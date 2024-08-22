@@ -1,9 +1,0 @@
-- hosts: localhost
-  tasks:
-    - name: Ensure MySQL is running
-      shell: |
-        kubectl rollout status deployment/mysql -n default
-      register: rollout_status
-      until: rollout_status.rc == 0
-      retries: 5
-      delay: 15
