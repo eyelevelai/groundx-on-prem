@@ -25,6 +25,6 @@ class RedisClient:
     def health_check(self):
         try:
             # PING command returns True if the Redis server is up and running
-            return self.client.ping()
-        except redis.exceptions.ConnectionError:
-            return False
+            return True, self.client.ping()
+        except redis.exceptions.ConnectionError as e:
+            return False, str(e)

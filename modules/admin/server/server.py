@@ -15,13 +15,11 @@ def hello_world():
 @app.route("/modules", methods=["GET"])
 def get_modules():
     redis_client = RedisClient()
+    redis_healthy, redis_error = redis_client.health_check()
     minio_client = MinioClient()
-    kafka_admin = KafkaAdmin()
-    kafka_healthy, kafka_error = kafka_admin.health_check()
     return jsonify({
-        "redis": "Healthy" if redis_client.health_check() else "Unhealthy",
+        "redis": "Healthy" if redis_healthy else redis_error,
         "minio": "Healthy" if minio_client.health_check() else "Unhealthy",
-        "kafka": "Healthy" if kafka_healthy else f"Unhealthy: {kafka_error}",
     }), 200
 
 @app.route("/redis/list", methods=["GET", "POST"])

@@ -17,11 +17,20 @@ spec:
           image: redis:latest
           ports:
             - containerPort: 6379
+          volumeMounts:
+            - mountPath: /data
+              name: redis-storage
+          command: ["redis-server"]
+          args: ["--appendonly", "yes"]
+      volumes:
+        - name: redis-storage
+          persistentVolumeClaim:
+            claimName: redis-pvc
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-service
+  name: redis
 spec:
   selector:
     app: redis
@@ -29,3 +38,4 @@ spec:
     - protocol: TCP
       port: 6379
       targetPort: 6379
+  type: ClusterIP

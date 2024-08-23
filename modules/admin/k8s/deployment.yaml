@@ -1,37 +1,37 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flask-redis-server-deployment
+  name: admin-server-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: flask-redis-server
+      app: admin-server
   template:
     metadata:
       labels:
-        app: flask-redis-server
+        app: admin-server
     spec:
       containers:
-        - name: flask-redis-server
-          image: admin-server
+        - name: admin-server
+          image: admin-server:latest
           imagePullPolicy: Never
           ports:
-            - containerPort: 5000
+            - containerPort: 8080
           env:
             - name: REDIS_HOST
-              value: redis-service
+              value: redis
             - name: REDIS_PORT
               value: "6379"
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: flask-redis-server-service
+  name: admin-server-service
 spec:
   type: LoadBalancer
   selector:
-    app: flask-redis-server
+    app: admin-server
   ports:
     - protocol: TCP
       port: 80
