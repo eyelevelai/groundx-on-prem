@@ -80,6 +80,19 @@ def minio_buckets():
     except Exception as e:
         return str(e), 500
 
+@app.route("/minio/bucket/create", methods=["POST"])
+def minio_create_bucket():
+    minio_client = MinioClient()
+    req_body = request.get_json()
+    bucket_name = req_body.get("bucket_name")
+    if not bucket_name:
+        return "bucket_name is required", 400
+    try:
+        minio_client.create_bucket(bucket_name)
+        return "Bucket created successfully", 200
+    except Exception as e:
+        return str(e), 500
+
 @app.route("/minio/upload", methods=["POST"])
 def minio_upload():
     minio_client = MinioClient()

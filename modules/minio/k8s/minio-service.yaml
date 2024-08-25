@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-service
+  labels:
+    app: minio
+spec:
+  type: ClusterIP # Internal access within the cluster
+  ports:
+    - name: minio-api # Added name for the API port
+      port: 9000
+      targetPort: 9000
+    - name: minio-console # Added name for the console port
+      port: 9001
+      targetPort: 9001
+  selector:
+    app: minio

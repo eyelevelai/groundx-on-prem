@@ -5,7 +5,7 @@ metadata:
   labels:
     app: minio
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: minio
@@ -31,32 +31,5 @@ spec:
               mountPath: /data
       volumes:
         - name: minio-storage
-          emptyDir: {} # Use PersistentVolume for production
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: minio-service
-  labels:
-    app: minio
-spec:
-  type: ClusterIP # Internal access within the cluster
-  ports:
-    - name: minio-api # Added name for the API port
-      port: 9000
-      targetPort: 9000
-    - name: minio-console # Added name for the console port
-      port: 9001
-      targetPort: 9001
-  selector:
-    app: minio
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: minio-config
-data:
-  MINIO_HOST: "minio-service"
-  MINIO_PORT: "9000"
-  MINIO_ACCESS_KEY: "ROOTNAME"
-  MINIO_SECRET: "CHANGEME123"
+          persistentVolumeClaim:
+            claimName: minio-pvc

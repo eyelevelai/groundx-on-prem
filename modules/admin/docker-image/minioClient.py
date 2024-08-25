@@ -25,6 +25,13 @@ class MinioClient:
         res = self.client.list_buckets()
         return [bucket.name for bucket in res]
 
+    def create_bucket(self, bucket_name):
+        try:
+            self.client.make_bucket(bucket_name)
+            return None
+        except Exception as e:
+            return str(e)
+
     def upload_file(self, file_name, file_content, file_type, bucket_name):
         try:
             self.client.put_object(bucket_name, file_name, io.BytesIO(file_content.encode('utf-8')), len(file_content), file_type)
