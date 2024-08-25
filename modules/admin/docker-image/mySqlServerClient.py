@@ -17,12 +17,10 @@ class MySQLServerConnector:
 
     def health_check(self):
         if not self.connection:
-            print("MySQL connection failed")
-            return
+            return False
         if not self.connection.is_connected():
-            print("MySQL connection is closed")
-            return
-        print("MySQL connection is open")
+            return False
+        return True
 
     def create_database(self, database):
         try:

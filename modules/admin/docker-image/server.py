@@ -19,9 +19,11 @@ def get_modules():
     redis_client = RedisClient()
     redis_healthy, redis_error = redis_client.health_check()
     minio_client = MinioClient()
+    mysql_server_client = MySQLServerConnector()
     return jsonify({
         "redis": "Healthy" if redis_healthy else redis_error,
         "minio": "Healthy" if minio_client.health_check() else "Unhealthy",
+        "mysql": "Healthy" if mysql_server_client.health_check() else "Unhealthy"
     }), 200
 
 @app.route("/redis/list", methods=["GET", "POST"])
