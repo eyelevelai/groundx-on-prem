@@ -13,6 +13,9 @@ COPY entrypoint.sh /usr/local/bin/
 # Make the script executable
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+# Ensure the data directory exists and has the correct permissions
+RUN mkdir -p /var/lib/mysql && chown -R mysql:mysql /var/lib/mysql
+
 # Set the entrypoint to the custom script
 ENTRYPOINT ["entrypoint.sh"]
 
