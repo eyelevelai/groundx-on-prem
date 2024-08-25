@@ -5,6 +5,8 @@ from minioClient import MinioClient
 from kafkaAdmin import KafkaAdmin
 from kafkaProducer import KafkaProducer
 from kafkaConsumer import KafkaConsumer
+from mySqlServerClient import MySQLServerConnector
+from mySqlDBClient import MySQLDBConnector
 
 app = Flask(__name__)
 
@@ -240,6 +242,57 @@ def kafka_consume():
         return str(e), 500
     finally:
         kafka_client.close()
+
+@app.route("/mysql/server/create-database", methods=["POST"])
+def mysql_server_create_db():
+    req_body = request.get_json()
+    database = req_body.get("database")
+    if not database:
+        return "query is required", 400
+    mysql_client = MySQLServerConnector()
+    try:
+        mysql_client.create_database(database)
+        return "Database created successfully", 200
+    except Exception as e:
+        return str(e), 500
+
+@app.route("/mysql/server/delete-database", methods=["DELETE"])
+def mysql_server_delete_db():
+    req_body = request.get_json()
+    database = req_body.get("database")
+    if not database:
+        return "query is required", 400
+    mysql_client = MySQLServerConnector()
+    try:
+        mysql_client.delete_database(database)
+        return "Database deleted successfully", 200
+    except Exception as e:
+        return str(e), 500
+
+@app.route("/mysql/server/list-db", methods=["POST"])
+def mysql_server_list_db():
+    mysql_client = MySQLServerConnector()
+    try:
+        return jsonify(mysql_client.list_database()), 200
+    except Exception as e:
+        return str(e), 500
+
+@app.route("/mysql/database/query", methods=["POST"])
+def mysql_database_query():
+    req_body = request.get_json()
+    database = req_body.get("database")
+    query = req_body.get("query")
+    if not database or not query:
+        return "database and query are required", 400
+    try:
+        with MySQLDBConnector(database) as mysql:
+            res = mysql.execute_query(query)
+            return jsonify(res), 200
+    except Exception as e:
+        return str(e), 500
+
+
+
 
 
 

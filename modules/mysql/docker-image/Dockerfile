@@ -1,23 +1,20 @@
-# Use the official MySQL image from the Docker Hub
+# Base image with MySQL
 FROM mysql:8.0
 
-# Environment variables to configure the MySQL instance
+# Set environment variables (these can also be passed during container runtime)
 ENV MYSQL_ROOT_PASSWORD=rootpassword
-ENV MYSQL_DATABASE=testdatabase
-ENV MYSQL_USER=testuser1
-ENV MYSQL_PASSWORD=testpassword1
+ENV MYSQL_USER=user
+ENV MYSQL_PASSWORD=userpassword
 
 # Copy the entrypoint script into the container
 COPY entrypoint.sh /usr/local/bin/
 
-# Make the script executable
+# Make the entrypoint script executable
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Ensure the data directory exists and has the correct permissions
-RUN mkdir -p /var/lib/mysql && chown -R mysql:mysql /var/lib/mysql
+# Define the entrypoint script to run when the container starts
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
-# Set the entrypoint to the custom script
-ENTRYPOINT ["entrypoint.sh"]
-
-# Expose the MySQL port
+# Expose MySQL port
 EXPOSE 3306
+

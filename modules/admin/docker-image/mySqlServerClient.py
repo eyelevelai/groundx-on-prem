@@ -6,8 +6,8 @@ class MySQLServerConnector:
     def __init__(self):
         self.host = os.getenv('MYSQL_HOST', 'localhost')
         self.port = os.getenv('MYSQL_PORT', '3306')
-        self.user = os.getenv('MYSQL_USER', 'testuser1')
-        self.password = os.getenv('MYSQL_PASSWORD', 'testpassword1')
+        self.user = 'root'
+        self.password = 'rootpassword'
         self.connection = mysql.connector.connect(
             host=self.host,
             port=self.port,
@@ -63,8 +63,10 @@ class MySQLServerConnector:
                 cursor.execute("SHOW DATABASES")
                 databases = cursor.fetchall()
                 print("List of databases:")
+                res = []
                 for db in databases:
-                    print(db)
+                    res.append(db[0])
+                return res
         except Error as e:
             print(f"Error listing databases: {e}")
         finally:
