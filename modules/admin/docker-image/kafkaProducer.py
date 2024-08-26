@@ -1,33 +1,24 @@
 from confluent_kafka import Producer
-import os
+import socket
 
 class KafkaProducer:
-    def __init__(self):
-        bootstrap_servers = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka-service:9092")
-        self.producer = Producer({'bootstrap.servers': bootstrap_servers})
+    def __init__(self, bootstrap_servers, topic):
+        self.conf = {
+            'bootstrap.servers': "localhost:9092",
+            'client.id': socket.gethostname()
+        }
+        self.producer = Producer(self.conf)
+        self.topic = topic
 
-    def delivery_report(self, err, msg):
-        """Delivery report callback to confirm message delivery or capture an error."""
+    def acked(self, err, msg):
         if err is not None:
-            print(f"Message delivery failed: {err}")
+            print("Failed to deliver message: %s: %s" % (str(msg), str(err)))
         else:
-            print(f"Message delivered to {msg.topic()} partition {msg.partition()} at offset {msg.offset()}.")
+            print("Message produced: %s" % (str(msg)))
 
-    def send_message(self, topic, key, value):
-        try:
-            self.producer.produce(
-                topic=topic,
-                key=key.encode('utf-8'),
-                value=value.encode('utf-8'),
-                callback=self.delivery_report
-            )
-            # Wait up to 10 seconds for the message to be delivered
-            self.producer.flush(timeout=10)
-        except Exception as e:
-            print(f"Failed to send message: {e}")
-            raise
+    def produce_message(self, key, value):
+        self.producer.produce(self.topic, key=key, value=value, callback=self.acked)
+        self.producer.poll(1)  # Serve delivery reports (callbacks)
 
-    def close(self):
-        # Wait for any outstanding messages to be delivered and clean up producer resources
+    def flush(self):
         self.producer.flush()
-        print("Producer closed.")

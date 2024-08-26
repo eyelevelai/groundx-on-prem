@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 
 from redisClient import RedisClient
 from minioClient import MinioClient
@@ -18,12 +18,18 @@ def hello_world():
 def get_modules():
     redis_client = RedisClient()
     redis_healthy, redis_error = redis_client.health_check()
+
     minio_client = MinioClient()
+
     mysql_server_client = MySQLServerConnector()
+
+    kafka_admin_client = KafkaAdmin()
+    kafka_healthy, kafka_error = kafka_admin_client.health_check()
     return jsonify({
         "redis": "Healthy" if redis_healthy else redis_error,
         "minio": "Healthy" if minio_client.health_check() else "Unhealthy",
-        "mysql": "Healthy" if mysql_server_client.health_check() else "Unhealthy"
+        "mysql": "Healthy" if mysql_server_client.health_check() else "Unhealthy",
+        "kafka": "Healthy" if kafka_healthy else kafka_error
     }), 200
 
 @app.route("/redis/list", methods=["GET", "POST"])
@@ -212,38 +218,31 @@ def kafka_describe_topic():
     except Exception as e:
         return str(e), 500
 
-@app.route("/kafka/produce", methods=["POST"])
-def kafka_produce():
-    kafka_client = KafkaProducer()
-    req_body = request.get_json()
-    topic = req_body.get("topic")
-    key = req_body.get("key")
-    value = req_body.get("value")
-    if not topic or not key or not value:
-        return "topic and message are required", 400
-    try:
-        kafka_client.send_message(topic, key, value)
-        return "Message produced successfully", 200
-    except Exception as e:
-        return str(e), 500
-    finally:
-        kafka_client.close()
+@app.route('/kafka/produce', methods=['POST'])
+def produce_kafka():
+    data = request.json
+    key = data.get('key')
+    value = data.get('value')
+
+    if not key or not value:
+        return jsonify({'error': 'Both key and value must be provided'}), 400
+
+    kafka_producer.produce_message(key=key, value=value)
+    return jsonify({'status': 'Message sent'}), 200
 
 @app.route("/kafka/consume", methods=["POST"])
-def kafka_consume():
-    req_body = request.get_json()
-    topic = req_body.get("topic")
-    group_id = req_body.get("group_id")
-    auto_offset_reset = req_body.get("auto_offset_reset")
-    if not topic or not group_id or not auto_offset_reset:
-        return "topic is required", 400
-    kafka_client = KafkaConsumer(topic, group_id, auto_offset_reset)
-    try:
-        return jsonify(kafka_client.consume_messages()), 200
-    except Exception as e:
-        return str(e), 500
-    finally:
-        kafka_client.close()
+def consume_kafka():
+    kafka_consumer = KafkaConsumer(
+        bootstrap_servers='localhost:9092',
+        group_id='kafka-python-getting-started',
+        topic='mytopic'
+    )
+
+    def generate():
+        for message in kafka_consumer.consume_messages():
+            yield message
+
+    return Response(generate(), content_type='text/plain')
 
 @app.route("/mysql/server/create-database", methods=["POST"])
 def mysql_server_create_db():

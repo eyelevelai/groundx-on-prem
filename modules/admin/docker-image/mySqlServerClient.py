@@ -8,12 +8,17 @@ class MySQLServerConnector:
         self.port = os.getenv('MYSQL_PORT', '3306')
         self.user = 'root'
         self.password = 'rootpassword'
-        self.connection = mysql.connector.connect(
-            host=self.host,
-            port=self.port,
-            user=self.user,
-            password=self.password
-        )
+        try:
+            self.connection = mysql.connector.connect(
+                host=self.host,
+                port=self.port,
+                user=self.user,
+                password=self.password
+            )
+            print("MySQL Database connection successful")
+        except Error as e:
+            print(f"Error connecting to MySQL database: {e}")
+            self.connection = None
 
     def health_check(self):
         if not self.connection:

@@ -5,8 +5,21 @@ import os
 class KafkaAdmin:
     def __init__(self):
         # Use the Kubernetes service name and port for the Kafka cluster
-        bootstrap_servers = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka-service:9092")
+        bootstrap_servers = os.getenv("KAFKA_HOST", "localhost:9092")
         self.admin_client = AdminClient({'bootstrap.servers': bootstrap_servers})
+
+    def health_check(self):
+        try:
+            metadata = self.admin_client.list_topics(timeout=2)
+            if metadata.topics:
+                print("Kafka cluster is healthy.")
+                return True, None
+            else:
+                print("Kafka cluster is accessible but no topics found.")
+                return True, None
+        except KafkaException as e:
+            return False, f"error message: {e}, kafka host: {os.getenv('KAFKA_HOST', 'localhost:9092')}"
+
 
 
     def create_topic(self, topic_name, num_partitions=1, replication_factor=1):
@@ -46,16 +59,3 @@ class KafkaAdmin:
             }
         else:
             return f"Topic '{topic_name}' does not exist."
-
-    def health_check(self):
-        try:
-            metadata = self.admin_client.list_topics(timeout=10)
-            if metadata.topics:
-                print("Kafka cluster is healthy.")
-                return True, None
-            else:
-                print("Kafka cluster is accessible but no topics found.")
-                return True, None
-        except KafkaException as e:
-            print(f"Kafka health check failed: {e}")
-            return False, e
