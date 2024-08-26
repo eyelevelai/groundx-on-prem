@@ -1,10 +1,11 @@
 from confluent_kafka import Producer
 import socket
+import os
 
 class KafkaProducer:
-    def __init__(self, bootstrap_servers, topic):
+    def __init__(self, topic):
         self.conf = {
-            'bootstrap.servers': "localhost:9092",
+            'bootstrap.servers': os.getenv("KAFKA_HOST", "localhost:9092"),
             'client.id': socket.gethostname()
         }
         self.producer = Producer(self.conf)

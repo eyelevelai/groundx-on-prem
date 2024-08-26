@@ -221,21 +221,29 @@ def kafka_describe_topic():
 @app.route('/kafka/produce', methods=['POST'])
 def produce_kafka():
     data = request.json
+    topic = data.get('topic')
     key = data.get('key')
     value = data.get('value')
 
-    if not key or not value:
-        return jsonify({'error': 'Both key and value must be provided'}), 400
+    if not key or not value or not topic:
+        return jsonify({'error': 'Topic, key and value must be provided'}), 400
 
+    kafka_producer = KafkaProducer(topic)
     kafka_producer.produce_message(key=key, value=value)
     return jsonify({'status': 'Message sent'}), 200
 
 @app.route("/kafka/consume", methods=["POST"])
 def consume_kafka():
+    data = request.json
+    topic = data.get('topic')
+    group_id = data.get('group_id')
+
+    if not topic or not group_id:
+        return jsonify({'error': 'Topic and group_id must be provided'}), 400
+
     kafka_consumer = KafkaConsumer(
-        bootstrap_servers='localhost:9092',
-        group_id='kafka-python-getting-started',
-        topic='mytopic'
+        group_id=group_id,
+        topic=topic
     )
 
     def generate():

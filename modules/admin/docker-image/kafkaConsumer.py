@@ -1,9 +1,10 @@
 from confluent_kafka import Consumer
+import os
 
 class KafkaConsumer:
-    def __init__(self, bootstrap_servers, group_id, topic):
+    def __init__(self, group_id, topic):
         self.config = {
-            'bootstrap.servers': bootstrap_servers,
+            'bootstrap.servers': os.getenv("KAFKA_HOST", "localhost:9092"),
             'group.id': group_id,
             'auto.offset.reset': 'earliest'
         }
@@ -18,7 +19,7 @@ class KafkaConsumer:
                 if msg is None:
                     yield "Waiting...\n"
                 elif msg.error():
-                    yield f"ERROR: {msg.error()}\n"
+                    yield f"ERROR: {msg.error()}\n topic subscrbed to: {self.topic}\n"
                 else:
                     yield f"Consumed event from topic {msg.topic()}: key = {msg.key().decode('utf-8')} value = {msg.value().decode('utf-8')}\n"
         except KeyboardInterrupt:
