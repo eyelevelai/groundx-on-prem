@@ -1,18 +1,18 @@
 resource "kubernetes_service" "loadbalancer" {
   metadata {
-    name = var.service_name
+    name = var.loadbalancer-name
   }
 
   spec {
-    type = var.service_type
+    type = var.loadbalancer_type
 
     selector = {
-      app = var.app_selector
+      app = var.groundx_service
     }
 
     port {
-      port        = var.service_port
-      target_port = var.target_port
+      port        = var.loadbalancer_port
+      target_port = var.loadbalancer_target_port
     }
   }
 }

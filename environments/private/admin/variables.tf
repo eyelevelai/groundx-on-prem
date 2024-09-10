@@ -964,22 +964,20 @@ variable "upload_service" {
   default     = "upload"
 }
 
-variable "service_name" {
-  default = "groundx-loadbalancer-service"
+# load balancer
+
+variable "loadbalancer-name" {
+  default = "loadbalancer-groundx"
 }
 
-variable "service_type" {
+variable "loadbalancer_type" {
   default = "LoadBalancer"
 }
 
-variable "service_port" {
+variable "loadbalancer_port" {
   default = 80
 }
 
-variable "target_port" {
+variable "loadbalancer_target_port" {
   default = 8080
-}
-
-variable "app_selector" {
-  default = "groundx"
 }
