@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: { { .Values.service.name } }
+spec:
+  type: { { .Values.service.type } }
+  selector: { { - toYaml .Values.service.selector | nindent 4 } }
+  ports:
+    - protocol: TCP
+      port: { { .Values.service.port } }
+      targetPort: { { .Values.service.targetPort } }

@@ -963,3 +963,23 @@ variable "upload_service" {
   type        = string
   default     = "upload"
 }
+
+variable "service_name" {
+  default = "groundx-loadbalancer-service"
+}
+
+variable "service_type" {
+  default = "LoadBalancer"
+}
+
+variable "service_port" {
+  default = 80
+}
+
+variable "target_port" {
+  default = 8080
+}
+
+variable "app_selector" {
+  default = "groundx"
+}
