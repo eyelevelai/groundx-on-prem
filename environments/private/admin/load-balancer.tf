@@ -9,7 +9,7 @@ resource "kubernetes_service" "loadbalancer" {
     }
 
     port {
-      port        = var.groundx_lb_port
+      port = var.groundx_lb_port
     }
   }
 }
