@@ -546,6 +546,19 @@ variable "groundx_version" {
 }
 
 
+# GROUNDX LOAD BALANCER
+
+variable "groundx_lb_service" {
+  description = "Name for service"
+  type        = string
+  default     = "groundx-lb"
+}
+
+variable "groundx_lb_port" {
+  default = 80
+}
+
+
 # LAYOUT
 
 variable "layout_api_node" {
@@ -962,22 +975,4 @@ variable "upload_service" {
   description = "Name for service"
   type        = string
   default     = "upload"
-}
-
-# load balancer
-
-variable "loadbalancer-name" {
-  default = "loadbalancer-groundx"
-}
-
-variable "loadbalancer_type" {
-  default = "LoadBalancer"
-}
-
-variable "loadbalancer_port" {
-  default = 80
-}
-
-variable "loadbalancer_target_port" {
-  default = 8080
 }
