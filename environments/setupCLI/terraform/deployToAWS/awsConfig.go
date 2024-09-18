@@ -1,6 +1,10 @@
 package deployToAWS
 
 import (
+	"errors"
+	"fmt"
+	"os"
+
 	"github.com/manifoldco/promptui"
 )
 
@@ -10,6 +14,7 @@ type awsConfig struct {
 	region          string
 	newVPC          bool
 	internetAccess  bool
+	keyPairValid    bool
 }
 
 func NewAWSConfig() awsConfig {
@@ -17,161 +22,134 @@ func NewAWSConfig() awsConfig {
 }
 
 func (a *awsConfig) Run() error {
-	err := a.setAccessKeyId()
+	for {
+		err := a.collectCredentials()
+		if err != nil {
+			fmt.Println("Error collecting credentials:", err)
+			continue
+		}
 
-	if err != nil {
+		err = a.collectRegion()
+		if err != nil {
+			fmt.Println("Error selecting region:", err)
+			continue
+		}
+
+		err = a.collectVPCConfig()
+		if err != nil {
+			fmt.Println("Error configuring VPC:", err)
+			continue
+		}
+
+		err = a.collectInternetAccess()
+		if err != nil {
+			fmt.Println("Error configuring internet access:", err)
+			continue
+		}
+
+		err = a.verifyAccessKeyPair()
+		if err != nil {
+			fmt.Println("Error verifying key pair:", err)
+			continue
+		}
+
+		if a.keyPairValid {
+			fmt.Println("Key pair is valid.")
+			break
+		} else {
+			fmt.Println("Key pair is invalid. Please try again.")
+		}
+	}
+
+	return nil
+}
+
+func (a *awsConfig) collectCredentials() error {
+	if err := a.promptInput("AWS Access Key ID", &a.accessKeyId); err != nil {
 		return err
 	}
 
-	err = a.setSecretAccessKey()
-
-	if err != nil {
-		return err
-	}
-
-	err = a.setRegion()
-
-	if err != nil {
-		return err
-	}
-
-	err = a.setCreateNewVPC()
-
-	if err != nil {
-		return err
-	}
-
-	err = a.setInternetAccessible()
-
-	if err != nil {
+	if err := a.promptInput("AWS Secret Access Key", &a.secretAccessKey); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (a *awsConfig) setAccessKeyId() error {
-	validate := func(input string) error {
-		return nil
-	}
-
-	prompt := promptui.Prompt{
-		Label:    "AWS Access Key ID",
-		Validate: validate,
-	}
-
-	result, err := prompt.Run()
-
-	if err != nil {
-		return err
-	}
-
-	a.accessKeyId = result
-
-	return nil
-}
-
-func (a *awsConfig) setSecretAccessKey() error {
-	validate := func(input string) error {
-		return nil
-	}
-
-	prompt := promptui.Prompt{
-		Label:    "AWS Secret Access Key",
-		Validate: validate,
-	}
-
-	result, err := prompt.Run()
-
-	if err != nil {
-		return err
-	}
-
-	a.secretAccessKey = result
-
-	return nil
-}
-
-func (a *awsConfig) setRegion() error {
-	validReagion := []string{
-		"us-east-2",
-		"us-east-1",
-		"us-west-1",
-		"us-west-2",
-		"af-south-1",
-		"ap-east-1",
-		"ap-south-2",
-		"ap-southeast-3",
-		"ap-southeast-5",
-		"ap-southeast-4",
-		"ap-south-1",
-		"ap-northeast-3",
-		"ap-northeast-2",
-		"ap-southeast-1",
-		"ap-southeast-2",
-		"ap-northeast-1",
-		"ca-central-1",
-		"ca-west-1",
-		"eu-central-1",
-		"eu-west-1",
-		"eu-west-2",
-		"eu-south-1",
-		"eu-west-3",
-		"eu-south-2",
-		"eu-north-1",
-		"eu-central-2",
-		"il-central-1",
-		"me-south-1",
-		"me-central-1",
-		"sa-east-1",
-		"us-gov-east-1",
-		"us-gov-west-1",
+func (a *awsConfig) collectRegion() error {
+	validRegion := []string{
+		"us-east-2", "us-east-1", "us-west-1", "us-west-2",
 	}
 
 	prompt := promptui.Select{
-		Label: "Select Region",
-		Items: validReagion,
+		Label: "Select AWS Region",
+		Items: validRegion,
 	}
 
 	_, result, err := prompt.Run()
-
 	if err != nil {
 		return err
 	}
 
 	a.region = result
-
 	return nil
 }
 
-func (a *awsConfig) setCreateNewVPC() error {
-	prompt := promptui.Prompt{
-		Label: "Create New VPC? (y/n)",
+func (a *awsConfig) collectVPCConfig() error {
+	return a.promptYesNo("Create New VPC?", &a.newVPC)
+}
+
+func (a *awsConfig) collectInternetAccess() error {
+	return a.promptYesNo("Do you want this deployment accessible via internet?", &a.internetAccess)
+}
+
+func (a *awsConfig) verifyAccessKeyPair() error {
+	fmt.Println("Verifying AWS access key pair...")
+	verificationClient := newVerifyAccessKeyPair(a.accessKeyId, a.secretAccessKey, a.region)
+	keyPairIsValid, err := verificationClient.Run()
+	if err != nil {
+		return fmt.Errorf("access key pair verification failed: %w", err)
+	}
+	a.keyPairValid = keyPairIsValid
+	return nil
+}
+
+func (a *awsConfig) promptInput(label string, result *string) error {
+	validate := func(input string) error {
+		if input == "" {
+			return errors.New("input cannot be empty")
+		}
+		return nil
 	}
 
-	result, err := prompt.Run()
+	prompt := promptui.Prompt{
+		Label:    label,
+		Validate: validate,
+	}
 
+	input, err := prompt.Run()
 	if err != nil {
 		return err
 	}
 
-	a.newVPC = result == "y"
+	if input == "exit" {
+		os.Exit(0)
+	}
 
+	*result = input
 	return nil
 }
 
-func (a *awsConfig) setInternetAccessible() error {
+func (a *awsConfig) promptYesNo(label string, result *bool) error {
 	prompt := promptui.Prompt{
-		Label: "Do you want this deployment accessible via internet? (y/n)",
+		Label: label + " (y/n)",
 	}
 
-	result, err := prompt.Run()
-
+	input, err := prompt.Run()
 	if err != nil {
 		return err
 	}
 
-	a.internetAccess = result == "y"
-
+	*result = input == "y"
 	return nil
 }
