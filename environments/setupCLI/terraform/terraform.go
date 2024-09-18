@@ -1,9 +1,8 @@
 package terraform
 
 import (
-	"fmt"
-
 	"eyelevel-setup-cli/terraform/deployToAWS"
+	"fmt"
 
 	"github.com/manifoldco/promptui"
 )

@@ -1,6 +1,7 @@
 package deployToAWS
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 )
@@ -43,6 +44,7 @@ func (t *terraformWorkflow) apply() error {
 func (t *terraformWorkflow) terraformCommand(command string, args ...string) error {
 	cmd := exec.Command("terraform", append([]string{command}, args...)...)
 	cmd.Dir = t.terraformDirectory
+	fmt.Println("executing terrafrom command in: ", t.terraformDirectory)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
