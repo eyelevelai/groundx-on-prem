@@ -66,7 +66,9 @@ func (r *resetTerrafromProject) listFilesAndDirectories() error {
 			return err
 		}
 		if info.IsDir() {
-			r.directoryToDelete = append(r.directoryToDelete, path)
+			if path != r.terrafromDirectory {
+				r.directoryToDelete = append(r.directoryToDelete, path)
+			}
 		} else {
 			if !strings.HasSuffix(path, ".tf") {
 				r.fileToDelete = append(r.fileToDelete, path)

@@ -57,6 +57,9 @@ func (c *checkForExistingProject) listFilesAndDirectories() error {
 		if err != nil {
 			return err
 		}
+		if path == c.terraformDirectory {
+			return nil
+		}
 		fileList = append(fileList, path)
 		return nil
 	})
