@@ -29,36 +29,30 @@ func (a *awsConfig) Run() error {
 			continue
 		}
 
-		err = a.collectRegion()
-		if err != nil {
-			fmt.Println("Error selecting region:", err)
-			continue
-		}
-
-		err = a.collectVPCConfig()
-		if err != nil {
-			fmt.Println("Error configuring VPC:", err)
-			continue
-		}
-
-		err = a.collectInternetAccess()
-		if err != nil {
-			fmt.Println("Error configuring internet access:", err)
-			continue
-		}
-
 		err = a.verifyAccessKeyPair()
 		if err != nil {
-			fmt.Println("Error verifying key pair:", err)
 			continue
 		}
 
 		if a.keyPairValid {
 			fmt.Println("Key pair is valid.")
 			break
-		} else {
-			fmt.Println("Key pair is invalid. Please try again.")
 		}
+	}
+
+	err := a.collectRegion()
+	if err != nil {
+		fmt.Println("Error selecting region:", err)
+	}
+
+	err = a.collectVPCConfig()
+	if err != nil {
+		fmt.Println("Error configuring VPC:", err)
+	}
+
+	err = a.collectInternetAccess()
+	if err != nil {
+		fmt.Println("Error configuring internet access:", err)
 	}
 
 	return nil
@@ -104,13 +98,19 @@ func (a *awsConfig) collectInternetAccess() error {
 }
 
 func (a *awsConfig) verifyAccessKeyPair() error {
-	fmt.Println("Verifying AWS access key pair...")
 	verificationClient := newVerifyAccessKeyPair(a.accessKeyId, a.secretAccessKey, a.region)
 	keyPairIsValid, err := verificationClient.Run()
 	if err != nil {
-		return fmt.Errorf("access key pair verification failed: %w", err)
+
+		return fmt.Errorf("access key pair verification failed")
 	}
 	a.keyPairValid = keyPairIsValid
+
+	fmt.Println("The key pair provided is lacking the necessary permissions:")
+	for _, accessLacking := range verificationClient.lackingPermissions {
+		fmt.Println("  -", accessLacking)
+	}
+
 	return nil
 }
 

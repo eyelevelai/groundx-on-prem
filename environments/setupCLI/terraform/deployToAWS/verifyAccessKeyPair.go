@@ -2,10 +2,8 @@ package deployToAWS
 
 import (
 	"context"
-	"fmt"
 	"log"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
@@ -59,11 +57,7 @@ func (v *verifyAccessKeyPair) Run() (keyPairValid bool, errorMessage error) {
 
 func (v *verifyAccessKeyPair) verifyPremissions() error {
 	for _, perm := range v.requiredPermissions {
-		success, err := v.simulatePermission(perm)
-		if err != nil {
-			fmt.Printf("Error checking permission %s: %v\n", perm, err)
-			return err
-		}
+		success := v.simulatePermission(perm)
 
 		if success {
 			v.presentPermissions = append(v.presentPermissions, perm)
@@ -74,23 +68,28 @@ func (v *verifyAccessKeyPair) verifyPremissions() error {
 	return nil
 }
 
-func (v *verifyAccessKeyPair) simulatePermission(targetPermission string) (bool, error) {
+func (v *verifyAccessKeyPair) simulatePermission(targetPermission string) bool {
+	callerIdentity, err := v.iamClient.GetUser(context.TODO(), &iam.GetUserInput{})
+	if err != nil {
+		log.Printf("Unable to retrieve user identity: %v", err)
+		return false
+	}
+
 	result, err := v.iamClient.SimulatePrincipalPolicy(context.TODO(), &iam.SimulatePrincipalPolicyInput{
-		PolicySourceArn: aws.String("arn:aws:iam::aws:policy/AdministratorAccess"),
+		PolicySourceArn: callerIdentity.User.Arn,
 		ActionNames:     []string{targetPermission},
 	})
 
 	if err != nil {
-		return false, fmt.Errorf("Error simulating permission %s: %v", targetPermission, err)
+		log.Printf("Error simulating permission for %s: %v", targetPermission, err)
+		return false
 	}
 
 	for _, eval := range result.EvaluationResults {
 		if eval.EvalDecision == types.PolicyEvaluationDecisionTypeAllowed {
-			fmt.Printf("Permission: %s is allowed\n", targetPermission)
-			return true, nil
+			return true
 		}
-		fmt.Printf("Permission: %s is denied\n", targetPermission)
 	}
 
-	return false, nil
+	return false
 }
