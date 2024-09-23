@@ -18,7 +18,6 @@ func (d *deployToAWS) Run() {
 	err := d.awsConfig.Run()
 
 	if err != nil {
-		fmt.Println("Error setting up AWS config")
 		fmt.Println(err)
 		return
 	}
@@ -27,7 +26,6 @@ func (d *deployToAWS) Run() {
 	resultStatus, err := checkForExistingProjects.Run()
 
 	if err != nil {
-		fmt.Println("Error checking for existing project")
 		fmt.Println(err)
 		return
 	}
@@ -45,7 +43,6 @@ func (d *deployToAWS) Run() {
 		}
 
 		if err != nil {
-			fmt.Println("Error resetting project")
 			fmt.Println(err)
 		}
 		return
