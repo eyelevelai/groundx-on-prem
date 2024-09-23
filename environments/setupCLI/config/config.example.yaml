@@ -1,0 +1,17 @@
+deployPlatform: "AWS"
+resetExistingProject: True
+projectConfiguration:
+  createEverything: True
+awsDeploymentConfiguration:
+  region: "us-east-1"
+  credentials:
+    accessKeyID: "access key ID"
+    secretAccessKey: "secret access key"
+terraformConfiguration:
+  backend:
+    path: "local"
+  project:
+    projectPath:
+      path: "./terraform/deployToAWS"
+      fromScrash: "./terraform/deployToAWS/from-scratch"
+      eksOnly: "./terraform/deployToAWS/eks-only"
