@@ -48,7 +48,7 @@ prompt_input() {
             read -p "$msg" choice
         fi
 
-        choice=${choice,,}
+        choice=$(echo "$choice" | tr '[:upper:]' '[:lower:]')
 
         result=$($validate_function "$choice" "data[@]")
         if [[ $? -eq 0 ]]; then
