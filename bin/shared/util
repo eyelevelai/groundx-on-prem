@@ -5,7 +5,7 @@ deploy() {
 
   if [[ -d "$dir" ]]; then
     status "\u00b7 Deploying $dir" && echo
-    terraform -chdir="$dir" init
+    terraform -chdir="$dir" init -upgrade
     terraform -chdir="$dir" plan
     if [[ "$TFLAG" -eq 1 ]]; then
       status "Skipping terraform apply" && ok
