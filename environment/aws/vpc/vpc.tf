@@ -9,7 +9,7 @@ module "eyelevel_vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.8.1"
 
-  name = "${var.cluster.name}-vpc"
+  name = "${local.cluster_name}-vpc"
 
   cidr = var.vpc.cidr
   azs  = slice(data.aws_availability_zones.available.names, 0, 3)

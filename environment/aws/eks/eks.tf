@@ -180,8 +180,8 @@ module "eyelevel_eks" {
   source                                   = "terraform-aws-modules/eks/aws"
   version                                  = ">= 20.0"
 
-  cluster_name                             = var.cluster.name
-  iam_role_name                            = "${var.cluster.name}-cluster-role"
+  cluster_name                             = local.cluster_name
+  iam_role_name                            = "${local.cluster_name}-cluster-role"
 
   cluster_endpoint_private_access          = true
   cluster_endpoint_public_access           = true
@@ -192,7 +192,7 @@ module "eyelevel_eks" {
   access_entries                           = local.access_entries
 
   eks_managed_node_group_defaults          = {
-    iam_role_name                          = "${var.cluster.name}-node-role"
+    iam_role_name                          = "${local.cluster_name}-node-role"
   }
 
   eks_managed_node_groups                  = local.node_groups
@@ -204,6 +204,6 @@ resource "null_resource" "wait_for_eks" {
   depends_on = [module.eyelevel_eks]
 
   provisioner "local-exec" {
-    command  = "aws eks update-kubeconfig --region ${var.environment.region} --name ${var.cluster.name}"
+    command  = "aws eks update-kubeconfig --region ${var.environment.region} --name ${local.cluster_name}"
   }
 }

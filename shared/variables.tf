@@ -14,7 +14,7 @@ variable "cluster" {
     internet_access  = bool
 
     kube_config_path = string
-    name             = string
+    prefix           = string
 
     # admin or developer
     role             = string
@@ -31,7 +31,7 @@ variable "cluster" {
     has_nvidia       = false
     internet_access  = true
     kube_config_path = "~/.kube/config"
-    name             = "eyelevel"
+    prefix           = "eyelevel"
     role             = "admin"
     search           = true
     type             = "eks"
