@@ -1,5 +1,5 @@
 resource "helm_release" "summary_api_service" {
-  count = local.create_summary ? 1 : 0
+  count = local.create_summary ? 0 : 0
 
   name       = "${var.summary_internal.service}-api-cluster"
   namespace  = var.app_internal.namespace

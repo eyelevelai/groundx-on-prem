@@ -23,10 +23,10 @@ spec:
           value: "{{ .Values.nodeSelector.node }}"
           effect: "NoSchedule"
       initContainers:
-        - name: wait-for-cache
-          image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-          imagePullPolicy: "Always"
-          command: ['sh', '-c', "until nc -z {{ .Values.dependencies.cache }}; do echo waiting for cache; sleep 2; done"]
+        #- name: wait-for-cache
+        #  image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+        #  imagePullPolicy: "Always"
+        #  command: ['sh', '-c', "until nc -z {{ .Values.dependencies.cache }}; do echo waiting for cache; sleep 2; done"]
         - name: create-symlink
           image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
           imagePullPolicy: "Always"
@@ -64,10 +64,10 @@ spec:
           command:
             - /bin/bash
             - -c
-            #- |
-            #  export PYTHONPATH=/workspace && while true; do sleep 30; done
             - |
-              export PYTHONPATH=/workspace && supervisord -c /workspace/supervisord.conf
+              export PYTHONPATH=/workspace && while true; do sleep 30; done
+            #- |
+            #  export PYTHONPATH=/workspace && supervisord -c /workspace/supervisord.conf
           securityContext:
             runAsUser: {{ .Values.securityContext.runAsUser }}
           livenessProbe:
