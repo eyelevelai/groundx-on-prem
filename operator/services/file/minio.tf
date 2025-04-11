@@ -23,9 +23,9 @@ resource "helm_release" "minio_operator" {
           runAsGroup = tonumber(local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.GID, 1000) : 1000)
           fsGroup    = tonumber(local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.GID, 1000) : 1000)
         }
-        nodeSelector = {
+        nodeSelector = var.app.node_selector ? {
           node = local.node_assignment.file
-        }
+        } : {}
         replicaCount    = var.file_resources.operator.replicas
         securityContext = {
           runAsUser  = tonumber(local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1000) : 1000)
@@ -60,9 +60,9 @@ resource "helm_release" "minio_tenant" {
           secretKey = var.file.password
         }
         name = "${var.file_internal.service}-tenant"
-        nodeSelector = {
+        nodeSelector = var.app.node_selector ? {
           node = local.node_assignment.file
-        }
+        } : {}
         pools = [{
           containerSecurityContext = {
             runAsUser  = tonumber(local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1000) : 1000)
@@ -70,9 +70,9 @@ resource "helm_release" "minio_tenant" {
             fsGroup    = tonumber(local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.GID, 1000) : 1000)
           }
           name = "${var.file_internal.service}-tenant-pool-0"
-          nodeSelector = {
+          nodeSelector = var.app.node_selector ? {
             node = local.node_assignment.file
-          }
+          } : {}
           resources = {
             limits            = {
               cpu             = local.pool.limits
