@@ -447,9 +447,9 @@ variable "layout" {
   })
   default         = {
     ocr           = {
-      credentials   = "gcv_credentials.json"
+      credentials   = ""
       project       = ""
-      type          = "google"
+      type          = "tesseract"
     }
   }
   validation {
