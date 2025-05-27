@@ -73,7 +73,7 @@ variable "engines" {
     {
       apiKey           = null
       baseURL          = null
-      engineID         = "mcpm-o-2-6"
+      engineID         = "gemma-3-4b-it"
       maxInputTokens   = 2000
       maxRequests      = 4
       maxTokens        = 10000000000
@@ -449,9 +449,9 @@ variable "layout" {
   })
   default         = {
     ocr           = {
-      credentials   = "gcv_credentials.json"
+      credentials   = ""
       project       = ""
-      type          = "google"
+      type          = "tesseract"
     }
   }
   validation {
@@ -903,15 +903,17 @@ variable "stream_internal" {
 # SUMMARY
 
 variable "summary_existing" {
-  description = "Summary settings, if using OpenAI vs private hosted model"
-  nullable    = true
-  type        = object({
-    api_key   = string
-    base_url  = string
+  description    = "Summary settings, if using OpenAI vs private hosted model"
+  nullable       = true
+  type           = object({
+    api_key      = string
+    base_url     = string
+    service_type = string
   })
-  default     = {
-    api_key   = null
-    base_url  = null
+  default        = {
+    api_key      = null
+    base_url     = null
+    service_type = null
   }
 }
 
@@ -953,7 +955,7 @@ variable "summary_internal" {
     }
     inference       = {
       device        = "cuda"
-      deviceUtilize = 0.5
+      deviceUtilize = 0.33
       image         = {
         pull        = "Always"
         repository  = "summary-inference"

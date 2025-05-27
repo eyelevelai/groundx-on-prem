@@ -30,13 +30,14 @@ ai:
     apiKey: ${summaryApiKey}
     baseURL: ${summaryBaseUrl}
     defaultKitId: 0
-  search: eyelevel
+  summaryType: ${summaryService}
   searchIndexes:
     ${searchIndex}:
       languages:
 %{ for language in jsondecode(languages) ~}
         - ${language}
 %{ endfor ~}
+%{ if engineCount > 0 ~}
 
 engines:
 %{ for engine in jsondecode(engines) ~}
@@ -66,6 +67,7 @@ engines:
     vision: ${engine.vision}
 %{ endfor ~}
 
+%{ endif ~}
 environment: prod
 
 groundxServer:

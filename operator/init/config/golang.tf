@@ -14,6 +14,7 @@ locals {
     dbServiceUserPassword  = local.db_settings.db_service_password
     deploymentType         = var.groundx_internal.type
     documentTPM            = var.throughput.conversions.document.tpm
+    engineCount            = length(var.engines)
     engines                = jsonencode(var.engines)
     fileBaseDomain         = local.file_settings.base_domain
     filePassword           = local.file_settings.password
@@ -135,6 +136,7 @@ locals {
     summaryClientQueue     = var.summary_client_internal.queue
     summaryClientService   = var.summary_client_internal.service
     summaryClientWorkers   = var.summary_client_resources.workers
+    summaryEngineType      = local.summary_credentials.service_type
     summaryService         = var.summary_internal.service
     uploadBucket           = local.file_settings.bucket
     uploadQueue            = var.upload_internal.queue

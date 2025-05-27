@@ -82,10 +82,11 @@ locals {
     port        = coalesce(var.stream_existing.port, var.stream_internal.port)
   }
 
-  create_summary = var.summary_existing.api_key == null || var.summary_existing.base_url == null
+  create_summary = (var.summary_existing.api_key == null || var.summary_existing.base_url == null) && coalesce(var.summary_existing.service_type, "on-prem") != "open-ai"
 
   summary_credentials = {
     api_key  = coalesce(var.summary_existing.api_key, var.admin.api_key)
     base_url = coalesce(var.summary_existing.base_url, "http://${var.summary_internal.service}-api.${var.app_internal.namespace}.svc.cluster.local")
+    service_type = coalesce(var.summary_existing.service_type, "on-prem")
   }
 }

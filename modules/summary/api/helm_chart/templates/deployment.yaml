@@ -34,7 +34,7 @@ spec:
           - /bin/bash
           - -c
           - |
-            export PYTHONPATH=/app && gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
+            export PYTHONPATH=/app:$PYTHONPATH && gunicorn -c /app/gunicorn_conf.py --capture-output #--enable-stdio-inheritance
         ports:
         - containerPort: 8080
           protocol: TCP

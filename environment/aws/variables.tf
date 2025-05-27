@@ -175,7 +175,7 @@ variable "nodes" {
       }
       cpu_only_nodes            = {
         ami_type                = "AL2023_x86_64_STANDARD"
-        desired_size            = 3
+        desired_size            = 4
         ebs                     = {
           delete_on_termination = true
           encrypted             = true
@@ -188,7 +188,7 @@ variable "nodes" {
         }
         instance_types          = ["t3a.medium"]
         max_size                = 15
-        min_size                = 3
+        min_size                = 4
       }
       layout_nodes              = {
         ami_type                = "AL2023_x86_64_NVIDIA"

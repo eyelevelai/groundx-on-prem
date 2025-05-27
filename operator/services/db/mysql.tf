@@ -1,10 +1,8 @@
 locals {
   proxy = {
-    limits = var.db_resources.proxy.resources.limits.cpu < 1 ? "${var.db_resources.proxy.resources.limits.cpu * 1000}m" : var.db_resources.proxy.resources.limits.cpu
     requests = var.db_resources.proxy.resources.requests.cpu < 1 ? "${var.db_resources.proxy.resources.requests.cpu * 1000}m" : var.db_resources.proxy.resources.requests.cpu
   }
   pxc = {
-    limits = var.db_resources.resources.limits.cpu < 1 ? "${var.db_resources.resources.limits.cpu * 1000}m" : var.db_resources.resources.limits.cpu
     requests = var.db_resources.resources.requests.cpu < 1 ? "${var.db_resources.resources.requests.cpu * 1000}m" : var.db_resources.resources.requests.cpu
   }
 }
@@ -54,10 +52,6 @@ resource "helm_release" "percona_cluster" {
           node = local.node_assignment.db
         } : {}
         resources = {
-          limits            = {
-            cpu             = local.proxy.limits
-            memory          = var.db_resources.proxy.resources.limits.memory
-          }
           requests          = {
             cpu             = local.proxy.requests
             memory          = var.db_resources.proxy.resources.requests.memory
@@ -94,10 +88,6 @@ resource "helm_release" "percona_cluster" {
           size = var.db_resources.pv_size
         }
         resources = {
-          limits            = {
-            cpu             = local.pxc.limits
-            memory          = var.db_resources.resources.limits.memory
-          }
           requests          = {
             cpu             = local.pxc.requests
             memory          = var.db_resources.resources.requests.memory

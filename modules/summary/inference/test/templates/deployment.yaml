@@ -79,7 +79,7 @@ spec:
                 touch /workspace/hf_models_cache/downloading
 
                 echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                  'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/model.tar.gz.part.$PART; \
+                  'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
                   while [ $RETRIES -lt $MAX_RETRIES ]; do \
                     echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                     wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \

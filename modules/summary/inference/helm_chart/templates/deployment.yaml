@@ -80,7 +80,7 @@ spec:
                 touch /workspace/hf_models_cache/downloading
 
                 echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                  'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/model.tar.gz.part.$PART; \
+                  'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
                   while [ $RETRIES -lt $MAX_RETRIES ]; do \
                     echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                     wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -91,18 +91,18 @@ spec:
 
                 rm /workspace/hf_models_cache/summary.tar.*
                 rm /workspace/hf_models_cache/downloading
-                touch /workspace/hf_models_cache/complete
+                touch /workspace/hf_models_cache/complete.g34b
               }
-              if [ ! -f /workspace/hf_models_cache/complete ]; then
+              if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
                 if [ ! -f /workspace/hf_models_cache/downloading ]; then
                   download_and_extract_model
                 else
                   echo "Download in progress by another pod. Waiting..."
-                  while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete ]; do
+                  while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
                     sleep $((3 + RANDOM % 2))
                   done
 
-                  if [ ! -f /workspace/hf_models_cache/complete ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
                     download_and_extract_model
                   else
                     echo "Model cache ready."

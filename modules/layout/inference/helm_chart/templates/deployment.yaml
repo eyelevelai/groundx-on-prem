@@ -17,7 +17,6 @@ spec:
     spec:
       nodeSelector:
         node: "{{ .Values.nodeSelector.node }}"
-      runtimeClassName: nvidia
       tolerations:
         - key: "node"
           value: "{{ .Values.nodeSelector.node }}"
@@ -92,9 +91,11 @@ spec:
             limits:
               cpu: "{{ .Values.resources.limits.cpu }}"
               memory: "{{ .Values.resources.limits.memory }}"
+              nvidia.com/gpu: 1
             requests:
               cpu: "{{ .Values.resources.requests.cpu }}"
               memory: "{{ .Values.resources.requests.memory }}"
+              nvidia.com/gpu: 1
           {{- end }}
           volumeMounts:
             - name: config-models

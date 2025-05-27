@@ -10,8 +10,8 @@ locals {
     layout_inference  = var.cluster.nodes.gpu_layout
     layout_map        = var.cluster.nodes.cpu_only
     layout_ocr        = var.cluster.nodes.cpu_memory
-    layout_process    = var.cluster.nodes.cpu_only
-    layout_save       = var.cluster.nodes.cpu_only
+    layout_process    = var.cluster.nodes.cpu_memory
+    layout_save       = var.cluster.nodes.cpu_memory
     layout_webhook    = var.cluster.nodes.cpu_only
     metrics           = var.cluster.nodes.cpu_only
     pre_process       = var.cluster.nodes.cpu_memory
