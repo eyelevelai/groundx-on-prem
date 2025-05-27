@@ -87,10 +87,26 @@ variable "cluster" {
 variable "cluster_internal" {
   description      = "Kubernetes cluster internal settings"
   type             = object({
-
+    nvidia         = object({
+      name         = string
+      namespace    = string
+      chart        = object({
+        name       = string
+        repository = string
+        version    = string
+      })
+    })
   })
   default          = {
-
+    nvidia         = {
+      name         = "nvidia-gpu-operator"
+      namespace    = "nvidia-gpu-operator"
+      chart        = {
+        name       = "gpu-operator"
+        repository = "https://helm.ngc.nvidia.com/nvidia"
+        version    = "v25.3.0"
+      }
+    }
   }
 }
 
