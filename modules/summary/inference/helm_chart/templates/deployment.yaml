@@ -53,7 +53,6 @@ spec:
             - name: host-usr-bin
               mountPath: /host-usr-bin
         {{- end }}
-        {{- if not .Values.local }}
         - name: update-permissions
           image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
           imagePullPolicy: "{{ .Values.busybox.pull }}"
@@ -119,7 +118,6 @@ spec:
           volumeMounts:
             - name: model-volume
               mountPath: /workspace/hf_models_cache
-        {{- end }}
       containers:
         - name: {{ .Values.service.name }}
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
@@ -207,8 +205,6 @@ spec:
             path: /usr/bin
             type: Directory
         {{- end }}
-        {{- if not .Values.local }}
         - name: model-volume
           persistentVolumeClaim:
             claimName: {{ .Values.pv.name }}
-        {{- end }}

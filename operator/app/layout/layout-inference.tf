@@ -9,7 +9,7 @@ resource "helm_release" "layout_inference_service" {
   values = [
     yamlencode({
       busybox         = var.app_internal.busybox
-      createSymlink   = local.is_openshift ? false : true
+      createSymlink   = local.create_symlink ? true : false
       dependencies    = {
         cache         = "${local.cache_settings.addr} ${local.cache_settings.port}"
         file          = "${local.file_settings.dependency} ${local.file_settings.port}"

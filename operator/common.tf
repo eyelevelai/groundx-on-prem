@@ -1,5 +1,6 @@
 locals {
   ingest_only  = var.cluster.search == false
+  create_symlink = var.cluster.type != "openshift" && var.cluster.type != "minikube"
   is_openshift = var.cluster.type == "openshift"
 
   container_suffix    = var.DEV == 1 ? "-dev" : ""
