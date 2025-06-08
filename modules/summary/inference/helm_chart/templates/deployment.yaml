@@ -169,10 +169,8 @@ spec:
             - name: supervisord-volume
               mountPath: /workspace/supervisord.conf
               subPath: supervisord.conf
-            {{- if not .Values.local }}
             - name: model-volume
               mountPath: /workspace/hf_models_cache
-            {{- end }}
       volumes:
         - name: config-models
           configMap:
