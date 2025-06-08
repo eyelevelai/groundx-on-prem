@@ -3,7 +3,7 @@ locals {
 }
 
 resource "kubernetes_config_map" "ldconfig_symlink" {
-  count = var.cluster.type == "eks" ? 1 : 0
+  count = local.create_symlink ? 1 : 0
 
   metadata {
     name      = "ldconfig-symlink-map"
