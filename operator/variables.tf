@@ -458,6 +458,11 @@ variable "layout" {
   }
 }
 
+variable "layout_process_batch_size" {
+  type    = number
+  default = 40
+}
+
 variable "layout_internal" {
   description    = "Layout internal settings"
   type           = object({
