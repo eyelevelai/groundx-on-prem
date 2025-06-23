@@ -76,7 +76,7 @@ locals {
     ),
   }
 
-  create_stream = var.stream_existing.base_domain == null || var.stream_existing.base_url == null || var.stream_existing.port == null
+  create_stream = var.stream_existing.base_domain == null || var.stream_existing.port == null
   stream_settings = {
     base_domain = coalesce(var.stream_existing.base_domain, "${var.stream_internal.service}-cluster-kafka-bootstrap.${var.app_internal.namespace}.svc.cluster.local")
     port        = coalesce(var.stream_existing.port, var.stream_internal.port)

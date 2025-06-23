@@ -862,15 +862,10 @@ variable "stream_existing" {
   type            = object({
     # no protocol, no port
     base_domain   = string
-
-    # includes protocol and port
-    base_url      = string
-
     port          = number
   })
   default         = {
     base_domain   = null
-    base_url      = null
     port          = null
   }
 }
