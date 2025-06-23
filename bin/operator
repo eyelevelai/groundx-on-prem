@@ -74,6 +74,7 @@ destroy() {
 
   if [[ -d "$dir" ]]; then
     echo "Destroying $dir"
+    terraform -chdir="$dir" init -upgrade
     if [[ "$TFLAG" -eq 1 ]]; then
       terraform -chdir="$dir" destroy
     else

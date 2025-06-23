@@ -86,7 +86,11 @@ spec:
             initialDelaySeconds: 90
             failureThreshold: 20
             periodSeconds: 15
-          {{- if not .Values.local }}
+          {{- if .Values.local }}
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+          {{- else }}
           resources:
             limits:
               cpu: "{{ .Values.resources.limits.cpu }}"
