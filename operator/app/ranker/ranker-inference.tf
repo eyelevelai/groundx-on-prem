@@ -31,6 +31,7 @@ resource "helm_release" "ranker_inference_service" {
         access        = var.ranker_internal.inference.pv.access
         capacity      = var.ranker_internal.inference.pv.capacity
         name          = "${var.ranker_internal.service}-model"
+        storage       = var.cluster.pv.name
       }
       replicas        = {
         cooldown      = var.ranker_resources.inference.replicas.cooldown

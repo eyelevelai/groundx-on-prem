@@ -6,6 +6,7 @@ metadata:
   labels:
     app: {{ .Values.service.name }}
 spec:
+  storageClassName: {{ .Values.pv.storage }}
   accessModes:
     - {{ .Values.pv.access }}
   resources:

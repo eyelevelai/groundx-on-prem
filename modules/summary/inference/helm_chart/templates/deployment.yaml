@@ -53,6 +53,7 @@ spec:
             - name: host-usr-bin
               mountPath: /host-usr-bin
         {{- end }}
+        {{- if ne .Values.type "openshift" }}
         - name: update-permissions
           image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
           imagePullPolicy: "{{ .Values.busybox.pull }}"
@@ -66,6 +67,7 @@ spec:
           volumeMounts:
             - name: model-volume
               mountPath: /workspace/hf_models_cache
+        {{- end }}
         - name: download-model
           image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
           imagePullPolicy: "{{ .Values.busybox.pull }}"

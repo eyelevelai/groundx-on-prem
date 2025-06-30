@@ -14,6 +14,7 @@ resource "helm_release" "summary_model_pv" {
       storage     = var.cluster.pv.name
       service     = {
         name      = "${var.summary_internal.service}-inference"
+        namespace = var.app_internal.namespace
       }
     })
   ]

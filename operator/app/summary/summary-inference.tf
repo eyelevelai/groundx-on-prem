@@ -30,6 +30,7 @@ resource "helm_release" "summary_inference_service" {
         access            = var.summary_internal.inference.pv.access
         capacity          = var.summary_internal.inference.pv.capacity
         name              = "${var.summary_internal.service}-model"
+        storage           = var.cluster.pv.name
       }
       replicas            = {
         cooldown          = var.summary_resources.inference.replicas.cooldown
@@ -48,6 +49,7 @@ resource "helm_release" "summary_inference_service" {
         namespace         = var.app_internal.namespace
         version           = var.summary_internal.version
       }
+      type                = var.cluster.type
       waitForDependencies = true
     })
   ]

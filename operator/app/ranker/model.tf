@@ -14,6 +14,7 @@ resource "helm_release" "ranker_model_pv" {
       storage     = var.cluster.pv.name
       service     = {
         name      = "${var.ranker_internal.service}-inference"
+        namespace = var.app_internal.namespace
       }
     })
   ]
