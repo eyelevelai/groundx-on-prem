@@ -879,27 +879,28 @@ variable "stream_existing" {
 }
 
 variable "stream_internal" {
-  description = "Stream internal settings"
-  type        = object({
-    chart     = object({
-      name    = string
-      url     = string
-      version = string
+  description    = "Stream internal settings"
+  type           = object({
+    chart        = object({
+      name       = string
+      url        = string
+      version    = string
     })
-    
-    port      = number
-    service   = string
-    version   = string
+    meta_version = string
+    port         = number
+    service      = string
+    version      = string
   })
-  default     = {
-    chart     = {
-      name    = ""
-      url     = "oci://quay.io/strimzi-helm/strimzi-kafka-operator"
-      version = "0.35.0"
+  default        = {
+    chart        = {
+      name       = ""
+      url        = "oci://quay.io/strimzi-helm/strimzi-kafka-operator"
+      version    = "0.47.0"
     }
-    port      = 9092
-    service   = "kafka"
-    version   = "3.4.0"
+    meta_version = "4.0-IV3"
+    port         = 9092
+    service      = "kafka"
+    version      = "4.0.0"
   }
 }
 

@@ -85,8 +85,8 @@ Key parameters:
 - `segment_bytes`: Maximum size of a single log segment.
 - `service.replicas`: Number of Kafka broker replicas.
 - `service.storage`: Size of storage for each Kafka broker.
-- `zookeeper.replicas`: Number of ZooKeeper replicas.
-- `zookeeper.storage`: Size of storage for each ZooKeeper node.
+- `nodepool.replicas`: Number of nodes in the pool.
+- `nodepool.storage`: Size of storage for each node.
 
 ## Usage Examples
 
