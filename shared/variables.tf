@@ -557,7 +557,7 @@ variable "layout_resources" {
           memory  = "16Gi"
         }
         requests  = {
-          cpu     = 1.5
+          cpu     = 1
           memory  = "2Gi"
         }
       }
@@ -914,6 +914,10 @@ variable "search_resources" {
 variable "stream_resources" {
   description       = "Stream compute resource information"
   type              = object({
+    nodepool        = object({
+      replicas      = number
+      storage       = string
+    })
     operator        = object({
       replicas      = number
     })
@@ -923,7 +927,7 @@ variable "stream_resources" {
         memory      = string
       })
       requests      = object({
-        cpu         = number
+        cpu         = string
         memory      = string
       })
     })
@@ -933,12 +937,12 @@ variable "stream_resources" {
       replicas      = number
       storage       = string
     })
-    zookeeper       = object({
-      replicas      = number
-      storage       = string
-    })
   })
   default           = {
+    nodepool        = {
+      replicas      = 1
+      storage       = "5Gi"
+    }
     operator        = {
       replicas      = 1
     }
@@ -948,19 +952,15 @@ variable "stream_resources" {
         memory      = "12Gi"
       }
       requests      = {
-        cpu         = 0.2
+        cpu         = "200m"
         memory      = "512Mi"
       }
     }
     retention_bytes = 1073741824
     segment_bytes   = 1073741824
     service         = {
-      replicas      = 2
-      storage       = "10Gi"
-    }
-    zookeeper       = {
       replicas      = 1
-      storage       = "5Gi"
+      storage       = "10Gi"
     }
   }
 }

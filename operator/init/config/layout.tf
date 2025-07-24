@@ -11,10 +11,12 @@ locals {
     fileUsername   = local.file_settings.username
     metricsAddr    = local.metrics_cache_settings.addr
     metricsPort    = local.metrics_cache_settings.port
+    minBatchSize   = var.layout_process_batch_size
     namespace      = var.app_internal.namespace
     layoutService  = var.layout_internal.service
     ocrProject     = var.layout.ocr.project
     ocrType        = var.layout.ocr.type
+    podMemory      = var.layout_resources.process.resources.requests.memory
     uploadBucket   = local.file_settings.bucket
     validAPIKey    = var.admin.api_key
     validUsername  = var.admin.username

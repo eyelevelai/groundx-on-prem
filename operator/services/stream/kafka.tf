@@ -39,6 +39,7 @@ resource "helm_release" "kafka_cluster" {
       }
       resources = var.stream_resources.resources
       service = {
+        meta_version    = var.stream_internal.meta_version
         name            = var.stream_internal.service
         namespace       = var.app_internal.namespace
         port            = var.stream_internal.port
@@ -50,10 +51,10 @@ resource "helm_release" "kafka_cluster" {
         }
         version = var.stream_internal.version
       }
-      zookeeper = {
-        replicas = var.stream_resources.zookeeper.replicas
+      nodepool = {
+        replicas = var.stream_resources.nodepool.replicas
         storage  = {
-          size = var.stream_resources.zookeeper.storage
+          size = var.stream_resources.nodepool.storage
         }
       }
     })
