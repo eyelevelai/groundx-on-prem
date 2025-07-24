@@ -64,10 +64,6 @@ resource "helm_release" "redis_cluster" {
   values = [
     yamlencode({
       resources = {
-        limits = {
-          cpu    = var.cache_cpu_limits
-          memory = var.cache_memory_limits
-        }
         requests = {
           cpu    = var.cache_cpu_requests
           memory = var.cache_memory_requests
@@ -93,10 +89,6 @@ resource "helm_release" "redis_openshift_cluster" {
   values = [
     yamlencode({
       resources = {
-        limits = {
-          cpu    = var.cache_cpu_limits
-          memory = var.cache_memory_limits
-        }
         requests = {
           cpu    = var.cache_cpu_requests
           memory = var.cache_memory_requests

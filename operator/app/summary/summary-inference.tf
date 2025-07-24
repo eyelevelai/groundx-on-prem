@@ -1,14 +1,14 @@
 resource "helm_release" "summary_inference_service" {
   count = local.create_summary ? 1 : 0
 
-  depends_on = [helm_release.summary_model_pv]
-
   name       = "${var.summary_internal.service}-inference"
   namespace  = var.app_internal.namespace
 
   chart      = "${local.module_path}/summary/inference/helm_chart"
 
   timeout    = 1800
+
+  disable_openapi_validation = true
 
   values = [
     yamlencode({

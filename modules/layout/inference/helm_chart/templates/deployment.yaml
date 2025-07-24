@@ -88,18 +88,13 @@ spec:
             periodSeconds: 15
           {{- if .Values.local }}
           resources:
-            limits:
+            requests:
               nvidia.com/gpu: 1
           {{- else }}
           resources:
-            limits:
-              cpu: "{{ .Values.resources.limits.cpu }}"
-              memory: "{{ .Values.resources.limits.memory }}"
-              nvidia.com/gpu: 1
             requests:
               cpu: "{{ .Values.resources.requests.cpu }}"
               memory: "{{ .Values.resources.requests.memory }}"
-              nvidia.com/gpu: 1
           {{- end }}
           volumeMounts:
             - name: config-models

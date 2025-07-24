@@ -1,6 +1,5 @@
 locals {
   pool = {
-    limits = var.file_resources.resources.limits.cpu < 1 ? "${var.file_resources.resources.limits.cpu * 1000}m" : var.file_resources.resources.limits.cpu
     requests = var.file_resources.resources.requests.cpu < 1 ? "${var.file_resources.resources.requests.cpu * 1000}m" : var.file_resources.resources.requests.cpu
   }
 }
@@ -72,16 +71,27 @@ resource "helm_release" "minio_tenant" {
           name = "${var.file_internal.service}-tenant-pool-0"
           nodeSelector = var.app.node_selector ? {
             node = local.node_assignment.file
+<<<<<<< Updated upstream
           } : {}
           resources = {
             limits            = {
               cpu             = local.pool.limits
               memory          = var.file_resources.resources.limits.memory
             }
+=======
+<<<<<<< Updated upstream
+=======
+          } : {}
+          resources = {
+>>>>>>> Stashed changes
             requests          = {
               cpu             = local.pool.requests
               memory          = var.file_resources.resources.requests.memory
             }
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
           }
           securityContext = {
             runAsUser  = tonumber(local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1000) : 1000)

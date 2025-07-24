@@ -1,8 +1,6 @@
 resource "helm_release" "ranker_inference_service" {
   count      = local.ingest_only ? 0 : 1
 
-  depends_on = [helm_release.ranker_model_pv]
-
   name       = "${var.ranker_internal.service}-inference"
   namespace  = var.app_internal.namespace
 

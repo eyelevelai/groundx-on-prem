@@ -1,32 +1,58 @@
 apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: "{{ .Values.service.name }}-dual-role"
+  labels:
+    strimzi.io/cluster: "{{ .Values.service.name }}-cluster"
+spec:
+  replicas: {{ .Values.nodepool.replicas }}
+  roles:
+    - controller
+    - broker
+  storage:
+    type: jbod
+    volumes:
+      - id: 0
+        type: persistent-claim
+        size: {{ .Values.nodepool.storage.size }}
+        deleteClaim: true
+        kraftMetadata: shared
+---
+
+apiVersion: kafka.strimzi.io/v1beta2
 kind: Kafka
 metadata:
   labels:
     app: {{ .Values.service.name }}
   name: "{{ .Values.service.name }}-cluster"
   namespace: {{ .Values.service.namespace }}
+  annotations:
+    strimzi.io/node-pools: enabled
+    strimzi.io/kraft: enabled
 spec:
   kafka:
     version: {{ .Values.service.version }}
+    metadataVersion: {{ .Values.service.meta_version }}
     replicas: {{ .Values.service.replicas }}
     listeners:
-      - name: plain
+      - name: kafka
         port: {{ .Values.service.port }}
         type: internal
         tls: false
     config:
-      default.replication.factor: {{ .Values.zookeeper.replicas }}
+      default.replication.factor: {{ .Values.service.replicas }}
       offsets.topic.replication.factor: {{ .Values.service.replicas }}
       transaction.state.log.replication.factor: {{ .Values.service.replicas }}
-      transaction.state.log.min.isr: 2
-      log.message.format.version: {{ .Values.service.version }}
+      transaction.state.log.min.isr: {{ .Values.service.replicas }}
+      min.insync.replicas: {{ .Values.service.replicas }}
+      log.message.format.version: {{ .Values.service.meta_version }}
+      inter.broker.protocol.version: {{ .Values.service.meta_version }}
+      unstable.api.versions.enable: "true"
+      unstable.feature.versions.enable: "true"
     resources:
       requests:
         memory: {{ .Values.resources.requests.memory }}
         cpu: {{ .Values.resources.requests.cpu }}
-      limits:
-        memory: {{ .Values.resources.limits.memory }}
-        cpu: {{ .Values.resources.limits.cpu }}
     template:
       pod:
         affinity:
@@ -45,28 +71,7 @@ spec:
     storage:
       type: persistent-claim
       size: {{ .Values.service.storage.size }}
-      deleteClaim: false
-  zookeeper:
-    replicas: {{ .Values.zookeeper.replicas }}
-    template:
-      pod:
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                  - key: node
-                    operator: In
-                    values:
-                    - "{{ .Values.nodeSelector.node }}"
-        tolerations:
-          - key: "node"
-            value: "{{ .Values.nodeSelector.node }}"
-            effect: "NoSchedule"
-    storage:
-      type: persistent-claim
-      size: {{ .Values.zookeeper.storage.size }}
-      deleteClaim: false
+      deleteClaim: true
   entityOperator:
     topicOperator: {}
     userOperator: {}
