@@ -1,8 +1,6 @@
 resource "helm_release" "ranker_inference_service" {
   count      = local.ingest_only ? 0 : 1
 
-  depends_on = [helm_release.ranker_model_pv]
-
   name       = "${var.ranker_internal.service}-inference"
   namespace  = var.app_internal.namespace
 
@@ -31,6 +29,7 @@ resource "helm_release" "ranker_inference_service" {
         access        = var.ranker_internal.inference.pv.access
         capacity      = var.ranker_internal.inference.pv.capacity
         name          = "${var.ranker_internal.service}-model"
+        storage       = var.cluster.pv.name
       }
       replicas        = {
         cooldown      = var.ranker_resources.inference.replicas.cooldown

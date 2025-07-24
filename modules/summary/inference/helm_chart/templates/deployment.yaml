@@ -15,6 +15,10 @@ spec:
       labels:
         app: {{ .Values.service.name }}
     spec:
+      securityContext:
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+        runAsGroup: {{ .Values.securityContext.runAsGroup }}
+        fsGroup: {{ .Values.securityContext.runAsGroup }}
       nodeSelector:
         node: "{{ .Values.nodeSelector.node }}"
       tolerations:
@@ -53,6 +57,7 @@ spec:
             - name: host-usr-bin
               mountPath: /host-usr-bin
         {{- end }}
+        {{- if ne .Values.type "openshift" }}
         - name: update-permissions
           image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
           imagePullPolicy: "{{ .Values.busybox.pull }}"
@@ -66,6 +71,7 @@ spec:
           volumeMounts:
             - name: model-volume
               mountPath: /workspace/hf_models_cache
+        {{- end }}
         - name: download-model
           image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
           imagePullPolicy: "{{ .Values.busybox.pull }}"
@@ -115,6 +121,7 @@ spec:
           securityContext:
             runAsUser: {{ .Values.securityContext.runAsUser }}
             runAsGroup: {{ .Values.securityContext.runAsGroup }}
+            fsGroup: {{ .Values.securityContext.runAsGroup }}
           volumeMounts:
             - name: model-volume
               mountPath: /workspace/hf_models_cache
@@ -136,6 +143,7 @@ spec:
           securityContext:
             runAsUser: {{ .Values.securityContext.runAsUser }}
             runAsGroup: {{ .Values.securityContext.runAsGroup }}
+            fsGroup: {{ .Values.securityContext.runAsGroup }}
           livenessProbe:
             httpGet:
               path: /alive
@@ -152,9 +160,6 @@ spec:
             periodSeconds: 15
           {{- if not .Values.local }}
           resources:
-            limits:
-              cpu: "{{ .Values.resources.limits.cpu }}"
-              memory: "{{ .Values.resources.limits.memory }}"
             requests:
               cpu: "{{ .Values.resources.requests.cpu }}"
               memory: "{{ .Values.resources.requests.memory }}"

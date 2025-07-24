@@ -79,32 +79,51 @@ destroy() {
       terraform -chdir="$dir" destroy
     else
       terraform -chdir="$dir" destroy --auto-approve
-      for app in "${inference_apps[@]}"; do
-        if [[ "$dir" == */"$app" ]]; then
-          helm delete -n eyelevel $app-api > /dev/null 2>&1
-          helm delete -n eyelevel $app-inference > /dev/null 2>&1
-          helm delete -n eyelevel $app-model-pv > /dev/null 2>&1
-          return 0
-        fi
-      done
-      for app in "${inference_process_apps[@]}"; do
-        if [[ "$dir" == */"$app" ]]; then
-          helm delete -n eyelevel $app-api > /dev/null 2>&1
-          helm delete -n eyelevel $app-correct > /dev/null 2>&1
-          helm delete -n eyelevel $app-inference > /dev/null 2>&1
-          helm delete -n eyelevel $app-map > /dev/null 2>&1
-          helm delete -n eyelevel $app-process > /dev/null 2>&1
-          helm delete -n eyelevel $app-ocr > /dev/null 2>&1
-          helm delete -n eyelevel $app-save > /dev/null 2>&1
-          return 0
-        fi
-      done
-      for app in "${golang_apps[@]}"; do
-        if [[ "$dir" == */"$app" ]]; then
-          helm delete -n eyelevel $app > /dev/null 2>&1
-          return 0
-        fi
-      done
+      if [[ "$dir" == */"cache" ]]; then
+        helm delete -n eyelevel redis > /dev/null 2>&1
+        helm delete -n eyelevel redis-metrics > /dev/null 2>&1
+      elif [[ "$dir" == */"db" ]]; then
+        helm delete -n eyelevel mysql-cluster > /dev/null 2>&1
+        helm delete -n eyelevel mysql-operator > /dev/null 2>&1
+      elif [[ "$dir" == */"file" ]]; then
+        helm delete -n eyelevel minio-operator > /dev/null 2>&1
+        helm delete -n eyelevel minio-tenant > /dev/null 2>&1
+      elif [[ "$dir" == */"graph" ]]; then
+        helm delete -n eyelevel neo4j > /dev/null 2>&1
+      elif [[ "$dir" == */"search" ]]; then
+        helm delete -n eyelevel opensearch-operator > /dev/null 2>&1
+      elif [[ "$dir" == */"stream" ]]; then
+        helm delete -n eyelevel kafka-cluster > /dev/null 2>&1
+        helm delete -n eyelevel kafka-operator > /dev/null 2>&1
+        helm delete -n eyelevel kafka-topics > /dev/null 2>&1
+      else
+        for app in "${inference_releases[@]}"; do
+          if [[ "$dir" == */"$app" ]]; then
+            helm delete -n eyelevel $app-api > /dev/null 2>&1
+            helm delete -n eyelevel $app-inference > /dev/null 2>&1
+            helm delete -n eyelevel $app-model-pv > /dev/null 2>&1
+            return 0
+          fi
+        done
+        for app in "${process_releases[@]}"; do
+          if [[ "$dir" == */"$app" ]]; then
+            helm delete -n eyelevel $app-api > /dev/null 2>&1
+            helm delete -n eyelevel $app-correct > /dev/null 2>&1
+            helm delete -n eyelevel $app-inference > /dev/null 2>&1
+            helm delete -n eyelevel $app-map > /dev/null 2>&1
+            helm delete -n eyelevel $app-process > /dev/null 2>&1
+            helm delete -n eyelevel $app-ocr > /dev/null 2>&1
+            helm delete -n eyelevel $app-save > /dev/null 2>&1
+            return 0
+          fi
+        done
+        for app in "${named_apps[@]}"; do
+          if [[ "$dir" == */"$app" ]]; then
+            helm delete -n eyelevel $app > /dev/null 2>&1
+            return 0
+          fi
+        done
+      fi
     fi
   else
     echo "Error: Directory '$dir' does not exist."
