@@ -469,13 +469,8 @@ variable "layout_resources" {
       }
       resources   = {
         requests  = {
-<<<<<<< Updated upstream
           cpu     = 1
-          memory  = "2Gi"
-=======
-          cpu     = 1.5
           memory  = "1Gi"
->>>>>>> Stashed changes
         }
       }
       threads     = 1
