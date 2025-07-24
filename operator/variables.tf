@@ -19,12 +19,10 @@ variable "app" {
   type              = object({
     graph           = bool
     languages       = list(string)
-    node_selector   = bool
   })
   default           = {
     graph           = false
     languages       = ["en"]
-    node_selector   = true
   }
 }
 

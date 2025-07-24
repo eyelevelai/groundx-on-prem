@@ -6,8 +6,6 @@ resource "helm_release" "summary_api_service" {
 
   chart      = "${local.module_path}/summary/api/helm_chart"
 
-  disable_openapi_validation = true
-
   values = [
     yamlencode({
       busybox         = var.app_internal.busybox

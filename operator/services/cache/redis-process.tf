@@ -31,7 +31,6 @@ resource "helm_release" "redis_process" {
         namespace    = var.app_internal.namespace
         port         = local.cache_settings.port
       }
-      setSelector = var.app.node_selector
     })
   ]
 }

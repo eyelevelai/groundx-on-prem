@@ -95,6 +95,7 @@ spec:
             requests:
               cpu: "{{ .Values.resources.requests.cpu }}"
               memory: "{{ .Values.resources.requests.memory }}"
+              nvidia.com/gpu: 1
           {{- end }}
           volumeMounts:
             - name: config-models

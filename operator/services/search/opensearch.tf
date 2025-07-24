@@ -26,9 +26,9 @@ resource "helm_release" "opensearch_operator" {
       }
       majorVersion = var.search_internal.version
       nodeGroup   = "master"
-      nodeSelector = var.app.node_selector ? {
+      nodeSelector = {
         node = local.node_assignment.search
-      } : {}
+      }
       persistence = {
         enabled = true
         enableInitChown = false

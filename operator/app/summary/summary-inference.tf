@@ -8,8 +8,6 @@ resource "helm_release" "summary_inference_service" {
 
   timeout    = 1800
 
-  disable_openapi_validation = true
-
   values = [
     yamlencode({
       busybox             = var.app_internal.busybox
