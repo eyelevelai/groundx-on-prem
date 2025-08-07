@@ -1,0 +1,1 @@
+kubectl apply -f modules/test/metrics.yaml

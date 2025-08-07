@@ -9,6 +9,7 @@ resource "helm_release" "layout_inference_service" {
   values = [
     yamlencode({
       busybox         = var.app_internal.busybox
+      cluster         = var.cluster_arch
       createSymlink   = local.create_symlink ? true : false
       dependencies    = {
         cache         = "${local.cache_settings.addr} ${local.cache_settings.port}"
@@ -19,7 +20,6 @@ resource "helm_release" "layout_inference_service" {
         repository    = "${var.app_internal.repo_url}/${var.layout_internal.inference.image.repository}${local.op_container_suffix}"
         tag           = var.layout_internal.inference.image.tag
       }
-      local           = var.cluster.environment == "local"
       nodeSelector    = {
         node          = local.node_assignment.layout_inference
       }

@@ -21,7 +21,6 @@ spec:
         fsGroup: {{ .Values.securityContext.runAsGroup }}
       nodeSelector:
         node: "{{ .Values.nodeSelector.node }}"
-      runtimeClassName: nvidia
       tolerations:
         - key: "node"
           value: "{{ .Values.nodeSelector.node }}"
@@ -56,7 +55,7 @@ spec:
             - name: host-usr-bin
               mountPath: /host-usr-bin
         {{- end }}
-        {{- if not .Values.local }}
+        {{- if ne .Values.type "openshift" }}
         - name: update-permissions
           image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
           imagePullPolicy: "{{ .Values.busybox.pull }}"
@@ -70,6 +69,7 @@ spec:
           volumeMounts:
             - name: model-volume
               mountPath: /workspace/hf_models_cache
+        {{- end }}
         - name: download-model
           image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
           imagePullPolicy: "{{ .Values.busybox.pull }}"
@@ -123,7 +123,6 @@ spec:
           volumeMounts:
             - name: model-volume
               mountPath: /workspace/hf_models_cache
-        {{- end }}
       containers:
         - name: {{ .Values.service.name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -134,19 +133,11 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
           workingDir: /workspace
-          {{- if .Values.local }}
-          command:
-            - /bin/sh
-            - -c
-            - |
-              export PYTHONPATH=/workspace && /workspace/init-ranker.py && supervisord -c /workspace/supervisord.conf
-          {{- else }}
           command:
             - /bin/sh
             - -c
             - |
               export PYTHONPATH=/workspace && supervisord -c /workspace/supervisord.conf
-          {{- end }}
           securityContext:
             runAsUser: {{ .Values.securityContext.runAsUser }}
             runAsGroup: {{ .Values.securityContext.runAsGroup }}
@@ -168,11 +159,20 @@ spec:
                 - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
             initialDelaySeconds: 60
             periodSeconds: 30
-          {{- if not .Values.local }}
+          {{- if or .Values.cluster.hasMig .Values.cluster.setResources }}
           resources:
+            {{- if .Values.cluster.hasMig }}
+            limits:
+              nvidia.com/gpu: 1
+            {{- end }}
             requests:
+              {{- if .Values.cluster.setResources }}
               cpu: "{{ .Values.resources.requests.cpu }}"
               memory: "{{ .Values.resources.requests.memory }}"
+              {{- end}}
+              {{- if .Values.cluster.hasMig }}
+              nvidia.com/gpu: 1
+              {{- end }}
           {{- end }}
           volumeMounts:
             - name: config-models

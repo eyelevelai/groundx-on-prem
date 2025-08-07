@@ -63,7 +63,7 @@ spec:
             - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
           initialDelaySeconds: 10
           periodSeconds: 30
-        {{- if not .Values.local }}
+        {{- if .Values.cluster.setResources }}
         resources:
           requests:
             cpu: "{{ .Values.resources.requests.cpu }}"

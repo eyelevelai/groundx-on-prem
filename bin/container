@@ -26,7 +26,7 @@ create_container_bundle() {
 
 get_containers() {
     top="$(git rev-parse --show-toplevel)"
-    echo "$top/modules/busybox/container $top/modules/opensearch/container $top/modules/redis/container "
+    echo "$top/modules/busybox/container $top/modules/opensearch/container $top/modules/redis/container $top/modules/vllm/container "
     echo "$top "
 }
 
@@ -34,7 +34,7 @@ get_containers() {
 build_command="buildx build"
 build_flag=true
 container_dirs=$(get_containers)
-premium="premium/"
+premium=""
 push_flag=true
 repo_target=""
 target="linux/amd64"

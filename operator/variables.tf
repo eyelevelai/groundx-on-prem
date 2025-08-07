@@ -50,6 +50,28 @@ variable "app_internal" {
   }
 }
 
+variable "cluster_arch" {
+  description    = "An object for overriding some default cluster architecture configurations"
+  type           = object({
+    hasMig       = bool
+    setResources = bool
+    summary      = object({
+      api        = number
+      client     = number
+      inference  = number
+    })
+  })
+  default        = {
+    hasMig       = false
+    setResources = true
+    summary      = {
+      api        = 0
+      client     = 0
+      inference  = 0
+    }
+  }
+}
+
 variable "engines" {
   description          = "Completion engine configurations"
   type                 = list(
@@ -71,7 +93,7 @@ variable "engines" {
     {
       apiKey           = null
       baseURL          = null
-      engineID         = "gemma-3-4b-it"
+      engineID         = "google/gemma-3-4b-it"
       maxInputTokens   = 2000
       maxRequests      = 4
       maxTokens        = 10000000000

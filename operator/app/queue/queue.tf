@@ -6,6 +6,7 @@ resource "helm_release" "queue_service" {
   values = [
     yamlencode({
       busybox         = var.app_internal.busybox
+      cluster         = var.cluster_arch
       dependencies    = {
         groundx       = "${var.groundx_internal.service}.${var.app_internal.namespace}.svc.cluster.local"
       }
@@ -14,7 +15,6 @@ resource "helm_release" "queue_service" {
         repository    = "${var.app_internal.repo_url}/${var.queue_internal.image.repository}${local.container_suffix}"
         tag           = var.queue_internal.image.tag
       }
-      local           = var.cluster.environment == "local"
       nodeSelector    = {
         node          = local.node_assignment.queue
       }

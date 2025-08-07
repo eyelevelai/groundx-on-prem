@@ -63,10 +63,12 @@ spec:
             - ps aux | grep 'document.celery_process.app' || exit 1
           initialDelaySeconds: 10
           periodSeconds: 30
+        {{- if .Values.cluster.setResources }}
         resources:
           requests:
             cpu: "{{ .Values.resources.requests.cpu }}"
             memory: "{{ .Values.resources.requests.memory }}"
+        {{- end }}
         volumeMounts:
         - name: config-volume
           mountPath: /app/config.py

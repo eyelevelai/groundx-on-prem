@@ -158,11 +158,20 @@ spec:
             initialDelaySeconds: 180
             failureThreshold: 20
             periodSeconds: 15
-          {{- if not .Values.local }}
+          {{- if or .Values.cluster.hasMig .Values.cluster.setResources }}
           resources:
+            {{- if .Values.cluster.hasMig }}
+            limits:
+              nvidia.com/gpu: 1
+            {{- end }}
             requests:
+              {{- if .Values.cluster.setResources }}
               cpu: "{{ .Values.resources.requests.cpu }}"
               memory: "{{ .Values.resources.requests.memory }}"
+              {{- end }}
+              {{- if .Values.cluster.hasMig }}
+              nvidia.com/gpu: 1
+              {{- end }}
           {{- end }}
           volumeMounts:
             - name: config-models

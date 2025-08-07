@@ -1,0 +1,236 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.service.name }}
+  namespace: {{ .Values.service.namespace }}
+  labels:
+    app: {{ .Values.service.name }}
+spec:
+  replicas: {{ .Values.replicas.min }}
+  selector:
+    matchLabels:
+      app: {{ .Values.service.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.service.name }}
+    spec:
+      securityContext:
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+        runAsGroup: {{ .Values.securityContext.runAsGroup }}
+        fsGroup: {{ .Values.securityContext.runAsGroup }}
+      nodeSelector:
+        node: "{{ .Values.nodeSelector.node }}"
+      tolerations:
+        - key: "node"
+          value: "{{ .Values.nodeSelector.node }}"
+          effect: "NoSchedule"
+      initContainers:
+        {{- if .Values.waitForDependencies }}
+        - name: wait-for-cache
+          image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
+          imagePullPolicy: "{{ .Values.busybox.pull }}"
+          command: ['sh', '-c', "until nc -z {{ .Values.dependencies.cache }}; do echo waiting for cache; sleep 2; done"]
+        {{- end }}
+        {{- if .Values.createSymlink }}
+        - name: create-symlink
+          image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
+          imagePullPolicy: "{{ .Values.busybox.pull }}"
+          command: ["/bin/sh", "-c", "--"]
+          args: ["echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh"]
+          securityContext:
+            privileged: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 50Mi
+          volumeMounts:
+            - name: {{ .Values.service.name }}
+              mountPath: /scripts/ldconfig_symlink.sh
+              subPath: ldconfig_symlink.sh
+            - name: host-sbin
+              mountPath: /host-sbin
+            - name: host-usr-sbin
+              mountPath: /host-usr-sbin
+            - name: host-bin
+              mountPath: /host-bin
+            - name: host-usr-bin
+              mountPath: /host-usr-bin
+        {{- end }}
+        {{- if ne .Values.type "openshift" }}
+        - name: update-permissions
+          image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
+          imagePullPolicy: "{{ .Values.busybox.pull }}"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              chown -R {{ .Values.securityContext.runAsUser }}:{{ .Values.securityContext.runAsGroup }} /workspace/hf_models_cache && chmod -R 777 /workspace/hf_models_cache
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: model-volume
+              mountPath: /workspace/hf_models_cache
+        {{- end }}
+        - name: download-model
+          image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
+          imagePullPolicy: "{{ .Values.busybox.pull }}"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              download_and_extract_model() {
+                echo "Model downloading started..."
+
+                touch /workspace/hf_models_cache/downloading
+
+                echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
+                  'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                  while [ $RETRIES -lt $MAX_RETRIES ]; do \
+                    echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
+                    wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
+                    echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
+                  done; \
+                  [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm /workspace/hf_models_cache/downloading; exit 1; }; \
+                  echo "Unzipping summary.tar.gz.part.$PART..."; tar -xzf /workspace/hf_models_cache/summary.tar.gz.part.$PART -C /workspace/hf_models_cache/; echo "Unzipping summary.tar.gz.part.$PART complete...";'
+
+                rm /workspace/hf_models_cache/summary.tar.*
+                rm /workspace/hf_models_cache/downloading
+                touch /workspace/hf_models_cache/complete.g34b
+              }
+
+              mkdir /workspace/.cache
+
+              if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                if [ ! -f /workspace/hf_models_cache/downloading ]; then
+                  download_and_extract_model
+                else
+                  echo "Download in progress by another pod. Waiting..."
+                  while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                    sleep $((3 + RANDOM % 2))
+                  done
+
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                    download_and_extract_model
+                  else
+                    echo "Model cache ready."
+                  fi
+                fi
+              else
+                echo "Model cache already exists. Skipping download."
+              fi
+
+              echo "Model load done."
+          securityContext:
+            runAsUser: {{ .Values.securityContext.runAsUser }}
+            runAsGroup: {{ .Values.securityContext.runAsGroup }}
+            fsGroup: {{ .Values.securityContext.runAsGroup }}
+          volumeMounts:
+            - name: model-volume
+              mountPath: /workspace/hf_models_cache
+      containers:
+        - name: {{ .Values.service.name }}
+          image: public.ecr.aws/c9r4x6y5/eyelevel/vllm:latest
+          imagePullPolicy: "{{ .Values.image.pull }}"
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: MODEL_ID
+              value: google/gemma-3-4b-it
+            - name: HF_HOME
+              value: /workspace/hf_models_cache
+            - name: HOME
+              value: /workspace
+          workingDir: /workspace
+          command: ["python3", "-m", "vllm.entrypoints.openai.api_server"]
+          args:
+          - --model=$(MODEL_ID)
+          - --tensor-parallel-size=1
+          - --host=0.0.0.0
+          - --port=8080
+          - --gpu-memory-utilization=0.90
+          - --trust-remote-code
+          - --enable-chunked-prefill
+          - --enable-expert-parallel
+          - --data-parallel-size=17
+          - --dtype=bfloat16
+          - --swap-space=16
+          - --disable-uvicorn-access-log
+          securityContext:
+            runAsUser: {{ .Values.securityContext.runAsUser }}
+            runAsGroup: {{ .Values.securityContext.runAsGroup }}
+            fsGroup: {{ .Values.securityContext.runAsGroup }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 180
+            failureThreshold: 20
+            periodSeconds: 15
+          {{- if or .Values.cluster.hasMig .Values.cluster.setResources }}
+          resources:
+            {{- if .Values.cluster.hasMig }}
+            limits:
+              nvidia.com/gpu: 1
+            {{- end }}
+            requests:
+              {{- if .Values.cluster.setResources }}
+              cpu: "{{ .Values.resources.requests.cpu }}"
+              memory: "{{ .Values.resources.requests.memory }}"
+              {{- end }}
+              {{- if .Values.cluster.hasMig }}
+              nvidia.com/gpu: 1
+              {{- end }}
+          {{- end }}
+          volumeMounts:
+            - name: config-models
+              mountPath: /workspace/config_models.py
+              subPath: config_models.py
+            - name: config-volume
+              mountPath: /workspace/config.py
+              subPath: config.py
+            - name: supervisord-volume
+              mountPath: /workspace/supervisord.conf
+              subPath: supervisord.conf
+            - name: model-volume
+              mountPath: /workspace/hf_models_cache
+      volumes:
+        - name: config-models
+          configMap:
+            name: config-models-map
+        - name: config-volume
+          configMap:
+            name: summary-config-py-map
+        - name: supervisord-volume
+          configMap:
+            name: summary-supervisord-24gb-conf-map
+        {{- if .Values.createSymlink }}
+        - name: {{ .Values.service.name }}
+          configMap:
+            name: ldconfig-symlink-map
+            defaultMode: 0555
+        - name: host-sbin
+          hostPath:
+            path: /sbin
+            type: Directory
+        - name: host-usr-sbin
+          hostPath:
+            path: /usr/sbin
+            type: Directory
+        - name: host-bin
+          hostPath:
+            path: /bin
+            type: Directory
+        - name: host-usr-bin
+          hostPath:
+            path: /usr/bin
+            type: Directory
+        {{- end }}
+        - name: model-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.pv.name }}

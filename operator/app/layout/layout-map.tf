@@ -7,6 +7,7 @@ resource "helm_release" "layout_map_service" {
   values = [
     yamlencode({
       busybox         = var.app_internal.busybox
+      cluster         = var.cluster_arch
       dependencies    = {
         cache         = "${local.cache_settings.addr} ${local.cache_settings.port}"
         file          = "${local.file_settings.dependency} ${local.file_settings.port}"
@@ -16,7 +17,6 @@ resource "helm_release" "layout_map_service" {
         repository    = "${var.app_internal.repo_url}/${var.layout_internal.map.image.repository}${local.container_suffix}"
         tag           = var.layout_internal.map.image.tag
       }
-      local           = var.cluster.environment == "local"
       nodeSelector    = {
         node          = local.node_assignment.layout_map
       }

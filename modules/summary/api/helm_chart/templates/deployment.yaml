@@ -55,7 +55,7 @@ spec:
             port: 8080
           initialDelaySeconds: 30
           periodSeconds: 15
-        {{- if not .Values.local }}
+        {{- if .Values.cluster.setResources }}
         resources:
           requests:
             cpu: "{{ .Values.resources.requests.cpu }}"

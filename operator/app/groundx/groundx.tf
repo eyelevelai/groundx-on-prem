@@ -6,6 +6,7 @@ resource "helm_release" "groundx_service" {
   values = [
     yamlencode({
       busybox         = var.app_internal.busybox
+      cluster         = var.cluster_arch
       dependencies    = {
         cache         = "${local.cache_settings.addr} ${local.cache_settings.port}"
         database      = "${local.db_endpoints.ro} ${local.db_endpoints.port}"
@@ -19,7 +20,6 @@ resource "helm_release" "groundx_service" {
         tag           = var.groundx_internal.image.tag
       }
       ingestOnly      = local.ingest_only
-      local           = var.cluster.environment == "local"
       nodeSelector    = {
         node          = local.node_assignment.groundx
       }

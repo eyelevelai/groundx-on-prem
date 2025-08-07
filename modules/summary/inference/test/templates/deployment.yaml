@@ -15,6 +15,10 @@ spec:
       labels:
         app: {{ .Values.service.name }}
     spec:
+      securityContext:
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+        runAsGroup: {{ .Values.securityContext.runAsGroup }}
+        fsGroup: {{ .Values.securityContext.runAsGroup }}
       nodeSelector:
         node: "{{ .Values.nodeSelector.node }}"
       tolerations:
@@ -53,6 +57,7 @@ spec:
             - name: host-usr-bin
               mountPath: /host-usr-bin
         {{- end }}
+        {{- if ne .Values.type "openshift" }}
         - name: update-permissions
           image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
           imagePullPolicy: "{{ .Values.busybox.pull }}"
@@ -66,6 +71,7 @@ spec:
           volumeMounts:
             - name: model-volume
               mountPath: /workspace/hf_models_cache
+        {{- end }}
         - name: download-model
           image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
           imagePullPolicy: "{{ .Values.busybox.pull }}"
@@ -90,18 +96,18 @@ spec:
 
                 rm /workspace/hf_models_cache/summary.tar.*
                 rm /workspace/hf_models_cache/downloading
-                touch /workspace/hf_models_cache/complete
+                touch /workspace/hf_models_cache/complete.g34b
               }
-              if [ ! -f /workspace/hf_models_cache/complete ]; then
+              if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
                 if [ ! -f /workspace/hf_models_cache/downloading ]; then
                   download_and_extract_model
                 else
                   echo "Download in progress by another pod. Waiting..."
-                  while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete ]; do
+                  while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
                     sleep $((3 + RANDOM % 2))
                   done
 
-                  if [ ! -f /workspace/hf_models_cache/complete ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
                     download_and_extract_model
                   else
                     echo "Model cache ready."
@@ -115,6 +121,7 @@ spec:
           securityContext:
             runAsUser: {{ .Values.securityContext.runAsUser }}
             runAsGroup: {{ .Values.securityContext.runAsGroup }}
+            fsGroup: {{ .Values.securityContext.runAsGroup }}
           volumeMounts:
             - name: model-volume
               mountPath: /workspace/hf_models_cache
@@ -136,31 +143,40 @@ spec:
           securityContext:
             runAsUser: {{ .Values.securityContext.runAsUser }}
             runAsGroup: {{ .Values.securityContext.runAsGroup }}
+            fsGroup: {{ .Values.securityContext.runAsGroup }}
           livenessProbe:
-          exec:
-            command:
-            - /bin/sh
-            - -c
-            - ps aux | grep 'summary.celery_inference.appSummary' || exit 1
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - ps aux | grep 'summary.celery_inference.appSummary' || exit 1
             initialDelaySeconds: 30
             failureThreshold: 8
             periodSeconds: 15
           readinessProbe:
-          exec:
-            command:
-            - /bin/sh
-            - -c
-            - ps aux | grep 'summary.celery_inference.appSummary' || exit 1
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - ps aux | grep 'summary.celery_inference.appSummary' || exit 1
             initialDelaySeconds: 180
             failureThreshold: 20
             periodSeconds: 15
+          {{- if or .Values.cluster.hasMig .Values.cluster.setResources }}
           resources:
+            {{- if .Values.cluster.hasMig }}
             limits:
-              cpu: "{{ .Values.resources.limits.cpu }}"
-              memory: "{{ .Values.resources.limits.memory }}"
+              nvidia.com/gpu: 1
+            {{- end }}
             requests:
+              {{- if .Values.cluster.setResources }}
               cpu: "{{ .Values.resources.requests.cpu }}"
               memory: "{{ .Values.resources.requests.memory }}"
+              {{- end }}
+              {{- if .Values.cluster.hasMig }}
+              nvidia.com/gpu: 1
+              {{- end }}
+          {{- end }}
           volumeMounts:
             - name: config-models
               mountPath: /workspace/config_models.py
@@ -188,7 +204,6 @@ spec:
           configMap:
             name: ldconfig-symlink-map
             defaultMode: 0555
-        {{- end }}
         - name: host-sbin
           hostPath:
             path: /sbin
@@ -205,6 +220,7 @@ spec:
           hostPath:
             path: /usr/bin
             type: Directory
+        {{- end }}
         - name: model-volume
           persistentVolumeClaim:
             claimName: {{ .Values.pv.name }}

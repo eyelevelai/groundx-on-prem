@@ -11,6 +11,7 @@ resource "helm_release" "ranker_inference_service" {
   values = [
     yamlencode({
       busybox         = var.app_internal.busybox
+      cluster         = var.cluster_arch
       createSymlink   = local.create_symlink ? true : false
       dependencies    = {
         cache         = "${local.cache_settings.addr} ${local.cache_settings.port}"
@@ -20,7 +21,6 @@ resource "helm_release" "ranker_inference_service" {
         repository    = "${var.app_internal.repo_url}/${var.ranker_internal.inference.image.repository}${local.op_container_suffix}"
         tag           = var.ranker_internal.inference.image.tag
       }
-      local           = var.cluster.environment == "local"
       model           = local.ranker_model.version
       nodeSelector    = {
         node          = local.node_assignment.ranker_inference
@@ -46,6 +46,7 @@ resource "helm_release" "ranker_inference_service" {
         namespace     = var.app_internal.namespace
         version       = var.ranker_internal.version
       }
+      type            = var.cluster.type
     })
   ]
 }

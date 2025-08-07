@@ -8,9 +8,12 @@ resource "helm_release" "summary_inference_service" {
 
   timeout    = 1800
 
+  disable_openapi_validation = var.cluster.type == "openshift"
+
   values = [
     yamlencode({
       busybox             = var.app_internal.busybox
+      cluster             = var.cluster_arch
       createSymlink       = local.create_symlink ? true : false
       dependencies        = {
         cache             = "${local.cache_settings.addr} ${local.cache_settings.port}"
@@ -20,7 +23,6 @@ resource "helm_release" "summary_inference_service" {
         repository        = "${var.app_internal.repo_url}/${var.summary_internal.inference.image.repository}${local.op_container_suffix}"
         tag               = var.summary_internal.inference.image.tag
       }
-      local               = var.cluster.environment == "local"
       nodeSelector        = {
         node              = local.node_assignment.summary_inference
       }
