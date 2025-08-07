@@ -4,6 +4,8 @@ resource "helm_release" "layout_process_service" {
 
   chart      = "${local.module_path}/layout/process/helm_chart"
 
+  disable_openapi_validation = var.cluster.type == "openshift"
+
   values = [
     yamlencode({
       busybox         = var.app_internal.busybox

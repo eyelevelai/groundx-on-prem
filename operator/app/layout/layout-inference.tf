@@ -4,6 +4,8 @@ resource "helm_release" "layout_inference_service" {
 
   chart      = "${local.module_path}/layout/inference/helm_chart"
 
+  disable_openapi_validation = var.cluster.type == "openshift"
+
   timeout    = 600
 
   values = [

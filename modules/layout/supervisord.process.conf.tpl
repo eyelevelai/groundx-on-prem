@@ -1,6 +1,6 @@
 
 [program:celery_worker_${worker_number}]
-command=celery -A document.celery_process.app worker -n %(ENV_POD_NAME)s-w${worker_number} --loglevel=INFO --queues=${queues} --concurrency=${threads}
+command=LOCAL=0 celery -A document.celery_process.app worker -n %(ENV_POD_NAME)s-w${worker_number} --loglevel=INFO --queues=${queues} --concurrency=${threads}
 autostart=true
 autorestart=true
 stdout_logfile=/dev/stdout
