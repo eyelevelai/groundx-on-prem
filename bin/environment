@@ -58,6 +58,7 @@ destroy() {
 
   if [[ -d "$dir" ]]; then
     status "\u00b7 Destroying $dir" && echo
+    terraform -chdir="$dir" init --upgrade
     if [[ "$TFLAG" -eq 1 ]]; then
       terraform -chdir="$dir" destroy
     else
