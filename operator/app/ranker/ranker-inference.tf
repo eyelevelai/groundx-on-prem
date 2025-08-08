@@ -47,6 +47,7 @@ resource "helm_release" "ranker_inference_service" {
         version       = var.ranker_internal.version
       }
       type            = var.cluster.type
+      waitForDependencies = true
     })
   ]
 }

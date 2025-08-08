@@ -57,21 +57,6 @@ spec:
             - name: host-usr-bin
               mountPath: /host-usr-bin
         {{- end }}
-        {{- if ne .Values.type "openshift" }}
-        - name: update-permissions
-          image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
-          imagePullPolicy: "{{ .Values.busybox.pull }}"
-          command:
-            - /bin/sh
-            - -c
-            - |
-              chown -R {{ .Values.securityContext.runAsUser }}:{{ .Values.securityContext.runAsGroup }} /workspace/hf_models_cache && chmod -R 777 /workspace/hf_models_cache
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - name: model-volume
-              mountPath: /workspace/hf_models_cache
-        {{- end }}
         - name: download-model
           image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
           imagePullPolicy: "{{ .Values.busybox.pull }}"
@@ -139,7 +124,7 @@ spec:
             - /bin/bash
             - -c
             - |
-              export PYTHONPATH=/workspace:/workspace/vllm:$PYTHONPATH && supervisord -c /workspace/supervisord.conf
+              export PYTHONPATH=/workspace:$PYTHONPATH && supervisord -c /workspace/supervisord.conf
           securityContext:
             runAsUser: {{ .Values.securityContext.runAsUser }}
             runAsGroup: {{ .Values.securityContext.runAsGroup }}

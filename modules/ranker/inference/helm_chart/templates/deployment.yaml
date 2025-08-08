@@ -16,9 +16,11 @@ spec:
         app: {{ .Values.service.name }}
     spec:
       securityContext:
-        runAsUser: {{ .Values.securityContext.runAsUser }}
-        runAsGroup: {{ .Values.securityContext.runAsGroup }}
-        fsGroup: {{ .Values.securityContext.runAsGroup }}
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 0
+        runAsNonRoot: false
+        privileged: true
       nodeSelector:
         node: "{{ .Values.nodeSelector.node }}"
       tolerations:
@@ -26,10 +28,12 @@ spec:
           value: "{{ .Values.nodeSelector.node }}"
           effect: "NoSchedule"
       initContainers:
+        {{- if .Values.waitForDependencies }}
         - name: wait-for-cache
           image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
           imagePullPolicy: "{{ .Values.busybox.pull }}"
           command: ["sh", "-c", "until nc -z {{ .Values.dependencies.cache }}; do echo waiting for cache; sleep 2; done"]
+        {{- end }}
         {{- if .Values.createSymlink }}
         - name: create-symlink
           image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
@@ -55,21 +59,7 @@ spec:
             - name: host-usr-bin
               mountPath: /host-usr-bin
         {{- end }}
-        {{- if ne .Values.type "openshift" }}
-        - name: update-permissions
-          image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
-          imagePullPolicy: "{{ .Values.busybox.pull }}"
-          command:
-            - /bin/sh
-            - -c
-            - |
-              chown -R {{ .Values.securityContext.runAsUser }}:{{ .Values.securityContext.runAsGroup }} /workspace/hf_models_cache && chmod -R 777 /workspace/hf_models_cache
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - name: model-volume
-              mountPath: /workspace/hf_models_cache
-        {{- end }}
+        {{- if .Values.temp }}
         - name: download-model
           image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
           imagePullPolicy: "{{ .Values.busybox.pull }}"
@@ -117,15 +107,18 @@ spec:
 
               echo "Model load done."
           securityContext:
-            runAsUser: {{ .Values.securityContext.runAsUser }}
-            runAsGroup: {{ .Values.securityContext.runAsGroup }}
-            fsGroup: {{ .Values.securityContext.runAsGroup }}
+            runAsUser: 0
+            runAsGroup: 0
+            fsGroup: 0
+            runAsNonRoot: false
+            privileged: true
           volumeMounts:
             - name: model-volume
               mountPath: /workspace/hf_models_cache
+        {{- end }}
       containers:
         - name: {{ .Values.service.name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
           imagePullPolicy: "{{ .Values.image.pull }}"
           env:
             - name: POD_NAME
@@ -133,15 +126,22 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
           workingDir: /workspace
+          #command:
+          #  - /bin/sh
+          #  - -c
+          #  - |
+          #    export PYTHONPATH=/workspace:$PYTHONPATH && supervisord -c /workspace/supervisord.conf
           command:
-            - /bin/sh
+            - /bin/bash
             - -c
             - |
-              export PYTHONPATH=/workspace && supervisord -c /workspace/supervisord.conf
+              export PYTHONPATH=/workspace::$PYTHONPATH && while true; do sleep 30; done
           securityContext:
-            runAsUser: {{ .Values.securityContext.runAsUser }}
-            runAsGroup: {{ .Values.securityContext.runAsGroup }}
-            fsGroup: {{ .Values.securityContext.runAsGroup }}
+            runAsUser: 0
+            runAsGroup: 0
+            fsGroup: 0
+            runAsNonRoot: false
+            privileged: true
           livenessProbe:
             exec:
               command:

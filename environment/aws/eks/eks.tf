@@ -188,7 +188,7 @@ module "eyelevel_eks" {
   count = local.should_create ? 1 : 0
 
   source                                   = "terraform-aws-modules/eks/aws"
-  version                                  = ">= 20.0"
+  version                                  = "~> 20.0"
 
   cluster_name                             = local.cluster_name
   iam_role_name                            = "${local.cluster_name}-cluster-role"

@@ -6,6 +6,7 @@ loglevel = "info"
 workers = ${workers}
 threads = ${threads}
 timeout = 120
+timeout_keep_alive = 15
 
 worker_class = "uvicorn.workers.UvicornWorker"
 
