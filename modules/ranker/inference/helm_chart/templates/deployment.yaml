@@ -59,7 +59,6 @@ spec:
             - name: host-usr-bin
               mountPath: /host-usr-bin
         {{- end }}
-        {{- if .Values.temp }}
         - name: download-model
           image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
           imagePullPolicy: "{{ .Values.busybox.pull }}"
@@ -115,7 +114,6 @@ spec:
           volumeMounts:
             - name: model-volume
               mountPath: /workspace/hf_models_cache
-        {{- end }}
       containers:
         - name: {{ .Values.service.name }}
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
@@ -126,16 +124,11 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
           workingDir: /workspace
-          #command:
-          #  - /bin/sh
-          #  - -c
-          #  - |
-          #    export PYTHONPATH=/workspace:$PYTHONPATH && supervisord -c /workspace/supervisord.conf
           command:
-            - /bin/bash
+            - /bin/sh
             - -c
             - |
-              export PYTHONPATH=/workspace::$PYTHONPATH && while true; do sleep 30; done
+              export PYTHONPATH=/workspace:$PYTHONPATH && supervisord -c /workspace/supervisord.conf
           securityContext:
             runAsUser: 0
             runAsGroup: 0
@@ -159,21 +152,15 @@ spec:
                 - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
             initialDelaySeconds: 60
             periodSeconds: 30
-          {{- if or .Values.cluster.hasMig .Values.cluster.setResources }}
           resources:
-            {{- if .Values.cluster.hasMig }}
             limits:
               nvidia.com/gpu: 1
-            {{- end }}
             requests:
               {{- if .Values.cluster.setResources }}
               cpu: "{{ .Values.resources.requests.cpu }}"
               memory: "{{ .Values.resources.requests.memory }}"
               {{- end}}
-              {{- if .Values.cluster.hasMig }}
               nvidia.com/gpu: 1
-              {{- end }}
-          {{- end }}
           volumeMounts:
             - name: config-models
               mountPath: /workspace/config_models.py
