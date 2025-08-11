@@ -44,7 +44,7 @@ resource "helm_release" "summary_inference_service" {
         runAsUser         = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : 1001
         runAsGroup        = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : 1001
       }
-      service = {
+      service             = {
         name              = "${var.summary_internal.service}-inference"
         namespace         = var.app_internal.namespace
         version           = var.summary_internal.version

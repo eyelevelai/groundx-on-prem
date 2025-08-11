@@ -16,11 +16,9 @@ spec:
         app: {{ .Values.service.name }}
     spec:
       securityContext:
-        runAsUser: 0
-        runAsGroup: 0
-        fsGroup: 0
-        runAsNonRoot: false
-        privileged: true
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+        runAsGroup: {{ .Values.securityContext.runAsGroup }}
+        fsGroup: {{ .Values.securityContext.fsGroup }}
       nodeSelector:
         node: "{{ .Values.nodeSelector.node }}"
       tolerations:
@@ -106,11 +104,9 @@ spec:
 
               echo "Model load done."
           securityContext:
-            runAsUser: 0
-            runAsGroup: 0
-            fsGroup: 0
-            runAsNonRoot: false
-            privileged: true
+            runAsUser: {{ .Values.securityContext.runAsUser }}
+            runAsGroup: {{ .Values.securityContext.runAsGroup }}
+            fsGroup: {{ .Values.securityContext.fsGroup }}
           volumeMounts:
             - name: model-volume
               mountPath: /workspace/hf_models_cache
@@ -130,11 +126,9 @@ spec:
             - |
               export PYTHONPATH=/workspace:$PYTHONPATH && supervisord -c /workspace/supervisord.conf
           securityContext:
-            runAsUser: 0
-            runAsGroup: 0
-            fsGroup: 0
-            runAsNonRoot: false
-            privileged: true
+            runAsUser: {{ .Values.securityContext.runAsUser }}
+            runAsGroup: {{ .Values.securityContext.runAsGroup }}
+            fsGroup: {{ .Values.securityContext.fsGroup }}
           livenessProbe:
             exec:
               command:

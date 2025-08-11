@@ -23,7 +23,6 @@ stdout_logfile=/dev/stdout
 stdout_logfile_maxbytes=0
 stderr_logfile=/dev/stderr
 stderr_logfile_maxbytes=0
-command=python /app/document_monitor.py
 
 [program:celery_health]
 command=python /app/document_health.py
