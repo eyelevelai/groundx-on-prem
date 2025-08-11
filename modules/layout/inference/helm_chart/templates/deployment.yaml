@@ -86,21 +86,15 @@ spec:
             initialDelaySeconds: 90
             failureThreshold: 20
             periodSeconds: 15
-          {{- if .Values.local }}
           resources:
             limits:
-              nvidia.com/gpu: 1
-          {{- else }}
-          resources:
-            limits:
-              cpu: "{{ .Values.resources.limits.cpu }}"
-              memory: "{{ .Values.resources.limits.memory }}"
               nvidia.com/gpu: 1
             requests:
+              {{- if .Values.cluster.setResources }}
               cpu: "{{ .Values.resources.requests.cpu }}"
               memory: "{{ .Values.resources.requests.memory }}"
+              {{- end }}
               nvidia.com/gpu: 1
-          {{- end }}
           volumeMounts:
             - name: config-models
               mountPath: /app/config_models.py

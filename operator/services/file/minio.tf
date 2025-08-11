@@ -1,6 +1,5 @@
 locals {
   pool = {
-    limits = var.file_resources.resources.limits.cpu < 1 ? "${var.file_resources.resources.limits.cpu * 1000}m" : var.file_resources.resources.limits.cpu
     requests = var.file_resources.resources.requests.cpu < 1 ? "${var.file_resources.resources.requests.cpu * 1000}m" : var.file_resources.resources.requests.cpu
   }
 }
@@ -72,6 +71,12 @@ resource "helm_release" "minio_tenant" {
           name = "${var.file_internal.service}-tenant-pool-0"
           nodeSelector = {
             node = local.node_assignment.file
+          }
+          resources = {
+            requests          = {
+              cpu             = local.pool.requests
+              memory          = var.file_resources.resources.requests.memory
+            }
           }
           securityContext = {
             runAsUser  = tonumber(local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1000) : 1000)

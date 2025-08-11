@@ -6,6 +6,7 @@ resource "helm_release" "pre_process_service" {
   values = [
     yamlencode({
       busybox         = var.app_internal.busybox
+      cluster         = var.cluster_arch
       dependencies    = {
         groundx       = "${var.groundx_internal.service}.${var.app_internal.namespace}.svc.cluster.local"
       }
@@ -14,7 +15,6 @@ resource "helm_release" "pre_process_service" {
         repository    = "${var.app_internal.repo_url}/${var.pre_process_internal.image.repository}${local.container_suffix}"
         tag           = var.pre_process_internal.image.tag
       }
-      local           = var.cluster.environment == "local"
       nodeSelector    = {
         node          = local.node_assignment.pre_process
       }

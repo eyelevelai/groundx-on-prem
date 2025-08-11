@@ -9,6 +9,18 @@ locals {
   max_ingest = var.cluster.throughput.ingest.max
   max_search = var.cluster.throughput.search.max
 
+  summary_inference_max = var.cluster_arch.summary.inference > 0 ? var.cluster_arch.summary.inference : max(3, ceil(local.max_ingest / var.summary_resources.inference.throughput))
+  summary_inference_min = var.cluster_arch.summary.inference > 0 ? var.cluster_arch.summary.inference : max(1, ceil(local.baseline_ingest / var.summary_resources.inference.throughput))
+
+  summary_inference_max_copies = ceil(local.summary_inference_max * var.summary_resources.inference.threads * var.summary_resources.inference.workers)
+  summary_inference_min_copies = ceil(local.summary_inference_min * var.summary_resources.inference.threads * var.summary_resources.inference.workers)
+
+  summary_api_max = ceil(local.summary_inference_max_copies / (var.summary_resources.api.threads * var.summary_resources.api.workers))
+  summary_api_min = ceil(local.summary_inference_min_copies / (var.summary_resources.api.threads * var.summary_resources.api.workers))
+
+  summary_client_max = ceil(local.summary_inference_max_copies / var.summary_client_resources.workers)
+  summary_client_min = ceil(local.summary_inference_min_copies / var.summary_client_resources.workers)
+
   replicas = {
     cache = {
       max = var.cache_resources.replicas
@@ -138,21 +150,21 @@ locals {
     }
     summary = {
       api = {
-        max = max(3, ceil(local.max_ingest / var.summary_resources.api.throughput))
-        min = max(1, ceil(local.baseline_ingest / var.summary_resources.api.throughput))
+        max = var.cluster_arch.summary.api > 0 ? var.cluster_arch.summary.api : max(3, local.summary_api_max)
+        min = var.cluster_arch.summary.api > 0 ? var.cluster_arch.summary.api : max(1, local.summary_api_min)
         node = local.node_assignment.summary_api
         resources = var.summary_resources.api.resources
       }
       inference = {
-        max = max(3, ceil(local.max_ingest / var.summary_resources.inference.throughput))
-        min = max(1, ceil(local.baseline_ingest / var.summary_resources.inference.throughput))
+        max = var.cluster_arch.summary.inference > 0 ? var.cluster_arch.summary.inference : max(3, ceil(local.max_ingest / var.summary_resources.inference.throughput))
+        min = var.cluster_arch.summary.inference > 0 ? var.cluster_arch.summary.inference : max(1, ceil(local.baseline_ingest / var.summary_resources.inference.throughput))
         node = local.node_assignment.summary_inference
         resources = var.summary_resources.inference.resources
       }
     }
     summary_client = {
-      max = max(3, ceil(local.max_ingest / var.summary_client_resources.throughput))
-      min = max(1, ceil(local.baseline_ingest / var.summary_client_resources.throughput))
+      max = var.cluster_arch.summary.client > 0 ? var.cluster_arch.summary.client : max(3, local.summary_client_max)
+      min = var.cluster_arch.summary.client > 0 ? var.cluster_arch.summary.client : max(1, local.summary_client_min)
       node = local.node_assignment.summary_client
       resources = var.summary_client_resources.resources
     }

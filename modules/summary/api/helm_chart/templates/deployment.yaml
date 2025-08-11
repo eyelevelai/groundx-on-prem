@@ -34,7 +34,7 @@ spec:
           - /bin/bash
           - -c
           - |
-            export PYTHONPATH=/app:$PYTHONPATH && gunicorn -c /app/gunicorn_conf.py --capture-output #--enable-stdio-inheritance
+            export PYTHONPATH=/app:$PYTHONPATH && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output #--enable-stdio-inheritance
         ports:
         - containerPort: 8080
           protocol: TCP
@@ -55,11 +55,8 @@ spec:
             port: 8080
           initialDelaySeconds: 30
           periodSeconds: 15
-        {{- if not .Values.local }}
+        {{- if .Values.cluster.setResources }}
         resources:
-          limits:
-            cpu: "{{ .Values.resources.limits.cpu }}"
-            memory: "{{ .Values.resources.limits.memory }}"
           requests:
             cpu: "{{ .Values.resources.requests.cpu }}"
             memory: "{{ .Values.resources.requests.memory }}"

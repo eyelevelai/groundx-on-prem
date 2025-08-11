@@ -35,17 +35,6 @@ locals {
   }"
 }
 
-resource "kubernetes_config_map" "ranker_gunicorn_conf_file" {
-  metadata {
-    name      = "ranker-gunicorn-conf-py-map"
-    namespace = var.app_internal.namespace
-  }
-
-  data = {
-    "gunicorn_conf.py" = local.ranker_gunicorn
-  }
-}
-
 resource "kubernetes_config_map" "ranker_config_file" {
   metadata {
     name      = "ranker-config-py-map"
@@ -54,6 +43,17 @@ resource "kubernetes_config_map" "ranker_config_file" {
 
   data = {
     "config.py" = local.ranker_config
+  }
+}
+
+resource "kubernetes_config_map" "ranker_gunicorn_conf_file" {
+  metadata {
+    name      = "ranker-gunicorn-conf-py-map"
+    namespace = var.app_internal.namespace
+  }
+
+  data = {
+    "gunicorn_conf.py" = local.ranker_gunicorn
   }
 }
 

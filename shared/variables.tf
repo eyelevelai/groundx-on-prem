@@ -88,7 +88,6 @@ variable "cluster_internal" {
   description      = "Kubernetes cluster internal settings"
   type             = object({
     nvidia         = object({
-      driver       = string
       name         = string
       namespace    = string
       chart        = object({
@@ -100,13 +99,12 @@ variable "cluster_internal" {
   })
   default          = {
     nvidia         = {
-      driver       = "550.144.03"
       name         = "nvidia-gpu-operator"
       namespace    = "nvidia-gpu-operator"
       chart        = {
         name       = "gpu-operator"
         repository = "https://helm.ngc.nvidia.com/nvidia"
-        version    = "v24.9.1"
+        version    = "v25.3.0"
       }
     }
   }
@@ -121,10 +119,6 @@ variable "cache_resources" {
     metrics    = bool
     replicas   = number
     resources  = object({
-      limits   = object({
-        cpu    = number
-        memory = string
-      })
       requests = object({
         cpu    = number
         memory = string
@@ -135,10 +129,6 @@ variable "cache_resources" {
     metrics    = true
     replicas   = 1
     resources  = {
-      limits   = {
-        cpu    = 3
-        memory = "12Gi"
-      }
       requests = {
         cpu    = 0.2
         memory = "512Mi"
@@ -184,13 +174,9 @@ variable "db_resources" {
     pv_size      = "20Gi"
     replicas     = 1
     resources    = {
-      limits     = {
-        cpu      = 3
-        memory   = "12Gi"
-      }
       requests   = {
         cpu      = 0.6
-        memory   = "1Gi"
+        memory   = "512Mi"
       }
     }
   }
@@ -210,10 +196,6 @@ variable "file_resources" {
     pool_server_volumes = number
     pv_path             = string
     resources           = object({
-      limits            = object({
-        cpu             = number
-        memory          = string
-      })
       requests          = object({
         cpu             = number
         memory          = string
@@ -230,10 +212,6 @@ variable "file_resources" {
     pool_server_volumes = 1
     pv_path             = "/Users/USER/mnt/minio"
     resources           = {
-      limits            = {
-        cpu             = 3
-        memory          = "12Gi"
-      }
       requests          = {
         cpu             = 0.1
         memory          = "256Mi"
@@ -251,10 +229,6 @@ variable "graph_resources" {
   type         = object({
     replicas   = number
     resources  = object({
-      limits   = object({
-        cpu    = number
-        memory = string
-      })
       requests = object({
         cpu    = number
         memory = string
@@ -264,10 +238,6 @@ variable "graph_resources" {
   default      = {
     replicas   = 1
     resources  = {
-      limits   = {
-        cpu    = 3
-        memory = "12Gi"
-      }
       requests = {
         cpu    = 0.1
         memory = "256Mi"
@@ -287,10 +257,6 @@ variable "groundx_resources" {
       threshold = number
     })
     resources   = object({
-      limits    = object({
-        cpu     = number
-        memory  = string
-      })
       requests  = object({
         cpu     = number
         memory  = string
@@ -304,10 +270,6 @@ variable "groundx_resources" {
       threshold = 8
     }
     resources   = {
-      limits    = {
-        cpu     = 2
-        memory  = "4Gi"
-      }
       requests  = {
         cpu     = 0.1
         memory  = "128Mi"
@@ -329,10 +291,6 @@ variable "layout_resources" {
         threshold = number
       })
       resources   = object({
-        limits    = object({
-          cpu     = number
-          memory  = string
-        })
         requests  = object({
           cpu     = number
           memory  = string
@@ -348,10 +306,6 @@ variable "layout_resources" {
         threshold = number
       })
       resources   = object({
-        limits    = object({
-          cpu     = number
-          memory  = string
-        })
         requests  = object({
           cpu     = number
           memory  = string
@@ -367,11 +321,6 @@ variable "layout_resources" {
         threshold = number
       })
       resources   = object({
-        limits    = object({
-          cpu     = number
-          memory  = string
-          gpu     = number
-        })
         requests  = object({
           cpu     = number
           memory  = string
@@ -392,10 +341,6 @@ variable "layout_resources" {
         threshold = number
       })
       resources   = object({
-        limits    = object({
-          cpu     = number
-          memory  = string
-        })
         requests  = object({
           cpu     = number
           memory  = string
@@ -411,10 +356,6 @@ variable "layout_resources" {
         threshold = number
       })
       resources   = object({
-        limits    = object({
-          cpu     = number
-          memory  = string
-        })
         requests  = object({
           cpu     = number
           memory  = string
@@ -430,10 +371,6 @@ variable "layout_resources" {
         threshold = number
       })
       resources   = object({
-        limits    = object({
-          cpu     = number
-          memory  = string
-        })
         requests  = object({
           cpu     = number
           memory  = string
@@ -449,10 +386,6 @@ variable "layout_resources" {
         threshold = number
       })
       resources   = object({
-        limits    = object({
-          cpu     = number
-          memory  = string
-        })
         requests  = object({
           cpu     = number
           memory  = string
@@ -470,10 +403,6 @@ variable "layout_resources" {
         threshold = 5
       }
       resources   = {
-        limits    = {
-          cpu     = 2
-          memory  = "4Gi"
-        }
         requests  = {
           cpu     = 0.1
           memory  = "256Mi"
@@ -489,17 +418,13 @@ variable "layout_resources" {
         threshold = 0.8
       }
       resources   = {
-        limits    = {
-          cpu     = 4
-          memory  = "16Gi"
-        }
         requests  = {
           cpu     = 1.5
           memory  = "1Gi"
         }
       }
       threads     = 1
-      throughput  = 10000
+      throughput  = 40000
       workers     = 1
     }
     inference     = {
@@ -508,11 +433,6 @@ variable "layout_resources" {
         threshold = 0.8
       }
       resources   = {
-        limits    = {
-          cpu     = 2
-          memory  = "15Gi"
-          gpu     = 1
-        }
         requests  = {
           cpu     = 0.5
           memory  = "2Gi"
@@ -520,7 +440,7 @@ variable "layout_resources" {
         }
       }
       threads     = 6
-      throughput  = 120000
+      throughput  = 100000
       workers     = 1
     }
     load_balancer = {
@@ -533,10 +453,6 @@ variable "layout_resources" {
         threshold = 0.8
       }
       resources   = {
-        limits    = {
-          cpu     = 2
-          memory  = "12Gi"
-        }
         requests  = {
           cpu     = 0.1
           memory  = "256Mi"
@@ -552,17 +468,13 @@ variable "layout_resources" {
         threshold = 0.8
       }
       resources   = {
-        limits    = {
-          cpu     = 4
-          memory  = "16Gi"
-        }
         requests  = {
           cpu     = 1
-          memory  = "2Gi"
+          memory  = "1Gi"
         }
       }
       threads     = 1
-      throughput  = 10000
+      throughput  = 40000
       workers     = 1
     }
     process       = {
@@ -571,13 +483,9 @@ variable "layout_resources" {
         threshold = 0.8
       }
       resources   = {
-        limits    = {
-          cpu     = 2
-          memory  = "12Gi"
-        }
         requests  = {
           cpu     = 0.1
-          memory  = "4Gi"
+          memory  = "1Gi"
         }
       }
       threads     = 1
@@ -590,17 +498,13 @@ variable "layout_resources" {
         threshold = 0.8
       }
       resources   = {
-        limits    = {
-          cpu     = 2
-          memory  = "12Gi"
-        }
         requests  = {
           cpu     = 0.2
-          memory  = "4Gi"
+          memory  = "1Gi"
         }
       }
       threads     = 1
-      throughput  = 300000
+      throughput  = 80000
       workers     = 1
     }
   }
@@ -621,10 +525,6 @@ variable "layout_webhook_resources" {
       threshold   = number
     })
     resources     = object({
-      limits      = object({
-        cpu       = number
-        memory    = string
-      })
       requests    = object({
         cpu       = number
         memory    = string
@@ -642,10 +542,6 @@ variable "layout_webhook_resources" {
       threshold   = 5
     }
     resources     = {
-      limits      = {
-        cpu       = 2
-        memory    = "4Gi"
-      }
       requests    = {
         cpu       = 0.1
         memory    = "128Mi"
@@ -667,10 +563,6 @@ variable "pre_process_resources" {
       threshold = number
     })
     resources   = object({
-      limits    = object({
-        cpu     = number
-        memory  = string
-      })
       requests  = object({
         cpu     = number
         memory  = string
@@ -685,16 +577,12 @@ variable "pre_process_resources" {
       threshold = 0.8
     }
     resources   = {
-      limits    = {
-        cpu     = 3
-        memory  = "12Gi"
-      }
       requests  = {
         cpu     = 0.2
         memory  = "1Gi"
       }
     }
-    throughput  = 9600
+    throughput  = 40000
   }
 }
 
@@ -710,10 +598,6 @@ variable "process_resources" {
       threshold = number
     })
     resources   = object({
-      limits    = object({
-        cpu     = number
-        memory  = string
-      })
       requests  = object({
         cpu     = number
         memory  = string
@@ -728,16 +612,12 @@ variable "process_resources" {
       threshold = 0.8
     }
     resources   = {
-      limits    = {
-        cpu     = 2
-        memory  = "12Gi"
-      }
       requests  = {
         cpu     = 0.2
         memory  = "256Mi"
       }
     }
-    throughput  = 11250
+    throughput  = 80000
   }
 }
 
@@ -753,10 +633,6 @@ variable "queue_resources" {
       threshold = number
     })
     resources   = object({
-      limits    = object({
-        cpu     = number
-        memory  = string
-      })
       requests  = object({
         cpu     = number
         memory  = string
@@ -771,16 +647,12 @@ variable "queue_resources" {
       threshold = 0.8
     }
     resources   = {
-      limits    = {
-        cpu     = 2
-        memory  = "12Gi"
-      }
       requests  = {
         cpu     = 0.1
         memory  = "128Mi"
       }
     }
-    throughput  = 11250
+    throughput  = 100000
   }
 }
 
@@ -796,10 +668,6 @@ variable "ranker_resources" {
         threshold = number
       })
       resources   = object({
-        limits    = object({
-          cpu     = number
-          memory  = string
-        })
         requests  = object({
           cpu     = number
           memory  = string
@@ -815,11 +683,6 @@ variable "ranker_resources" {
         threshold = number
       })
       resources   = object({
-        limits    = object({
-          cpu     = number
-          memory  = string
-          gpu     = number
-        })
         requests  = object({
           cpu     = number
           memory  = string
@@ -837,10 +700,6 @@ variable "ranker_resources" {
         threshold = 5
       }
       resources   = {
-        limits    = {
-          cpu     = 2
-          memory  = "4Gi"
-        }
         requests  = {
           cpu     = 0.1
           memory  = "128Mi"
@@ -856,14 +715,9 @@ variable "ranker_resources" {
         threshold = 0.8
       }
       resources   = {
-        limits    = {
-          cpu     = 8
-          memory  = "36Gi"
-          gpu     = 1
-        }
         requests  = {
           cpu     = 1.5
-          memory  = "4Gi"
+          memory  = "1Gi"
           gpu     = 1
         }
       }
@@ -882,10 +736,6 @@ variable "search_resources" {
     pv_size    = string
     replicas   = number
     resources  = object({
-      limits   = object({
-        cpu    = number
-        memory = string
-      })
       requests = object({
         cpu    = number
         memory = string
@@ -896,10 +746,6 @@ variable "search_resources" {
     pv_size    = "20Gi"
     replicas   = 1
     resources  = {
-      limits   = {
-        cpu    = 3
-        memory = "12Gi"
-      }
       requests = {
         cpu    = 0.2
         memory = "512Mi"
@@ -922,10 +768,6 @@ variable "stream_resources" {
       replicas      = number
     })
     resources       = object({
-      limits        = object({
-        cpu         = number
-        memory      = string
-      })
       requests      = object({
         cpu         = string
         memory      = string
@@ -947,10 +789,6 @@ variable "stream_resources" {
       replicas      = 1
     }
     resources       = {
-      limits        = {
-        cpu         = 3
-        memory      = "12Gi"
-      }
       requests      = {
         cpu         = "200m"
         memory      = "512Mi"
@@ -977,17 +815,13 @@ variable "summary_resources" {
         threshold = number
       })
       resources   = object({
-        limits    = object({
-          cpu     = number
-          memory  = string
-        })
         requests  = object({
           cpu     = number
           memory  = string
         })
       })
       threads     = number
-      throughput  = number
+      throughput  = optional(number, null)
       workers     = number
     })
     inference     = object({
@@ -996,11 +830,6 @@ variable "summary_resources" {
         threshold = number
       })
       resources   = object({
-        limits    = object({
-          cpu     = number
-          memory  = string
-          gpu     = number
-        })
         requests  = object({
           cpu     = number
           memory  = string
@@ -1023,17 +852,12 @@ variable "summary_resources" {
         threshold = 0.8
       }
       resources   = {
-        limits    = {
-          cpu     = 3
-          memory  = "12Gi"
-        }
         requests  = {
           cpu     = 0.1
           memory  = "256Mi"
         }
       }
       threads     = 4
-      throughput  = 9600
       workers     = 1
     }
     inference     = {
@@ -1042,14 +866,9 @@ variable "summary_resources" {
         threshold = 0.8
       }
       resources   = {
-        limits    = {
-          cpu     = 4
-          memory  = "32Gi"
-          gpu     = 1
-        }
         requests  = {
           cpu     = 0.5
-          memory  = "2Gi"
+          memory  = "1Gi"
           gpu     = 1
         }
       }
@@ -1075,16 +894,12 @@ variable "summary_client_resources" {
       threshold = number
     })
     resources   = object({
-      limits    = object({
-        cpu     = number
-        memory  = string
-      })
       requests  = object({
         cpu     = number
         memory  = string
       })
     })
-    throughput  = number
+    throughput  = optional(number, null)
     workers     = number
   })
   default       = {
@@ -1093,16 +908,11 @@ variable "summary_client_resources" {
       threshold = 0.8
     }
     resources   = {
-      limits    = {
-        cpu     = 3
-        memory  = "12Gi"
-      }
       requests  = {
         cpu     = 0.1
         memory  = "512Mi"
       }
     }
-    throughput  = 9600
     workers     = 3
   }
 }
@@ -1214,10 +1024,6 @@ variable "upload_resources" {
       threshold = number
     })
     resources   = object({
-      limits    = object({
-        cpu     = number
-        memory  = string
-      })
       requests  = object({
         cpu     = number
         memory  = string
@@ -1232,15 +1038,11 @@ variable "upload_resources" {
       threshold = 0.8
     }
     resources   = {
-      limits    = {
-        cpu     = 2
-        memory  = "4Gi"
-      }
       requests  = {
         cpu     = 0.1
         memory  = "128Mi"
       }
     }
-    throughput  = 150000
+    throughput  = 80000
   }
 }

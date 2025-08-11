@@ -15,18 +15,23 @@ spec:
       labels:
         app: {{ .Values.service.name }}
     spec:
+      securityContext:
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+        runAsGroup: {{ .Values.securityContext.runAsGroup }}
+        fsGroup: {{ .Values.securityContext.fsGroup }}
       nodeSelector:
         node: "{{ .Values.nodeSelector.node }}"
-      runtimeClassName: nvidia
       tolerations:
         - key: "node"
           value: "{{ .Values.nodeSelector.node }}"
           effect: "NoSchedule"
       initContainers:
+        {{- if .Values.waitForDependencies }}
         - name: wait-for-cache
           image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
           imagePullPolicy: "{{ .Values.busybox.pull }}"
           command: ["sh", "-c", "until nc -z {{ .Values.dependencies.cache }}; do echo waiting for cache; sleep 2; done"]
+        {{- end }}
         {{- if .Values.createSymlink }}
         - name: create-symlink
           image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
@@ -52,20 +57,6 @@ spec:
             - name: host-usr-bin
               mountPath: /host-usr-bin
         {{- end }}
-        {{- if not .Values.local }}
-        - name: update-permissions
-          image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
-          imagePullPolicy: "{{ .Values.busybox.pull }}"
-          command:
-            - /bin/sh
-            - -c
-            - |
-              chown -R {{ .Values.securityContext.runAsUser }}:{{ .Values.securityContext.runAsGroup }} /workspace/hf_models_cache && chmod -R 777 /workspace/hf_models_cache
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - name: model-volume
-              mountPath: /workspace/hf_models_cache
         - name: download-model
           image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
           imagePullPolicy: "{{ .Values.busybox.pull }}"
@@ -115,13 +106,13 @@ spec:
           securityContext:
             runAsUser: {{ .Values.securityContext.runAsUser }}
             runAsGroup: {{ .Values.securityContext.runAsGroup }}
+            fsGroup: {{ .Values.securityContext.fsGroup }}
           volumeMounts:
             - name: model-volume
               mountPath: /workspace/hf_models_cache
-        {{- end }}
       containers:
         - name: {{ .Values.service.name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
           imagePullPolicy: "{{ .Values.image.pull }}"
           env:
             - name: POD_NAME
@@ -129,22 +120,15 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
           workingDir: /workspace
-          {{- if .Values.local }}
           command:
             - /bin/sh
             - -c
             - |
-              export PYTHONPATH=/workspace && /workspace/init-ranker.py && supervisord -c /workspace/supervisord.conf
-          {{- else }}
-          command:
-            - /bin/sh
-            - -c
-            - |
-              export PYTHONPATH=/workspace && supervisord -c /workspace/supervisord.conf
-          {{- end }}
+              export PYTHONPATH=/workspace:$PYTHONPATH && supervisord -c /workspace/supervisord.conf
           securityContext:
             runAsUser: {{ .Values.securityContext.runAsUser }}
             runAsGroup: {{ .Values.securityContext.runAsGroup }}
+            fsGroup: {{ .Values.securityContext.fsGroup }}
           livenessProbe:
             exec:
               command:
@@ -162,15 +146,15 @@ spec:
                 - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
             initialDelaySeconds: 60
             periodSeconds: 30
-          {{- if not .Values.local }}
           resources:
             limits:
-              cpu: "{{ .Values.resources.limits.cpu }}"
-              memory: "{{ .Values.resources.limits.memory }}"
+              nvidia.com/gpu: 1
             requests:
+              {{- if .Values.cluster.setResources }}
               cpu: "{{ .Values.resources.requests.cpu }}"
               memory: "{{ .Values.resources.requests.memory }}"
-          {{- end }}
+              {{- end}}
+              nvidia.com/gpu: 1
           volumeMounts:
             - name: config-models
               mountPath: /workspace/config_models.py

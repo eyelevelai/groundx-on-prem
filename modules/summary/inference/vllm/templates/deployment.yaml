@@ -57,6 +57,21 @@ spec:
             - name: host-usr-bin
               mountPath: /host-usr-bin
         {{- end }}
+        {{- if ne .Values.type "openshift" }}
+        - name: update-permissions
+          image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
+          imagePullPolicy: "{{ .Values.busybox.pull }}"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              chown -R {{ .Values.securityContext.runAsUser }}:{{ .Values.securityContext.runAsGroup }} /workspace/hf_models_cache && chmod -R 777 /workspace/hf_models_cache
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: model-volume
+              mountPath: /workspace/hf_models_cache
+        {{- end }}
         - name: download-model
           image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
           imagePullPolicy: "{{ .Values.busybox.pull }}"
@@ -83,6 +98,9 @@ spec:
                 rm /workspace/hf_models_cache/downloading
                 touch /workspace/hf_models_cache/complete.g34b
               }
+
+              mkdir /workspace/.cache
+
               if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
                 if [ ! -f /workspace/hf_models_cache/downloading ]; then
                   download_and_extract_model
@@ -112,30 +130,41 @@ spec:
               mountPath: /workspace/hf_models_cache
       containers:
         - name: {{ .Values.service.name }}
-          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          image: public.ecr.aws/c9r4x6y5/eyelevel/vllm:latest
           imagePullPolicy: "{{ .Values.image.pull }}"
+          ports:
+            - containerPort: 8080
+              protocol: TCP
           env:
             - name: POD_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+            - name: MODEL_ID
+              value: google/gemma-3-4b-it
+            - name: HF_HOME
+              value: /workspace/hf_models_cache
+            - name: HOME
+              value: /workspace
           workingDir: /workspace
-          command:
-            - /bin/bash
-            - -c
-            - |
-              export PYTHONPATH=/workspace:$PYTHONPATH && supervisord -c /workspace/supervisord.conf
+          command: ["python3", "-m", "vllm.entrypoints.openai.api_server"]
+          args:
+          - --model=$(MODEL_ID)
+          - --tensor-parallel-size=1
+          - --host=0.0.0.0
+          - --port=8080
+          - --gpu-memory-utilization=0.90
+          - --trust-remote-code
+          - --enable-chunked-prefill
+          - --enable-expert-parallel
+          - --data-parallel-size=17
+          - --dtype=bfloat16
+          - --swap-space=16
+          - --disable-uvicorn-access-log
           securityContext:
             runAsUser: {{ .Values.securityContext.runAsUser }}
             runAsGroup: {{ .Values.securityContext.runAsGroup }}
             fsGroup: {{ .Values.securityContext.runAsGroup }}
-          livenessProbe:
-            httpGet:
-              path: /alive
-              port: 8080
-            initialDelaySeconds: 30
-            failureThreshold: 8
-            periodSeconds: 15
           readinessProbe:
             httpGet:
               path: /health

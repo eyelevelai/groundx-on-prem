@@ -22,7 +22,7 @@ variable "environment_internal" {
     eks_version = string
   })
   default       = {
-    eks_version = "1.32"
+    eks_version = "1.33"
   }
 }
 

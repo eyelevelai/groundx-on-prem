@@ -1,7 +1,10 @@
 
 [program:celery_worker_${worker_number}]
 command=celery -A summary.celery_inference.appSummary worker -n %(ENV_POD_NAME)s-w${worker_number} --loglevel=INFO --concurrency=${threads} --queues=${queues} --pool=solo
-environment=CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w${worker_number}"
+environment=
+    CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w${worker_number}",
+    LOCAL=0,
+    PYTHONUNBUFFERED="1"
 autostart=true
 autorestart=true
 stdout_logfile=/dev/stdout
@@ -11,6 +14,9 @@ stderr_logfile_maxbytes=0
 
 [program:celery_monitor]
 command=python /workspace/summary_monitor.py
+environment=
+    LOCAL=0,
+    PYTHONUNBUFFERED="1"
 autostart=true
 autorestart=true
 stdout_logfile=/dev/stdout
@@ -20,6 +26,9 @@ stderr_logfile_maxbytes=0
 
 [program:celery_health]
 command=python /workspace/summary_health.py
+environment=
+    LOCAL=0,
+    PYTHONUNBUFFERED="1"
 autostart=true
 autorestart=true
 stdout_logfile=/dev/stdout
