@@ -424,7 +424,7 @@ variable "layout_resources" {
         }
       }
       threads     = 1
-      throughput  = 10000
+      throughput  = 40000
       workers     = 1
     }
     inference     = {
@@ -440,7 +440,7 @@ variable "layout_resources" {
         }
       }
       threads     = 6
-      throughput  = 120000
+      throughput  = 100000
       workers     = 1
     }
     load_balancer = {
@@ -474,7 +474,7 @@ variable "layout_resources" {
         }
       }
       threads     = 1
-      throughput  = 10000
+      throughput  = 40000
       workers     = 1
     }
     process       = {
@@ -504,7 +504,7 @@ variable "layout_resources" {
         }
       }
       threads     = 1
-      throughput  = 300000
+      throughput  = 80000
       workers     = 1
     }
   }
@@ -582,7 +582,7 @@ variable "pre_process_resources" {
         memory  = "1Gi"
       }
     }
-    throughput  = 9600
+    throughput  = 40000
   }
 }
 
@@ -617,7 +617,7 @@ variable "process_resources" {
         memory  = "256Mi"
       }
     }
-    throughput  = 11250
+    throughput  = 80000
   }
 }
 
@@ -652,7 +652,7 @@ variable "queue_resources" {
         memory  = "128Mi"
       }
     }
-    throughput  = 11250
+    throughput  = 100000
   }
 }
 
@@ -821,7 +821,7 @@ variable "summary_resources" {
         })
       })
       threads     = number
-      throughput  = number
+      throughput  = optional(number, null)
       workers     = number
     })
     inference     = object({
@@ -858,7 +858,6 @@ variable "summary_resources" {
         }
       }
       threads     = 4
-      throughput  = 9600
       workers     = 1
     }
     inference     = {
@@ -900,7 +899,7 @@ variable "summary_client_resources" {
         memory  = string
       })
     })
-    throughput  = number
+    throughput  = optional(number, null)
     workers     = number
   })
   default       = {
@@ -914,7 +913,6 @@ variable "summary_client_resources" {
         memory  = "512Mi"
       }
     }
-    throughput  = 9600
     workers     = 3
   }
 }
@@ -1045,6 +1043,6 @@ variable "upload_resources" {
         memory  = "128Mi"
       }
     }
-    throughput  = 150000
+    throughput  = 80000
   }
 }
