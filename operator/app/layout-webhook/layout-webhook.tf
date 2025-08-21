@@ -1,3 +1,7 @@
+locals {
+  lw_image_tag = var.layout_webhook_internal.image.tag != "latest" ? var.layout_webhook_internal.image.tag : var.deployment_type.tag
+}
+
 resource "helm_release" "layout_webhook_service" {
   name       = var.layout_webhook_internal.service
   namespace  = var.app_internal.namespace
@@ -13,7 +17,7 @@ resource "helm_release" "layout_webhook_service" {
       image           = {
         pull          = var.layout_webhook_internal.image.pull
         repository    = "${var.app_internal.repo_url}/${var.layout_webhook_internal.image.repository}${local.container_suffix}"
-        tag           = var.layout_webhook_internal.image.tag
+        tag           = local.lw_image_tag
       }
       nodeSelector    = {
         node          = local.node_assignment.layout_webhook
@@ -35,6 +39,9 @@ resource "helm_release" "layout_webhook_service" {
         namespace     = var.app_internal.namespace
         version       = var.layout_webhook_internal.version
       }
+      username        = local.lw_image_tag == "chainguard" ? "nonroot" : "golang"
     })
   ]
+
+  timeout = 300
 }

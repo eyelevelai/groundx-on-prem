@@ -1,3 +1,7 @@
+locals {
+  sc_image_tag = var.summary_client_internal.image.tag != "latest" ? var.summary_client_internal.image.tag : var.deployment_type.tag
+}
+
 resource "helm_release" "summary_client_service" {
   name       = var.summary_client_internal.service
   namespace  = var.app_internal.namespace
@@ -13,7 +17,7 @@ resource "helm_release" "summary_client_service" {
       image           = {
         pull          = var.summary_client_internal.image.pull
         repository    = "${var.app_internal.repo_url}/${var.summary_client_internal.image.repository}${local.container_suffix}"
-        tag           = var.summary_client_internal.image.tag
+        tag           = local.sc_image_tag
       }
       nodeSelector    = {
         node          = local.node_assignment.summary_client
@@ -35,6 +39,9 @@ resource "helm_release" "summary_client_service" {
         namespace     = var.app_internal.namespace
         version       = var.summary_client_internal.version
       }
+      username        = local.sc_image_tag == "chainguard" ? "nonroot" : "golang"
     })
   ]
+
+  timeout = 300
 }

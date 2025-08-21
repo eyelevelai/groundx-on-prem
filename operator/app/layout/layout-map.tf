@@ -1,3 +1,7 @@
+locals {
+  lm_image_tag = var.layout_internal.map.image.tag != "latest" ? var.layout_internal.map.image.tag : var.deployment_type.tag
+}
+
 resource "helm_release" "layout_map_service" {
   name       = "${var.layout_internal.service}-map"
   namespace  = var.app_internal.namespace
@@ -17,7 +21,7 @@ resource "helm_release" "layout_map_service" {
       image           = {
         pull          = var.layout_internal.map.image.pull
         repository    = "${var.app_internal.repo_url}/${var.layout_internal.map.image.repository}${local.container_suffix}"
-        tag           = var.layout_internal.map.image.tag
+        tag           = local.lm_image_tag
       }
       nodeSelector    = {
         node          = local.node_assignment.layout_map
@@ -39,4 +43,6 @@ resource "helm_release" "layout_map_service" {
       }
     })
   ]
+
+  timeout = 300
 }

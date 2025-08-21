@@ -1,3 +1,7 @@
+locals {
+  lc_image_tag = var.layout_internal.correct.image.tag != "latest" ? var.layout_internal.correct.image.tag : var.deployment_type.tag
+}
+
 resource "helm_release" "layout_correct_service" {
   name       = "${var.layout_internal.service}-correct"
   namespace  = var.app_internal.namespace
@@ -17,7 +21,7 @@ resource "helm_release" "layout_correct_service" {
       image           = {
         pull          = var.layout_internal.correct.image.pull
         repository    = "${var.app_internal.repo_url}/${var.layout_internal.correct.image.repository}${local.container_suffix}"
-        tag           = var.layout_internal.correct.image.tag
+        tag           = local.lc_image_tag
       }
       nodeSelector    = {
         node          = local.node_assignment.layout_correct
@@ -39,4 +43,6 @@ resource "helm_release" "layout_correct_service" {
       }
     })
   ]
+
+  timeout = 300
 }

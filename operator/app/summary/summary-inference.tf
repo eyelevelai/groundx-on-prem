@@ -1,3 +1,7 @@
+locals {
+  si_image_tag = var.summary_internal.inference.image.tag != "latest" ? var.summary_internal.inference.image.tag : var.deployment_type.tag
+}
+
 resource "helm_release" "summary_inference_service" {
   count = local.create_summary ? 1 : 0
 
@@ -21,7 +25,7 @@ resource "helm_release" "summary_inference_service" {
       image               = {
         pull              = var.summary_internal.inference.image.pull
         repository        = "${var.app_internal.repo_url}/${var.summary_internal.inference.image.repository}${local.op_container_suffix}"
-        tag               = var.summary_internal.inference.image.tag
+        tag               = local.si_image_tag
       }
       nodeSelector        = {
         node              = local.node_assignment.summary_inference

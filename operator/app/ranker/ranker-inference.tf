@@ -1,3 +1,7 @@
+locals {
+  ri_image_tag = var.ranker_internal.inference.image.tag != "latest" ? var.ranker_internal.inference.image.tag : var.deployment_type.tag
+}
+
 resource "helm_release" "ranker_inference_service" {
   count      = local.ingest_only ? 0 : 1
 
@@ -19,7 +23,7 @@ resource "helm_release" "ranker_inference_service" {
       image               = {
         pull              = var.ranker_internal.inference.image.pull
         repository        = "${var.app_internal.repo_url}/${var.ranker_internal.inference.image.repository}${local.op_container_suffix}"
-        tag               = var.ranker_internal.inference.image.tag
+        tag               = local.ri_image_tag
       }
       model               = local.ranker_model.version
       nodeSelector        = {

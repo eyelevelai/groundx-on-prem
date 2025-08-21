@@ -1,3 +1,7 @@
+locals {
+  gx_image_tag = var.groundx_internal.image.tag != "latest" ? var.groundx_internal.image.tag : var.deployment_type.tag
+}
+
 resource "helm_release" "groundx_service" {
   name       = var.groundx_internal.service
   namespace  = var.app_internal.namespace
@@ -17,7 +21,7 @@ resource "helm_release" "groundx_service" {
       image           = {
         pull          = var.groundx_internal.image.pull
         repository    = "${var.app_internal.repo_url}/${var.groundx_internal.image.repository}${local.container_suffix}"
-        tag           = var.groundx_internal.image.tag
+        tag           = local.gx_image_tag
       }
       ingestOnly      = local.ingest_only
       nodeSelector    = {
@@ -35,10 +39,13 @@ resource "helm_release" "groundx_service" {
         runAsGroup    = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.GID, 1001) : 1001
         fsGroup       = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.GID, 1001) : 1001
       }
-      service = {
+      service         = {
         name          = var.groundx_internal.service
         namespace     = var.app_internal.namespace
       }
+      username        = local.gx_image_tag == "chainguard" ? "nonroot" : "golang"
     })
   ]
+
+  timeout = 300
 }

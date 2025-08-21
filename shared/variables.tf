@@ -84,6 +84,17 @@ variable "cluster" {
   }
 }
 
+variable "deployment_type" {
+  type     = object({
+    min_pv = number
+    tag    = string
+  })
+  default  = {
+    min_pv = 20
+    tag    = "latest"
+  }
+}
+
 variable "cluster_internal" {
   description      = "Kubernetes cluster internal settings"
   type             = object({

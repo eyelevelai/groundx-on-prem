@@ -1,3 +1,7 @@
+locals {
+  up_image_tag = var.upload_internal.image.tag != "latest" ? var.upload_internal.image.tag : var.deployment_type.tag
+}
+
 resource "helm_release" "upload_service" {
   name       = var.upload_internal.service
   namespace  = var.app_internal.namespace
@@ -13,7 +17,7 @@ resource "helm_release" "upload_service" {
       image           = {
         pull          = var.upload_internal.image.pull
         repository    = "${var.app_internal.repo_url}/${var.upload_internal.image.repository}${local.container_suffix}"
-        tag           = var.upload_internal.image.tag
+        tag           = local.up_image_tag
       }
       nodeSelector    = {
         node          = local.node_assignment.upload
@@ -35,6 +39,9 @@ resource "helm_release" "upload_service" {
         namespace     = var.app_internal.namespace
         version       = var.upload_internal.version
       }
+      username        = local.up_image_tag == "chainguard" ? "nonroot" : "golang"
     })
   ]
+
+  timeout = 300
 }

@@ -1,3 +1,7 @@
+locals {
+  ls_image_tag = var.layout_internal.save.image.tag != "latest" ? var.layout_internal.save.image.tag : var.deployment_type.tag
+}
+
 resource "helm_release" "layout_save_service" {
   name       = "${var.layout_internal.service}-save"
   namespace  = var.app_internal.namespace
@@ -17,7 +21,7 @@ resource "helm_release" "layout_save_service" {
       image           = {
         pull          = var.layout_internal.save.image.pull
         repository    = "${var.app_internal.repo_url}/${var.layout_internal.save.image.repository}${local.container_suffix}"
-        tag           = var.layout_internal.save.image.tag
+        tag           = local.ls_image_tag
       }
       nodeSelector    = {
         node          = local.node_assignment.layout_save
@@ -39,4 +43,6 @@ resource "helm_release" "layout_save_service" {
       }
     })
   ]
+
+  timeout = 300
 }

@@ -1,3 +1,7 @@
+locals {
+  q_image_tag = var.queue_internal.image.tag != "latest" ? var.queue_internal.image.tag : var.deployment_type.tag
+}
+
 resource "helm_release" "queue_service" {
   name       = var.queue_internal.service
   namespace  = var.app_internal.namespace
@@ -13,7 +17,7 @@ resource "helm_release" "queue_service" {
       image           = {
         pull          = var.queue_internal.image.pull
         repository    = "${var.app_internal.repo_url}/${var.queue_internal.image.repository}${local.container_suffix}"
-        tag           = var.queue_internal.image.tag
+        tag           = local.q_image_tag
       }
       nodeSelector    = {
         node          = local.node_assignment.queue
@@ -35,6 +39,9 @@ resource "helm_release" "queue_service" {
         namespace     = var.app_internal.namespace
         version       = var.queue_internal.version
       }
+      username        = local.q_image_tag == "chainguard" ? "nonroot" : "golang"
     })
   ]
+
+  timeout = 300
 }

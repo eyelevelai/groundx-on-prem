@@ -1,3 +1,7 @@
+locals {
+  li_image_tag = var.layout_internal.inference.image.tag != "latest" ? var.layout_internal.inference.image.tag : var.deployment_type.tag
+}
+
 resource "helm_release" "layout_inference_service" {
   name       = "${var.layout_internal.service}-inference"
   namespace  = var.app_internal.namespace
@@ -20,7 +24,7 @@ resource "helm_release" "layout_inference_service" {
       image           = {
         pull          = var.layout_internal.inference.image.pull
         repository    = "${var.app_internal.repo_url}/${var.layout_internal.inference.image.repository}${local.op_container_suffix}"
-        tag           = var.layout_internal.inference.image.tag
+        tag           = local.li_image_tag
       }
       nodeSelector    = {
         node          = local.node_assignment.layout_inference

@@ -117,7 +117,7 @@ destroy() {
             return 0
           fi
         done
-        for app in "${named_apps[@]}"; do
+        for app in "${named_releases[@]}"; do
           if [[ "$dir" == */"$app" ]]; then
             helm delete -n eyelevel $app > /dev/null 2>&1
             return 0

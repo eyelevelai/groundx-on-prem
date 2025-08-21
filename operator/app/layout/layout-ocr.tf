@@ -1,3 +1,7 @@
+locals {
+  lo_image_tag = var.layout_internal.ocr.image.tag != "latest" ? var.layout_internal.ocr.image.tag : var.deployment_type.tag
+}
+
 resource "helm_release" "layout_ocr_service" {
   count = var.layout.ocr.type == "google" ? 0 : 1
 
@@ -19,7 +23,7 @@ resource "helm_release" "layout_ocr_service" {
       image           = {
         pull          = var.layout_internal.ocr.image.pull
         repository    = "${var.app_internal.repo_url}/${var.layout_internal.ocr.image.repository}${local.container_suffix}"
-        tag           = var.layout_internal.ocr.image.tag
+        tag           = local.lo_image_tag
       }
       nodeSelector    = {
         node          = local.node_assignment.layout_ocr
@@ -41,4 +45,6 @@ resource "helm_release" "layout_ocr_service" {
       }
     })
   ]
+
+  timeout = 300
 }

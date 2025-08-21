@@ -1,3 +1,7 @@
+locals {
+  p_image_tag = var.process_internal.image.tag != "latest" ? var.process_internal.image.tag : var.deployment_type.tag
+}
+
 resource "helm_release" "process_service" {
   name       = var.process_internal.service
   namespace  = var.app_internal.namespace
@@ -13,7 +17,7 @@ resource "helm_release" "process_service" {
       image           = {
         pull          = var.process_internal.image.pull
         repository    = "${var.app_internal.repo_url}/${var.process_internal.image.repository}${local.container_suffix}"
-        tag           = var.process_internal.image.tag
+        tag           = local.p_image_tag
       }
       nodeSelector    = {
         node          = local.node_assignment.process
@@ -35,6 +39,9 @@ resource "helm_release" "process_service" {
         namespace     = var.app_internal.namespace
         version       = var.process_internal.version
       }
+      username        = local.p_image_tag == "chainguard" ? "nonroot" : "golang"
     })
   ]
+
+  timeout = 300
 }

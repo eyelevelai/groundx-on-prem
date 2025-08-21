@@ -1,3 +1,7 @@
+locals {
+  pp_image_tag = var.pre_process_internal.image.tag != "latest" ? var.pre_process_internal.image.tag : var.deployment_type.tag
+}
+
 resource "helm_release" "pre_process_service" {
   name       = var.pre_process_internal.service
   namespace  = var.app_internal.namespace
@@ -13,7 +17,7 @@ resource "helm_release" "pre_process_service" {
       image           = {
         pull          = var.pre_process_internal.image.pull
         repository    = "${var.app_internal.repo_url}/${var.pre_process_internal.image.repository}${local.container_suffix}"
-        tag           = var.pre_process_internal.image.tag
+        tag           = local.pp_image_tag
       }
       nodeSelector    = {
         node          = local.node_assignment.pre_process
@@ -35,6 +39,9 @@ resource "helm_release" "pre_process_service" {
         namespace     = var.app_internal.namespace
         version       = var.pre_process_internal.version
       }
+      username        = local.pp_image_tag == "chainguard" ? "nonroot" : "golang"
     })
   ]
+
+  timeout = 300
 }

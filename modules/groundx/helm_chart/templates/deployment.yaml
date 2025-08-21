@@ -74,7 +74,7 @@ spec:
         {{- end }}
         volumeMounts:
         - name: config-volume
-          mountPath: /home/golang/.cashbot/config.yaml
+          mountPath: /home/{{ .Values.username }}/.cashbot/config.yaml
           subPath: config.yaml
         - name: init-db-volume
           mountPath: /app/init-db.sql
