@@ -88,10 +88,12 @@ variable "deployment_type" {
   type     = object({
     min_pv = number
     tag    = string
+    user   = string
   })
   default  = {
     min_pv = 20
     tag    = "latest"
+    user   = null
   }
 }
 
