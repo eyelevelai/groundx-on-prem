@@ -140,8 +140,8 @@ spec:
             httpGet:
               path: /health
               port: 8080
-            initialDelaySeconds: 180
-            failureThreshold: 20
+            initialDelaySeconds: 30
+            failureThreshold: 30
             periodSeconds: 15
           {{- if or .Values.cluster.hasMig .Values.cluster.setResources }}
           resources:

@@ -33,7 +33,7 @@ resource "helm_release" "ranker_api_service" {
       }
       resources       = var.ranker_resources.api.resources
       securityContext = {
-        runAsUser     = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : 1001
+        runAsUser     = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : var.deployment_type.user != null ? var.deployment_type.user : 1001
       }
       service         = {
         name          = "${var.ranker_internal.service}-api"

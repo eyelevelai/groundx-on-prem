@@ -47,6 +47,8 @@ spec:
             export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
         securityContext:
           runAsUser: {{ .Values.securityContext.runAsUser }}
+          runAsGroup: {{ .Values.securityContext.runAsGroup }}
+          fsGroup: {{ .Values.securityContext.runAsGroup }}
         livenessProbe:
           exec:
             command:

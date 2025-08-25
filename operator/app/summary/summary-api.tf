@@ -35,7 +35,7 @@ resource "helm_release" "summary_api_service" {
       }
       resources       = var.summary_resources.api.resources
       securityContext = {
-        runAsUser     = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : var.deployment_type.user ? var.deployment_type.user : 1001
+        runAsUser     = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : var.deployment_type.user != null ? var.deployment_type.user : 1001
       }
       service         = {
         name          = "${var.summary_internal.service}-api"
