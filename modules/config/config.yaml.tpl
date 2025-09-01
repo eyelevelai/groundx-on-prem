@@ -236,7 +236,7 @@ upload:
   baseDomain: ${fileBaseDomain}
   baseUrl: ${fileSSL ? "https" : "http"}://${fileBaseDomain}
   bucket: ${uploadBucket}
-  bucketUrl: ${fileSSL ? "https" : "http"}://${fileBaseDomain}
+  bucketUrl: ${fileBucketSSL ? "https" : "http"}://${fileBucketDomain}
   id: ${fileUsername}
   secret: ${filePassword}
   service: minio

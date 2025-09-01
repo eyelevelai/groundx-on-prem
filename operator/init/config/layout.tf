@@ -1,26 +1,28 @@
 locals {
   layout_config = templatefile(
     "${local.module_path}/layout/config.py.tpl", {
-    cacheAddr      = local.cache_settings.addr
-    cachePort      = local.cache_settings.port
-    deviceType     = var.layout_internal.models.device
-    fileBaseDomain = local.file_settings.base_domain
-    filePassword   = local.file_settings.password
-    fileService    = var.file_internal.service
-    fileSSL        = local.file_settings.ssl
-    fileUsername   = local.file_settings.username
-    metricsAddr    = local.metrics_cache_settings.addr
-    metricsPort    = local.metrics_cache_settings.port
-    minBatchSize   = var.layout_process_batch_size
-    namespace      = var.app_internal.namespace
-    layoutService  = var.layout_internal.service
-    ocrProject     = var.layout.ocr.project
-    ocrType        = var.layout.ocr.type
-    podMemory      = var.layout_resources.process.resources.requests.memory
-    uploadBucket   = local.file_settings.bucket
-    validAPIKey    = var.admin.api_key
-    validUsername  = var.admin.username
-    workers        = var.layout_resources.inference.workers
+    cacheAddr        = local.cache_settings.addr
+    cachePort        = local.cache_settings.port
+    deviceType       = var.layout_internal.models.device
+    fileBaseDomain   = local.file_settings.base_domain
+    fileBucketDomain = local.file_settings.bucket_domain
+    fileBucketSSL    = local.file_settings.bucket_ssl
+    filePassword     = local.file_settings.password
+    fileService      = var.file_internal.service
+    fileSSL          = local.file_settings.ssl
+    fileUsername     = local.file_settings.username
+    metricsAddr      = local.metrics_cache_settings.addr
+    metricsPort      = local.metrics_cache_settings.port
+    minBatchSize     = var.layout_process_batch_size
+    namespace        = var.app_internal.namespace
+    layoutService    = var.layout_internal.service
+    ocrProject       = var.layout.ocr.project
+    ocrType          = var.layout.ocr.type
+    podMemory        = var.layout_resources.process.resources.requests.memory
+    uploadBucket     = local.file_settings.bucket
+    validAPIKey      = var.admin.api_key
+    validUsername    = var.admin.username
+    workers          = var.layout_resources.inference.workers
   })
 
   layout_gunicorn = templatefile(

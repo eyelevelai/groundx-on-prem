@@ -13,4 +13,18 @@ resource "helm_release" "gpu_operator" {
   cleanup_on_fail  = true
   reset_values     = true
   replace          = true
+
+  values = var.cluster.type == "aks" ? [
+    yamlencode({
+      driver = {
+        enabled = false
+      }
+      operator = {
+        runtimeClass = "nvidia-container-runtime"
+      }
+      toolkit = {
+        enabled = false
+      }
+    })
+  ] : []
 }

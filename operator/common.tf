@@ -42,10 +42,12 @@ locals {
   file_settings = {
     base_domain   = coalesce(var.file_existing.base_domain, local.file_domain)
     bucket        = coalesce(var.file_existing.bucket, var.file.upload_bucket)
+    bucket_domain = "${var.file_internal.service}.${var.app_internal.namespace}.svc.cluster.local"
+    bucket_ssl    = coalesce(var.file_existing.ssl, var.file_resources.ssl)
     dependency    = coalesce(var.file_existing.base_domain, "${var.file_internal.service}-tenant-hl.${var.app_internal.namespace}.svc.cluster.local")
     password      = coalesce(var.file_existing.password, var.file.password)
     port          = coalesce(var.file_existing.port, var.file_internal.port)
-    ssl           = coalesce(var.file_existing.ssl, var.file_resources.ssl)
+    ssl           = coalesce(coalesce(var.file_existing.ssl, var.file_internal.load_balancer.ssl), var.file_resources.ssl)
     username      = coalesce(var.file_existing.username, var.file.username)
   }
 
