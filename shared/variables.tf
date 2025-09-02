@@ -432,7 +432,7 @@ variable "layout_resources" {
       }
       resources   = {
         requests  = {
-          cpu     = 1.5
+          cpu     = 1
           memory  = "1Gi"
         }
       }

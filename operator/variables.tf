@@ -391,6 +391,7 @@ variable "groundx" {
     load_balancer = object({
       internal    = bool
       port        = number
+      target      = number
     })
   })
   default         = {
