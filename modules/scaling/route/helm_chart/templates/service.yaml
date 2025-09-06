@@ -10,8 +10,8 @@ spec:
     kind: Service
     name: {{ .Values.target }}
   port:
-    port: 8080
-    targetPort: 8080
+    port: {{ .Values.port }}
+    targetPort: {{ .Values.targetPort }}
   tls:
     termination: edge
     insecureEdgeTerminationPolicy: Redirect

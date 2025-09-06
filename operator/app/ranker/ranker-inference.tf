@@ -1,3 +1,7 @@
+locals {
+  ri_image_tag = var.ranker_internal.inference.image.tag != "latest" ? var.ranker_internal.inference.image.tag : var.deployment_type.tag
+}
+
 resource "helm_release" "ranker_inference_service" {
   count      = local.ingest_only ? 0 : 1
 
@@ -19,7 +23,7 @@ resource "helm_release" "ranker_inference_service" {
       image               = {
         pull              = var.ranker_internal.inference.image.pull
         repository        = "${var.app_internal.repo_url}/${var.ranker_internal.inference.image.repository}${local.op_container_suffix}"
-        tag               = var.ranker_internal.inference.image.tag
+        tag               = local.ri_image_tag
       }
       model               = local.ranker_model.version
       nodeSelector        = {
@@ -39,9 +43,9 @@ resource "helm_release" "ranker_inference_service" {
       }
       resources           = var.ranker_resources.inference.resources
       securityContext     = {
-        fsGroup           = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : 1001
-        runAsGroup        = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : 1001
-        runAsUser         = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : 1001
+        fsGroup           = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : var.deployment_type.user != null ? var.deployment_type.user : 1001
+        runAsGroup        = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : var.deployment_type.user != null ? var.deployment_type.user : 1001
+        runAsUser         = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : var.deployment_type.user != null ? var.deployment_type.user : 1001
       }
       service             = {
         name              = "${var.ranker_internal.service}-inference"

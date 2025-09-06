@@ -84,6 +84,19 @@ variable "cluster" {
   }
 }
 
+variable "deployment_type" {
+  type     = object({
+    min_pv = number
+    tag    = string
+    user   = number
+  })
+  default  = {
+    min_pv = 20
+    tag    = "latest"
+    user   = null
+  }
+}
+
 variable "cluster_internal" {
   description      = "Kubernetes cluster internal settings"
   type             = object({
@@ -419,7 +432,7 @@ variable "layout_resources" {
       }
       resources   = {
         requests  = {
-          cpu     = 1.5
+          cpu     = 1
           memory  = "1Gi"
         }
       }

@@ -316,6 +316,12 @@ variable "file_internal" {
         version      = string
       })
     })
+    load_balancer    = object({
+      internal       = bool
+      port           = number
+      ssl            = bool
+      target         = number
+    })
     port             = number
     pv_access        = string
     service          = string
@@ -333,6 +339,7 @@ variable "file_internal" {
         version      = "6.0.3"
       }
     }
+    load_balancer    = null
     port             = 9000
     pv_access        = "ReadWriteMany"
     service          = "minio"
@@ -384,12 +391,14 @@ variable "groundx" {
     load_balancer = object({
       internal    = bool
       port        = number
+      target      = number
     })
   })
   default         = {
     load_balancer = {
       internal    = false
       port        = 80
+      target      = 8080
     }
   }
 }

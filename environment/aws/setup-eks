@@ -231,6 +231,17 @@ cluster = {
 EOF
 fi
 
+if [[ "${TAG:-}" == "chainguard" ]]; then
+  cat <<'EOF' >> "$ENV_DIR/env.tfvars"
+
+deployment_type = {
+  min_pv = 120
+  tag    = "chainguard"
+  user   = 65532
+}
+EOF
+fi
+
     "$do" "eks" "-t" 2>&1 | tee tf_output.log
 
     if [[ $? -ne 0 ]]; then

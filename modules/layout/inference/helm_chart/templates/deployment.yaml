@@ -72,6 +72,8 @@ spec:
               export PYTHONPATH=/app && python /app/init-layout.py && supervisord -c /app/supervisord.conf
           securityContext:
             runAsUser: {{ .Values.securityContext.runAsUser }}
+            runAsGroup: {{ .Values.securityContext.runAsGroup }}
+            fsGroup: {{ .Values.securityContext.runAsGroup }}
           livenessProbe:
             httpGet:
               path: /alive

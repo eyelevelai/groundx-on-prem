@@ -1,3 +1,7 @@
+locals {
+  sc_image_tag = var.summary_client_internal.image.tag != "latest" ? var.summary_client_internal.image.tag : var.deployment_type.tag
+}
+
 resource "helm_release" "summary_client_service" {
   name       = var.summary_client_internal.service
   namespace  = var.app_internal.namespace
@@ -13,7 +17,7 @@ resource "helm_release" "summary_client_service" {
       image           = {
         pull          = var.summary_client_internal.image.pull
         repository    = "${var.app_internal.repo_url}/${var.summary_client_internal.image.repository}${local.container_suffix}"
-        tag           = var.summary_client_internal.image.tag
+        tag           = local.sc_image_tag
       }
       nodeSelector    = {
         node          = local.node_assignment.summary_client
@@ -26,15 +30,18 @@ resource "helm_release" "summary_client_service" {
       }
       resources       = var.summary_client_resources.resources
       securityContext = {
-        runAsUser     = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : 1001
-        runAsGroup    = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.GID, 1001) : 1001
-        fsGroup       = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.GID, 1001) : 1001
+        runAsUser     = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : var.deployment_type.user != null ? var.deployment_type.user : 1001
+        runAsGroup    = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.GID, 1001) : var.deployment_type.user != null ? var.deployment_type.user : 1001
+        fsGroup       = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.GID, 1001) : var.deployment_type.user != null ? var.deployment_type.user : 1001
       }
       service         = {
         name          = var.summary_client_internal.service
         namespace     = var.app_internal.namespace
         version       = var.summary_client_internal.version
       }
+      username        = local.sc_image_tag == "chainguard" ? "nonroot" : "golang"
     })
   ]
+
+  timeout = 300
 }

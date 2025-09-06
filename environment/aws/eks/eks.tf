@@ -35,7 +35,16 @@ locals {
         block_device_mappings                               = {
           xvda                                              = {
             device_name                                     = "/dev/xvda"
-            ebs                                             = var.nodes.node_groups.cpu_memory_nodes.ebs
+            ebs                                             = {
+              delete_on_termination                         = var.nodes.node_groups.cpu_memory_nodes.ebs.delete_on_termination
+              encrypted                                     = var.nodes.node_groups.cpu_memory_nodes.ebs.encrypted
+              iops                                          = var.nodes.node_groups.cpu_memory_nodes.ebs.iops
+              kms_key_id                                    = var.nodes.node_groups.cpu_memory_nodes.ebs.kms_key_id
+              snapshot_id                                   = var.nodes.node_groups.cpu_memory_nodes.ebs.snapshot_id
+              throughput                                    = var.nodes.node_groups.cpu_memory_nodes.ebs.throughput
+              volume_size                                   = max(var.deployment_type.min_pv, var.nodes.node_groups.cpu_memory_nodes.ebs.volume_size)
+              volume_type                                   = var.nodes.node_groups.cpu_memory_nodes.ebs.volume_type
+            }
           }
         }
 
@@ -67,7 +76,16 @@ locals {
         block_device_mappings                               = {
           xvda                                              = {
             device_name                                     = "/dev/xvda"
-            ebs                                             = var.nodes.node_groups.cpu_only_nodes.ebs
+            ebs                                             = {
+              delete_on_termination                         = var.nodes.node_groups.cpu_only_nodes.ebs.delete_on_termination
+              encrypted                                     = var.nodes.node_groups.cpu_only_nodes.ebs.encrypted
+              iops                                          = var.nodes.node_groups.cpu_only_nodes.ebs.iops
+              kms_key_id                                    = var.nodes.node_groups.cpu_only_nodes.ebs.kms_key_id
+              snapshot_id                                   = var.nodes.node_groups.cpu_only_nodes.ebs.snapshot_id
+              throughput                                    = var.nodes.node_groups.cpu_only_nodes.ebs.throughput
+              volume_size                                   = max(var.deployment_type.min_pv, var.nodes.node_groups.cpu_only_nodes.ebs.volume_size)
+              volume_type                                   = var.nodes.node_groups.cpu_only_nodes.ebs.volume_type
+            }
           }
         }
 
@@ -99,7 +117,16 @@ locals {
         block_device_mappings                               = {
           xvda                                              = {
             device_name                                     = "/dev/xvda"
-            ebs                                             = var.nodes.node_groups.layout_nodes.ebs
+            ebs                                             = {
+              delete_on_termination                         = var.nodes.node_groups.layout_nodes.ebs.delete_on_termination
+              encrypted                                     = var.nodes.node_groups.layout_nodes.ebs.encrypted
+              iops                                          = var.nodes.node_groups.layout_nodes.ebs.iops
+              kms_key_id                                    = var.nodes.node_groups.layout_nodes.ebs.kms_key_id
+              snapshot_id                                   = var.nodes.node_groups.layout_nodes.ebs.snapshot_id
+              throughput                                    = var.nodes.node_groups.layout_nodes.ebs.throughput
+              volume_size                                   = max(var.deployment_type.min_pv, var.nodes.node_groups.layout_nodes.ebs.volume_size)
+              volume_type                                   = var.nodes.node_groups.layout_nodes.ebs.volume_type
+            }
           }
         }
 
@@ -131,7 +158,16 @@ locals {
         block_device_mappings                               = {
           xvda                                              = {
             device_name                                     = "/dev/xvda"
-            ebs                                             = var.nodes.node_groups.summary_nodes.ebs
+            ebs                                             = {
+              delete_on_termination                         = var.nodes.node_groups.summary_nodes.ebs.delete_on_termination
+              encrypted                                     = var.nodes.node_groups.summary_nodes.ebs.encrypted
+              iops                                          = var.nodes.node_groups.summary_nodes.ebs.iops
+              kms_key_id                                    = var.nodes.node_groups.summary_nodes.ebs.kms_key_id
+              snapshot_id                                   = var.nodes.node_groups.summary_nodes.ebs.snapshot_id
+              throughput                                    = var.nodes.node_groups.summary_nodes.ebs.throughput
+              volume_size                                   = max(var.deployment_type.min_pv, var.nodes.node_groups.summary_nodes.ebs.volume_size)
+              volume_type                                   = var.nodes.node_groups.summary_nodes.ebs.volume_type
+            }
           }
         }
 
@@ -165,7 +201,16 @@ locals {
         block_device_mappings                               = {
           xvda                                              = {
             device_name                                     = "/dev/xvda"
-            ebs                                             = var.nodes.node_groups.ranker_nodes.ebs
+            ebs                                             = {
+              delete_on_termination                         = var.nodes.node_groups.ranker_nodes.ebs.delete_on_termination
+              encrypted                                     = var.nodes.node_groups.ranker_nodes.ebs.encrypted
+              iops                                          = var.nodes.node_groups.ranker_nodes.ebs.iops
+              kms_key_id                                    = var.nodes.node_groups.ranker_nodes.ebs.kms_key_id
+              snapshot_id                                   = var.nodes.node_groups.ranker_nodes.ebs.snapshot_id
+              throughput                                    = var.nodes.node_groups.ranker_nodes.ebs.throughput
+              volume_size                                   = max(var.deployment_type.min_pv, var.nodes.node_groups.ranker_nodes.ebs.volume_size)
+              volume_type                                   = var.nodes.node_groups.ranker_nodes.ebs.volume_type
+            }
           }
         }
 

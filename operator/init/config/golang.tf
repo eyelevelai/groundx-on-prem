@@ -17,6 +17,8 @@ locals {
     engineCount            = length(var.engines)
     engines                = jsonencode(var.engines)
     fileBaseDomain         = local.file_settings.base_domain
+    fileBucketDomain       = local.file_settings.bucket_domain
+    fileBucketSSL          = local.file_settings.bucket_ssl
     filePassword           = local.file_settings.password
     fileService            = var.file_internal.service
     fileSSL                = local.file_settings.ssl

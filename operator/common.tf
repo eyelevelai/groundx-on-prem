@@ -38,14 +38,17 @@ locals {
   create_file = var.file_existing.base_domain == null || var.file_existing.bucket == null || var.file_existing.password == null || var.file_existing.port == null || var.file_existing.ssl == null
 
   file_domain = coalesce(var.file.base_domain, "${var.file_internal.service}.${var.app_internal.namespace}.svc.cluster.local")
+  file_ssl = var.file_internal.load_balancer != null ? coalesce(var.file_existing.ssl, var.file_internal.load_balancer.ssl) : null
 
   file_settings = {
     base_domain   = coalesce(var.file_existing.base_domain, local.file_domain)
     bucket        = coalesce(var.file_existing.bucket, var.file.upload_bucket)
+    bucket_domain = "${var.file_internal.service}.${var.app_internal.namespace}.svc.cluster.local"
+    bucket_ssl    = coalesce(var.file_existing.ssl, var.file_resources.ssl)
     dependency    = coalesce(var.file_existing.base_domain, "${var.file_internal.service}-tenant-hl.${var.app_internal.namespace}.svc.cluster.local")
     password      = coalesce(var.file_existing.password, var.file.password)
     port          = coalesce(var.file_existing.port, var.file_internal.port)
-    ssl           = coalesce(var.file_existing.ssl, var.file_resources.ssl)
+    ssl           = coalesce(local.file_ssl, var.file_resources.ssl)
     username      = coalesce(var.file_existing.username, var.file.username)
   }
 

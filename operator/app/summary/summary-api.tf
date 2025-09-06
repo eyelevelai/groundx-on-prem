@@ -1,3 +1,7 @@
+locals {
+  sa_image_tag = var.summary_internal.api.image.tag != "latest" ? var.summary_internal.api.image.tag : var.deployment_type.tag
+}
+
 resource "helm_release" "summary_api_service" {
   count = local.create_summary ? 1 : 0
 
@@ -18,7 +22,7 @@ resource "helm_release" "summary_api_service" {
       image           = {
         pull          = var.summary_internal.api.image.pull
         repository    = "${var.app_internal.repo_url}/${var.summary_internal.api.image.repository}${local.container_suffix}"
-        tag           = var.summary_internal.api.image.tag
+        tag           = local.sa_image_tag
       }
       nodeSelector    = {
         node          = local.node_assignment.summary_api
@@ -31,7 +35,7 @@ resource "helm_release" "summary_api_service" {
       }
       resources       = var.summary_resources.api.resources
       securityContext = {
-        runAsUser     = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : 1001
+        runAsUser     = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : var.deployment_type.user != null ? var.deployment_type.user : 1001
       }
       service         = {
         name          = "${var.summary_internal.service}-api"
@@ -40,4 +44,6 @@ resource "helm_release" "summary_api_service" {
       }
     })
   ]
+
+  timeout = 300
 }

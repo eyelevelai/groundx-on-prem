@@ -1,3 +1,7 @@
+locals {
+  ls_image_tag = var.layout_internal.save.image.tag != "latest" ? var.layout_internal.save.image.tag : var.deployment_type.tag
+}
+
 resource "helm_release" "layout_save_service" {
   name       = "${var.layout_internal.service}-save"
   namespace  = var.app_internal.namespace
@@ -17,7 +21,7 @@ resource "helm_release" "layout_save_service" {
       image           = {
         pull          = var.layout_internal.save.image.pull
         repository    = "${var.app_internal.repo_url}/${var.layout_internal.save.image.repository}${local.container_suffix}"
-        tag           = var.layout_internal.save.image.tag
+        tag           = local.ls_image_tag
       }
       nodeSelector    = {
         node          = local.node_assignment.layout_save
@@ -30,7 +34,9 @@ resource "helm_release" "layout_save_service" {
       }
       resources       = var.layout_resources.save.resources
       securityContext = {
-        runAsUser     = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : 1001
+        fsGroup       = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : var.deployment_type.user != null ? var.deployment_type.user : 1001
+        runAsGroup    = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : var.deployment_type.user != null ? var.deployment_type.user : 1001
+        runAsUser     = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : var.deployment_type.user != null ? var.deployment_type.user : 1001
       }
       service         = {
         name          = "${var.layout_internal.service}-save"
@@ -39,4 +45,6 @@ resource "helm_release" "layout_save_service" {
       }
     })
   ]
+
+  timeout = 300
 }

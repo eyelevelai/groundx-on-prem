@@ -9,11 +9,12 @@ resource "helm_release" "groundx_lb" {
 
   values = [
     yamlencode({
-      internal  = var.groundx.load_balancer.internal
-      name      = "${var.groundx_internal.service}-service"
-      namespace = var.app_internal.namespace
-      port      = var.groundx.load_balancer.port
-      target    = "${var.groundx_internal.service}"
+      internal   = var.groundx.load_balancer.internal
+      name       = "${var.groundx_internal.service}-service"
+      namespace  = var.app_internal.namespace
+      port       = var.groundx.load_balancer.port
+      target     = var.groundx_internal.service
+      targetPort = var.groundx.load_balancer.target
     })
   ]
 }
@@ -29,9 +30,11 @@ resource "helm_release" "groundx_route" {
 
   values = [
     yamlencode({
-      name      = "${var.groundx_internal.service}-service"
-      namespace = var.app_internal.namespace
-      target    = "${var.groundx_internal.service}"
+      name       = "${var.groundx_internal.service}-service"
+      namespace  = var.app_internal.namespace
+      port       = var.groundx.load_balancer.port
+      target     = var.groundx_internal.service
+      targetPort = var.groundx.load_balancer.target
     })
   ]
 }
