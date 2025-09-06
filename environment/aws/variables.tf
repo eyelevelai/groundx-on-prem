@@ -166,7 +166,7 @@ variable "nodes" {
           kms_key_id            = null
           snapshot_id           = null
           throughput            = null
-          volume_size           = 20
+          volume_size           = 30
           volume_type           = "gp2"
         }
         instance_types          = ["m6a.xlarge"]
@@ -183,7 +183,7 @@ variable "nodes" {
           kms_key_id            = null
           snapshot_id           = null
           throughput            = null
-          volume_size           = 20
+          volume_size           = 30
           volume_type           = "gp2"
         }
         instance_types          = ["t3a.medium"]
@@ -200,7 +200,7 @@ variable "nodes" {
           kms_key_id            = null
           snapshot_id           = null
           throughput            = null
-          volume_size           = 35
+          volume_size           = 50
           volume_type           = "gp2"
         }
         instance_types          = ["g4dn.xlarge"]
