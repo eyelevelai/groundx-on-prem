@@ -4,6 +4,7 @@ command=celery -A summary.celery_inference.appSummary worker -n %(ENV_POD_NAME)s
 environment=
     CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w${worker_number}",
     LOCAL=0,
+    VLLM_ATTENTION_BACKEND="FLASH_ATTN",
     PYTHONUNBUFFERED="1"
 autostart=true
 autorestart=true
