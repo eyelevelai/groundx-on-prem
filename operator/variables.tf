@@ -985,7 +985,7 @@ variable "summary_internal" {
     }
     inference       = {
       device        = "cuda"
-      deviceUtilize = 0.33
+      deviceUtilize = 0.45
       image         = {
         pull        = "Always"
         repository  = "summary-inference"
