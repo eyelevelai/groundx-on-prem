@@ -1,0 +1,1 @@
+../../../shared/node_assignments.tf

@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "properties": {
+    "namespace": { "type": "string", "minLength": 1 },
+    "createNamespace": { "type": "boolean" },
+    "tls": {
+      "type": "object",
+      "properties": {
+        "existingSecret": {
+          "type": "string",
+          "description": "Name of an existing kubernetes.io/tls Secret in the target namespace. Leave empty to have the chart create/reference no TLS resources."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["namespace"],
+  "additionalProperties": false
+}

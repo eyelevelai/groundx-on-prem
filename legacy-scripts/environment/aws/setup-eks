@@ -1,0 +1,303 @@
+#!/usr/bin/env bash
+
+ENV_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+do="$ENV_DIR/../../bin/environment"
+
+. "$ENV_DIR/../../bin/shared/cli-input"
+. "$ENV_DIR/../../bin/shared/util"
+
+echo $ENV_DIR
+
+must_have aws
+must_have terraform
+
+if [ ! -f "$ENV_DIR/env.tfvars" ]; then
+    echo "env.tfvars not found. Copying env.tfvars.example..."
+    cp "$ENV_DIR/env.tfvars.example" "$ENV_DIR/env.tfvars"
+fi
+
+environments=("aws")
+aws_clusters=("eks")
+
+check_env=false
+check_vpc=false
+check_kc=false
+check_kct=false
+
+ENV="aws"
+VPC=true
+KC=true
+KCT="eks"
+REGION="us-east-2"
+SEARCH=true
+
+choose_cluster_existing=$(prompt_menu "What type of Kubernetes cluster do you have?" "aws_clusters[@]")
+choose_cluster_new=$(prompt_menu "What type of Kubernetes cluster do you want to set up?" "aws_clusters[@]")
+choose_environment=$(prompt_menu "What hosting environment do you want to deploy to?" "environments[@]")
+choose_kc=$(prompt_text "Do you want to set up a dedicated Kubernetes cluster for this deployment?")
+choose_vpc=$(prompt_text "Do you want to set up a dedicated VPC for this deployment?")
+confirm_choices=$(prompt_text "")
+enter_region=$(prompt_text "What AWS region do you want to deploy to?")
+
+if $check_env; then
+    ENV=$(prompt_input "menu" "$choose_environment" "environments[@]" "") && ok
+fi
+
+if [[ "$ENV" == "aws" ]]; then
+    test_aws || { error "aws command isn't working (are you logged in and authorized?)"; exit 2; }
+fi
+
+if $check_vpc; then
+    VPC=$(prompt_input "yn" "$choose_vpc" "empty[@]" "") && ok
+fi
+
+if $check_kc && ! $VPC; then
+    KC=$(prompt_input "yn" "$choose_kc" "empty[@]" "") && ok
+else
+    KC=true
+fi
+
+if $check_kct; then
+    if $KC; then
+        KCT=$(prompt_input "menu" "$choose_cluster_new" "aws_clusters[@]" "") && ok
+    else
+        KCT=$(prompt_input "menu" "$choose_cluster_existing" "aws_clusters[@]" "") && ok
+    fi
+fi
+
+if [[ "$ENV" == "aws" ]]; then
+    msg=$(status "Enter your region (e.g. us-east-2)")
+    REGION=$(prompt_input "aws-region" "$enter_region" "empty[@]" "$msg") && ok
+fi
+
+echo "" && echo ""
+echo "Please confirm your deployment settings:" && echo ""
+echo -e   "deploying to:        $ENV"
+if [[ "$REGION" != "" ]]; then
+  echo -e "  region:            $REGION"
+fi
+if $VPC; then
+    ok    "creating a VPC:      "
+else
+    error "creating a VPC:      "
+fi
+if $KC; then
+    ok    "creating a cluster:  "
+else
+    error "creating a cluster:  "
+fi
+echo -e   "cluster type:        $KCT"
+
+
+result=$(prompt_input "yn" "$confirm_choices" "empty[@]" "") && ok
+
+if ! $result; then
+    echo "Cancelling deployment."
+    exit 1
+fi
+
+
+vpc_id=""
+subnets="[]"
+ssh_security_group=""
+role_arns="[$ARN]"
+ssh_key="$SSH_KEY"
+
+if $KC; then
+    status "testing EKS cluster configuration"
+
+    cat <<EOF > "$ENV_DIR/env.tfvars"
+environment = {
+  cluster_role_arns = $role_arns
+  region = "$REGION"
+  security_groups = [$ssh_security_group]
+  ssh_key_name = "$ssh_key"
+  stage = "prod"
+  subnets = $subnets
+  vpc_id = "$vpc_id"
+}
+EOF
+fi
+
+if $VPC; then
+    status "testing VPC configuration"
+    "$do" "$ENV-vpc" "-t" 2>&1 | tee tf_output.log
+
+    if [[ $? -ne 0 ]]; then
+        error "Terraform apply failed. Check tf_output.log for details." && echo ""
+        exit 1
+    fi
+
+    cleaned_log=$(sed -r "s/\x1B\[[0-9;]*[mK]//g" tf_output.log)
+
+    if echo "$cleaned_log" | grep -Eq "Warning|Error"; then
+        error "Terraform apply encountered warnings and/or errors. Check tf_output.log for details." && echo ""
+        exit 1
+    fi
+    if grep -q "Warning" <(sed -r "s/\x1B\[[0-9;]*[mK]//g" tf_output.log); then
+        error "Terraform apply encountered warnings. Check tf_output.log for details." && echo ""
+        exit 1
+    fi
+
+    ok && echo ""
+    status "creating VPC" && echo ""
+
+    "$do" "$ENV-vpc" 2>&1 | tee tf_output.log
+
+    if [[ $? -ne 0 ]]; then
+        error "Terraform apply failed. Check tf_output.log for details." && echo ""
+        exit 1
+    fi
+
+    cleaned_log=$(sed -r "s/\x1B\[[0-9;]*[mK]//g" tf_output.log)
+
+    if echo "$cleaned_log" | grep -Eq "Warning|Error"; then
+        error "Terraform apply encountered warnings and/or errors. Check tf_output.log for details." && echo ""
+        exit 1
+    fi
+    if grep -q "Warning" <(sed -r "s/\x1B\[[0-9;]*[mK]//g" tf_output.log); then
+        error "Terraform apply encountered warnings. Check tf_output.log for details." && echo ""
+        exit 1
+    fi
+
+    vpc_id=$(terraform -chdir="$ENV_DIR/vpc" output -raw vpc_id 2>/dev/null)
+    if [[ -z "$vpc_id" ]]; then
+        terraform -chdir="$ENV_DIR/vpc" output -raw vpc_id
+        error "vpc_id is empty or not defined." && echo ""
+        exit 1
+    fi
+    if [[ "$vpc_id" == *"Warning"* || "$vpc_id" == *"Error"* ]]; then
+        error "$vpc_id"
+        exit 1
+    fi
+
+    subnets=$(terraform -chdir="$ENV_DIR/vpc" output -json subnets 2>/dev/null)
+    if [[ -z "$subnets" ]]; then
+        terraform -chdir="$ENV_DIR/vpc" output -json subnets
+        error "subnets is empty or not defined." && echo ""
+        exit 1
+    fi
+    if [[ "$subnets" == *"Warning"* || "$subnets" == *"Error"* ]]; then
+        error "$subnets"
+        exit 1
+    fi
+
+    sg=$(terraform -chdir="$ENV_DIR/vpc" output -raw ssh_security_group 2>/dev/null)
+    if [[ -z "$sg" ]]; then
+        terraform -chdir="$ENV_DIR/vpc" output -raw ssh_security_group
+        error "ssh_security_group is empty or not defined." && echo ""
+        exit 1
+    fi
+    if [[ "$sg" == *"Warning"* || "$sg" == *"Error"* ]]; then
+        error "$sg"
+        exit 1
+    fi
+
+    ssh_security_group="\"$sg\""
+
+    ok && echo ""
+fi
+
+if $KC; then
+    status "testing EKS cluster configuration"
+
+    cat <<EOF > "$ENV_DIR/env.tfvars"
+environment = {
+  cluster_role_arns = $role_arns
+  region = "$REGION"
+  security_groups = [$ssh_security_group]
+  ssh_key_name = "$ssh_key"
+  stage = "prod"
+  subnets = $subnets
+  vpc_id = "$vpc_id"
+}
+EOF
+
+if ! $SEARCH; then
+    cat <<EOF >> "$ENV_DIR/env.tfvars"
+cluster = {
+  autoscale        = false
+  environment      = "aws"
+  has_nvidia       = false
+  internet_access  = true
+  kube_config_path = "~/.kube/config"
+  nodes            = {
+    cpu_memory     = "eyelevel-cpu-memory"
+    cpu_only       = "eyelevel-cpu-only"
+    gpu_layout     = "eyelevel-gpu-layout"
+    gpu_ranker     = "eyelevel-gpu-ranker"
+    gpu_summary    = "eyelevel-gpu-summary"
+  }
+  prefix           = "eyelevel"
+  pv               = {
+    name           = "eyelevel-pv"
+    type           = "gp2"
+  }
+  search           = $SEARCH
+  throughput       = {
+    ingest         = {
+      baseline     = 9600
+      max          = 25000
+    }
+    search         = {
+      baseline     = 400000
+      max          = 3600000
+    }
+  }
+  type             = "eks"
+}
+EOF
+fi
+
+if [[ "${TAG:-}" == "chainguard" ]]; then
+  cat <<'EOF' >> "$ENV_DIR/env.tfvars"
+
+deployment_type = {
+  min_pv = 120
+  tag    = "chainguard"
+  user   = 65532
+}
+EOF
+fi
+
+    "$do" "eks" "-t" 2>&1 | tee tf_output.log
+
+    if [[ $? -ne 0 ]]; then
+        error "Terraform apply failed. Check tf_output.log for details." && echo ""
+        exit 1
+    fi
+
+    cleaned_log=$(sed -r "s/\x1B\[[0-9;]*[mK]//g" tf_output.log)
+
+    if echo "$cleaned_log" | grep -Eq "Warning|Error"; then
+        error "Terraform apply encountered warnings and/or errors. Check tf_output.log for details." && echo ""
+        exit 1
+    fi
+    if grep -q "Warning" <(sed -r "s/\x1B\[[0-9;]*[mK]//g" tf_output.log); then
+        error "Terraform apply encountered warnings. Check tf_output.log for details." && echo ""
+        exit 1
+    fi
+
+    ok && echo ""
+    status "creating EKS cluster" && echo ""
+
+    "$do" "eks" 2>&1 | tee tf_output.log
+
+    if [[ $? -ne 0 ]]; then
+        error "Terraform apply failed. Check tf_output.log for details." && echo ""
+        exit 1
+    fi
+
+    cleaned_log=$(sed -r "s/\x1B\[[0-9;]*[mK]//g" tf_output.log)
+
+    if echo "$cleaned_log" | grep -Eq "Warning|Error"; then
+        error "Terraform apply encountered warnings and/or errors. Check tf_output.log for details." && echo ""
+        exit 1
+    fi
+    if grep -q "Warning" <(sed -r "s/\x1B\[[0-9;]*[mK]//g" tf_output.log); then
+        error "Terraform apply encountered warnings. Check tf_output.log for details." && echo ""
+        exit 1
+    fi
+
+    ok && echo "" && ok "VPC and Cluster setup complete. You can now set up the EyeLevel operator" && echo "" && echo ""
+fi

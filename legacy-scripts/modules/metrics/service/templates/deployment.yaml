@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.service.name }}
+  namespace: {{ .Values.service.namespace }}
+  labels:
+    app: {{ .Values.service.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.service.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.service.name }}
+    spec:
+      nodeSelector:
+        node: "{{ .Values.nodeSelector.node }}"
+      tolerations:
+        - key: "node"
+          value: "{{ .Values.nodeSelector.node }}"
+          effect: "NoSchedule"
+      initContainers:
+      - name: wait-for-cache
+        image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
+        imagePullPolicy: "{{ .Values.busybox.pull }}"
+        command: ['sh', '-c', "until nc -z {{ .Values.dependencies.cache }}; do echo waiting for cache; sleep 2; done"]
+      containers:
+      - name: {{ .Values.service.name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: "{{ .Values.image.pull }}"
+        ports:
+        - containerPort: 8080
+        - containerPort: 8443
+        {{- if .Values.debug }}
+        env:
+        - name: DEBUG
+          value: "1"
+        {{- end }}
+        securityContext:
+          runAsUser: {{ .Values.securityContext.runAsUser }}
+          runAsGroup: {{ .Values.securityContext.runAsGroup }}
+          fsGroup: {{ .Values.securityContext.fsGroup }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        volumeMounts:
+        - name: config-volume
+          mountPath: /home/golang/.cashbot/config.yaml
+          subPath: config.yaml
+        - name: init-db-volume
+          mountPath: /app/init-db.sql
+          subPath: init-db.sql
+        - name: tls-cert
+          mountPath: /etc/ssl/tls
+          readOnly: true
+      volumes:
+      - name: config-volume
+        configMap:
+          name: config-yaml-map
+      - name: init-db-volume
+        configMap:
+          name: init-database-file
+      - name: tls-cert
+        secret:
+          secretName: {{ .Values.service.namespace }}-cert
