@@ -1,0 +1,16 @@
+FROM vllm/vllm-openai:latest
+
+# Switch to root user to make changes
+USER root
+
+# Ensure the vllm user can read the configuration file
+RUN chown -R 1001:1001 /root \
+    && chmod -R 777 /root
+
+RUN mkdir /workspace
+RUN mkdir /workspace/.cache
+RUN chown -R 1001:1001 /workspace \
+    && chmod -R 777 /workspace
+
+# Set the default user back to the OpenShift random UID
+USER 1001

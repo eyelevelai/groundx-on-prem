@@ -1,5 +1,247 @@
 namespace: eyelevel
 createNamespace: true
+ingestOnly: false
+languages:
+  - en
+logLevel: info
+hasMig: false
 
-tls:
-  existingSecret: ""
+admin:
+  apiKey: "00000000-0000-0000-0000-000000000000"
+  email: "support@mycorp.net"
+  password: "password"
+  username: "00000000-0000-0000-0000-000000000000"
+
+cluster:
+  # "", "eks", "aks", "gke", "openshift", etc.
+  type: eks
+
+  nodeLabels:
+    cpuMemory: eyelevel-cpu-memory
+    cpuOnly: eyelevel-cpu-only
+    gpuLayout: eyelevel-gpu-layout
+    gpuRanker: eyelevel-gpu-ranker
+    gpuSummary: eyelevel-gpu-summary
+
+  tls:
+    existingSecret: ""
+
+engines:
+  en:
+    engineID: google/gemma-3-12b-it
+    maxInputTokens: 100000
+    maxOutputTokens: 2000
+
+cache:
+  internal:
+    serviceName: redis
+    isCluster: false
+    port: 6379
+
+  # set to use external cache
+  existing: {}          
+#    addr: redis.mycorp.net
+#    isCluster: true
+#    port: 6379
+
+  metrics:
+    enabled: true
+
+    internal:
+      serviceName: metrics
+      isCluster: false
+      port: 6379
+
+    # set to use external metrics cache
+    existing: {}
+#      addr: redis-metrics.mycorp.net
+#      isCluster: true
+#      port: 6379
+
+db:
+  dbName: eyelevel
+  serviceUser: eyelevel
+  servicePassword: password
+  privilegedUsername: root
+  privilegedPassword: password
+  maxIdle: 5
+  maxOpen: 10
+
+  internal:
+    serviceName: mysql
+    port: 3306
+
+  # set to use external MySQL DB
+  existing: {}
+#    ro: myro.mycorp.net
+#    rw: myrw.mycorp.net
+#    port: 3306
+
+file:
+  bucketName: eyelevel
+  username: minio
+  password: minio123
+  # minio or sqs
+  serviceType: minio
+
+  internal:
+    serviceName: minio
+    port: 9000
+    customDomain: ""
+
+    # set to expose minio externally
+    load_balancer: {}
+#      port: 8080
+#      ssl: true
+#.     target: 9000
+
+  # set to use existing minio file storage
+  existing: {}
+#.   domain: minio.mycorp.net
+#    port: 9000
+#    ssl: true
+
+search:
+  indexName: prod-1
+  username: eyelevel
+  password: R0otb_*t!kazs
+  privilegedPassword: R0otb_*t!kazs
+  privilegedUsername: admin
+
+  internal:
+    serviceName: search
+    port: 9200
+
+  existing:
+#    domain: search.mycorp.net
+#    url: https://search.mycorp.net:9200
+#    port: 9200
+
+stream:
+  internal:
+    serviceName: kafka
+    port: 9092
+
+  existing: {}
+#    domain: kafka.mycorp.net
+#    url: https://kafka.mycorp.net:9092
+#    port: 9092
+
+summary:
+  internal:
+    serviceName: summary
+    defaultKitID: 0
+
+    # set to expose summary service externally
+    load_balancer: {}
+#      port: 8080
+#      ssl: true
+#.     target: 8080
+
+  existing: {}
+#    apiKey: my-oai-key
+#    serviceType: openai
+#    url: https://api.openai.com/v1
+
+dashboard:
+  internal:
+    serviceName: dashboard
+
+groundx:
+  internal:
+    port: 8080
+    serviceName: groundx
+    type: all
+
+layout:
+  internal:
+    correct:
+      queue: correct_queue
+    inference:
+      queue: layout_queue
+    map:
+      queue: map_queue
+    ocr:
+      queue: ocr_queue
+    process:
+      queue: process_queue
+    save:
+      queue: save_queue
+    serviceName: layout
+
+layoutWebhook:
+  internal:
+    port: 8080
+    serviceName: layout-webhook
+
+metrics:
+  internal:
+    port: 8080
+    serviceName: metrics
+
+preProcess:
+  internal:
+    port: 8080
+    queue: file-pre-process
+    queueSize: 4
+    serviceName: pre-process
+
+process:
+  internal:
+    port: 8080
+    queue: file-process
+    queueSize: 4
+    serviceName: process
+
+queue:
+  internal:
+    port: 8080
+    queue: file-update
+    queueSize: 4
+    serviceName: queue
+
+ranker:
+  internal:
+    serviceName: ranker
+
+summaryClient:
+  internal:
+    port: 8080
+    serviceName: summary-client
+    workers: 3
+
+upload:
+  internal:
+    port: 8080
+    queue: file-upload
+    queueSize: 4
+    serviceName: upload
+
+throughput:
+  tpm:
+    document: 12500
+    page: 500
+    summaryRequest: 625
+  services:
+    layout:
+      correct: 500
+      inference: 120000
+      map: 500
+      ocr: 500
+      process: 500
+      save: 500
+    preProcess:
+      queue: 6
+    process:
+      queue: 9
+    queue:
+      queue: 9
+    ranker:
+      inference: 0
+    summary:
+      api: 9600
+      inference: 3200
+    summaryClient:
+      api: 9600
+    upload:
+      queue: 120

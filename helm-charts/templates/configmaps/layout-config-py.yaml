@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: layout-config-py-map
+  namespace: {{ include "groundx.ns" . }}
+data:
+  config.py: |
+    env = dict(
+        accessKey={{ .Values.upload.username | default "" | quote }},
+        accessSecret={{ .Values.upload.password | default "" | quote }},
+        annotationBase="layout/processed/",
+        cacheDir="/app/hf_models_cache",
+        callbackAPIKey={{ .Values.auth.groundx.username | default "" | quote }},
+        deviceType={{ .Values.layout.models.device | default "cpu" | quote }},
+        env="prod",
+        includeLS=False,
+        layoutBroker="redis://{{ .Values.cache.addr | default "redis" }}:{{ .Values.cache.port | default 6379 }}/0",
+        layoutLogger={{ .Values.services.layout.api | default "layout-api" | quote }},
+        layoutResultBroker="redis://{{ .Values.cache.addr | default "redis" }}:{{ .Values.cache.port | default 6379 }}/0",
+        metricsAddr={{ .Values.metrics.session.addr | default "redis" | quote }},
+        metricsPort={{ .Values.metrics.session.port | default 6379 }},
+        minBatchSize={{ .Values.layout.process.minBatchSize | default 1 }},
+        ocrBase="layout/raw/",
+        ocrCredentials="credentials.json",
+        ocrProject={{ .Values.layout.ocr.project | default "" | quote }},
+        ocrType={{ .Values.layout.ocr.type | default "" | quote }},
+        podMemory={{ .Values.layout.podMemory | default "2Gi" | quote }},
+        queueType="kafka",
+        service={{ .Values.services.layout.api | default "layout-api" | quote }},
+        uploadBase="layout/processed/",
+        uploadBaseURL={{ printf "%s://%s" (ternary "https" "http" (.Values.upload.bucketSSL | default false)) (.Values.upload.bucketDomain | default "") | quote }},
+        uploadBucket={{ .Values.upload.bucket | default "" | quote }},
+        uploadReplaceURL={{ printf "%s://%s/%s/" (ternary "https" "http" (.Values.upload.bucketSSL | default false)) (.Values.upload.bucketDomain | default "") (.Values.upload.bucket | default "") | quote }},
+        uploadSSL={{ ternary "True" "False" (.Values.upload.bucketSSL | default false) }},
+        uploadType="minio",
+        uploadURL={{ printf "%s://%s/%s/" (ternary "https" "http" (.Values.upload.ssl | default false)) (.Values.upload.baseDomain | default "") (.Values.upload.bucket | default "") | quote }},
+        validAPIKeys=[{{ .Values.auth.groundx.apiKey | default "" | quote }}, {{ .Values.auth.groundx.username | default "" | quote }}],
+        workers={{ .Values.layout.inference.workers | default 1 }},
+    )

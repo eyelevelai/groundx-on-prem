@@ -1,1 +1,1 @@
-../../../shared/common.tf
+../../../../terraform/shared/common.tf

@@ -1,0 +1,28 @@
+{{- $ns := include "groundx.ns" . -}}
+{{- range $name, $cfg := (.Values.layout.supervisordSets | default dict) }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: layout-{{ $name }}-supervisord-conf-map
+  namespace: {{ $ns }}
+data:
+  supervisord.conf: |
+    [supervisord]
+    nodaemon=true
+    logfile=/dev/stdout
+    pidfile=/tmp/supervisord.pid
+
+    {{- range $i, $ := until (int (default 0 $cfg.workers)) }}
+    [program:worker-{{ add $i 1 }}]
+    command=/usr/bin/python /app/worker.py \
+      --queues {{ join "," ($cfg.queues | default list) }} \
+      --threads {{ default 1 $cfg.threads }} \
+      --worker-number {{ add $i 1 }}
+    autostart=true
+    autorestart=true
+    stdout_logfile=/dev/stdout
+    stderr_logfile=/dev/stderr
+
+    {{- end }}
+{{- end }}

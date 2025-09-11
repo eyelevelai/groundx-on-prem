@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: layout-gunicorn-conf-py-map
+  namespace: {{ include "groundx.ns" . }}
+data:
+  gunicorn_conf.py: |
+    bind = "0.0.0.0:8080"
+    threads = {{ .Values.layout.api.threads | default 2 }}
+    workers = {{ .Values.layout.api.workers | default 1 }}
+    timeout = {{ .Values.layout.api.timeout | default 120 }}

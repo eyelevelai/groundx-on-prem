@@ -1,1 +1,1 @@
-../../../shared/variables.tf
+../../../../terraform/shared/variables.tf

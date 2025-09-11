@@ -23,36 +23,36 @@ for (( idx=${#valid_envs[@]}-1 ; idx>=0 ; idx-- )) ; do
                 cdir="vpc"
             fi
             for (( kdx=${#rm_types[@]}-1 ; kdx>=0 ; kdx-- )) ; do
-                rm -rf "$BIN_DIR/../environment/${valid_envs[$idx]}/$cdir/${rm_types[$kdx]}"
+                rm -rf "$BIN_DIR/../terraform/${valid_envs[$idx]}/$cdir/${rm_types[$kdx]}"
             done
         done
     fi
-    rm -rf "$BIN_DIR/../environment/${valid_envs[$idx]}/env.tfvars"
+    rm -rf "$BIN_DIR/../terraform/${valid_envs[$idx]}/env.tfvars"
 done
 
 for (( kdx=${#rm_types[@]}-1 ; kdx>=0 ; kdx-- )) ; do
-    rm -rf "$BIN_DIR/../environment/estimate/${rm_types[$kdx]}"
+    rm -rf "$BIN_DIR/../terraform/estimate/${rm_types[$kdx]}"
 done
 
 for (( idx=${#valid_groups[@]}-1 ; idx>=0 ; idx-- )) ; do
     if [[ "${valid_groups[$idx]}" == "init" ]]; then
         for (( jdx=${#valid_init[@]}-1 ; jdx>=0 ; jdx-- )) ; do
             for (( kdx=${#rm_types[@]}-1 ; kdx>=0 ; kdx-- )) ; do
-                rm -rf "$BIN_DIR/../operator/${valid_groups[$idx]}/${valid_init[$jdx]}/${rm_types[$kdx]}"
+                rm -rf "$BIN_DIR/../legacy-scripts/operator/${valid_groups[$idx]}/${valid_init[$jdx]}/${rm_types[$kdx]}"
             done
         done
     elif [[ "${valid_groups[$idx]}" == "services" ]]; then
         for (( jdx=${#valid_services[@]}-1 ; jdx>=0 ; jdx-- )) ; do
             for (( kdx=${#rm_types[@]}-1 ; kdx>=0 ; kdx-- )) ; do
-                rm -rf "$BIN_DIR/../operator/${valid_groups[$idx]}/${valid_services[$jdx]}/${rm_types[$kdx]}"
+                rm -rf "$BIN_DIR/../legacy-scripts/operator/${valid_groups[$idx]}/${valid_services[$jdx]}/${rm_types[$kdx]}"
             done
         done
     elif [[ "${valid_groups[$idx]}" == "app" ]]; then
         for (( jdx=${#valid_apps[@]}-1 ; jdx>=0 ; jdx-- )) ; do
             for (( kdx=${#rm_types[@]}-1 ; kdx>=0 ; kdx-- )) ; do
-                rm -rf "$BIN_DIR/../operator/${valid_groups[$idx]}/${valid_apps[$jdx]}/${rm_types[$kdx]}"
+                rm -rf "$BIN_DIR/../legacy-scripts/operator/${valid_groups[$idx]}/${valid_apps[$jdx]}/${rm_types[$kdx]}"
             done
         done
     fi
 done
-rm -rf "$BIN_DIR/../operator/env.tfvars"
+rm -rf "$BIN_DIR/../legacy-scripts/operator/env.tfvars"

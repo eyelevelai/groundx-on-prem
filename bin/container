@@ -26,8 +26,7 @@ create_container_bundle() {
 
 get_containers() {
     top="$(git rev-parse --show-toplevel)"
-    echo "$top/modules/busybox/container $top/modules/opensearch/container $top/modules/redis/container $top/modules/vllm/container "
-    echo "$top "
+    echo "$top/containers "
 }
 
 
@@ -63,7 +62,6 @@ do
             *)
                 repo_target=$2
                 top="$(git rev-parse --show-toplevel)"
-                container_dirs=("$top/modules/$repo_target/container")
                 shift 2
             ;;
         esac

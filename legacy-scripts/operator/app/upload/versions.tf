@@ -1,1 +1,1 @@
-../../../shared/versions.tf
+../../../../terraform/shared/versions.tf
