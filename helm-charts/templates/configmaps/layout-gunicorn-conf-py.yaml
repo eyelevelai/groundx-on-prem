@@ -5,7 +5,17 @@ metadata:
   namespace: {{ include "groundx.ns" . }}
 data:
   gunicorn_conf.py: |
+    infolog = "-"
+    accesslog = "-"
+    errorlog = "-"
+
+    loglevel = "{{ .Values.logLevel }}"
+    workers = {{ .Values.layout.internal.api.workers }}
+    threads = {{ .Values.layout.internal.api.threads }}
+    timeout = {{ .Values.layout.internal.api.timeout }}
+
+    worker_class = "uvicorn.workers.UvicornWorker"
+
     bind = "0.0.0.0:8080"
-    threads = {{ .Values.layout.api.threads | default 2 }}
-    workers = {{ .Values.layout.api.workers | default 1 }}
-    timeout = {{ .Values.layout.api.timeout | default 120 }}
+
+    wsgi_app = "document_api_server:app"

@@ -26,7 +26,13 @@
 {{- define "groundx.cache.isCluster" -}}
 {{- $ex := .Values.cache.existing | default dict -}}
 {{- $in := .Values.cache.internal | default dict -}}
-{{- coalesce (dig "isCluster" "" $ex) (dig "isCluster" false $in) -}}
+{{- $ic := coalesce (dig "isCluster" "" $ex) (dig "isCluster" "" $in) -}}
+{{- if eq (printf "%v" $ic) "true" -}}true{{- else -}}false{{- end -}}
+{{- end }}
+
+{{- define "groundx.cache.notCluster" -}}
+{{- $ic := include "groundx.cache.isCluster" . | trim | lower -}}
+{{- if eq $ic "true" -}}false{{- else -}}true{{- end -}}
 {{- end }}
 
 {{- define "groundx.cache.port" -}}
@@ -56,10 +62,16 @@
 {{- $ex := dig "existing" dict $m -}}
 {{- $in := dig "internal" dict $m -}}
 {{- if (dig "enabled" false $m) -}}
-  {{- coalesce (dig "isCluster" "" $ex) (dig "isCluster" false $in) -}}
+  {{- $ic := coalesce (dig "isCluster" "" $ex) (dig "isCluster" "" $in) -}}
+  {{- if eq (printf "%v" $ic) "true" -}}true{{- else -}}false{{- end -}}
 {{- else -}}
   {{- include "groundx.cache.isCluster" . -}}
 {{- end -}}
+{{- end }}
+
+{{- define "groundx.metrics.cache.notCluster" -}}
+{{- $ic := include "groundx.metrics.cache.isCluster" . | trim | lower -}}
+{{- if eq $ic "true" -}}false{{- else -}}true{{- end -}}
 {{- end }}
 
 {{- define "groundx.metrics.cache.port" -}}
@@ -80,7 +92,7 @@
 
 {{- define "groundx.db.serviceHost" -}}
 {{- $ns := include "groundx.ns" . -}}
-{{- $name := include "groundx.db.serviceName" . -}}
+{{- $name := (.Values.db.internal.serviceName | default "") -}}
 {{- printf "%s-cluster-pxc-db-haproxy.%s.svc.cluster.local" $name $ns -}}
 {{- end }}
 
@@ -132,12 +144,28 @@
 {{- coalesce (dig "port" "" $ex) (dig "port" 9000 $in) -}}
 {{- end }}
 
+{{- define "groundx.lb" -}}
+{{- $in := .Values.file.internal | default dict -}}
+{{- dig "load_balancer" dict $in -}}
+{{- end }}
+
+{{- define "groundx.lbssl" -}}
+{{- $in := .Values.file.internal | default dict -}}
+{{- $lb := dig "load_balancer" dict $in -}}
+{{- (hasKey $lb "ssl") | ternary (dig "ssl" "" $lb) false -}}
+{{- end }}
+
+{{- define "groundx.essl" -}}
+{{- $ex := .Values.file.existing | default dict -}}
+{{- coalesce "" "" false -}}
+{{- end }}
+
 {{- define "groundx.file.ssl" -}}
 {{- $ex := .Values.file.existing | default dict -}}
 {{- $in := .Values.file.internal | default dict -}}
 {{- $lb := dig "load_balancer" dict $in -}}
 {{- $lbssl := (hasKey $lb "ssl") | ternary (dig "ssl" "" $lb) "" -}}
-{{- coalesce (dig "ssl" "" $ex) $lbssl false -}}
+{{- coalesce (dig "ssl" "" $ex) $lbssl "false" -}}
 {{- end }}
 
 {{- define "groundx.file.settings" -}}
@@ -149,16 +177,25 @@
 {{- $domain := include "groundx.file.domain" . -}}
 {{- $ssl := include "groundx.file.ssl" . -}}
 {{- $bucketDomain := printf "%s.%s.svc.cluster.local" $svc $ns -}}
+{{- $sslStr := printf "%v" $ssl -}}
+{{- $scheme := "http" -}}
+{{- if eq $sslStr "true" -}}{{- $scheme = "https" -}}{{- end -}}
+{{- $extBucketSSL := coalesce (dig "ssl" "" $ex) false -}}
+{{- $extBucketSSLStr := printf "%v" $extBucketSSL -}}
+{{- $bucketScheme := "http" -}}
+{{- if eq $extBucketSSLStr "true" -}}{{- $bucketScheme = "https" -}}{{- end -}}
 {{- dict
     "baseDomain"   (coalesce (dig "domain" "" $ex) $domain)
     "bucketName"   (coalesce (dig "bucketName" "" $f) "eyelevel")
     "bucketDomain" $bucketDomain
-    "bucketSSL"    (coalesce (dig "ssl" "" $ex) false)
+    "bucketScheme" $bucketScheme
+    "bucketSSL"    (coalesce (dig "ssl" "" $ex) $ssl "false")
     "dependency"   (coalesce (dig "domain" "" $ex) (printf "%s-tenant-hl.%s.svc.cluster.local" $svc $ns))
-    "serviceType". (dig "serviceType" "" $f)
+    "serviceType"  (dig "serviceType" "" $f)
     "username"     (dig "username" "" $f)
     "password"     (dig "password" "" $f)
     "port"         (include "groundx.file.port" .)
+    "scheme"       $scheme
     "ssl"          $ssl
   | toYaml -}}
 {{- end }}

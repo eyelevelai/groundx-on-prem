@@ -3,14 +3,646 @@
   "properties": {
     "namespace": { "type": "string", "minLength": 1 },
     "createNamespace": { "type": "boolean" },
-    "tls": {
+    "ingestOnly": { "type": "boolean" },
+    "languages": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "logLevel": { "type": "string" },
+    "hasMig": { "type": "boolean" },
+    "admin": {
       "type": "object",
       "properties": {
-        "existingSecret": {
-          "type": "string",
-          "description": "Name of an existing kubernetes.io/tls Secret in the target namespace. Leave empty to have the chart create/reference no TLS resources."
+        "apiKey": { "type": "string" },
+        "email": { "type": "string" },
+        "password": { "type": "string" },
+        "username": { "type": "string" }
+      },
+      "required": ["apiKey", "email", "password", "username"],
+      "additionalProperties": false
+    },
+    "cluster": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "nodeLabels": {
+          "type": "object",
+          "properties": {
+            "cpuMemory": { "type": "string" },
+            "cpuOnly": { "type": "string" },
+            "gpuLayout": { "type": "string" },
+            "gpuRanker": { "type": "string" },
+            "gpuSummary": { "type": "string" }
+          },
+          "required": ["cpuMemory", "cpuOnly", "gpuLayout", "gpuRanker", "gpuSummary"],
+          "additionalProperties": false
+        },
+        "tls": {
+          "type": "object",
+          "properties": {
+            "existingSecret": { "type": "string" }
+          },
+          "additionalProperties": false
         }
       },
+      "required": ["type", "nodeLabels"],
+      "additionalProperties": false
+          },
+    "engines": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z]+$": {
+          "type": "object",
+          "properties": {
+            "engineID": { "type": "string" },
+            "maxInputTokens": { "type": "integer" },
+            "maxOutputTokens": { "type": "integer" },
+            "maxRequests": { "type": "integer" },
+            "requestLimit": { "type": "integer" },
+            "vision": { "type": "boolean" }
+          },
+          "required": ["engineID"],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "cache": {
+      "type": "object",
+      "properties": {
+        "internal": {
+          "type": "object",
+          "properties": {
+            "serviceName": { "type": "string" },
+            "isCluster": { "type": "boolean" },
+            "port": { "type": "integer" }
+          },
+          "required": ["serviceName", "isCluster", "port"],
+          "additionalProperties": false
+        },
+        "existing": {
+          "type": "object",
+          "properties": {
+            "addr": { "type": "string" },
+            "isCluster": { "type": "boolean" },
+            "port": { "type": "integer" }
+          },
+          "additionalProperties": false
+        },
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "internal": {
+              "type": "object",
+              "properties": {
+                "serviceName": { "type": "string" },
+                "isCluster": { "type": "boolean" },
+                "port": { "type": "integer" }
+              },
+              "required": ["serviceName", "isCluster", "port"],
+              "additionalProperties": false
+            },
+            "existing": {
+              "type": "object",
+              "properties": {
+                "addr": { "type": "string" },
+                "isCluster": { "type": "boolean" },
+                "port": { "type": "integer" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["metrics"],
+      "additionalProperties": false
+    },
+    "db": {
+      "type": "object",
+      "properties": {
+        "dbName": { "type": "string" },
+        "serviceUser": { "type": "string" },
+        "servicePassword": { "type": "string" },
+        "privilegedUsername": { "type": "string" },
+        "privilegedPassword": { "type": "string" },
+        "maxIdle": { "type": "integer" },
+        "maxOpen": { "type": "integer" },
+        "internal": {
+          "type": "object",
+          "properties": {
+            "serviceName": { "type": "string" },
+            "port": { "type": "integer" }
+          },
+          "required": ["serviceName", "port"],
+          "additionalProperties": false
+        },
+        "existing": {
+          "type": "object",
+          "properties": {
+            "ro": { "type": "string" },
+            "rw": { "type": "string" },
+            "port": { "type": "integer" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "dbName", "serviceUser", "servicePassword", "privilegedUsername", "privilegedPassword"
+      ],
+      "additionalProperties": false
+    },
+    "file": {
+      "type": "object",
+      "properties": {
+        "bucketName": { "type": "string" },
+        "username": { "type": "string" },
+        "password": { "type": "string" },
+        "serviceType": { "type": "string" },
+        "internal": {
+          "type": "object",
+          "properties": {
+            "serviceName": { "type": "string" },
+            "port": { "type": "integer" },
+            "customDomain": { "type": "string" },
+            "load_balancer": {
+              "type": "object",
+              "properties": {
+                "port": { "type": "integer" },
+                "ssl": { "type": "boolean" },
+                "target": { "type": "integer" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": ["serviceName", "port"],
+          "additionalProperties": false
+        },
+        "existing": {
+          "type": "object",
+          "properties": {
+            "domain": { "type": "string" },
+            "port": { "type": "integer" },
+            "ssl": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["bucketName", "username", "password", "serviceType"],
+      "additionalProperties": false
+    },
+    "search": {
+      "type": "object",
+      "properties": {
+        "indexName": { "type": "string" },
+        "username": { "type": "string" },
+        "password": { "type": "string" },
+        "privilegedPassword": { "type": "string" },
+        "privilegedUsername": { "type": "string" },
+        "internal": {
+          "type": "object",
+          "properties": {
+            "serviceName": { "type": "string" },
+            "port": { "type": "integer" }
+          },
+          "required": ["serviceName", "port"],
+          "additionalProperties": false
+        },
+        "existing": {
+          "type": "object",
+          "properties": {
+            "domain": { "type": "string" },
+            "url": { "type": "string" },
+            "port": { "type": "integer" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "indexName", "username", "password", "privilegedPassword", "privilegedUsername"
+      ],
+      "additionalProperties": false
+    },
+    "stream": {
+      "type": "object",
+      "properties": {
+        "internal": {
+          "type": "object",
+          "properties": {
+            "serviceName": { "type": "string" },
+            "port": { "type": "integer" }
+          },
+          "required": ["serviceName", "port"],
+          "additionalProperties": false
+        },
+        "existing": {
+          "type": "object",
+          "properties": {
+            "domain": { "type": "string" },
+            "url": { "type": "string" },
+            "port": { "type": "integer" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "internal": {
+          "type": "object",
+          "properties": {
+            "queue": { "type": "string" },
+            "serviceName": { "type": "string" },
+            "defaultKitID": { "type": "integer" },
+            "load_balancer": {
+              "type": "object",
+              "additionalProperties": false
+            }
+          },
+          "required": ["serviceName"],
+          "additionalProperties": false
+        },
+        "existing": {
+          "type": "object",
+          "properties": {
+            "apiKey": { "type": "string" },
+            "serviceType": { "type": "string" },
+            "url": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "dashboard": {
+      "type": "object",
+      "properties": {
+        "internal": {
+          "type": "object",
+          "properties": {
+            "serviceName": { "type": "string" }
+          },
+          "required": ["serviceName"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["internal"],
+      "additionalProperties": false
+    },
+    "groundx": {
+      "type": "object",
+      "properties": {
+        "internal": {
+          "type": "object",
+          "properties": {
+            "port": { "type": "integer" },
+            "serviceName": { "type": "string" },
+            "type": { "type": "string" }
+          },
+          "required": ["port", "serviceName", "type"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["internal"],
+      "additionalProperties": false
+    },
+    "layout": {
+      "type": "object",
+      "properties": {
+        "internal": {
+          "type": "object",
+          "properties": {
+            "api": {
+              "type": "object",
+              "properties": {
+                "threads": { "type": "integer" },
+                "timeout": { "type": "integer" },
+                "workers": { "type": "integer" }
+              },
+              "required": ["threads", "timeout", "workers"],
+              "additionalProperties": false
+            },
+            "correct": {
+              "type": "object",
+              "properties": {
+                "queue": { "type": "string" },
+                "threads": { "type": "integer" },
+                "workers": { "type": "integer" }
+              },
+              "required": ["queue", "threads", "workers"],
+              "additionalProperties": false
+            },
+            "inference": {
+              "type": "object",
+              "properties": {
+                "queue": { "type": "string" },
+                "threads": { "type": "integer" },
+                "workers": { "type": "integer" }
+              },
+              "required": ["queue", "threads", "workers"],
+              "additionalProperties": false
+            },
+            "map": {
+              "type": "object",
+              "properties": {
+                "queue": { "type": "string" },
+                "threads": { "type": "integer" },
+                "workers": { "type": "integer" }
+              },
+              "required": ["queue", "threads", "workers"],
+              "additionalProperties": false
+            },
+            "ocr": {
+              "type": "object",
+              "properties": {
+                "credentials": { "type": "string" },
+                "queue": { "type": "string" },
+                "threads": { "type": "integer" },
+                "workers": { "type": "integer" }
+              },
+              "required": ["queue", "threads", "workers"],
+              "additionalProperties": false
+            },
+            "process": {
+              "type": "object",
+              "properties": {
+                "queue": { "type": "string" },
+                "threads": { "type": "integer" },
+                "workers": { "type": "integer" }
+              },
+              "required": ["queue", "threads", "workers"],
+              "additionalProperties": false
+            },
+            "save": {
+              "type": "object",
+              "properties": {
+                "queue": { "type": "string" },
+                "threads": { "type": "integer" },
+                "workers": { "type": "integer" }
+              },
+              "required": ["queue", "threads", "workers"],
+              "additionalProperties": false
+            },
+            "serviceName": { "type": "string" }
+          },
+          "required": [
+            "correct", "inference", "map", "ocr", "process", "save", "serviceName"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": ["internal"],
+      "additionalProperties": false
+    },
+    "layoutWebhook": {
+      "type": "object",
+      "properties": {
+        "internal": {
+          "type": "object",
+          "properties": {
+            "port": { "type": "integer" },
+            "serviceName": { "type": "string" }
+          },
+          "required": ["port", "serviceName"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["internal"],
+      "additionalProperties": false
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "internal": {
+          "type": "object",
+          "properties": {
+            "port": { "type": "integer" },
+            "serviceName": { "type": "string" }
+          },
+          "required": ["port", "serviceName"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["internal"],
+      "additionalProperties": false
+    },
+    "preProcess": {
+      "type": "object",
+      "properties": {
+        "internal": {
+          "type": "object",
+          "properties": {
+            "port": { "type": "integer" },
+            "queue": { "type": "string" },
+            "queueSize": { "type": "integer" },
+            "serviceName": { "type": "string" }
+          },
+          "required": ["port", "queue", "queueSize", "serviceName"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["internal"],
+      "additionalProperties": false
+    },
+    "process": {
+      "type": "object",
+      "properties": {
+        "internal": {
+          "type": "object",
+          "properties": {
+            "port": { "type": "integer" },
+            "queue": { "type": "string" },
+            "queueSize": { "type": "integer" },
+            "serviceName": { "type": "string" }
+          },
+          "required": ["port", "queue", "queueSize", "serviceName"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["internal"],
+      "additionalProperties": false
+    },
+    "queue": {
+      "type": "object",
+      "properties": {
+        "internal": {
+          "type": "object",
+          "properties": {
+            "port": { "type": "integer" },
+            "queue": { "type": "string" },
+            "queueSize": { "type": "integer" },
+            "serviceName": { "type": "string" }
+          },
+          "required": ["port", "queue", "queueSize", "serviceName"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["internal"],
+      "additionalProperties": false
+    },
+    "ranker": {
+      "type": "object",
+      "properties": {
+        "internal": {
+          "type": "object",
+          "properties": {
+            "serviceName": { "type": "string" }
+          },
+          "required": ["serviceName"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["internal"],
+      "additionalProperties": false
+    },
+    "summaryClient": {
+      "type": "object",
+      "properties": {
+        "internal": {
+          "type": "object",
+          "properties": {
+            "port": { "type": "integer" },
+            "serviceName": { "type": "string" },
+            "workers": { "type": "integer" }
+          },
+          "required": ["port", "serviceName", "workers"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["internal"],
+      "additionalProperties": false
+    },
+    "upload": {
+      "type": "object",
+      "properties": {
+        "internal": {
+          "type": "object",
+          "properties": {
+            "port": { "type": "integer" },
+            "queue": { "type": "string" },
+            "queueSize": { "type": "integer" },
+            "serviceName": { "type": "string" }
+          },
+          "required": ["port", "queue", "queueSize", "serviceName"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["internal"],
+      "additionalProperties": false
+    },
+    "integration": {
+      "type": "object",
+      "properties": {
+        "search": {
+          "type": "object",
+          "properties": {
+            "duration": { "type": "integer" },
+            "fileId": { "type": "string" },
+            "modelId": { "type": "integer" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "throughput": {
+      "type": "object",
+      "properties": {
+        "tpm": {
+          "type": "object",
+          "properties": {
+            "document": { "type": "integer" },
+            "page": { "type": "integer" },
+            "summaryRequest": { "type": "integer" }
+          },
+          "required": ["document", "page", "summaryRequest"],
+          "additionalProperties": false
+        },
+        "services": {
+          "type": "object",
+          "properties": {
+            "layout": {
+              "type": "object",
+              "properties": {
+                "correct": { "type": "integer" },
+                "inference": { "type": "integer" },
+                "map": { "type": "integer" },
+                "ocr": { "type": "integer" },
+                "process": { "type": "integer" },
+                "save": { "type": "integer" }
+              },
+              "required": ["correct", "inference", "map", "ocr", "process", "save"],
+              "additionalProperties": false
+            },
+            "preProcess": {
+              "type": "object",
+              "properties": {
+                "queue": { "type": "integer" }
+              },
+              "required": ["queue"],
+              "additionalProperties": false
+            },
+            "process": {
+              "type": "object",
+              "properties": {
+                "queue": { "type": "integer" }
+              },
+              "required": ["queue"],
+              "additionalProperties": false
+            },
+            "queue": {
+              "type": "object",
+              "properties": {
+                "queue": { "type": "integer" }
+              },
+              "required": ["queue"],
+              "additionalProperties": false
+            },
+            "ranker": {
+              "type": "object",
+              "properties": {
+                "inference": { "type": "integer" }
+              },
+              "required": ["inference"],
+              "additionalProperties": false
+            },
+            "summary": {
+              "type": "object",
+              "properties": {
+                "api": { "type": "integer" },
+                "inference": { "type": "integer" }
+              },
+              "required": ["api", "inference"],
+              "additionalProperties": false
+            },
+            "summaryClient": {
+              "type": "object",
+              "properties": {
+                "api": { "type": "integer" }
+              },
+              "required": ["api"],
+              "additionalProperties": false
+            },
+            "upload": {
+              "type": "object",
+              "properties": {
+                "queue": { "type": "integer" }
+              },
+              "required": ["queue"],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout", "preProcess", "process", "queue", "ranker", "summary", "summaryClient", "upload"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": ["tpm", "services"],
       "additionalProperties": false
     }
   },

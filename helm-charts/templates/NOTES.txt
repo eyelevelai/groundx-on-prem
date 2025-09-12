@@ -4,7 +4,7 @@
 Release: {{ .Release.Name }}
 Namespace: {{ $ns }}
 Internal TLS:
-{{- if .Values.tls.existingSecret }}
+{{- if and .Values.tls .Values.tls.existingSecret }}
   Using secret: {{ .Values.tls.existingSecret }}
 
   To inspect it:

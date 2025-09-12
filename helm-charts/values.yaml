@@ -31,6 +31,9 @@ engines:
     engineID: google/gemma-3-12b-it
     maxInputTokens: 100000
     maxOutputTokens: 2000
+    maxRequests: 4
+    requestLimit: 4
+    vision: true
 
 cache:
   internal:
@@ -64,8 +67,6 @@ db:
   servicePassword: password
   privilegedUsername: root
   privilegedPassword: password
-  maxIdle: 5
-  maxOpen: 10
 
   internal:
     serviceName: mysql
@@ -109,10 +110,10 @@ search:
   privilegedUsername: admin
 
   internal:
-    serviceName: search
+    serviceName: opensearch
     port: 9200
 
-  existing:
+  existing: {}
 #    domain: search.mycorp.net
 #    url: https://search.mycorp.net:9200
 #    port: 9200
@@ -129,8 +130,8 @@ stream:
 
 summary:
   internal:
+    queue: file-summary
     serviceName: summary
-    defaultKitID: 0
 
     # set to expose summary service externally
     load_balancer: {}
@@ -155,18 +156,34 @@ groundx:
 
 layout:
   internal:
+    api:
+      threads: 2
+      timeout: 120
+      workers: 2
     correct:
       queue: correct_queue
+      threads: 1
+      workers: 1
     inference:
       queue: layout_queue
+      threads: 6
+      workers: 1
     map:
       queue: map_queue
+      threads: 1
+      workers: 1
     ocr:
       queue: ocr_queue
+      threads: 1
+      workers: 1
     process:
       queue: process_queue
+      threads: 1
+      workers: 1
     save:
       queue: save_queue
+      threads: 1
+      workers: 1
     serviceName: layout
 
 layoutWebhook:
