@@ -3,6 +3,11 @@ kind: ConfigMap
 metadata:
   name: config-yaml-map
   namespace: {{ include "groundx.ns" . }}
+  labels:
+    appVersion: {{ .Chart.AppVersion | quote }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    heritage: {{ .Release.Service }}
+    version: {{ .Chart.Version | quote }}
 data:
   config.yaml: |
     _mysql: &mysql
@@ -13,6 +18,7 @@ data:
       database: {{ .Values.db.dbName | default "" }}
       maxIdle: {{ .Values.db.maxIdle | default 5 }}
       maxOpen: {{ .Values.db.maxOpen | default 10 }}
+
     ai:
       aws:
         search:
@@ -45,7 +51,7 @@ data:
           {{- end }}
 
     engines:
-    {{- range $e := .Values.engines }}
+    {{- range $e := .Values.summaryClient.engines }}
       {{ $e.engineID }}:
         engineID: "{{ $e.engineID }}"
         {{- if $e.apiKey }}
@@ -84,6 +90,7 @@ data:
 
     {{- $integration := .Values.integration | default dict }}
     {{- $intSearch := $integration.search | default dict }}
+
     integrationTests:
       search:
         duration: {{ $intSearch.duration | default 3660 }}
@@ -250,7 +257,6 @@ data:
       baseDomain: {{ get $fs "baseDomain" }}
       baseUrl: {{ printf "%s://%s" (get $fs "scheme") (get $fs "baseDomain") }}
       bucket: {{ get $fs "bucketName" }}
-      bucketSSL: {{ get $fs "bucketSSL" }}
       bucketUrl: {{ printf "%s://%s" (get $fs "bucketScheme") (get $fs "bucketDomain") }}
       id: {{ get $fs "username" }}
       secret: {{ get $fs "password" }}

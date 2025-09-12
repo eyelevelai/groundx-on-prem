@@ -144,22 +144,6 @@
 {{- coalesce (dig "port" "" $ex) (dig "port" 9000 $in) -}}
 {{- end }}
 
-{{- define "groundx.lb" -}}
-{{- $in := .Values.file.internal | default dict -}}
-{{- dig "load_balancer" dict $in -}}
-{{- end }}
-
-{{- define "groundx.lbssl" -}}
-{{- $in := .Values.file.internal | default dict -}}
-{{- $lb := dig "load_balancer" dict $in -}}
-{{- (hasKey $lb "ssl") | ternary (dig "ssl" "" $lb) false -}}
-{{- end }}
-
-{{- define "groundx.essl" -}}
-{{- $ex := .Values.file.existing | default dict -}}
-{{- coalesce "" "" false -}}
-{{- end }}
-
 {{- define "groundx.file.ssl" -}}
 {{- $ex := .Values.file.existing | default dict -}}
 {{- $in := .Values.file.internal | default dict -}}

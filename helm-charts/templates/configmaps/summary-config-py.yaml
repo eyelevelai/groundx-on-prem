@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: summary-config-py-map
+  namespace: {{ include "groundx.ns" . }}
+  labels:
+    appVersion: {{ .Chart.AppVersion | quote }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    heritage: {{ .Release.Service }}
+    version: {{ .Chart.Version | quote }}
+data:
+  config.py: |
+    env = dict(
+        deviceType={{ .Values.summary.internal.inference.deviceType | quote }},
+        deviceUtilize={{ .Values.summary.internal.inference.deviceUtilize }},
+        metricsAddr={{ include "groundx.metrics.cache.addr" . | quote }},
+        metricsPort={{ include "groundx.metrics.cache.port" . }},
+        service={{ .Values.summary.internal.serviceName | quote }},
+        summaryBroker={{ printf "redis://%s:%v/0" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
+        summaryLog={{ .Values.summary.internal.serviceName | quote }},
+        summaryResultBroker={{ printf "redis://%s:%v/0" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
+        validAPIKeys=[{{ .Values.admin.apiKey | quote }}, {{ .Values.admin.username | quote }}],
+        workers={{ .Values.summary.internal.inference.workers }},
+    )

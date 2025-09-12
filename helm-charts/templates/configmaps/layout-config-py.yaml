@@ -1,39 +1,44 @@
+{{- $fs := (include "groundx.file.settings" . | fromYaml) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: layout-config-py-map
   namespace: {{ include "groundx.ns" . }}
+  labels:
+    appVersion: {{ .Chart.AppVersion | quote }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    heritage: {{ .Release.Service }}
+    version: {{ .Chart.Version | quote }}
 data:
   config.py: |
     env = dict(
-        accessKey={{ .Values.upload.username | default "" | quote }},
-        accessSecret={{ .Values.upload.password | default "" | quote }},
+        accessKey={{ .Values.file.username | quote }},
+        accessSecret={{ .Values.file.password | quote }},
         annotationBase="layout/processed/",
         cacheDir="/app/hf_models_cache",
-        callbackAPIKey={{ .Values.auth.groundx.username | default "" | quote }},
-        deviceType={{ .Values.layout.models.device | default "cpu" | quote }},
+        callbackAPIKey={{ .Values.admin.apiKey | quote }},
+        deviceType={{ .Values.layout.internal.inference.deviceType | default "cpu" | quote }},
         env="prod",
         includeLS=False,
-        layoutBroker="redis://{{ .Values.cache.addr | default "redis" }}:{{ .Values.cache.port | default 6379 }}/0",
-        layoutLogger={{ .Values.services.layout.api | default "layout-api" | quote }},
-        layoutResultBroker="redis://{{ .Values.cache.addr | default "redis" }}:{{ .Values.cache.port | default 6379 }}/0",
-        metricsAddr={{ .Values.metrics.session.addr | default "redis" | quote }},
-        metricsPort={{ .Values.metrics.session.port | default 6379 }},
-        minBatchSize={{ .Values.layout.process.minBatchSize | default 1 }},
+        layoutBroker={{ printf "redis://%s:%v/0" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
+        layoutLogger={{ .Values.layout.internal.serviceName | quote }},
+        layoutResultBroker={{ printf "redis://%s:%v/0" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
+        metricsAddr={{ include "groundx.metrics.cache.addr" . | quote }},
+        metricsPort={{ include "groundx.metrics.cache.port" . }},
+        minBatchSize={{ .Values.layout.internal.process.batchSize }},
         ocrBase="layout/raw/",
         ocrCredentials="credentials.json",
-        ocrProject={{ .Values.layout.ocr.project | default "" | quote }},
-        ocrType={{ .Values.layout.ocr.type | default "" | quote }},
+        ocrProject={{ .Values.layout.internal.ocr.project | quote }},
+        ocrType={{ .Values.layout.internal.ocr.type | quote }},
         podMemory={{ .Values.layout.podMemory | default "2Gi" | quote }},
-        queueType="kafka",
-        service={{ .Values.services.layout.api | default "layout-api" | quote }},
+        service={{ .Values.layout.internal.serviceName | quote }},
         uploadBase="layout/processed/",
-        uploadBaseURL={{ printf "%s://%s" (ternary "https" "http" (.Values.upload.bucketSSL | default false)) (.Values.upload.bucketDomain | default "") | quote }},
-        uploadBucket={{ .Values.upload.bucket | default "" | quote }},
-        uploadReplaceURL={{ printf "%s://%s/%s/" (ternary "https" "http" (.Values.upload.bucketSSL | default false)) (.Values.upload.bucketDomain | default "") (.Values.upload.bucket | default "") | quote }},
-        uploadSSL={{ ternary "True" "False" (.Values.upload.bucketSSL | default false) }},
-        uploadType="minio",
-        uploadURL={{ printf "%s://%s/%s/" (ternary "https" "http" (.Values.upload.ssl | default false)) (.Values.upload.baseDomain | default "") (.Values.upload.bucket | default "") | quote }},
-        validAPIKeys=[{{ .Values.auth.groundx.apiKey | default "" | quote }}, {{ .Values.auth.groundx.username | default "" | quote }}],
-        workers={{ .Values.layout.inference.workers | default 1 }},
+        uploadBaseURL={{ get $fs "bucketDomain" | quote }},
+        uploadBucket={{ get $fs "bucketName" | quote }},
+        uploadReplaceURL={{ printf "%s://%s/%s/" (get $fs "bucketScheme") (get $fs "bucketDomain") (get $fs "bucketName") | quote }},
+        uploadSSL={{ if eq (printf "%v" (get $fs "bucketSSL")) "true" }}True{{ else }}False{{ end }},
+        uploadType={{ .Values.file.serviceType | quote }},
+        uploadURL={{ printf "%s://%s/%s/" (get $fs "scheme") (get $fs "baseDomain") (get $fs "bucketName") | quote }},
+        validAPIKeys=[{{ .Values.admin.apiKey | quote }}, {{ .Values.admin.username | quote }}],
+        workers={{ .Values.layout.internal.inference.workers }},
     )

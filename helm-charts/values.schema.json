@@ -47,25 +47,6 @@
       },
       "required": ["type", "nodeLabels"],
       "additionalProperties": false
-          },
-    "engines": {
-      "type": "object",
-      "patternProperties": {
-        "^[a-zA-Z]+$": {
-          "type": "object",
-          "properties": {
-            "engineID": { "type": "string" },
-            "maxInputTokens": { "type": "integer" },
-            "maxOutputTokens": { "type": "integer" },
-            "maxRequests": { "type": "integer" },
-            "requestLimit": { "type": "integer" },
-            "vision": { "type": "boolean" }
-          },
-          "required": ["engineID"],
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
     },
     "cache": {
       "type": "object",
@@ -255,6 +236,27 @@
         "internal": {
           "type": "object",
           "properties": {
+            "api": {
+              "type": "object",
+              "properties": {
+                "threads": { "type": "integer" },
+                "timeout": { "type": "integer" },
+                "workers": { "type": "integer" }
+              },
+              "required": ["threads", "timeout", "workers"],
+              "additionalProperties": false
+            },
+            "inference": {
+              "type": "object",
+              "properties": {
+                "deviceType": { "type": "string" },
+                "deviceUtilize": { "type": "number" },
+                "threads": { "type": "integer" },
+                "workers": { "type": "integer" }
+              },
+              "required": ["deviceType", "deviceUtilize", "threads", "workers"],
+              "additionalProperties": false
+            },
             "queue": { "type": "string" },
             "serviceName": { "type": "string" },
             "defaultKitID": { "type": "integer" },
@@ -339,6 +341,7 @@
             "inference": {
               "type": "object",
               "properties": {
+                "deviceType": { "type": "string" },
                 "queue": { "type": "string" },
                 "threads": { "type": "integer" },
                 "workers": { "type": "integer" }
@@ -360,8 +363,10 @@
               "type": "object",
               "properties": {
                 "credentials": { "type": "string" },
+                "project": { "type": "string" },
                 "queue": { "type": "string" },
                 "threads": { "type": "integer" },
+                "type": { "type": "string" },
                 "workers": { "type": "integer" }
               },
               "required": ["queue", "threads", "workers"],
@@ -370,6 +375,7 @@
             "process": {
               "type": "object",
               "properties": {
+                "batchSize": { "type": "integer" },
                 "queue": { "type": "string" },
                 "threads": { "type": "integer" },
                 "workers": { "type": "integer" }
@@ -490,6 +496,26 @@
         "internal": {
           "type": "object",
           "properties": {
+            "api": {
+              "type": "object",
+              "properties": {
+                "threads": { "type": "integer" },
+                "timeout": { "type": "integer" },
+                "workers": { "type": "integer" }
+              },
+              "required": ["threads", "timeout", "workers"],
+              "additionalProperties": false
+            },
+            "inference": {
+              "type": "object",
+              "properties": {
+                "deviceType": { "type": "string" },
+                "threads": { "type": "integer" },
+                "workers": { "type": "integer" }
+              },
+              "required": ["deviceType", "threads", "workers"],
+              "additionalProperties": false
+            },
             "serviceName": { "type": "string" }
           },
           "required": ["serviceName"],
@@ -502,6 +528,23 @@
     "summaryClient": {
       "type": "object",
       "properties": {
+        "engines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "engineID": { "type": "string" },
+              "maxInputTokens": { "type": "integer" },
+              "maxOutputTokens": { "type": "integer" },
+              "maxRequests": { "type": "integer" },
+              "requestLimit": { "type": "integer" },
+              "type": { "type": "string" },
+              "vision": { "type": "boolean" }
+            },
+            "required": ["engineID"],
+            "additionalProperties": false
+          }
+        },
         "internal": {
           "type": "object",
           "properties": {

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: layout-gunicorn-conf-py-map
+  name: ranker-gunicorn-conf-py-map
   namespace: {{ include "groundx.ns" . }}
   labels:
     appVersion: {{ .Chart.AppVersion | quote }}
@@ -15,12 +15,13 @@ data:
     errorlog = "-"
 
     loglevel = "{{ .Values.logLevel }}"
-    workers = {{ .Values.layout.internal.api.workers }}
-    threads = {{ .Values.layout.internal.api.threads }}
-    timeout = {{ .Values.layout.internal.api.timeout }}
+    workers = {{ .Values.ranker.internal.api.workers }}
+    threads = {{ .Values.ranker.internal.api.threads }}
+    timeout = {{ .Values.ranker.internal.api.timeout }}
+    timeout_keep_alive = 15
 
     worker_class = "uvicorn.workers.UvicornWorker"
 
     bind = "0.0.0.0:8080"
 
-    wsgi_app = "document_api_server:app"
+    wsgi_app = "ranker_server:app"

@@ -26,15 +26,6 @@ cluster:
   tls:
     existingSecret: ""
 
-engines:
-  en:
-    engineID: google/gemma-3-12b-it
-    maxInputTokens: 100000
-    maxOutputTokens: 2000
-    maxRequests: 4
-    requestLimit: 4
-    vision: true
-
 cache:
   internal:
     serviceName: redis
@@ -130,6 +121,15 @@ stream:
 
 summary:
   internal:
+    api:
+      threads: 4
+      timeout: 240
+      workers: 1
+    inference:
+      deviceType: cuda
+      deviceUtilize: 0.9
+      threads: 1
+      workers: 1
     queue: file-summary
     serviceName: summary
 
@@ -165,6 +165,7 @@ layout:
       threads: 1
       workers: 1
     inference:
+      deviceType: cuda
       queue: layout_queue
       threads: 6
       workers: 1
@@ -173,10 +174,13 @@ layout:
       threads: 1
       workers: 1
     ocr:
+      project: ""
       queue: ocr_queue
       threads: 1
+      type: "tesseract"
       workers: 1
     process:
+      batchSize: 40
       queue: process_queue
       threads: 1
       workers: 1
@@ -219,9 +223,25 @@ queue:
 
 ranker:
   internal:
+    api:
+      threads: 3
+      timeout: 120
+      workers: 1
+    inference:
+      deviceType: cuda
+      threads: 1
+      workers: 14
     serviceName: ranker
 
 summaryClient:
+  engines:
+    - engineID: google/gemma-3-12b-it
+      maxInputTokens: 100000
+      maxOutputTokens: 2000
+      maxRequests: 4
+      requestLimit: 4
+      vision: true
+
   internal:
     port: 8080
     serviceName: summary-client

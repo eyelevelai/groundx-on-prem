@@ -1,0 +1,78 @@
+suite: "configmaps render as expected"
+values:
+  - ../values.yaml
+chart:
+  appVersion: 0.1.0
+  version: 0.1.0
+
+tests:
+  - it: config-yaml.yaml
+    templates:
+      - ../templates/configmaps/config-yaml.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: layout-config-py.yaml
+    templates:
+      - ../templates/configmaps/layout-config-py.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: layout-gunicorn-conf-py.yaml
+    templates:
+      - ../templates/configmaps/layout-gunicorn-conf-py.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: layout-ocr-credentials.yaml
+    templates:
+      - ../templates/configmaps/layout-ocr-credentials.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: layout-supervisord-conf.yaml
+    templates:
+      - ../templates/configmaps/layout-supervisord-conf.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: config-models.yaml
+    templates:
+      - ../templates/configmaps/config-models.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: ranker-config-py.yaml
+    templates:
+      - ../templates/configmaps/ranker-config-py.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: ranker-gunicorn-conf-py.yaml
+    templates:
+      - ../templates/configmaps/ranker-gunicorn-conf-py.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: ranker-supervisord-conf.yaml
+    templates:
+      - ../templates/configmaps/ranker-supervisord-conf.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: summary-config-py.yaml
+    templates:
+      - ../templates/configmaps/summary-config-py.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: summary-gunicorn-conf-py.yaml
+    templates:
+      - ../templates/configmaps/summary-gunicorn-conf-py.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: summary-supervisord-conf.yaml
+    templates:
+      - ../templates/configmaps/summary-supervisord-conf.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: init-database-file.yaml
+    templates:
+      - ../templates/configmaps/init-database-file.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: ldconfig-symlink.yaml
+    templates:
+      - ../templates/configmaps/ldconfig-symlink.yaml
+    asserts:
+      - matchSnapshot: {}
