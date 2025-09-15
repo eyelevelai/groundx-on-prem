@@ -1,0 +1,45 @@
+{{- $cc := include "groundx.metrics.cache.create" . -}}
+{{- if $cc -}}
+{{- $svc := printf "%s-%s" .Values.cache.internal.serviceName .Values.cache.metrics.internal.serviceName -}}
+{{- $mountName := printf "%s-persistent-storage" $svc -}}
+{{- $port := include "groundx.metrics.cache.port" . -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $svc | quote }}
+  namespace: {{ include "groundx.ns" . | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
+spec:
+  serviceName: {{ $svc | quote }}
+  replicas: {{ .Values.cache.metrics.internal.replicas.desired }}
+  selector:
+    matchLabels:
+      app: {{ $svc | quote }}
+  template:
+    metadata:
+      labels:
+        app: {{ $svc | quote }}
+    spec:
+{{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.metrics.internal.securityContext "indent" 6 "root" $ "user" 1001) }}
+{{ include "groundx.renderNodeSelector" (dict "name" $svc "indent" 6 "root" $) }}
+      serviceAccountName: "{{ $svc }}-sa"
+      containers:
+        - name: {{ $svc | quote }}
+          image: {{ include "groundx.metrics.cache.image" . | quote }}
+          imagePullPolicy: {{ include "groundx.metrics.cache.imagePullPolicy" . | quote }}
+          ports:
+            - containerPort: {{ $port }}
+              protocol: TCP
+{{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.metrics.internal.securityContext "indent" 10 "root" $ "user" 1001) }}
+{{- with .Values.cache.metrics.internal.resources }}
+{{ include "groundx.renderContainerResources" (dict "ctx" . "indent" 10) }}
+{{- end }}
+          volumeMounts:
+            - name: {{ $mountName | quote }}
+              mountPath: {{ include "groundx.metrics.cache.mountPath" . | quote }}
+      volumes:
+        - name: {{ $mountName | quote }}
+          emptyDir: {}
+{{ include "groundx.renderService" (dict "name" $svc "port" $port "type" .Values.cache.metrics.internal.type "root" $) }}
+{{- end }}

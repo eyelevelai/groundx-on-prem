@@ -15,10 +15,24 @@
       "properties": {
         "apiKey": { "type": "string" },
         "email": { "type": "string" },
+        "imageRepository": { "type": "string" },
         "password": { "type": "string" },
         "username": { "type": "string" }
       },
       "required": ["apiKey", "email", "password", "username"],
+      "additionalProperties": false
+    },
+    "app": {
+      "type": "object",
+      "properties": {
+        "deployments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "additionalProperties": false
+        }
+      },
       "additionalProperties": false
     },
     "cluster": {
@@ -54,11 +68,26 @@
         "internal": {
           "type": "object",
           "properties": {
+            "image": { "type": "string" },
+            "mountPath": { "type": "string" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "desired": { "type": "integer" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" }
+              },
+              "required": ["min", "max", "desired"],
+              "additionalProperties": false
+            },
+            "resources": { "type": "object" },
+            "securityContext": { "type": "object" },
             "serviceName": { "type": "string" },
             "isCluster": { "type": "boolean" },
-            "port": { "type": "integer" }
+            "port": { "type": "integer" },
+            "type": { "type": "string" }
           },
-          "required": ["serviceName", "isCluster", "port"],
+          "required": ["serviceName", "isCluster", "port", "replicas", "type"],
           "additionalProperties": false
         },
         "existing": {
@@ -77,11 +106,25 @@
             "internal": {
               "type": "object",
               "properties": {
+                "image": { "type": "string" },
+                "replicas": {
+                  "type": "object",
+                  "properties": {
+                    "desired": { "type": "integer" },
+                    "max": { "type": "integer" },
+                    "min": { "type": "integer" }
+                  },
+                  "required": ["min", "max", "desired"],
+                  "additionalProperties": false
+                },
+                "resources": { "type": "object" },
+                "securityContext": { "type": "object" },
                 "serviceName": { "type": "string" },
                 "isCluster": { "type": "boolean" },
-                "port": { "type": "integer" }
+                "port": { "type": "integer" },
+                "type": { "type": "string" }
               },
-              "required": ["serviceName", "isCluster", "port"],
+              "required": ["serviceName", "isCluster", "port", "replicas", "type"],
               "additionalProperties": false
             },
             "existing": {

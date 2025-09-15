@@ -135,7 +135,7 @@ config-yaml.yaml:
               target: file-upload
               threshold: 120
           session:
-            addr: redis-metrics.eyelevel.svc.cluster.local:6379
+            addr: cache-metrics.eyelevel.svc.cluster.local:6379
             notCluster: true
           summaryRequest:
             tokensPerMinute: 625
@@ -207,7 +207,7 @@ config-yaml.yaml:
         rec:
           mysql: *mysql
           session:
-            addr: redis.eyelevel.svc.cluster.local:6379
+            addr: cache.eyelevel.svc.cluster.local:6379
             notCluster: true
 
         ssp:
@@ -258,10 +258,10 @@ layout-config-py.yaml:
             deviceType="cuda",
             env="prod",
             includeLS=False,
-            layoutBroker="redis://redis.eyelevel.svc.cluster.local:6379/0",
+            layoutBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             layoutLogger="layout",
-            layoutResultBroker="redis://redis.eyelevel.svc.cluster.local:6379/0",
-            metricsAddr="redis-metrics.eyelevel.svc.cluster.local",
+            layoutResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            metricsAddr="cache-metrics.eyelevel.svc.cluster.local",
             metricsPort=6379,
             minBatchSize=40,
             ocrBase="layout/raw/",
@@ -534,11 +534,11 @@ ranker-config-py.yaml:
       config.py: |
         env = dict(
             deviceType="cuda",
-            metricsAddr="redis-metrics.eyelevel.svc.cluster.local",
+            metricsAddr="cache-metrics.eyelevel.svc.cluster.local",
             metricsPort=6379,
-            searchBroker="redis://redis.eyelevel.svc.cluster.local:6379/0",
+            searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
-            searchResultBroker="redis://redis.eyelevel.svc.cluster.local:6379/0",
+            searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             service="ranker",
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=14,
@@ -788,12 +788,12 @@ summary-config-py.yaml:
         env = dict(
             deviceType="cuda",
             deviceUtilize=0.9,
-            metricsAddr="redis-metrics.eyelevel.svc.cluster.local",
+            metricsAddr="cache-metrics.eyelevel.svc.cluster.local",
             metricsPort=6379,
             service="summary",
-            summaryBroker="redis://redis.eyelevel.svc.cluster.local:6379/0",
+            summaryBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             summaryLog="summary",
-            summaryResultBroker="redis://redis.eyelevel.svc.cluster.local:6379/0",
+            summaryResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=1,
         )
