@@ -1,82 +1,74 @@
+{{- define "groundx.cache.serviceName" -}}
+{{- $in := .Values.cache | default dict -}}
+{{ dig "serviceName" "cache" $in }}
+{{- end }}
+
+{{- define "groundx.metrics.cache.serviceName" -}}
+{{- $in := .Values.cache.metrics | default dict -}}
+{{ dig "serviceName" "metrics" $in }}
+{{- end }}
+
 {{- define "groundx.cache.image" -}}
-{{- $in := .Values.cache.internal | default dict -}}
+{{- $in := .Values.cache | default dict -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
-{{- $img := dig "image" nil $in -}}
-{{- if $img -}}
-  {{- $img -}}
-{{- else -}}
-  {{- printf "%s/%s:%s" $repoPrefix "eyelevel/redis" "latest" -}}
-{{- end -}}
+{{- $fallback := printf "%s/%s:%s" $repoPrefix "eyelevel/redis" "latest" -}}
+{{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
 {{- define "groundx.metrics.cache.image" -}}
-{{- $in := .Values.cache.metrics.internal | default dict -}}
+{{- $in := .Values.cache.metrics | default dict -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
-{{- $img := dig "image" nil $in -}}
-{{- if $img -}}
-  {{- $img -}}
-{{- else -}}
-  {{- printf "%s/%s:%s" $repoPrefix "eyelevel/redis" "latest" -}}
-{{- end -}}
+{{- $fallback := printf "%s/%s:%s" $repoPrefix "eyelevel/redis" "latest" -}}
+{{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
 {{- define "groundx.cache.imagePullPolicy" -}}
-{{- $in := .Values.cache.internal | default dict -}}
-{{- $policy := dig "imagePullPolicy" "" $in -}}
-{{- if $policy -}}
-{{ $policy }}
-{{- else -}}
-Always
-{{- end -}}
+{{- $in := .Values.cache | default dict -}}
+{{ dig "imagePullPolicy" "Always" $in }}
 {{- end }}
 
 {{- define "groundx.metrics.cache.imagePullPolicy" -}}
-{{- $in := .Values.cache.metrics.internal | default dict -}}
-{{- $policy := dig "imagePullPolicy" "" $in -}}
-{{- if $policy -}}
-{{ $policy }}
-{{- else -}}
-Always
-{{- end -}}
+{{- $in := .Values.cache.metrics | default dict -}}
+{{ dig "imagePullPolicy" "Always" $in }}
 {{- end }}
 
 {{- define "groundx.cache.mountPath" -}}
-{{- $in := .Values.cache.internal | default dict -}}
-{{- $mp := dig "mountPath" "" $in -}}
-{{- if $mp -}}
-{{ $mp }}
-{{- else -}}
-/mnt/redis
-{{- end -}}
+{{- $in := .Values.cache | default dict -}}
+{{ dig "mountPath" "/mnt/redis" $in }}
 {{- end }}
 
 {{- define "groundx.metrics.cache.mountPath" -}}
-{{- $in := .Values.cache.metrics.internal | default dict -}}
-{{- $mp := dig "mountPath" "" $in -}}
-{{- if $mp -}}
-{{ $mp }}
-{{- else -}}
-/mnt/redis
-{{- end -}}
+{{- $in := .Values.cache.metrics | default dict -}}
+{{ dig "mountPath" "/mnt/redis" $in }}
 {{- end }}
 
 {{- define "groundx.cache.create" -}}
+{{- $in := .Values.cache | default dict -}}
 {{- $ex := .Values.cache.existing | default dict -}}
-{{- or (empty (dig "addr" "" $ex)) (empty (dig "isCluster" "" $ex)) (empty (dig "port" "" $ex)) -}}
+{{- if not (empty (dig "addr" "" $ex)) -}}
+false
+{{- else if hasKey $in "enabled" -}}
+  {{- if (dig "enabled" false $in) -}}true{{- else -}}false{{- end -}}
+{{- else -}}
+true
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.cache.addr" -}}
 {{- $ex := .Values.cache.existing | default dict -}}
-{{- $in := .Values.cache.internal | default dict -}}
+{{- $svc := include "groundx.cache.serviceName" . -}}
 {{- $ns := include "groundx.ns" . -}}
-{{- coalesce (dig "addr" "" $ex) (printf "%s.%s.svc.cluster.local" (dig "serviceName" "redis" $in) $ns) -}}
+{{- coalesce (dig "addr" "" $ex) (printf "%s.%s.svc.cluster.local" $svc $ns) -}}
 {{- end }}
 
 {{- define "groundx.cache.isCluster" -}}
 {{- $ex := .Values.cache.existing | default dict -}}
-{{- $in := .Values.cache.internal | default dict -}}
-{{- $ic := coalesce (dig "isCluster" "" $ex) (dig "isCluster" "" $in) -}}
-{{- if eq (printf "%v" $ic) "true" -}}true{{- else -}}false{{- end -}}
+{{- $in := .Values.cache | default dict -}}
+{{- if not (empty (dig "addr" "" $ex)) -}}
+{{ dig "isCluster" "true" $ex }}
+{{- else -}}
+{{ dig "isCluster" "false" $in }}
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.cache.notCluster" -}}
@@ -86,21 +78,35 @@ Always
 
 {{- define "groundx.cache.port" -}}
 {{- $ex := .Values.cache.existing | default dict -}}
-{{- $in := .Values.cache.internal | default dict -}}
-{{- coalesce (dig "port" "" $ex) (dig "port" 6379 $in) -}}
+{{- $in := .Values.cache | default dict -}}
+{{- if not (empty (dig "addr" "" $ex)) -}}
+{{ dig "port" "" $ex }}
+{{- else -}}
+{{ dig "port" 6379 $in }}
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.metrics.cache.create" -}}
-{{- and (include "groundx.cache.create" . | fromYaml) (dig "metrics" "enabled" false .Values.cache) -}}
+{{- if (dig "enabled" false .Values.cache.metrics) -}}
+{{- $ex := .Values.cache.metrics.existing | default dict -}}
+{{- if not (empty (dig "addr" "" $ex)) -}}
+false
+{{- else -}}
+{{ include "groundx.cache.create" . }}
+{{- end -}}
+{{- else -}}
+false
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.metrics.cache.addr" -}}
 {{- $m  := .Values.cache.metrics | default dict -}}
 {{- $ex := dig "existing" dict $m -}}
-{{- $in := dig "internal" dict $m -}}
+{{- $svc := include "groundx.cache.serviceName" . -}}
+{{- $msvc := include "groundx.metrics.cache.serviceName" . -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- if (dig "enabled" false $m) -}}
-  {{- coalesce (dig "addr" "" $ex) (printf "%s-%s.%s.svc.cluster.local" (dig "serviceName" "redis" (.Values.cache.internal | default dict)) (dig "serviceName" "metrics" $in) $ns) -}}
+  {{- coalesce (dig "addr" "" $ex) (printf "%s-%s.%s.svc.cluster.local" $svc $msvc $ns) -}}
 {{- else -}}
   {{- include "groundx.cache.addr" . -}}
 {{- end -}}
@@ -109,12 +115,14 @@ Always
 {{- define "groundx.metrics.cache.isCluster" -}}
 {{- $m  := .Values.cache.metrics | default dict -}}
 {{- $ex := dig "existing" dict $m -}}
-{{- $in := dig "internal" dict $m -}}
 {{- if (dig "enabled" false $m) -}}
-  {{- $ic := coalesce (dig "isCluster" "" $ex) (dig "isCluster" "" $in) -}}
-  {{- if eq (printf "%v" $ic) "true" -}}true{{- else -}}false{{- end -}}
+{{- if not (empty (dig "addr" "" $ex)) -}}
+{{ dig "isCluster" "true" $ex }}
 {{- else -}}
-  {{- include "groundx.cache.isCluster" . -}}
+{{ dig "isCluster" "false" $m }}
+{{- end -}}
+{{- else -}}
+{{ include "groundx.cache.isCluster" . }}
 {{- end -}}
 {{- end }}
 
@@ -126,10 +134,13 @@ Always
 {{- define "groundx.metrics.cache.port" -}}
 {{- $m  := .Values.cache.metrics | default dict -}}
 {{- $ex := dig "existing" dict $m -}}
-{{- $in := dig "internal" dict $m -}}
 {{- if (dig "enabled" false $m) -}}
-  {{- coalesce (dig "port" "" $ex) (dig "port" 6379 $in) -}}
+{{- if not (empty (dig "addr" "" $ex)) -}}
+{{ dig "port" "" $ex }}
 {{- else -}}
-  {{- include "groundx.cache.port" . -}}
+{{ dig "port" 6379 $m }}
+{{- end -}}
+{{- else -}}
+{{ include "groundx.cache.port" . }}
 {{- end -}}
 {{- end }}

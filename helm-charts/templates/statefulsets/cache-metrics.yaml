@@ -1,6 +1,8 @@
 {{- $cc := include "groundx.metrics.cache.create" . -}}
-{{- if $cc -}}
-{{- $svc := printf "%s-%s" .Values.cache.internal.serviceName .Values.cache.metrics.internal.serviceName -}}
+{{- if not (eq $cc "false") -}}
+{{- $s := include "groundx.cache.serviceName" . -}}
+{{- $ms := include "groundx.metrics.cache.serviceName" . -}}
+{{- $svc := printf "%s-%s" $s $ms -}}
 {{- $mountName := printf "%s-persistent-storage" $svc -}}
 {{- $port := include "groundx.metrics.cache.port" . -}}
 apiVersion: apps/v1
@@ -12,7 +14,7 @@ metadata:
 {{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
 spec:
   serviceName: {{ $svc | quote }}
-  replicas: {{ .Values.cache.metrics.internal.replicas.desired }}
+  replicas: {{ .Values.cache.metrics.replicas.desired }}
   selector:
     matchLabels:
       app: {{ $svc | quote }}
@@ -21,7 +23,7 @@ spec:
       labels:
         app: {{ $svc | quote }}
     spec:
-{{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.metrics.internal.securityContext "indent" 6 "root" $ "user" 1001) }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.metrics.securityContext "indent" 6 "root" $ "user" 1001) }}
 {{ include "groundx.renderNodeSelector" (dict "name" $svc "indent" 6 "root" $) }}
       serviceAccountName: "{{ $svc }}-sa"
       containers:
@@ -31,8 +33,8 @@ spec:
           ports:
             - containerPort: {{ $port }}
               protocol: TCP
-{{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.metrics.internal.securityContext "indent" 10 "root" $ "user" 1001) }}
-{{- with .Values.cache.metrics.internal.resources }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.metrics.securityContext "indent" 10 "root" $ "user" 1001) }}
+{{- with .Values.cache.metrics.resources }}
 {{ include "groundx.renderContainerResources" (dict "ctx" . "indent" 10) }}
 {{- end }}
           volumeMounts:
@@ -41,5 +43,5 @@ spec:
       volumes:
         - name: {{ $mountName | quote }}
           emptyDir: {}
-{{ include "groundx.renderService" (dict "name" $svc "port" $port "type" .Values.cache.metrics.internal.type "root" $) }}
+{{ include "groundx.renderService" (dict "name" $svc "port" $port "type" .Values.cache.metrics.type "root" $) }}
 {{- end }}

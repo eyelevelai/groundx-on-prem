@@ -1,6 +1,6 @@
 {{- $cc := include "groundx.cache.create" . -}}
-{{- if $cc -}}
-{{- $svc := .Values.cache.internal.serviceName -}}
+{{- if not (eq $cc "false") -}}
+{{- $svc := include "groundx.cache.serviceName" . -}}
 {{- $mountName := printf "%s-persistent-storage" $svc -}}
 {{- $port := include "groundx.cache.port" . -}}
 apiVersion: apps/v1
@@ -12,7 +12,7 @@ metadata:
 {{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
 spec:
   serviceName: {{ $svc | quote }}
-  replicas: {{ .Values.cache.internal.replicas.desired }}
+  replicas: {{ .Values.cache.replicas.desired }}
   selector:
     matchLabels:
       app: {{ $svc | quote }}
@@ -21,7 +21,7 @@ spec:
       labels:
         app: {{ $svc | quote }}
     spec:
-{{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.internal.securityContext "indent" 6 "root" $ "user" 1001) }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.securityContext "indent" 6 "root" $ "user" 1001) }}
 {{ include "groundx.renderNodeSelector" (dict "name" $svc "indent" 6 "root" $) }}
       serviceAccountName: "{{ $svc }}-sa"
       containers:
@@ -31,8 +31,8 @@ spec:
           ports:
             - containerPort: {{ $port }}
               protocol: TCP
-{{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.internal.securityContext "indent" 10 "root" $ "user" 1001) }}
-{{- with .Values.cache.internal.resources }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.securityContext "indent" 10 "root" $ "user" 1001) }}
+{{- with .Values.cache.resources }}
 {{ include "groundx.renderContainerResources" (dict "ctx" . "indent" 10) }}
 {{- end }}
           volumeMounts:
@@ -41,5 +41,5 @@ spec:
       volumes:
         - name: {{ $mountName | quote }}
           emptyDir: {}
-{{ include "groundx.renderService" (dict "name" $svc "port" $port "type" .Values.cache.internal.type "root" $) }}
+{{ include "groundx.renderService" (dict "name" $svc "port" $port "type" .Values.cache.type "root" $) }}
 {{- end }}

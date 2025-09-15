@@ -27,40 +27,44 @@ cluster:
     existingSecret: ""
 
 cache:
-  internal:
-    replicas:
-      min: 1
-      desired: 1
-      max: 1
-    serviceName: cache
-    isCluster: false
-    port: 6379
-    type: ClusterIP
+  replicas:
+    # max: 1
+    # min: 1
+    desired: 1
+  isCluster: false
+  type: ClusterIP
+
+  resources:
+    requests:
+      cpu: "0.2"
+      memory: 512Mi
 
   # set to use external cache
-  existing: {}          
-#    addr: redis.mycorp.net
-#    isCluster: true
-#    port: 6379
+  existing: {}
+    # addr: redis.mycorp.net
+    # isCluster: true
+    # port: 6379
 
   metrics:
     enabled: true
 
-    internal:
-      replicas:
-        min: 1
-        desired: 1
-        max: 1
-      serviceName: metrics
-      isCluster: false
-      port: 6379
-      type: ClusterIP
+    replicas:
+      # max: 1
+      # min: 1
+      desired: 1
+    isCluster: false
+    type: ClusterIP
+
+    resources:
+      requests:
+        cpu: "0.2"
+        memory: 512Mi
 
     # set to use external metrics cache
     existing: {}
-#      addr: redis-metrics.mycorp.net
-#      isCluster: true
-#      port: 6379
+      # addr: redis-metrics.mycorp.net
+      # isCluster: true
+      # port: 6379
 
 db:
   dbName: eyelevel

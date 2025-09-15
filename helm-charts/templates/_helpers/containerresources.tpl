@@ -2,17 +2,17 @@
 {{- $ctx := .ctx -}}
 {{- $indent := .indent | default 0 -}}
 {{- if and
-  $ctx.resources
+  $ctx
   (or
-    (and $ctx.resources.limits (or $ctx.resources.limits.cpu $ctx.resources.limits.memory $ctx.resources.limits.gpu))
-    (and $ctx.resources.requests (or $ctx.resources.requests.cpu $ctx.resources.requests.memory $ctx.resources.requests.gpu))
+    (and $ctx.limits (or $ctx.limits.cpu $ctx.limits.memory $ctx.limits.gpu))
+    (and $ctx.requests (or $ctx.requests.cpu $ctx.requests.memory $ctx.requests.gpu))
   )
 }}
 {{ printf "%*s" $indent "" }}resources:
 {{- if $ctx.limits }}
 {{ printf "%*s" (add $indent 2) "" }}limits:
 {{- if $ctx.limits.cpu }}
-{{ printf "%*s" (add $indent 4) "" }}cpu: {{ $ctx.limits.cpu | quote }}
+{{ printf "%*s" (add $indent 4) "" }}cpu: {{ $ctx.limits.cpu }}
 {{- end }}
 {{- if $ctx.limits.memory }}
 {{ printf "%*s" (add $indent 4) "" }}memory: {{ $ctx.limits.memory | quote }}
@@ -21,16 +21,16 @@
 {{ printf "%*s" (add $indent 4) "" }}nvidia.com/gpu: {{ $ctx.limits.gpu }}
 {{- end }}
 {{- end }}
-{{- if $ctx.resources }}
-{{ printf "%*s" (add $indent 2) "" }}resources:
-{{- if $ctx.resources.cpu }}
-{{ printf "%*s" (add $indent 4) "" }}cpu: {{ $ctx.resources.cpu | quote }}
+{{- if $ctx.requests }}
+{{ printf "%*s" (add $indent 2) "" }}requests:
+{{- if $ctx.requests.cpu }}
+{{ printf "%*s" (add $indent 4) "" }}cpu: {{ $ctx.requests.cpu }}
 {{- end }}
-{{- if $ctx.resources.memory }}
-{{ printf "%*s" (add $indent 4) "" }}memory: {{ $ctx.resources.memory | quote }}
+{{- if $ctx.requests.memory }}
+{{ printf "%*s" (add $indent 4) "" }}memory: {{ $ctx.requests.memory | quote }}
 {{- end }}
-{{- if $ctx.resources.gpu }}
-{{ printf "%*s" (add $indent 4) "" }}nvidia.com/gpu: {{ $ctx.resources.gpu }}
+{{- if $ctx.requests.gpu }}
+{{ printf "%*s" (add $indent 4) "" }}nvidia.com/gpu: {{ $ctx.requests.gpu }}
 {{- end }}
 {{- end }}
 {{- end }}

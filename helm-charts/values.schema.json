@@ -65,31 +65,25 @@
     "cache": {
       "type": "object",
       "properties": {
-        "internal": {
+        "enabled": { "type": "boolean" },
+        "image": { "type": "string" },
+        "mountPath": { "type": "string" },
+        "replicas": {
           "type": "object",
           "properties": {
-            "image": { "type": "string" },
-            "mountPath": { "type": "string" },
-            "replicas": {
-              "type": "object",
-              "properties": {
-                "desired": { "type": "integer" },
-                "max": { "type": "integer" },
-                "min": { "type": "integer" }
-              },
-              "required": ["min", "max", "desired"],
-              "additionalProperties": false
-            },
-            "resources": { "type": "object" },
-            "securityContext": { "type": "object" },
-            "serviceName": { "type": "string" },
-            "isCluster": { "type": "boolean" },
-            "port": { "type": "integer" },
-            "type": { "type": "string" }
+            "desired": { "type": "integer" },
+            "max": { "type": "integer" },
+            "min": { "type": "integer" }
           },
-          "required": ["serviceName", "isCluster", "port", "replicas", "type"],
+          "required": ["desired"],
           "additionalProperties": false
         },
+        "resources": { "type": "object" },
+        "securityContext": { "type": "object" },
+        "serviceName": { "type": "string" },
+        "isCluster": { "type": "boolean" },
+        "port": { "type": "integer" },
+        "type": { "type": "string" },
         "existing": {
           "type": "object",
           "properties": {
@@ -103,30 +97,6 @@
           "type": "object",
           "properties": {
             "enabled": { "type": "boolean" },
-            "internal": {
-              "type": "object",
-              "properties": {
-                "image": { "type": "string" },
-                "replicas": {
-                  "type": "object",
-                  "properties": {
-                    "desired": { "type": "integer" },
-                    "max": { "type": "integer" },
-                    "min": { "type": "integer" }
-                  },
-                  "required": ["min", "max", "desired"],
-                  "additionalProperties": false
-                },
-                "resources": { "type": "object" },
-                "securityContext": { "type": "object" },
-                "serviceName": { "type": "string" },
-                "isCluster": { "type": "boolean" },
-                "port": { "type": "integer" },
-                "type": { "type": "string" }
-              },
-              "required": ["serviceName", "isCluster", "port", "replicas", "type"],
-              "additionalProperties": false
-            },
             "existing": {
               "type": "object",
               "properties": {
@@ -135,13 +105,30 @@
                 "port": { "type": "integer" }
               },
               "additionalProperties": false
-            }
+            },
+            "image": { "type": "string" },
+            "isCluster": { "type": "boolean" },
+            "port": { "type": "integer" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "desired": { "type": "integer" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" }
+              },
+              "required": ["desired"],
+              "additionalProperties": false
+            },
+            "resources": { "type": "object" },
+            "securityContext": { "type": "object" },
+            "serviceName": { "type": "string" },
+            "type": { "type": "string" }
           },
           "required": ["enabled"],
           "additionalProperties": false
         }
       },
-      "required": ["metrics"],
+      "required": ["isCluster", "metrics", "replicas", "type"],
       "additionalProperties": false
     },
     "db": {
@@ -730,6 +717,9 @@
       },
       "required": ["tpm", "services"],
       "additionalProperties": false
+    },
+    "pxc-operator": {
+      "type": "object"
     }
   },
   "required": ["namespace"],
