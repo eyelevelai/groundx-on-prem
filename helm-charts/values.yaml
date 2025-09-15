@@ -26,10 +26,12 @@ cluster:
   tls:
     existingSecret: ""
 
+pxc-operator:
+  nodeSelector:
+    node: eyelevel-cpu-only
+
 cache:
   replicas:
-    # max: 1
-    # min: 1
     desired: 1
   isCluster: false
   type: ClusterIP
@@ -40,17 +42,18 @@ cache:
       memory: 512Mi
 
   # set to use external cache
+  # will supercede all other settings except metrics
   existing: {}
     # addr: redis.mycorp.net
     # isCluster: true
     # port: 6379
 
   metrics:
+    # set false if you want to share 1 redis cache
+    # for metrics and process metadata caching
     enabled: true
 
     replicas:
-      # max: 1
-      # min: 1
       desired: 1
     isCluster: false
     type: ClusterIP
@@ -61,6 +64,7 @@ cache:
         memory: 512Mi
 
     # set to use external metrics cache
+    # will supercede all other settings in metrics
     existing: {}
       # addr: redis-metrics.mycorp.net
       # isCluster: true
@@ -70,13 +74,33 @@ db:
   dbName: eyelevel
   serviceUser: eyelevel
   servicePassword: password
+
+  # used to initialize DB
+  # creates service user, db, and tables
   privilegedUsername: root
   privilegedPassword: password
 
-  internal:
-    serviceName: mysql
-    port: 3306
+  # haproxy
+  proxy:
+    replicas:
+      desired: 1
+    resources:
+      requests:
+        cpu: 600m
+        memory: 1Gi
 
+  # pxc
+  replicas:
+    desired: 1
+
+  resources:
+    requests:
+      cpu: 600m
+      memory: 512Mi
+
+  # set to false if using external MySQL DB
+  # set to false to disable percona deployment
+  operator: true
   # set to use external MySQL DB
   existing: {}
 #    ro: myro.mycorp.net

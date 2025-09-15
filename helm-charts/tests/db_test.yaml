@@ -1,0 +1,15 @@
+suite: "db renders as expected"
+values:
+  - ../values.yaml
+
+tests:
+  - it: pxc-operator.yaml
+    templates:
+      - ../charts/pxc-operator/templates/deployment.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: db_cluster.yaml
+    templates:
+      - ../templates/services/db_cluster.yaml
+    asserts:
+      - matchSnapshot: {}

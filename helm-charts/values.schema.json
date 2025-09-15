@@ -124,32 +124,19 @@
             "serviceName": { "type": "string" },
             "type": { "type": "string" }
           },
-          "required": ["enabled"],
+          "required": ["enabled", "existing"],
           "additionalProperties": false
         }
       },
-      "required": ["isCluster", "metrics", "replicas", "type"],
+      "required": ["existing", "isCluster", "metrics", "replicas", "type"],
       "additionalProperties": false
     },
     "db": {
       "type": "object",
       "properties": {
+        "backup": {"type": "boolean" },
         "dbName": { "type": "string" },
-        "serviceUser": { "type": "string" },
-        "servicePassword": { "type": "string" },
-        "privilegedUsername": { "type": "string" },
-        "privilegedPassword": { "type": "string" },
-        "maxIdle": { "type": "integer" },
-        "maxOpen": { "type": "integer" },
-        "internal": {
-          "type": "object",
-          "properties": {
-            "serviceName": { "type": "string" },
-            "port": { "type": "integer" }
-          },
-          "required": ["serviceName", "port"],
-          "additionalProperties": false
-        },
+        "disableUnsafeChecks": {"type": "boolean" },
         "existing": {
           "type": "object",
           "properties": {
@@ -158,10 +145,51 @@
             "port": { "type": "integer" }
           },
           "additionalProperties": false
-        }
+        },
+        "logcollector": {"type": "boolean" },
+        "serviceUser": { "type": "string" },
+        "servicePassword": { "type": "string" },
+        "privilegedUsername": { "type": "string" },
+        "privilegedPassword": { "type": "string" },
+        "maxIdle": { "type": "integer" },
+        "maxOpen": { "type": "integer" },
+        "operator": { "type": "boolean" },
+        "pvSize": { "type": "string" },
+        "serviceName": { "type": "string" },
+        "pmm": {"type": "boolean" },
+        "port": { "type": "integer" },
+        "proxy": {
+          "type": "object",
+          "properties": {
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "desired": { "type": "integer" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" }
+              },
+              "required": ["desired"],
+              "additionalProperties": false
+            },
+            "resources": { "type": "object" }
+          },
+          "required": ["replicas"],
+          "additionalProperties": false
+        },
+        "replicas": {
+          "type": "object",
+          "properties": {
+            "desired": { "type": "integer" },
+            "max": { "type": "integer" },
+            "min": { "type": "integer" }
+          },
+          "required": ["desired"],
+          "additionalProperties": false
+        },
+        "resources": { "type": "object" }
       },
       "required": [
-        "dbName", "serviceUser", "servicePassword", "privilegedUsername", "privilegedPassword"
+        "dbName", "existing", "operator", "replicas", "serviceUser", "servicePassword", "privilegedUsername", "privilegedPassword", "proxy"
       ],
       "additionalProperties": false
     },

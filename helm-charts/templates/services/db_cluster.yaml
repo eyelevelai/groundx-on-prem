@@ -1,0 +1,80 @@
+{{- $cc := include "groundx.db.create" . -}}
+{{- if not (eq $cc "false") -}}
+
+{{- $svc := printf "%s-cluster" (include "groundx.db.serviceName" .) -}}
+{{- $tls := .Values.cluster.tls.existingSecret | default "false" -}}
+
+apiVersion: pxc.percona.com/v1
+kind: PerconaXtraDBCluster
+metadata:
+  name: {{ $svc | quote }}
+  namespace: {{ include "groundx.ns" . | quote }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
+spec:
+  backup:
+    enabled: {{ include "groundx.db.backup" . }}
+    nodeSelector:
+      node: {{ include "groundx.node.value" (dict "name" $svc "root" $) | quote }}
+
+  haproxy:
+    enabled: true
+    nodeSelector:
+      node: {{ include "groundx.node.value" (dict "name" $svc "root" $) | quote }}
+{{- with .Values.db.proxy.resources }}
+{{ include "groundx.renderContainerResources" (dict "ctx" . "indent" 4) }}
+{{- end }}
+    size: {{ .Values.db.proxy.replicas.desired }}
+
+  logcollector:
+    enabled: {{ include "groundx.db.logcollector" . }}
+    nodeSelector:
+      node: {{ include "groundx.node.value" (dict "name" $svc "root" $) | quote }}
+
+  nodeSelector:
+    node: {{ include "groundx.node.value" (dict "name" $svc "root" $) | quote }}
+
+  pmm:
+    enabled: {{ include "groundx.db.pmm" . }}
+    nodeSelector:
+      node: {{ include "groundx.node.value" (dict "name" $svc "root" $) | quote }}
+
+  proxysql:
+    enabled: false
+    nodeSelector:
+      node: {{ include "groundx.node.value" (dict "name" $svc "root" $) | quote }}
+
+  pxc:
+    nodeSelector:
+      node: {{ include "groundx.node.value" (dict "name" $svc "root" $) | quote }}
+    persistence:
+      size: {{ include "groundx.db.pvSize" . | quote }}
+{{- with .Values.db.resources }}
+{{ include "groundx.renderContainerResources" (dict "ctx" . "indent" 4) }}
+{{- end }}
+    size: {{ .Values.db.replicas.desired }}
+
+  secrets:
+    passwords:
+      root: {{ .Values.db.privilegedPassword | quote }}
+      xtrabackup: {{ .Values.db.privilegedPassword | quote }}
+      monitor: {{ .Values.db.privilegedPassword | quote }}
+      clustercheck: {{ .Values.db.privilegedPassword | quote }}
+      proxyadmin: {{ .Values.db.privilegedPassword | quote }}
+      operator: {{ .Values.db.privilegedPassword | quote }}
+      replication: {{ .Values.db.privilegedPassword | quote }}
+{{- if not (eq $tls "false") }}
+    tls:
+      cluster:  {{ $tls | quote }}
+      internal: {{ $tls | quote }}
+{{- end }}
+
+  unsafeFlags:
+    pxcSize: {{ include "groundx.db.disableUnsafeChecks" . }}
+    proxySize: {{ include "groundx.db.disableUnsafeChecks" . }}
+
+{{- end -}}

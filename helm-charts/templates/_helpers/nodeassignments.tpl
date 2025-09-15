@@ -3,6 +3,7 @@
   "cache"             "cpuOnly"
   "cache-metrics"     "cpuOnly"
   "db"                "cpuOnly"
+  "db-cluster"        "cpuOnly"
   "file"              "cpuOnly"
   "graph"             "cpuOnly"
   "layout_api"        "cpuOnly"
