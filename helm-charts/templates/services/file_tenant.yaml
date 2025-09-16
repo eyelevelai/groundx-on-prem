@@ -1,0 +1,45 @@
+{{- $cc := include "groundx.file.create" . -}}
+{{- if not (eq $cc "false") -}}
+
+{{- $ctx := (include "groundx.file.settings" . | fromYaml) }}
+{{- $name := include "groundx.file.serviceName" . -}}
+{{- $svc := printf "%s-tenant" (include "groundx.file.serviceName" .) -}}
+{{- $lb := include "groundx.file.loadBalancer" . | trim }}
+
+apiVersion: minio.min.io/v2
+kind: Tenant
+metadata:
+  name: {{ $svc | quote }}
+  namespace: {{ include "groundx.ns" . | quote }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
+spec:
+  tenant:
+    certificate:
+      requestAutoCert: false
+    configSecret:
+      accessKey: {{ $ctx.username }}
+      secretKey: {{ $ctx.password }}
+    name: {{ $svc | quote }}
+    nodeSelector:
+      node: {{ include "groundx.node.value" (dict "name" $svc "root" $) | quote }}
+{{- with .Values.file.resources }}
+{{ include "groundx.renderContainerResources" (dict "ctx" . "indent" 4) }}
+{{- end }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" .Values.file.securityContext "indent" 4 "root" $ "user" 1000) }}
+    servers: {{ .Values.file.replicas }}
+    size: {{ .Values.file.volumeSize }}
+    volumesPerServer: {{ .Values.file.volumesPerReplica }}
+{{- if not (empty $lb) }}
+{{- if eq .Values.cluster.type "openshift" }}
+{{ include "groundx.renderRoute" (dict "name" $name "lb" $lb "root" $) }}
+{{- else }}
+{{ include "groundx.renderLoadBalancer" (dict "name" $name "lb" $lb "root" $) }}
+{{- end }}
+{{- end }}
+
+{{- end }}

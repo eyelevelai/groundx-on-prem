@@ -1,0 +1,26 @@
+operator:
+  clusterName: opensearch-cluster
+
+  global:
+    dockerRegistry: public.ecr.aws/c9r4x6y5
+
+  image:
+    repository: eyelevel/opensearch
+    tag: latest
+
+  majorVersion: 2.16.0
+  nodeGroup: master
+
+  persistence:
+    enabled: true
+    enableInitChown: false
+    size: 20Gi
+
+  podSecurityContext:
+    runAsNonRoot: true
+
+  replicas: 1
+  securityContext:
+    runAsNonRoot: true
+
+  singleNode: true

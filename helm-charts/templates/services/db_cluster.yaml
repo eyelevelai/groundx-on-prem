@@ -28,7 +28,7 @@ spec:
 {{- with .Values.db.proxy.resources }}
 {{ include "groundx.renderContainerResources" (dict "ctx" . "indent" 4) }}
 {{- end }}
-    size: {{ .Values.db.proxy.replicas.desired }}
+    size: {{ .Values.db.proxy.replicas }}
 
   logcollector:
     enabled: {{ include "groundx.db.logcollector" . }}
@@ -56,7 +56,7 @@ spec:
 {{- with .Values.db.resources }}
 {{ include "groundx.renderContainerResources" (dict "ctx" . "indent" 4) }}
 {{- end }}
-    size: {{ .Values.db.replicas.desired }}
+    size: {{ .Values.db.replicas }}
 
   secrets:
     passwords:
@@ -77,4 +77,4 @@ spec:
     pxcSize: {{ include "groundx.db.disableUnsafeChecks" . }}
     proxySize: {{ include "groundx.db.disableUnsafeChecks" . }}
 
-{{- end -}}
+{{- end }}

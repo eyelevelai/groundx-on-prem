@@ -10,7 +10,7 @@ db_cluster.yaml:
       labels:
         app: db-cluster
         appVersion: 0.1.0
-        chart: groundx-"0.1.0"
+        chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
       name: db-cluster
@@ -73,10 +73,10 @@ pxc-operator.yaml:
       labels:
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: pxc-operator
+        app.kubernetes.io/name: dbOperator
         app.kubernetes.io/version: 1.18.0
-        helm.sh/chart: pxc-operator-1.18.0
-      name: RELEASE-NAME-pxc-operator
+        helm.sh/chart: dbOperator-1.18.0
+      name: RELEASE-NAME-dbOperator
       namespace: NAMESPACE
     spec:
       replicas: 1
@@ -84,8 +84,8 @@ pxc-operator.yaml:
         matchLabels:
           app.kubernetes.io/component: operator
           app.kubernetes.io/instance: RELEASE-NAME
-          app.kubernetes.io/name: pxc-operator
-          app.kubernetes.io/part-of: pxc-operator
+          app.kubernetes.io/name: dbOperator
+          app.kubernetes.io/part-of: dbOperator
       strategy:
         rollingUpdate:
           maxUnavailable: 1
@@ -95,8 +95,8 @@ pxc-operator.yaml:
           labels:
             app.kubernetes.io/component: operator
             app.kubernetes.io/instance: RELEASE-NAME
-            app.kubernetes.io/name: pxc-operator
-            app.kubernetes.io/part-of: pxc-operator
+            app.kubernetes.io/name: dbOperator
+            app.kubernetes.io/part-of: dbOperator
         spec:
           containers:
             - command:
@@ -109,7 +109,7 @@ pxc-operator.yaml:
                     fieldRef:
                       fieldPath: metadata.name
                 - name: OPERATOR_NAME
-                  value: RELEASE-NAME-pxc-operator
+                  value: RELEASE-NAME-dbOperator
                 - name: LOG_STRUCTURED
                   value: "false"
                 - name: LOG_LEVEL
@@ -138,5 +138,5 @@ pxc-operator.yaml:
                   memory: 20Mi
           nodeSelector:
             node: eyelevel-cpu-only
-          serviceAccountName: RELEASE-NAME-pxc-operator
+          serviceAccountName: RELEASE-NAME-dbOperator
           terminationGracePeriodSeconds: 600

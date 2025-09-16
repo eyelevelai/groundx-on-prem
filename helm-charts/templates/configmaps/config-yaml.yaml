@@ -13,7 +13,7 @@ data:
     _mysql: &mysql
       ro_addr: {{ include "groundx.db.ro" . }}
       rw_addr: {{ include "groundx.db.rw" . }}
-      user: {{ .Values.db.serviceUser | default "" }}
+      user: {{ .Values.db.serviceUsername | default "" }}
       password: {{ .Values.db.servicePassword | default "" }}
       database: {{ .Values.db.dbName | default "" }}
       maxIdle: {{ .Values.db.maxIdle | default 5 }}

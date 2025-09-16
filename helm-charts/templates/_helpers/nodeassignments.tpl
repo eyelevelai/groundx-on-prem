@@ -6,6 +6,7 @@
   "db-cluster"        "cpuOnly"
   "file"              "cpuOnly"
   "graph"             "cpuOnly"
+  "file-tenant"       "cpuOnly"
   "layout_api"        "cpuOnly"
   "layout_correct"    "cpuMemory"
   "layout_inference"  "gpuLayout"

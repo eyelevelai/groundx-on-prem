@@ -137,6 +137,7 @@
         "backup": {"type": "boolean" },
         "dbName": { "type": "string" },
         "disableUnsafeChecks": {"type": "boolean" },
+        "enabled": { "type": "boolean" },
         "existing": {
           "type": "object",
           "properties": {
@@ -147,49 +148,30 @@
           "additionalProperties": false
         },
         "logcollector": {"type": "boolean" },
-        "serviceUser": { "type": "string" },
-        "servicePassword": { "type": "string" },
-        "privilegedUsername": { "type": "string" },
         "privilegedPassword": { "type": "string" },
+        "privilegedUsername": { "type": "string" },
         "maxIdle": { "type": "integer" },
         "maxOpen": { "type": "integer" },
-        "operator": { "type": "boolean" },
         "pvSize": { "type": "string" },
         "serviceName": { "type": "string" },
+        "servicePassword": { "type": "string" },
+        "serviceUsername": { "type": "string" },
         "pmm": {"type": "boolean" },
         "port": { "type": "integer" },
         "proxy": {
           "type": "object",
           "properties": {
-            "replicas": {
-              "type": "object",
-              "properties": {
-                "desired": { "type": "integer" },
-                "max": { "type": "integer" },
-                "min": { "type": "integer" }
-              },
-              "required": ["desired"],
-              "additionalProperties": false
-            },
+            "replicas": { "type": "integer" },
             "resources": { "type": "object" }
           },
           "required": ["replicas"],
           "additionalProperties": false
         },
-        "replicas": {
-          "type": "object",
-          "properties": {
-            "desired": { "type": "integer" },
-            "max": { "type": "integer" },
-            "min": { "type": "integer" }
-          },
-          "required": ["desired"],
-          "additionalProperties": false
-        },
+        "replicas": { "type": "integer" },
         "resources": { "type": "object" }
       },
       "required": [
-        "dbName", "existing", "operator", "replicas", "serviceUser", "servicePassword", "privilegedUsername", "privilegedPassword", "proxy"
+        "dbName", "enabled", "existing", "privilegedPassword", "privilegedUsername", "proxy", "replicas", "servicePassword", "serviceUsername"
       ],
       "additionalProperties": false
     },
@@ -197,28 +179,8 @@
       "type": "object",
       "properties": {
         "bucketName": { "type": "string" },
-        "username": { "type": "string" },
-        "password": { "type": "string" },
-        "serviceType": { "type": "string" },
-        "internal": {
-          "type": "object",
-          "properties": {
-            "serviceName": { "type": "string" },
-            "port": { "type": "integer" },
-            "customDomain": { "type": "string" },
-            "load_balancer": {
-              "type": "object",
-              "properties": {
-                "port": { "type": "integer" },
-                "ssl": { "type": "boolean" },
-                "target": { "type": "integer" }
-              },
-              "additionalProperties": false
-            }
-          },
-          "required": ["serviceName", "port"],
-          "additionalProperties": false
-        },
+        "customDomain": { "type": "string" },
+        "enabled": { "type": "boolean" },
         "existing": {
           "type": "object",
           "properties": {
@@ -227,28 +189,34 @@
             "ssl": { "type": "boolean" }
           },
           "additionalProperties": false
-        }
+        },
+        "loadBalancer": {
+          "type": "object",
+          "properties": {
+            "port": { "type": "integer" },
+            "ssl": { "type": "boolean" },
+            "timeout": { "type": "integer" }
+          },
+          "additionalProperties": false
+        },
+        "password": { "type": "string" },
+        "port": { "type": "integer" },
+        "replicas": { "type": "integer" },
+        "resources": { "type": "object" },
+        "securityContext": { "type": "object" },
+        "serviceName": { "type": "string" },
+        "serviceType": { "type": "string" },
+        "username": { "type": "string" },
+        "volumesPerReplica": { "type": "integer" },
+        "volumeSize": { "type": "string" }
       },
-      "required": ["bucketName", "username", "password", "serviceType"],
+      "required": ["bucketName", "existing", "loadBalancer", "replicas", "username", "password", "serviceType"],
       "additionalProperties": false
     },
     "search": {
       "type": "object",
       "properties": {
-        "indexName": { "type": "string" },
-        "username": { "type": "string" },
-        "password": { "type": "string" },
-        "privilegedPassword": { "type": "string" },
-        "privilegedUsername": { "type": "string" },
-        "internal": {
-          "type": "object",
-          "properties": {
-            "serviceName": { "type": "string" },
-            "port": { "type": "integer" }
-          },
-          "required": ["serviceName", "port"],
-          "additionalProperties": false
-        },
+        "enabled": { "type": "boolean" },
         "existing": {
           "type": "object",
           "properties": {
@@ -257,10 +225,19 @@
             "port": { "type": "integer" }
           },
           "additionalProperties": false
-        }
+        },
+        "global": { "type": "object" },
+        "indexName": { "type": "string" },
+        "operator": { "type": "object" },
+        "password": { "type": "string" },
+        "port": { "type": "integer" },
+        "privilegedPassword": { "type": "string" },
+        "privilegedUsername": { "type": "string" },
+        "serviceName": { "type": "string" },
+        "username": { "type": "string" }
       },
       "required": [
-        "indexName", "username", "password", "privilegedPassword", "privilegedUsername"
+        "enabled", "existing", "indexName", "password", "privilegedPassword", "privilegedUsername", "username"
       ],
       "additionalProperties": false
     },
@@ -318,8 +295,13 @@
             "queue": { "type": "string" },
             "serviceName": { "type": "string" },
             "defaultKitID": { "type": "integer" },
-            "load_balancer": {
+            "loadBalancer": {
               "type": "object",
+              "properties": {
+                "port": { "type": "integer" },
+                "ssl": { "type": "boolean" },
+                "timeout": { "type": "integer" }
+              },
               "additionalProperties": false
             }
           },
@@ -746,10 +728,13 @@
       "required": ["tpm", "services"],
       "additionalProperties": false
     },
-    "pxc-operator": {
+    "dbOperator": {
+      "type": "object"
+    },
+    "fileOperator": {
       "type": "object"
     }
   },
-  "required": ["namespace"],
+  "required": ["cluster", "namespace"],
   "additionalProperties": false
 }

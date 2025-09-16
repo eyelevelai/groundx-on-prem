@@ -11,7 +11,17 @@ maintainers:
   email: developer@groundx.ai
 dependencies:
   - name: pxc-operator
+    alias: dbOperator
     repository: https://percona.github.io/percona-helm-charts
     version: 1.18.0
-    condition: db.operator
-
+    condition: db.enabled
+  - name: operator
+    alias: fileOperator
+    repository: https://operator.min.io
+    version: 6.0.3
+    condition: file.enabled
+  - name: opensearch
+    alias: search
+    repository: oci://public.ecr.aws/c9r4x6y5/helm
+    version: 0.1.1
+    condition: search.enabled

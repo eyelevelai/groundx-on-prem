@@ -1,0 +1,15 @@
+suite: "file renders as expected"
+values:
+  - ../values.yaml
+
+tests:
+  - it: minio-operator.yaml
+    templates:
+      - ../charts/fileOperator/templates/operator-deployment.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: file_tenant.yaml
+    templates:
+      - ../templates/services/file_tenant.yaml
+    asserts:
+      - matchSnapshot: {}

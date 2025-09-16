@@ -4,8 +4,8 @@ config-yaml.yaml:
     data:
       config.yaml: |
         _mysql: &mysql
-          ro_addr: mysql-cluster-pxc-db-haproxy.eyelevel.svc.cluster.local
-          rw_addr: mysql-cluster-pxc-db-haproxy.eyelevel.svc.cluster.local
+          ro_addr: db-cluster-pxc-db-haproxy.eyelevel.svc.cluster.local
+          rw_addr: db-cluster-pxc-db-haproxy.eyelevel.svc.cluster.local
           user: eyelevel
           password: password
           database: eyelevel
@@ -15,7 +15,7 @@ config-yaml.yaml:
         ai:
           aws:
             search:
-              baseURL: https://opensearch-cluster-master.eyelevel.svc.cluster.local:9200
+              baseURL: https://search-cluster-master.eyelevel.svc.cluster.local:9200
               index: prod-1
               languages:
                 - en
@@ -221,10 +221,10 @@ config-yaml.yaml:
           serviceName: summary-client
 
         upload:
-          baseDomain: minio.eyelevel.svc.cluster.local
-          baseUrl: http://minio.eyelevel.svc.cluster.local
+          baseDomain: file.eyelevel.svc.cluster.local
+          baseUrl: http://file.eyelevel.svc.cluster.local
           bucket: eyelevel
-          bucketUrl: http://minio.eyelevel.svc.cluster.local
+          bucketUrl: http://file.eyelevel.svc.cluster.local
           id: minio
           secret: minio123
           service: minio
@@ -271,12 +271,12 @@ layout-config-py.yaml:
             podMemory="2Gi",
             service="layout",
             uploadBase="layout/processed/",
-            uploadBaseURL="minio.eyelevel.svc.cluster.local",
+            uploadBaseURL="file.eyelevel.svc.cluster.local",
             uploadBucket="eyelevel",
-            uploadReplaceURL="http://minio.eyelevel.svc.cluster.local/eyelevel/",
+            uploadReplaceURL="http://file.eyelevel.svc.cluster.local/eyelevel/",
             uploadSSL=False,
             uploadType="minio",
-            uploadURL="http://minio.eyelevel.svc.cluster.local/eyelevel/",
+            uploadURL="http://file.eyelevel.svc.cluster.local/eyelevel/",
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=1,
         )

@@ -26,9 +26,15 @@ cluster:
   tls:
     existingSecret: ""
 
-pxc-operator:
+dbOperator:
   nodeSelector:
     node: eyelevel-cpu-only
+
+fileOperator:
+  operator:
+    nodeSelector:
+      node: eyelevel-cpu-only
+    replicaCount: 1
 
 cache:
   replicas:
@@ -71,8 +77,11 @@ cache:
       # port: 6379
 
 db:
+  # set to false to disable percona deployment
+  enabled: true
+
   dbName: eyelevel
-  serviceUser: eyelevel
+  serviceUsername: eyelevel
   servicePassword: password
 
   # used to initialize DB
@@ -82,25 +91,20 @@ db:
 
   # haproxy
   proxy:
-    replicas:
-      desired: 1
+    replicas: 1
     resources:
       requests:
         cpu: 600m
         memory: 1Gi
 
   # pxc
-  replicas:
-    desired: 1
+  replicas: 1
 
   resources:
     requests:
       cpu: 600m
       memory: 512Mi
 
-  # set to false if using external MySQL DB
-  # set to false to disable percona deployment
-  operator: true
   # set to use external MySQL DB
   existing: {}
 #    ro: myro.mycorp.net
@@ -108,44 +112,67 @@ db:
 #    port: 3306
 
 file:
+  # set to false to disable minio deployment
+  enabled: true
+
   bucketName: eyelevel
   username: minio
   password: minio123
+
+  replicas: 1
   # minio or sqs
   serviceType: minio
+  volumesPerReplica: 1
+  volumeSize: 20Gi
 
-  internal:
-    serviceName: minio
-    port: 9000
-    customDomain: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
 
-    # set to expose minio externally
-    load_balancer: {}
-#      port: 8080
-#      ssl: true
-#.     target: 9000
+  # set to use a custom domain for file URLs
+  customDomain: ""
+
+  # set to expose minio externally
+  # in openshift, creates a route
+  loadBalancer: {}
+    # port: 8080
 
   # set to use existing minio file storage
   existing: {}
-#.   domain: minio.mycorp.net
-#    port: 9000
-#    ssl: true
+    # domain: minio.mycorp.net
+    # port: 9000
+    # ssl: true
 
 search:
+# set to false to disable opensearch deployment
+  enabled: true
+
   indexName: prod-1
   username: eyelevel
   password: R0otb_*t!kazs
   privilegedPassword: R0otb_*t!kazs
   privilegedUsername: admin
 
-  internal:
-    serviceName: opensearch
-    port: 9200
+  operator:
+    extraEnvs:
+      - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+        # must be same as search.privilegedPassword
+        value: R0otb_*t!kazs
+    nodeSelector:
+      node: eyelevel-cpu-only
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+    # replicas: 1
+    # singleNode: true # set false if replices > 1
 
+  # set to use existing opensearch
   existing: {}
-#    domain: search.mycorp.net
-#    url: https://search.mycorp.net:9200
-#    port: 9200
+    # domain: search.mycorp.net
+    # url: https://search.mycorp.net:9200
+    # port: 9200
 
 stream:
   internal:
@@ -172,7 +199,7 @@ summary:
     serviceName: summary
 
     # set to expose summary service externally
-    load_balancer: {}
+    loadBalancer: {}
 #      port: 8080
 #      ssl: true
 #.     target: 8080
