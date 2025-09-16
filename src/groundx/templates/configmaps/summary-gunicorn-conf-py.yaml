@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: summary-gunicorn-conf-py-map
+  namespace: {{ include "groundx.ns" . }}
+  labels:
+    appVersion: {{ .Chart.AppVersion | quote }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    heritage: {{ .Release.Service }}
+    version: {{ .Chart.Version | quote }}
+data:
+  gunicorn_conf.py: |
+    infolog = "-"
+    accesslog = "-"
+    errorlog = "-"
+
+    loglevel = "{{ .Values.logLevel }}"
+    workers = {{ .Values.summary.internal.api.workers }}
+    threads = {{ .Values.summary.internal.api.threads }}
+    timeout = {{ .Values.summary.internal.api.timeout }}
+    timeout_keep_alive = 15
+
+    worker_class = "uvicorn.workers.UvicornWorker"
+
+    bind = "0.0.0.0:8080"
+
+    wsgi_app = "summary_server:app"

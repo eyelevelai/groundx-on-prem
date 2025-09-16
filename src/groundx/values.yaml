@@ -1,0 +1,374 @@
+namespace: eyelevel
+createNamespace: true
+ingestOnly: false
+languages:
+  - en
+logLevel: info
+hasMig: false
+
+admin:
+  apiKey: "00000000-0000-0000-0000-000000000000"
+  email: "support@mycorp.net"
+  password: "password"
+  username: "00000000-0000-0000-0000-000000000000"
+
+cluster:
+  # "", "eks", "aks", "gke", "openshift", etc.
+  type: eks
+
+  nodeLabels:
+    cpuMemory: eyelevel-cpu-memory
+    cpuOnly: eyelevel-cpu-only
+    gpuLayout: eyelevel-gpu-layout
+    gpuRanker: eyelevel-gpu-ranker
+    gpuSummary: eyelevel-gpu-summary
+
+  tls:
+    existingSecret: ""
+
+cache:
+  replicas:
+    desired: 1
+  isCluster: false
+  type: ClusterIP
+
+  resources:
+    requests:
+      cpu: "0.2"
+      memory: 512Mi
+
+  # set to use external cache
+  # will supercede all other settings except metrics
+  existing: {}
+    # addr: redis.mycorp.net
+    # isCluster: true
+    # port: 6379
+
+  metrics:
+    # set false if you want to share 1 redis cache
+    # for metrics and process metadata caching
+    enabled: true
+
+    replicas:
+      desired: 1
+    isCluster: false
+    type: ClusterIP
+
+    resources:
+      requests:
+        cpu: "0.2"
+        memory: 512Mi
+
+    # set to use external metrics cache
+    # will supercede all other settings in metrics
+    existing: {}
+      # addr: redis-metrics.mycorp.net
+      # isCluster: true
+      # port: 6379
+
+dbOperator:
+  nodeSelector:
+    node: eyelevel-cpu-only
+
+db:
+  # set to false to disable percona deployment
+  enabled: true
+
+  dbName: eyelevel
+  serviceUsername: eyelevel
+  servicePassword: password
+
+  # used to initialize DB
+  # creates service user, db, and tables
+  privilegedUsername: root
+  privilegedPassword: password
+
+  # haproxy
+  proxy:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 600m
+        memory: 1Gi
+
+  # pxc
+  replicas: 1
+
+  resources:
+    requests:
+      cpu: 600m
+      memory: 512Mi
+
+  # set to use external MySQL DB
+  existing: {}
+#    ro: myro.mycorp.net
+#    rw: myrw.mycorp.net
+#    port: 3306
+
+file:
+  # set to false to disable minio deployment
+  enabled: true
+
+  bucketName: eyelevel
+  username: minio
+  password: minio123
+
+  replicas: 1
+  # minio or sqs
+  serviceType: minio
+  volumesPerReplica: 1
+  volumeSize: 20Gi
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+  # set to use a custom domain for file URLs
+  customDomain: ""
+
+  operator:
+    nodeSelector:
+      node: eyelevel-cpu-only
+    replicaCount: 1
+
+  # set to expose minio externally
+  # in openshift, creates a route
+  loadBalancer: {}
+    # port: 8080
+
+  # set to use existing minio file storage
+  existing: {}
+    # domain: minio.mycorp.net
+    # port: 9000
+    # ssl: true
+
+search:
+  # set to false to disable opensearch deployment
+  enabled: true
+
+  indexName: prod-1
+  username: eyelevel
+  password: R0otb_*t!kazs
+  privilegedPassword: R0otb_*t!kazs
+  privilegedUsername: admin
+
+  operator:
+    extraEnvs:
+      - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+        # must be same as search.privilegedPassword
+        value: R0otb_*t!kazs
+    nodeSelector:
+      node: eyelevel-cpu-only
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+    # replicas: 1
+    # singleNode: true # set false if replices > 1
+
+  # set to use existing opensearch
+  existing: {}
+    # domain: search.mycorp.net
+    # url: https://search.mycorp.net:9200
+    # port: 9200
+
+streamOperator:
+  nodeSelector:
+    node: eyelevel-cpu-only
+  replicas: 1
+
+stream:
+  # set to false to disable kafka deployment
+  enabled: true
+
+  replicas: 1
+  nodePoolStorage: 5Gi
+  serviceStorage: 10Gi
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+
+  existing: {}
+#    domain: kafka.mycorp.net
+#    port: 9092
+
+summary:
+  internal:
+    api:
+      threads: 4
+      timeout: 240
+      workers: 1
+    inference:
+      deviceType: cuda
+      deviceUtilize: 0.9
+      threads: 1
+      workers: 1
+    serviceName: summary
+
+    # set to expose summary service externally
+    loadBalancer: {}
+#      port: 8080
+#      ssl: true
+#.     target: 8080
+
+  existing: {}
+#    apiKey: my-oai-key
+#    serviceType: openai
+#    url: https://api.openai.com/v1
+
+dashboard:
+  internal:
+    serviceName: dashboard
+
+groundx:
+  internal:
+    port: 8080
+    replicas:
+      desired: 1
+    serviceName: groundx
+    type: all
+
+layout:
+  internal:
+    api:
+      threads: 2
+      timeout: 120
+      workers: 2
+    correct:
+      queue: correct_queue
+      threads: 1
+      workers: 1
+    inference:
+      deviceType: cuda
+      queue: layout_queue
+      threads: 6
+      workers: 1
+    map:
+      queue: map_queue
+      threads: 1
+      workers: 1
+    ocr:
+      project: ""
+      queue: ocr_queue
+      threads: 1
+      type: "tesseract"
+      workers: 1
+    process:
+      batchSize: 40
+      queue: process_queue
+      threads: 1
+      workers: 1
+    save:
+      queue: save_queue
+      threads: 1
+      workers: 1
+    serviceName: layout
+
+layoutWebhook:
+  internal:
+    port: 8080
+    replicas:
+      desired: 1
+    serviceName: layout-webhook
+
+metrics:
+  internal:
+    port: 8080
+    serviceName: metrics
+
+preProcess:
+  internal:
+    port: 8080
+    queue: file-pre-process
+    queueSize: 4
+    replicas:
+      desired: 1
+    serviceName: pre-process
+
+process:
+  internal:
+    port: 8080
+    queue: file-process
+    queueSize: 4
+    replicas:
+      desired: 1
+    serviceName: process
+
+queue:
+  internal:
+    port: 8080
+    queue: file-update
+    queueSize: 4
+    replicas:
+      desired: 1
+    serviceName: queue
+
+ranker:
+  internal:
+    api:
+      threads: 3
+      timeout: 120
+      workers: 1
+    inference:
+      deviceType: cuda
+      threads: 1
+      workers: 14
+    serviceName: ranker
+
+summaryClient:
+  engines:
+    - engineID: google/gemma-3-12b-it
+      maxInputTokens: 100000
+      maxOutputTokens: 2000
+      maxRequests: 4
+      requestLimit: 4
+      vision: true
+
+  internal:
+    port: 8080
+    queue: file-summary
+    replicas:
+      desired: 1
+    serviceName: summary-client
+    workers: 3
+
+upload:
+  internal:
+    port: 8080
+    queue: file-upload
+    queueSize: 4
+    replicas:
+      desired: 1
+    serviceName: upload
+
+throughput:
+  tpm:
+    document: 12500
+    page: 500
+    summaryRequest: 625
+  services:
+    layout:
+      correct: 500
+      inference: 120000
+      map: 500
+      ocr: 500
+      process: 500
+      save: 500
+    preProcess:
+      queue: 6
+    process:
+      queue: 9
+    queue:
+      queue: 9
+    ranker:
+      inference: 0
+    summary:
+      api: 9600
+      inference: 3200
+    summaryClient:
+      api: 9600
+    upload:
+      queue: 120

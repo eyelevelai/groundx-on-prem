@@ -1,0 +1,270 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-yaml-map
+  namespace: {{ include "groundx.ns" . }}
+  labels:
+    appVersion: {{ .Chart.AppVersion | quote }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    heritage: {{ .Release.Service }}
+    version: {{ .Chart.Version | quote }}
+data:
+  config.yaml: |
+    _mysql: &mysql
+      ro_addr: {{ include "groundx.db.ro" . }}
+      rw_addr: {{ include "groundx.db.rw" . }}
+      user: {{ .Values.db.serviceUsername | default "" }}
+      password: {{ .Values.db.servicePassword | default "" }}
+      database: {{ .Values.db.dbName | default "" }}
+      maxIdle: {{ .Values.db.maxIdle | default 5 }}
+      maxOpen: {{ .Values.db.maxOpen | default 10 }}
+
+    ai:
+      aws:
+        search:
+          baseURL: {{ include "groundx.search.baseURL" . }}
+          index: {{ .Values.search.indexName | default "" }}
+          languages:
+          {{- range $l := (.Values.languages | default list) }}
+            - {{ $l }}
+          {{- end }}
+          username: {{ .Values.search.username | default "" }}
+          password: {{ .Values.search.password | default "" }}
+      eyelevelSearch:
+        apiKey: {{ .Values.admin.apiKey | default "" }}
+        baseURL: http://{{ .Values.ranker.internal.serviceName | default "" }}-api.{{ include "groundx.ns" . }}.svc.cluster.local
+      layout:
+        client:
+          apiKey: {{ .Values.admin.apiKey | default "" }}
+          baseURL: http://{{ .Values.layout.internal.serviceName | default "" }}-api.{{ include "groundx.ns" . }}.svc.cluster.local
+          callbackURL: http://{{ .Values.layoutWebhook.internal.serviceName | default "" }}.{{ include "groundx.ns" . }}.svc.cluster.local
+      openai:
+        apiKey: {{ include "groundx.summary.apiKey" . }}
+        baseURL: {{ include "groundx.summary.baseURL" . }}
+        defaultKitId: {{ .Values.summary.internal.defaultKitID | default 0 }}
+      summaryType: {{ .Values.summary.internal.serviceName | default "" }}
+      searchIndexes:
+        {{ .Values.search.indexName | default "" }}:
+          languages:
+          {{- range $l := (.Values.languages | default list) }}
+            - {{ $l }}
+          {{- end }}
+
+    engines:
+    {{- range $e := .Values.summaryClient.engines }}
+      {{ $e.engineID }}:
+        engineID: "{{ $e.engineID }}"
+        {{- if $e.apiKey }}
+        {{ printf "apiKey: %q" $e.apiKey | nindent 8 }}{{ end }}
+        {{- if $e.baseURL }}
+        {{ printf "baseURL: %q" $e.baseURL | nindent 8 }}{{ end }}
+        {{- if hasKey $e "maxInputTokens" }}
+        maxInputTokens: {{ $e.maxInputTokens }}{{ end }}
+        {{- if hasKey $e "maxRequests"    }}
+        maxRequests: {{ $e.maxRequests }}{{ end }}
+        {{- if hasKey $e "maxOutputTokens"      }}
+        maxTokens: {{ $e.maxOutputTokens }}{{ end }}
+        {{- if hasKey $e "requestLimit"   }}
+        requestLimit: {{ $e.requestLimit }}{{ end }}
+        {{- if $e.type }}
+        {{ printf "type: %q" $e.type | nindent 8 }}{{ end }}
+        vision: {{ $e.vision | default true }}
+    {{- end }}
+
+    environment: {{ .Values.environment | default "prod" }}
+
+    groundxServer:
+      baseURL: http://{{ .Values.groundx.internal.serviceName | default "" }}.{{ include "groundx.ns" . }}.svc.cluster.local
+      port: {{ .Values.groundx.internal.port | default 0 }}
+      serviceName: {{ .Values.groundx.internal.serviceName | default "" }}
+
+    init:
+      ingestOnly: {{ .Values.ingestOnly | default false }}
+      mysql:
+        user: {{ .Values.db.privilegedUsername | default "" }}
+        password: {{ .Values.db.privilegedPassword | default "" }}
+      search:
+        password: {{ .Values.search.privilegedPassword | default "" }}
+        searchModel: all_access
+        username: {{ .Values.search.privilegedUsername | default "" }}
+
+    {{- $integration := .Values.integration | default dict }}
+    {{- $intSearch := $integration.search | default dict }}
+
+    integrationTests:
+      search:
+        duration: {{ $intSearch.duration | default 3660 }}
+        fileId: {{ $intSearch.fileId | default "ey-mtr6hapxq7d94zigammwir6xz4" }}
+        modelId: {{ $intSearch.modelId | default 1 }}
+
+    layoutWebhookServer:
+      baseURL: http://{{ .Values.layoutWebhook.internal.serviceName | default "" }}.{{ include "groundx.ns" . }}.svc.cluster.local
+      port: {{ .Values.layoutWebhook.internal.port | default 0 }}
+      serviceName: {{ .Values.layoutWebhook.internal.serviceName | default "" }}
+
+    kafka:
+      filePreProcess:
+        broker: {{ printf "%s:%v" (include "groundx.stream.domain" .) (include "groundx.stream.port" .) }}
+        groupId: {{ printf "%s-%s" (include "groundx.ns" .) (include "groundx.stream.serviceName" .) }}
+        topic: {{ .Values.preProcess.internal.queue | default "" }}
+      fileProcess:
+        broker: {{ printf "%s:%v" (include "groundx.stream.domain" .) (include "groundx.stream.port" .) }}
+        groupId: {{ printf "%s-%s" (include "groundx.ns" .) (include "groundx.stream.serviceName" .) }}
+        topic: {{ .Values.process.internal.queue | default "" }}
+      fileSummaryDev:
+        broker: {{ printf "%s:%v" (include "groundx.stream.domain" .) (include "groundx.stream.port" .) }}
+        groupId: {{ printf "%s-%s" (include "groundx.ns" .) (include "groundx.stream.serviceName" .) }}
+        topic: {{ .Values.summaryClient.internal.queue | default "" }}
+      fileSummaryProd:
+        broker: {{ printf "%s:%v" (include "groundx.stream.domain" .) (include "groundx.stream.port" .) }}
+        groupId: {{ printf "%s-%s" (include "groundx.ns" .) (include "groundx.stream.serviceName" .) }}
+        topic: {{ .Values.summaryClient.internal.queue | default "" }}
+      fileUpdate:
+        broker: {{ printf "%s:%v" (include "groundx.stream.domain" .) (include "groundx.stream.port" .) }}
+        groupId: {{ printf "%s-%s" (include "groundx.ns" .) (include "groundx.stream.serviceName" .) }}
+        topic: {{ .Values.queue.internal.queue | default "" }}
+      fileUpload:
+        broker: {{ printf "%s:%v" (include "groundx.stream.domain" .) (include "groundx.stream.port" .) }}
+        groupId: {{ printf "%s-%s" (include "groundx.ns" .) (include "groundx.stream.serviceName" .) }}
+        topic: {{ .Values.upload.internal.queue | default "" }}
+
+    metrics:
+      active: true
+      api:
+        - name: {{ .Values.groundx.internal.serviceName | default "" }}
+        - name: {{ .Values.layout.internal.serviceName | default "" }}-api
+        - name: {{ .Values.layoutWebhook.internal.serviceName | default "" }}
+      document:
+        tokensPerMinute: {{ .Values.throughput.tpm.document | default 0 }}
+      inference:
+        - name: {{ .Values.layout.internal.serviceName | default "" }}-inference
+          tokensPerMinute: {{ .Values.throughput.services.layout.inference | default 0 }}
+        - name: {{ .Values.summary.internal.serviceName | default "" }}-api
+          tokensPerMinute: {{ .Values.throughput.services.summary.api | default 0 }}
+        - name: {{ .Values.summary.internal.serviceName | default "" }}-inference
+          tokensPerMinute: {{ .Values.throughput.services.summary.inference | default 0 }}
+        - name: {{ .Values.summaryClient.internal.serviceName | default "" }}
+          tokensPerMinute: {{ .Values.throughput.services.summaryClient.api | default 0 }}
+      page:
+        tokensPerMinute: {{ .Values.throughput.tpm.page | default 0 }}
+      queue:
+        - name: {{ .Values.preProcess.internal.serviceName | default "" }}
+          target: {{ .Values.preProcess.internal.queue | default "" }}
+          threshold: {{ .Values.throughput.services.preProcess.queue | default 0 }}
+        - name: {{ .Values.process.internal.serviceName | default "" }}
+          target: {{ .Values.process.internal.queue | default "" }}
+          threshold: {{ .Values.throughput.services.process.queue | default 0 }}
+        - name: {{ .Values.queue.internal.serviceName | default "" }}
+          target: {{ .Values.queue.internal.queue | default "" }}
+          threshold: {{ .Values.throughput.services.queue.queue | default 0 }}
+        - name: {{ .Values.upload.internal.serviceName | default "" }}
+          target: {{ .Values.upload.internal.queue | default "" }}
+          threshold: {{ .Values.throughput.services.upload.queue | default 0 }}
+      session:
+        addr: {{ printf "%s:%v" (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) }}
+        notCluster: {{ include "groundx.metrics.cache.notCluster" . }}
+      summaryRequest:
+        tokensPerMinute: {{ .Values.throughput.tpm.summaryRequest | default 0 }}
+      task:
+        - name: {{ .Values.layout.internal.serviceName | default "" }}-correct
+          target: {{ .Values.layout.internal.correct.queue | default "" }}
+          threshold: {{ .Values.throughput.services.layout.correct | default 0 }}
+        - name: {{ .Values.layout.internal.serviceName | default "" }}-map
+          target: {{ .Values.layout.internal.map.queue | default "" }}
+          threshold: {{ .Values.throughput.services.layout.map | default 0 }}
+        - name: {{ .Values.layout.internal.serviceName | default "" }}-ocr
+          target: {{ .Values.layout.internal.ocr.queue | default "" }}
+          threshold: {{ .Values.throughput.services.layout.ocr | default 0 }}
+        - name: {{ .Values.layout.internal.serviceName | default "" }}-process
+          target: {{ .Values.layout.internal.process.queue | default "" }}
+          threshold: {{ .Values.throughput.services.layout.process | default 0 }}
+        - name: {{ .Values.layout.internal.serviceName | default "" }}-save
+          target: {{ .Values.layout.internal.save.queue | default "" }}
+          threshold: {{ .Values.throughput.services.layout.save | default 0 }}
+
+    metricsServer:
+      baseURL: http://{{ .Values.metrics.internal.serviceName | default "" }}.{{ include "groundx.ns" . }}.svc.cluster.local
+      port: {{ .Values.metrics.internal.port | default 0 }}
+      serviceName: {{ .Values.metrics.internal.serviceName | default "" }}
+      sslCACert: /etc/ssl/tls/ca.crt
+      sslCert: /etc/ssl/tls/tls.crt
+      sslKey: /etc/ssl/tls/tls.key
+      sslPort: 8443
+
+    owner:
+      baseURL: http://{{ .Values.groundx.internal.serviceName | default "" }}.{{ include "groundx.ns" . }}.svc.cluster.local/api/v1
+      name: on-prem
+      type: {{ .Values.groundx.internal.type | default "" }}
+      username: {{ .Values.admin.username | default "" }}
+
+    preProcessFileServer:
+      baseURL: http://{{ .Values.preProcess.internal.serviceName | default "" }}.{{ include "groundx.ns" . }}.svc.cluster.local
+      maxConcurrent: {{ .Values.preProcess.internal.queueSize | default 0 }}
+      port: {{ .Values.preProcess.internal.port | default 0 }}
+      serviceName: {{ .Values.preProcess.internal.serviceName | default "" }}
+
+    processFileServer:
+      baseURL: http://{{ .Values.process.internal.serviceName | default "" }}.{{ include "groundx.ns" . }}.svc.cluster.local
+      maxConcurrent: {{ .Values.process.internal.queueSize | default 0 }}
+      port: {{ .Values.process.internal.port | default 0 }}
+      serviceName: {{ .Values.process.internal.serviceName | default "" }}
+
+    processors:
+      convert: [11]
+      layout: [3]
+      map: [4]
+      saveFile: [2]
+      skipConvert: [12]
+      skipGenerate: [1]
+      skipLayout: [5]
+      skipMap: [6]
+      skipSummarize: [7]
+      summarize: [8]
+      summarizeChunks: [10]
+      summarizeSections: [9]
+{{- if .Values.ingestOnly }}
+      extraPostDefaults:
+        - processorID: 1
+          type: skip-generate
+{{- end }}
+
+    queueFileServer:
+      baseURL: http://{{ .Values.queue.internal.serviceName | default "" }}.{{ include "groundx.ns" . }}.svc.cluster.local
+      maxConcurrent: {{ .Values.queue.internal.queueSize | default 0 }}
+      pollTime: 1
+      port: {{ .Values.queue.internal.port | default 0 }}
+      serviceName: {{ .Values.queue.internal.serviceName | default "" }}
+
+    rec:
+      mysql: *mysql
+      session:
+        addr: {{ printf "%s:%v" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) }}
+        notCluster: {{ include "groundx.cache.notCluster" . }}
+
+    ssp:
+      baseURL: http://{{ .Values.dashboard.internal.serviceName | default "" }}.{{ include "groundx.ns" . }}.svc.cluster.local
+      dashboardURL: http://{{ .Values.dashboard.internal.serviceName | default "" }}.{{ include "groundx.ns" . }}.svc.cluster.local
+
+    summaryServer:
+      baseURL: http://{{ .Values.summary.internal.serviceName | default "" }}.{{ include "groundx.ns" . }}.svc.cluster.local
+      maxConcurrent: {{ .Values.summaryClient.internal.workers | default 0 }}
+      port: {{ .Values.summaryClient.internal.port | default 0 }}
+      serviceName: {{ .Values.summaryClient.internal.serviceName | default "" }}
+
+    {{- $fs := (include "groundx.file.settings" . | fromYaml) }}
+
+    upload:
+      baseDomain: {{ get $fs "baseDomain" }}
+      baseUrl: {{ printf "%s://%s" (get $fs "scheme") (get $fs "baseDomain") }}
+      bucket: {{ get $fs "bucketName" }}
+      bucketUrl: {{ printf "%s://%s" (get $fs "bucketScheme") (get $fs "bucketDomain") }}
+      id: {{ get $fs "username" }}
+      secret: {{ get $fs "password" }}
+      service: {{ get $fs "serviceType" }}
+      ssl: {{ get $fs "ssl" }}
+
+    uploadFileServer:
+      baseURL: http://{{ .Values.upload.internal.serviceName | default "" }}.{{ include "groundx.ns" . }}.svc.cluster.local
+      maxConcurrent: {{ .Values.upload.internal.queueSize | default 0 }}
+      port: {{ .Values.upload.internal.port | default 0 }}
+      serviceName: {{ .Values.upload.internal.serviceName | default "" }}
