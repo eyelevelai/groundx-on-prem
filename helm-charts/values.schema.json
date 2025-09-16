@@ -190,6 +190,7 @@
           },
           "additionalProperties": false
         },
+        "global": { "type": "object" },
         "loadBalancer": {
           "type": "object",
           "properties": {
@@ -198,6 +199,20 @@
             "timeout": { "type": "integer" }
           },
           "additionalProperties": false
+        },
+        "operator": {
+          "type": "object",
+          "properties": {
+            "nodeSelector": {
+              "type": "object",
+              "properties": {
+                "node": { "type": "string" }
+              },
+              "required": ["node"]
+            },
+            "replicaCount": { "type": "integer" }
+          },
+          "required": ["nodeSelector", "replicaCount"]
         },
         "password": { "type": "string" },
         "port": { "type": "integer" },
@@ -228,7 +243,20 @@
         },
         "global": { "type": "object" },
         "indexName": { "type": "string" },
-        "operator": { "type": "object" },
+        "operator": {
+          "type": "object",
+          "properties": {
+            "extraEnvs": { "type": "array" },
+            "nodeSelector": {
+              "type": "object",
+              "properties": {
+                "node": { "type": "string" }
+              },
+              "required": ["node"]
+            }
+          },
+          "required": ["extraEnvs", "nodeSelector"]
+        },
         "password": { "type": "string" },
         "port": { "type": "integer" },
         "privilegedPassword": { "type": "string" },
@@ -244,6 +272,7 @@
     "stream": {
       "type": "object",
       "properties": {
+        "enabled": { "type": "boolean" },
         "internal": {
           "type": "object",
           "properties": {
@@ -729,9 +758,6 @@
       "additionalProperties": false
     },
     "dbOperator": {
-      "type": "object"
-    },
-    "fileOperator": {
       "type": "object"
     }
   },

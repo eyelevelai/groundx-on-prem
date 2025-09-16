@@ -52,7 +52,7 @@ minio-operator.yaml:
       labels:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/version: v6.0.3
-        helm.sh/chart: fileOperator-6.0.3
+        helm.sh/chart: file-6.0.3
       name: minio-operator
       namespace: NAMESPACE
     spec:
@@ -60,15 +60,15 @@ minio-operator.yaml:
       selector:
         matchLabels:
           app.kubernetes.io/instance: RELEASE-NAME
-          app.kubernetes.io/name: fileOperator
+          app.kubernetes.io/name: file
       template:
         metadata:
           labels:
             app.kubernetes.io/instance: RELEASE-NAME
             app.kubernetes.io/managed-by: Helm
-            app.kubernetes.io/name: fileOperator
+            app.kubernetes.io/name: file
             app.kubernetes.io/version: v6.0.3
-            helm.sh/chart: fileOperator-6.0.3
+            helm.sh/chart: file-6.0.3
         spec:
           affinity:
             podAntiAffinity:
@@ -88,7 +88,7 @@ minio-operator.yaml:
                   value: "on"
               image: quay.io/minio/operator:v6.0.3
               imagePullPolicy: IfNotPresent
-              name: fileOperator
+              name: file
               resources:
                 requests:
                   cpu: 200m

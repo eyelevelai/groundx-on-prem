@@ -26,16 +26,6 @@ cluster:
   tls:
     existingSecret: ""
 
-dbOperator:
-  nodeSelector:
-    node: eyelevel-cpu-only
-
-fileOperator:
-  operator:
-    nodeSelector:
-      node: eyelevel-cpu-only
-    replicaCount: 1
-
 cache:
   replicas:
     desired: 1
@@ -75,6 +65,10 @@ cache:
       # addr: redis-metrics.mycorp.net
       # isCluster: true
       # port: 6379
+
+dbOperator:
+  nodeSelector:
+    node: eyelevel-cpu-only
 
 db:
   # set to false to disable percona deployment
@@ -133,6 +127,11 @@ file:
   # set to use a custom domain for file URLs
   customDomain: ""
 
+  operator:
+    nodeSelector:
+      node: eyelevel-cpu-only
+    replicaCount: 1
+
   # set to expose minio externally
   # in openshift, creates a route
   loadBalancer: {}
@@ -145,7 +144,7 @@ file:
     # ssl: true
 
 search:
-# set to false to disable opensearch deployment
+  # set to false to disable opensearch deployment
   enabled: true
 
   indexName: prod-1
@@ -175,6 +174,9 @@ search:
     # port: 9200
 
 stream:
+  # set to false to disable kafka deployment
+  enabled: true
+
   internal:
     serviceName: kafka
     port: 9092
