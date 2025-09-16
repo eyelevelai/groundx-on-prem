@@ -3,7 +3,7 @@
 
 {{- $ctx := (include "groundx.file.settings" . | fromYaml) }}
 {{- $name := include "groundx.file.serviceName" . -}}
-{{- $svc := printf "%s-tenant" (include "groundx.file.serviceName" .) -}}
+{{- $svc := printf "%s-tenant" $name -}}
 {{- $lb := include "groundx.file.loadBalancer" . | trim }}
 
 apiVersion: minio.min.io/v2

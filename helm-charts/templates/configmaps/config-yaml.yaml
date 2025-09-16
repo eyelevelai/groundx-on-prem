@@ -104,28 +104,28 @@ data:
 
     kafka:
       filePreProcess:
-        broker: {{ printf "%s:%v" (include "groundx.stream.baseDomain" .) (include "groundx.stream.port" .) }}
-        groupId: {{ printf "%s-%s" (include "groundx.ns" .) (.Values.stream.internal.serviceName | default "") }}
+        broker: {{ printf "%s:%v" (include "groundx.stream.domain" .) (include "groundx.stream.port" .) }}
+        groupId: {{ printf "%s-%s" (include "groundx.ns" .) (include "groundx.stream.serviceName" .) }}
         topic: {{ .Values.preProcess.internal.queue | default "" }}
       fileProcess:
-        broker: {{ printf "%s:%v" (include "groundx.stream.baseDomain" .) (include "groundx.stream.port" .) }}
-        groupId: {{ printf "%s-%s" (include "groundx.ns" .) (.Values.stream.internal.serviceName | default "") }}
+        broker: {{ printf "%s:%v" (include "groundx.stream.domain" .) (include "groundx.stream.port" .) }}
+        groupId: {{ printf "%s-%s" (include "groundx.ns" .) (include "groundx.stream.serviceName" .) }}
         topic: {{ .Values.process.internal.queue | default "" }}
       fileSummaryDev:
-        broker: {{ printf "%s:%v" (include "groundx.stream.baseDomain" .) (include "groundx.stream.port" .) }}
-        groupId: {{ printf "%s-%s" (include "groundx.ns" .) (.Values.stream.internal.serviceName | default "") }}
-        topic: {{ .Values.summary.internal.queue | default "" }}
+        broker: {{ printf "%s:%v" (include "groundx.stream.domain" .) (include "groundx.stream.port" .) }}
+        groupId: {{ printf "%s-%s" (include "groundx.ns" .) (include "groundx.stream.serviceName" .) }}
+        topic: {{ .Values.summaryClient.internal.queue | default "" }}
       fileSummaryProd:
-        broker: {{ printf "%s:%v" (include "groundx.stream.baseDomain" .) (include "groundx.stream.port" .) }}
-        groupId: {{ printf "%s-%s" (include "groundx.ns" .) (.Values.stream.internal.serviceName | default "") }}
-        topic: {{ .Values.summary.internal.queue | default "" }}
+        broker: {{ printf "%s:%v" (include "groundx.stream.domain" .) (include "groundx.stream.port" .) }}
+        groupId: {{ printf "%s-%s" (include "groundx.ns" .) (include "groundx.stream.serviceName" .) }}
+        topic: {{ .Values.summaryClient.internal.queue | default "" }}
       fileUpdate:
-        broker: {{ printf "%s:%v" (include "groundx.stream.baseDomain" .) (include "groundx.stream.port" .) }}
-        groupId: {{ printf "%s-%s" (include "groundx.ns" .) (.Values.stream.internal.serviceName | default "") }}
+        broker: {{ printf "%s:%v" (include "groundx.stream.domain" .) (include "groundx.stream.port" .) }}
+        groupId: {{ printf "%s-%s" (include "groundx.ns" .) (include "groundx.stream.serviceName" .) }}
         topic: {{ .Values.queue.internal.queue | default "" }}
       fileUpload:
-        broker: {{ printf "%s:%v" (include "groundx.stream.baseDomain" .) (include "groundx.stream.port" .) }}
-        groupId: {{ printf "%s-%s" (include "groundx.ns" .) (.Values.stream.internal.serviceName | default "") }}
+        broker: {{ printf "%s:%v" (include "groundx.stream.domain" .) (include "groundx.stream.port" .) }}
+        groupId: {{ printf "%s-%s" (include "groundx.ns" .) (include "groundx.stream.serviceName" .) }}
         topic: {{ .Values.upload.internal.queue | default "" }}
 
     metrics:

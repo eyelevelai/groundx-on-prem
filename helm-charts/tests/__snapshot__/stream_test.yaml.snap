@@ -1,0 +1,285 @@
+060-Deployment-strimzi-cluster-operator.yaml:
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: strimzi
+        chart: streamOperator-0.47.0
+        component: deployment
+        heritage: Helm
+        release: RELEASE-NAME
+      name: strimzi-cluster-operator
+      namespace: NAMESPACE
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          name: strimzi-cluster-operator
+          strimzi.io/kind: cluster-operator
+      template:
+        metadata:
+          labels:
+            name: strimzi-cluster-operator
+            strimzi.io/kind: cluster-operator
+        spec:
+          containers:
+            - args:
+                - /opt/strimzi/bin/cluster_operator_run.sh
+              env:
+                - name: STRIMZI_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: STRIMZI_FULL_RECONCILIATION_INTERVAL_MS
+                  value: "120000"
+                - name: STRIMZI_OPERATION_TIMEOUT_MS
+                  value: "300000"
+                - name: STRIMZI_DEFAULT_KAFKA_EXPORTER_IMAGE
+                  value: quay.io/strimzi/kafka:0.47.0-kafka-4.0.0
+                - name: STRIMZI_DEFAULT_CRUISE_CONTROL_IMAGE
+                  value: quay.io/strimzi/kafka:0.47.0-kafka-4.0.0
+                - name: STRIMZI_KAFKA_IMAGES
+                  value: |
+                    3.9.0=quay.io/strimzi/kafka:0.47.0-kafka-3.9.0
+                    3.9.1=quay.io/strimzi/kafka:0.47.0-kafka-3.9.1
+                    4.0.0=quay.io/strimzi/kafka:0.47.0-kafka-4.0.0
+                - name: STRIMZI_KAFKA_CONNECT_IMAGES
+                  value: |
+                    3.9.0=quay.io/strimzi/kafka:0.47.0-kafka-3.9.0
+                    3.9.1=quay.io/strimzi/kafka:0.47.0-kafka-3.9.1
+                    4.0.0=quay.io/strimzi/kafka:0.47.0-kafka-4.0.0
+                - name: STRIMZI_KAFKA_MIRROR_MAKER_2_IMAGES
+                  value: |
+                    3.9.0=quay.io/strimzi/kafka:0.47.0-kafka-3.9.0
+                    3.9.1=quay.io/strimzi/kafka:0.47.0-kafka-3.9.1
+                    4.0.0=quay.io/strimzi/kafka:0.47.0-kafka-4.0.0
+                - name: STRIMZI_DEFAULT_TOPIC_OPERATOR_IMAGE
+                  value: quay.io/strimzi/operator:0.47.0
+                - name: STRIMZI_DEFAULT_USER_OPERATOR_IMAGE
+                  value: quay.io/strimzi/operator:0.47.0
+                - name: STRIMZI_DEFAULT_KAFKA_INIT_IMAGE
+                  value: quay.io/strimzi/operator:0.47.0
+                - name: STRIMZI_DEFAULT_KAFKA_BRIDGE_IMAGE
+                  value: quay.io/strimzi/kafka-bridge:0.32.0
+                - name: STRIMZI_DEFAULT_KANIKO_EXECUTOR_IMAGE
+                  value: quay.io/strimzi/kaniko-executor:0.47.0
+                - name: STRIMZI_DEFAULT_MAVEN_BUILDER
+                  value: quay.io/strimzi/maven-builder:0.47.0
+                - name: STRIMZI_OPERATOR_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: STRIMZI_FEATURE_GATES
+                  value: ""
+                - name: STRIMZI_LEADER_ELECTION_ENABLED
+                  value: "true"
+                - name: STRIMZI_LEADER_ELECTION_LEASE_NAME
+                  value: strimzi-cluster-operator
+                - name: STRIMZI_LEADER_ELECTION_LEASE_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: STRIMZI_LEADER_ELECTION_IDENTITY
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: quay.io/strimzi/operator:0.47.0
+              livenessProbe:
+                httpGet:
+                  path: /healthy
+                  port: http
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              name: strimzi-cluster-operator
+              ports:
+                - containerPort: 8080
+                  name: http
+              readinessProbe:
+                httpGet:
+                  path: /ready
+                  port: http
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                limits:
+                  cpu: 1000m
+                  memory: 384Mi
+                requests:
+                  cpu: 200m
+                  memory: 384Mi
+              volumeMounts:
+                - mountPath: /tmp
+                  name: strimzi-tmp
+                - mountPath: /opt/strimzi/custom-config/
+                  name: co-config-volume
+          nodeSelector:
+            node: eyelevel-cpu-only
+          serviceAccountName: strimzi-cluster-operator
+          volumes:
+            - emptyDir:
+                medium: Memory
+                sizeLimit: 1Mi
+              name: strimzi-tmp
+            - configMap:
+                name: strimzi-cluster-operator
+              name: co-config-volume
+stream_cluster.yaml:
+  1: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaNodePool
+    metadata:
+      labels:
+        app: stream-dual-role
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        strimzi.io/cluster: stream-cluster
+        version: 0.1.0
+      name: stream-dual-role
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      roles:
+        - controller
+        - broker
+      storage:
+        type: jbod
+        volumes:
+          - deleteClaim: true
+            id: 0
+            kraftMetadata: shared
+            size: 5Gi
+            type: persistent-claim
+  2: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: Kafka
+    metadata:
+      annotations:
+        strimzi.io/kraft: enabled
+        strimzi.io/node-pools: enabled
+      labels:
+        app: stream
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: stream-cluster
+      namespace: eyelevel
+    spec:
+      entityOperator:
+        topicOperator: {}
+        userOperator: {}
+      kafka:
+        config:
+          default.replication.factor: 1
+          inter.broker.protocol.version: 4.0-IV3
+          log.message.format.version: 4.0-IV3
+          min.insync.replicas: 1
+          offsets.topic.replication.factor: 1
+          transaction.state.log.min.isr: 1
+          transaction.state.log.replication.factor: 1
+          unstable.api.versions.enable: "true"
+          unstable.feature.versions.enable: "true"
+        listeners:
+          - name: kafka
+            port: 9092
+            tls: false
+            type: internal
+        metadataVersion: 4.0-IV3
+        replicas: 1
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+        storage:
+          deleteClaim: true
+          size: 10Gi
+          type: persistent-claim
+        template:
+          pod:
+            affinity:
+              nodeAffinity:
+                requiredDuringSchedulingIgnoredDuringExecution:
+                  nodeSelectorTerms:
+                    - matchExpressions:
+                        - key: node
+                          operator: In
+                          values:
+                            - eyelevel-cpu-only
+            tolerations:
+              - effect: NoSchedule
+                key: node
+                value: eyelevel-cpu-only
+        version: 4.0.0
+stream_topics.yaml:
+  1: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-pre-process
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  2: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-process
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  3: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-summary
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  4: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-update
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  5: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-upload
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1

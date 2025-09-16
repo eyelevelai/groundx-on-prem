@@ -22,19 +22,6 @@
       "required": ["apiKey", "email", "password", "username"],
       "additionalProperties": false
     },
-    "app": {
-      "type": "object",
-      "properties": {
-        "deployments": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
     "cluster": {
       "type": "object",
       "properties": {
@@ -273,25 +260,29 @@
       "type": "object",
       "properties": {
         "enabled": { "type": "boolean" },
-        "internal": {
-          "type": "object",
-          "properties": {
-            "serviceName": { "type": "string" },
-            "port": { "type": "integer" }
-          },
-          "required": ["serviceName", "port"],
-          "additionalProperties": false
-        },
         "existing": {
           "type": "object",
           "properties": {
             "domain": { "type": "string" },
-            "url": { "type": "string" },
             "port": { "type": "integer" }
           },
           "additionalProperties": false
-        }
+        },
+        "metaVersion": { "type": "string" },
+        "nodePoolStorage": { "type": "string" },
+        "retention": { "type": "integer" },
+        "segment": { "type": "integer" },
+        "serviceName": { "type": "string" },
+        "serviceStorage": { "type": "string" },
+        "port": { "type": "integer" },
+        "replicas": { "type": "integer" },
+        "resources": { "type": "object" },
+        "topics": { "type": "object" },
+        "version": { "type": "string" }
       },
+      "required": [
+        "enabled", "existing", "nodePoolStorage", "replicas", "serviceStorage"
+      ],
       "additionalProperties": false
     },
     "summary": {
@@ -303,6 +294,16 @@
             "api": {
               "type": "object",
               "properties": {
+                "replicas": {
+                  "type": "object",
+                  "properties": {
+                    "desired": { "type": "integer" },
+                    "max": { "type": "integer" },
+                    "min": { "type": "integer" }
+                  },
+                  "required": ["desired"],
+                  "additionalProperties": false
+                },
                 "threads": { "type": "integer" },
                 "timeout": { "type": "integer" },
                 "workers": { "type": "integer" }
@@ -315,13 +316,22 @@
               "properties": {
                 "deviceType": { "type": "string" },
                 "deviceUtilize": { "type": "number" },
+                "replicas": {
+                  "type": "object",
+                  "properties": {
+                    "desired": { "type": "integer" },
+                    "max": { "type": "integer" },
+                    "min": { "type": "integer" }
+                  },
+                  "required": ["desired"],
+                  "additionalProperties": false
+                },
                 "threads": { "type": "integer" },
                 "workers": { "type": "integer" }
               },
               "required": ["deviceType", "deviceUtilize", "threads", "workers"],
               "additionalProperties": false
             },
-            "queue": { "type": "string" },
             "serviceName": { "type": "string" },
             "defaultKitID": { "type": "integer" },
             "loadBalancer": {
@@ -371,10 +381,20 @@
           "type": "object",
           "properties": {
             "port": { "type": "integer" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "desired": { "type": "integer" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" }
+              },
+              "required": ["desired"],
+              "additionalProperties": false
+            },
             "serviceName": { "type": "string" },
             "type": { "type": "string" }
           },
-          "required": ["port", "serviceName", "type"],
+          "required": ["port", "replicas", "serviceName", "type"],
           "additionalProperties": false
         }
       },
@@ -480,9 +500,19 @@
           "type": "object",
           "properties": {
             "port": { "type": "integer" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "desired": { "type": "integer" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" }
+              },
+              "required": ["desired"],
+              "additionalProperties": false
+            },
             "serviceName": { "type": "string" }
           },
-          "required": ["port", "serviceName"],
+          "required": ["port", "replicas", "serviceName"],
           "additionalProperties": false
         }
       },
@@ -514,9 +544,19 @@
             "port": { "type": "integer" },
             "queue": { "type": "string" },
             "queueSize": { "type": "integer" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "desired": { "type": "integer" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" }
+              },
+              "required": ["desired"],
+              "additionalProperties": false
+            },
             "serviceName": { "type": "string" }
           },
-          "required": ["port", "queue", "queueSize", "serviceName"],
+          "required": ["port", "queue", "queueSize", "replicas", "serviceName"],
           "additionalProperties": false
         }
       },
@@ -532,9 +572,19 @@
             "port": { "type": "integer" },
             "queue": { "type": "string" },
             "queueSize": { "type": "integer" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "desired": { "type": "integer" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" }
+              },
+              "required": ["desired"],
+              "additionalProperties": false
+            },
             "serviceName": { "type": "string" }
           },
-          "required": ["port", "queue", "queueSize", "serviceName"],
+          "required": ["port", "queue", "queueSize", "replicas", "serviceName"],
           "additionalProperties": false
         }
       },
@@ -550,9 +600,19 @@
             "port": { "type": "integer" },
             "queue": { "type": "string" },
             "queueSize": { "type": "integer" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "desired": { "type": "integer" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" }
+              },
+              "required": ["desired"],
+              "additionalProperties": false
+            },
             "serviceName": { "type": "string" }
           },
-          "required": ["port", "queue", "queueSize", "serviceName"],
+          "required": ["port", "queue", "queueSize", "replicas", "serviceName"],
           "additionalProperties": false
         }
       },
@@ -618,10 +678,21 @@
           "type": "object",
           "properties": {
             "port": { "type": "integer" },
+            "queue": { "type": "string" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "desired": { "type": "integer" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" }
+              },
+              "required": ["desired"],
+              "additionalProperties": false
+            },
             "serviceName": { "type": "string" },
             "workers": { "type": "integer" }
           },
-          "required": ["port", "serviceName", "workers"],
+          "required": ["port", "queue", "replicas", "serviceName", "workers"],
           "additionalProperties": false
         }
       },
@@ -637,9 +708,19 @@
             "port": { "type": "integer" },
             "queue": { "type": "string" },
             "queueSize": { "type": "integer" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "desired": { "type": "integer" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" }
+              },
+              "required": ["desired"],
+              "additionalProperties": false
+            },
             "serviceName": { "type": "string" }
           },
-          "required": ["port", "queue", "queueSize", "serviceName"],
+          "required": ["port", "queue", "queueSize", "replicas", "serviceName"],
           "additionalProperties": false
         }
       },
@@ -758,7 +839,31 @@
       "additionalProperties": false
     },
     "dbOperator": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "nodeSelector": {
+          "type": "object",
+          "properties": {
+            "node": { "type": "string" }
+          },
+          "required": ["node"]
+        }
+      },
+      "required": ["nodeSelector"]
+    },
+    "streamOperator": {
+      "type": "object",
+      "properties": {
+        "nodeSelector": {
+          "type": "object",
+          "properties": {
+            "node": { "type": "string" }
+          },
+          "required": ["node"]
+        },
+        "replicas": { "type": "integer" }
+      },
+      "required": ["nodeSelector", "replicas"]
     }
   },
   "required": ["cluster", "namespace"],

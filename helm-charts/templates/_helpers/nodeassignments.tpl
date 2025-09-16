@@ -26,6 +26,7 @@
   "summary_client"    "cpuOnly"
   "search"            "cpuOnly"
   "stream"            "cpuOnly"
+  "stream-cluster"    "cpuOnly"
   "upload"            "cpuOnly"
   | toYaml -}}
 {{- end }}

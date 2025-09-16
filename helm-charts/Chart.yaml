@@ -22,6 +22,11 @@ dependencies:
     condition: file.enabled
   - name: opensearch
     alias: search
-    repository: oci://public.ecr.aws/c9r4x6y5/helm
+    repository: https://registry.groundx.ai/helm
     version: 0.1.1
     condition: search.enabled
+  - name: strimzi-kafka-operator
+    alias: streamOperator
+    repository: oci://quay.io/strimzi-helm
+    version: 0.47.0
+    condition: stream.enabled

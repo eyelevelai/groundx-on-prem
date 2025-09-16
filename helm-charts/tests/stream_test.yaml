@@ -1,0 +1,20 @@
+suite: "stream renders as expected"
+values:
+  - ../values.yaml
+
+tests:
+  - it: 060-Deployment-strimzi-cluster-operator.yaml
+    templates:
+      - ../charts/streamOperator/templates/060-Deployment-strimzi-cluster-operator.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: stream_cluster.yaml
+    templates:
+      - ../templates/services/stream_cluster.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: stream_topics.yaml
+    templates:
+      - ../templates/services/stream_topics.yaml
+    asserts:
+      - matchSnapshot: {}

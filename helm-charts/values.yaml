@@ -173,17 +173,26 @@ search:
     # url: https://search.mycorp.net:9200
     # port: 9200
 
+streamOperator:
+  nodeSelector:
+    node: eyelevel-cpu-only
+  replicas: 1
+
 stream:
   # set to false to disable kafka deployment
   enabled: true
 
-  internal:
-    serviceName: kafka
-    port: 9092
+  replicas: 1
+  nodePoolStorage: 5Gi
+  serviceStorage: 10Gi
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
 
   existing: {}
 #    domain: kafka.mycorp.net
-#    url: https://kafka.mycorp.net:9092
 #    port: 9092
 
 summary:
@@ -197,7 +206,6 @@ summary:
       deviceUtilize: 0.9
       threads: 1
       workers: 1
-    queue: file-summary
     serviceName: summary
 
     # set to expose summary service externally
@@ -218,6 +226,8 @@ dashboard:
 groundx:
   internal:
     port: 8080
+    replicas:
+      desired: 1
     serviceName: groundx
     type: all
 
@@ -260,6 +270,8 @@ layout:
 layoutWebhook:
   internal:
     port: 8080
+    replicas:
+      desired: 1
     serviceName: layout-webhook
 
 metrics:
@@ -272,6 +284,8 @@ preProcess:
     port: 8080
     queue: file-pre-process
     queueSize: 4
+    replicas:
+      desired: 1
     serviceName: pre-process
 
 process:
@@ -279,6 +293,8 @@ process:
     port: 8080
     queue: file-process
     queueSize: 4
+    replicas:
+      desired: 1
     serviceName: process
 
 queue:
@@ -286,6 +302,8 @@ queue:
     port: 8080
     queue: file-update
     queueSize: 4
+    replicas:
+      desired: 1
     serviceName: queue
 
 ranker:
@@ -311,6 +329,9 @@ summaryClient:
 
   internal:
     port: 8080
+    queue: file-summary
+    replicas:
+      desired: 1
     serviceName: summary-client
     workers: 3
 
@@ -319,6 +340,8 @@ upload:
     port: 8080
     queue: file-upload
     queueSize: 4
+    replicas:
+      desired: 1
     serviceName: upload
 
 throughput:
