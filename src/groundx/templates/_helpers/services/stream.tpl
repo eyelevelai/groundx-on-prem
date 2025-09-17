@@ -74,3 +74,13 @@ true
 ) -}}
 {{- end -}}
 {{- end }}
+
+{{- define "groundx.stream.metaVersion" -}}
+{{- $in := .Values.stream | default dict -}}
+{{ dig "metaVersion" "4.0-IV3" $in }}
+{{- end }}
+
+{{- define "groundx.stream.version" -}}
+{{- $in := .Values.stream | default dict -}}
+{{ dig "version" "4.0.0" $in }}
+{{- end }}

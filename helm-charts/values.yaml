@@ -66,10 +66,6 @@ cache:
       # isCluster: true
       # port: 6379
 
-dbOperator:
-  nodeSelector:
-    node: eyelevel-cpu-only
-
 db:
   # set to false to disable percona deployment
   enabled: true
@@ -153,38 +149,22 @@ search:
   privilegedPassword: R0otb_*t!kazs
   privilegedUsername: admin
 
-  operator:
-    extraEnvs:
-      - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
-        # must be same as search.privilegedPassword
-        value: R0otb_*t!kazs
-    nodeSelector:
-      node: eyelevel-cpu-only
-    resources:
-      requests:
-        cpu: 200m
-        memory: 512Mi
-    # replicas: 1
-    # singleNode: true # set false if replices > 1
-
   # set to use existing opensearch
   existing: {}
     # domain: search.mycorp.net
     # url: https://search.mycorp.net:9200
     # port: 9200
 
-streamOperator:
-  nodeSelector:
-    node: eyelevel-cpu-only
-  replicas: 1
-
 stream:
   # set to false to disable kafka deployment
   enabled: true
 
   replicas: 1
-  nodePoolStorage: 5Gi
-  serviceStorage: 10Gi
+  storage: 10Gi
+
+  nodepool:
+    replicas: 1
+    storage: 5Gi
 
   resources:
     requests:

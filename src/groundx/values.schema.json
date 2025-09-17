@@ -114,7 +114,7 @@
           "additionalProperties": false
         }
       },
-      "required": ["existing", "isCluster", "metrics", "replicas", "type"],
+      "required": ["enabled", "existing", "isCluster", "metrics", "replicas", "type"],
       "additionalProperties": false
     },
     "db": {
@@ -141,7 +141,7 @@
         "port": { "type": "integer" }
       },
       "required": [
-        "dbName", "existing", "privilegedPassword", "privilegedUsername", "servicePassword", "serviceUsername"
+        "dbName", "enabled", "existing", "privilegedPassword", "privilegedUsername", "servicePassword", "serviceUsername"
       ],
       "additionalProperties": false
     },
@@ -175,7 +175,7 @@
         "serviceType": { "type": "string" },
         "username": { "type": "string" }
       },
-      "required": ["bucketName", "existing", "loadBalancer", "replicas", "username", "password", "serviceType"],
+      "required": ["bucketName", "enabled", "existing", "loadBalancer", "username", "password", "serviceType"],
       "additionalProperties": false
     },
     "search": {
@@ -200,7 +200,7 @@
         "username": { "type": "string" }
       },
       "required": [
-        "existing", "indexName", "password", "privilegedPassword", "privilegedUsername", "username"
+        "enabled", "existing", "indexName", "password", "privilegedPassword", "privilegedUsername", "username"
       ],
       "additionalProperties": false
     },
@@ -216,14 +216,30 @@
           },
           "additionalProperties": false
         },
+        "metaVersion": { "type": "string" },
+        "nodepool": {
+          "type": "object",
+          "properties": {
+            "replicas": { "type": "integer" },
+            "storage": { "type": "string" }
+          },
+          "required": [
+            "replicas", "storage"
+          ],
+          "additionalProperties": false
+        },
+        "replicas": { "type": "integer" },
+        "resources": { "type": "object" },
         "retention": { "type": "integer" },
         "segment": { "type": "integer" },
         "serviceName": { "type": "string" },
+        "storage": { "type": "string" },
         "port": { "type": "integer" },
-        "topics": { "type": "object" }
+        "topics": { "type": "object" },
+        "version": { "type": "string" }
       },
       "required": [
-        "enabled", "existing", "nodePoolStorage", "replicas", "serviceStorage"
+        "enabled", "existing", "nodepool", "replicas", "storage"
       ],
       "additionalProperties": false
     },
@@ -779,20 +795,6 @@
       },
       "required": ["tpm", "services"],
       "additionalProperties": false
-    },
-    "streamoperator": {
-      "type": "object",
-      "properties": {
-        "nodeSelector": {
-          "type": "object",
-          "properties": {
-            "node": { "type": "string" }
-          },
-          "required": ["node"]
-        },
-        "replicas": { "type": "integer" }
-      },
-      "required": ["nodeSelector", "replicas"]
     }
   },
   "required": ["cluster", "namespace"],

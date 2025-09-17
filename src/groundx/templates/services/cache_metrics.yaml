@@ -23,7 +23,7 @@ spec:
       labels:
         app: {{ $svc | quote }}
     spec:
-{{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.metrics.securityContext "indent" 6 "root" $ "user" 1001) }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.metrics.securityContext "indent" 6 "root" $ "user" 1001 "simple" "true") }}
 {{ include "groundx.renderNodeSelector" (dict "name" $svc "indent" 6 "root" $) }}
       serviceAccountName: "{{ $svc }}-sa"
       containers:
@@ -33,7 +33,7 @@ spec:
           ports:
             - containerPort: {{ $port }}
               protocol: TCP
-{{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.metrics.securityContext "indent" 10 "root" $ "user" 1001) }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.metrics.securityContext "indent" 10 "root" $ "user" 1001 "simple" "true") }}
 {{- with .Values.cache.metrics.resources }}
 {{ include "groundx.renderContainerResources" (dict "ctx" . "indent" 10) }}
 {{- end }}

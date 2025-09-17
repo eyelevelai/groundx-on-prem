@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 rm build/.DS_Store
 helm package groundx -d build
 helm package opensearch -d build

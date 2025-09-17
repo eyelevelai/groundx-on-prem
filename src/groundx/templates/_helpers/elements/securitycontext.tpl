@@ -4,7 +4,7 @@
 {{- $root := .root -}}
 {{- $user := .user -}}
 {{- $prefix := .prefix | default "securityContext" -}}
-{{- $simple := .prefix | default "false" -}}
+{{- $simple := .simple | default "false" -}}
 {{- if not $ctx }}
   {{- $isOS := eq (dig "type" "" $root.Values.cluster) "openshift" -}}
   {{- if eq $simple "false" -}}

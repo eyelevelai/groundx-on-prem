@@ -26,6 +26,8 @@ cluster:
     existingSecret: ""
 
 cache:
+  enabled: true
+
   replicas:
     desired: 1
   isCluster: false
@@ -65,11 +67,9 @@ cache:
       # isCluster: true
       # port: 6379
 
-dboperator:
-  nodeSelector:
-    node: eyelevel-cpu-only
-
 db:
+  enabled: true
+
   dbName: eyelevel
   serviceUsername: eyelevel
   servicePassword: password
@@ -86,6 +86,8 @@ db:
 #    port: 3306
 
 file:
+  enabled: true
+
   bucketName: eyelevel
   username: minio
   password: minio123
@@ -108,6 +110,8 @@ file:
     # ssl: true
 
 search:
+  enabled: true
+
   indexName: prod-1
   username: eyelevel
   password: R0otb_*t!kazs
@@ -121,6 +125,20 @@ search:
     # port: 9200
 
 stream:
+  enabled: true
+
+  replicas: 1
+  storage: 10Gi
+
+  nodepool:
+    replicas: 1
+    storage: 5Gi
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+
   existing: {}
 #    domain: kafka.mycorp.net
 #    port: 9092
