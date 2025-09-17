@@ -20,31 +20,6 @@ true
 {{- end -}}
 {{- end }}
 
-{{- define "groundx.db.backup" -}}
-{{- $in := .Values.db | default dict -}}
-{{ dig "backup" "false" $in }}
-{{- end }}
-
-{{- define "groundx.db.disableUnsafeChecks" -}}
-{{- $in := .Values.db | default dict -}}
-{{ dig "disableUnsafeChecks" "true" $in }}
-{{- end }}
-
-{{- define "groundx.db.logcollector" -}}
-{{- $in := .Values.db | default dict -}}
-{{ dig "logcollector" "false" $in }}
-{{- end }}
-
-{{- define "groundx.db.pmm" -}}
-{{- $in := .Values.db | default dict -}}
-{{ dig "pmm" "false" $in }}
-{{- end }}
-
-{{- define "groundx.db.pvSize" -}}
-{{- $in := .Values.db | default dict -}}
-{{ dig "pvSize" "10Gi" $in }}
-{{- end }}
-
 {{- define "groundx.db.serviceHost" -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- $name := include "groundx.db.serviceName" . -}}

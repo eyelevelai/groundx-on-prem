@@ -48,11 +48,6 @@ true
 {{- end -}}
 {{- end }}
 
-{{- define "groundx.stream.metaVersion" -}}
-{{- $in := .Values.stream | default dict -}}
-{{ dig "metaVersion" "4.0-IV3" $in }}
-{{- end }}
-
 {{- define "groundx.stream.retention" -}}
 {{- $in := .Values.stream | default dict -}}
 {{ dig "retention" "1073741824" $in }}
@@ -61,11 +56,6 @@ true
 {{- define "groundx.stream.segment" -}}
 {{- $in := .Values.stream | default dict -}}
 {{ dig "segment" "1073741824" $in }}
-{{- end }}
-
-{{- define "groundx.stream.version" -}}
-{{- $in := .Values.stream | default dict -}}
-{{ dig "version" "4.0.0" $in }}
 {{- end }}
 
 {{- define "groundx.stream.topics" -}}

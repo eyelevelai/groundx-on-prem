@@ -9,24 +9,3 @@ sources:
 maintainers:
 - name: GroundX Project Maintainers
   email: developer@groundx.ai
-dependencies:
-  - name: pxc-operator
-    alias: dbOperator
-    repository: https://percona.github.io/percona-helm-charts
-    version: 1.18.0
-    condition: db.enabled
-  - name: operator
-    alias: file
-    repository: https://operator.min.io
-    version: 6.0.3
-    condition: file.enabled
-  - name: opensearch
-    alias: search
-    repository: https://registry.groundx.ai/helm
-    version: 0.1.1
-    condition: search.enabled
-  - name: strimzi-kafka-operator
-    alias: streamOperator
-    repository: oci://quay.io/strimzi-helm
-    version: 0.47.0
-    condition: stream.enabled

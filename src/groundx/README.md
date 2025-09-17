@@ -79,3 +79,56 @@ terraform -chdir=terraform/nvidia-operator apply -auto-approve
 terraform -chdir=terraform/nvidia-operator init --upgrade
 terraform -chdir=terraform/nvidia-operator destroy -auto-approve
 ```
+
+## Deploying with Helm
+
+```bash
+kubectl create namespace eyelevel
+```
+
+## Creating a Default PV Class
+
+```bash
+helm install prereqs groundx/prereqs -n eyelevel
+```
+
+## Installing services
+
+### MySQL
+
+```bash
+helm repo add percona https://percona.github.io/percona-helm-charts/
+helm repo update
+helm install db-operator percona/pxc-operator -n eyelevel -f src/groundx/services/values.db.operator.yaml
+helm install db-cluster percona/pxc-db -n eyelevel -f src/groundx/services/values.db.cluster.yaml
+```
+
+### MinIO
+
+```bash
+helm repo add minio-operator https://operator.min.io/
+helm repo update
+helm install file-operator minio-operator/operator -n eyelevel -f src/groundx/services/values.file.operator.yaml
+helm install file-cluster minio-operator/tenant -n eyelevel -f src/groundx/services/values.file.tenant.yaml
+```
+
+### OpenSearch
+
+```bash
+helm repo add opensearch https://opensearch-project.github.io/helm-charts/
+helm repo update
+helm install opensearch opensearch/opensearch -n eyelevel -f src/groundx/services/values.search.yaml
+```
+
+## GroundX
+
+```bash
+helm repo add groundx https://registry.groundx.ai/helm
+helm repo update
+
+# Dry-run render the templates
+helm template my-release groundx/groundx \
+  --version 0.1.0 \
+  -n eyelevel \
+  --create-namespace
+```

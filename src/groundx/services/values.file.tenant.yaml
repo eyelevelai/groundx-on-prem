@@ -1,0 +1,20 @@
+tenant:
+  certificate:
+    requestAutoCert: false
+  configSecret:
+    accessKey: minio
+    secretKey: minio123
+  name: file-tenant
+  nodeSelector:
+    node: eyelevel-cpu-only
+  pools:
+    - name: file-tenant-pool-0
+      nodeSelector:
+        node: eyelevel-cpu-only
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+      servers: 1
+      size: 20Gi
+      volumesPerServer: 1

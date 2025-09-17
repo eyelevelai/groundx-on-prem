@@ -13,9 +13,9 @@ data:
     _mysql: &mysql
       ro_addr: {{ include "groundx.db.ro" . }}
       rw_addr: {{ include "groundx.db.rw" . }}
-      user: {{ .Values.db.serviceUsername | default "" }}
-      password: {{ .Values.db.servicePassword | default "" }}
-      database: {{ .Values.db.dbName | default "" }}
+      user: {{ .Values.db.serviceUsername }}
+      password: {{ .Values.db.servicePassword }}
+      database: {{ .Values.db.dbName }}
       maxIdle: {{ .Values.db.maxIdle | default 5 }}
       maxOpen: {{ .Values.db.maxOpen | default 10 }}
 

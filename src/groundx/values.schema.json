@@ -2,7 +2,6 @@
   "type": "object",
   "properties": {
     "namespace": { "type": "string", "minLength": 1 },
-    "createNamespace": { "type": "boolean" },
     "ingestOnly": { "type": "boolean" },
     "languages": {
       "type": "array",
@@ -121,9 +120,7 @@
     "db": {
       "type": "object",
       "properties": {
-        "backup": {"type": "boolean" },
         "dbName": { "type": "string" },
-        "disableUnsafeChecks": {"type": "boolean" },
         "enabled": { "type": "boolean" },
         "existing": {
           "type": "object",
@@ -134,31 +131,17 @@
           },
           "additionalProperties": false
         },
-        "logcollector": {"type": "boolean" },
         "privilegedPassword": { "type": "string" },
         "privilegedUsername": { "type": "string" },
         "maxIdle": { "type": "integer" },
         "maxOpen": { "type": "integer" },
-        "pvSize": { "type": "string" },
         "serviceName": { "type": "string" },
         "servicePassword": { "type": "string" },
         "serviceUsername": { "type": "string" },
-        "pmm": {"type": "boolean" },
-        "port": { "type": "integer" },
-        "proxy": {
-          "type": "object",
-          "properties": {
-            "replicas": { "type": "integer" },
-            "resources": { "type": "object" }
-          },
-          "required": ["replicas"],
-          "additionalProperties": false
-        },
-        "replicas": { "type": "integer" },
-        "resources": { "type": "object" }
+        "port": { "type": "integer" }
       },
       "required": [
-        "dbName", "enabled", "existing", "privilegedPassword", "privilegedUsername", "proxy", "replicas", "servicePassword", "serviceUsername"
+        "dbName", "existing", "privilegedPassword", "privilegedUsername", "servicePassword", "serviceUsername"
       ],
       "additionalProperties": false
     },
@@ -177,7 +160,6 @@
           },
           "additionalProperties": false
         },
-        "global": { "type": "object" },
         "loadBalancer": {
           "type": "object",
           "properties": {
@@ -187,30 +169,11 @@
           },
           "additionalProperties": false
         },
-        "operator": {
-          "type": "object",
-          "properties": {
-            "nodeSelector": {
-              "type": "object",
-              "properties": {
-                "node": { "type": "string" }
-              },
-              "required": ["node"]
-            },
-            "replicaCount": { "type": "integer" }
-          },
-          "required": ["nodeSelector", "replicaCount"]
-        },
         "password": { "type": "string" },
         "port": { "type": "integer" },
-        "replicas": { "type": "integer" },
-        "resources": { "type": "object" },
-        "securityContext": { "type": "object" },
         "serviceName": { "type": "string" },
         "serviceType": { "type": "string" },
-        "username": { "type": "string" },
-        "volumesPerReplica": { "type": "integer" },
-        "volumeSize": { "type": "string" }
+        "username": { "type": "string" }
       },
       "required": ["bucketName", "existing", "loadBalancer", "replicas", "username", "password", "serviceType"],
       "additionalProperties": false
@@ -228,22 +191,7 @@
           },
           "additionalProperties": false
         },
-        "global": { "type": "object" },
         "indexName": { "type": "string" },
-        "operator": {
-          "type": "object",
-          "properties": {
-            "extraEnvs": { "type": "array" },
-            "nodeSelector": {
-              "type": "object",
-              "properties": {
-                "node": { "type": "string" }
-              },
-              "required": ["node"]
-            }
-          },
-          "required": ["extraEnvs", "nodeSelector"]
-        },
         "password": { "type": "string" },
         "port": { "type": "integer" },
         "privilegedPassword": { "type": "string" },
@@ -252,7 +200,7 @@
         "username": { "type": "string" }
       },
       "required": [
-        "enabled", "existing", "indexName", "password", "privilegedPassword", "privilegedUsername", "username"
+        "existing", "indexName", "password", "privilegedPassword", "privilegedUsername", "username"
       ],
       "additionalProperties": false
     },
@@ -268,17 +216,11 @@
           },
           "additionalProperties": false
         },
-        "metaVersion": { "type": "string" },
-        "nodePoolStorage": { "type": "string" },
         "retention": { "type": "integer" },
         "segment": { "type": "integer" },
         "serviceName": { "type": "string" },
-        "serviceStorage": { "type": "string" },
         "port": { "type": "integer" },
-        "replicas": { "type": "integer" },
-        "resources": { "type": "object" },
-        "topics": { "type": "object" },
-        "version": { "type": "string" }
+        "topics": { "type": "object" }
       },
       "required": [
         "enabled", "existing", "nodePoolStorage", "replicas", "serviceStorage"
@@ -838,20 +780,7 @@
       "required": ["tpm", "services"],
       "additionalProperties": false
     },
-    "dbOperator": {
-      "type": "object",
-      "properties": {
-        "nodeSelector": {
-          "type": "object",
-          "properties": {
-            "node": { "type": "string" }
-          },
-          "required": ["node"]
-        }
-      },
-      "required": ["nodeSelector"]
-    },
-    "streamOperator": {
+    "streamoperator": {
       "type": "object",
       "properties": {
         "nodeSelector": {

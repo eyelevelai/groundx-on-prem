@@ -1,5 +1,4 @@
 namespace: eyelevel
-createNamespace: true
 ingestOnly: false
 languages:
   - en
@@ -66,14 +65,11 @@ cache:
       # isCluster: true
       # port: 6379
 
-dbOperator:
+dboperator:
   nodeSelector:
     node: eyelevel-cpu-only
 
 db:
-  # set to false to disable percona deployment
-  enabled: true
-
   dbName: eyelevel
   serviceUsername: eyelevel
   servicePassword: password
@@ -83,22 +79,6 @@ db:
   privilegedUsername: root
   privilegedPassword: password
 
-  # haproxy
-  proxy:
-    replicas: 1
-    resources:
-      requests:
-        cpu: 600m
-        memory: 1Gi
-
-  # pxc
-  replicas: 1
-
-  resources:
-    requests:
-      cpu: 600m
-      memory: 512Mi
-
   # set to use external MySQL DB
   existing: {}
 #    ro: myro.mycorp.net
@@ -106,31 +86,15 @@ db:
 #    port: 3306
 
 file:
-  # set to false to disable minio deployment
-  enabled: true
-
   bucketName: eyelevel
   username: minio
   password: minio123
 
-  replicas: 1
   # minio or sqs
   serviceType: minio
-  volumesPerReplica: 1
-  volumeSize: 20Gi
-
-  resources:
-    requests:
-      cpu: 100m
-      memory: 256Mi
 
   # set to use a custom domain for file URLs
   customDomain: ""
-
-  operator:
-    nodeSelector:
-      node: eyelevel-cpu-only
-    replicaCount: 1
 
   # set to expose minio externally
   # in openshift, creates a route
@@ -144,28 +108,11 @@ file:
     # ssl: true
 
 search:
-  # set to false to disable opensearch deployment
-  enabled: true
-
   indexName: prod-1
   username: eyelevel
   password: R0otb_*t!kazs
   privilegedPassword: R0otb_*t!kazs
   privilegedUsername: admin
-
-  operator:
-    extraEnvs:
-      - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
-        # must be same as search.privilegedPassword
-        value: R0otb_*t!kazs
-    nodeSelector:
-      node: eyelevel-cpu-only
-    resources:
-      requests:
-        cpu: 200m
-        memory: 512Mi
-    # replicas: 1
-    # singleNode: true # set false if replices > 1
 
   # set to use existing opensearch
   existing: {}
@@ -173,24 +120,7 @@ search:
     # url: https://search.mycorp.net:9200
     # port: 9200
 
-streamOperator:
-  nodeSelector:
-    node: eyelevel-cpu-only
-  replicas: 1
-
 stream:
-  # set to false to disable kafka deployment
-  enabled: true
-
-  replicas: 1
-  nodePoolStorage: 5Gi
-  serviceStorage: 10Gi
-
-  resources:
-    requests:
-      cpu: 200m
-      memory: 512Mi
-
   existing: {}
 #    domain: kafka.mycorp.net
 #    port: 9092
