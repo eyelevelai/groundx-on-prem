@@ -4,10 +4,7 @@ metadata:
   name: config-models-map
   namespace: {{ include "groundx.ns" . }}
   labels:
-    appVersion: {{ .Chart.AppVersion | quote }}
-    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    heritage: {{ .Release.Service }}
-    version: {{ .Chart.Version | quote }}
+{{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
 data:
   config_models.py: |
     env = dict(

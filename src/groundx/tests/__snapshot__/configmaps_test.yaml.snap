@@ -52,7 +52,7 @@ config-yaml.yaml:
 
         groundxServer:
           baseURL: http://groundx.eyelevel.svc.cluster.local
-          port: 8080
+          port: 80
           serviceName: groundx
 
         init:
@@ -73,7 +73,7 @@ config-yaml.yaml:
 
         layoutWebhookServer:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
-          port: 8080
+          port: 80
           serviceName: layout-webhook
 
         kafka:
@@ -156,15 +156,6 @@ config-yaml.yaml:
               target: save_queue
               threshold: 500
 
-        metricsServer:
-          baseURL: http://metrics.eyelevel.svc.cluster.local
-          port: 8080
-          serviceName: metrics
-          sslCACert: /etc/ssl/tls/ca.crt
-          sslCert: /etc/ssl/tls/tls.crt
-          sslKey: /etc/ssl/tls/tls.key
-          sslPort: 8443
-
         owner:
           baseURL: http://groundx.eyelevel.svc.cluster.local/api/v1
           name: on-prem
@@ -209,10 +200,6 @@ config-yaml.yaml:
           session:
             addr: cache.eyelevel.svc.cluster.local:6379
             notCluster: true
-
-        ssp:
-          baseURL: http://dashboard.eyelevel.svc.cluster.local
-          dashboardURL: http://dashboard.eyelevel.svc.cluster.local
 
         summaryServer:
           baseURL: http://summary.eyelevel.svc.cluster.local

@@ -4,10 +4,7 @@ metadata:
   name: layout-gunicorn-conf-py-map
   namespace: {{ include "groundx.ns" . }}
   labels:
-    appVersion: {{ .Chart.AppVersion | quote }}
-    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    heritage: {{ .Release.Service }}
-    version: {{ .Chart.Version | quote }}
+{{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
 data:
   gunicorn_conf.py: |
     infolog = "-"
@@ -15,9 +12,9 @@ data:
     errorlog = "-"
 
     loglevel = "{{ .Values.logLevel }}"
-    workers = {{ .Values.layout.internal.api.workers }}
-    threads = {{ .Values.layout.internal.api.threads }}
-    timeout = {{ .Values.layout.internal.api.timeout }}
+    workers = {{ .Values.layout.api.workers }}
+    threads = {{ .Values.layout.api.threads }}
+    timeout = {{ .Values.layout.api.timeout }}
 
     worker_class = "uvicorn.workers.UvicornWorker"
 

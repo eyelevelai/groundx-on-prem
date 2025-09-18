@@ -64,13 +64,17 @@ true
 {{- if not (empty $topics) -}}
 {{- toYaml $topics -}}
 {{- else -}}
-{{- $p := 3 -}}
+{{- $ppq := include "groundx.preProcess.queue" . -}}
+{{- $pq := include "groundx.process.queue" . -}}
+{{- $qq := include "groundx.queue.queue" . -}}
+{{- $scq := include "groundx.summaryClient.queue" . -}}
+{{- $uq := include "groundx.upload.queue" . -}}
 {{- toYaml (dict
-  .Values.preProcess.internal.queue    .Values.preProcess.internal.replicas.desired
-  .Values.process.internal.queue       .Values.process.internal.replicas.desired
-  .Values.summaryClient.internal.queue .Values.summaryClient.internal.replicas.desired
-  .Values.queue.internal.queue         .Values.queue.internal.replicas.desired
-  .Values.upload.internal.queue        .Values.upload.internal.replicas.desired
+  $ppq .Values.preProcess.replicas.desired
+  $pq  .Values.process.replicas.desired
+  $scq .Values.summaryClient.replicas.desired
+  $qq  .Values.queue.replicas.desired
+  $uq  .Values.upload.replicas.desired
 ) -}}
 {{- end -}}
 {{- end }}

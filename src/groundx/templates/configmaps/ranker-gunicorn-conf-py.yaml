@@ -4,10 +4,7 @@ metadata:
   name: ranker-gunicorn-conf-py-map
   namespace: {{ include "groundx.ns" . }}
   labels:
-    appVersion: {{ .Chart.AppVersion | quote }}
-    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    heritage: {{ .Release.Service }}
-    version: {{ .Chart.Version | quote }}
+{{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
 data:
   gunicorn_conf.py: |
     infolog = "-"
@@ -15,9 +12,9 @@ data:
     errorlog = "-"
 
     loglevel = "{{ .Values.logLevel }}"
-    workers = {{ .Values.ranker.internal.api.workers }}
-    threads = {{ .Values.ranker.internal.api.threads }}
-    timeout = {{ .Values.ranker.internal.api.timeout }}
+    workers = {{ .Values.ranker.api.workers }}
+    threads = {{ .Values.ranker.api.threads }}
+    timeout = {{ .Values.ranker.api.timeout }}
     timeout_keep_alive = 15
 
     worker_class = "uvicorn.workers.UvicornWorker"

@@ -1,3 +1,8 @@
+{{- define "groundx.summary.serviceName" -}}
+{{- $in := .Values.summary | default dict -}}
+{{ dig "serviceName" "summary" $in }}
+{{- end }}
+
 {{- define "groundx.summary.create" -}}
 {{- $ex := .Values.summary.existing | default dict -}}
 {{- $stype := lower (coalesce (dig "serviceType" "" $ex) "on-prem") -}}
@@ -12,9 +17,14 @@
 
 {{- define "groundx.summary.baseURL" -}}
 {{- $ex := .Values.summary.existing | default dict -}}
-{{- $in := .Values.summary.internal | default dict -}}
+{{- $svc := include "groundx.summary.serviceName" . -}}
 {{- $ns := include "groundx.ns" . -}}
-{{- coalesce (dig "url" "" $ex) (printf "http://%s-api.%s.svc.cluster.local" (dig "serviceName" "summary" $in) $ns) -}}
+{{- coalesce (dig "url" "" $ex) (printf "http://%s-api.%s.svc.cluster.local" $svc $ns) -}}
+{{- end }}
+
+{{- define "groundx.summary.defaultKitID" -}}
+{{- $in := .Values.summary | default dict -}}
+{{ dig "defaultKitID" 0 $in }}
 {{- end }}
 
 {{- define "groundx.summary.serviceType" -}}

@@ -31,7 +31,6 @@ cache:
   replicas:
     desired: 1
   isCluster: false
-  type: ClusterIP
 
   resources:
     requests:
@@ -53,7 +52,6 @@ cache:
     replicas:
       desired: 1
     isCluster: false
-    type: ClusterIP
 
     resources:
       requests:
@@ -144,129 +142,178 @@ stream:
 #    port: 9092
 
 summary:
-  internal:
-    api:
-      threads: 4
-      timeout: 240
-      workers: 1
-    inference:
-      deviceType: cuda
-      deviceUtilize: 0.9
-      threads: 1
-      workers: 1
-    serviceName: summary
+  api:
+    enabled: true
 
-    # set to expose summary service externally
-    loadBalancer: {}
-#      port: 8080
-#      ssl: true
-#.     target: 8080
+    threads: 4
+    timeout: 240
+    workers: 1
+
+    replicas:
+      desired: 1
+  inference:
+    enabled: true
+
+    deviceType: cuda
+    deviceUtilize: 0.9
+    threads: 1
+    workers: 1
+
+    replicas:
+      desired: 1
 
   existing: {}
 #    apiKey: my-oai-key
 #    serviceType: openai
 #    url: https://api.openai.com/v1
 
-dashboard:
-  internal:
-    serviceName: dashboard
-
 groundx:
-  internal:
-    port: 8080
-    replicas:
-      desired: 1
-    serviceName: groundx
-    type: all
+  enabled: true
+
+  replicas:
+    desired: 1
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
 
 layout:
-  internal:
-    api:
-      threads: 2
-      timeout: 120
-      workers: 2
-    correct:
-      queue: correct_queue
-      threads: 1
-      workers: 1
-    inference:
-      deviceType: cuda
-      queue: layout_queue
-      threads: 6
-      workers: 1
-    map:
-      queue: map_queue
-      threads: 1
-      workers: 1
-    ocr:
-      project: ""
-      queue: ocr_queue
-      threads: 1
-      type: "tesseract"
-      workers: 1
-    process:
-      batchSize: 40
-      queue: process_queue
-      threads: 1
-      workers: 1
-    save:
-      queue: save_queue
-      threads: 1
-      workers: 1
-    serviceName: layout
+  api:
+    enabled: true
+
+    threads: 2
+    timeout: 120
+    workers: 2
+
+    replicas:
+      desired: 1
+  correct:
+    enabled: true
+
+    queue: correct_queue
+    threads: 1
+    workers: 1
+
+    replicas:
+      desired: 1
+  inference:
+    enabled: true
+
+    deviceType: cuda
+    queue: layout_queue
+    threads: 6
+    workers: 1
+
+    replicas:
+      desired: 1
+  map:
+    enabled: true
+
+    queue: map_queue
+    threads: 1
+    workers: 1
+
+    replicas:
+      desired: 1
+  ocr:
+    enabled: true
+
+    project: ""
+    queue: ocr_queue
+    threads: 1
+    type: "tesseract"
+    workers: 1
+
+    replicas:
+      desired: 1
+  process:
+    enabled: true
+
+    batchSize: 40
+    queue: process_queue
+    threads: 1
+    workers: 1
+
+    replicas:
+      desired: 1
+  save:
+    enabled: true
+
+    queue: save_queue
+    threads: 1
+    workers: 1
+
+    replicas:
+      desired: 1
 
 layoutWebhook:
-  internal:
-    port: 8080
-    replicas:
-      desired: 1
-    serviceName: layout-webhook
+  enabled: true
 
-metrics:
-  internal:
-    port: 8080
-    serviceName: metrics
+  replicas:
+    desired: 1
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
 
 preProcess:
-  internal:
-    port: 8080
-    queue: file-pre-process
-    queueSize: 4
-    replicas:
-      desired: 1
-    serviceName: pre-process
+  enabled: true
+
+  replicas:
+    desired: 1
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 1Gi
 
 process:
-  internal:
-    port: 8080
-    queue: file-process
-    queueSize: 4
-    replicas:
-      desired: 1
-    serviceName: process
+  enabled: true
+
+  replicas:
+    desired: 1
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
 
 queue:
-  internal:
-    port: 8080
-    queue: file-update
-    queueSize: 4
-    replicas:
-      desired: 1
-    serviceName: queue
+  enabled: true
+
+  replicas:
+    desired: 1
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
 
 ranker:
-  internal:
-    api:
-      threads: 3
-      timeout: 120
-      workers: 1
-    inference:
-      deviceType: cuda
-      threads: 1
-      workers: 14
-    serviceName: ranker
+  api:
+    enabled: true
+
+    threads: 3
+    timeout: 120
+    workers: 1
+
+    replicas:
+      desired: 1
+  inference:
+    enabled: true
+
+    deviceType: cuda
+    threads: 1
+    workers: 14
+
+    replicas:
+      desired: 1
 
 summaryClient:
+  enabled: true
+
   engines:
     - engineID: google/gemma-3-12b-it
       maxInputTokens: 100000
@@ -275,22 +322,24 @@ summaryClient:
       requestLimit: 4
       vision: true
 
-  internal:
-    port: 8080
-    queue: file-summary
-    replicas:
-      desired: 1
-    serviceName: summary-client
-    workers: 3
+  replicas:
+    desired: 1
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
 
 upload:
-  internal:
-    port: 8080
-    queue: file-upload
-    queueSize: 4
-    replicas:
-      desired: 1
-    serviceName: upload
+  enabled: true
+
+  replicas:
+    desired: 1
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
 
 throughput:
   tpm:

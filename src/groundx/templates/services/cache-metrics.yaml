@@ -1,10 +1,11 @@
 {{- $cc := include "groundx.metrics.cache.create" . -}}
-{{- if not (eq $cc "false") -}}
+{{- if ne $cc "false" -}}
 {{- $s := include "groundx.cache.serviceName" . -}}
 {{- $ms := include "groundx.metrics.cache.serviceName" . -}}
+{{- $lb := include "groundx.metrics.cache.loadBalancer" . -}}
 {{- $svc := printf "%s-%s" $s $ms -}}
 {{- $mountName := printf "%s-persistent-storage" $svc -}}
-{{- $port := include "groundx.metrics.cache.port" . -}}
+{{- $cport := include "groundx.metrics.cache.containerPort" . -}}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -25,13 +26,12 @@ spec:
     spec:
 {{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.metrics.securityContext "indent" 6 "root" $ "user" 1001 "simple" "true") }}
 {{ include "groundx.renderNodeSelector" (dict "name" $svc "indent" 6 "root" $) }}
-      serviceAccountName: "{{ $svc }}-sa"
       containers:
         - name: {{ $svc | quote }}
           image: {{ include "groundx.metrics.cache.image" . | quote }}
           imagePullPolicy: {{ include "groundx.metrics.cache.imagePullPolicy" . | quote }}
           ports:
-            - containerPort: {{ $port }}
+            - containerPort: {{ $cport }}
               protocol: TCP
 {{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.metrics.securityContext "indent" 10 "root" $ "user" 1001 "simple" "true") }}
 {{- with .Values.cache.metrics.resources }}
@@ -43,5 +43,12 @@ spec:
       volumes:
         - name: {{ $mountName | quote }}
           emptyDir: {}
-{{ include "groundx.renderService" (dict "name" $svc "port" $port "type" .Values.cache.metrics.type "root" $) }}
+{{- if $lb }}
+{{- if eq .Values.cluster.type "openshift" }}
+{{ include "groundx.renderRoute" (dict "name" $svc "lb" $lb "root" $) }}
+{{- else }}
+{{ include "groundx.renderLoadBalancer" (dict "name" $svc "lb" $lb "root" $) }}
+{{- end }}
+{{- end }}
+
 {{- end }}

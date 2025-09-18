@@ -6,10 +6,7 @@ metadata:
   name: init-database-file
   namespace: {{ include "groundx.ns" . }}
   labels:
-    appVersion: {{ .Chart.AppVersion | quote }}
-    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    heritage: {{ .Release.Service }}
-    version: {{ .Chart.Version | quote }}
+{{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
 data:
   init-db.sql: |
     INSERT INTO partner_users (customer_username, customer_email, partner_username, status) values ('{{ $.Values.admin.username }}', '{{ $.Values.admin.email }}', '{{ $.Values.admin.username }}', 'admin');

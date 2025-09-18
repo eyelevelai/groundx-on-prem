@@ -8,6 +8,16 @@
 {{ dig "serviceName" "metrics" $in }}
 {{- end }}
 
+{{- define "groundx.cache.containerPort" -}}
+{{- $in := .Values.cache | default dict -}}
+{{ dig "containerPort" 6379 $in }}
+{{- end }}
+
+{{- define "groundx.metrics.cache.containerPort" -}}
+{{- $in := .Values.cache.metrics | default dict -}}
+{{ dig "containerPort" 6379 $in }}
+{{- end }}
+
 {{- define "groundx.cache.image" -}}
 {{- $in := .Values.cache | default dict -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
@@ -142,5 +152,53 @@ false
 {{- end -}}
 {{- else -}}
 {{ include "groundx.cache.port" . }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.cache.loadBalancer" -}}
+{{- $in := .Values.cache | default dict -}}
+{{- if hasKey $in "loadBalancer" -}}
+{{- $lb := .Values.cache.loadBalancer | default dict -}}
+{{- dict
+    "isInternal" (dig "isInternal" "false" $lb)
+    "port"       (include "groundx.cache.port" .)
+    "ssl"        (dig "ssl" "false" $lb)
+    "targetPort" (include "groundx.cache.containerPort" .)
+    "timeout"    (dig "timeout" "" $lb)
+    "type"       (dig "type" "ClusterIP" $lb)
+  | toYaml -}}
+{{- else -}}
+{{- dict
+    "isInternal" "true"
+    "port"       (include "groundx.cache.port" .)
+    "ssl"        "false"
+    "targetPort" (include "groundx.cache.containerPort" .)
+    "timeout"    ""
+    "type"       "ClusterIP"
+  | toYaml -}}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.metrics.cache.loadBalancer" -}}
+{{- $in := .Values.cache.metrics | default dict -}}
+{{- if hasKey $in "loadBalancer" -}}
+{{- $lb := .Values.cache.metrics.loadBalancer | default dict -}}
+{{- dict
+    "isInternal" (dig "isInternal" "false" $lb)
+    "port"       (include "groundx.metrics.cache.port" .)
+    "ssl"        (dig "ssl" "false" $lb)
+    "targetPort" (include "groundx.metrics.cache.containerPort" .)
+    "timeout"    (dig "timeout" "" $lb)
+    "type"       (dig "type" "ClusterIP" $lb)
+  | toYaml -}}
+{{- else -}}
+{{- dict
+    "isInternal" "true"
+    "port"       (include "groundx.metrics.cache.port" .)
+    "ssl"        "false"
+    "targetPort" (include "groundx.metrics.cache.containerPort" .)
+    "timeout"    ""
+    "type"       "ClusterIP"
+  | toYaml -}}
 {{- end -}}
 {{- end }}

@@ -50,7 +50,6 @@ cache-metrics.yaml:
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
-          serviceAccountName: cache-metrics-sa
           tolerations:
             - effect: NoSchedule
               key: node
@@ -59,19 +58,6 @@ cache-metrics.yaml:
             - emptyDir: {}
               name: cache-metrics-persistent-storage
   2: |
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      name: cache-metrics-sa-rolebinding
-    roleRef:
-      apiGroup: rbac.authorization.k8s.io
-      kind: ClusterRole
-      name: edit
-    subjects:
-      - kind: ServiceAccount
-        name: cache-metrics-sa
-        namespace: eyelevel
-  3: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -87,11 +73,6 @@ cache-metrics.yaml:
       selector:
         app: cache-metrics
       type: ClusterIP
-  4: |
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: cache-metrics-sa
 cache.yaml:
   1: |
     apiVersion: apps/v1
@@ -144,7 +125,6 @@ cache.yaml:
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
-          serviceAccountName: cache-sa
           tolerations:
             - effect: NoSchedule
               key: node
@@ -153,19 +133,6 @@ cache.yaml:
             - emptyDir: {}
               name: cache-persistent-storage
   2: |
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      name: cache-sa-rolebinding
-    roleRef:
-      apiGroup: rbac.authorization.k8s.io
-      kind: ClusterRole
-      name: edit
-    subjects:
-      - kind: ServiceAccount
-        name: cache-sa
-        namespace: eyelevel
-  3: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -181,8 +148,3 @@ cache.yaml:
       selector:
         app: cache
       type: ClusterIP
-  4: |
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: cache-sa

@@ -5,10 +5,7 @@ metadata:
   name: layout-config-py-map
   namespace: {{ include "groundx.ns" . }}
   labels:
-    appVersion: {{ .Chart.AppVersion | quote }}
-    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    heritage: {{ .Release.Service }}
-    version: {{ .Chart.Version | quote }}
+{{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
 data:
   config.py: |
     env = dict(
@@ -17,21 +14,21 @@ data:
         annotationBase="layout/processed/",
         cacheDir="/app/hf_models_cache",
         callbackAPIKey={{ .Values.admin.apiKey | quote }},
-        deviceType={{ .Values.layout.internal.inference.deviceType | default "cpu" | quote }},
+        deviceType={{ .Values.layout.inference.deviceType | default "cpu" | quote }},
         env="prod",
         includeLS=False,
         layoutBroker={{ printf "redis://%s:%v/0" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
-        layoutLogger={{ .Values.layout.internal.serviceName | quote }},
+        layoutLogger={{ .Values.layout.serviceName | quote }},
         layoutResultBroker={{ printf "redis://%s:%v/0" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
         metricsAddr={{ include "groundx.metrics.cache.addr" . | quote }},
         metricsPort={{ include "groundx.metrics.cache.port" . }},
-        minBatchSize={{ .Values.layout.internal.process.batchSize }},
+        minBatchSize={{ .Values.layout.process.batchSize }},
         ocrBase="layout/raw/",
         ocrCredentials="credentials.json",
-        ocrProject={{ .Values.layout.internal.ocr.project | quote }},
-        ocrType={{ .Values.layout.internal.ocr.type | quote }},
+        ocrProject={{ .Values.layout.ocr.project | quote }},
+        ocrType={{ .Values.layout.ocr.type | quote }},
         podMemory={{ .Values.layout.podMemory | default "2Gi" | quote }},
-        service={{ .Values.layout.internal.serviceName | quote }},
+        service={{ .Values.layout.serviceName | quote }},
         uploadBase="layout/processed/",
         uploadBaseURL={{ get $fs "bucketDomain" | quote }},
         uploadBucket={{ get $fs "bucketName" | quote }},
@@ -40,5 +37,5 @@ data:
         uploadType={{ .Values.file.serviceType | quote }},
         uploadURL={{ printf "%s://%s/%s/" (get $fs "scheme") (get $fs "baseDomain") (get $fs "bucketName") | quote }},
         validAPIKeys=[{{ .Values.admin.apiKey | quote }}, {{ .Values.admin.username | quote }}],
-        workers={{ .Values.layout.internal.inference.workers }},
+        workers={{ .Values.layout.inference.workers }},
     )

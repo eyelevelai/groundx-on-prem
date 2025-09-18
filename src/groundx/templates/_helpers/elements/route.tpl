@@ -6,7 +6,7 @@
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: "{{ $name }}-service"
+  name: {{ $name | quote }}
   namespace: {{ include "groundx.ns" $root | quote }}
   labels:
     app: {{ $name | quote }}

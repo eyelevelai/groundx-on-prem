@@ -1,15 +1,12 @@
 {{- $ns := include "groundx.ns" . -}}
-{{- $workers := int (default 1 .Values.summary.internal.inference.workers) -}}
+{{- $workers := int (default 1 .Values.summary.inference.workers) -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: summary-supervisord-conf-map
   namespace: {{ include "groundx.ns" . }}
   labels:
-    appVersion: {{ .Chart.AppVersion | quote }}
-    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    heritage: {{ .Release.Service }}
-    version: {{ .Chart.Version | quote }}
+{{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
 data:
   supervisord.conf: |
     [supervisord]
@@ -18,7 +15,7 @@ data:
     {{- range $i, $_ := until $workers }}
 
     [program:celery_worker_{{ add $i 1 }}]
-    command=celery -A summary.celery_inference.appSummary worker -n %(ENV_POD_NAME)s-w{{ add $i 1 }} --loglevel=INFO --concurrency={{ $.Values.summary.internal.inference.threads }} --queues=summary_inference_queue --pool=solo
+    command=celery -A summary.celery_inference.appSummary worker -n %(ENV_POD_NAME)s-w{{ add $i 1 }} --loglevel=INFO --concurrency={{ $.Values.summary.inference.threads }} --queues=summary_inference_queue --pool=solo
     environment=
       CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w{{ add $i 1 }}",
       LOCAL="0",

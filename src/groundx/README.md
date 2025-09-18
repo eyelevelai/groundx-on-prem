@@ -100,8 +100,8 @@ helm install prereqs groundx/prereqs -n eyelevel
 helm repo add percona https://percona.github.io/percona-helm-charts/
 helm repo update
 
-helm install db-operator percona/pxc-operator -n eyelevel -f src/groundx/services/values.db.operator.yaml --version 1.15.1
-helm install db-cluster percona/pxc-db -n eyelevel -f src/groundx/services/values.db.cluster.yaml --version 1.15.1
+helm install db-operator percona/pxc-operator -n eyelevel -f src/groundx/values/values.db.operator.yaml --version 1.15.1
+helm install db-cluster percona/pxc-db -n eyelevel -f src/groundx/values/values.db.cluster.yaml --version 1.15.1
 ```
 
 ### MinIO
@@ -110,8 +110,8 @@ helm install db-cluster percona/pxc-db -n eyelevel -f src/groundx/services/value
 helm repo add minio-operator https://operator.min.io/
 helm repo update
 
-helm install file-operator minio-operator/operator -n eyelevel -f src/groundx/services/values.file.operator.yaml --version 6.0.3
-helm install file-cluster minio-operator/tenant -n eyelevel -f src/groundx/services/values.file.tenant.yaml --version 6.0.3
+helm install file-operator minio-operator/operator -n eyelevel -f src/groundx/values/values.file.operator.yaml --version 6.0.3
+helm install file-cluster minio-operator/tenant -n eyelevel -f src/groundx/values/values.file.tenant.yaml --version 6.0.3
 ```
 
 ### OpenSearch
@@ -120,13 +120,13 @@ helm install file-cluster minio-operator/tenant -n eyelevel -f src/groundx/servi
 helm repo add opensearch https://opensearch-project.github.io/helm-charts/
 helm repo update
 
-helm install opensearch opensearch/opensearch -n eyelevel -f src/groundx/services/values.search.yaml --version 2.23.1
+helm install opensearch opensearch/opensearch -n eyelevel -f src/groundx/values/values.search.yaml --version 2.23.1
 ```
 
 ### Kafka
 
 ```bash
-helm install stream-operator oci://quay.io/strimzi-helm/strimzi-kafka-operator -n eyelevel -f src/groundx/services/values.stream.yaml --version 0.47.0
+helm install stream-operator oci://quay.io/strimzi-helm/strimzi-kafka-operator -n eyelevel -f src/groundx/values/values.stream.yaml --version 0.47.0
 ```
 
 ## GroundX

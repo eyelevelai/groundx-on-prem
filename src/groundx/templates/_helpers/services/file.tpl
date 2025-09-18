@@ -87,6 +87,7 @@ true
 {{- $in := .Values.file.loadBalancer | default dict -}}
 {{- if hasKey $in "port" }}
 {{- dict
+    "isInternal" (dig "isInternal" "false" $in)
     "port"       (dig "port" "" $in)
     "ssl"        (dig "ssl" "" $in)
     "targetPort" (include "groundx.file.port" .)

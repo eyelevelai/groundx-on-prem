@@ -1,4 +1,4 @@
-suite: "caches render as expected"
+suite: "app renders as expected"
 values:
   - ../values.yaml
 chart:
@@ -6,13 +6,13 @@ chart:
   version: 0.1.0
 
 tests:
-  - it: cache.yaml
+  - it: groundx.yaml
     templates:
-      - ../templates/services/cache.yaml
+      - ../templates/app/groundx.yaml
     asserts:
       - matchSnapshot: {}
-  - it: cache-metrics.yaml
+  - it: golang.yaml
     templates:
-      - ../templates/services/cache-metrics.yaml
+      - ../templates/app/golang.yaml
     asserts:
       - matchSnapshot: {}

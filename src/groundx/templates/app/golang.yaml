@@ -1,0 +1,88 @@
+{{- $svcs := (include "groundx.golang.services" . | fromYaml) -}}
+
+{{- range $idx, $entry := $svcs }}
+{{- $svcKey := printf "groundx.%s.settings" $entry -}}
+{{- $svcData := include $svcKey $ | fromYaml -}}
+
+{{- $image := get $svcData "image" -}}
+{{- $lb := get $svcData "loadBalancer" -}}
+{{- $replicas := get $svcData "replicas" -}}
+{{- $res := get $svcData "resources" -}}
+{{- $cport := get $svcData "port" -}}
+{{- $pull := get $svcData "pull" -}}
+{{- $sctx := get $svcData "securityContext" -}}
+{{- $svc := get $svcData "name" -}}
+
+{{- $desired := get $replicas "desired" -}}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $svc }}
+  namespace: {{ include "groundx.ns" $ | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
+spec:
+  replicas: {{ $desired }}
+  selector:
+    matchLabels:
+      app: {{ $svc }}
+  template:
+    metadata:
+      labels:
+        app: {{ $svc }}
+    spec:
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 6 "root" $ "user" 1001) }}
+{{ include "groundx.renderNodeSelector" (dict "name" $svc "indent" 6 "root" $) }}
+      initContainers:
+        - name: wait-for-groundx
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until wget --spider -q {{ include "groundx.groundx.serviceUrl" $ }}/health; do echo waiting for groundx; sleep 2; done"]
+      containers:
+        - name: {{ $svc }}
+          image: {{ $image | quote }}
+          imagePullPolicy: {{ $pull | quote }}
+          ports:
+            - containerPort: {{ $cport }}
+              protocol: TCP
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 10 "root" $ "user" 1001) }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ $cport }}
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ $cport }}
+            initialDelaySeconds: 10
+            periodSeconds: 30
+{{- if $res }}
+{{ include "groundx.renderContainerResources" (dict "ctx" $res "indent" 10) }}
+{{- end }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /home/{{ include "groundx.golang.username" $ }}/.cashbot/config.yaml
+              subPath: config.yaml
+            - name: init-db-volume
+              mountPath: /app/init-db.sql
+              subPath: init-db.sql
+      volumes:
+        - name: config-volume
+          configMap:
+            name: config-yaml-map
+        - name: init-db-volume
+          configMap:
+            name: init-database-file
+{{- if $lb }}
+{{- if eq $.Values.cluster.type "openshift" }}
+{{ include "groundx.renderRoute" (dict "name" $svc "lb" $lb "root" $) }}
+{{- else }}
+{{ include "groundx.renderLoadBalancer" (dict "name" $svc "lb" $lb "root" $) }}
+{{- end }}
+{{- end }}
+
+{{ end }}

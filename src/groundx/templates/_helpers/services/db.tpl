@@ -20,6 +20,16 @@ true
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.db.maxIdle" -}}
+{{- $in := .Values.db | default dict -}}
+{{ dig "maxIdle" 5 $in }}
+{{- end }}
+
+{{- define "groundx.db.maxOpen" -}}
+{{- $in := .Values.db | default dict -}}
+{{ dig "maxOpen" 10 $in }}
+{{- end }}
+
 {{- define "groundx.db.serviceHost" -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- $name := include "groundx.db.serviceName" . -}}

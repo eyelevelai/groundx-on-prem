@@ -1,5 +1,5 @@
 {{- $ns := include "groundx.ns" . -}}
-{{- $sets := .Values.layout.internal | default dict -}}
+{{- $sets := .Values.layout | default dict -}}
 {{- range $name, $cfg := $sets }}
 {{- if and (kindIs "map" $cfg) (ne $name "serviceName") (ne $name "api") }}
 {{- $workers := int (default 1 $cfg.workers) -}}
@@ -12,10 +12,7 @@ metadata:
   name: layout-{{ $name }}-supervisord-conf-map
   namespace: {{ $ns }}
   labels:
-    appVersion: {{ $.Chart.AppVersion | quote }}
-    chart: {{ $.Chart.Name }}-{{ $.Chart.Version | replace "+" "_" }}
-    heritage: {{ $.Release.Service }}
-    version: {{ $.Chart.Version | quote }}
+{{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
 data:
   supervisord.conf: |
     [supervisord]

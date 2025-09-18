@@ -1,8 +1,9 @@
 {{- $cc := include "groundx.cache.create" . -}}
-{{- if not (eq $cc "false") -}}
+{{- if ne $cc "false" -}}
 {{- $svc := include "groundx.cache.serviceName" . -}}
+{{- $lb := include "groundx.cache.loadBalancer" . -}}
 {{- $mountName := printf "%s-persistent-storage" $svc -}}
-{{- $port := include "groundx.cache.port" . -}}
+{{- $cport := include "groundx.cache.containerPort" . -}}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -23,13 +24,12 @@ spec:
     spec:
 {{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.securityContext "indent" 6 "root" $ "user" 1001 "simple" "true") }}
 {{ include "groundx.renderNodeSelector" (dict "name" $svc "indent" 6 "root" $) }}
-      serviceAccountName: "{{ $svc }}-sa"
       containers:
         - name: {{ $svc | quote }}
           image: {{ include "groundx.cache.image" . | quote }}
           imagePullPolicy: {{ include "groundx.cache.imagePullPolicy" . | quote }}
           ports:
-            - containerPort: {{ $port }}
+            - containerPort: {{ $cport}}
               protocol: TCP
 {{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.securityContext "indent" 10 "root" $ "user" 1001 "simple" "true") }}
 {{- with .Values.cache.resources }}
@@ -41,5 +41,12 @@ spec:
       volumes:
         - name: {{ $mountName | quote }}
           emptyDir: {}
-{{ include "groundx.renderService" (dict "name" $svc "port" $port "type" .Values.cache.type "root" $) }}
+{{- if $lb }}
+{{- if eq .Values.cluster.type "openshift" }}
+{{ include "groundx.renderRoute" (dict "name" $svc "lb" $lb "root" $) }}
+{{- else }}
+{{ include "groundx.renderLoadBalancer" (dict "name" $svc "lb" $lb "root" $) }}
+{{- end }}
+{{- end }}
+
 {{- end }}

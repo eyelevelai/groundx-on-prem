@@ -4,20 +4,17 @@ metadata:
   name: ranker-config-py-map
   namespace: {{ include "groundx.ns" . }}
   labels:
-    appVersion: {{ .Chart.AppVersion | quote }}
-    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    heritage: {{ .Release.Service }}
-    version: {{ .Chart.Version | quote }}
+{{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
 data:
   config.py: |
     env = dict(
-        deviceType={{ .Values.ranker.internal.inference.deviceType | default "cpu" | quote }},
+        deviceType={{ .Values.ranker.inference.deviceType | default "cpu" | quote }},
         metricsAddr={{ include "groundx.metrics.cache.addr" . | quote }},
         metricsPort={{ include "groundx.metrics.cache.port" . }},
         searchBroker={{ printf "redis://%s:%v/0" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
-        searchLog={{ .Values.ranker.internal.serviceName | quote }},
+        searchLog={{ .Values.ranker.serviceName | quote }},
         searchResultBroker={{ printf "redis://%s:%v/0" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
-        service={{ .Values.ranker.internal.serviceName | quote }},
+        service={{ .Values.ranker.serviceName | quote }},
         validAPIKeys=[{{ .Values.admin.apiKey | quote }}, {{ .Values.admin.username | quote }}],
-        workers={{ .Values.ranker.internal.inference.workers }},
+        workers={{ .Values.ranker.inference.workers }},
     )
