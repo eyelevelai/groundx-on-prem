@@ -38,16 +38,6 @@ true
 {{ (dig "pull" "Always" $in) }}
 {{- end }}
 
-{{- define "groundx.layoutWebhook.ssl" -}}
-{{- $in := .Values.layoutWebhook | default dict -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := .Values.layoutWebhook.loadBalancer | default dict -}}
-{{ dig "ssl" "false" $lb  }}
-{{- else -}}
-false
-{{- end -}}
-{{- end }}
-
 {{- define "groundx.layoutWebhook.loadBalancer" -}}
 {{- $in := .Values.layoutWebhook | default dict -}}
 {{- if hasKey $in "loadBalancer" -}}
@@ -55,7 +45,7 @@ false
 {{- dict
     "isInternal" (dig "isInternal" "false" $lb)
     "port"       (include "groundx.layoutWebhook.port" .)
-    "ssl"        (include "groundx.layoutWebhook.ssl" .)
+    "ssl"        (dig "ssl" "false" $lb)
     "targetPort" (include "groundx.layoutWebhook.containerPort" .)
     "timeout"    (dig "timeout" "" $lb)
     "type"       (dig "type" "ClusterIP" $lb)
@@ -73,7 +63,11 @@ false
 
 {{- define "groundx.layoutWebhook.settings" -}}
 {{- $in := .Values.layoutWebhook | default dict -}}
-{{- $cfg := dict -}}
+{{- $cfg := dict
+  "dependencies" (dict
+    "groundx" "groundx"
+  )
+-}}
 {{- $_ := set $cfg "name"         (include "groundx.layoutWebhook.serviceName" .) -}}
 {{- $_ := set $cfg "image"        (include "groundx.layoutWebhook.image" .) -}}
 {{- $_ := set $cfg "loadBalancer" (include "groundx.layoutWebhook.loadBalancer" . | trim) -}}

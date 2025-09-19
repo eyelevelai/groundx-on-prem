@@ -2,7 +2,7 @@
 {{- $name := .name -}}
 {{- $indent := .indent | default 0 -}}
 {{- $root := .root -}}
-{{- if ne $name "" }}
+{{- if ne $name "" -}}
 {{ printf "%*s" $indent "" }}app: {{ $name | quote }}
 {{- end }}
 {{ printf "%*s" $indent "" }}appVersion: {{ $root.Chart.AppVersion | quote }}

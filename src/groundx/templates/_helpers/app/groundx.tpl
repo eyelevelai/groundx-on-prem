@@ -87,3 +87,31 @@ false
   | toYaml -}}
 {{- end -}}
 {{- end }}
+
+{{- define "groundx.groundx.settings" -}}
+{{- $in := .Values.groundx | default dict -}}
+{{- $cfg := dict
+  "dependencies" (dict
+    "cache"  "cache"
+    "file"   "file"
+    "search" "search"
+    "db"     "db"
+    "stream" "stream"
+  )
+-}}
+{{- $_ := set $cfg "name"         (include "groundx.groundx.serviceName" .) -}}
+{{- $_ := set $cfg "image"        (include "groundx.groundx.image" .) -}}
+{{- $_ := set $cfg "loadBalancer" (include "groundx.groundx.loadBalancer" . | trim) -}}
+{{- $_ := set $cfg "port"         (include "groundx.groundx.containerPort" .) -}}
+{{- $_ := set $cfg "pull"         (include "groundx.groundx.pull" .) -}}
+{{- if and (hasKey $in "replicas") (not (empty (get $in "replicas"))) -}}
+  {{- $_ := set $cfg "replicas" (get $in "replicas") -}}
+{{- end -}}
+{{- if and (hasKey $in "resources") (not (empty (get $in "resources"))) -}}
+  {{- $_ := set $cfg "resources" (get $in "resources") -}}
+{{- end -}}
+{{- if and (hasKey $in "securityContext") (not (empty (get $in "securityContext"))) -}}
+  {{- $_ := set $cfg "securityContext" (get $in "securityContext") -}}
+{{- end -}}
+{{- $cfg | toYaml -}}
+{{- end }}

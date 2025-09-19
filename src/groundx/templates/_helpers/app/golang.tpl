@@ -125,6 +125,9 @@ true
 
 {{- define "groundx.golang.services" -}}
 {{- $svcs := dict -}}
+{{- if eq (include "groundx.groundx.create" . | trim) "true" -}}
+{{- $svcs  = set $svcs "groundx" "groundx" -}}
+{{- end -}}
 {{- if eq (include "groundx.layoutWebhook.create" . | trim) "true" -}}
 {{- $svcs  = set $svcs "layoutWebhook" "layoutWebhook" -}}
 {{- end -}}

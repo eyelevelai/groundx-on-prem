@@ -172,20 +172,20 @@ data:
       summaryRequest:
         tokensPerMinute: {{ .Values.throughput.tpm.summaryRequest | default 0 }}
       task:
-        - name: {{ .Values.layout.serviceName }}-correct
-          target: {{ .Values.layout.correct.queue }}
+        - name: {{ include "groundx.layout.correct.serviceName" . }}
+          target: {{ include "groundx.layout.correct.queue" . }}
           threshold: {{ .Values.throughput.services.layout.correct | default 0 }}
-        - name: {{ .Values.layout.serviceName }}-map
-          target: {{ .Values.layout.map.queue }}
+        - name: {{ include "groundx.layout.map.serviceName" . }}
+          target: {{ include "groundx.layout.map.queue" . }}
           threshold: {{ .Values.throughput.services.layout.map | default 0 }}
-        - name: {{ .Values.layout.serviceName }}-ocr
-          target: {{ .Values.layout.ocr.queue }}
+        - name: {{ include "groundx.layout.ocr.serviceName" . }}
+          target: {{ include "groundx.layout.ocr.queue" . }}
           threshold: {{ .Values.throughput.services.layout.ocr | default 0 }}
-        - name: {{ .Values.layout.serviceName }}-process
-          target: {{ .Values.layout.process.queue }}
+        - name: {{ include "groundx.layout.process.serviceName" . }}
+          target: {{ include "groundx.layout.process.queue" . }}
           threshold: {{ .Values.throughput.services.layout.process | default 0 }}
-        - name: {{ .Values.layout.serviceName }}-save
-          target: {{ .Values.layout.save.queue }}
+        - name: {{ include "groundx.layout.save.serviceName" . }}
+          target: {{ include "groundx.layout.save.queue" . }}
           threshold: {{ .Values.throughput.services.layout.save | default 0 }}
 
 {{- if .Values.metrics }}

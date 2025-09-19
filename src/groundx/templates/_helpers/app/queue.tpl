@@ -40,7 +40,11 @@ true
 
 {{- define "groundx.queue.settings" -}}
 {{- $in := .Values.queue | default dict -}}
-{{- $cfg := dict -}}
+{{- $cfg := dict
+  "dependencies" (dict
+    "groundx" "groundx"
+  )
+-}}
 {{- $_ := set $cfg "name"         (include "groundx.queue.serviceName" .) -}}
 {{- $_ := set $cfg "image"        (include "groundx.queue.image" .) -}}
 {{- $_ := set $cfg "port"         (include "groundx.queue.containerPort" .) -}}

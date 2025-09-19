@@ -40,7 +40,11 @@ true
 
 {{- define "groundx.summaryClient.settings" -}}
 {{- $in := .Values.summaryClient | default dict -}}
-{{- $cfg := dict -}}
+{{- $cfg := dict
+  "dependencies" (dict
+    "groundx" "groundx"
+  )
+-}}
 {{- $_ := set $cfg "name"         (include "groundx.summaryClient.serviceName" .) -}}
 {{- $_ := set $cfg "image"        (include "groundx.summaryClient.image" .) -}}
 {{- $_ := set $cfg "port"         (include "groundx.summaryClient.containerPort" .) -}}

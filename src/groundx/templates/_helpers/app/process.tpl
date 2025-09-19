@@ -40,7 +40,11 @@ true
 
 {{- define "groundx.process.settings" -}}
 {{- $in := .Values.process | default dict -}}
-{{- $cfg := dict -}}
+{{- $cfg := dict
+  "dependencies" (dict
+    "groundx" "groundx"
+  )
+-}}
 {{- $_ := set $cfg "name"         (include "groundx.process.serviceName" .) -}}
 {{- $_ := set $cfg "image"        (include "groundx.process.image" .) -}}
 {{- $_ := set $cfg "port"         (include "groundx.process.containerPort" .) -}}

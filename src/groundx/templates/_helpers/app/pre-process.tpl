@@ -40,7 +40,11 @@ true
 
 {{- define "groundx.preProcess.settings" -}}
 {{- $in := .Values.preProcess | default dict -}}
-{{- $cfg := dict -}}
+{{- $cfg := dict
+  "dependencies" (dict
+    "groundx" "groundx"
+  )
+-}}
 {{- $_ := set $cfg "name"         (include "groundx.preProcess.serviceName" .) -}}
 {{- $_ := set $cfg "image"        (include "groundx.preProcess.image" .) -}}
 {{- $_ := set $cfg "port"         (include "groundx.preProcess.containerPort" .) -}}

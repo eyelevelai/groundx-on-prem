@@ -7,7 +7,7 @@
     (and $ctx.limits (or $ctx.limits.cpu $ctx.limits.memory $ctx.limits.gpu))
     (and $ctx.requests (or $ctx.requests.cpu $ctx.requests.memory $ctx.requests.gpu))
   )
-}}
+-}}
 {{ printf "%*s" $indent "" }}resources:
 {{- if $ctx.limits }}
 {{ printf "%*s" (add $indent 2) "" }}limits:

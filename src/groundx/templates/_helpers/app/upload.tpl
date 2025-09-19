@@ -40,7 +40,11 @@ true
 
 {{- define "groundx.upload.settings" -}}
 {{- $in := .Values.upload | default dict -}}
-{{- $cfg := dict -}}
+{{- $cfg := dict
+  "dependencies" (dict
+    "groundx" "groundx"
+  )
+-}}
 {{- $_ := set $cfg "name"         (include "groundx.upload.serviceName" .) -}}
 {{- $_ := set $cfg "image"        (include "groundx.upload.image" .) -}}
 {{- $_ := set $cfg "port"         (include "groundx.upload.containerPort" .) -}}

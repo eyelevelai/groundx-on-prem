@@ -182,18 +182,10 @@ layout:
   api:
     enabled: true
 
-    threads: 2
-    timeout: 120
-    workers: 2
-
     replicas:
       desired: 1
   correct:
     enabled: true
-
-    queue: correct_queue
-    threads: 1
-    workers: 1
 
     replicas:
       desired: 1
@@ -210,39 +202,20 @@ layout:
   map:
     enabled: true
 
-    queue: map_queue
-    threads: 1
-    workers: 1
-
     replicas:
       desired: 1
   ocr:
     enabled: true
-
-    project: ""
-    queue: ocr_queue
-    threads: 1
-    type: "tesseract"
-    workers: 1
 
     replicas:
       desired: 1
   process:
     enabled: true
 
-    batchSize: 40
-    queue: process_queue
-    threads: 1
-    workers: 1
-
     replicas:
       desired: 1
   save:
     enabled: true
-
-    queue: save_queue
-    threads: 1
-    workers: 1
 
     replicas:
       desired: 1
