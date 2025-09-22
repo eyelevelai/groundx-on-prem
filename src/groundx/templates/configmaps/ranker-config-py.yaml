@@ -1,20 +1,22 @@
+{{- $svc := include "groundx.ranker.serviceName" . -}}
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: ranker-config-py-map
+  name: {{ $svc }}-config-py-map
   namespace: {{ include "groundx.ns" . }}
   labels:
 {{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
 data:
   config.py: |
     env = dict(
-        deviceType={{ .Values.ranker.inference.deviceType | default "cpu" | quote }},
+        deviceType={{ include "groundx.ranker.inference.deviceType" . | quote }},
         metricsAddr={{ include "groundx.metrics.cache.addr" . | quote }},
         metricsPort={{ include "groundx.metrics.cache.port" . }},
         searchBroker={{ printf "redis://%s:%v/0" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
-        searchLog={{ .Values.ranker.serviceName | quote }},
+        searchLog={{ include "groundx.ranker.serviceName" . | quote }},
         searchResultBroker={{ printf "redis://%s:%v/0" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
-        service={{ .Values.ranker.serviceName | quote }},
+        service={{ include "groundx.ranker.serviceName" . | quote }},
         validAPIKeys=[{{ .Values.admin.apiKey | quote }}, {{ .Values.admin.username | quote }}],
-        workers={{ .Values.ranker.inference.workers }},
+        workers={{ include "groundx.ranker.inference.workers" . }},
     )

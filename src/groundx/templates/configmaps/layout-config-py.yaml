@@ -1,8 +1,10 @@
+{{- $svc := include "groundx.layout.serviceName" . -}}
+
 {{- $fs := (include "groundx.file.settings" . | fromYaml) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: layout-config-py-map
+  name: {{ $svc }}-config-py-map
   namespace: {{ include "groundx.ns" . }}
   labels:
 {{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
@@ -14,7 +16,7 @@ data:
         annotationBase="layout/processed/",
         cacheDir="/app/hf_models_cache",
         callbackAPIKey={{ .Values.admin.apiKey | quote }},
-        deviceType={{ .Values.layout.inference.deviceType | default "cpu" | quote }},
+        deviceType={{ include "groundx.layout.inference.deviceType" . | quote }},
         env="prod",
         includeLS=False,
         layoutBroker={{ printf "redis://%s:%v/0" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
@@ -27,7 +29,7 @@ data:
         ocrCredentials="credentials.json",
         ocrProject={{ include "groundx.layout.ocr.project" . | quote }},
         ocrType={{ include "groundx.layout.ocr.type" . | quote }},
-        podMemory={{ .Values.layout.podMemory | default "2Gi" | quote }},
+        podMemory={{ include "groundx.layout.podMemory" . | quote }},
         service={{ include "groundx.layout.serviceName" . | quote }},
         uploadBase="layout/processed/",
         uploadBaseURL={{ get $fs "bucketDomain" | quote }},
@@ -37,5 +39,5 @@ data:
         uploadType={{ .Values.file.serviceType | quote }},
         uploadURL={{ printf "%s://%s/%s/" (get $fs "scheme") (get $fs "baseDomain") (get $fs "bucketName") | quote }},
         validAPIKeys=[{{ .Values.admin.apiKey | quote }}, {{ .Values.admin.username | quote }}],
-        workers={{ .Values.layout.inference.workers }},
+        workers={{ include "groundx.layout.inference.workers" . }},
     )

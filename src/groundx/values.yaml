@@ -1,9 +1,5 @@
 namespace: eyelevel
-ingestOnly: false
-languages:
-  - en
-logLevel: info
-hasMig: false
+pvClass: eyelevel-pv
 
 admin:
   apiKey: "00000000-0000-0000-0000-000000000000"
@@ -145,19 +141,10 @@ summary:
   api:
     enabled: true
 
-    threads: 4
-    timeout: 240
-    workers: 1
-
     replicas:
       desired: 1
   inference:
     enabled: true
-
-    deviceType: cuda
-    deviceUtilize: 0.9
-    threads: 1
-    workers: 1
 
     replicas:
       desired: 1
@@ -191,11 +178,6 @@ layout:
       desired: 1
   inference:
     enabled: true
-
-    deviceType: cuda
-    queue: layout_queue
-    threads: 6
-    workers: 1
 
     replicas:
       desired: 1
@@ -268,18 +250,10 @@ ranker:
   api:
     enabled: true
 
-    threads: 3
-    timeout: 120
-    workers: 1
-
     replicas:
       desired: 1
   inference:
     enabled: true
-
-    deviceType: cuda
-    threads: 1
-    workers: 14
 
     replicas:
       desired: 1
@@ -313,32 +287,3 @@ upload:
     requests:
       cpu: 100m
       memory: 128Mi
-
-throughput:
-  tpm:
-    document: 12500
-    page: 500
-    summaryRequest: 625
-  services:
-    layout:
-      correct: 500
-      inference: 120000
-      map: 500
-      ocr: 500
-      process: 500
-      save: 500
-    preProcess:
-      queue: 6
-    process:
-      queue: 9
-    queue:
-      queue: 9
-    ranker:
-      inference: 0
-    summary:
-      api: 9600
-      inference: 3200
-    summaryClient:
-      api: 9600
-    upload:
-      queue: 120

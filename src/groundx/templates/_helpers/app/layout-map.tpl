@@ -53,6 +53,9 @@ true
 {{- $_ := set $cfg "name"         (include "groundx.layout.map.serviceName" .) -}}
 {{- $_ := set $cfg "image"        (include "groundx.layout.map.image" .) -}}
 {{- $_ := set $cfg "pull"         (include "groundx.layout.map.pull" .) -}}
+{{- $_ := set $cfg "queue"        (include "groundx.layout.map.queue" .) -}}
+{{- $_ := set $cfg "threads"      (include "groundx.layout.map.threads" .) -}}
+{{- $_ := set $cfg "workers"      (include "groundx.layout.map.workers" .) -}}
 {{- if and (hasKey $in "replicas") (not (empty (get $in "replicas"))) -}}
   {{- $_ := set $cfg "replicas" (get $in "replicas") -}}
 {{- end -}}

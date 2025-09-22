@@ -9,6 +9,7 @@
     },
     "logLevel": { "type": "string" },
     "hasMig": { "type": "boolean" },
+    "pvClass": { "type": "string" },
     "admin": {
       "type": "object",
       "properties": {
@@ -342,6 +343,29 @@
               "required": ["pull", "repository", "tag"],
               "additionalProperties": false
             },
+            "loadBalancer": {
+              "type": "object",
+              "properties": {
+                "ipType": { "type": "string" },
+                "isInternal": { "type": "boolean" },
+                "port": { "type": "integer" },
+                "ssl": { "type": "boolean" },
+                "timeout": { "type": "integer" }
+              },
+              "required": ["port", "ssl"],
+              "additionalProperties": false
+            },
+            "pvc": {
+              "type": "object",
+              "properties": {
+                "access": { "type": "string" },
+                "capacity": { "type": "string" },
+                "name": { "type": "string" }
+              },
+              "required": ["access", "capacity", "name"],
+              "additionalProperties": false
+            },
+            "queue": { "type": "string" },
             "replicas": {
               "type": "object",
               "properties": {
@@ -514,6 +538,18 @@
               "required": ["pull", "repository", "tag"],
               "additionalProperties": false
             },
+            "loadBalancer": {
+              "type": "object",
+              "properties": {
+                "ipType": { "type": "string" },
+                "isInternal": { "type": "boolean" },
+                "port": { "type": "integer" },
+                "ssl": { "type": "boolean" },
+                "timeout": { "type": "integer" }
+              },
+              "required": ["port", "ssl"],
+              "additionalProperties": false
+            },
             "queue": { "type": "string" },
             "replicas": {
               "type": "object",
@@ -602,6 +638,7 @@
           "required": ["enabled", "replicas"],
           "additionalProperties": false
         },
+        "podMemory": { "type": "string" },
         "process": {
           "type": "object",
           "properties": {
@@ -892,6 +929,17 @@
               "required": ["pull", "repository", "tag"],
               "additionalProperties": false
             },
+            "pvc": {
+              "type": "object",
+              "properties": {
+                "access": { "type": "string" },
+                "capacity": { "type": "string" },
+                "name": { "type": "string" }
+              },
+              "required": ["access", "capacity", "name"],
+              "additionalProperties": false
+            },
+            "queue": { "type": "string" },
             "replicas": {
               "type": "object",
               "properties": {
@@ -1120,6 +1168,6 @@
       "additionalProperties": false
     }
   },
-  "required": ["cluster", "namespace"],
+  "required": ["cluster", "namespace", "pvClass"],
   "additionalProperties": false
 }

@@ -2,6 +2,10 @@
 {{- if .Values.namespace -}}{{ .Values.namespace }}{{- else -}}{{ .Release.Namespace }}{{- end -}}
 {{- end }}
 
+{{- define "groundx.ingestOnly" -}}
+{{ .Values.ingestOnly | default false }}
+{{- end }}
+
 {{- define "groundx.isOpenshift" -}}
 {{- eq (dig "type" "" .Values.cluster) "openshift" -}}
 {{- end }}
@@ -15,6 +19,10 @@
 {{ .Values.environment | default "prod" }}
 {{- end }}
 
+{{- define "groundx.hasMig" -}}
+{{ .Values.hasMig | default false }}
+{{- end }}
+
 {{- define "groundx.imageRepository" -}}
 {{- $in := .Values.admin | default dict -}}
 {{- $repo := dig "imageRepository" "" $in -}}
@@ -23,6 +31,14 @@
 {{- else -}}
 public.ecr.aws/c9r4x6y5
 {{- end -}}
+{{- end }}
+
+{{- define "groundx.languages" -}}
+{{ .Values.languages | default (list "en") }}
+{{- end }}
+
+{{- define "groundx.logLevel" -}}
+{{ .Values.logLevel | default "warn" }}
 {{- end }}
 
 {{- define "groundx.busybox.image" -}}

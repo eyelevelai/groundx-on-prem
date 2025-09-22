@@ -4,7 +4,9 @@
 {{- $svcKey := printf "groundx.%s.settings" $entry -}}
 {{- $svcData := include $svcKey $ | fromYaml -}}
 
+{{- $cfg := get $svcData "cfg" -}}
 {{- $cport := get $svcData "port" -}}
+{{- $guni := get $svcData "gunicorn" -}}
 {{- $image := get $svcData "image" -}}
 {{- $lb := get $svcData "loadBalancer" -}}
 {{- $replicas := get $svcData "replicas" -}}
@@ -63,7 +65,8 @@ spec:
             httpGet:
               path: /health
               port: {{ $cport }}
-            initialDelaySeconds: 30
+            initialDelaySeconds: 10
+            failureThreshold: 12
             periodSeconds: 30
           readinessProbe:
             httpGet:
@@ -84,9 +87,14 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: layout-config-py-map
+            name: {{ $cfg }}
         - name: gunicorn-conf-volume
           configMap:
-            name: layout-gunicorn-conf-py-map
+            name: {{ $guni }}
+{{- if eq $.Values.cluster.type "openshift" }}
+{{ include "groundx.renderRoute" (dict "name" $svc "lb" $lb "root" $) }}
+{{- else }}
+{{ include "groundx.renderLoadBalancer" (dict "name" $svc "lb" $lb "root" $) }}
+{{- end }}
 
 {{ end }}

@@ -71,6 +71,9 @@ true
 {{- $_ := set $cfg "name"         (include "groundx.layout.ocr.serviceName" .) -}}
 {{- $_ := set $cfg "image"        (include "groundx.layout.ocr.image" .) -}}
 {{- $_ := set $cfg "pull"         (include "groundx.layout.ocr.pull" .) -}}
+{{- $_ := set $cfg "queue"        (include "groundx.layout.ocr.queue" .) -}}
+{{- $_ := set $cfg "threads"      (include "groundx.layout.ocr.threads" .) -}}
+{{- $_ := set $cfg "workers"      (include "groundx.layout.ocr.workers" .) -}}
 {{- if and (hasKey $in "replicas") (not (empty (get $in "replicas"))) -}}
   {{- $_ := set $cfg "replicas" (get $in "replicas") -}}
 {{- end -}}

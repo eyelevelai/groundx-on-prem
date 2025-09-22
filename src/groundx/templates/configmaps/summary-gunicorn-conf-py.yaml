@@ -1,7 +1,9 @@
+{{- $svc := include "groundx.summary.serviceName" . -}}
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: summary-gunicorn-conf-py-map
+  name: {{ $svc }}-gunicorn-conf-py-map
   namespace: {{ include "groundx.ns" . }}
   labels:
 {{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
@@ -11,10 +13,10 @@ data:
     accesslog = "-"
     errorlog = "-"
 
-    loglevel = "{{ .Values.logLevel }}"
-    workers = {{ .Values.summary.api.workers }}
-    threads = {{ .Values.summary.api.threads }}
-    timeout = {{ .Values.summary.api.timeout }}
+    loglevel = {{ include "groundx.logLevel" . | quote }}
+    workers = {{ include "groundx.summary.api.workers" . }}
+    threads = {{ include "groundx.summary.api.threads" . }}
+    timeout = {{ include "groundx.summary.api.timeout" . }}
     timeout_keep_alive = 15
 
     worker_class = "uvicorn.workers.UvicornWorker"

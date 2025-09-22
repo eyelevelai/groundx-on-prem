@@ -25,7 +25,7 @@ spec:
       - name: wait-for-cache
         image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
         imagePullPolicy: "{{ .Values.busybox.pull }}"
-        command: ['sh', '-c', "until nc -z {{ .Values.dependencies.cache }}; do echo waiting for cache; sleep 2; done"] 
+        command: ['sh', '-c', "until nc -z {{ .Values.dependencies.cache }}; do echo waiting for cache; sleep 2; done"]
       containers:
       - name: {{ .Values.service.name }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -34,7 +34,7 @@ spec:
           - /bin/bash
           - -c
           - |
-            export PYTHONPATH=/app && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
+            export PYTHONPATH=/app:$PYTHONPATH && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
         ports:
         - containerPort: 8080
           protocol: TCP

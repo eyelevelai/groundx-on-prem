@@ -1,10 +1,10 @@
-{{- define "groundx.layout.api.serviceName" -}}
-{{- $svc := include "groundx.layout.serviceName" . -}}
+{{- define "groundx.summary.api.serviceName" -}}
+{{- $svc := include "groundx.summary.serviceName" . -}}
 {{ printf "%s-api" $svc }}
 {{- end }}
 
-{{- define "groundx.layout.api.create" -}}
-{{- $b := .Values.layout | default dict -}}
+{{- define "groundx.summary.api.create" -}}
+{{- $b := .Values.summary | default dict -}}
 {{- $in := (dig "api" nil $b) | default dict -}}
 {{- if hasKey $in "enabled" -}}
   {{- if (dig "enabled" false $in) -}}true{{- else -}}false{{- end -}}
@@ -13,22 +13,22 @@ true
 {{- end -}}
 {{- end }}
 
-{{- define "groundx.layout.api.containerPort" -}}
-{{- $b := .Values.layout | default dict -}}
+{{- define "groundx.summary.api.containerPort" -}}
+{{- $b := .Values.summary | default dict -}}
 {{- $in := (dig "api" nil $b) | default dict -}}
 {{ dig "containerPort" 8080 $in }}
 {{- end }}
 
-{{- define "groundx.layout.api.image" -}}
-{{- $b := .Values.layout | default dict -}}
+{{- define "groundx.summary.api.image" -}}
+{{- $b := .Values.summary | default dict -}}
 {{- $in := (dig "api" nil $b) | default dict -}}
 {{- $img := (dig "image" nil $in) | default dict -}}
 {{- $bs := printf "%s/eyelevel/python-api" (include "groundx.imageRepository" .) -}}
 {{ printf "%s:%s" (dig "repository" $bs $img) (dig "repository" "latest" $img) }}
 {{- end }}
 
-{{- define "groundx.layout.api.port" -}}
-{{- $b := .Values.layout | default dict -}}
+{{- define "groundx.summary.api.port" -}}
+{{- $b := .Values.summary | default dict -}}
 {{- $in := (dig "api" nil $b) | default dict -}}
 {{- if hasKey $in "loadBalancer" -}}
 {{- $lb := (dig "loadBalancer" nil $in) | default dict -}}
@@ -38,68 +38,68 @@ true
 {{- end -}}
 {{- end }}
 
-{{- define "groundx.layout.api.pull" -}}
-{{- $b := .Values.layout | default dict -}}
+{{- define "groundx.summary.api.pull" -}}
+{{- $b := .Values.summary | default dict -}}
 {{- $in := (dig "api" nil $b) | default dict -}}
 {{- $img := (dig "image" nil $in) | default dict -}}
 {{ (dig "pull" "Always" $img) }}
 {{- end }}
 
-{{- define "groundx.layout.api.threads" -}}
-{{- $b := .Values.layout | default dict -}}
+{{- define "groundx.summary.api.threads" -}}
+{{- $b := .Values.summary | default dict -}}
 {{- $in := (dig "api" nil $b) | default dict -}}
-{{ dig "threads" 2 $in }}
+{{ dig "threads" 4 $in }}
 {{- end }}
 
-{{- define "groundx.layout.api.timeout" -}}
-{{- $b := .Values.layout | default dict -}}
+{{- define "groundx.summary.api.timeout" -}}
+{{- $b := .Values.summary | default dict -}}
 {{- $in := (dig "api" nil $b) | default dict -}}
-{{ dig "timeout" 120 $in }}
+{{ dig "timeout" 240 $in }}
 {{- end }}
 
-{{- define "groundx.layout.api.workers" -}}
-{{- $b := .Values.layout | default dict -}}
+{{- define "groundx.summary.api.workers" -}}
+{{- $b := .Values.summary | default dict -}}
 {{- $in := (dig "api" nil $b) | default dict -}}
-{{ dig "workers" 2 $in }}
+{{ dig "workers" 1 $in }}
 {{- end }}
 
-{{- define "groundx.layout.api.loadBalancer" -}}
-{{- $b := .Values.layout | default dict -}}
+{{- define "groundx.summary.api.loadBalancer" -}}
+{{- $b := .Values.summary | default dict -}}
 {{- $in := (dig "api" nil $b) | default dict -}}
 {{- if hasKey $in "loadBalancer" -}}
 {{- $lb := (dig "loadBalancer" nil $in) | default dict -}}
 {{- dict
     "isInternal" (dig "isInternal" "false" $lb)
-    "port"       (include "groundx.layout.api.port" .)
+    "port"       (include "groundx.summary.api.port" .)
     "ssl"        (dig "ssl" "false" $lb)
-    "targetPort" (include "groundx.layout.api.containerPort" .)
+    "targetPort" (include "groundx.summary.api.containerPort" .)
     "timeout"    (dig "timeout" "" $lb)
     "type"       (dig "type" "ClusterIP" $lb)
   | toYaml -}}
-{{- else }}
+{{- else -}}
 {{- dict
     "isInternal" "true"
-    "port"       (include "groundx.layout.api.port" .)
+    "port"       (include "groundx.summary.api.port" .)
     "ssl"        "false"
-    "targetPort" (include "groundx.layout.api.containerPort" .)
+    "targetPort" (include "groundx.summary.api.containerPort" .)
     "timeout"    ""
     "type"       "ClusterIP"
   | toYaml -}}
 {{- end -}}
 {{- end }}
 
-{{- define "groundx.layout.api.settings" -}}
-{{- $svc := include "groundx.layout.serviceName" . -}}
-{{- $b := .Values.layout | default dict -}}
+{{- define "groundx.summary.api.settings" -}}
+{{- $svc := include "groundx.summary.serviceName" . -}}
+{{- $b := .Values.summary | default dict -}}
 {{- $in := (dig "api" nil $b) | default dict -}}
 {{- $cfg := dict -}}
 {{- $_ := set $cfg "cfg"          (printf "%s-config-py-map" $svc) -}}
-{{- $_ := set $cfg "name"         (include "groundx.layout.api.serviceName" .) -}}
+{{- $_ := set $cfg "name"         (include "groundx.summary.api.serviceName" .) -}}
 {{- $_ := set $cfg "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc) -}}
-{{- $_ := set $cfg "image"        (include "groundx.layout.api.image" .) -}}
-{{- $_ := set $cfg "loadBalancer" (include "groundx.layout.api.loadBalancer" .) -}}
-{{- $_ := set $cfg "port"         (include "groundx.layout.api.containerPort" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.layout.api.pull" .) -}}
+{{- $_ := set $cfg "image"        (include "groundx.summary.api.image" .) -}}
+{{- $_ := set $cfg "loadBalancer" (include "groundx.summary.api.loadBalancer" .) -}}
+{{- $_ := set $cfg "port"         (include "groundx.summary.api.containerPort" .) -}}
+{{- $_ := set $cfg "pull"         (include "groundx.summary.api.pull" .) -}}
 {{- if and (hasKey $in "replicas") (not (empty (get $in "replicas"))) -}}
   {{- $_ := set $cfg "replicas" (get $in "replicas") -}}
 {{- end -}}

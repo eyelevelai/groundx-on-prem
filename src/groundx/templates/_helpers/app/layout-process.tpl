@@ -59,6 +59,9 @@ true
 {{- $_ := set $cfg "name"         (include "groundx.layout.process.serviceName" .) -}}
 {{- $_ := set $cfg "image"        (include "groundx.layout.process.image" .) -}}
 {{- $_ := set $cfg "pull"         (include "groundx.layout.process.pull" .) -}}
+{{- $_ := set $cfg "queue"        (include "groundx.layout.process.queue" .) -}}
+{{- $_ := set $cfg "threads"      (include "groundx.layout.process.threads" .) -}}
+{{- $_ := set $cfg "workers"      (include "groundx.layout.process.workers" .) -}}
 {{- if and (hasKey $in "replicas") (not (empty (get $in "replicas"))) -}}
   {{- $_ := set $cfg "replicas" (get $in "replicas") -}}
 {{- end -}}

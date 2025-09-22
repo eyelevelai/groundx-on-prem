@@ -1,15 +1,17 @@
+{{- $svc := include "groundx.summary.serviceName" . -}}
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: summary-config-py-map
+  name: {{ $svc }}-config-py-map
   namespace: {{ include "groundx.ns" . }}
   labels:
 {{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
 data:
   config.py: |
     env = dict(
-        deviceType={{ .Values.summary.inference.deviceType | quote }},
-        deviceUtilize={{ .Values.summary.inference.deviceUtilize }},
+        deviceType={{ include "groundx.summary.inference.deviceType" . | quote }},
+        deviceUtilize={{ include "groundx.summary.inference.deviceUtilize" . }},
         metricsAddr={{ include "groundx.metrics.cache.addr" . | quote }},
         metricsPort={{ include "groundx.metrics.cache.port" . }},
         service={{ include "groundx.summary.serviceName" . | quote }},
@@ -17,5 +19,5 @@ data:
         summaryLog={{ include "groundx.summary.serviceName" . | quote }},
         summaryResultBroker={{ printf "redis://%s:%v/0" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
         validAPIKeys=[{{ .Values.admin.apiKey | quote }}, {{ .Values.admin.username | quote }}],
-        workers={{ .Values.summary.inference.workers }},
+        workers={{ include "groundx.summary.inference.workers" . }},
     )

@@ -22,22 +22,18 @@ data:
           baseURL: {{ include "groundx.search.baseURL" . }}
           index: {{ .Values.search.indexName }}
           languages:
-{{- if and (hasKey .Values "languages") (not (empty .Values.languages)) }}
-          {{- range $l := .Values.languages }}
-            - {{ $l }}
+          {{- range (include "groundx.languages" . | fromYamlArray) }}
+            - {{ . }}
           {{- end }}
-{{- else }}
-            - en
-{{- end }}
           username: {{ .Values.search.username  }}
           password: {{ .Values.search.password }}
       eyelevelSearch:
         apiKey: {{ .Values.admin.apiKey }}
-        baseURL: http://{{ .Values.ranker.serviceName }}-api.{{ include "groundx.ns" . }}.svc.cluster.local
+        baseURL: http://{{ include "groundx.ranker.serviceName" . }}-api.{{ include "groundx.ns" . }}.svc.cluster.local
       layout:
         client:
           apiKey: {{ .Values.admin.apiKey }}
-          baseURL: http://{{ .Values.layout.serviceName }}-api.{{ include "groundx.ns" . }}.svc.cluster.local
+          baseURL: http://{{ include "groundx.layout.serviceName" . }}-api.{{ include "groundx.ns" . }}.svc.cluster.local
           callbackURL: http://{{ include "groundx.layoutWebhook.serviceName" . }}.{{ include "groundx.ns" . }}.svc.cluster.local
       openai:
         apiKey: {{ include "groundx.summary.apiKey" . }}
@@ -47,13 +43,9 @@ data:
       searchIndexes:
         {{ .Values.search.indexName }}:
           languages:
-{{- if and (hasKey .Values "languages") (not (empty .Values.languages)) }}
-          {{- range $l := .Values.languages }}
-            - {{ $l }}
+          {{- range (include "groundx.languages" . | fromYamlArray) }}
+            - {{ . }}
           {{- end }}
-{{- else }}
-            - en
-{{- end }}
 {{- if and (hasKey .Values.summaryClient "engines") (not (empty .Values.summaryClient.engines)) }}
     engines:
     {{- range $e := .Values.summaryClient.engines }}
@@ -85,7 +77,7 @@ data:
       serviceName: {{ include "groundx.groundx.serviceName" . }}
 
     init:
-      ingestOnly: {{ .Values.ingestOnly | default false }}
+      ingestOnly: {{ include "groundx.ingestOnly" . }}
       mysql:
         user: {{ .Values.db.privilegedUsername }}
         password: {{ .Values.db.privilegedPassword }}
@@ -94,14 +86,11 @@ data:
         searchModel: all_access
         username: {{ .Values.search.privilegedUsername }}
 
-    {{- $integration := .Values.integration | default dict }}
-    {{- $intSearch := $integration.search | default dict }}
-
     integrationTests:
       search:
-        duration: {{ $intSearch.duration | default 3660 }}
-        fileId: {{ $intSearch.fileId | default "ey-mtr6hapxq7d94zigammwir6xz4" }}
-        modelId: {{ $intSearch.modelId | default 1 }}
+        duration: {{ include "groundx.integration.search.duration" . }}
+        fileId: {{ include "groundx.integration.search.fileId" . | quote }}
+        modelId: {{ include "groundx.integration.search.modelId" . }}
 
     layoutWebhookServer:
       baseURL: http://{{ include "groundx.layoutWebhook.serviceName" . }}.{{ include "groundx.ns" . }}.svc.cluster.local
@@ -138,60 +127,60 @@ data:
       active: true
       api:
         - name: {{ include "groundx.groundx.serviceName" . }}
-        - name: {{ .Values.layout.serviceName }}-api
+        - name: {{ include "groundx.layout.serviceName" . }}-api
         - name: {{ include "groundx.layoutWebhook.serviceName" . }}
       document:
-        tokensPerMinute: {{ .Values.throughput.tpm.document | default 0 }}
+        tokensPerMinute: {{ include "groundx.throughput.tpm.document" . }}
       inference:
-        - name: {{ .Values.layout.serviceName }}-inference
-          tokensPerMinute: {{ .Values.throughput.services.layout.inference | default 0 }}
+        - name: {{ include "groundx.layout.serviceName" . }}-inference
+          tokensPerMinute: {{ include "groundx.throughput.services.layout.inference" . }}
         - name: {{ include "groundx.summary.serviceName" . }}-api
-          tokensPerMinute: {{ .Values.throughput.services.summary.api | default 0 }}
+          tokensPerMinute: {{ include "groundx.throughput.services.summary.api" . }}
         - name: {{ include "groundx.summary.serviceName" . }}-inference
-          tokensPerMinute: {{ .Values.throughput.services.summary.inference | default 0 }}
+          tokensPerMinute: {{ include "groundx.throughput.services.summary.inference" . }}
         - name: {{ include "groundx.summaryClient.serviceName" . }}
-          tokensPerMinute: {{ .Values.throughput.services.summaryClient.api | default 0 }}
+          tokensPerMinute: {{ include "groundx.throughput.services.summaryClient.api" . }}
       page:
-        tokensPerMinute: {{ .Values.throughput.tpm.page | default 0 }}
+        tokensPerMinute: {{ include "groundx.throughput.tpm.page" . }}
       queue:
         - name: {{ include "groundx.preProcess.serviceName" . }}
           target: {{ include "groundx.preProcess.queue" . }}
-          threshold: {{ .Values.throughput.services.preProcess.queue | default 0 }}
+          threshold: {{ include "groundx.throughput.services.preProcess.queue" . }}
         - name: {{ include "groundx.process.serviceName" . }}
           target: {{ include "groundx.process.queue" . }}
-          threshold: {{ .Values.throughput.services.process.queue | default 0 }}
+          threshold: {{ include "groundx.throughput.services.process.queue" . }}
         - name: {{ include "groundx.queue.serviceName" . }}
           target: {{ include "groundx.queue.queue" . }}
-          threshold: {{ .Values.throughput.services.queue.queue | default 0 }}
+          threshold: {{ include "groundx.throughput.services.queue.queue" . }}
         - name: {{ include "groundx.upload.serviceName" . }}
           target: {{ include "groundx.upload.queue" . }}
-          threshold: {{ .Values.throughput.services.upload.queue | default 0 }}
+          threshold: {{ include "groundx.throughput.services.upload.queue" . }}
       session:
         addr: {{ printf "%s:%v" (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) }}
         notCluster: {{ include "groundx.metrics.cache.notCluster" . }}
       summaryRequest:
-        tokensPerMinute: {{ .Values.throughput.tpm.summaryRequest | default 0 }}
+        tokensPerMinute: {{ include "groundx.throughput.tpm.summaryRequest" . }}
       task:
         - name: {{ include "groundx.layout.correct.serviceName" . }}
           target: {{ include "groundx.layout.correct.queue" . }}
-          threshold: {{ .Values.throughput.services.layout.correct | default 0 }}
+          threshold: {{ include "groundx.throughput.services.layout.correct" . }}
         - name: {{ include "groundx.layout.map.serviceName" . }}
           target: {{ include "groundx.layout.map.queue" . }}
-          threshold: {{ .Values.throughput.services.layout.map | default 0 }}
+          threshold: {{ include "groundx.throughput.services.layout.map" . }}
         - name: {{ include "groundx.layout.ocr.serviceName" . }}
           target: {{ include "groundx.layout.ocr.queue" . }}
-          threshold: {{ .Values.throughput.services.layout.ocr | default 0 }}
+          threshold: {{ include "groundx.throughput.services.layout.ocr" . }}
         - name: {{ include "groundx.layout.process.serviceName" . }}
           target: {{ include "groundx.layout.process.queue" . }}
-          threshold: {{ .Values.throughput.services.layout.process | default 0 }}
+          threshold: {{ include "groundx.throughput.services.layout.process" . }}
         - name: {{ include "groundx.layout.save.serviceName" . }}
           target: {{ include "groundx.layout.save.queue" . }}
-          threshold: {{ .Values.throughput.services.layout.save | default 0 }}
+          threshold: {{ include "groundx.throughput.services.layout.save" . }}
 
 {{- if .Values.metrics }}
     metricsServer:
       baseURL: http://{{ .Values.metrics.serviceName }}.{{ include "groundx.ns" . }}.svc.cluster.local
-      port: {{ .Values.metrics.port | default 0 }}
+      port: {{ .Values.metrics.port }}
       serviceName: {{ .Values.metrics.serviceName }}
       sslCACert: /etc/ssl/tls/ca.crt
       sslCert: /etc/ssl/tls/tls.crt
@@ -230,7 +219,7 @@ data:
       summarize: [8]
       summarizeChunks: [10]
       summarizeSections: [9]
-{{- if .Values.ingestOnly }}
+{{- if eq (include "groundx.ingestOnly" .) "true" }}
       extraPostDefaults:
         - processorID: 1
           type: skip-generate
