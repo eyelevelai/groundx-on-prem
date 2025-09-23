@@ -23,7 +23,7 @@ inference.yaml:
         spec:
           containers:
             - command:
-                - /bin/bash
+                - /bin/sh
                 - -c
                 - |
                   export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
@@ -37,7 +37,7 @@ inference.yaml:
               livenessProbe:
                 failureThreshold: 8
                 httpGet:
-                  path: /health
+                  path: /alive
                   port: 8080
                 initialDelaySeconds: 30
                 periodSeconds: 15
@@ -143,7 +143,7 @@ inference.yaml:
                 name: layout-config-py-map
               name: config-volume
             - configMap:
-                name: layout-gunicorn-conf-py-map
+                name: layout-inference-supervisord-conf-map
               name: supervisord-volume
             - configMap:
                 defaultMode: 365
@@ -189,7 +189,7 @@ inference.yaml:
         spec:
           containers:
             - command:
-                - /bin/bash
+                - /bin/sh
                 - -c
                 - |
                   export PYTHONPATH=/workspace:$PYTHONPATH &&  supervisord -c /workspace/supervisord.conf
@@ -205,7 +205,7 @@ inference.yaml:
                   command:
                     - /bin/sh
                     - -c
-                    - ps aux | grep 'true' | grep -v grep || exit 1
+                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
                 failureThreshold: 10
                 initialDelaySeconds: 60
                 periodSeconds: 30
@@ -215,7 +215,7 @@ inference.yaml:
                   command:
                     - /bin/sh
                     - -c
-                    - ps aux | grep 'true' | grep -v grep || exit 1
+                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
                 initialDelaySeconds: 60
                 periodSeconds: 30
               securityContext:
@@ -365,7 +365,7 @@ inference.yaml:
                 name: ranker-config-py-map
               name: config-volume
             - configMap:
-                name: ranker-gunicorn-conf-py-map
+                name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
             - configMap:
                 defaultMode: 365
@@ -429,7 +429,7 @@ inference.yaml:
         spec:
           containers:
             - command:
-                - /bin/bash
+                - /bin/sh
                 - -c
                 - |
                   export PYTHONPATH=/workspace:$PYTHONPATH &&  supervisord -c /workspace/supervisord.conf
@@ -443,7 +443,7 @@ inference.yaml:
               livenessProbe:
                 failureThreshold: 8
                 httpGet:
-                  path: /health
+                  path: /alive
                   port: 8080
                 initialDelaySeconds: 30
                 periodSeconds: 15
@@ -605,7 +605,7 @@ inference.yaml:
                 name: summary-config-py-map
               name: config-volume
             - configMap:
-                name: summary-gunicorn-conf-py-map
+                name: summary-inference-supervisord-conf-map
               name: supervisord-volume
             - configMap:
                 defaultMode: 365

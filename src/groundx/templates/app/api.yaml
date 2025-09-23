@@ -59,7 +59,7 @@ spec:
             - /bin/bash
             - -c
             - |
-              export PYTHONPATH=/app && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
+              export PYTHONPATH=/app:$PYTHONPATH && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
 {{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 10 "root" $ "user" 1001) }}
           livenessProbe:
             httpGet:

@@ -124,13 +124,13 @@ true
 {{- $_ := set $cfg "baseName"     ($svc) -}}
 {{- $_ := set $cfg "cfg"          (printf "%s-config-py-map" $svc) -}}
 {{- $_ := set $cfg "name"         (include "groundx.summary.inference.serviceName" .) -}}
-{{- $_ := set $cfg "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc) -}}
 {{- $_ := set $cfg "image"        (include "groundx.summary.inference.image" .) -}}
 {{- $_ := set $cfg "loadBalancer" (include "groundx.summary.inference.loadBalancer" .) -}}
 {{- $_ := set $cfg "modelParts"   ("00 01 02 03 04") -}}
 {{- $_ := set $cfg "modelVersion" ("g34b") -}}
 {{- $_ := set $cfg "port"         (include "groundx.summary.inference.containerPort" .) -}}
 {{- $_ := set $cfg "pvc"          (include "groundx.summary.inference.pvc" . | fromYaml) -}}
+{{- $_ := set $cfg "supervisord"  (printf "%s-inference-supervisord-conf-map" $svc) -}}
 {{- $_ := set $cfg "workingDir"   ("/workspace") -}}
 {{- $_ := set $cfg "pull"         (include "groundx.summary.inference.pull" .) -}}
 {{- if and (hasKey $in "replicas") (not (empty (get $in "replicas"))) -}}

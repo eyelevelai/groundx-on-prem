@@ -105,10 +105,10 @@ true
 {{- $_ := set $cfg "execOpts"     ("python /app/init-layout.py &&") -}}
 {{- $_ := set $cfg "fileSync"     ("true") -}}
 {{- $_ := set $cfg "name"         (include "groundx.layout.inference.serviceName" .) -}}
-{{- $_ := set $cfg "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc) -}}
 {{- $_ := set $cfg "image"        (include "groundx.layout.inference.image" .) -}}
 {{- $_ := set $cfg "loadBalancer" (include "groundx.layout.inference.loadBalancer" .) -}}
 {{- $_ := set $cfg "port"         (include "groundx.layout.inference.containerPort" .) -}}
+{{- $_ := set $cfg "supervisord"  (printf "%s-inference-supervisord-conf-map" $svc) -}}
 {{- $_ := set $cfg "workingDir"   ("/app") -}}
 {{- $_ := set $cfg "pull"         (include "groundx.layout.inference.pull" .) -}}
 {{- $_ := set $cfg "queue"        (include "groundx.layout.inference.queue" .) -}}

@@ -74,14 +74,14 @@ true
 {{- $in := (dig "inference" nil $b) | default dict -}}
 {{- $cfg := dict -}}
 {{- $_ := set $cfg "baseName"     ($svc) -}}
+{{- $_ := set $cfg "celery"       ("ranker.celery.appSearch") -}}
 {{- $_ := set $cfg "cfg"          (printf "%s-config-py-map" $svc) -}}
 {{- $_ := set $cfg "name"         (include "groundx.ranker.inference.serviceName" .) -}}
-{{- $_ := set $cfg "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc) -}}
 {{- $_ := set $cfg "image"        (include "groundx.ranker.inference.image" .) -}}
-{{- $_ := set $cfg "isCelery"     ("true") -}}
 {{- $_ := set $cfg "modelParts"   ("00 01 02") -}}
 {{- $_ := set $cfg "modelVersion" ("model") -}}
 {{- $_ := set $cfg "pvc"          (include "groundx.ranker.inference.pvc" . | fromYaml) -}}
+{{- $_ := set $cfg "supervisord"  (printf "%s-inference-supervisord-conf-map" $svc) -}}
 {{- $_ := set $cfg "workingDir"   ("/workspace") -}}
 {{- $_ := set $cfg "pull"         (include "groundx.ranker.inference.pull" .) -}}
 {{- if and (hasKey $in "replicas") (not (empty (get $in "replicas"))) -}}

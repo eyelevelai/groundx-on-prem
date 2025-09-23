@@ -17,7 +17,7 @@ true
 {{- $b := .Values.layout | default dict -}}
 {{- $in := (dig "save" nil $b) | default dict -}}
 {{- $img := (dig "image" nil $in) | default dict -}}
-{{- $bs := printf "%s/eyelevel/%s" (include "groundx.imageRepository" .) (include "groundx.layout.save.serviceName" .) -}}
+{{- $bs := printf "%s/eyelevel/%s" (include "groundx.imageRepository" .) (include "groundx.layout.process.serviceName" .) -}}
 {{ printf "%s:%s" (dig "repository" $bs $img) (dig "repository" "latest" $img) }}
 {{- end }}
 
