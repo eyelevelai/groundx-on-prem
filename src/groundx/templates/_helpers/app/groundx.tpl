@@ -56,7 +56,11 @@ false
 {{- $sslStr := printf "%v" $ssl -}}
 {{- $scheme := "http" -}}
 {{- if eq $sslStr "true" -}}{{- $scheme = "https" -}}{{- end -}}
+{{- if or (and (eq $sslStr "true") (eq $port "443")) (eq $port "80") -}}
+{{ printf "%s://%s.%s.svc.cluster.local" $scheme $name $ns }}
+{{- else -}}
 {{ printf "%s://%s.%s.svc.cluster.local:%v" $scheme $name $ns $port }}
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.groundx.type" -}}
@@ -74,16 +78,16 @@ false
     "ssl"        (include "groundx.groundx.ssl" .)
     "targetPort" (include "groundx.groundx.containerPort" .)
     "timeout"    (dig "timeout" "" $lb)
-    "type"       (dig "type" "ClusterIP" $lb)
+    "type"       (dig "type" "LoadBalancer" $lb)
   | toYaml -}}
 {{- else -}}
 {{- dict
-    "isInternal" "true"
+    "isInternal" "false"
     "port"       (include "groundx.groundx.port" .)
     "ssl"        "false"
     "targetPort" (include "groundx.groundx.containerPort" .)
     "timeout"    ""
-    "type"       "ClusterIP"
+    "type"       "LoadBalancer"
   | toYaml -}}
 {{- end -}}
 {{- end }}

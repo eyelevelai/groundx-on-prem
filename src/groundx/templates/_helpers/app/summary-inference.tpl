@@ -40,17 +40,6 @@ true
 {{ printf "%s:%s" (dig "repository" $bs $img) (dig "repository" "latest" $img) }}
 {{- end }}
 
-{{- define "groundx.summary.inference.port" -}}
-{{- $b := .Values.summary | default dict -}}
-{{- $in := (dig "inference" nil $b) | default dict -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := (dig "loadBalancer" nil $in) | default dict -}}
-{{ dig "port" 80 $lb }}
-{{- else -}}
-80
-{{- end -}}
-{{- end }}
-
 {{- define "groundx.summary.inference.pull" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := (dig "inference" nil $b) | default dict -}}
@@ -91,31 +80,6 @@ true
 {{ dig "workers" 1 $in }}
 {{- end }}
 
-{{- define "groundx.summary.inference.loadBalancer" -}}
-{{- $b := .Values.summary | default dict -}}
-{{- $in := (dig "inference" nil $b) | default dict -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := (dig "loadBalancer" nil $in) | default dict -}}
-{{- dict
-    "isInternal" (dig "isInternal" "false" $lb)
-    "port"       (include "groundx.summary.inference.port" .)
-    "ssl"        (dig "ssl" "false" $lb)
-    "targetPort" (include "groundx.summary.inference.containerPort" .)
-    "timeout"    (dig "timeout" "" $lb)
-    "type"       (dig "type" "ClusterIP" $lb)
-  | toYaml -}}
-{{- else -}}
-{{- dict
-    "isInternal" "true"
-    "port"       (include "groundx.summary.inference.port" .)
-    "ssl"        "false"
-    "targetPort" (include "groundx.summary.inference.containerPort" .)
-    "timeout"    ""
-    "type"       "ClusterIP"
-  | toYaml -}}
-{{- end -}}
-{{- end }}
-
 {{- define "groundx.summary.inference.settings" -}}
 {{- $svc := include "groundx.summary.serviceName" . -}}
 {{- $b := .Values.summary | default dict -}}
@@ -125,7 +89,6 @@ true
 {{- $_ := set $cfg "cfg"          (printf "%s-config-py-map" $svc) -}}
 {{- $_ := set $cfg "name"         (include "groundx.summary.inference.serviceName" .) -}}
 {{- $_ := set $cfg "image"        (include "groundx.summary.inference.image" .) -}}
-{{- $_ := set $cfg "loadBalancer" (include "groundx.summary.inference.loadBalancer" .) -}}
 {{- $_ := set $cfg "modelParts"   ("00 01 02 03 04") -}}
 {{- $_ := set $cfg "modelVersion" ("g34b") -}}
 {{- $_ := set $cfg "port"         (include "groundx.summary.inference.containerPort" .) -}}

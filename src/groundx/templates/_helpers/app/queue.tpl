@@ -38,6 +38,17 @@ true
 {{ dig "queueSize" 4 $in }}
 {{- end }}
 
+{{- define "groundx.queue.serviceUrl" -}}
+{{- $ns := include "groundx.ns" . -}}
+{{- $name := include "groundx.queue.serviceName" . -}}
+{{- $port := include "groundx.queue.containerPort" . -}}
+{{- if eq $port "80" -}}
+{{ printf "http://%s.%s.svc.cluster.local" $name $ns }}
+{{- else -}}
+{{ printf "http://%s.%s.svc.cluster.local:%v" $name $ns $port }}
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.queue.settings" -}}
 {{- $in := .Values.queue | default dict -}}
 {{- $cfg := dict

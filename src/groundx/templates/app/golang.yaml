@@ -34,7 +34,7 @@ spec:
       labels:
         app: {{ $svc }}
     spec:
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 6 "root" $ "user" 1001) }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
 {{ include "groundx.renderNodeSelector" (dict "name" $svc "indent" 6 "root" $) }}
 {{- if not (empty $dpnd) }}
       initContainers:
@@ -82,7 +82,7 @@ spec:
           ports:
             - containerPort: {{ $cport }}
               protocol: TCP
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 10 "root" $ "user" 1001) }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
           livenessProbe:
             httpGet:
               path: /health

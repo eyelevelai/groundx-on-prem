@@ -258,6 +258,7 @@
         "retention": { "type": "integer" },
         "segment": { "type": "integer" },
         "serviceName": { "type": "string" },
+        "serviceType": { "type": "string" },
         "storage": { "type": "string" },
         "port": { "type": "integer" },
         "topics": { "type": "object" },
@@ -341,18 +342,6 @@
                 "tag": { "type": "string" }
               },
               "required": ["pull", "repository", "tag"],
-              "additionalProperties": false
-            },
-            "loadBalancer": {
-              "type": "object",
-              "properties": {
-                "ipType": { "type": "string" },
-                "isInternal": { "type": "boolean" },
-                "port": { "type": "integer" },
-                "ssl": { "type": "boolean" },
-                "timeout": { "type": "integer" }
-              },
-              "required": ["port", "ssl"],
               "additionalProperties": false
             },
             "pvc": {

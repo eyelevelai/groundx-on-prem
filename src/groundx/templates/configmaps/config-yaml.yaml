@@ -29,12 +29,12 @@ data:
           password: {{ .Values.search.password }}
       eyelevelSearch:
         apiKey: {{ .Values.admin.apiKey }}
-        baseURL: http://{{ include "groundx.ranker.serviceName" . }}-api.{{ include "groundx.ns" . }}.svc.cluster.local
+        baseURL: {{ include "groundx.ranker.api.serviceUrl" . }}
       layout:
         client:
           apiKey: {{ .Values.admin.apiKey }}
-          baseURL: http://{{ include "groundx.layout.serviceName" . }}-api.{{ include "groundx.ns" . }}.svc.cluster.local
-          callbackURL: http://{{ include "groundx.layoutWebhook.serviceName" . }}.{{ include "groundx.ns" . }}.svc.cluster.local
+          baseURL: {{ include "groundx.layout.api.serviceUrl" . }}
+          callbackURL: {{ include "groundx.layoutWebhook.serviceUrl" . }}
       openai:
         apiKey: {{ include "groundx.summary.apiKey" . }}
         baseURL: {{ include "groundx.summary.baseURL" . }}
@@ -72,8 +72,8 @@ data:
     environment: {{ include "groundx.environment" . }}
 
     groundxServer:
-      baseURL: http://{{ include "groundx.groundx.serviceName" . }}.{{ include "groundx.ns" . }}.svc.cluster.local
-      port: {{ include "groundx.groundx.port" . }}
+      baseURL: {{ include "groundx.groundx.serviceUrl" . }}
+      port: {{ include "groundx.groundx.containerPort" . }}
       serviceName: {{ include "groundx.groundx.serviceName" . }}
 
     init:
@@ -93,8 +93,8 @@ data:
         modelId: {{ include "groundx.integration.search.modelId" . }}
 
     layoutWebhookServer:
-      baseURL: http://{{ include "groundx.layoutWebhook.serviceName" . }}.{{ include "groundx.ns" . }}.svc.cluster.local
-      port: {{ include "groundx.layoutWebhook.port" . }}
+      baseURL: {{ include "groundx.layoutWebhook.serviceUrl" . }}
+      port: {{ include "groundx.layoutWebhook.containerPort" . }}
       serviceName: {{ include "groundx.layoutWebhook.serviceName" . }}
 
     kafka:
@@ -189,19 +189,19 @@ data:
 {{- end }}
 
     owner:
-      baseURL: http://{{ include "groundx.groundx.serviceName" . }}.{{ include "groundx.ns" . }}.svc.cluster.local/api/v1
+      baseURL: {{ include "groundx.groundx.serviceUrl" . }}/api/v1
       name: on-prem
       type: {{ include "groundx.groundx.type" . }}
       username: {{ .Values.admin.username }}
 
     preProcessFileServer:
-      baseURL: http://{{ include "groundx.preProcess.serviceName" . }}.{{ include "groundx.ns" . }}.svc.cluster.local
+      baseURL: {{ include "groundx.preProcess.serviceUrl" . }}
       maxConcurrent: {{ include "groundx.preProcess.queueSize" . }}
       port: {{ include "groundx.preProcess.containerPort" . }}
       serviceName: {{ include "groundx.preProcess.serviceName" . }}
 
     processFileServer:
-      baseURL: http://{{ include "groundx.process.serviceName" . }}.{{ include "groundx.ns" . }}.svc.cluster.local
+      baseURL: {{ include "groundx.process.serviceUrl" . }}
       maxConcurrent: {{ include "groundx.process.queueSize" . }}
       port: {{ include "groundx.process.containerPort" . }}
       serviceName: {{ include "groundx.process.serviceName" . }}
@@ -226,7 +226,7 @@ data:
 {{- end }}
 
     queueFileServer:
-      baseURL: http://{{ include "groundx.queue.serviceName" . }}.{{ include "groundx.ns" . }}.svc.cluster.local
+      baseURL: {{ include "groundx.queue.serviceUrl" . }}
       maxConcurrent: {{ include "groundx.queue.queueSize" . }}
       pollTime: 1
       port: {{ include "groundx.queue.containerPort" . }}
@@ -245,7 +245,7 @@ data:
 {{- end }}
 
     summaryServer:
-      baseURL: http://{{ include "groundx.summary.serviceName" . }}.{{ include "groundx.ns" . }}.svc.cluster.local
+      baseURL: {{ include "groundx.summaryClient.serviceUrl" . }}
       maxConcurrent: {{ include "groundx.summaryClient.queueSize" . }}
       port: {{ include "groundx.summaryClient.containerPort" . }}
       serviceName: {{ include "groundx.summaryClient.serviceName" . }}
@@ -263,7 +263,7 @@ data:
       ssl: {{ get $fs "ssl" }}
 
     uploadFileServer:
-      baseURL: http://{{ include "groundx.upload.serviceName" . }}.{{ include "groundx.ns" . }}.svc.cluster.local
+      baseURL: {{ include "groundx.upload.serviceUrl" . }}
       maxConcurrent: {{ include "groundx.upload.queueSize" . }}
       port: {{ include "groundx.upload.containerPort" . }}
       serviceName: {{ include "groundx.upload.serviceName" . }}

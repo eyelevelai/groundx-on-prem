@@ -1,6 +1,6 @@
 {{- define "groundx.file.serviceName" -}}
 {{- $in := .Values.file | default dict -}}
-{{ dig "serviceName" "file" $in }}
+{{ dig "serviceName" "minio" $in }}
 {{- end }}
 
 {{- define "groundx.file.existing" -}}

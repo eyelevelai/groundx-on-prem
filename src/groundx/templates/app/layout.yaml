@@ -1,4 +1,5 @@
 {{- $svcs := (include "groundx.layout.process.services" . | fromYaml) -}}
+{{- $hasOCR := include "groundx.layout.hasOCRCredentials" . -}}
 
 {{- range $idx, $entry := $svcs }}
 {{- $svcKey := printf "groundx.%s.settings" $entry -}}
@@ -31,7 +32,7 @@ spec:
       labels:
         app: {{ $svc }}
     spec:
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 6 "root" $ "user" 1001) }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
 {{ include "groundx.renderNodeSelector" (dict "name" $svc "indent" 6 "root" $) }}
       initContainers:
         - name: wait-for-cache
@@ -57,7 +58,7 @@ spec:
             - -c
             - |
               export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 10 "root" $ "user" 1001) }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
           livenessProbe:
             exec:
               command:
@@ -81,9 +82,11 @@ spec:
             - name: config-volume
               mountPath: /app/config.py
               subPath: config.py
+{{- if eq $hasOCR "true" -}}
             - name: credentials-volume
               mountPath: /app/credentials.json
               subPath: credentials.json
+{{- end }}
             - name: supervisord-volume
               mountPath: /app/supervisord.conf
               subPath: supervisord.conf
@@ -91,9 +94,11 @@ spec:
         - name: config-volume
           configMap:
             name: layout-config-py-map
+{{- if eq $hasOCR "true" -}}
         - name: credentials-volume
           configMap:
             name: layout-ocr-credentials-map
+{{- end }}
         - name: supervisord-volume
           configMap:
             name: {{ $svc }}-supervisord-conf-map

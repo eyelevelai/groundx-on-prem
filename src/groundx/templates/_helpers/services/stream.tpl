@@ -26,6 +26,11 @@ true
 {{- printf "%s-cluster-kafka-bootstrap.%s.svc.cluster.local" $name $ns -}}
 {{- end }}
 
+{{- define "groundx.stream.serviceType" -}}
+{{- $in := .Values.stream | default dict -}}
+{{ dig "serviceType" "kafka" $in }}
+{{- end }}
+
 {{- define "groundx.stream.domain" -}}
 {{- $ex := .Values.stream.existing | default dict -}}
 {{- $in := .Values.stream | default dict -}}

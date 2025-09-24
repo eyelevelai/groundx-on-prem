@@ -45,6 +45,32 @@ true
 {{ (dig "pull" "Always" $img) }}
 {{- end }}
 
+{{- define "groundx.layout.api.ssl" -}}
+{{- $b := .Values.layout | default dict -}}
+{{- $in := (dig "api" nil $b) | default dict -}}
+{{- if hasKey $in "loadBalancer" -}}
+{{- $lb := .Values.layout.api.loadBalancer | default dict -}}
+{{ dig "ssl" "false" $lb  }}
+{{- else -}}
+false
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.layout.api.serviceUrl" -}}
+{{- $ns := include "groundx.ns" . -}}
+{{- $name := include "groundx.layout.serviceName" . -}}
+{{- $port := include "groundx.layout.api.port" . -}}
+{{- $ssl := include "groundx.layout.api.ssl" . -}}
+{{- $sslStr := printf "%v" $ssl -}}
+{{- $scheme := "http" -}}
+{{- if eq $sslStr "true" -}}{{- $scheme = "https" -}}{{- end -}}
+{{- if or (and (eq $sslStr "true") (eq $port "443")) (eq $port "80") -}}
+{{ printf "%s://%s-api.%s.svc.cluster.local" $scheme $name $ns }}
+{{- else -}}
+{{ printf "%s://%s-api.%s.svc.cluster.local:%v" $scheme $name $ns $port }}
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.layout.api.threads" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := (dig "api" nil $b) | default dict -}}

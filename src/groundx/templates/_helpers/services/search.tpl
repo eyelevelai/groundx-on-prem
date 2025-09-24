@@ -1,6 +1,6 @@
 {{- define "groundx.search.serviceName" -}}
 {{- $in := .Values.search | default dict -}}
-{{ dig "serviceName" "search" $in }}
+{{ dig "serviceName" "opensearch" $in }}
 {{- end }}
 
 {{- define "groundx.search.existing" -}}

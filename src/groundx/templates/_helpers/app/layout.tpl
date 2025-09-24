@@ -9,6 +9,15 @@
 {{- $svcs | toYaml -}}
 {{- end }}
 
+{{- define "groundx.layout.hasOCRCredentials" -}}
+{{- $path := include "groundx.layout.ocr.credentials" . -}}
+{{- if and (kindIs "string" $path) (ne $path "") -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.layout.supervisor" -}}
 {{- $svcs := dict
   "correct"   "layout.correct"

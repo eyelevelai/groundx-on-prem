@@ -30,19 +30,15 @@ true
 {{ dig "maxOpen" 10 $in }}
 {{- end }}
 
-{{- define "groundx.db.serviceHost" -}}
-{{- $ns := include "groundx.ns" . -}}
-{{- $name := include "groundx.db.serviceName" . -}}
-{{- printf "%s-cluster-pxc-db-haproxy.%s.svc.cluster.local" $name $ns -}}
-{{- end }}
-
 {{- define "groundx.db.ro" -}}
 {{- $ex := .Values.db.existing | default dict -}}
 {{- $ic := include "groundx.db.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
 {{ coalesce (dig "ro" "" $ex) (dig "rw" "" $ex) }}
 {{- else -}}
-{{ include "groundx.db.serviceHost" . }}
+{{- $name := include "groundx.db.serviceName" . -}}
+{{- $ns := include "groundx.ns" . -}}
+{{- printf "%s-cluster-haproxy-replicas.%s.svc.cluster.local" $name $ns -}}
 {{- end -}}
 {{- end }}
 
@@ -52,7 +48,9 @@ true
 {{- if eq $ic "true" -}}
 {{ coalesce (dig "rw" "" $ex) (dig "ro" "" $ex) }}
 {{- else -}}
-{{ include "groundx.db.serviceHost" . }}
+{{- $name := include "groundx.db.serviceName" . -}}
+{{- $ns := include "groundx.ns" . -}}
+{{- printf "%s-cluster-haproxy.%s.svc.cluster.local" $name $ns -}}
 {{- end -}}
 {{- end }}
 

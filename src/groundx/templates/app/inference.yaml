@@ -44,7 +44,7 @@ spec:
       labels:
         app: {{ $svc }}
     spec:
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 6 "root" $ "user" 1001) }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
 {{ include "groundx.renderNodeSelector" (dict "name" $svc "indent" 6 "root" $) }}
       initContainers:
         - name: wait-for-cache
@@ -129,7 +129,7 @@ spec:
               fi
 
               echo "Model load done."
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 10 "root" $ "user" 1001) }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
           volumeMounts:
             - name: model-volume
               mountPath: {{ $wd }}/hf_models_cache
@@ -149,7 +149,7 @@ spec:
             - -c
             - |
               export PYTHONPATH={{ $wd }}:$PYTHONPATH && {{ $eopts }} supervisord -c {{ $wd }}/supervisord.conf
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 10 "root" $ "user" 1001) }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
 {{- if ne $ic "false" }}
           livenessProbe:
             exec:

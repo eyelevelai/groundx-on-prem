@@ -33,6 +33,31 @@ true
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.layoutWebhook.ssl" -}}
+{{- $in := .Values.layoutWebhook | default dict -}}
+{{- if hasKey $in "loadBalancer" -}}
+{{- $lb := .Values.layoutWebhook.loadBalancer | default dict -}}
+{{ dig "ssl" "false" $lb  }}
+{{- else -}}
+false
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.layoutWebhook.serviceUrl" -}}
+{{- $ns := include "groundx.ns" . -}}
+{{- $name := include "groundx.layoutWebhook.serviceName" . -}}
+{{- $port := include "groundx.layoutWebhook.port" . -}}
+{{- $ssl := include "groundx.layoutWebhook.ssl" . -}}
+{{- $sslStr := printf "%v" $ssl -}}
+{{- $scheme := "http" -}}
+{{- if eq $sslStr "true" -}}{{- $scheme = "https" -}}{{- end -}}
+{{- if or (and (eq $sslStr "true") (eq $port "443")) (eq $port "80") -}}
+{{ printf "%s://%s.%s.svc.cluster.local" $scheme $name $ns }}
+{{- else -}}
+{{ printf "%s://%s.%s.svc.cluster.local:%v" $scheme $name $ns $port }}
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.layoutWebhook.pull" -}}
 {{- $in := .Values.layoutWebhook.image | default dict -}}
 {{ (dig "pull" "Always" $in) }}

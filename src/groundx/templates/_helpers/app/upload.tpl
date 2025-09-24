@@ -38,6 +38,17 @@ true
 {{ dig "queueSize" 4 $in }}
 {{- end }}
 
+{{- define "groundx.upload.serviceUrl" -}}
+{{- $ns := include "groundx.ns" . -}}
+{{- $name := include "groundx.upload.serviceName" . -}}
+{{- $port := include "groundx.upload.containerPort" . -}}
+{{- if eq $port "80" -}}
+{{ printf "http://%s.%s.svc.cluster.local" $name $ns }}
+{{- else -}}
+{{ printf "http://%s.%s.svc.cluster.local:%v" $name $ns $port }}
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.upload.settings" -}}
 {{- $in := .Values.upload | default dict -}}
 {{- $cfg := dict

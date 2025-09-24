@@ -4,10 +4,26 @@
 {{- $root := .root -}}
 {{- $user := .user -}}
 {{- $prefix := .prefix | default "securityContext" -}}
-{{- $simple := .simple | default "false" -}}
+{{- $cfg := .cfg | default "full" -}}
 {{- if not $ctx }}
   {{- $isOS := eq (dig "type" "" $root.Values.cluster) "openshift" -}}
-  {{- if eq $simple "false" -}}
+  {{- if eq $cfg "spec" -}}
+    {{- if $isOS -}}
+      {{- $ctx = dict
+          "runAsNonRoot" true
+          "seccompProfile" (dict "type" "RuntimeDefault")
+        -}}
+    {{- else -}}
+      {{- $ctx = dict
+          "runAsNonRoot" true
+          "seccompProfile" (dict "type" "RuntimeDefault")
+          "runAsUser" $user
+          "runAsGroup" $user
+          "fsGroup" $user
+          "fsGroupChangePolicy" "OnRootMismatch"
+        -}}
+    {{- end }}
+  {{- else if eq $cfg "container" -}}
     {{- if $isOS -}}
       {{- $ctx = dict
           "runAsNonRoot" true
@@ -23,8 +39,6 @@
           "capabilities" (dict "drop" (list "ALL"))
           "runAsUser" $user
           "runAsGroup" $user
-          "fsGroup" $user
-          "fsGroupChangePolicy" "OnRootMismatch"
         -}}
     {{- end }}
   {{- else -}}
