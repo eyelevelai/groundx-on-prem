@@ -56,8 +56,6 @@ layout.yaml:
                 capabilities:
                   drop:
                     - ALL
-                fsGroup: 1001
-                fsGroupChangePolicy: OnRootMismatch
                 runAsGroup: 1001
                 runAsNonRoot: true
                 runAsUser: 1001
@@ -67,9 +65,6 @@ layout.yaml:
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
-                - mountPath: /app/credentials.json
-                  name: credentials-volume
-                  subPath: credentials.json
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
@@ -85,17 +80,13 @@ layout.yaml:
             - command:
                 - sh
                 - -c
-                - until nc -z file-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
             runAsGroup: 1001
@@ -111,9 +102,6 @@ layout.yaml:
             - configMap:
                 name: layout-config-py-map
               name: config-volume
-            - configMap:
-                name: layout-ocr-credentials-map
-              name: credentials-volume
             - configMap:
                 name: layout-correct-supervisord-conf-map
               name: supervisord-volume
@@ -174,8 +162,6 @@ layout.yaml:
                 capabilities:
                   drop:
                     - ALL
-                fsGroup: 1001
-                fsGroupChangePolicy: OnRootMismatch
                 runAsGroup: 1001
                 runAsNonRoot: true
                 runAsUser: 1001
@@ -185,9 +171,6 @@ layout.yaml:
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
-                - mountPath: /app/credentials.json
-                  name: credentials-volume
-                  subPath: credentials.json
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
@@ -203,17 +186,13 @@ layout.yaml:
             - command:
                 - sh
                 - -c
-                - until nc -z file-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-only
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
             runAsGroup: 1001
@@ -229,9 +208,6 @@ layout.yaml:
             - configMap:
                 name: layout-config-py-map
               name: config-volume
-            - configMap:
-                name: layout-ocr-credentials-map
-              name: credentials-volume
             - configMap:
                 name: layout-map-supervisord-conf-map
               name: supervisord-volume
@@ -292,8 +268,6 @@ layout.yaml:
                 capabilities:
                   drop:
                     - ALL
-                fsGroup: 1001
-                fsGroupChangePolicy: OnRootMismatch
                 runAsGroup: 1001
                 runAsNonRoot: true
                 runAsUser: 1001
@@ -303,9 +277,6 @@ layout.yaml:
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
-                - mountPath: /app/credentials.json
-                  name: credentials-volume
-                  subPath: credentials.json
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
@@ -321,17 +292,13 @@ layout.yaml:
             - command:
                 - sh
                 - -c
-                - until nc -z file-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
             runAsGroup: 1001
@@ -347,9 +314,6 @@ layout.yaml:
             - configMap:
                 name: layout-config-py-map
               name: config-volume
-            - configMap:
-                name: layout-ocr-credentials-map
-              name: credentials-volume
             - configMap:
                 name: layout-ocr-supervisord-conf-map
               name: supervisord-volume
@@ -410,8 +374,6 @@ layout.yaml:
                 capabilities:
                   drop:
                     - ALL
-                fsGroup: 1001
-                fsGroupChangePolicy: OnRootMismatch
                 runAsGroup: 1001
                 runAsNonRoot: true
                 runAsUser: 1001
@@ -421,9 +383,6 @@ layout.yaml:
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
-                - mountPath: /app/credentials.json
-                  name: credentials-volume
-                  subPath: credentials.json
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
@@ -439,17 +398,13 @@ layout.yaml:
             - command:
                 - sh
                 - -c
-                - until nc -z file-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
             runAsGroup: 1001
@@ -465,9 +420,6 @@ layout.yaml:
             - configMap:
                 name: layout-config-py-map
               name: config-volume
-            - configMap:
-                name: layout-ocr-credentials-map
-              name: credentials-volume
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
@@ -528,8 +480,6 @@ layout.yaml:
                 capabilities:
                   drop:
                     - ALL
-                fsGroup: 1001
-                fsGroupChangePolicy: OnRootMismatch
                 runAsGroup: 1001
                 runAsNonRoot: true
                 runAsUser: 1001
@@ -539,9 +489,6 @@ layout.yaml:
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
-                - mountPath: /app/credentials.json
-                  name: credentials-volume
-                  subPath: credentials.json
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
@@ -557,17 +504,13 @@ layout.yaml:
             - command:
                 - sh
                 - -c
-                - until nc -z file-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
             runAsGroup: 1001
@@ -583,9 +526,6 @@ layout.yaml:
             - configMap:
                 name: layout-config-py-map
               name: config-volume
-            - configMap:
-                name: layout-ocr-credentials-map
-              name: credentials-volume
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume

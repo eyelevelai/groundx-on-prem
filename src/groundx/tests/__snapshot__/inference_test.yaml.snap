@@ -57,8 +57,6 @@ inference.yaml:
                 capabilities:
                   drop:
                     - ALL
-                fsGroup: 1001
-                fsGroupChangePolicy: OnRootMismatch
                 runAsGroup: 1001
                 runAsNonRoot: true
                 runAsUser: 1001
@@ -86,7 +84,7 @@ inference.yaml:
             - command:
                 - sh
                 - -c
-                - until nc -z file-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-file-storage
@@ -120,10 +118,6 @@ inference.yaml:
           nodeSelector:
             node: eyelevel-gpu-layout
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
             runAsGroup: 1001
@@ -223,8 +217,6 @@ inference.yaml:
                 capabilities:
                   drop:
                     - ALL
-                fsGroup: 1001
-                fsGroupChangePolicy: OnRootMismatch
                 runAsGroup: 1001
                 runAsNonRoot: true
                 runAsUser: 1001
@@ -329,8 +321,6 @@ inference.yaml:
                 capabilities:
                   drop:
                     - ALL
-                fsGroup: 1001
-                fsGroupChangePolicy: OnRootMismatch
                 runAsGroup: 1001
                 runAsNonRoot: true
                 runAsUser: 1001
@@ -342,10 +332,6 @@ inference.yaml:
           nodeSelector:
             node: eyelevel-gpu-ranker
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
             runAsGroup: 1001
@@ -463,8 +449,6 @@ inference.yaml:
                 capabilities:
                   drop:
                     - ALL
-                fsGroup: 1001
-                fsGroupChangePolicy: OnRootMismatch
                 runAsGroup: 1001
                 runAsNonRoot: true
                 runAsUser: 1001
@@ -569,8 +553,6 @@ inference.yaml:
                 capabilities:
                   drop:
                     - ALL
-                fsGroup: 1001
-                fsGroupChangePolicy: OnRootMismatch
                 runAsGroup: 1001
                 runAsNonRoot: true
                 runAsUser: 1001
@@ -582,10 +564,6 @@ inference.yaml:
           nodeSelector:
             node: eyelevel-gpu-summary
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
             runAsGroup: 1001

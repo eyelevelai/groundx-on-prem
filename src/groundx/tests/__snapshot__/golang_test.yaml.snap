@@ -49,8 +49,6 @@ golang.yaml:
                 capabilities:
                   drop:
                     - ALL
-                fsGroup: 1001
-                fsGroupChangePolicy: OnRootMismatch
                 runAsGroup: 1001
                 runAsNonRoot: true
                 runAsUser: 1001
@@ -74,21 +72,21 @@ golang.yaml:
             - command:
                 - sh
                 - -c
-                - until nc -z file-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-file-storage
             - command:
                 - sh
                 - -c
-                - until nc -z search-cluster-master.eyelevel.svc.cluster.local 9200; do echo waiting for search; sleep 2; done
+                - until nc -z opensearch-cluster-master.eyelevel.svc.cluster.local 9200; do echo waiting for search; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-search
             - command:
                 - sh
                 - -c
-                - until nc -z db-cluster-pxc-db-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+                - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-database
@@ -102,10 +100,6 @@ golang.yaml:
           nodeSelector:
             node: eyelevel-cpu-only
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
             runAsGroup: 1001
@@ -139,7 +133,7 @@ golang.yaml:
           targetPort: 8080
       selector:
         app: groundx
-      type: ClusterIP
+      type: LoadBalancer
   3: |
     apiVersion: apps/v1
     kind: Deployment
@@ -190,8 +184,6 @@ golang.yaml:
                 capabilities:
                   drop:
                     - ALL
-                fsGroup: 1001
-                fsGroupChangePolicy: OnRootMismatch
                 runAsGroup: 1001
                 runAsNonRoot: true
                 runAsUser: 1001
@@ -208,17 +200,13 @@ golang.yaml:
             - command:
                 - sh
                 - -c
-                - until wget --spider -q http://groundx.eyelevel.svc.cluster.local:80/health; do echo waiting for groundx; sleep 2; done
+                - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
             runAsGroup: 1001
@@ -303,8 +291,6 @@ golang.yaml:
                 capabilities:
                   drop:
                     - ALL
-                fsGroup: 1001
-                fsGroupChangePolicy: OnRootMismatch
                 runAsGroup: 1001
                 runAsNonRoot: true
                 runAsUser: 1001
@@ -321,17 +307,13 @@ golang.yaml:
             - command:
                 - sh
                 - -c
-                - until wget --spider -q http://groundx.eyelevel.svc.cluster.local:80/health; do echo waiting for groundx; sleep 2; done
+                - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-memory
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
             runAsGroup: 1001
@@ -400,8 +382,6 @@ golang.yaml:
                 capabilities:
                   drop:
                     - ALL
-                fsGroup: 1001
-                fsGroupChangePolicy: OnRootMismatch
                 runAsGroup: 1001
                 runAsNonRoot: true
                 runAsUser: 1001
@@ -418,17 +398,13 @@ golang.yaml:
             - command:
                 - sh
                 - -c
-                - until wget --spider -q http://groundx.eyelevel.svc.cluster.local:80/health; do echo waiting for groundx; sleep 2; done
+                - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
             runAsGroup: 1001
@@ -497,8 +473,6 @@ golang.yaml:
                 capabilities:
                   drop:
                     - ALL
-                fsGroup: 1001
-                fsGroupChangePolicy: OnRootMismatch
                 runAsGroup: 1001
                 runAsNonRoot: true
                 runAsUser: 1001
@@ -515,17 +489,13 @@ golang.yaml:
             - command:
                 - sh
                 - -c
-                - until wget --spider -q http://groundx.eyelevel.svc.cluster.local:80/health; do echo waiting for groundx; sleep 2; done
+                - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
             runAsGroup: 1001
@@ -594,8 +564,6 @@ golang.yaml:
                 capabilities:
                   drop:
                     - ALL
-                fsGroup: 1001
-                fsGroupChangePolicy: OnRootMismatch
                 runAsGroup: 1001
                 runAsNonRoot: true
                 runAsUser: 1001
@@ -612,17 +580,13 @@ golang.yaml:
             - command:
                 - sh
                 - -c
-                - until wget --spider -q http://groundx.eyelevel.svc.cluster.local:80/health; do echo waiting for groundx; sleep 2; done
+                - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
             runAsGroup: 1001
@@ -691,8 +655,6 @@ golang.yaml:
                 capabilities:
                   drop:
                     - ALL
-                fsGroup: 1001
-                fsGroupChangePolicy: OnRootMismatch
                 runAsGroup: 1001
                 runAsNonRoot: true
                 runAsUser: 1001
@@ -709,17 +671,13 @@ golang.yaml:
             - command:
                 - sh
                 - -c
-                - until wget --spider -q http://groundx.eyelevel.svc.cluster.local:80/health; do echo waiting for groundx; sleep 2; done
+                - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
             runAsGroup: 1001

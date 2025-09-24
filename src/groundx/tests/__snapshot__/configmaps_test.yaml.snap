@@ -4,8 +4,8 @@ config-yaml.yaml:
     data:
       config.yaml: |
         _mysql: &mysql
-          ro_addr: db-cluster-pxc-db-haproxy.eyelevel.svc.cluster.local
-          rw_addr: db-cluster-pxc-db-haproxy.eyelevel.svc.cluster.local
+          ro_addr: db-cluster-haproxy-replicas.eyelevel.svc.cluster.local
+          rw_addr: db-cluster-haproxy.eyelevel.svc.cluster.local
           user: eyelevel
           password: password
           database: eyelevel
@@ -15,7 +15,7 @@ config-yaml.yaml:
         ai:
           aws:
             search:
-              baseURL: https://search-cluster-master.eyelevel.svc.cluster.local:9200
+              baseURL: https://opensearch-cluster-master.eyelevel.svc.cluster.local:9200
               index: prod-1
               languages:
                 - en
@@ -51,7 +51,7 @@ config-yaml.yaml:
 
         groundxServer:
           baseURL: http://groundx.eyelevel.svc.cluster.local
-          port: 80
+          port: 8080
           serviceName: groundx
 
         init:
@@ -72,7 +72,7 @@ config-yaml.yaml:
 
         layoutWebhookServer:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
-          port: 80
+          port: 8080
           serviceName: layout-webhook
 
         kafka:
@@ -162,13 +162,13 @@ config-yaml.yaml:
           username: 00000000-0000-0000-0000-000000000000
 
         preProcessFileServer:
-          baseURL: http://pre-process.eyelevel.svc.cluster.local
+          baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
           maxConcurrent: 4
           port: 8080
           serviceName: pre-process
 
         processFileServer:
-          baseURL: http://process.eyelevel.svc.cluster.local
+          baseURL: http://process.eyelevel.svc.cluster.local:8080
           maxConcurrent: 4
           port: 8080
           serviceName: process
@@ -188,7 +188,7 @@ config-yaml.yaml:
           summarizeSections: [9]
 
         queueFileServer:
-          baseURL: http://queue.eyelevel.svc.cluster.local
+          baseURL: http://queue.eyelevel.svc.cluster.local:8080
           maxConcurrent: 4
           pollTime: 1
           port: 8080
@@ -201,23 +201,23 @@ config-yaml.yaml:
             notCluster: true
 
         summaryServer:
-          baseURL: http://summary.eyelevel.svc.cluster.local
+          baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
           maxConcurrent: 3
           port: 8080
           serviceName: summary-client
 
         upload:
-          baseDomain: file.eyelevel.svc.cluster.local
-          baseUrl: http://file.eyelevel.svc.cluster.local
+          baseDomain: minio.eyelevel.svc.cluster.local
+          baseUrl: http://minio.eyelevel.svc.cluster.local
           bucket: eyelevel
-          bucketUrl: http://file.eyelevel.svc.cluster.local
+          bucketUrl: http://minio.eyelevel.svc.cluster.local
           id: minio
           secret: minio123
           service: minio
           ssl: false
 
         uploadFileServer:
-          baseURL: http://upload.eyelevel.svc.cluster.local
+          baseURL: http://upload.eyelevel.svc.cluster.local:8080
           maxConcurrent: 4
           port: 8080
           serviceName: upload
@@ -255,14 +255,15 @@ layout-config-py.yaml:
             ocrProject="",
             ocrType="tesseract",
             podMemory="2Gi",
+            queueType="kafka",
             service="layout",
             uploadBase="layout/processed/",
-            uploadBaseURL="file.eyelevel.svc.cluster.local",
+            uploadBaseURL="minio.eyelevel.svc.cluster.local",
             uploadBucket="eyelevel",
-            uploadReplaceURL="http://file.eyelevel.svc.cluster.local/eyelevel/",
+            uploadReplaceURL="http://minio.eyelevel.svc.cluster.local/eyelevel/",
             uploadSSL=False,
             uploadType="minio",
-            uploadURL="http://file.eyelevel.svc.cluster.local/eyelevel/",
+            uploadURL="http://minio.eyelevel.svc.cluster.local/eyelevel/",
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=1,
         )

@@ -34,6 +34,10 @@ cache-metrics.yaml:
                   cpu: 0.2
                   memory: 512Mi
               securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
                 runAsGroup: 1001
                 runAsNonRoot: true
                 runAsUser: 1001
@@ -45,6 +49,8 @@ cache-metrics.yaml:
           nodeSelector:
             node: eyelevel-cpu-only
           securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
             runAsGroup: 1001
             runAsNonRoot: true
             runAsUser: 1001
@@ -109,6 +115,10 @@ cache.yaml:
                   cpu: 0.2
                   memory: 512Mi
               securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
                 runAsGroup: 1001
                 runAsNonRoot: true
                 runAsUser: 1001
@@ -120,6 +130,8 @@ cache.yaml:
           nodeSelector:
             node: eyelevel-cpu-only
           securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
             runAsGroup: 1001
             runAsNonRoot: true
             runAsUser: 1001
