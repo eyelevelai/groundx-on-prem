@@ -4,6 +4,9 @@
 {{- $name := include "groundx.stream.serviceName" . -}}
 {{- $svc := printf "%s-cluster" $name -}}
 {{- $np := printf "%s-dual-role" $name -}}
+
+{{- $in := .Values.stream | default dict -}}
+{{- $rs := dig "resources" dict $in -}}
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaNodePool
 metadata:
@@ -13,7 +16,7 @@ metadata:
     strimzi.io/cluster: {{ $svc }}
 {{ include "groundx.renderDefaultLabels" (dict "name" $np "indent" 4 "root" $) }}
 spec:
-  replicas: {{ .Values.stream.nodepool.replicas }}
+  replicas: {{ include "groundx.stream.nodepool.replicas" . }}
   roles:
     - controller
     - broker
@@ -22,7 +25,7 @@ spec:
     volumes:
       - id: 0
         type: persistent-claim
-        size: {{ .Values.stream.nodepool.storage }}
+        size: {{ include "groundx.stream.nodepool.storage" . }}
         deleteClaim: true
         kraftMetadata: shared
 ---
@@ -40,25 +43,23 @@ spec:
   kafka:
     version: {{ include "groundx.stream.version" . }}
     metadataVersion: {{ include "groundx.stream.metaVersion" . }}
-    replicas: {{ .Values.stream.replicas }}
+    replicas: {{ include "groundx.stream.replicas" . }}
     listeners:
       - name: kafka
         port: {{ include "groundx.stream.port" . }}
         type: internal
         tls: false
     config:
-      default.replication.factor: {{ .Values.stream.replicas }}
-      offsets.topic.replication.factor: {{ .Values.stream.replicas }}
-      transaction.state.log.replication.factor: {{ .Values.stream.replicas }}
-      transaction.state.log.min.isr: {{ .Values.stream.replicas }}
-      min.insync.replicas: {{ .Values.stream.replicas }}
+      default.replication.factor: {{ include "groundx.stream.replicas" . }}
+      offsets.topic.replication.factor: {{ include "groundx.stream.replicas" . }}
+      transaction.state.log.replication.factor: {{ include "groundx.stream.replicas" . }}
+      transaction.state.log.min.isr: {{ include "groundx.stream.replicas" . }}
+      min.insync.replicas: {{ include "groundx.stream.replicas" . }}
       log.message.format.version: {{ include "groundx.stream.metaVersion" . }}
       inter.broker.protocol.version: {{ include "groundx.stream.metaVersion" . }}
       unstable.api.versions.enable: "true"
       unstable.feature.versions.enable: "true"
-{{- with .Values.stream.resources }}
-{{ include "groundx.renderContainerResources" (dict "ctx" . "indent" 4) }}
-{{- end }}
+{{ include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 4) }}
     template:
       pod:
         affinity:
@@ -69,14 +70,14 @@ spec:
                   - key: node
                     operator: In
                     values:
-                    - {{ include "groundx.node.value" (dict "name" $svc "root" $) | quote }}
+                    - {{ include "groundx.stream.node" . | quote }}
         tolerations:
           - key: "node"
-            value: {{ include "groundx.node.value" (dict "name" $svc "root" $) | quote }}
+            value: {{ include "groundx.stream.node" . | quote }}
             effect: "NoSchedule"
     storage:
       type: persistent-claim
-      size: {{ .Values.stream.storage }}
+      size: {{ include "groundx.stream.storage" . }}
       deleteClaim: true
   entityOperator:
     topicOperator: {}

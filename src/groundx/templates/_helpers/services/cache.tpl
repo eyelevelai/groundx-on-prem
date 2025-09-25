@@ -1,10 +1,24 @@
+{{- define "groundx.cache.node" -}}
+{{- $in := .Values.cache | default dict -}}
+{{- $df := include "groundx.node.cpuOnly" . -}}
+{{ dig "node" $df $in }}
+{{- end }}
+
 {{- define "groundx.cache.serviceName" -}}
 {{- $in := .Values.cache | default dict -}}
 {{ dig "serviceName" "cache" $in }}
 {{- end }}
 
+{{- define "groundx.metrics.cache.node" -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $in := (dig "metrics" nil $b) | default dict -}}
+{{- $df := include "groundx.node.cpuOnly" . -}}
+{{ dig "node" $df $in }}
+{{- end }}
+
 {{- define "groundx.metrics.cache.serviceName" -}}
-{{- $in := .Values.cache.metrics | default dict -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $in := (dig "metrics" nil $b) | default dict -}}
 {{ dig "serviceName" "metrics" $in }}
 {{- end }}
 
@@ -14,7 +28,8 @@
 {{- end }}
 
 {{- define "groundx.metrics.cache.containerPort" -}}
-{{- $in := .Values.cache.metrics | default dict -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $in := (dig "metrics" nil $b) | default dict -}}
 {{ dig "containerPort" 6379 $in }}
 {{- end }}
 
@@ -26,7 +41,8 @@
 {{- end }}
 
 {{- define "groundx.metrics.cache.image" -}}
-{{- $in := .Values.cache.metrics | default dict -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $in := (dig "metrics" nil $b) | default dict -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
 {{- $fallback := printf "%s/%s:%s" $repoPrefix "eyelevel/redis" "latest" -}}
 {{- coalesce (dig "image" "" $in) $fallback -}}
@@ -38,7 +54,8 @@
 {{- end }}
 
 {{- define "groundx.metrics.cache.imagePullPolicy" -}}
-{{- $in := .Values.cache.metrics | default dict -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $in := (dig "metrics" nil $b) | default dict -}}
 {{ dig "imagePullPolicy" "Always" $in }}
 {{- end }}
 
@@ -48,13 +65,23 @@
 {{- end }}
 
 {{- define "groundx.metrics.cache.mountPath" -}}
-{{- $in := .Values.cache.metrics | default dict -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $in := (dig "metrics" nil $b) | default dict -}}
 {{ dig "mountPath" "/mnt/redis" $in }}
+{{- end }}
+
+{{- define "groundx.cache.replicas" -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $in := dig "replicas" dict $b -}}
+{{- if not $in }}
+  {{- $in = dict "desired" 1 "max" 1 "min" 1 -}}
+{{- end }}
+{{- toYaml $in | nindent 0 }}
 {{- end }}
 
 {{- define "groundx.cache.create" -}}
 {{- $in := .Values.cache | default dict -}}
-{{- $ex := .Values.cache.existing | default dict -}}
+{{- $ex := (dig "existing" nil $in) | default dict -}}
 {{- if not (empty (dig "addr" "" $ex)) -}}
 false
 {{- else if hasKey $in "enabled" -}}
@@ -65,19 +92,22 @@ true
 {{- end }}
 
 {{- define "groundx.cache.addr" -}}
-{{- $ex := .Values.cache.existing | default dict -}}
+{{- $in := .Values.cache | default dict -}}
+{{- $ex := (dig "existing" nil $in) | default dict -}}
 {{- $svc := include "groundx.cache.serviceName" . -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- coalesce (dig "addr" "" $ex) (printf "%s.%s.svc.cluster.local" $svc $ns) -}}
 {{- end }}
 
 {{- define "groundx.cache.isCluster" -}}
-{{- $ex := .Values.cache.existing | default dict -}}
 {{- $in := .Values.cache | default dict -}}
+{{- $ex := (dig "existing" nil $in) | default dict -}}
 {{- if not (empty (dig "addr" "" $ex)) -}}
 {{ dig "isCluster" "true" $ex }}
 {{- else -}}
-{{ dig "isCluster" "false" $in }}
+{{- $rep := (include "groundx.cache.replicas" . | fromYaml) -}}
+{{- $desired := int (dig "desired" 1 $rep) -}}
+{{- if gt $desired 1 -}}true{{- else -}}false{{- end -}}
 {{- end -}}
 {{- end }}
 
@@ -87,8 +117,8 @@ true
 {{- end }}
 
 {{- define "groundx.cache.port" -}}
-{{- $ex := .Values.cache.existing | default dict -}}
 {{- $in := .Values.cache | default dict -}}
+{{- $ex := (dig "existing" nil $in) | default dict -}}
 {{- if not (empty (dig "addr" "" $ex)) -}}
 {{ dig "port" "" $ex }}
 {{- else -}}
@@ -97,8 +127,10 @@ true
 {{- end }}
 
 {{- define "groundx.metrics.cache.create" -}}
-{{- if (dig "enabled" false .Values.cache.metrics) -}}
-{{- $ex := .Values.cache.metrics.existing | default dict -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $in := (dig "metrics" nil $b) | default dict -}}
+{{- if (dig "enabled" false $in) -}}
+{{- $ex := (dig "existing" nil $in) | default dict -}}
 {{- if not (empty (dig "addr" "" $ex)) -}}
 false
 {{- else -}}
@@ -110,7 +142,8 @@ false
 {{- end }}
 
 {{- define "groundx.metrics.cache.addr" -}}
-{{- $m  := .Values.cache.metrics | default dict -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $m := (dig "metrics" nil $b) | default dict -}}
 {{- $ex := dig "existing" dict $m -}}
 {{- $svc := include "groundx.cache.serviceName" . -}}
 {{- $msvc := include "groundx.metrics.cache.serviceName" . -}}
@@ -123,13 +156,16 @@ false
 {{- end }}
 
 {{- define "groundx.metrics.cache.isCluster" -}}
-{{- $m  := .Values.cache.metrics | default dict -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $m := (dig "metrics" nil $b) | default dict -}}
 {{- $ex := dig "existing" dict $m -}}
 {{- if (dig "enabled" false $m) -}}
 {{- if not (empty (dig "addr" "" $ex)) -}}
 {{ dig "isCluster" "true" $ex }}
 {{- else -}}
-{{ dig "isCluster" "false" $m }}
+{{- $rep := (include "groundx.metrics.cache.replicas" . | fromYaml) -}}
+{{- $desired := int (dig "desired" 1 $rep) -}}
+{{- if gt $desired 1 -}}true{{- else -}}false{{- end -}}
 {{- end -}}
 {{- else -}}
 {{ include "groundx.cache.isCluster" . }}
@@ -142,7 +178,8 @@ false
 {{- end }}
 
 {{- define "groundx.metrics.cache.port" -}}
-{{- $m  := .Values.cache.metrics | default dict -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $m := (dig "metrics" nil $b) | default dict -}}
 {{- $ex := dig "existing" dict $m -}}
 {{- if (dig "enabled" false $m) -}}
 {{- if not (empty (dig "addr" "" $ex)) -}}
@@ -155,10 +192,20 @@ false
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.metrics.cache.replicas" -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $m := dig "metrics" dict $b  -}}
+{{- $in := dig "replicas" dict $m -}}
+{{- if not $in }}
+  {{- $in = dict "desired" 1 "max" 1 "min" 1 -}}
+{{- end }}
+{{- toYaml $in | nindent 0 }}
+{{- end }}
+
 {{- define "groundx.cache.loadBalancer" -}}
 {{- $in := .Values.cache | default dict -}}
 {{- if hasKey $in "loadBalancer" -}}
-{{- $lb := .Values.cache.loadBalancer | default dict -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
 {{- dict
     "isInternal" (dig "isInternal" "false" $lb)
     "port"       (include "groundx.cache.port" .)
@@ -180,9 +227,10 @@ false
 {{- end }}
 
 {{- define "groundx.metrics.cache.loadBalancer" -}}
-{{- $in := .Values.cache.metrics | default dict -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $in := (dig "metrics" nil $b) | default dict -}}
 {{- if hasKey $in "loadBalancer" -}}
-{{- $lb := .Values.cache.metrics.loadBalancer | default dict -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
 {{- dict
     "isInternal" (dig "isInternal" "false" $lb)
     "port"       (include "groundx.metrics.cache.port" .)

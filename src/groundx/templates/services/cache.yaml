@@ -1,9 +1,23 @@
 {{- $cc := include "groundx.cache.create" . -}}
 {{- if ne $cc "false" -}}
+{{- $in := .Values.cache | default dict -}}
 {{- $svc := include "groundx.cache.serviceName" . -}}
+
+{{- $cport := include "groundx.cache.containerPort" . -}}
+{{- $ct := include "groundx.clusterType" . -}}
 {{- $lb := include "groundx.cache.loadBalancer" . -}}
 {{- $mountName := printf "%s-persistent-storage" $svc -}}
-{{- $cport := include "groundx.cache.containerPort" . -}}
+{{- $node := include "groundx.cache.node" . -}}
+{{- $rp := include "groundx.cache.replicas" . | fromYaml -}}
+
+{{- $aff := dig "affinity" dict $in -}}
+{{- $anns := dig "annotations" dict $in -}}
+{{- $csct := dig "containerSecurityContext" dict $in -}}
+{{- $lbls := dig "labels" dict $in -}}
+{{- $nsl := dig "nodeSelector" dict $in -}}
+{{- $rs := dig "resources" dict $in -}}
+{{- $sct := dig "securityContext" dict $in -}}
+{{- $tl := dig "tolerations" list $in -}}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -13,7 +27,7 @@ metadata:
 {{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
 spec:
   serviceName: {{ $svc | quote }}
-  replicas: {{ .Values.cache.replicas.desired }}
+  replicas: {{ dig "desired" 1 $rp }}
   selector:
     matchLabels:
       app: {{ $svc | quote }}
@@ -21,9 +35,21 @@ spec:
     metadata:
       labels:
         app: {{ $svc | quote }}
+{{- if gt (len $lbls) 0 }}
+{{ toYaml $lbls | nindent 8 }}
+{{- end }}
+{{- if gt (len $anns) 0 }}
+      annotations:
+{{ toYaml $anns | nindent 8 }}
+{{- end }}
     spec:
-{{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.securityContext "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
-{{ include "groundx.renderNodeSelector" (dict "name" $svc "indent" 6 "root" $) }}
+{{- if gt (len $aff) 0 }}
+      affinity:
+{{ toYaml $aff | nindent 8 }}
+{{- end }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
+{{- include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
+{{- include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
       containers:
         - name: {{ $svc | quote }}
           image: {{ include "groundx.cache.image" . | quote }}
@@ -31,10 +57,8 @@ spec:
           ports:
             - containerPort: {{ $cport}}
               protocol: TCP
-{{ include "groundx.renderSecurityContext" (dict "ctx" .Values.cache.securityContext "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
-{{- with .Values.cache.resources }}
-{{ include "groundx.renderContainerResources" (dict "ctx" . "indent" 10) }}
-{{- end }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
+{{ include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
           volumeMounts:
             - name: {{ $mountName | quote }}
               mountPath: {{ include "groundx.cache.mountPath" . | quote }}
@@ -42,7 +66,7 @@ spec:
         - name: {{ $mountName | quote }}
           emptyDir: {}
 {{- if $lb }}
-{{- if eq .Values.cluster.type "openshift" }}
+{{- if eq $ct "openshift" }}
 {{ include "groundx.renderRoute" (dict "name" $svc "lb" $lb "root" $) }}
 {{- else }}
 {{ include "groundx.renderLoadBalancer" (dict "name" $svc "lb" $lb "root" $) }}

@@ -5,26 +5,33 @@
 {{- $svcKey := printf "groundx.%s.settings" $entry -}}
 {{- $svcData := include $svcKey $ | fromYaml -}}
 
+{{- $aff := get $svcData "affinity" -}}
+{{- $anns := get $svcData "annotations" -}}
 {{- $bn := get $svcData "baseName" -}}
 {{- $cfg := get $svcData "cfg" -}}
 {{- $cport := get $svcData "port" | default "0" -}}
+{{- $csct := get $svcData "containerSecurityContext" -}}
 {{- $eopts := get $svcData "execOpts" | default "" -}}
 {{- $fs := get $svcData "fileSync" | default false -}}
 {{- $image := get $svcData "image" -}}
 {{- $ic := get $svcData "celery" | default "false" -}}
 {{- $lb := get $svcData "loadBalancer" -}}
+{{- $lbls := get $svcData "labels" -}}
 {{- $mpr := get $svcData "modelParts" -}}
 {{- $mv := get $svcData "modelVersion" -}}
-{{- $replicas := get $svcData "replicas" -}}
-{{- $res := get $svcData "resources" -}}
+{{- $node := get $svcData "node" -}}
+{{- $nsl := get $svcData "nodeSelector" -}}
+{{- $rp := get $svcData "replicas" -}}
+{{- $rs := get $svcData "resources" -}}
 {{- $pull := get $svcData "pull" -}}
 {{- $pvc := get $svcData "pvc" | default dict -}}
-{{- $sctx := get $svcData "securityContext" -}}
+{{- $sct := get $svcData "securityContext" -}}
 {{- $supe := get $svcData "supervisord" -}}
 {{- $svc := get $svcData "name" -}}
+{{- $tl := get $svcData "tolerations" -}}
 {{- $wd := get $svcData "workingDir" -}}
 
-{{- $desired := get $replicas "desired" -}}
+{{- $desired := get $rp "desired" -}}
 
 ---
 apiVersion: apps/v1
@@ -43,9 +50,21 @@ spec:
     metadata:
       labels:
         app: {{ $svc }}
+{{- if gt (len $lbls) 0 }}
+{{ toYaml $lbls | nindent 8 }}
+{{- end }}
+{{- if gt (len $anns) 0 }}
+      annotations:
+{{ toYaml $anns | nindent 8 }}
+{{- end }}
     spec:
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
-{{ include "groundx.renderNodeSelector" (dict "name" $svc "indent" 6 "root" $) }}
+{{- if gt (len $aff) 0 }}
+      affinity:
+{{ toYaml $aff | nindent 8 }}
+{{- end }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
+{{- include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
+{{- include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
       initContainers:
         - name: wait-for-cache
           image: {{ include "groundx.busybox.image" $ }}
@@ -129,13 +148,13 @@ spec:
               fi
 
               echo "Model load done."
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
           volumeMounts:
             - name: model-volume
               mountPath: {{ $wd }}/hf_models_cache
 {{- end }}
       containers:
-        - name: {{ $svc }}
+        - name: {{ $svc | quote }}
           image: {{ $image | quote }}
           imagePullPolicy: {{ $pull | quote }}
           env:
@@ -149,7 +168,7 @@ spec:
             - -c
             - |
               export PYTHONPATH={{ $wd }}:$PYTHONPATH && {{ $eopts }} supervisord -c {{ $wd }}/supervisord.conf
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
 {{- if ne $ic "false" }}
           livenessProbe:
             exec:
@@ -187,9 +206,7 @@ spec:
             failureThreshold: 30
             periodSeconds: 15
 {{- end }}
-{{- if $res }}
-{{ include "groundx.renderContainerResources" (dict "ctx" $res "indent" 10) }}
-{{- end }}
+{{ include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
           volumeMounts:
             - name: config-models
               mountPath: {{ $wd }}/config_models.py

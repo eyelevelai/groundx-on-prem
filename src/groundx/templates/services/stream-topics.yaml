@@ -15,7 +15,7 @@ metadata:
     strimzi.io/cluster: {{ $svc | quote }}
 spec:
   partitions: {{ $partitions }}
-  replicas: {{ $.Values.stream.replicas }}
+  replicas: {{ include "groundx.stream.replicas" $ }}
   config:
     retention.ms: 7200000
     retention.bytes: {{ include "groundx.stream.retention" $ }}

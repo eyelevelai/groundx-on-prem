@@ -38,9 +38,10 @@ config-yaml.yaml:
             prod-1:
               languages:
                 - en
+
         engines:
-          google/gemma-3-12b-it:
-            engineID: "google/gemma-3-12b-it"
+          google/gemma-3-4b-it:
+            engineID: "google/gemma-3-4b-it"
             maxInputTokens: 100000
             maxRequests: 4
             maxTokens: 2000
@@ -74,32 +75,6 @@ config-yaml.yaml:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
           port: 8080
           serviceName: layout-webhook
-
-        kafka:
-          filePreProcess:
-            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
-            groupId: eyelevel-stream
-            topic: file-pre-process
-          fileProcess:
-            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
-            groupId: eyelevel-stream
-            topic: file-process
-          fileSummaryDev:
-            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
-            groupId: eyelevel-stream
-            topic: file-summary
-          fileSummaryProd:
-            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
-            groupId: eyelevel-stream
-            topic: file-summary
-          fileUpdate:
-            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
-            groupId: eyelevel-stream
-            topic: file-update
-          fileUpload:
-            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
-            groupId: eyelevel-stream
-            topic: file-upload
 
         metrics:
           active: true
@@ -193,6 +168,38 @@ config-yaml.yaml:
           pollTime: 1
           port: 8080
           serviceName: queue
+
+        queues:
+          filePreProcess:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: eyelevel-stream
+            topic: file-pre-process
+            type: kafka
+          fileProcess:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: eyelevel-stream
+            topic: file-process
+            type: kafka
+          fileSummaryDev:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: eyelevel-stream
+            topic: file-summary
+            type: kafka
+          fileSummaryProd:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: eyelevel-stream
+            topic: file-summary
+            type: kafka
+          fileUpdate:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: eyelevel-stream
+            topic: file-update
+            type: kafka
+          fileUpload:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: eyelevel-stream
+            topic: file-upload
+            type: kafka
 
         rec:
           mysql: *mysql

@@ -1,4 +1,5 @@
 namespace: eyelevel
+pvClass: eyelevel-pv
 
 admin:
   apiKey: "00000000-0000-0000-0000-000000000000"
@@ -7,26 +8,28 @@ admin:
   username: "00000000-0000-0000-0000-000000000000"
 
 cluster:
-  pvClass: eyelevel-pv
-
-  # "", "eks", "aks", "gke", "openshift", etc.
   type: eks
+
+  nodeLabels:
+    cpuMemory: eyelevel-cpu-memory
+    cpuOnly: eyelevel-cpu-only
+    gpuLayout: eyelevel-gpu-layout
+    gpuRanker: eyelevel-gpu-ranker
+    gpuSummary: eyelevel-gpu-summary
+
+  tls:
+    existingSecret: ""
 
 cache:
   enabled: true
 
-  metrics:
-    enabled: true
-    existing: {}
-
-    resources:
-      requests:
-        cpu: 200m
-        memory: 512Mi
+  replicas:
+    desired: 1
+  isCluster: false
 
   resources:
     requests:
-      cpu: 200m
+      cpu: "0.2"
       memory: 512Mi
 
   # set to use external cache
@@ -36,12 +39,33 @@ cache:
     # isCluster: true
     # port: 6379
 
+  metrics:
+    # set false if you want to share 1 redis cache
+    # for metrics and process metadata caching
+    enabled: true
+
+    replicas:
+      desired: 1
+    isCluster: false
+
+    resources:
+      requests:
+        cpu: "0.2"
+        memory: 512Mi
+
+    # set to use external metrics cache
+    # will supercede all other settings in metrics
+    existing: {}
+      # addr: redis-metrics.mycorp.net
+      # isCluster: true
+      # port: 6379
+
 db:
   enabled: true
 
   dbName: eyelevel
-  username: eyelevel
-  password: password
+  serviceUsername: eyelevel
+  servicePassword: password
 
   # used to initialize DB
   # creates service user, db, and tables
@@ -61,16 +85,21 @@ file:
   username: minio
   password: minio123
 
+  # minio or sqs
+  serviceType: minio
+
+  # set to use a custom domain for file URLs
+  customDomain: ""
+
   # set to expose minio externally
   # in openshift, creates a route
   loadBalancer: {}
+    # port: 8080
 
   # set to use existing minio file storage
   existing: {}
     # domain: minio.mycorp.net
     # port: 9000
-    # minio or s3
-    # serviceType: minio
     # ssl: true
 
 search:
@@ -91,9 +120,13 @@ search:
 stream:
   enabled: true
 
+  replicas: 1
   storage: 10Gi
 
+  serviceType: kafka
+
   nodepool:
+    replicas: 1
     storage: 5Gi
 
   resources:
@@ -108,8 +141,14 @@ stream:
 summary:
   api:
     enabled: true
+
+    replicas:
+      desired: 1
   inference:
     enabled: true
+
+    replicas:
+      desired: 1
 
   existing: {}
 #    apiKey: my-oai-key
@@ -119,6 +158,9 @@ summary:
 groundx:
   enabled: true
 
+  replicas:
+    desired: 1
+
   resources:
     requests:
       cpu: 100m
@@ -127,21 +169,45 @@ groundx:
 layout:
   api:
     enabled: true
+
+    replicas:
+      desired: 1
   correct:
     enabled: true
+
+    replicas:
+      desired: 1
   inference:
     enabled: true
+
+    replicas:
+      desired: 1
   map:
     enabled: true
+
+    replicas:
+      desired: 1
   ocr:
     enabled: true
+
+    replicas:
+      desired: 1
   process:
     enabled: true
+
+    replicas:
+      desired: 1
   save:
     enabled: true
 
+    replicas:
+      desired: 1
+
 layoutWebhook:
   enabled: true
+
+  replicas:
+    desired: 1
 
   resources:
     requests:
@@ -151,6 +217,9 @@ layoutWebhook:
 preProcess:
   enabled: true
 
+  replicas:
+    desired: 1
+
   resources:
     requests:
       cpu: 200m
@@ -158,6 +227,9 @@ preProcess:
 
 process:
   enabled: true
+
+  replicas:
+    desired: 1
 
   resources:
     requests:
@@ -167,6 +239,9 @@ process:
 queue:
   enabled: true
 
+  replicas:
+    desired: 1
+
   resources:
     requests:
       cpu: 100m
@@ -175,11 +250,28 @@ queue:
 ranker:
   api:
     enabled: true
+
+    replicas:
+      desired: 1
   inference:
     enabled: true
 
+    replicas:
+      desired: 1
+
 summaryClient:
   enabled: true
+
+  engines:
+    - engineID: google/gemma-3-12b-it
+      maxInputTokens: 100000
+      maxOutputTokens: 2000
+      maxRequests: 4
+      requestLimit: 4
+      vision: true
+
+  replicas:
+    desired: 1
 
   resources:
     requests:
@@ -188,6 +280,9 @@ summaryClient:
 
 upload:
   enabled: true
+
+  replicas:
+    desired: 1
 
   resources:
     requests:

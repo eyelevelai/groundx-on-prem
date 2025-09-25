@@ -4,7 +4,8 @@
 {{- end }}
 
 {{- define "groundx.search.existing" -}}
-{{- $ex := .Values.search.existing | default dict -}}
+{{- $in := .Values.search | default dict -}}
+{{- $ex := dig "existing" dict $in -}}
 {{ not (or (empty (dig "domain" "" $ex)) (empty (dig "url" "" $ex))) }}
 {{- end }}
 
@@ -27,7 +28,8 @@ true
 {{- end }}
 
 {{- define "groundx.search.baseDomain" -}}
-{{- $ex := .Values.search.existing | default dict -}}
+{{- $in := .Values.search | default dict -}}
+{{- $ex := dig "existing" dict $in -}}
 {{- $ic := include "groundx.search.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
 {{ dig "domain" "" $ex }}
@@ -36,9 +38,21 @@ true
 {{- end -}}
 {{- end }}
 
-{{- define "groundx.search.port" -}}
-{{- $ex := .Values.search.existing | default dict -}}
+{{- define "groundx.search.baseURL" -}}
 {{- $in := .Values.search | default dict -}}
+{{- $ex := dig "existing" dict $in -}}
+{{- $ic := include "groundx.search.serviceHost" . -}}
+{{- $port := include "groundx.search.port" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "url" "" $ex }}
+{{- else -}}
+{{ printf "https://%s:%v" $ic $port }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.search.port" -}}
+{{- $in := .Values.search | default dict -}}
+{{- $ex := dig "existing" dict $in -}}
 {{- $ic := include "groundx.search.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
 {{ dig "port" "" $ex }}
@@ -47,13 +61,27 @@ true
 {{- end -}}
 {{- end }}
 
-{{- define "groundx.search.baseURL" -}}
-{{- $ex := .Values.search.existing | default dict -}}
-{{- $ic := include "groundx.search.serviceHost" . -}}
-{{- $port := include "groundx.search.port" . -}}
-{{- if eq $ic "true" -}}
-{{ dig "url" "" $ex }}
-{{- else -}}
-{{ printf "https://%s:%v" $ic $port }}
-{{- end -}}
+{{- define "groundx.search.indexName" -}}
+{{- $in := .Values.search | default dict -}}
+{{ dig "indexName" "prod-1" $in }}
+{{- end }}
+
+{{- define "groundx.search.password" -}}
+{{- $in := .Values.search | default dict -}}
+{{ dig "password" "R0otb_*t!kazs" $in }}
+{{- end }}
+
+{{- define "groundx.search.privilegedPassword" -}}
+{{- $in := .Values.search | default dict -}}
+{{ dig "privilegedPassword" "R0otb_*t!kazs" $in }}
+{{- end }}
+
+{{- define "groundx.search.privilegedUsername" -}}
+{{- $in := .Values.search | default dict -}}
+{{ dig "privilegedUsername" "admin" $in }}
+{{- end }}
+
+{{- define "groundx.search.username" -}}
+{{- $in := .Values.search | default dict -}}
+{{ dig "username" "eyelevel" $in }}
 {{- end }}

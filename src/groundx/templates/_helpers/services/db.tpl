@@ -1,10 +1,17 @@
+{{- define "groundx.db.node" -}}
+{{- $in := .Values.db | default dict -}}
+{{- $df := include "groundx.node.cpuOnly" . -}}
+{{ dig "node" $df $in }}
+{{- end }}
+
 {{- define "groundx.db.serviceName" -}}
 {{- $in := .Values.db | default dict -}}
 {{ dig "serviceName" "db" $in }}
 {{- end }}
 
 {{- define "groundx.db.existing" -}}
-{{- $ex := .Values.db.existing | default dict -}}
+{{- $in := .Values.db | default dict -}}
+{{- $ex := dig "existing" dict $in -}}
 {{ not (or (empty (dig "ro" "" $ex)) (empty (dig "rw" "" $ex))) }}
 {{- end }}
 
@@ -20,6 +27,11 @@ true
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.db.dbName" -}}
+{{- $in := .Values.db | default dict -}}
+{{ dig "dbName" "eyelevel" $in }}
+{{- end }}
+
 {{- define "groundx.db.maxIdle" -}}
 {{- $in := .Values.db | default dict -}}
 {{ dig "maxIdle" 5 $in }}
@@ -30,8 +42,35 @@ true
 {{ dig "maxOpen" 10 $in }}
 {{- end }}
 
+{{- define "groundx.db.password" -}}
+{{- $in := .Values.db | default dict -}}
+{{ dig "password" "password" $in }}
+{{- end }}
+
+{{- define "groundx.db.port" -}}
+{{- $in := .Values.file | default dict -}}
+{{- $ex := dig "existing" dict $in -}}
+{{- $ic := include "groundx.db.existing" . | trim | lower -}}
+{{- if eq $ic "true" -}}
+{{ dig "port" "" $ex }}
+{{- else -}}
+{{ dig "port" 3306 $in }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.db.privilegedPassword" -}}
+{{- $in := .Values.db | default dict -}}
+{{ dig "privilegedPassword" "password" $in }}
+{{- end }}
+
+{{- define "groundx.db.privilegedUsername" -}}
+{{- $in := .Values.db | default dict -}}
+{{ dig "privilegedUsername" "root" $in }}
+{{- end }}
+
 {{- define "groundx.db.ro" -}}
-{{- $ex := .Values.db.existing | default dict -}}
+{{- $in := .Values.db | default dict -}}
+{{- $ex := dig "existing" dict $in -}}
 {{- $ic := include "groundx.db.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
 {{ coalesce (dig "ro" "" $ex) (dig "rw" "" $ex) }}
@@ -43,7 +82,8 @@ true
 {{- end }}
 
 {{- define "groundx.db.rw" -}}
-{{- $ex := .Values.db.existing | default dict -}}
+{{- $in := .Values.db | default dict -}}
+{{- $ex := dig "existing" dict $in -}}
 {{- $ic := include "groundx.db.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
 {{ coalesce (dig "rw" "" $ex) (dig "ro" "" $ex) }}
@@ -54,13 +94,7 @@ true
 {{- end -}}
 {{- end }}
 
-{{- define "groundx.db.port" -}}
-{{- $ex := .Values.db.existing | default dict -}}
+{{- define "groundx.db.username" -}}
 {{- $in := .Values.db | default dict -}}
-{{- $ic := include "groundx.db.existing" . | trim | lower -}}
-{{- if eq $ic "true" -}}
-{{ dig "port" "" $ex }}
-{{- else -}}
-{{ dig "port" 3306 $in }}
-{{- end -}}
+{{ dig "username" "eyelevel" $in }}
 {{- end }}

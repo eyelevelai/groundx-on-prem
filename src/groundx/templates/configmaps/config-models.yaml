@@ -1,3 +1,8 @@
+{{- $hasEngs := include "groundx.hasCustomEngines" . }}
+{{- $engDict := (include "groundx.engines" . | fromYaml) -}}
+{{- $engs := dig "engines" dict $engDict -}}
+{{- $first := (dig "default" dict $engs) -}}
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -8,4 +13,8 @@ metadata:
 data:
   config_models.py: |
     env = dict(
+{{- if ne $hasEngs "false" -}}
+      dtype = {{ dig "dataType" "" $first | quote }},
+      name = {{ dig "engineID" "" $first | quote }},
+{{- end }}
     )

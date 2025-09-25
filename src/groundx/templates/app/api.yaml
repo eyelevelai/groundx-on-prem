@@ -4,18 +4,26 @@
 {{- $svcKey := printf "groundx.%s.settings" $entry -}}
 {{- $svcData := include $svcKey $ | fromYaml -}}
 
+{{- $aff := get $svcData "affinity" -}}
+{{- $anns := get $svcData "annotations" -}}
 {{- $cfg := get $svcData "cfg" -}}
 {{- $cport := get $svcData "port" -}}
+{{- $csct := get $svcData "containerSecurityContext" -}}
+{{- $ct := include "groundx.clusterType" $ -}}
 {{- $guni := get $svcData "gunicorn" -}}
 {{- $image := get $svcData "image" -}}
 {{- $lb := get $svcData "loadBalancer" -}}
-{{- $replicas := get $svcData "replicas" -}}
-{{- $res := get $svcData "resources" -}}
+{{- $lbls := get $svcData "labels" -}}
+{{- $node := get $svcData "node" -}}
+{{- $nsl := get $svcData "nodeSelector" -}}
+{{- $rp := get $svcData "replicas" -}}
+{{- $rs := get $svcData "resources" -}}
 {{- $pull := get $svcData "pull" -}}
-{{- $sctx := get $svcData "securityContext" -}}
+{{- $sct := get $svcData "securityContext" -}}
 {{- $svc := get $svcData "name" -}}
+{{- $tl := get $svcData "tolerations" -}}
 
-{{- $desired := get $replicas "desired" -}}
+{{- $desired := get $rp "desired" -}}
 
 ---
 apiVersion: apps/v1
@@ -34,16 +42,28 @@ spec:
     metadata:
       labels:
         app: {{ $svc }}
+{{- if gt (len $lbls) 0 }}
+{{ toYaml $lbls | nindent 8 }}
+{{- end }}
+{{- if gt (len $anns) 0 }}
+      annotations:
+{{ toYaml $anns | nindent 8 }}
+{{- end }}
     spec:
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
-{{ include "groundx.renderNodeSelector" (dict "name" $svc "indent" 6 "root" $) }}
+{{- if gt (len $aff) 0 }}
+      affinity:
+{{ toYaml $aff | nindent 8 }}
+{{- end }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
+{{- include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
+{{- include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
       initContainers:
         - name: wait-for-cache
           image: {{ include "groundx.busybox.image" $ }}
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
           command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.cache.addr" $) (include "groundx.cache.port" $) }}; do echo waiting for cache; sleep 2; done"]
       containers:
-        - name: {{ $svc }}
+        - name: {{ $svc | quote }}
           image: {{ $image | quote }}
           imagePullPolicy: {{ $pull | quote }}
           ports:
@@ -60,7 +80,7 @@ spec:
             - -c
             - |
               export PYTHONPATH=/app:$PYTHONPATH && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
           livenessProbe:
             httpGet:
               path: /health
@@ -74,9 +94,7 @@ spec:
               port: {{ $cport }}
             initialDelaySeconds: 10
             periodSeconds: 30
-{{- if $res }}
-{{ include "groundx.renderContainerResources" (dict "ctx" $res "indent" 10) }}
-{{- end }}
+{{- include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
           volumeMounts:
             - name: config-volume
               mountPath: /app/config.py
@@ -91,7 +109,7 @@ spec:
         - name: gunicorn-conf-volume
           configMap:
             name: {{ $guni }}
-{{- if eq $.Values.cluster.type "openshift" }}
+{{- if eq $ct "openshift" }}
 {{ include "groundx.renderRoute" (dict "name" $svc "lb" $lb "root" $) }}
 {{- else }}
 {{ include "groundx.renderLoadBalancer" (dict "name" $svc "lb" $lb "root" $) }}

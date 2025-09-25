@@ -1,12 +1,13 @@
 {{- define "groundx.renderSecurityContext" -}}
-{{- $ctx := .ctx -}}
+{{- $ctx := .ctx | default dict -}}
 {{- $indent := .indent | default 0 -}}
 {{- $root := .root -}}
+{{- $ct := include "groundx.clusterType" $root -}}
 {{- $user := .user -}}
 {{- $prefix := .prefix | default "securityContext" -}}
 {{- $cfg := .cfg | default "full" -}}
-{{- if not $ctx }}
-  {{- $isOS := eq (dig "type" "" $root.Values.cluster) "openshift" -}}
+{{- if lt (len $ctx) 1 }}
+  {{- $isOS := eq $ct "openshift" -}}
   {{- if eq $cfg "spec" -}}
     {{- if $isOS -}}
       {{- $ctx = dict

@@ -1,3 +1,9 @@
+{{- define "groundx.layoutWebhook.node" -}}
+{{- $in := .Values.layoutWebhook | default dict -}}
+{{- $df := include "groundx.node.cpuOnly" . -}}
+{{ dig "node" $df $in }}
+{{- end }}
+
 {{- define "groundx.layoutWebhook.serviceName" -}}
 {{- $in := .Values.layoutWebhook | default dict -}}
 {{ dig "serviceName" "layout-webhook" $in }}
@@ -18,29 +24,37 @@ true
 {{- end }}
 
 {{- define "groundx.layoutWebhook.image" -}}
-{{- $in := .Values.layoutWebhook.image | default dict -}}
+{{- $b := .Values.layoutWebhook | default dict -}}
+{{- $in := dig "image" dict $b -}}
 {{- $bs := printf "%s/eyelevel/layout-webhook" (include "groundx.imageRepository" .) -}}
 {{ printf "%s:%s" (dig "repository" $bs $in) (dig "repository" "latest" $in) }}
 {{- end }}
 
 {{- define "groundx.layoutWebhook.port" -}}
 {{- $in := .Values.layoutWebhook | default dict -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := .Values.layoutWebhook.loadBalancer | default dict -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
 {{ dig "port" 80 $lb }}
-{{- else -}}
-80
-{{- end -}}
+{{- end }}
+
+{{- define "groundx.layoutWebhook.pull" -}}
+{{- $b := .Values.layoutWebhook | default dict -}}
+{{- $in := dig "image" dict $b -}}
+{{ (dig "pull" "Always" $in) }}
+{{- end }}
+
+{{- define "groundx.layoutWebhook.replicas" -}}
+{{- $b := .Values.layoutWebhook | default dict -}}
+{{- $in := dig "replicas" dict $b -}}
+{{- if not $in }}
+  {{- $in = dict "desired" 1 "max" 1 "min" 1 -}}
+{{- end }}
+{{- toYaml $in | nindent 0 }}
 {{- end }}
 
 {{- define "groundx.layoutWebhook.ssl" -}}
 {{- $in := .Values.layoutWebhook | default dict -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := .Values.layoutWebhook.loadBalancer | default dict -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
 {{ dig "ssl" "false" $lb  }}
-{{- else -}}
-false
-{{- end -}}
 {{- end }}
 
 {{- define "groundx.layoutWebhook.serviceUrl" -}}
@@ -58,15 +72,10 @@ false
 {{- end -}}
 {{- end }}
 
-{{- define "groundx.layoutWebhook.pull" -}}
-{{- $in := .Values.layoutWebhook.image | default dict -}}
-{{ (dig "pull" "Always" $in) }}
-{{- end }}
-
 {{- define "groundx.layoutWebhook.loadBalancer" -}}
 {{- $in := .Values.layoutWebhook | default dict -}}
 {{- if hasKey $in "loadBalancer" -}}
-{{- $lb := .Values.layoutWebhook.loadBalancer | default dict -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
 {{- dict
     "isInternal" (dig "isInternal" "false" $lb)
     "port"       (include "groundx.layoutWebhook.port" .)
@@ -88,24 +97,42 @@ false
 
 {{- define "groundx.layoutWebhook.settings" -}}
 {{- $in := .Values.layoutWebhook | default dict -}}
+{{- $rep := (include "groundx.layoutWebhook.replicas" . | fromYaml) -}}
 {{- $cfg := dict
   "dependencies" (dict
     "groundx" "groundx"
   )
+  "node"         (include "groundx.layoutWebhook.node" .)
+  "replicas"     ($rep)
 -}}
 {{- $_ := set $cfg "name"         (include "groundx.layoutWebhook.serviceName" .) -}}
 {{- $_ := set $cfg "image"        (include "groundx.layoutWebhook.image" .) -}}
 {{- $_ := set $cfg "loadBalancer" (include "groundx.layoutWebhook.loadBalancer" . | trim) -}}
 {{- $_ := set $cfg "port"         (include "groundx.layoutWebhook.containerPort" .) -}}
 {{- $_ := set $cfg "pull"         (include "groundx.layoutWebhook.pull" .) -}}
-{{- if and (hasKey $in "replicas") (not (empty (get $in "replicas"))) -}}
-  {{- $_ := set $cfg "replicas" (get $in "replicas") -}}
+{{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
+  {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
+{{- end -}}
+{{- if and (hasKey $in "annotations") (not (empty (get $in "annotations"))) -}}
+  {{- $_ := set $cfg "annotations" (get $in "annotations") -}}
+{{- end -}}
+{{- if and (hasKey $in "containerSecurityContext") (not (empty (get $in "containerSecurityContext"))) -}}
+  {{- $_ := set $cfg "containerSecurityContext" (get $in "containerSecurityContext") -}}
+{{- end -}}
+{{- if and (hasKey $in "labels") (not (empty (get $in "labels"))) -}}
+  {{- $_ := set $cfg "labels" (get $in "labels") -}}
+{{- end -}}
+{{- if and (hasKey $in "nodeSelector") (not (empty (get $in "nodeSelector"))) -}}
+  {{- $_ := set $cfg "nodeSelector" (get $in "nodeSelector") -}}
 {{- end -}}
 {{- if and (hasKey $in "resources") (not (empty (get $in "resources"))) -}}
   {{- $_ := set $cfg "resources" (get $in "resources") -}}
 {{- end -}}
 {{- if and (hasKey $in "securityContext") (not (empty (get $in "securityContext"))) -}}
   {{- $_ := set $cfg "securityContext" (get $in "securityContext") -}}
+{{- end -}}
+{{- if and (hasKey $in "tolerations") (not (empty (get $in "tolerations"))) -}}
+  {{- $_ := set $cfg "tolerations" (get $in "tolerations") -}}
 {{- end -}}
 {{- $cfg | toYaml -}}
 {{- end }}

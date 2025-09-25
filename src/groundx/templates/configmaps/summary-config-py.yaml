@@ -18,6 +18,6 @@ data:
         summaryBroker={{ printf "redis://%s:%v/0" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
         summaryLog={{ include "groundx.summary.serviceName" . | quote }},
         summaryResultBroker={{ printf "redis://%s:%v/0" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
-        validAPIKeys=[{{ .Values.admin.apiKey | quote }}, {{ .Values.admin.username | quote }}],
+        validAPIKeys=[{{ include "groundx.admin.apiKey" . | quote }}, {{ include "groundx.admin.username" . | quote }}],
         workers={{ include "groundx.summary.inference.workers" . }},
     )

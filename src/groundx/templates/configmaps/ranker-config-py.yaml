@@ -17,6 +17,6 @@ data:
         searchLog={{ include "groundx.ranker.serviceName" . | quote }},
         searchResultBroker={{ printf "redis://%s:%v/0" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
         service={{ include "groundx.ranker.serviceName" . | quote }},
-        validAPIKeys=[{{ .Values.admin.apiKey | quote }}, {{ .Values.admin.username | quote }}],
+        validAPIKeys=[{{ include "groundx.admin.apiKey" . | quote }}, {{ include "groundx.admin.username" . | quote }}],
         workers={{ include "groundx.ranker.inference.workers" . }},
     )

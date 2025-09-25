@@ -4,17 +4,26 @@
 {{- $svcKey := printf "groundx.%s.settings" $entry -}}
 {{- $svcData := include $svcKey $ | fromYaml -}}
 
+{{- $aff := get $svcData "affinity" -}}
+{{- $anns := get $svcData "annotations" -}}
 {{- $cport := get $svcData "port" -}}
+{{- $csct := get $svcData "containerSecurityContext" -}}
+{{- $ct := include "groundx.clusterType" $ -}}
 {{- $dpnd := get $svcData "dependencies" | default dict -}}
 {{- $image := get $svcData "image" -}}
+{{- $io := include "groundx.ingestOnly" $ -}}
 {{- $lb := get $svcData "loadBalancer" -}}
-{{- $replicas := get $svcData "replicas" -}}
-{{- $res := get $svcData "resources" -}}
+{{- $lbls := get $svcData "labels" -}}
+{{- $node := get $svcData "node" -}}
+{{- $nsl := get $svcData "nodeSelector" -}}
+{{- $rp := get $svcData "replicas" -}}
+{{- $rs := get $svcData "resources" -}}
 {{- $pull := get $svcData "pull" -}}
-{{- $sctx := get $svcData "securityContext" -}}
+{{- $sct := get $svcData "securityContext" -}}
 {{- $svc := get $svcData "name" -}}
+{{- $tl := get $svcData "tolerations" -}}
 
-{{- $desired := get $replicas "desired" -}}
+{{- $desired := get $rp "desired" -}}
 
 ---
 apiVersion: apps/v1
@@ -33,9 +42,21 @@ spec:
     metadata:
       labels:
         app: {{ $svc }}
+{{- if gt (len $lbls) 0 }}
+{{ toYaml $lbls | nindent 8 }}
+{{- end }}
+{{- if gt (len $anns) 0 }}
+      annotations:
+{{ toYaml $anns | nindent 8 }}
+{{- end }}
     spec:
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
-{{ include "groundx.renderNodeSelector" (dict "name" $svc "indent" 6 "root" $) }}
+{{- if gt (len $aff) 0 }}
+      affinity:
+{{ toYaml $aff | nindent 8 }}
+{{- end }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
+{{ include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
+{{ include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
 {{- if not (empty $dpnd) }}
       initContainers:
 {{- if hasKey $dpnd "groundx" }}
@@ -56,7 +77,7 @@ spec:
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
           command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.file.serviceDependency" $) (include "groundx.file.port" $) }}; do echo waiting for file storage; sleep 2; done"]
 {{- end }}
-{{- if and (not $.Values.ingestOnly) (hasKey $dpnd "search") }}
+{{- if and (ne $io "true") (hasKey $dpnd "search") }}
         - name: wait-for-search
           image: {{ include "groundx.busybox.image" $ }}
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
@@ -76,13 +97,13 @@ spec:
 {{- end }}
 {{- end }}
       containers:
-        - name: {{ $svc }}
+        - name: {{ $svc | quote }}
           image: {{ $image | quote }}
           imagePullPolicy: {{ $pull | quote }}
           ports:
             - containerPort: {{ $cport }}
               protocol: TCP
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
           livenessProbe:
             httpGet:
               path: /health
@@ -95,9 +116,7 @@ spec:
               port: {{ $cport }}
             initialDelaySeconds: 10
             periodSeconds: 30
-{{- if $res }}
-{{ include "groundx.renderContainerResources" (dict "ctx" $res "indent" 10) }}
-{{- end }}
+{{ include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
           volumeMounts:
             - name: config-volume
               mountPath: /home/{{ include "groundx.golang.username" $ }}/.cashbot/config.yaml
@@ -113,7 +132,7 @@ spec:
           configMap:
             name: init-database-file
 {{- if $lb }}
-{{- if eq $.Values.cluster.type "openshift" }}
+{{- if eq $ct "openshift" }}
 {{ include "groundx.renderRoute" (dict "name" $svc "lb" $lb "root" $) }}
 {{- else }}
 {{ include "groundx.renderLoadBalancer" (dict "name" $svc "lb" $lb "root" $) }}

@@ -1,3 +1,10 @@
+{{- define "groundx.ranker.api.node" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- $df := include "groundx.node.cpuOnly" . -}}
+{{ dig "node" $df $in }}
+{{- end }}
+
 {{- define "groundx.ranker.api.serviceName" -}}
 {{- $svc := include "groundx.ranker.serviceName" . -}}
 {{ printf "%s-api" $svc }}
@@ -5,7 +12,7 @@
 
 {{- define "groundx.ranker.api.create" -}}
 {{- $b := .Values.ranker | default dict -}}
-{{- $in := (dig "api" nil $b) | default dict -}}
+{{- $in := dig "api" dict $b -}}
 {{- if hasKey $in "enabled" -}}
   {{- if (dig "enabled" false $in) -}}true{{- else -}}false{{- end -}}
 {{- else -}}
@@ -15,45 +22,47 @@ true
 
 {{- define "groundx.ranker.api.containerPort" -}}
 {{- $b := .Values.ranker | default dict -}}
-{{- $in := (dig "api" nil $b) | default dict -}}
+{{- $in := dig "api" dict $b -}}
 {{ dig "containerPort" 8080 $in }}
 {{- end }}
 
 {{- define "groundx.ranker.api.image" -}}
 {{- $b := .Values.ranker | default dict -}}
-{{- $in := (dig "api" nil $b) | default dict -}}
-{{- $img := (dig "image" nil $in) | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- $img := dig "image" dict $in -}}
 {{- $bs := printf "%s/eyelevel/python-api" (include "groundx.imageRepository" .) -}}
 {{ printf "%s:%s" (dig "repository" $bs $img) (dig "repository" "latest" $img) }}
 {{- end }}
 
 {{- define "groundx.ranker.api.port" -}}
 {{- $b := .Values.ranker | default dict -}}
-{{- $in := (dig "api" nil $b) | default dict -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := (dig "loadBalancer" nil $in) | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
 {{ dig "port" 80 $lb }}
-{{- else -}}
-80
-{{- end -}}
 {{- end }}
 
 {{- define "groundx.ranker.api.pull" -}}
 {{- $b := .Values.ranker | default dict -}}
-{{- $in := (dig "api" nil $b) | default dict -}}
-{{- $img := (dig "image" nil $in) | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- $img := dig "image" dict $in -}}
 {{ (dig "pull" "Always" $img) }}
+{{- end }}
+
+{{- define "groundx.ranker.api.replicas" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $c := dig "api" dict $b -}}
+{{- $in := dig "replicas" dict $c -}}
+{{- if not $in }}
+  {{- $in = dict "desired" 1 "max" 1 "min" 1 -}}
+{{- end }}
+{{- toYaml $in | nindent 0 }}
 {{- end }}
 
 {{- define "groundx.ranker.api.ssl" -}}
 {{- $b := .Values.ranker | default dict -}}
-{{- $in := (dig "api" nil $b) | default dict -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := .Values.ranker.api.loadBalancer | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
 {{ dig "ssl" "false" $lb  }}
-{{- else -}}
-false
-{{- end -}}
 {{- end }}
 
 {{- define "groundx.ranker.api.serviceUrl" -}}
@@ -73,27 +82,27 @@ false
 
 {{- define "groundx.ranker.api.threads" -}}
 {{- $b := .Values.ranker | default dict -}}
-{{- $in := (dig "api" nil $b) | default dict -}}
+{{- $in := dig "api" dict $b -}}
 {{ dig "threads" 3 $in }}
 {{- end }}
 
 {{- define "groundx.ranker.api.timeout" -}}
 {{- $b := .Values.ranker | default dict -}}
-{{- $in := (dig "api" nil $b) | default dict -}}
+{{- $in := dig "api" dict $b -}}
 {{ dig "timeout" 120 $in }}
 {{- end }}
 
 {{- define "groundx.ranker.api.workers" -}}
 {{- $b := .Values.ranker | default dict -}}
-{{- $in := (dig "api" nil $b) | default dict -}}
+{{- $in := dig "api" dict $b -}}
 {{ dig "workers" 1 $in }}
 {{- end }}
 
 {{- define "groundx.ranker.api.loadBalancer" -}}
 {{- $b := .Values.ranker | default dict -}}
-{{- $in := (dig "api" nil $b) | default dict -}}
+{{- $in := dig "api" dict $b -}}
 {{- if hasKey $in "loadBalancer" -}}
-{{- $lb := (dig "loadBalancer" nil $in) | default dict -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
 {{- dict
     "isInternal" (dig "isInternal" "false" $lb)
     "port"       (include "groundx.ranker.api.port" .)
@@ -117,8 +126,12 @@ false
 {{- define "groundx.ranker.api.settings" -}}
 {{- $svc := include "groundx.ranker.serviceName" . -}}
 {{- $b := .Values.ranker | default dict -}}
-{{- $in := (dig "api" nil $b) | default dict -}}
-{{- $cfg := dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- $rep := (include "groundx.ranker.api.replicas" . | fromYaml) -}}
+{{- $cfg := dict
+  "node"     (include "groundx.ranker.api.node" .)
+  "replicas" ($rep)
+-}}
 {{- $_ := set $cfg "cfg"          (printf "%s-config-py-map" $svc) -}}
 {{- $_ := set $cfg "name"         (include "groundx.ranker.api.serviceName" .) -}}
 {{- $_ := set $cfg "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc) -}}
@@ -126,14 +139,29 @@ false
 {{- $_ := set $cfg "loadBalancer" (include "groundx.ranker.api.loadBalancer" .) -}}
 {{- $_ := set $cfg "port"         (include "groundx.ranker.api.containerPort" .) -}}
 {{- $_ := set $cfg "pull"         (include "groundx.ranker.api.pull" .) -}}
-{{- if and (hasKey $in "replicas") (not (empty (get $in "replicas"))) -}}
-  {{- $_ := set $cfg "replicas" (get $in "replicas") -}}
+{{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
+  {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
+{{- end -}}
+{{- if and (hasKey $in "annotations") (not (empty (get $in "annotations"))) -}}
+  {{- $_ := set $cfg "annotations" (get $in "annotations") -}}
+{{- end -}}
+{{- if and (hasKey $in "containerSecurityContext") (not (empty (get $in "containerSecurityContext"))) -}}
+  {{- $_ := set $cfg "containerSecurityContext" (get $in "containerSecurityContext") -}}
+{{- end -}}
+{{- if and (hasKey $in "labels") (not (empty (get $in "labels"))) -}}
+  {{- $_ := set $cfg "labels" (get $in "labels") -}}
+{{- end -}}
+{{- if and (hasKey $in "nodeSelector") (not (empty (get $in "nodeSelector"))) -}}
+  {{- $_ := set $cfg "nodeSelector" (get $in "nodeSelector") -}}
 {{- end -}}
 {{- if and (hasKey $in "resources") (not (empty (get $in "resources"))) -}}
   {{- $_ := set $cfg "resources" (get $in "resources") -}}
 {{- end -}}
 {{- if and (hasKey $in "securityContext") (not (empty (get $in "securityContext"))) -}}
   {{- $_ := set $cfg "securityContext" (get $in "securityContext") -}}
+{{- end -}}
+{{- if and (hasKey $in "tolerations") (not (empty (get $in "tolerations"))) -}}
+  {{- $_ := set $cfg "tolerations" (get $in "tolerations") -}}
 {{- end -}}
 {{- $cfg | toYaml -}}
 {{- end }}

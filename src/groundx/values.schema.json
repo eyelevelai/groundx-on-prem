@@ -2,14 +2,13 @@
   "type": "object",
   "properties": {
     "namespace": { "type": "string", "minLength": 1 },
+    "imageType": { "type": "string" },
     "ingestOnly": { "type": "boolean" },
     "languages": {
       "type": "array",
       "items": { "type": "string" }
     },
     "logLevel": { "type": "string" },
-    "hasMig": { "type": "boolean" },
-    "pvClass": { "type": "string" },
     "admin": {
       "type": "object",
       "properties": {
@@ -25,7 +24,7 @@
     "cluster": {
       "type": "object",
       "properties": {
-        "deployment": { "type": "string" },
+        "hasMig": { "type": "boolean" },
         "nodeLabels": {
           "type": "object",
           "properties": {
@@ -38,6 +37,7 @@
           "required": ["cpuMemory", "cpuOnly", "gpuLayout", "gpuRanker", "gpuSummary"],
           "additionalProperties": false
         },
+        "pvClass": { "type": "string" },
         "tls": {
           "type": "object",
           "properties": {
@@ -47,12 +47,37 @@
         },
         "type": { "type": "string" }
       },
-      "required": ["type", "nodeLabels"],
+      "required": ["pvClass", "type"],
       "additionalProperties": false
+    },
+    "engines": {
+      "type": "object",
+      "properties": {
+        "default": {
+          "type": "object",
+          "properties": {
+            "dataType": { "type": "string" },
+            "engineID": { "type": "string" },
+            "maxInputTokens": { "type": "integer" },
+            "maxOutputTokens": { "type": "integer" },
+            "maxRequests": { "type": "integer" },
+            "reasoningEffort": { "type": "string" },
+            "requestLimit": { "type": "integer" },
+            "type": { "type": "string" },
+            "vision": { "type": "boolean" }
+          },
+          "required": ["dataType", "engineID"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["default"]
     },
     "cache": {
       "type": "object",
       "properties": {
+        "affinity": { "type": "object" },
+        "annotations": { "type": "object" },
+        "containerSecurityContext": { "type": "object" },
         "enabled": { "type": "boolean" },
         "existing": {
           "type": "object",
@@ -64,7 +89,7 @@
           "additionalProperties": false
         },
         "image": { "type": "string" },
-        "isCluster": { "type": "boolean" },
+        "labels": { "type": "object" },
         "loadBalancer": {
           "type": "object",
           "properties": {
@@ -78,6 +103,9 @@
           "additionalProperties": false
         },
         "mountPath": { "type": "string" },
+        "node": { "type": "string" },
+        "nodeSelector": { "type": "object" },
+        "port": { "type": "integer" },
         "replicas": {
           "type": "object",
           "properties": {
@@ -91,10 +119,13 @@
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
         "serviceName": { "type": "string" },
-        "port": { "type": "integer" },
+        "tolerations": { "type": "array" },
         "metrics": {
           "type": "object",
           "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
+            "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
             "existing": {
               "type": "object",
@@ -106,7 +137,7 @@
               "additionalProperties": false
             },
             "image": { "type": "string" },
-            "isCluster": { "type": "boolean" },
+            "labels": { "type": "object" },
             "loadBalancer": {
               "type": "object",
               "properties": {
@@ -119,6 +150,9 @@
               "required": ["port", "ssl"],
               "additionalProperties": false
             },
+            "mountPath": { "type": "string" },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
             "port": { "type": "integer" },
             "replicas": {
               "type": "object",
@@ -138,7 +172,7 @@
           "additionalProperties": false
         }
       },
-      "required": ["enabled", "existing", "isCluster", "metrics", "replicas"],
+      "required": ["enabled", "existing", "metrics"],
       "additionalProperties": false
     },
     "db": {
@@ -155,17 +189,17 @@
           },
           "additionalProperties": false
         },
+        "port": { "type": "integer" },
         "privilegedPassword": { "type": "string" },
         "privilegedUsername": { "type": "string" },
         "maxIdle": { "type": "integer" },
         "maxOpen": { "type": "integer" },
+        "password": { "type": "string" },
         "serviceName": { "type": "string" },
-        "servicePassword": { "type": "string" },
-        "serviceUsername": { "type": "string" },
-        "port": { "type": "integer" }
+        "username": { "type": "string" }
       },
       "required": [
-        "dbName", "enabled", "existing", "privilegedPassword", "privilegedUsername", "servicePassword", "serviceUsername"
+        "dbName", "enabled", "existing", "password", "privilegedPassword", "privilegedUsername", "username"
       ],
       "additionalProperties": false
     },
@@ -189,6 +223,7 @@
           "properties": {
             "isInternal": { "type": "boolean" },
             "port": { "type": "integer" },
+            "serviceType": { "type": "string" },
             "ssl": { "type": "boolean" },
             "timeout": { "type": "integer" }
           },
@@ -197,10 +232,9 @@
         "password": { "type": "string" },
         "port": { "type": "integer" },
         "serviceName": { "type": "string" },
-        "serviceType": { "type": "string" },
         "username": { "type": "string" }
       },
-      "required": ["bucketName", "enabled", "existing", "loadBalancer", "username", "password", "serviceType"],
+      "required": ["bucketName", "enabled", "existing", "loadBalancer", "username", "password"],
       "additionalProperties": false
     },
     "search": {
@@ -248,9 +282,6 @@
             "replicas": { "type": "integer" },
             "storage": { "type": "string" }
           },
-          "required": [
-            "replicas", "storage"
-          ],
           "additionalProperties": false
         },
         "replicas": { "type": "integer" },
@@ -261,11 +292,76 @@
         "serviceType": { "type": "string" },
         "storage": { "type": "string" },
         "port": { "type": "integer" },
-        "topics": { "type": "object" },
+        "topics": {
+          "type": "object",
+          "properties": {
+            "preProcess": {
+              "type": "object",
+              "properties": {
+                "broker": { "type": "string" },
+                "groupID": { "type": "string" },
+                "region": { "type": "string" },
+                "topic": { "type": "string" },
+                "type": { "type": "string" },
+                "url": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "process": {
+              "type": "object",
+              "properties": {
+                "broker": { "type": "string" },
+                "groupID": { "type": "string" },
+                "region": { "type": "string" },
+                "topic": { "type": "string" },
+                "type": { "type": "string" },
+                "url": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "queue": {
+              "type": "object",
+              "properties": {
+                "broker": { "type": "string" },
+                "groupID": { "type": "string" },
+                "region": { "type": "string" },
+                "topic": { "type": "string" },
+                "type": { "type": "string" },
+                "url": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "summary": {
+              "type": "object",
+              "properties": {
+                "broker": { "type": "string" },
+                "groupID": { "type": "string" },
+                "region": { "type": "string" },
+                "topic": { "type": "string" },
+                "type": { "type": "string" },
+                "url": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "upload": {
+              "type": "object",
+              "properties": {
+                "broker": { "type": "string" },
+                "groupID": { "type": "string" },
+                "region": { "type": "string" },
+                "topic": { "type": "string" },
+                "type": { "type": "string" },
+                "url": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
         "version": { "type": "string" }
       },
       "required": [
-        "enabled", "existing", "nodepool", "replicas", "storage"
+        "enabled", "existing"
       ],
       "additionalProperties": false
     },
@@ -275,7 +371,10 @@
         "api": {
           "type": "object",
           "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
             "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
             "image": {
               "type": "object",
@@ -284,9 +383,9 @@
                 "repository": { "type": "string" },
                 "tag": { "type": "string" }
               },
-              "required": ["pull", "repository", "tag"],
               "additionalProperties": false
             },
+            "labels": { "type": "object" },
             "loadBalancer": {
               "type": "object",
               "properties": {
@@ -299,6 +398,8 @@
               "required": ["port", "ssl"],
               "additionalProperties": false
             },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
             "replicas": {
               "type": "object",
               "properties": {
@@ -315,7 +416,7 @@
             "timeout": { "type": "integer" },
             "workers": { "type": "integer" }
           },
-          "required": ["enabled", "replicas"],
+          "required": ["enabled"],
           "additionalProperties": false
         },
         "defaultKitID": { "type": "integer" },
@@ -331,6 +432,10 @@
         "inference": {
           "type": "object",
           "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
+            "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
             "deviceType": { "type": "string" },
             "deviceUtilize": { "type": "number" },
             "enabled": { "type": "boolean" },
@@ -341,9 +446,11 @@
                 "repository": { "type": "string" },
                 "tag": { "type": "string" }
               },
-              "required": ["pull", "repository", "tag"],
               "additionalProperties": false
             },
+            "labels": { "type": "object" },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
             "pvc": {
               "type": "object",
               "properties": {
@@ -370,7 +477,7 @@
             "threads": { "type": "integer" },
             "workers": { "type": "integer" }
           },
-          "required": ["enabled", "replicas"],
+          "required": ["enabled"],
           "additionalProperties": false
         },
         "serviceName": { "type": "string" }
@@ -388,7 +495,10 @@
     "groundx": {
       "type": "object",
       "properties": {
+        "affinity": { "type": "object" },
+        "annotations": { "type": "object" },
         "containerPort": { "type": "integer" },
+        "containerSecurityContext": { "type": "object" },
         "enabled": { "type": "boolean" },
         "image": {
           "type": "object",
@@ -397,9 +507,9 @@
             "repository": { "type": "string" },
             "tag": { "type": "string" }
           },
-          "required": ["pull", "repository", "tag"],
           "additionalProperties": false
         },
+        "labels": { "type": "object" },
         "loadBalancer": {
           "type": "object",
           "properties": {
@@ -412,6 +522,8 @@
           "required": ["port", "ssl"],
           "additionalProperties": false
         },
+        "node": { "type": "string" },
+        "nodeSelector": { "type": "object" },
         "replicas": {
           "type": "object",
           "properties": {
@@ -426,7 +538,7 @@
         "securityContext": { "type": "object" },
         "serviceName": { "type": "string" }
       },
-      "required": ["enabled", "replicas"],
+      "required": ["enabled"],
       "additionalProperties": false
     },
     "layout": {
@@ -435,7 +547,10 @@
         "api": {
           "type": "object",
           "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
             "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
             "image": {
               "type": "object",
@@ -444,9 +559,9 @@
                 "repository": { "type": "string" },
                 "tag": { "type": "string" }
               },
-              "required": ["pull", "repository", "tag"],
               "additionalProperties": false
             },
+            "labels": { "type": "object" },
             "loadBalancer": {
               "type": "object",
               "properties": {
@@ -459,6 +574,8 @@
               "required": ["port", "ssl"],
               "additionalProperties": false
             },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
             "replicas": {
               "type": "object",
               "properties": {
@@ -475,12 +592,16 @@
             "timeout": { "type": "integer" },
             "workers": { "type": "integer" }
           },
-          "required": ["enabled", "replicas"],
+          "required": ["enabled"],
           "additionalProperties": false
         },
         "correct": {
           "type": "object",
           "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
+            "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
             "image": {
               "type": "object",
@@ -489,9 +610,11 @@
                 "repository": { "type": "string" },
                 "tag": { "type": "string" }
               },
-              "required": ["pull", "repository", "tag"],
               "additionalProperties": false
             },
+            "labels": { "type": "object" },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
             "queue": { "type": "string" },
             "replicas": {
               "type": "object",
@@ -508,13 +631,16 @@
             "threads": { "type": "integer" },
             "workers": { "type": "integer" }
           },
-          "required": ["enabled", "replicas"],
+          "required": ["enabled"],
           "additionalProperties": false
         },
         "inference": {
           "type": "object",
           "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
             "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
             "deviceType": { "type": "string" },
             "enabled": { "type": "boolean" },
             "image": {
@@ -524,9 +650,9 @@
                 "repository": { "type": "string" },
                 "tag": { "type": "string" }
               },
-              "required": ["pull", "repository", "tag"],
               "additionalProperties": false
             },
+            "labels": { "type": "object" },
             "loadBalancer": {
               "type": "object",
               "properties": {
@@ -539,6 +665,8 @@
               "required": ["port", "ssl"],
               "additionalProperties": false
             },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
             "queue": { "type": "string" },
             "replicas": {
               "type": "object",
@@ -555,12 +683,16 @@
             "threads": { "type": "integer" },
             "workers": { "type": "integer" }
           },
-          "required": ["enabled", "replicas"],
+          "required": ["enabled"],
           "additionalProperties": false
         },
         "map": {
           "type": "object",
           "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
+            "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
             "image": {
               "type": "object",
@@ -569,9 +701,11 @@
                 "repository": { "type": "string" },
                 "tag": { "type": "string" }
               },
-              "required": ["pull", "repository", "tag"],
               "additionalProperties": false
             },
+            "labels": { "type": "object" },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
             "queue": { "type": "string" },
             "replicas": {
               "type": "object",
@@ -588,12 +722,16 @@
             "threads": { "type": "integer" },
             "workers": { "type": "integer" }
           },
-          "required": ["enabled", "replicas"],
+          "required": ["enabled"],
           "additionalProperties": false
         },
         "ocr": {
           "type": "object",
           "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
+            "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
             "credentials": { "type": "string" },
             "enabled": { "type": "boolean" },
             "image": {
@@ -603,9 +741,11 @@
                 "repository": { "type": "string" },
                 "tag": { "type": "string" }
               },
-              "required": ["pull", "repository", "tag"],
               "additionalProperties": false
             },
+            "labels": { "type": "object" },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
             "project": { "type": "string" },
             "queue": { "type": "string" },
             "replicas": {
@@ -624,14 +764,18 @@
             "type": { "type": "string" },
             "workers": { "type": "integer" }
           },
-          "required": ["enabled", "replicas"],
+          "required": ["enabled"],
           "additionalProperties": false
         },
         "podMemory": { "type": "string" },
         "process": {
           "type": "object",
           "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
             "batchSize": { "type": "integer" },
+            "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
             "image": {
               "type": "object",
@@ -640,9 +784,11 @@
                 "repository": { "type": "string" },
                 "tag": { "type": "string" }
               },
-              "required": ["pull", "repository", "tag"],
               "additionalProperties": false
             },
+            "labels": { "type": "object" },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
             "queue": { "type": "string" },
             "replicas": {
               "type": "object",
@@ -659,12 +805,16 @@
             "threads": { "type": "integer" },
             "workers": { "type": "integer" }
           },
-          "required": ["enabled", "replicas"],
+          "required": ["enabled"],
           "additionalProperties": false
         },
         "save": {
           "type": "object",
           "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
+            "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
             "image": {
               "type": "object",
@@ -673,9 +823,11 @@
                 "repository": { "type": "string" },
                 "tag": { "type": "string" }
               },
-              "required": ["pull", "repository", "tag"],
               "additionalProperties": false
             },
+            "labels": { "type": "object" },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
             "queue": { "type": "string" },
             "replicas": {
               "type": "object",
@@ -692,7 +844,7 @@
             "threads": { "type": "integer" },
             "workers": { "type": "integer" }
           },
-          "required": ["enabled", "replicas"],
+          "required": ["enabled"],
           "additionalProperties": false
         },
         "serviceName": { "type": "string" }
@@ -703,7 +855,10 @@
     "layoutWebhook": {
       "type": "object",
       "properties": {
+        "affinity": { "type": "object" },
+        "annotations": { "type": "object" },
         "containerPort": { "type": "integer" },
+        "containerSecurityContext": { "type": "object" },
         "enabled": { "type": "boolean" },
         "image": {
           "type": "object",
@@ -712,9 +867,9 @@
             "repository": { "type": "string" },
             "tag": { "type": "string" }
           },
-          "required": ["pull", "repository", "tag"],
           "additionalProperties": false
         },
+        "labels": { "type": "object" },
         "loadBalancer": {
           "type": "object",
           "properties": {
@@ -727,6 +882,8 @@
           "required": ["port", "ssl"],
           "additionalProperties": false
         },
+        "node": { "type": "string" },
+        "nodeSelector": { "type": "object" },
         "replicas": {
           "type": "object",
           "properties": {
@@ -741,7 +898,7 @@
         "securityContext": { "type": "object" },
         "serviceName": { "type": "string" }
       },
-      "required": ["enabled", "replicas"],
+      "required": ["enabled"],
       "additionalProperties": false
     },
     "metrics": {
@@ -755,7 +912,10 @@
     "preProcess": {
       "type": "object",
       "properties": {
+        "affinity": { "type": "object" },
+        "annotations": { "type": "object" },
         "containerPort": { "type": "integer" },
+        "containerSecurityContext": { "type": "object" },
         "enabled": { "type": "boolean" },
         "image": {
           "type": "object",
@@ -764,10 +924,11 @@
             "repository": { "type": "string" },
             "tag": { "type": "string" }
           },
-          "required": ["pull", "repository", "tag"],
           "additionalProperties": false
         },
-        "queue": { "type": "string" },
+        "labels": { "type": "object" },
+        "node": { "type": "string" },
+        "nodeSelector": { "type": "object" },
         "queueSize": { "type": "integer" },
         "replicas": {
           "type": "object",
@@ -783,13 +944,16 @@
         "securityContext": { "type": "object" },
         "serviceName": { "type": "string" }
       },
-      "required": ["enabled", "replicas"],
+      "required": ["enabled"],
       "additionalProperties": false
     },
     "process": {
       "type": "object",
       "properties": {
+        "affinity": { "type": "object" },
+        "annotations": { "type": "object" },
         "containerPort": { "type": "integer" },
+        "containerSecurityContext": { "type": "object" },
         "enabled": { "type": "boolean" },
         "image": {
           "type": "object",
@@ -798,10 +962,11 @@
             "repository": { "type": "string" },
             "tag": { "type": "string" }
           },
-          "required": ["pull", "repository", "tag"],
           "additionalProperties": false
         },
-        "queue": { "type": "string" },
+        "labels": { "type": "object" },
+        "node": { "type": "string" },
+        "nodeSelector": { "type": "object" },
         "queueSize": { "type": "integer" },
         "replicas": {
           "type": "object",
@@ -817,13 +982,16 @@
         "securityContext": { "type": "object" },
         "serviceName": { "type": "string" }
       },
-      "required": ["enabled", "replicas"],
+      "required": ["enabled"],
       "additionalProperties": false
     },
     "queue": {
       "type": "object",
       "properties": {
+        "affinity": { "type": "object" },
+        "annotations": { "type": "object" },
         "containerPort": { "type": "integer" },
+        "containerSecurityContext": { "type": "object" },
         "enabled": { "type": "boolean" },
         "image": {
           "type": "object",
@@ -832,10 +1000,11 @@
             "repository": { "type": "string" },
             "tag": { "type": "string" }
           },
-          "required": ["pull", "repository", "tag"],
           "additionalProperties": false
         },
-        "queue": { "type": "string" },
+        "labels": { "type": "object" },
+        "node": { "type": "string" },
+        "nodeSelector": { "type": "object" },
         "queueSize": { "type": "integer" },
         "replicas": {
           "type": "object",
@@ -851,7 +1020,7 @@
         "securityContext": { "type": "object" },
         "serviceName": { "type": "string" }
       },
-      "required": ["enabled", "replicas"],
+      "required": ["enabled"],
       "additionalProperties": false
     },
     "ranker": {
@@ -860,7 +1029,10 @@
         "api": {
           "type": "object",
           "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
             "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
             "image": {
               "type": "object",
@@ -869,9 +1041,9 @@
                 "repository": { "type": "string" },
                 "tag": { "type": "string" }
               },
-              "required": ["pull", "repository", "tag"],
               "additionalProperties": false
             },
+            "labels": { "type": "object" },
             "loadBalancer": {
               "type": "object",
               "properties": {
@@ -884,6 +1056,8 @@
               "required": ["port", "ssl"],
               "additionalProperties": false
             },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
             "replicas": {
               "type": "object",
               "properties": {
@@ -900,12 +1074,16 @@
             "timeout": { "type": "integer" },
             "workers": { "type": "integer" }
           },
-          "required": ["enabled", "replicas"],
+          "required": ["enabled"],
           "additionalProperties": false
         },
         "inference": {
           "type": "object",
           "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
+            "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
             "deviceType": { "type": "string" },
             "enabled": { "type": "boolean" },
             "image": {
@@ -915,9 +1093,11 @@
                 "repository": { "type": "string" },
                 "tag": { "type": "string" }
               },
-              "required": ["pull", "repository", "tag"],
               "additionalProperties": false
             },
+            "labels": { "type": "object" },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
             "pvc": {
               "type": "object",
               "properties": {
@@ -944,7 +1124,7 @@
             "threads": { "type": "integer" },
             "workers": { "type": "integer" }
           },
-          "required": ["enabled", "replicas"],
+          "required": ["enabled"],
           "additionalProperties": false
         },
         "serviceName": { "type": "string" }
@@ -955,7 +1135,10 @@
     "summaryClient": {
       "type": "object",
       "properties": {
+        "affinity": { "type": "object" },
+        "annotations": { "type": "object" },
         "containerPort": { "type": "integer" },
+        "containerSecurityContext": { "type": "object" },
         "enabled": { "type": "boolean" },
         "image": {
           "type": "object",
@@ -964,28 +1147,11 @@
             "repository": { "type": "string" },
             "tag": { "type": "string" }
           },
-          "required": ["pull", "repository", "tag"],
           "additionalProperties": false
         },
-        "engines": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "engineID": { "type": "string" },
-              "maxInputTokens": { "type": "integer" },
-              "maxOutputTokens": { "type": "integer" },
-              "maxRequests": { "type": "integer" },
-              "reasoningEffort": { "type": "string" },
-              "requestLimit": { "type": "integer" },
-              "type": { "type": "string" },
-              "vision": { "type": "boolean" }
-            },
-            "required": ["engineID"],
-            "additionalProperties": false
-          }
-        },
-        "queue": { "type": "string" },
+        "labels": { "type": "object" },
+        "node": { "type": "string" },
+        "nodeSelector": { "type": "object" },
         "queueSize": { "type": "integer" },
         "replicas": {
           "type": "object",
@@ -1001,13 +1167,16 @@
         "securityContext": { "type": "object" },
         "serviceName": { "type": "string" }
       },
-      "required": ["enabled", "replicas"],
+      "required": ["enabled"],
       "additionalProperties": false
     },
     "upload": {
       "type": "object",
       "properties": {
+        "affinity": { "type": "object" },
+        "annotations": { "type": "object" },
         "containerPort": { "type": "integer" },
+        "containerSecurityContext": { "type": "object" },
         "enabled": { "type": "boolean" },
         "image": {
           "type": "object",
@@ -1016,10 +1185,11 @@
             "repository": { "type": "string" },
             "tag": { "type": "string" }
           },
-          "required": ["pull", "repository", "tag"],
           "additionalProperties": false
         },
-        "queue": { "type": "string" },
+        "labels": { "type": "object" },
+        "node": { "type": "string" },
+        "nodeSelector": { "type": "object" },
         "queueSize": { "type": "integer" },
         "replicas": {
           "type": "object",
@@ -1035,7 +1205,7 @@
         "securityContext": { "type": "object" },
         "serviceName": { "type": "string" }
       },
-      "required": ["enabled", "replicas"],
+      "required": ["enabled"],
       "additionalProperties": false
     },
     "dashboard": {
@@ -1157,6 +1327,6 @@
       "additionalProperties": false
     }
   },
-  "required": ["cluster", "namespace", "pvClass"],
+  "required": ["cluster", "namespace"],
   "additionalProperties": false
 }

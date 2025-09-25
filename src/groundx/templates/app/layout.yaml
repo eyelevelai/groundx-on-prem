@@ -5,15 +5,21 @@
 {{- $svcKey := printf "groundx.%s.settings" $entry -}}
 {{- $svcData := include $svcKey $ | fromYaml -}}
 
+{{- $aff := get $svcData "affinity" -}}
+{{- $anns := get $svcData "annotations" -}}
+{{- $csct := get $svcData "containerSecurityContext" -}}
 {{- $image := get $svcData "image" -}}
-{{- $replicas := get $svcData "replicas" -}}
-{{- $res := get $svcData "resources" -}}
+{{- $lbls := get $svcData "labels" -}}
+{{- $node := get $svcData "node" -}}
+{{- $nsl := get $svcData "nodeSelector" -}}
+{{- $rp := get $svcData "replicas" -}}
+{{- $rs := get $svcData "resources" -}}
 {{- $pull := get $svcData "pull" -}}
-{{- $sctx := get $svcData "securityContext" -}}
+{{- $sct := get $svcData "securityContext" -}}
 {{- $svc := get $svcData "name" -}}
+{{- $tl := get $svcData "tolerations" -}}
 
-{{- $desired := get $replicas "desired" -}}
-
+{{- $desired := get $rp "desired" -}}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -31,9 +37,21 @@ spec:
     metadata:
       labels:
         app: {{ $svc }}
+{{- if gt (len $lbls) 0 }}
+{{ toYaml $lbls | nindent 8 }}
+{{- end }}
+{{- if gt (len $anns) 0 }}
+      annotations:
+{{ toYaml $anns | nindent 8 }}
+{{- end }}
     spec:
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
-{{ include "groundx.renderNodeSelector" (dict "name" $svc "indent" 6 "root" $) }}
+{{- if gt (len $aff) 0 }}
+      affinity:
+{{ toYaml $aff | nindent 8 }}
+{{- end }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
+{{- include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
+{{- include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
       initContainers:
         - name: wait-for-cache
           image: {{ include "groundx.busybox.image" $ }}
@@ -44,7 +62,7 @@ spec:
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
           command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.file.serviceDependency" $) (include "groundx.file.port" $) }}; do echo waiting for file storage; sleep 2; done"]
       containers:
-        - name: {{ $svc }}
+        - name: {{ $svc | quote }}
           image: {{ $image | quote }}
           imagePullPolicy: {{ $pull | quote }}
           env:
@@ -58,7 +76,7 @@ spec:
             - -c
             - |
               export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sctx "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
           livenessProbe:
             exec:
               command:
@@ -75,9 +93,7 @@ spec:
               - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
             initialDelaySeconds: 10
             periodSeconds: 30
-{{- if $res }}
-{{ include "groundx.renderContainerResources" (dict "ctx" $res "indent" 10) }}
-{{- end }}
+{{ include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
           volumeMounts:
             - name: config-volume
               mountPath: /app/config.py

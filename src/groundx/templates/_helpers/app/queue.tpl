@@ -1,3 +1,9 @@
+{{- define "groundx.queue.node" -}}
+{{- $in := .Values.queue | default dict -}}
+{{- $df := include "groundx.node.cpuOnly" . -}}
+{{ dig "node" $df $in }}
+{{- end }}
+
 {{- define "groundx.queue.serviceName" -}}
 {{- $in := .Values.queue | default dict -}}
 {{ dig "serviceName" "queue" $in }}
@@ -23,19 +29,30 @@ true
 {{- end }}
 
 {{- define "groundx.queue.image" -}}
-{{- $in := .Values.queue.image | default dict -}}
+{{- $b := .Values.queue | default dict -}}
+{{- $in := dig "image" dict $b -}}
 {{- $bs := printf "%s/eyelevel/queue" (include "groundx.imageRepository" .) -}}
 {{ printf "%s:%s" (dig "repository" $bs $in) (dig "repository" "latest" $in) }}
 {{- end }}
 
 {{- define "groundx.queue.pull" -}}
-{{- $in := .Values.queue.image | default dict -}}
+{{- $b := .Values.queue | default dict -}}
+{{- $in := dig "image" dict $b -}}
 {{ (dig "pull" "Always" $in) }}
 {{- end }}
 
 {{- define "groundx.queue.queueSize" -}}
 {{- $in := .Values.queue | default dict -}}
 {{ dig "queueSize" 4 $in }}
+{{- end }}
+
+{{- define "groundx.queue.replicas" -}}
+{{- $b := .Values.queue | default dict -}}
+{{- $in := dig "replicas" dict $b -}}
+{{- if not $in }}
+  {{- $in = dict "desired" 1 "max" 1 "min" 1 -}}
+{{- end }}
+{{- toYaml $in | nindent 0 }}
 {{- end }}
 
 {{- define "groundx.queue.serviceUrl" -}}
@@ -51,23 +68,41 @@ true
 
 {{- define "groundx.queue.settings" -}}
 {{- $in := .Values.queue | default dict -}}
+{{- $rep := (include "groundx.queue.replicas" . | fromYaml) -}}
 {{- $cfg := dict
   "dependencies" (dict
     "groundx" "groundx"
   )
+  "node"         (include "groundx.queue.node" .)
+  "replicas"     ($rep)
 -}}
 {{- $_ := set $cfg "name"         (include "groundx.queue.serviceName" .) -}}
 {{- $_ := set $cfg "image"        (include "groundx.queue.image" .) -}}
 {{- $_ := set $cfg "port"         (include "groundx.queue.containerPort" .) -}}
 {{- $_ := set $cfg "pull"         (include "groundx.queue.pull" .) -}}
-{{- if and (hasKey $in "replicas") (not (empty (get $in "replicas"))) -}}
-  {{- $_ := set $cfg "replicas" (get $in "replicas") -}}
+{{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
+  {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
+{{- end -}}
+{{- if and (hasKey $in "annotations") (not (empty (get $in "annotations"))) -}}
+  {{- $_ := set $cfg "annotations" (get $in "annotations") -}}
+{{- end -}}
+{{- if and (hasKey $in "containerSecurityContext") (not (empty (get $in "containerSecurityContext"))) -}}
+  {{- $_ := set $cfg "containerSecurityContext" (get $in "containerSecurityContext") -}}
+{{- end -}}
+{{- if and (hasKey $in "labels") (not (empty (get $in "labels"))) -}}
+  {{- $_ := set $cfg "labels" (get $in "labels") -}}
+{{- end -}}
+{{- if and (hasKey $in "nodeSelector") (not (empty (get $in "nodeSelector"))) -}}
+  {{- $_ := set $cfg "nodeSelector" (get $in "nodeSelector") -}}
 {{- end -}}
 {{- if and (hasKey $in "resources") (not (empty (get $in "resources"))) -}}
   {{- $_ := set $cfg "resources" (get $in "resources") -}}
 {{- end -}}
 {{- if and (hasKey $in "securityContext") (not (empty (get $in "securityContext"))) -}}
   {{- $_ := set $cfg "securityContext" (get $in "securityContext") -}}
+{{- end -}}
+{{- if and (hasKey $in "tolerations") (not (empty (get $in "tolerations"))) -}}
+  {{- $_ := set $cfg "tolerations" (get $in "tolerations") -}}
 {{- end -}}
 {{- $cfg | toYaml -}}
 {{- end }}
