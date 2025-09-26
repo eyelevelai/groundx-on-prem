@@ -4,24 +4,31 @@ chart:
   version: 0.1.0
 
 tests:
-  - it: "default: golang.yaml"
+  - it: "default: golang"
     templates:
       - ../templates/app/golang.yaml
     values:
       - ../values.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "empty: golang.yaml"
+  - it: "empty: golang"
     templates:
       - ../templates/app/golang.yaml
     values:
       - ./files/values.empty.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "aws: golang.yaml"
+  - it: "aws: golang"
     templates:
       - ../templates/app/golang.yaml
     values:
       - ../values/values.aws.services.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "openshift: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/values.openshift.yaml
     asserts:
       - matchSnapshot: {}

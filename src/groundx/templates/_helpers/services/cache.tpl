@@ -86,6 +86,28 @@ false
 {{ dig "imagePullPolicy" "Always" $in }}
 {{- end }}
 
+{{- define "groundx.cache.isRoute" -}}
+{{- $lb := (include "groundx.cache.loadBalancer" . | fromYaml) -}}
+{{- $os := include "groundx.isOpenshift" . -}}
+{{- $ty := (dig "type" "ClusterIP" $lb) | trim | lower -}}
+{{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.metrics.cache.isRoute" -}}
+{{- $lb := (include "groundx.metrics.cache.loadBalancer" . | fromYaml) -}}
+{{- $os := include "groundx.isOpenshift" . -}}
+{{- $ty := (dig "type" "ClusterIP" $lb) | trim | lower -}}
+{{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.cache.mountPath" -}}
 {{- $in := .Values.cache | default dict -}}
 {{ dig "mountPath" "/mnt/redis" $in }}

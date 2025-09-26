@@ -4,24 +4,31 @@ chart:
   version: 0.1.0
 
 tests:
-  - it: "default: api.yaml"
+  - it: "default: api"
     templates:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "empty: api.yaml"
+  - it: "empty: api"
     templates:
       - ../templates/app/api.yaml
     values:
       - ./files/values.empty.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "aws: api.yaml"
+  - it: "aws: api"
     templates:
       - ../templates/app/api.yaml
     values:
       - ../values/values.aws.services.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "openshift: api"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values/values.openshift.yaml
     asserts:
       - matchSnapshot: {}

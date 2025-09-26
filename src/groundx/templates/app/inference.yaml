@@ -76,7 +76,7 @@ spec:
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
           command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.file.serviceDependency" $) (include "groundx.file.port" $) }}; do echo waiting for file storage; sleep 2; done"]
 {{- end }}
-{{- if $csym }}
+{{- if eq $csym "true" }}
         - name: create-symlink
           image: {{ include "groundx.busybox.image" $ }}
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
@@ -231,7 +231,7 @@ spec:
         - name: supervisord-volume
           configMap:
             name: {{ $supe }}
-{{- if $csym }}
+{{- if eq $csym "true" }}
         - name: {{ $svc }}
           configMap:
             name: ldconfig-symlink-map

@@ -1,6 +1,5 @@
-'aws: stream-cluster.yaml':
-'aws: stream-topics.yaml':
-'default: stream-cluster.yaml':
+'aws: stream':
+'default: stream':
   1: |
     apiVersion: kafka.strimzi.io/v1beta2
     kind: KafkaNodePool
@@ -88,8 +87,7 @@
                 key: node
                 value: eyelevel-cpu-only
         version: 4.0.0
-'default: stream-topics.yaml':
-  1: |
+  3: |
     apiVersion: kafka.strimzi.io/v1beta2
     kind: KafkaTopic
     metadata:
@@ -103,7 +101,7 @@
         segment.bytes: 1073741824
       partitions: 1
       replicas: 1
-  2: |
+  4: |
     apiVersion: kafka.strimzi.io/v1beta2
     kind: KafkaTopic
     metadata:
@@ -117,7 +115,7 @@
         segment.bytes: 1073741824
       partitions: 1
       replicas: 1
-  3: |
+  5: |
     apiVersion: kafka.strimzi.io/v1beta2
     kind: KafkaTopic
     metadata:
@@ -131,7 +129,7 @@
         segment.bytes: 1073741824
       partitions: 1
       replicas: 1
-  4: |
+  6: |
     apiVersion: kafka.strimzi.io/v1beta2
     kind: KafkaTopic
     metadata:
@@ -145,7 +143,7 @@
         segment.bytes: 1073741824
       partitions: 1
       replicas: 1
-  5: |
+  7: |
     apiVersion: kafka.strimzi.io/v1beta2
     kind: KafkaTopic
     metadata:
@@ -159,7 +157,7 @@
         segment.bytes: 1073741824
       partitions: 1
       replicas: 1
-'empty: stream-cluster.yaml':
+'empty: stream':
   1: |
     apiVersion: kafka.strimzi.io/v1beta2
     kind: KafkaNodePool
@@ -247,8 +245,7 @@
                 key: node
                 value: eyelevel-cpu-only
         version: 4.0.0
-'empty: stream-topics.yaml':
-  1: |
+  3: |
     apiVersion: kafka.strimzi.io/v1beta2
     kind: KafkaTopic
     metadata:
@@ -262,7 +259,7 @@
         segment.bytes: 1073741824
       partitions: 1
       replicas: 1
-  2: |
+  4: |
     apiVersion: kafka.strimzi.io/v1beta2
     kind: KafkaTopic
     metadata:
@@ -276,7 +273,7 @@
         segment.bytes: 1073741824
       partitions: 1
       replicas: 1
-  3: |
+  5: |
     apiVersion: kafka.strimzi.io/v1beta2
     kind: KafkaTopic
     metadata:
@@ -290,7 +287,7 @@
         segment.bytes: 1073741824
       partitions: 1
       replicas: 1
-  4: |
+  6: |
     apiVersion: kafka.strimzi.io/v1beta2
     kind: KafkaTopic
     metadata:
@@ -304,7 +301,165 @@
         segment.bytes: 1073741824
       partitions: 1
       replicas: 1
+  7: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-upload
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+'openshift: stream':
+  1: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaNodePool
+    metadata:
+      labels:
+        app: stream-dual-role
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        strimzi.io/cluster: stream-cluster
+        version: 0.1.0
+      name: stream-dual-role
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      roles:
+        - controller
+        - broker
+      storage:
+        type: jbod
+        volumes:
+          - deleteClaim: true
+            id: 0
+            kraftMetadata: shared
+            size: 5Gi
+            type: persistent-claim
+  2: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: Kafka
+    metadata:
+      annotations:
+        strimzi.io/kraft: enabled
+        strimzi.io/node-pools: enabled
+      labels:
+        app: stream
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: stream-cluster
+      namespace: eyelevel
+    spec:
+      entityOperator:
+        topicOperator: {}
+        userOperator: {}
+      kafka:
+        config:
+          default.replication.factor: 1
+          inter.broker.protocol.version: 4.0-IV3
+          log.message.format.version: 4.0-IV3
+          min.insync.replicas: 1
+          offsets.topic.replication.factor: 1
+          transaction.state.log.min.isr: 1
+          transaction.state.log.replication.factor: 1
+          unstable.api.versions.enable: "true"
+          unstable.feature.versions.enable: "true"
+        listeners:
+          - name: kafka
+            port: 9092
+            tls: false
+            type: internal
+        metadataVersion: 4.0-IV3
+        replicas: 1
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+        storage:
+          deleteClaim: true
+          size: 10Gi
+          type: persistent-claim
+        template:
+          pod:
+            affinity:
+              nodeAffinity:
+                requiredDuringSchedulingIgnoredDuringExecution:
+                  nodeSelectorTerms:
+                    - matchExpressions:
+                        - key: node
+                          operator: In
+                          values:
+                            - eyelevel-cpu-only
+            tolerations:
+              - effect: NoSchedule
+                key: node
+                value: eyelevel-cpu-only
+        version: 4.0.0
+  3: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-pre-process
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  4: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-process
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
   5: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-summary
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  6: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-update
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  7: |
     apiVersion: kafka.strimzi.io/v1beta2
     kind: KafkaTopic
     metadata:

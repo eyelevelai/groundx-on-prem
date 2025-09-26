@@ -8,10 +8,10 @@
 {{- $anns := get $svcData "annotations" -}}
 {{- $cport := get $svcData "port" -}}
 {{- $csct := get $svcData "containerSecurityContext" -}}
-{{- $ct := include "groundx.clusterType" $ -}}
 {{- $dpnd := get $svcData "dependencies" | default dict -}}
 {{- $image := get $svcData "image" -}}
 {{- $io := include "groundx.ingestOnly" $ -}}
+{{- $ir := get $svcData "isRoute" -}}
 {{- $lb := get $svcData "loadBalancer" -}}
 {{- $lbls := get $svcData "labels" -}}
 {{- $node := get $svcData "node" -}}
@@ -132,7 +132,7 @@ spec:
           configMap:
             name: init-database-file
 {{- if $lb }}
-{{- if eq $ct "openshift" }}
+{{- if eq $ir "true" }}
 {{ include "groundx.renderRoute" (dict "name" $svc "lb" $lb "root" $) }}
 {{- else }}
 {{ include "groundx.renderLoadBalancer" (dict "name" $svc "lb" $lb "root" $) }}

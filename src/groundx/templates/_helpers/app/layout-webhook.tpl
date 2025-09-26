@@ -30,6 +30,17 @@ true
 {{ printf "%s:%s" (dig "repository" $bs $in) (dig "repository" "latest" $in) }}
 {{- end }}
 
+{{- define "groundx.layoutWebhook.isRoute" -}}
+{{- $lb := (include "groundx.layoutWebhook.loadBalancer" . | fromYaml) -}}
+{{- $os := include "groundx.isOpenshift" . -}}
+{{- $ty := (dig "type" "ClusterIP" $lb) | trim | lower -}}
+{{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.layoutWebhook.port" -}}
 {{- $in := .Values.layoutWebhook | default dict -}}
 {{- $lb := dig "loadBalancer" dict $in -}}
@@ -102,6 +113,7 @@ true
   "dependencies" (dict
     "groundx" "groundx"
   )
+  "isRoute"      (include "groundx.layoutWebhook.isRoute" .)
   "node"         (include "groundx.layoutWebhook.node" .)
   "replicas"     ($rep)
 -}}

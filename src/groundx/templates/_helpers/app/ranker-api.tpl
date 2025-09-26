@@ -37,6 +37,17 @@ true
 {{ printf "%s:%s" (dig "repository" $bs $img) (dig "repository" "latest" $img) }}
 {{- end }}
 
+{{- define "groundx.ranker.api.isRoute" -}}
+{{- $lb := (include "groundx.ranker.api.loadBalancer" . | fromYaml) -}}
+{{- $os := include "groundx.isOpenshift" . -}}
+{{- $ty := (dig "type" "ClusterIP" $lb) | trim | lower -}}
+{{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.ranker.api.port" -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "api" dict $b -}}
@@ -139,6 +150,7 @@ true
 {{- $_ := set $cfg "name"         (include "groundx.ranker.api.serviceName" .) -}}
 {{- $_ := set $cfg "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc) -}}
 {{- $_ := set $cfg "image"        (include "groundx.ranker.api.image" .) -}}
+{{- $_ := set $cfg "isRoute"      (include "groundx.ranker.api.isRoute" .) -}}
 {{- $_ := set $cfg "loadBalancer" (include "groundx.ranker.api.loadBalancer" .) -}}
 {{- $_ := set $cfg "port"         (include "groundx.ranker.api.containerPort" .) -}}
 {{- $_ := set $cfg "pull"         (include "groundx.ranker.api.pull" .) -}}

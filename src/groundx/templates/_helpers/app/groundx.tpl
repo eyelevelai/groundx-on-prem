@@ -30,6 +30,17 @@ true
 {{ printf "%s:%s" (dig "repository" $bs $in) (dig "repository" "latest" $in) }}
 {{- end }}
 
+{{- define "groundx.groundx.isRoute" -}}
+{{- $lb := (include "groundx.groundx.loadBalancer" . | fromYaml) -}}
+{{- $os := include "groundx.isOpenshift" . -}}
+{{- $ty := (dig "type" "ClusterIP" $lb) | trim | lower -}}
+{{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.groundx.port" -}}
 {{- $in := .Values.groundx | default dict -}}
 {{- if hasKey $in "loadBalancer" -}}
@@ -126,14 +137,15 @@ false
 {{- $rep := (include "groundx.groundx.replicas" . | fromYaml) -}}
 {{- $cfg := dict
   "dependencies" $dpnd
+  "image"        (include "groundx.groundx.image" .)
+  "isRoute"      (include "groundx.groundx.isRoute" .)
+  "loadBalancer" (include "groundx.groundx.loadBalancer" . | trim)
+  "name"         (include "groundx.groundx.serviceName" .)
   "node"         (include "groundx.groundx.node" .)
+  "port"         (include "groundx.groundx.containerPort" .)
+  "pull"         (include "groundx.groundx.pull" .)
   "replicas"     ($rep)
 -}}
-{{- $_ := set $cfg "name"         (include "groundx.groundx.serviceName" .) -}}
-{{- $_ := set $cfg "image"        (include "groundx.groundx.image" .) -}}
-{{- $_ := set $cfg "loadBalancer" (include "groundx.groundx.loadBalancer" . | trim) -}}
-{{- $_ := set $cfg "port"         (include "groundx.groundx.containerPort" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.groundx.pull" .) -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

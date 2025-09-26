@@ -4,24 +4,31 @@ chart:
   version: 0.1.0
 
 tests:
-  - it: "default: inference.yaml"
+  - it: "default: inference"
     templates:
       - ../templates/app/inference.yaml
     values:
       - ../values.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "empty: inference.yaml"
+  - it: "empty: inference"
     templates:
       - ../templates/app/inference.yaml
     values:
       - ./files/values.empty.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "aws: inference.yaml"
+  - it: "aws: inference"
     templates:
       - ../templates/app/inference.yaml
     values:
       - ../values/values.aws.services.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "openshift: inference"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values/values.openshift.yaml
     asserts:
       - matchSnapshot: {}

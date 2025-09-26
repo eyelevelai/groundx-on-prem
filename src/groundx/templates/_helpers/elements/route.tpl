@@ -18,6 +18,6 @@ spec:
     port: {{ (dig "port" 8080 $lb) }}
     targetPort: {{ (dig "targetPort" 8080 $lb) }}
   tls:
-    termination: edge
     insecureEdgeTerminationPolicy: Redirect
+    termination: edge
 {{- end }}

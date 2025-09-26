@@ -4,24 +4,31 @@ chart:
   version: 0.1.0
 
 tests:
-  - it: "default: layout.yaml"
+  - it: "default: layout"
     templates:
       - ../templates/app/layout.yaml
     values:
       - ../values.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "empty: layout.yaml"
+  - it: "empty: layout"
     templates:
       - ../templates/app/layout.yaml
     values:
       - ./files/values.empty.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "aws: layout.yaml"
+  - it: "aws: layout"
     templates:
       - ../templates/app/layout.yaml
     values:
       - ../values/values.aws.services.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "openshift: layout"
+    templates:
+      - ../templates/app/layout.yaml
+    values:
+      - ../values/values.openshift.yaml
     asserts:
       - matchSnapshot: {}

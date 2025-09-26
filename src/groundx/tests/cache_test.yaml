@@ -4,45 +4,35 @@ chart:
   version: 0.1.0
 
 tests:
-  - it: "default: cache.yaml"
+  - it: "default: cache"
     templates:
       - ../templates/services/cache.yaml
-    values:
-      - ../values.yaml
-    asserts:
-      - matchSnapshot: {}
-  - it: "default: cache-metrics.yaml"
-    templates:
       - ../templates/services/cache-metrics.yaml
     values:
       - ../values.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "empty: cache.yaml"
+  - it: "empty: cache"
     templates:
       - ../templates/services/cache.yaml
-    values:
-      - ./files/values.empty.yaml
-    asserts:
-      - matchSnapshot: {}
-  - it: "empty: cache-metrics.yaml"
-    templates:
       - ../templates/services/cache-metrics.yaml
     values:
       - ./files/values.empty.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "aws: cache.yaml"
+  - it: "aws: cache"
     templates:
       - ../templates/services/cache.yaml
+      - ../templates/services/cache-metrics.yaml
     values:
       - ../values/values.aws.services.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "aws: cache-metrics.yaml"
+  - it: "openshift: cache"
     templates:
+      - ../templates/services/cache.yaml
       - ../templates/services/cache-metrics.yaml
     values:
-      - ../values/values.aws.services.yaml
+      - ../values/values.openshift.yaml
     asserts:
       - matchSnapshot: {}

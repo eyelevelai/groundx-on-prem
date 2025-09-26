@@ -9,9 +9,9 @@
 {{- $cfg := get $svcData "cfg" -}}
 {{- $cport := get $svcData "port" -}}
 {{- $csct := get $svcData "containerSecurityContext" -}}
-{{- $ct := include "groundx.clusterType" $ -}}
 {{- $guni := get $svcData "gunicorn" -}}
 {{- $image := get $svcData "image" -}}
+{{- $ir := get $svcData "isRoute" -}}
 {{- $lb := get $svcData "loadBalancer" -}}
 {{- $lbls := get $svcData "labels" -}}
 {{- $node := get $svcData "node" -}}
@@ -109,7 +109,7 @@ spec:
         - name: gunicorn-conf-volume
           configMap:
             name: {{ $guni }}
-{{- if eq $ct "openshift" }}
+{{- if eq $ir "true" }}
 {{ include "groundx.renderRoute" (dict "name" $svc "lb" $lb "root" $) }}
 {{- else }}
 {{ include "groundx.renderLoadBalancer" (dict "name" $svc "lb" $lb "root" $) }}

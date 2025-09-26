@@ -34,6 +34,17 @@ true
 {{ printf "%s:%s" (dig "repository" $bs $img) (dig "repository" "latest" $img) }}
 {{- end }}
 
+{{- define "groundx.layout.api.isRoute" -}}
+{{- $lb := (include "groundx.layout.api.loadBalancer" . | fromYaml) -}}
+{{- $os := include "groundx.isOpenshift" . -}}
+{{- $ty := (dig "type" "ClusterIP" $lb) | trim | lower -}}
+{{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.layout.api.port" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "api" dict $b -}}
@@ -144,6 +155,7 @@ false
 {{- $_ := set $cfg "name"         (include "groundx.layout.api.serviceName" .) -}}
 {{- $_ := set $cfg "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc) -}}
 {{- $_ := set $cfg "image"        (include "groundx.layout.api.image" .) -}}
+{{- $_ := set $cfg "isRoute"      (include "groundx.layout.api.isRoute" .) -}}
 {{- $_ := set $cfg "loadBalancer" (include "groundx.layout.api.loadBalancer" .) -}}
 {{- $_ := set $cfg "port"         (include "groundx.layout.api.containerPort" .) -}}
 {{- $_ := set $cfg "pull"         (include "groundx.layout.api.pull" .) -}}

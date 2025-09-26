@@ -4,7 +4,7 @@
 {{- $svc := include "groundx.cache.serviceName" . -}}
 
 {{- $cport := include "groundx.cache.containerPort" . -}}
-{{- $ct := include "groundx.clusterType" . -}}
+{{- $ir := include "groundx.cache.isRoute" . -}}
 {{- $lb := include "groundx.cache.loadBalancer" . -}}
 {{- $mountName := printf "%s-persistent-storage" $svc -}}
 {{- $node := include "groundx.cache.node" . -}}
@@ -66,7 +66,7 @@ spec:
         - name: {{ $mountName | quote }}
           emptyDir: {}
 {{- if $lb }}
-{{- if eq $ct "openshift" }}
+{{- if eq $ir "true" }}
 {{ include "groundx.renderRoute" (dict "name" $svc "lb" $lb "root" $) }}
 {{- else }}
 {{ include "groundx.renderLoadBalancer" (dict "name" $svc "lb" $lb "root" $) }}
