@@ -111,15 +111,21 @@ false
 
 {{- define "groundx.groundx.settings" -}}
 {{- $in := .Values.groundx | default dict -}}
+
+{{- $dpnd := dict
+  "cache"  "cache"
+  "file"   "file"
+  "search" "search"
+  "db"     "db"
+-}}
+{{- $cd := include "groundx.stream.create" . -}}
+{{- if eq $cd "true" -}}
+{{- $_ := set $dpnd "stream" "stream" -}}
+{{- end -}}
+
 {{- $rep := (include "groundx.groundx.replicas" . | fromYaml) -}}
 {{- $cfg := dict
-  "dependencies" (dict
-    "cache"  "cache"
-    "file"   "file"
-    "search" "search"
-    "db"     "db"
-    "stream" "stream"
-  )
+  "dependencies" $dpnd
   "node"         (include "groundx.groundx.node" .)
   "replicas"     ($rep)
 -}}

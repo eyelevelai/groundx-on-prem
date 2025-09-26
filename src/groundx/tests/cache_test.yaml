@@ -32,3 +32,17 @@ tests:
       - ./files/values.empty.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "aws: cache.yaml"
+    templates:
+      - ../templates/services/cache.yaml
+    values:
+      - ../values/values.aws.services.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "aws: cache-metrics.yaml"
+    templates:
+      - ../templates/services/cache-metrics.yaml
+    values:
+      - ../values/values.aws.services.yaml
+    asserts:
+      - matchSnapshot: {}

@@ -71,7 +71,7 @@ true
 {{- $ex := dig "existing" dict $in -}}
 {{- $ic := include "groundx.stream.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
-{{ dig "port" "" $ex }}
+{{ dig "port" 9092 $ex }}
 {{- else -}}
 {{ dig "port" 9092 $in }}
 {{- end -}}
@@ -113,6 +113,7 @@ true
 {{- if and (hasKey $pp "region") (hasKey $pp "url") -}}
 {{- $cfg = dict
   "region" (index $pp "region")
+  "topic"  ("file-pre-process")
   "type"   ("sqs")
   "url"    (index $pp "url")
 -}}
@@ -148,6 +149,7 @@ true
 {{- if and (hasKey $pp "region") (hasKey $pp "url") -}}
 {{- $cfg = dict
   "region" (index $pp "region")
+  "topic"  ("file-process")
   "type"   ("sqs")
   "url"    (index $pp "url")
 -}}
@@ -183,6 +185,7 @@ true
 {{- if and (hasKey $pp "region") (hasKey $pp "url") -}}
 {{- $cfg = dict
   "region" (index $pp "region")
+  "topic"  ("file-summary")
   "type"   ("sqs")
   "url"    (index $pp "url")
 -}}
@@ -218,6 +221,7 @@ true
 {{- if and (hasKey $pp "region") (hasKey $pp "url") -}}
 {{- $cfg = dict
   "region" (index $pp "region")
+  "topic"  ("file-update")
   "type"   ("sqs")
   "url"    (index $pp "url")
 -}}
@@ -253,6 +257,7 @@ true
 {{- if and (hasKey $pp "region") (hasKey $pp "url") -}}
 {{- $cfg = dict
   "region" (index $pp "region")
+  "topic"  ("file-upload")
   "type"   ("sqs")
   "url"    (index $pp "url")
 -}}

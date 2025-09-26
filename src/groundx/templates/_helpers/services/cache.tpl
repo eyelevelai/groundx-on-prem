@@ -4,6 +4,33 @@
 {{ dig "node" $df $in }}
 {{- end }}
 
+{{- define "groundx.cache.create" -}}
+{{- $in := .Values.cache | default dict -}}
+{{- $ex := (dig "existing" nil $in) | default dict -}}
+{{- if not (empty (dig "addr" "" $ex)) -}}
+false
+{{- else if hasKey $in "enabled" -}}
+  {{- if (dig "enabled" false $in) -}}true{{- else -}}false{{- end -}}
+{{- else -}}
+true
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.metrics.cache.create" -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $in := (dig "metrics" nil $b) | default dict -}}
+{{- if (dig "enabled" false $in) -}}
+{{- $ex := (dig "existing" nil $in) | default dict -}}
+{{- if not (empty (dig "addr" "" $ex)) -}}
+false
+{{- else -}}
+{{ include "groundx.cache.create" . }}
+{{- end -}}
+{{- else -}}
+false
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.cache.serviceName" -}}
 {{- $in := .Values.cache | default dict -}}
 {{ dig "serviceName" "cache" $in }}
@@ -79,18 +106,6 @@
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
-{{- define "groundx.cache.create" -}}
-{{- $in := .Values.cache | default dict -}}
-{{- $ex := (dig "existing" nil $in) | default dict -}}
-{{- if not (empty (dig "addr" "" $ex)) -}}
-false
-{{- else if hasKey $in "enabled" -}}
-  {{- if (dig "enabled" false $in) -}}true{{- else -}}false{{- end -}}
-{{- else -}}
-true
-{{- end -}}
-{{- end }}
-
 {{- define "groundx.cache.addr" -}}
 {{- $in := .Values.cache | default dict -}}
 {{- $ex := (dig "existing" nil $in) | default dict -}}
@@ -120,24 +135,9 @@ true
 {{- $in := .Values.cache | default dict -}}
 {{- $ex := (dig "existing" nil $in) | default dict -}}
 {{- if not (empty (dig "addr" "" $ex)) -}}
-{{ dig "port" "" $ex }}
+{{ dig "port" 6379 $ex }}
 {{- else -}}
 {{ dig "port" 6379 $in }}
-{{- end -}}
-{{- end }}
-
-{{- define "groundx.metrics.cache.create" -}}
-{{- $b := .Values.cache | default dict -}}
-{{- $in := (dig "metrics" nil $b) | default dict -}}
-{{- if (dig "enabled" false $in) -}}
-{{- $ex := (dig "existing" nil $in) | default dict -}}
-{{- if not (empty (dig "addr" "" $ex)) -}}
-false
-{{- else -}}
-{{ include "groundx.cache.create" . }}
-{{- end -}}
-{{- else -}}
-false
 {{- end -}}
 {{- end }}
 
@@ -183,7 +183,7 @@ false
 {{- $ex := dig "existing" dict $m -}}
 {{- if (dig "enabled" false $m) -}}
 {{- if not (empty (dig "addr" "" $ex)) -}}
-{{ dig "port" "" $ex }}
+{{ dig "port" 6379 $ex }}
 {{- else -}}
 {{ dig "port" 6379 $m }}
 {{- end -}}

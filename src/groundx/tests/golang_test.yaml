@@ -18,3 +18,10 @@ tests:
       - ./files/values.empty.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "aws: golang.yaml"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/values.aws.services.yaml
+    asserts:
+      - matchSnapshot: {}

@@ -6,7 +6,7 @@
 {{- define "groundx.search.existing" -}}
 {{- $in := .Values.search | default dict -}}
 {{- $ex := dig "existing" dict $in -}}
-{{ not (or (empty (dig "domain" "" $ex)) (empty (dig "url" "" $ex))) }}
+{{ not (empty (dig "url" "" $ex)) }}
 {{- end }}
 
 {{- define "groundx.search.create" -}}
@@ -28,35 +28,54 @@ true
 {{- end }}
 
 {{- define "groundx.search.baseDomain" -}}
-{{- $in := .Values.search | default dict -}}
-{{- $ex := dig "existing" dict $in -}}
 {{- $ic := include "groundx.search.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
-{{ dig "domain" "" $ex }}
+{{- $url := include "groundx.search.baseURL" . -}}
+{{- $parts := splitList "://" $url -}}
+{{- if and (kindIs "slice" $parts) (eq (len $parts) 2) -}}
+{{ index $parts 1 }}
+{{- else -}}
+{{ $url }}
+{{- end -}}
 {{- else -}}
 {{ include "groundx.search.serviceHost" . }}
 {{- end -}}
 {{- end }}
 
 {{- define "groundx.search.baseURL" -}}
+{{- $ic := include "groundx.search.existing" . | trim | lower -}}
+{{- if eq $ic "true" -}}
 {{- $in := .Values.search | default dict -}}
 {{- $ex := dig "existing" dict $in -}}
-{{- $ic := include "groundx.search.serviceHost" . -}}
-{{- $port := include "groundx.search.port" . -}}
-{{- if eq $ic "true" -}}
 {{ dig "url" "" $ex }}
 {{- else -}}
-{{ printf "https://%s:%v" $ic $port }}
+{{- $port := include "groundx.search.port" . -}}
+{{- $svc := include "groundx.search.serviceHost" . -}}
+{{ printf "https://%s:%v" $svc $port }}
 {{- end -}}
 {{- end }}
 
 {{- define "groundx.search.port" -}}
-{{- $in := .Values.search | default dict -}}
-{{- $ex := dig "existing" dict $in -}}
 {{- $ic := include "groundx.search.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
-{{ dig "port" "" $ex }}
+{{- $url := include "groundx.search.baseURL" . }}
+{{- $sch := "http" -}}
+{{- $sparts := splitList "://" $url -}}
+{{- $domain := include "groundx.search.baseURL" . -}}
+{{- if and (kindIs "slice" $sparts) (eq (len $sparts) 2) -}}
+{{- $sch = index $sparts 0 -}}
+{{- $domain = index $sparts 1 -}}
+{{- end -}}
+{{- $pparts := splitList ":" $domain -}}
+{{- if and (kindIs "slice" $pparts) (eq (len $pparts) 2) -}}
+{{ index $pparts 1 }}
+{{- else if eq $sch "https" -}}
+443
 {{- else -}}
+80
+{{- end -}}
+{{- else -}}
+{{- $in := .Values.search | default dict -}}
 {{ dig "port" 9200 $in }}
 {{- end -}}
 {{- end }}

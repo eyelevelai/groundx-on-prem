@@ -77,7 +77,7 @@ spec:
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
           command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.file.serviceDependency" $) (include "groundx.file.port" $) }}; do echo waiting for file storage; sleep 2; done"]
 {{- end }}
-{{- if and (ne $io "true") (hasKey $dpnd "search") }}
+{{- if hasKey $dpnd "search" }}
         - name: wait-for-search
           image: {{ include "groundx.busybox.image" $ }}
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}

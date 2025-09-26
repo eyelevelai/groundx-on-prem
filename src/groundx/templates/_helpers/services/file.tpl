@@ -6,7 +6,7 @@
 {{- define "groundx.file.existing" -}}
 {{- $in := .Values.file | default dict -}}
 {{- $ex := dig "existing" dict $in -}}
-{{ not (empty (dig "domain" "" $ex)) }}
+{{ not (empty (dig "url" "" $ex)) }}
 {{- end }}
 
 {{- define "groundx.file.create" -}}
@@ -27,12 +27,25 @@ true
 {{- printf "%s.%s.svc.cluster.local" $name $ns -}}
 {{- end }}
 
+{{- define "groundx.file.bucketDomain" -}}
+{{- $ic := include "groundx.file.existing" . | trim | lower -}}
+{{- if eq $ic "true" -}}
+{{ include "groundx.file.domain" . }}
+{{- else -}}
+{{ include "groundx.file.serviceHost" . }}
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.file.bucketName" -}}
 {{- $in := .Values.file | default dict -}}
 {{ dig "bucketName" "eyelevel" $in }}
 {{- end }}
 
 {{- define "groundx.file.bucketSsl" -}}
+{{- $ic := include "groundx.file.existing" . | trim | lower -}}
+{{- if eq $ic "true" -}}
+{{ include "groundx.file.ssl" . }}
+{{- else -}}
 {{- $in := .Values.file | default dict -}}
 {{- $lb := dig "loadBalancer" dict $in -}}
 {{- if hasKey $lb "ssl" }}
@@ -40,14 +53,19 @@ true
 {{- else -}}
 {{ dig "ssl" "false" $in }}
 {{- end -}}
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.file.domain" -}}
 {{- $in := .Values.file | default dict -}}
-{{- $ex := dig "existing" dict $in -}}
 {{- $ic := include "groundx.file.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
-{{ dig "domain" "" $ex }}
+{{- $ex := dig "existing" dict $in -}}
+{{- $url := dig "url" "" $ex -}}
+{{- $parts := splitList "://" $url -}}
+{{- if and (kindIs "slice" $parts) (eq (len $parts) 2) -}}
+{{ index $parts 1 }}
+{{- end -}}
 {{- else if and (hasKey $in "customDomain") (not (empty $in.customDomain)) }}
 {{ $in.customDomain }}
 {{- else -}}
@@ -62,10 +80,23 @@ true
 
 {{- define "groundx.file.port" -}}
 {{- $in := .Values.file | default dict -}}
-{{- $ex := dig "existing" dict $in -}}
 {{- $ic := include "groundx.file.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
-{{ dig "port" "" $ex }}
+{{- $ex := dig "existing" dict $in -}}
+{{- $url := dig "url" "" $ex -}}
+{{- $parts := splitList "://" $url -}}
+{{- $sch := "http" -}}
+{{- if and (kindIs "slice" $parts) (eq (len $parts) 2) -}}
+{{- $sch = index $parts 0 -}}
+{{- end -}}
+{{- $port := dig "port" -1 $ex -}}
+{{- if gt $port -1 -}}
+{{ $port }}
+{{- else if eq $sch "https" -}}
+443
+{{- else -}}
+80
+{{- end -}}
 {{- else -}}
 {{ dig "port" 9000 $in }}
 {{- end -}}
@@ -82,37 +113,48 @@ true
 {{- end }}
 
 {{- define "groundx.file.serviceDependency" -}}
-{{- $in := .Values.file | default dict -}}
-{{- $ex := dig "existing" dict $in -}}
-{{- $ns := include "groundx.ns" . -}}
-{{- $name := include "groundx.file.serviceName" . -}}
 {{- $ic := include "groundx.file.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
 {{ include "groundx.file.domain" . }}
 {{- else -}}
+{{- $ns := include "groundx.ns" . -}}
+{{- $name := include "groundx.file.serviceName" . -}}
 {{- printf "%s-tenant-hl.%s.svc.cluster.local" $name $ns -}}
 {{- end -}}
 {{- end }}
 
 {{- define "groundx.file.serviceType" -}}
 {{- $in := .Values.file | default dict -}}
-{{- $ex := dig "existing" dict $in -}}
 {{- $ic := include "groundx.file.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
+{{- $ex := dig "existing" dict $in -}}
 {{ dig "serviceType" "minio" $ex }}
 {{- else -}}
-minio
+{{ dig "serviceType" "minio" $in }}
 {{- end -}}
 {{- end }}
 
 {{- define "groundx.file.ssl" -}}
 {{- $in := .Values.file | default dict -}}
-{{- $ex := dig "existing" dict $in -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
 {{- $ic := include "groundx.file.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
-{{ dig "ssl" "false" $ex }}
+{{- $ex := dig "existing" dict $in -}}
+{{- $url := dig "url" "" $ex -}}
+{{- $parts := splitList "://" $url -}}
+{{- $sch := "http" -}}
+{{- if and (kindIs "slice" $parts) (eq (len $parts) 2) -}}
+{{- $sch = index $parts 0 -}}
+{{- end -}}
+{{- if eq $sch "https" -}}
+true
 {{- else -}}
-{{ dig "ssl" "false" $in }}
+false
+{{- end -}}
+{{- else if hasKey $lb "ssl" -}}
+{{ dig "ssl" "" $lb }}
+{{- else -}}
+false
 {{- end -}}
 {{- end }}
 
@@ -139,20 +181,19 @@ minio
 {{- $ns := include "groundx.ns" . -}}
 {{- $svc := include "groundx.file.serviceName" . -}}
 {{- $ssl := include "groundx.file.ssl" . -}}
-{{- $bucketDomain := printf "%s.%s.svc.cluster.local" $svc $ns -}}
 {{- $sslStr := printf "%v" $ssl -}}
 {{- $scheme := "http" -}}
 {{- if eq $sslStr "true" -}}{{- $scheme = "https" -}}{{- end -}}
-{{- $extBucketSSL := include "groundx.file.bucketSsl" . -}}
-{{- $extBucketSSLStr := printf "%v" $extBucketSSL -}}
+{{- $bucketSSL := include "groundx.file.bucketSsl" . -}}
+{{- $bucketSSLStr := printf "%v" $bucketSSL -}}
 {{- $bucketScheme := "http" -}}
-{{- if eq $extBucketSSLStr "true" -}}{{- $bucketScheme = "https" -}}{{- end -}}
+{{- if eq $bucketSSLStr "true" -}}{{- $bucketScheme = "https" -}}{{- end -}}
 {{- dict
     "baseDomain"   (include "groundx.file.domain" .)
     "bucketName"   (include "groundx.file.bucketName" .)
-    "bucketDomain" (include "groundx.file.serviceHost" .)
+    "bucketDomain" (include "groundx.file.bucketDomain" .)
     "bucketScheme" $bucketScheme
-    "bucketSSL"    (include "groundx.file.bucketSsl" .)
+    "bucketSSL"    $bucketSSL
     "dependency"   (include "groundx.file.serviceDependency" .)
     "serviceType"  (include "groundx.file.serviceType" .)
     "username"     (include "groundx.file.username" .)

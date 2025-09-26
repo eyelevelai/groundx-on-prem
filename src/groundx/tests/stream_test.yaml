@@ -32,3 +32,17 @@ tests:
       - ./files/values.empty.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "aws: stream-cluster.yaml"
+    templates:
+      - ../templates/services/stream-cluster.yaml
+    values:
+      - ../values/values.aws.services.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "aws: stream-topics.yaml"
+    templates:
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ../values/values.aws.services.yaml
+    asserts:
+      - matchSnapshot: {}

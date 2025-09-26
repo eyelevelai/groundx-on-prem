@@ -1,0 +1,57 @@
+namespace: eyelevel
+ingestOnly: true
+
+cluster:
+  pvClass: eyelevel-pv
+  type: eks
+
+cache:
+  metrics:
+    enabled: false
+
+  existing:
+    addr: X.X.X.use2.cache.amazonaws.com
+    isCluster: true
+    port: 6379
+
+db:
+  existing:
+    ro: X.X.us-east-2.rds.amazonaws.com
+    rw: X.X.us-east-2.rds.amazonaws.com
+    port: 3306
+
+file:
+  bucketName: eyelevel
+
+  existing:
+    url: https://X.s3.us-west-2.amazonaws.com
+    serviceType: s3
+
+search:
+  existing:
+    url: https://X.us-east-2.es.amazonaws.com
+
+stream:
+  enabled: false
+
+  topics:
+    preProcess:
+      region: us-east-2
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/X/file-pre-process
+    process:
+      region: us-east-2
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/X/file-process
+    summary:
+      region: us-east-2
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/X/file-summary
+    update:
+      region: us-east-2
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/X/file-update
+    upload:
+      region: us-east-2
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/X/file-upload

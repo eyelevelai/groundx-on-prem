@@ -52,7 +52,7 @@ true
 {{- $ex := dig "existing" dict $in -}}
 {{- $ic := include "groundx.db.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
-{{ dig "port" "" $ex }}
+{{ dig "port" 3306 $ex }}
 {{- else -}}
 {{ dig "port" 3306 $in }}
 {{- end -}}
@@ -73,7 +73,7 @@ true
 {{- $ex := dig "existing" dict $in -}}
 {{- $ic := include "groundx.db.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
-{{ coalesce (dig "ro" "" $ex) (dig "rw" "" $ex) }}
+{{- coalesce (dig "ro" "" $ex) (dig "rw" "" $ex) -}}
 {{- else -}}
 {{- $name := include "groundx.db.serviceName" . -}}
 {{- $ns := include "groundx.ns" . -}}
@@ -86,7 +86,7 @@ true
 {{- $ex := dig "existing" dict $in -}}
 {{- $ic := include "groundx.db.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
-{{ coalesce (dig "rw" "" $ex) (dig "ro" "" $ex) }}
+{{- coalesce (dig "rw" "" $ex) (dig "ro" "" $ex) -}}
 {{- else -}}
 {{- $name := include "groundx.db.serviceName" . -}}
 {{- $ns := include "groundx.ns" . -}}

@@ -18,3 +18,10 @@ tests:
       - ./files/values.empty.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "aws: api.yaml"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values/values.aws.services.yaml
+    asserts:
+      - matchSnapshot: {}
