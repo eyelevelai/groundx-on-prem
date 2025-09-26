@@ -32,3 +32,10 @@ tests:
       - ../values/values.openshift.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "minikube: api"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values/values.minikube.yaml
+    asserts:
+      - matchSnapshot: {}

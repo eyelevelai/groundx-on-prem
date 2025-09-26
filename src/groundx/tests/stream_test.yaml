@@ -36,3 +36,11 @@ tests:
       - ../values/values.openshift.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "minikube: stream"
+    templates:
+      - ../templates/services/stream-cluster.yaml
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ../values/values.minikube.yaml
+    asserts:
+      - matchSnapshot: {}
