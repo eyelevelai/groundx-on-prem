@@ -1,4 +1,4 @@
-inference.yaml:
+default-inference.yaml:
   1: |
     apiVersion: apps/v1
     kind: Deployment
@@ -52,6 +52,10 @@ inference.yaml:
                   port: 8080
                 initialDelaySeconds: 30
                 periodSeconds: 15
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -212,6 +216,10 @@ inference.yaml:
                     - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
                 initialDelaySeconds: 60
                 periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 1.5
+                  memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -444,6 +452,647 @@ inference.yaml:
                   port: 8080
                 initialDelaySeconds: 30
                 periodSeconds: 15
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 1Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /workspace/config_models.py
+                  name: config-models
+                  subPath: config_models.py
+                - mountPath: /workspace/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /workspace/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /workspace/hf_models_cache
+                  name: model-volume
+              workingDir: /workspace
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              imagePullPolicy: Always
+              name: wait-for-cache
+            - args:
+                - echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh
+              command:
+                - /bin/sh
+                - -c
+                - --
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              imagePullPolicy: Always
+              name: create-symlink
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 50Mi
+              securityContext:
+                privileged: true
+              volumeMounts:
+                - mountPath: /scripts/ldconfig_symlink.sh
+                  name: summary-inference
+                  subPath: ldconfig_symlink.sh
+                - mountPath: /host-sbin
+                  name: host-sbin
+                - mountPath: /host-usr-sbin
+                  name: host-usr-sbin
+                - mountPath: /host-bin
+                  name: host-bin
+                - mountPath: /host-usr-bin
+                  name: host-usr-bin
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  download_and_extract_model() {
+                    echo "Model downloading started..."
+
+                    touch /workspace/hf_models_cache/downloading
+
+                    echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                      while [ $RETRIES -lt $MAX_RETRIES ]; do \
+                        echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
+                        wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
+                        echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
+                      done; \
+                      [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm /workspace/hf_models_cache/downloading; exit 1; }; \
+                      echo "Unzipping summary.tar.gz.part.$PART..."; tar -xzf /workspace/hf_models_cache/summary.tar.gz.part.$PART -C /workspace/hf_models_cache/; echo "Unzipping summary.tar.gz.part.$PART complete...";'
+
+                    rm /workspace/hf_models_cache/summary.tar.*
+                    rm /workspace/hf_models_cache/downloading
+                    touch /workspace/hf_models_cache/complete.g34b
+                  }
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                    if [ ! -f /workspace/hf_models_cache/downloading ]; then
+                      download_and_extract_model
+                    else
+                      echo "Download in progress by another pod. Waiting..."
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                        sleep $((3 + RANDOM % 2))
+                      done
+
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                        download_and_extract_model
+                      else
+                        echo "Model cache ready."
+                      fi
+                    fi
+                  else
+                    echo "Model cache already exists. Skipping download."
+                  fi
+
+                  echo "Model load done."
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              imagePullPolicy: Always
+              name: download-model
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /workspace/hf_models_cache
+                  name: model-volume
+          nodeSelector:
+            node: eyelevel-gpu-summary
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-gpu-summary
+          volumes:
+            - configMap:
+                name: config-models-map
+              name: config-models
+            - configMap:
+                name: summary-config-py-map
+              name: config-volume
+            - configMap:
+                name: summary-inference-supervisord-conf-map
+              name: supervisord-volume
+            - configMap:
+                defaultMode: 365
+                name: ldconfig-symlink-map
+              name: summary-inference
+            - hostPath:
+                path: /sbin
+                type: Directory
+              name: host-sbin
+            - hostPath:
+                path: /usr/sbin
+                type: Directory
+              name: host-usr-sbin
+            - hostPath:
+                path: /bin
+                type: Directory
+              name: host-bin
+            - hostPath:
+                path: /usr/bin
+                type: Directory
+              name: host-usr-bin
+            - name: model-volume
+              persistentVolumeClaim:
+                claimName: summary-model
+  5: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: summary-model
+      name: summary-model
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: eyelevel-pv
+empty-inference.yaml:
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: layout-inference
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-inference
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: layout-inference
+      template:
+        metadata:
+          labels:
+            app: layout-inference
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:latest
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 8
+                httpGet:
+                  path: /alive
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
+              name: layout-inference
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 30
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config_models.py
+                  name: config-models
+                  subPath: config_models.py
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              imagePullPolicy: Always
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              imagePullPolicy: Always
+              name: wait-for-file-storage
+            - args:
+                - echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh
+              command:
+                - /bin/sh
+                - -c
+                - --
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              imagePullPolicy: Always
+              name: create-symlink
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 50Mi
+              securityContext:
+                privileged: true
+              volumeMounts:
+                - mountPath: /scripts/ldconfig_symlink.sh
+                  name: layout-inference
+                  subPath: ldconfig_symlink.sh
+                - mountPath: /host-sbin
+                  name: host-sbin
+                - mountPath: /host-usr-sbin
+                  name: host-usr-sbin
+                - mountPath: /host-bin
+                  name: host-bin
+                - mountPath: /host-usr-bin
+                  name: host-usr-bin
+          nodeSelector:
+            node: eyelevel-gpu-layout
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-gpu-layout
+          volumes:
+            - configMap:
+                name: config-models-map
+              name: config-models
+            - configMap:
+                name: layout-config-py-map
+              name: config-volume
+            - configMap:
+                name: layout-inference-supervisord-conf-map
+              name: supervisord-volume
+            - configMap:
+                defaultMode: 365
+                name: ldconfig-symlink-map
+              name: layout-inference
+            - hostPath:
+                path: /sbin
+                type: Directory
+              name: host-sbin
+            - hostPath:
+                path: /usr/sbin
+                type: Directory
+              name: host-usr-sbin
+            - hostPath:
+                path: /bin
+                type: Directory
+              name: host-bin
+            - hostPath:
+                path: /usr/bin
+                type: Directory
+              name: host-usr-bin
+  2: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: ranker-inference
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-inference
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: ranker-inference
+      template:
+        metadata:
+          labels:
+            app: ranker-inference
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/workspace:$PYTHONPATH &&  supervisord -c /workspace/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:latest
+              imagePullPolicy: Always
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
+                failureThreshold: 10
+                initialDelaySeconds: 60
+                periodSeconds: 30
+              name: ranker-inference
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
+                initialDelaySeconds: 60
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 1.5
+                  memory: 1Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /workspace/config_models.py
+                  name: config-models
+                  subPath: config_models.py
+                - mountPath: /workspace/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /workspace/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /workspace/hf_models_cache
+                  name: model-volume
+              workingDir: /workspace
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              imagePullPolicy: Always
+              name: wait-for-cache
+            - args:
+                - echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh
+              command:
+                - /bin/sh
+                - -c
+                - --
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              imagePullPolicy: Always
+              name: create-symlink
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 50Mi
+              securityContext:
+                privileged: true
+              volumeMounts:
+                - mountPath: /scripts/ldconfig_symlink.sh
+                  name: ranker-inference
+                  subPath: ldconfig_symlink.sh
+                - mountPath: /host-sbin
+                  name: host-sbin
+                - mountPath: /host-usr-sbin
+                  name: host-usr-sbin
+                - mountPath: /host-bin
+                  name: host-bin
+                - mountPath: /host-usr-bin
+                  name: host-usr-bin
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  download_and_extract_model() {
+                    echo "Model downloading started..."
+
+                    touch /workspace/hf_models_cache/downloading
+
+                    echo "00 01 02" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/ranker/model/current/model.tar.gz.part.$PART; \
+                      while [ $RETRIES -lt $MAX_RETRIES ]; do \
+                        echo "Download [attempt $RETRIES] ranker.tar.gz.part.$PART"; \
+                        wget -q -O /workspace/hf_models_cache/ranker.tar.gz.part.$PART $URL && { echo "Downloaded ranker.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
+                        echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
+                      done; \
+                      [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm /workspace/hf_models_cache/downloading; exit 1; }; \
+                      echo "Unzipping ranker.tar.gz.part.$PART..."; tar -xzf /workspace/hf_models_cache/ranker.tar.gz.part.$PART -C /workspace/hf_models_cache/; echo "Unzipping ranker.tar.gz.part.$PART complete...";'
+
+                    rm /workspace/hf_models_cache/ranker.tar.*
+                    rm /workspace/hf_models_cache/downloading
+                    touch /workspace/hf_models_cache/complete.model
+                  }
+                  if [ ! -f /workspace/hf_models_cache/complete.model ]; then
+                    if [ ! -f /workspace/hf_models_cache/downloading ]; then
+                      download_and_extract_model
+                    else
+                      echo "Download in progress by another pod. Waiting..."
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.model ]; do
+                        sleep $((3 + RANDOM % 2))
+                      done
+
+                      if [ ! -f /workspace/hf_models_cache/complete.model ]; then
+                        download_and_extract_model
+                      else
+                        echo "Model cache ready."
+                      fi
+                    fi
+                  else
+                    echo "Model cache already exists. Skipping download."
+                  fi
+
+                  echo "Model load done."
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              imagePullPolicy: Always
+              name: download-model
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /workspace/hf_models_cache
+                  name: model-volume
+          nodeSelector:
+            node: eyelevel-gpu-ranker
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-gpu-ranker
+          volumes:
+            - configMap:
+                name: config-models-map
+              name: config-models
+            - configMap:
+                name: ranker-config-py-map
+              name: config-volume
+            - configMap:
+                name: ranker-inference-supervisord-conf-map
+              name: supervisord-volume
+            - configMap:
+                defaultMode: 365
+                name: ldconfig-symlink-map
+              name: ranker-inference
+            - hostPath:
+                path: /sbin
+                type: Directory
+              name: host-sbin
+            - hostPath:
+                path: /usr/sbin
+                type: Directory
+              name: host-usr-sbin
+            - hostPath:
+                path: /bin
+                type: Directory
+              name: host-bin
+            - hostPath:
+                path: /usr/bin
+                type: Directory
+              name: host-usr-bin
+            - name: model-volume
+              persistentVolumeClaim:
+                claimName: ranker-model
+  3: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: ranker-model
+      name: ranker-model
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: eyelevel-pv
+  4: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: summary-inference
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-inference
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: summary-inference
+      template:
+        metadata:
+          labels:
+            app: summary-inference
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/workspace:$PYTHONPATH &&  supervisord -c /workspace/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:latest
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 8
+                httpGet:
+                  path: /alive
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
+              name: summary-inference
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 30
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:

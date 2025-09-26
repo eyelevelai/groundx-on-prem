@@ -1,13 +1,20 @@
 suite: "layout renders as expected"
-values:
-  - ../values.yaml
 chart:
   appVersion: 0.1.0
   version: 0.1.0
 
 tests:
-  - it: layout.yaml
+  - it: default-layout.yaml
     templates:
       - ../templates/app/layout.yaml
+    values:
+      - ../values.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: empty-layout.yaml
+    templates:
+      - ../templates/app/layout.yaml
+    values:
+      - ./files/values.empty.yaml
     asserts:
       - matchSnapshot: {}

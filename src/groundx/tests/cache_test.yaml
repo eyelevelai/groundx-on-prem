@@ -1,18 +1,34 @@
 suite: "caches render as expected"
-values:
-  - ../values.yaml
 chart:
   appVersion: 0.1.0
   version: 0.1.0
 
 tests:
-  - it: cache.yaml
+  - it: default-cache.yaml
     templates:
       - ../templates/services/cache.yaml
+    values:
+      - ../values.yaml
     asserts:
       - matchSnapshot: {}
-  - it: cache-metrics.yaml
+  - it: default-cache-metrics.yaml
     templates:
       - ../templates/services/cache-metrics.yaml
+    values:
+      - ../values.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: empty-cache.yaml
+    templates:
+      - ../templates/services/cache.yaml
+    values:
+      - ./files/values.empty.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: empty-cache-metrics.yaml
+    templates:
+      - ../templates/services/cache-metrics.yaml
+    values:
+      - ./files/values.empty.yaml
     asserts:
       - matchSnapshot: {}

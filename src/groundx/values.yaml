@@ -108,8 +108,18 @@ stream:
 summary:
   api:
     enabled: true
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
   inference:
     enabled: true
+
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
 
   existing: {}
 #    apiKey: my-oai-key
@@ -127,18 +137,53 @@ groundx:
 layout:
   api:
     enabled: true
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
   correct:
     enabled: true
+
+    resources:
+      requests:
+        cpu: 1
+        memory: 1Gi
   inference:
     enabled: true
+
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
   map:
     enabled: true
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
   ocr:
     enabled: true
+
+    resources:
+      requests:
+        cpu: 1
+        memory: 1Gi
   process:
     enabled: true
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 1Gi
   save:
     enabled: true
+
+    resources:
+      requests:
+        cpu: 200m
+        memory: 1Gi
 
 layoutWebhook:
   enabled: true
@@ -175,8 +220,18 @@ queue:
 ranker:
   api:
     enabled: true
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
   inference:
     enabled: true
+
+    resources:
+      requests:
+        cpu: 1.5
+        memory: 1Gi
 
 summaryClient:
   enabled: true
