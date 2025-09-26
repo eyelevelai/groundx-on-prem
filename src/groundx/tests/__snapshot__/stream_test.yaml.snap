@@ -1,6 +1,6 @@
 'aws: stream-cluster.yaml':
 'aws: stream-topics.yaml':
-default-stream-cluster.yaml:
+'default: stream-cluster.yaml':
   1: |
     apiVersion: kafka.strimzi.io/v1beta2
     kind: KafkaNodePool
@@ -88,7 +88,7 @@ default-stream-cluster.yaml:
                 key: node
                 value: eyelevel-cpu-only
         version: 4.0.0
-default-stream-topics.yaml:
+'default: stream-topics.yaml':
   1: |
     apiVersion: kafka.strimzi.io/v1beta2
     kind: KafkaTopic
@@ -159,7 +159,7 @@ default-stream-topics.yaml:
         segment.bytes: 1073741824
       partitions: 1
       replicas: 1
-empty-stream-cluster.yaml:
+'empty: stream-cluster.yaml':
   1: |
     apiVersion: kafka.strimzi.io/v1beta2
     kind: KafkaNodePool
@@ -247,7 +247,7 @@ empty-stream-cluster.yaml:
                 key: node
                 value: eyelevel-cpu-only
         version: 4.0.0
-empty-stream-topics.yaml:
+'empty: stream-topics.yaml':
   1: |
     apiVersion: kafka.strimzi.io/v1beta2
     kind: KafkaTopic

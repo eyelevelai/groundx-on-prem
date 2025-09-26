@@ -1,6 +1,6 @@
 'aws: cache.yaml':
 'aws: cache-metrics.yaml':
-default-cache-metrics.yaml:
+'default: cache-metrics.yaml':
   1: |
     apiVersion: apps/v1
     kind: StatefulSet
@@ -81,7 +81,7 @@ default-cache-metrics.yaml:
       selector:
         app: cache-metrics
       type: ClusterIP
-default-cache.yaml:
+'default: cache.yaml':
   1: |
     apiVersion: apps/v1
     kind: StatefulSet
@@ -162,7 +162,7 @@ default-cache.yaml:
       selector:
         app: cache
       type: ClusterIP
-empty-cache-metrics.yaml:
+'empty: cache-metrics.yaml':
   1: |
     apiVersion: apps/v1
     kind: StatefulSet
@@ -243,7 +243,7 @@ empty-cache-metrics.yaml:
       selector:
         app: cache-metrics
       type: ClusterIP
-empty-cache.yaml:
+'empty: cache.yaml':
   1: |
     apiVersion: apps/v1
     kind: StatefulSet

@@ -4,28 +4,28 @@ chart:
   version: 0.1.0
 
 tests:
-  - it: default-stream-cluster.yaml
+  - it: "default: stream-cluster.yaml"
     templates:
       - ../templates/services/stream-cluster.yaml
     values:
       - ../values.yaml
     asserts:
       - matchSnapshot: {}
-  - it: default-stream-topics.yaml
+  - it: "default: stream-topics.yaml"
     templates:
       - ../templates/services/stream-topics.yaml
     values:
       - ../values.yaml
     asserts:
       - matchSnapshot: {}
-  - it: empty-stream-cluster.yaml
+  - it: "empty: stream-cluster.yaml"
     templates:
       - ../templates/services/stream-cluster.yaml
     values:
       - ./files/values.empty.yaml
     asserts:
       - matchSnapshot: {}
-  - it: empty-stream-topics.yaml
+  - it: "empty: stream-topics.yaml"
     templates:
       - ../templates/services/stream-topics.yaml
     values:
