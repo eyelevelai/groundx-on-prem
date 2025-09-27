@@ -1,4 +1,5 @@
 {{- define "groundx.renderPVC" -}}
+{{- $app := .app -}}
 {{- $pvc := .ctx -}}
 {{- $root := .root -}}
 {{- $name := dig "name" "" $pvc -}}
@@ -10,7 +11,7 @@ metadata:
   name: {{ $name | quote }}
   namespace: {{ include "groundx.ns" $root | quote }}
   labels:
-    app: {{ $name | quote }}
+    app: {{ $app | quote }}
 spec:
   storageClassName: {{ dig "class" "" $pvc }}
   accessModes:

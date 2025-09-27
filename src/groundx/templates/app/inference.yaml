@@ -257,7 +257,7 @@ spec:
         - name: model-volume
           persistentVolumeClaim:
             claimName: {{ dig "name" "" $pvc }}
-{{ include "groundx.renderPVC" (dict "ctx" $pvc "root" $) }}
+{{ include "groundx.renderPVC" (dict "ctx" $pvc "app" $svc "root" $) }}
 {{- end }}
 
 {{ end }}

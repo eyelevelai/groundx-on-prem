@@ -1198,22 +1198,22 @@
     kind: Deployment
     metadata:
       labels:
-        app: layout-api
+        app: myapp-api
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: layout-api
+      name: myapp-api
       namespace: eyelevel
     spec:
       replicas: 1
       selector:
         matchLabels:
-          app: layout-api
+          app: myapp-api
       template:
         metadata:
           labels:
-            app: layout-api
+            app: myapp-api
         spec:
           containers:
             - command:
@@ -1235,7 +1235,7 @@
                   port: 8080
                 initialDelaySeconds: 10
                 periodSeconds: 30
-              name: layout-api
+              name: myapp-api
               ports:
                 - containerPort: 8080
                   protocol: TCP
@@ -1271,12 +1271,12 @@
             - command:
                 - sh
                 - -c
-                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+                - until nc -z myapp.eyelevel.svc.cluster.local 6377; do echo waiting for cache; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-cache
           nodeSelector:
-            node: eyelevel-cpu-only
+            node: test-label-1
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1288,21 +1288,21 @@
           tolerations:
             - effect: NoSchedule
               key: node
-              value: eyelevel-cpu-only
+              value: test-label-1
           volumes:
             - configMap:
-                name: layout-config-py-map
+                name: myapp-config-py-map
               name: config-volume
             - configMap:
-                name: layout-gunicorn-conf-py-map
+                name: myapp-gunicorn-conf-py-map
               name: gunicorn-conf-volume
   2: |
     apiVersion: v1
     kind: Service
     metadata:
       labels:
-        app: layout-api
-      name: layout-api
+        app: myapp-api
+      name: myapp-api
       namespace: eyelevel
     spec:
       ports:
@@ -1310,30 +1310,42 @@
           protocol: TCP
           targetPort: 8080
       selector:
-        app: layout-api
+        app: myapp-api
       type: ClusterIP
   3: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
       labels:
-        app: ranker-api
+        app: myapp-api
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: ranker-api
+      name: myapp-api
       namespace: eyelevel
     spec:
       replicas: 1
       selector:
         matchLabels:
-          app: ranker-api
+          app: myapp-api
       template:
         metadata:
+          annotations:
+            prometheus.io/port: "8081"
           labels:
-            app: ranker-api
+            app: myapp-api
+            app.kubernetes.io/name: myapp
         spec:
+          affinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - myapp
+                topologyKey: kubernetes.io/hostname
           containers:
             - command:
                 - /bin/bash
@@ -1345,23 +1357,23 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:latest
-              imagePullPolicy: Always
+              image: test.image:v1
+              imagePullPolicy: Never
               livenessProbe:
                 failureThreshold: 12
                 httpGet:
                   path: /health
-                  port: 8080
+                  port: 8081
                 initialDelaySeconds: 10
                 periodSeconds: 30
-              name: ranker-api
+              name: myapp-api
               ports:
-                - containerPort: 8080
+                - containerPort: 8081
                   protocol: TCP
               readinessProbe:
                 httpGet:
                   path: /health
-                  port: 8080
+                  port: 8081
                 initialDelaySeconds: 10
                 periodSeconds: 30
               resources:
@@ -1369,15 +1381,7 @@
                   cpu: 100m
                   memory: 128Mi
               securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 1001
-                runAsNonRoot: true
-                runAsUser: 1001
-                seccompProfile:
-                  type: RuntimeDefault
+                readOnlyRootFilesystem: true
               volumeMounts:
                 - mountPath: /app/config.py
                   name: config-volume
@@ -1390,69 +1394,76 @@
             - command:
                 - sh
                 - -c
-                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+                - until nc -z myapp.eyelevel.svc.cluster.local 6377; do echo waiting for cache; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-cache
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
-            fsGroup: 1001
-            fsGroupChangePolicy: OnRootMismatch
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
-            seccompProfile:
-              type: RuntimeDefault
+            fsGroup: 2000
           tolerations:
             - effect: NoSchedule
-              key: node
-              value: eyelevel-cpu-only
+              key: workload-type
+              operator: Equal
+              value: batch
           volumes:
             - configMap:
-                name: ranker-config-py-map
+                name: myapp-config-py-map
               name: config-volume
             - configMap:
-                name: ranker-gunicorn-conf-py-map
+                name: myapp-gunicorn-conf-py-map
               name: gunicorn-conf-volume
   4: |
     apiVersion: v1
     kind: Service
     metadata:
+      annotations:
+        service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "30"
       labels:
-        app: ranker-api
-      name: ranker-api
+        app: myapp-api
+      name: myapp-api
       namespace: eyelevel
     spec:
       ports:
-        - port: 80
+        - port: 6377
           protocol: TCP
-          targetPort: 8080
+          targetPort: 8081
       selector:
-        app: ranker-api
+        app: myapp-api
       type: ClusterIP
   5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
       labels:
-        app: summary-api
+        app: myapp-api
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: summary-api
+      name: myapp-api
       namespace: eyelevel
     spec:
       replicas: 1
       selector:
         matchLabels:
-          app: summary-api
+          app: myapp-api
       template:
         metadata:
+          annotations:
+            prometheus.io/port: "8081"
           labels:
-            app: summary-api
+            app: myapp-api
+            app.kubernetes.io/name: myapp
         spec:
+          affinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - myapp
+                topologyKey: kubernetes.io/hostname
           containers:
             - command:
                 - /bin/bash
@@ -1464,23 +1475,23 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:latest
-              imagePullPolicy: Always
+              image: test.image:v1
+              imagePullPolicy: Never
               livenessProbe:
                 failureThreshold: 12
                 httpGet:
                   path: /health
-                  port: 8080
+                  port: 8081
                 initialDelaySeconds: 10
                 periodSeconds: 30
-              name: summary-api
+              name: myapp-api
               ports:
-                - containerPort: 8080
+                - containerPort: 8081
                   protocol: TCP
               readinessProbe:
                 httpGet:
                   path: /health
-                  port: 8080
+                  port: 8081
                 initialDelaySeconds: 10
                 periodSeconds: 30
               resources:
@@ -1488,15 +1499,7 @@
                   cpu: 100m
                   memory: 256Mi
               securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 1001
-                runAsNonRoot: true
-                runAsUser: 1001
-                seccompProfile:
-                  type: RuntimeDefault
+                readOnlyRootFilesystem: true
               volumeMounts:
                 - mountPath: /app/config.py
                   name: config-volume
@@ -1509,46 +1512,38 @@
             - command:
                 - sh
                 - -c
-                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+                - until nc -z myapp.eyelevel.svc.cluster.local 6377; do echo waiting for cache; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-cache
           nodeSelector:
-            node: eyelevel-cpu-only
+            disktype: ssd
           securityContext:
-            fsGroup: 1001
-            fsGroupChangePolicy: OnRootMismatch
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
-            seccompProfile:
-              type: RuntimeDefault
-          tolerations:
-            - effect: NoSchedule
-              key: node
-              value: eyelevel-cpu-only
+            fsGroup: 2000
           volumes:
             - configMap:
-                name: summary-config-py-map
+                name: myapp-config-py-map
               name: config-volume
             - configMap:
-                name: summary-gunicorn-conf-py-map
+                name: myapp-gunicorn-conf-py-map
               name: gunicorn-conf-volume
   6: |
     apiVersion: v1
     kind: Service
     metadata:
+      annotations:
+        service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "30"
       labels:
-        app: summary-api
-      name: summary-api
+        app: myapp-api
+      name: myapp-api
       namespace: eyelevel
     spec:
       ports:
-        - port: 80
+        - port: 6377
           protocol: TCP
-          targetPort: 8080
+          targetPort: 8081
       selector:
-        app: summary-api
+        app: myapp-api
       type: ClusterIP
 'minikube: api':
   1: |

@@ -11,12 +11,17 @@
 {{- end }}
 
 {{- define "groundx.summary.inference.create" -}}
+{{- $is := include "groundx.summary.create" . -}}
+{{- if eq $is "false" -}}
+false
+{{- else -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
 {{- if hasKey $in "enabled" -}}
   {{- if (dig "enabled" false $in) -}}true{{- else -}}false{{- end -}}
 {{- else -}}
 true
+{{- end -}}
 {{- end -}}
 {{- end }}
 

@@ -136,23 +136,15 @@ summary:
     imagePullPolicy: Never
     labels:
       app.kubernetes.io/name: myapp
-    node: test-label-1
-    nodeSelector:
-      disktype: ssd
+    node: ""
     pvc:
       access: ReadOnce
-      capacity: 1Gi
       class: test-pv
       name: test-pvc
     queue: my-queue
     securityContext:
       fsGroup: 2000
     threads: 2
-    tolerations:
-      - effect: "NoSchedule"
-        key: "workload-type"
-        operator: "Equal"
-        value: "batch"
     workers: 4
 
 groundx:
@@ -195,6 +187,11 @@ groundx:
 
 layout:
   serviceName: myapp
+
+  api:
+    node: test-label-1
+    threads: 2
+    workers: 3
 
   correct:
     affinity:
@@ -256,11 +253,6 @@ layout:
     securityContext:
       fsGroup: 2000
     threads: 2
-    tolerations:
-      - effect: "NoSchedule"
-        key: "workload-type"
-        operator: "Equal"
-        value: "batch"
     workers: 4
 
   map:
@@ -576,36 +568,11 @@ ranker:
     workers: 4
 
   inference:
-    affinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchExpressions:
-              - key: app
-                operator: In
-                values:
-                  - myapp
-          topologyKey: "kubernetes.io/hostname"
-    annotations:
-      prometheus.io/port: "8081"
-    containerPort: 8081
-    containerSecurityContext:
-      readOnlyRootFilesystem: true
     deviceType: cpu
-    image: test.image:v1
-    imagePullPolicy: Never
-    labels:
-      app.kubernetes.io/name: myapp
     node: test-label-1
-    nodeSelector:
-      disktype: ssd
     pvc:
-      access: ReadOnce
       capacity: 1Gi
-      class: test-pv
-      name: test-pvc
     queue: my-queue
-    securityContext:
-      fsGroup: 2000
     threads: 2
     tolerations:
       - effect: "NoSchedule"

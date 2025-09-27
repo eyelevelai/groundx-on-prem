@@ -85,13 +85,24 @@ true
 {{- $ex := dig "existing" dict $in -}}
 {{- $url := dig "url" "" $ex -}}
 {{- $parts := splitList "://" $url -}}
+{{- $domain := $url -}}
 {{- $sch := "http" -}}
 {{- if and (kindIs "slice" $parts) (eq (len $parts) 2) -}}
 {{- $sch = index $parts 0 -}}
+{{- $domain = index $parts 1 -}}
 {{- end -}}
-{{- $port := dig "port" -1 $ex -}}
-{{- if gt $port -1 -}}
+{{- $pparts := splitList ":" $domain -}}
+{{- $rawPort := dig "port" "" $ex -}}
+{{- $port := -1 -}}
+{{- if (kindIs "string" $rawPort) }}
+{{- $port = (int $rawPort) -}}
+{{- else if (kindIs "int" $rawPort) }}
+  {{- $port = $rawPort -}}
+{{- end -}}
+{{- if gt $port 0 -}}
 {{ $port }}
+{{- else if and (kindIs "slice" $pparts) (eq (len $pparts) 2) -}}
+{{ index $pparts 1 }}
 {{- else if eq $sch "https" -}}
 443
 {{- else -}}
@@ -115,7 +126,13 @@ true
 {{- define "groundx.file.serviceDependency" -}}
 {{- $ic := include "groundx.file.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
-{{ include "groundx.file.domain" . }}
+{{- $domain := include "groundx.file.domain" . -}}
+{{- $parts := splitList ":" $domain -}}
+{{- if and (kindIs "slice" $parts) (eq (len $parts) 2) -}}
+{{ index $parts 0 }}
+{{- else -}}
+{{ $domain }}
+{{- end -}}
 {{- else -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- $name := include "groundx.file.serviceName" . -}}
