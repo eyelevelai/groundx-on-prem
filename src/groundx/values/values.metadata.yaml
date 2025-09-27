@@ -22,7 +22,7 @@ cache:
   containerSecurityContext:
     readOnlyRootFilesystem: true
   image: test.image:v1
-  imagePolicy: Never
+  imagePullPolicy: Never
   labels:
     app.kubernetes.io/name: myapp
     app.kubernetes.io/component: backend
@@ -67,7 +67,7 @@ cache:
     containerSecurityContext:
       readOnlyRootFilesystem: true
     image: test.image:v1
-    imagePolicy: Never
+    imagePullPolicy: Never
     labels:
       app.kubernetes.io/name: myapp
     loadBalancer:
@@ -91,7 +91,7 @@ cache:
         effect: "NoSchedule"
 
 summary:
-  defaultKitID: 1
+  defaultKitId: 1
   serviceName: myapp
 
   api:
@@ -111,7 +111,7 @@ summary:
     containerSecurityContext:
       readOnlyRootFilesystem: true
     image: test.image:v1
-    imagePolicy: Never
+    imagePullPolicy: Never
     labels:
       app.kubernetes.io/name: myapp
     loadBalancer:
@@ -152,15 +152,9 @@ summary:
     deviceType: cpu
     deviceUtilize: 0.37
     image: test.image:v1
-    imagePolicy: Never
+    imagePullPolicy: Never
     labels:
       app.kubernetes.io/name: myapp
-    loadBalancer:
-      ipType: LoadBalancer
-      isInternal: true
-      port: 6377
-      ssl: true
-      timeout: 30
     node: test-label-1
     nodeSelector:
       disktype: ssd
@@ -197,7 +191,7 @@ groundx:
   containerSecurityContext:
     readOnlyRootFilesystem: true
   image: test.image:v1
-  imagePolicy: Never
+  imagePullPolicy: Never
   labels:
     app.kubernetes.io/name: myapp
   loadBalancer:
@@ -238,7 +232,7 @@ layout:
     containerSecurityContext:
       readOnlyRootFilesystem: true
     image: test.image:v1
-    imagePolicy: Never
+    imagePullPolicy: Never
     labels:
       app.kubernetes.io/name: myapp
     loadBalancer:
@@ -278,7 +272,7 @@ layout:
     containerSecurityContext:
       readOnlyRootFilesystem: true
     image: test.image:v1
-    imagePolicy: Never
+    imagePullPolicy: Never
     labels:
       app.kubernetes.io/name: myapp
     node: test-label-1
@@ -313,7 +307,7 @@ layout:
       readOnlyRootFilesystem: true
     deviceType: cpu
     image: test.image:v1
-    imagePolicy: Never
+    imagePullPolicy: Never
     labels:
       app.kubernetes.io/name: myapp
     node: test-label-1
@@ -347,7 +341,7 @@ layout:
     containerSecurityContext:
       readOnlyRootFilesystem: true
     image: test.image:v1
-    imagePolicy: Never
+    imagePullPolicy: Never
     labels:
       app.kubernetes.io/name: myapp
     node: test-label-1
@@ -380,17 +374,10 @@ layout:
     containerPort: 8081
     containerSecurityContext:
       readOnlyRootFilesystem: true
-    credentials: testcreds
     image: test.image:v1
-    imagePolicy: Never
+    imagePullPolicy: Never
     labels:
       app.kubernetes.io/name: myapp
-    loadBalancer:
-      ipType: LoadBalancer
-      isInternal: true
-      port: 6377
-      ssl: true
-      timeout: 30
     node: test-label-1
     nodeSelector:
       disktype: ssd
@@ -425,7 +412,7 @@ layout:
     containerSecurityContext:
       readOnlyRootFilesystem: true
     image: test.image:v1
-    imagePolicy: Never
+    imagePullPolicy: Never
     labels:
       app.kubernetes.io/name: myapp
     node: test-label-1
@@ -459,7 +446,7 @@ layout:
     containerSecurityContext:
       readOnlyRootFilesystem: true
     image: test.image:v1
-    imagePolicy: Never
+    imagePullPolicy: Never
     labels:
       app.kubernetes.io/name: myapp
     node: test-label-1
@@ -493,7 +480,7 @@ layoutWebhook:
   containerSecurityContext:
     readOnlyRootFilesystem: true
   image: test.image:v1
-  imagePolicy: Never
+  imagePullPolicy: Never
   labels:
     app.kubernetes.io/name: myapp
   loadBalancer:
@@ -531,7 +518,7 @@ preProcess:
   containerSecurityContext:
     readOnlyRootFilesystem: true
   image: test.image:v1
-  imagePolicy: Never
+  imagePullPolicy: Never
   labels:
     app.kubernetes.io/name: myapp
   node: test-label-1
@@ -564,7 +551,7 @@ process:
   containerSecurityContext:
     readOnlyRootFilesystem: true
   image: test.image:v1
-  imagePolicy: Never
+  imagePullPolicy: Never
   labels:
     app.kubernetes.io/name: myapp
   node: test-label-1
@@ -597,7 +584,7 @@ queue:
   containerSecurityContext:
     readOnlyRootFilesystem: true
   image: test.image:v1
-  imagePolicy: Never
+  imagePullPolicy: Never
   labels:
     app.kubernetes.io/name: myapp
   node: test-label-1
@@ -633,7 +620,7 @@ ranker:
     containerSecurityContext:
       readOnlyRootFilesystem: true
     image: test.image:v1
-    imagePolicy: Never
+    imagePullPolicy: Never
     labels:
       app.kubernetes.io/name: myapp
     loadBalancer:
@@ -674,7 +661,7 @@ ranker:
       readOnlyRootFilesystem: true
     deviceType: cpu
     image: test.image:v1
-    imagePolicy: Never
+    imagePullPolicy: Never
     labels:
       app.kubernetes.io/name: myapp
     node: test-label-1
@@ -713,7 +700,7 @@ summaryClient:
   containerSecurityContext:
     readOnlyRootFilesystem: true
   image: test.image:v1
-  imagePolicy: Never
+  imagePullPolicy: Never
   labels:
     app.kubernetes.io/name: myapp
   node: test-label-1
@@ -746,7 +733,7 @@ upload:
   containerSecurityContext:
     readOnlyRootFilesystem: true
   image: test.image:v1
-  imagePolicy: Never
+  imagePullPolicy: Never
   labels:
     app.kubernetes.io/name: myapp
   node: test-label-1

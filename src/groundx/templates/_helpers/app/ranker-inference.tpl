@@ -43,15 +43,6 @@ true
 {{ dig "imagePullPolicy" "Always" $in }}
 {{- end }}
 
-{{- define "groundx.ranker.inference.image" -}}
-{{- $b := .Values.ranker | default dict -}}
-{{- $svc := include "groundx.ranker.inference.serviceName" . -}}
-{{- $in := dig "inference" dict $b -}}
-{{- $img := dig "image" dict $in -}}
-{{- $bs := printf "%s/eyelevel/%s" (include "groundx.imageRepository" .) $svc -}}
-{{ printf "%s:%s" (dig "repository" $bs $img) (dig "repository" "latest" $img) }}
-{{- end }}
-
 {{- define "groundx.ranker.inference.pvc" -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "inference" dict $b -}}

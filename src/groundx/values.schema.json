@@ -57,7 +57,7 @@
           "type": "object",
           "properties": {
             "dataType": { "type": "string" },
-            "engineID": { "type": "string" },
+            "engineId": { "type": "string" },
             "maxInputTokens": { "type": "integer" },
             "maxOutputTokens": { "type": "integer" },
             "maxRequests": { "type": "integer" },
@@ -66,7 +66,7 @@
             "type": { "type": "string" },
             "vision": { "type": "boolean" }
           },
-          "required": ["dataType", "engineID"],
+          "required": ["engineId"],
           "additionalProperties": false
         }
       },
@@ -171,7 +171,7 @@
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
             "serviceName": { "type": "string" },
-            "tolerations": { "type": "object" }
+            "tolerations": { "type": "array" }
           },
           "required": ["existing"],
           "additionalProperties": false
@@ -301,7 +301,7 @@
               "type": "object",
               "properties": {
                 "broker": { "type": "string" },
-                "groupID": { "type": "string" },
+                "groupId": { "type": "string" },
                 "region": { "type": "string" },
                 "topic": { "type": "string" },
                 "type": { "type": "string" },
@@ -313,7 +313,7 @@
               "type": "object",
               "properties": {
                 "broker": { "type": "string" },
-                "groupID": { "type": "string" },
+                "groupId": { "type": "string" },
                 "region": { "type": "string" },
                 "topic": { "type": "string" },
                 "type": { "type": "string" },
@@ -325,7 +325,7 @@
               "type": "object",
               "properties": {
                 "broker": { "type": "string" },
-                "groupID": { "type": "string" },
+                "groupId": { "type": "string" },
                 "region": { "type": "string" },
                 "topic": { "type": "string" },
                 "type": { "type": "string" },
@@ -337,7 +337,7 @@
               "type": "object",
               "properties": {
                 "broker": { "type": "string" },
-                "groupID": { "type": "string" },
+                "groupId": { "type": "string" },
                 "region": { "type": "string" },
                 "topic": { "type": "string" },
                 "type": { "type": "string" },
@@ -349,7 +349,7 @@
               "type": "object",
               "properties": {
                 "broker": { "type": "string" },
-                "groupID": { "type": "string" },
+                "groupId": { "type": "string" },
                 "region": { "type": "string" },
                 "topic": { "type": "string" },
                 "type": { "type": "string" },
@@ -409,13 +409,13 @@
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
-            "tolerations": { "type": "object" },
+            "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
           "additionalProperties": false
         },
-        "defaultKitID": { "type": "integer" },
+        "defaultKitId": { "type": "integer" },
         "existing": {
           "type": "object",
           "properties": {
@@ -464,7 +464,7 @@
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
-            "tolerations": { "type": "object" },
+            "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -520,7 +520,7 @@
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
         "serviceName": { "type": "string" },
-        "tolerations": { "type": "object" }
+        "tolerations": { "type": "array" }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -567,7 +567,7 @@
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
-            "tolerations": { "type": "object" },
+            "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -600,7 +600,7 @@
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
-            "tolerations": { "type": "object" },
+            "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -634,7 +634,7 @@
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
-            "tolerations": { "type": "object" },
+            "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -667,7 +667,7 @@
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
-            "tolerations": { "type": "object" },
+            "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -702,7 +702,7 @@
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
-            "tolerations": { "type": "object" },
+            "tolerations": { "type": "array" },
             "type": { "type": "string" },
             "workers": { "type": "integer" }
           },
@@ -738,7 +738,7 @@
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
-            "tolerations": { "type": "object" },
+            "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -771,7 +771,7 @@
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
-            "tolerations": { "type": "object" },
+            "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -820,7 +820,7 @@
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
         "serviceName": { "type": "string" },
-        "tolerations": { "type": "object" }
+        "tolerations": { "type": "array" }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -860,7 +860,7 @@
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
         "serviceName": { "type": "string" },
-        "tolerations": { "type": "object" }
+        "tolerations": { "type": "array" }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -892,7 +892,7 @@
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
         "serviceName": { "type": "string" },
-        "tolerations": { "type": "object" }
+        "tolerations": { "type": "array" }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -924,7 +924,7 @@
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
         "serviceName": { "type": "string" },
-        "tolerations": { "type": "object" }
+        "tolerations": { "type": "array" }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -971,7 +971,7 @@
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
-            "tolerations": { "type": "object" },
+            "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -1015,7 +1015,7 @@
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
-            "tolerations": { "type": "object" },
+            "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -1053,7 +1053,7 @@
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
         "serviceName": { "type": "string" },
-        "tolerations": { "type": "object" }
+        "tolerations": { "type": "array" }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -1085,7 +1085,7 @@
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
         "serviceName": { "type": "string" },
-        "tolerations": { "type": "object" }
+        "tolerations": { "type": "array" }
       },
       "required": ["enabled"],
       "additionalProperties": false

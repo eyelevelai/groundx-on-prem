@@ -14,7 +14,7 @@ data:
   config_models.py: |
     env = dict(
 {{- if ne $hasEngs "false" -}}
-      dtype = {{ dig "dataType" "" $first | quote }},
-      name = {{ dig "engineID" "" $first | quote }},
+      dtype = {{ dig "dataType" (include "groundx.defaultDataType" .) $first | quote }},
+      name = {{ dig "engineId" (include "groundx.defaultEngine" .) $first | quote }},
 {{- end }}
     )

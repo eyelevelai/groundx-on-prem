@@ -2,7 +2,11 @@
 {{- $lb := .lb | fromYaml -}}
 {{- $name := .name -}}
 {{- $root := .root -}}
-{{- $hasInternal := and (eq (dig "isInternal" "" $lb) "true") (eq (dig "type" "" $lb) "LoadBalancer") -}}
+{{- $ii := dig "isInternal" "" $lb -}}
+{{- if ne (kindOf $ii) "string" -}}
+{{- $ii = printf "%v" $ii -}}
+{{- end -}}
+{{- $hasInternal := and (eq $ii "true") (eq (dig "type" "" $lb) "LoadBalancer") -}}
 {{- $hasTO := and (hasKey $lb "timeout") (not (empty (dig "timeout" "" $lb))) -}}
 
 ---

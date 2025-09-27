@@ -35,13 +35,6 @@ true
 {{ dig "imagePullPolicy" "Always" $in }}
 {{- end }}
 
-{{- define "groundx.layoutWebhook.image" -}}
-{{- $b := .Values.layoutWebhook | default dict -}}
-{{- $in := dig "image" dict $b -}}
-{{- $bs := printf "%s/eyelevel/layout-webhook" (include "groundx.imageRepository" .) -}}
-{{ printf "%s:%s" (dig "repository" $bs $in) (dig "repository" "latest" $in) }}
-{{- end }}
-
 {{- define "groundx.layoutWebhook.isRoute" -}}
 {{- $lb := (include "groundx.layoutWebhook.loadBalancer" . | fromYaml) -}}
 {{- $os := include "groundx.isOpenshift" . -}}

@@ -45,7 +45,7 @@ data:
       openai:
         apiKey: {{ include "groundx.summary.apiKey" . }}
         baseURL: {{ include "groundx.summary.baseURL" . }}
-        defaultKitId: {{ include "groundx.summary.defaultKitID" . }}
+        defaultKitId: {{ include "groundx.summary.defaultKitId" . }}
       summaryType: {{ include "groundx.summary.serviceName" . }}
       searchIndexes:
         {{ include "groundx.search.indexName" . }}:
@@ -56,7 +56,7 @@ data:
 
     engines:
       {{ range $i, $e := $engs }}
-      {{- $engineID := get $e "engineID" -}}
+      {{- $engineID := get $e "engineId" -}}
       {{ $engineID }}:
         engineID: {{ $engineID | quote }}
         {{- if hasKey $e "apiKey" }}

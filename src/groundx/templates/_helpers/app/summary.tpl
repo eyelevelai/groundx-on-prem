@@ -25,9 +25,9 @@
 {{- coalesce (dig "url" "" $ex) (printf "http://%s-api.%s.svc.cluster.local" $svc $ns) -}}
 {{- end }}
 
-{{- define "groundx.summary.defaultKitID" -}}
+{{- define "groundx.summary.defaultKitId" -}}
 {{- $in := .Values.summary | default dict -}}
-{{ dig "defaultKitID" 0 $in }}
+{{ dig "defaultKitId" 0 $in }}
 {{- end }}
 
 {{- define "groundx.summary.serviceType" -}}
