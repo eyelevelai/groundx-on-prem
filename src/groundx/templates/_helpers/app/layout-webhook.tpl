@@ -24,6 +24,18 @@ true
 {{- end }}
 
 {{- define "groundx.layoutWebhook.image" -}}
+{{- $in := .Values.layoutWebhook | default dict -}}
+{{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
+{{- $fallback := printf "%s/eyelevel/layout-webhook:latest" $repoPrefix -}}
+{{- coalesce (dig "image" "" $in) $fallback -}}
+{{- end }}
+
+{{- define "groundx.layoutWebhook.imagePullPolicy" -}}
+{{- $in := .Values.layoutWebhook | default dict -}}
+{{ dig "imagePullPolicy" "Always" $in }}
+{{- end }}
+
+{{- define "groundx.layoutWebhook.image" -}}
 {{- $b := .Values.layoutWebhook | default dict -}}
 {{- $in := dig "image" dict $b -}}
 {{- $bs := printf "%s/eyelevel/layout-webhook" (include "groundx.imageRepository" .) -}}
@@ -45,12 +57,6 @@ false
 {{- $in := .Values.layoutWebhook | default dict -}}
 {{- $lb := dig "loadBalancer" dict $in -}}
 {{ dig "port" 80 $lb }}
-{{- end }}
-
-{{- define "groundx.layoutWebhook.pull" -}}
-{{- $b := .Values.layoutWebhook | default dict -}}
-{{- $in := dig "image" dict $b -}}
-{{ (dig "pull" "Always" $in) }}
 {{- end }}
 
 {{- define "groundx.layoutWebhook.replicas" -}}
@@ -121,7 +127,7 @@ false
 {{- $_ := set $cfg "image"        (include "groundx.layoutWebhook.image" .) -}}
 {{- $_ := set $cfg "loadBalancer" (include "groundx.layoutWebhook.loadBalancer" . | trim) -}}
 {{- $_ := set $cfg "port"         (include "groundx.layoutWebhook.containerPort" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.layoutWebhook.pull" .) -}}
+{{- $_ := set $cfg "pull"         (include "groundx.layoutWebhook.imagePullPolicy" .) -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

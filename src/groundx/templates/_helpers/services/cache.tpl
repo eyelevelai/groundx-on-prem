@@ -63,7 +63,7 @@ false
 {{- define "groundx.cache.image" -}}
 {{- $in := .Values.cache | default dict -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
-{{- $fallback := printf "%s/%s:%s" $repoPrefix "eyelevel/redis" "latest" -}}
+{{- $fallback := printf "%s/eyelevel/redis:latest" $repoPrefix -}}
 {{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
@@ -71,7 +71,7 @@ false
 {{- $b := .Values.cache | default dict -}}
 {{- $in := (dig "metrics" nil $b) | default dict -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
-{{- $fallback := printf "%s/%s:%s" $repoPrefix "eyelevel/redis" "latest" -}}
+{{- $fallback := printf "%s/eyelevel/redis:latest" $repoPrefix -}}
 {{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 

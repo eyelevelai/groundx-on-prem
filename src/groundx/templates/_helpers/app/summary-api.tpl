@@ -29,9 +29,15 @@ true
 {{- define "groundx.summary.api.image" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{- $img := dig "image" dict $in -}}
-{{- $bs := printf "%s/eyelevel/python-api" (include "groundx.imageRepository" .) -}}
-{{ printf "%s:%s" (dig "repository" $bs $img) (dig "repository" "latest" $img) }}
+{{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
+{{- $fallback := printf "%s/eyelevel/python-api:latest" $repoPrefix -}}
+{{- coalesce (dig "image" "" $in) $fallback -}}
+{{- end }}
+
+{{- define "groundx.summary.api.imagePullPolicy" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{ (dig "imagePullPolicy" "Always" $in) }}
 {{- end }}
 
 {{- define "groundx.summary.api.isRoute" -}}
@@ -50,13 +56,6 @@ false
 {{- $in := dig "api" dict $b -}}
 {{- $lb := dig "loadBalancer" dict $in -}}
 {{ dig "port" 80 $lb }}
-{{- end }}
-
-{{- define "groundx.summary.api.pull" -}}
-{{- $b := .Values.summary | default dict -}}
-{{- $in := dig "api" dict $b -}}
-{{- $img := dig "image" dict $in -}}
-{{ (dig "pull" "Always" $img) }}
 {{- end }}
 
 {{- define "groundx.summary.api.replicas" -}}
@@ -150,7 +149,7 @@ false
 {{- $_ := set $cfg "isRoute"      (include "groundx.summary.api.isRoute" .) -}}
 {{- $_ := set $cfg "loadBalancer" (include "groundx.summary.api.loadBalancer" .) -}}
 {{- $_ := set $cfg "port"         (include "groundx.summary.api.containerPort" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.summary.api.pull" .) -}}
+{{- $_ := set $cfg "pull"         (include "groundx.summary.api.imagePullPolicy" .) -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

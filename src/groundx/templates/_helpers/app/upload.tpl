@@ -23,17 +23,17 @@ true
 {{ dig "containerPort" 8080 $in }}
 {{- end }}
 
+
 {{- define "groundx.upload.image" -}}
-{{- $b := .Values.upload | default dict -}}
-{{- $in := dig "image" dict $b -}}
-{{- $bs := printf "%s/eyelevel/upload" (include "groundx.imageRepository" .) -}}
-{{ printf "%s:%s" (dig "repository" $bs $in) (dig "repository" "latest" $in) }}
+{{- $in := .Values.upload | default dict -}}
+{{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
+{{- $fallback := printf "%s/eyelevel/upload:latest" $repoPrefix -}}
+{{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
-{{- define "groundx.upload.pull" -}}
-{{- $b := .Values.upload | default dict -}}
-{{- $in := dig "image" dict $b -}}
-{{ (dig "pull" "Always" $in) }}
+{{- define "groundx.upload.imagePullPolicy" -}}
+{{- $in := .Values.upload | default dict -}}
+{{ dig "imagePullPolicy" "Always" $in }}
 {{- end }}
 
 {{- define "groundx.upload.queueSize" -}}
@@ -74,7 +74,7 @@ true
 {{- $_ := set $cfg "name"         (include "groundx.upload.serviceName" .) -}}
 {{- $_ := set $cfg "image"        (include "groundx.upload.image" .) -}}
 {{- $_ := set $cfg "port"         (include "groundx.upload.containerPort" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.upload.pull" .) -}}
+{{- $_ := set $cfg "pull"         (include "groundx.upload.imagePullPolicy" .) -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

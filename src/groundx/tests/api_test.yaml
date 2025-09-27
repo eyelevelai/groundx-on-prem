@@ -39,3 +39,17 @@ tests:
       - ../values/values.minikube.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "existing: api"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values/values.existing.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "metadata: api"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values/values.metadata.yaml
+    asserts:
+      - matchSnapshot: {}

@@ -39,3 +39,17 @@ tests:
       - ../values/values.minikube.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "existing: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/values.existing.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "metadata: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/values.metadata.yaml
+    asserts:
+      - matchSnapshot: {}

@@ -29,22 +29,21 @@ true
 {{- define "groundx.layout.ocr.image" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "ocr" dict $b -}}
-{{- $img := dig "image" dict $in -}}
-{{- $bs := printf "%s/eyelevel/%s" (include "groundx.imageRepository" .) (include "groundx.layout.process.serviceName" .) -}}
-{{ printf "%s:%s" (dig "repository" $bs $img) (dig "repository" "latest" $img) }}
+{{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
+{{- $fallback := printf "%s/eyelevel/layout-process:latest" $repoPrefix -}}
+{{- coalesce (dig "image" "" $in) $fallback -}}
+{{- end }}
+
+{{- define "groundx.layout.ocr.imagePullPolicy" -}}
+{{- $b := .Values.layout | default dict -}}
+{{- $in := dig "ocr" dict $b -}}
+{{ dig "imagePullPolicy" "Always" $in }}
 {{- end }}
 
 {{- define "groundx.layout.ocr.project" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "ocr" dict $b -}}
 {{ dig "project" "" $in }}
-{{- end }}
-
-{{- define "groundx.layout.ocr.pull" -}}
-{{- $b := .Values.layout | default dict -}}
-{{- $in := dig "ocr" dict $b -}}
-{{- $img := dig "image" dict $in -}}
-{{ (dig "pull" "Always" $img) }}
 {{- end }}
 
 {{- define "groundx.layout.ocr.queue" -}}
@@ -91,7 +90,7 @@ true
 -}}
 {{- $_ := set $cfg "name"         (include "groundx.layout.ocr.serviceName" .) -}}
 {{- $_ := set $cfg "image"        (include "groundx.layout.ocr.image" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.layout.ocr.pull" .) -}}
+{{- $_ := set $cfg "pull"         (include "groundx.layout.ocr.imagePullPolicy" .) -}}
 {{- $_ := set $cfg "queue"        (include "groundx.layout.ocr.queue" .) -}}
 {{- $_ := set $cfg "threads"      (include "groundx.layout.ocr.threads" .) -}}
 {{- $_ := set $cfg "workers"      (include "groundx.layout.ocr.workers" .) -}}

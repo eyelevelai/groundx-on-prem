@@ -104,3 +104,43 @@ tests:
       - ../values/values.minikube.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "existing: configmaps"
+    templates:
+      - ../templates/configmaps/config-yaml.yaml
+      - ../templates/configmaps/layout-config-py.yaml
+      - ../templates/configmaps/layout-gunicorn-conf-py.yaml
+      - ../templates/configmaps/layout-ocr-credentials.yaml
+      - ../templates/configmaps/layout-supervisord-conf.yaml
+      - ../templates/configmaps/config-models.yaml
+      - ../templates/configmaps/ranker-config-py.yaml
+      - ../templates/configmaps/ranker-gunicorn-conf-py.yaml
+      - ../templates/configmaps/ranker-supervisord-conf.yaml
+      - ../templates/configmaps/summary-config-py.yaml
+      - ../templates/configmaps/summary-gunicorn-conf-py.yaml
+      - ../templates/configmaps/summary-supervisord-conf.yaml
+      - ../templates/configmaps/init-database-file.yaml
+      - ../templates/configmaps/ldconfig-symlink.yaml
+    values:
+      - ../values/values.existing.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "metadata: configmaps"
+    templates:
+      - ../templates/configmaps/config-yaml.yaml
+      - ../templates/configmaps/layout-config-py.yaml
+      - ../templates/configmaps/layout-gunicorn-conf-py.yaml
+      - ../templates/configmaps/layout-ocr-credentials.yaml
+      - ../templates/configmaps/layout-supervisord-conf.yaml
+      - ../templates/configmaps/config-models.yaml
+      - ../templates/configmaps/ranker-config-py.yaml
+      - ../templates/configmaps/ranker-gunicorn-conf-py.yaml
+      - ../templates/configmaps/ranker-supervisord-conf.yaml
+      - ../templates/configmaps/summary-config-py.yaml
+      - ../templates/configmaps/summary-gunicorn-conf-py.yaml
+      - ../templates/configmaps/summary-supervisord-conf.yaml
+      - ../templates/configmaps/init-database-file.yaml
+      - ../templates/configmaps/ldconfig-symlink.yaml
+    values:
+      - ../values/values.metadata.yaml
+    asserts:
+      - matchSnapshot: {}

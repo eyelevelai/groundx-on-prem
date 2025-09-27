@@ -39,3 +39,17 @@ tests:
       - ../values/values.minikube.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "existing: layout"
+    templates:
+      - ../templates/app/layout.yaml
+    values:
+      - ../values/values.existing.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "metadata: layout"
+    templates:
+      - ../templates/app/layout.yaml
+    values:
+      - ../values/values.metadata.yaml
+    asserts:
+      - matchSnapshot: {}

@@ -44,3 +44,19 @@ tests:
       - ../values/values.minikube.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "existing: stream"
+    templates:
+      - ../templates/services/stream-cluster.yaml
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ../values/values.existing.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "metadata: stream"
+    templates:
+      - ../templates/services/stream-cluster.yaml
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ../values/values.metadata.yaml
+    asserts:
+      - matchSnapshot: {}

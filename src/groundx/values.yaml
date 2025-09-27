@@ -67,11 +67,10 @@ file:
 
   # set to use existing minio file storage
   existing: {}
-    # domain: minio.mycorp.net
     # port: 9000
     # minio or s3
     # serviceType: minio
-    # ssl: true
+    # url: https://minio.mycorp.net
 
 search:
   enabled: true
@@ -84,9 +83,7 @@ search:
 
   # set to use existing opensearch
   existing: {}
-    # domain: search.mycorp.net
     # url: https://search.mycorp.net:9200
-    # port: 9200
 
 stream:
   enabled: true
@@ -121,6 +118,8 @@ summary:
         cpu: 500m
         memory: 1Gi
 
+  # must be an OpenAI chat compatible endpoint
+  # /chat/completions
   existing: {}
 #    apiKey: my-oai-key
 #    serviceType: openai

@@ -31,18 +31,25 @@ true
 
 {{- define "groundx.ranker.inference.image" -}}
 {{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
+{{- $fallback := printf "%s/eyelevel/ranker-inference:latest" $repoPrefix -}}
+{{- coalesce (dig "image" "" $in) $fallback -}}
+{{- end }}
+
+{{- define "groundx.ranker.inference.imagePullPolicy" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{ dig "imagePullPolicy" "Always" $in }}
+{{- end }}
+
+{{- define "groundx.ranker.inference.image" -}}
+{{- $b := .Values.ranker | default dict -}}
 {{- $svc := include "groundx.ranker.inference.serviceName" . -}}
 {{- $in := dig "inference" dict $b -}}
 {{- $img := dig "image" dict $in -}}
 {{- $bs := printf "%s/eyelevel/%s" (include "groundx.imageRepository" .) $svc -}}
 {{ printf "%s:%s" (dig "repository" $bs $img) (dig "repository" "latest" $img) }}
-{{- end }}
-
-{{- define "groundx.ranker.inference.pull" -}}
-{{- $b := .Values.ranker | default dict -}}
-{{- $in := dig "inference" dict $b -}}
-{{- $img := dig "image" dict $in -}}
-{{ (dig "pull" "Always" $img) }}
 {{- end }}
 
 {{- define "groundx.ranker.inference.pvc" -}}
@@ -107,7 +114,7 @@ true
 {{- $_ := set $cfg "pvc"          (include "groundx.ranker.inference.pvc" . | fromYaml) -}}
 {{- $_ := set $cfg "supervisord"  (printf "%s-inference-supervisord-conf-map" $svc) -}}
 {{- $_ := set $cfg "workingDir"   ("/workspace") -}}
-{{- $_ := set $cfg "pull"         (include "groundx.ranker.inference.pull" .) -}}
+{{- $_ := set $cfg "pull"         (include "groundx.ranker.inference.imagePullPolicy" .) -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

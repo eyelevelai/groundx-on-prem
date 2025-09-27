@@ -29,16 +29,15 @@ true
 {{- end }}
 
 {{- define "groundx.preProcess.image" -}}
-{{- $b := .Values.preProcess | default dict -}}
-{{- $in := dig "image" dict $b -}}
-{{- $bs := printf "%s/eyelevel/pre-process" (include "groundx.imageRepository" .) -}}
-{{ printf "%s:%s" (dig "repository" $bs $in) (dig "repository" "latest" $in) }}
+{{- $in := .Values.preProcess | default dict -}}
+{{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
+{{- $fallback := printf "%s/eyelevel/pre-process:latest" $repoPrefix -}}
+{{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
-{{- define "groundx.preProcess.pull" -}}
-{{- $b := .Values.preProcess | default dict -}}
-{{- $in := dig "image" dict $b -}}
-{{ (dig "pull" "Always" $in) }}
+{{- define "groundx.preProcess.imagePullPolicy" -}}
+{{- $in := .Values.preProcess | default dict -}}
+{{ dig "imagePullPolicy" "Always" $in }}
 {{- end }}
 
 {{- define "groundx.preProcess.queueSize" -}}
@@ -79,7 +78,7 @@ true
 {{- $_ := set $cfg "name"         (include "groundx.preProcess.serviceName" .) -}}
 {{- $_ := set $cfg "image"        (include "groundx.preProcess.image" .) -}}
 {{- $_ := set $cfg "port"         (include "groundx.preProcess.containerPort" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.preProcess.pull" .) -}}
+{{- $_ := set $cfg "pull"         (include "groundx.preProcess.imagePullPolicy" .) -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

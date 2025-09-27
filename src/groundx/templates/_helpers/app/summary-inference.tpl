@@ -40,18 +40,16 @@ true
 
 {{- define "groundx.summary.inference.image" -}}
 {{- $b := .Values.summary | default dict -}}
-{{- $svc := include "groundx.summary.inference.serviceName" . -}}
 {{- $in := dig "inference" dict $b -}}
-{{- $img := dig "image" dict $in -}}
-{{- $bs := printf "%s/eyelevel/%s" (include "groundx.imageRepository" .) $svc -}}
-{{ printf "%s:%s" (dig "repository" $bs $img) (dig "repository" "latest" $img) }}
+{{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
+{{- $fallback := printf "%s/eyelevel/summary-inference:latest" $repoPrefix -}}
+{{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
-{{- define "groundx.summary.inference.pull" -}}
+{{- define "groundx.summary.inference.imagePullPolicy" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
-{{- $img := dig "image" dict $in -}}
-{{ (dig "pull" "Always" $img) }}
+{{ (dig "imagePullPolicy" "Always" $in) }}
 {{- end }}
 
 {{- define "groundx.summary.inference.pvc" -}}
@@ -116,7 +114,7 @@ true
 {{- $_ := set $cfg "pvc"          (include "groundx.summary.inference.pvc" . | fromYaml) -}}
 {{- $_ := set $cfg "supervisord"  (printf "%s-inference-supervisord-conf-map" $svc) -}}
 {{- $_ := set $cfg "workingDir"   ("/workspace") -}}
-{{- $_ := set $cfg "pull"         (include "groundx.summary.inference.pull" .) -}}
+{{- $_ := set $cfg "pull"         (include "groundx.summary.inference.imagePullPolicy" .) -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

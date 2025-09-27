@@ -24,10 +24,15 @@ true
 {{- end }}
 
 {{- define "groundx.groundx.image" -}}
-{{- $b := .Values.groundx | default dict -}}
-{{- $in := dig "image" dict $b -}}
-{{- $bs := printf "%s/eyelevel/groundx" (include "groundx.imageRepository" .) -}}
-{{ printf "%s:%s" (dig "repository" $bs $in) (dig "repository" "latest" $in) }}
+{{- $in := .Values.groundx | default dict -}}
+{{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
+{{- $fallback := printf "%s/eyelevel/groundx:latest" $repoPrefix -}}
+{{- coalesce (dig "image" "" $in) $fallback -}}
+{{- end }}
+
+{{- define "groundx.groundx.imagePullPolicy" -}}
+{{- $in := .Values.groundx | default dict -}}
+{{ dig "imagePullPolicy" "Always" $in }}
 {{- end }}
 
 {{- define "groundx.groundx.isRoute" -}}
@@ -49,12 +54,6 @@ false
 {{- else -}}
 80
 {{- end -}}
-{{- end }}
-
-{{- define "groundx.groundx.pull" -}}
-{{- $b := .Values.groundx | default dict -}}
-{{- $in := dig "image" dict $b -}}
-{{ (dig "pull" "Always" $in) }}
 {{- end }}
 
 {{- define "groundx.groundx.replicas" -}}
@@ -143,7 +142,7 @@ false
   "name"         (include "groundx.groundx.serviceName" .)
   "node"         (include "groundx.groundx.node" .)
   "port"         (include "groundx.groundx.containerPort" .)
-  "pull"         (include "groundx.groundx.pull" .)
+  "pull"         (include "groundx.groundx.imagePullPolicy" .)
   "replicas"     ($rep)
 -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}

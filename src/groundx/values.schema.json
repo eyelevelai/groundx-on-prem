@@ -77,6 +77,7 @@
       "properties": {
         "affinity": { "type": "object" },
         "annotations": { "type": "object" },
+        "containerPort": { "type": "integer" },
         "containerSecurityContext": { "type": "object" },
         "enabled": { "type": "boolean" },
         "existing": {
@@ -89,6 +90,7 @@
           "additionalProperties": false
         },
         "image": { "type": "string" },
+        "imagePullPolicy": { "type": "string" },
         "labels": { "type": "object" },
         "loadBalancer": {
           "type": "object",
@@ -125,6 +127,7 @@
           "properties": {
             "affinity": { "type": "object" },
             "annotations": { "type": "object" },
+            "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
             "existing": {
@@ -137,6 +140,7 @@
               "additionalProperties": false
             },
             "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
             "labels": { "type": "object" },
             "loadBalancer": {
               "type": "object",
@@ -166,7 +170,8 @@
             },
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
-            "serviceName": { "type": "string" }
+            "serviceName": { "type": "string" },
+            "tolerations": { "type": "object" }
           },
           "required": ["existing"],
           "additionalProperties": false
@@ -373,15 +378,8 @@
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
-            "image": {
-              "type": "object",
-              "properties": {
-                "pull": { "type": "string" },
-                "repository": { "type": "string" },
-                "tag": { "type": "string" }
-              },
-              "additionalProperties": false
-            },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
             "labels": { "type": "object" },
             "loadBalancer": {
               "type": "object",
@@ -411,6 +409,7 @@
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
+            "tolerations": { "type": "object" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -436,15 +435,8 @@
             "deviceType": { "type": "string" },
             "deviceUtilize": { "type": "number" },
             "enabled": { "type": "boolean" },
-            "image": {
-              "type": "object",
-              "properties": {
-                "pull": { "type": "string" },
-                "repository": { "type": "string" },
-                "tag": { "type": "string" }
-              },
-              "additionalProperties": false
-            },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
             "labels": { "type": "object" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
@@ -453,9 +445,9 @@
               "properties": {
                 "access": { "type": "string" },
                 "capacity": { "type": "string" },
+                "class": { "type": "string" },
                 "name": { "type": "string" }
               },
-              "required": ["access", "capacity", "name"],
               "additionalProperties": false
             },
             "queue": { "type": "string" },
@@ -472,6 +464,7 @@
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
+            "tolerations": { "type": "object" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -497,15 +490,8 @@
         "containerPort": { "type": "integer" },
         "containerSecurityContext": { "type": "object" },
         "enabled": { "type": "boolean" },
-        "image": {
-          "type": "object",
-          "properties": {
-            "pull": { "type": "string" },
-            "repository": { "type": "string" },
-            "tag": { "type": "string" }
-          },
-          "additionalProperties": false
-        },
+        "image": { "type": "string" },
+        "imagePullPolicy": { "type": "string" },
         "labels": { "type": "object" },
         "loadBalancer": {
           "type": "object",
@@ -533,7 +519,8 @@
         },
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
-        "serviceName": { "type": "string" }
+        "serviceName": { "type": "string" },
+        "tolerations": { "type": "object" }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -549,15 +536,8 @@
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
-            "image": {
-              "type": "object",
-              "properties": {
-                "pull": { "type": "string" },
-                "repository": { "type": "string" },
-                "tag": { "type": "string" }
-              },
-              "additionalProperties": false
-            },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
             "labels": { "type": "object" },
             "loadBalancer": {
               "type": "object",
@@ -587,6 +567,7 @@
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
+            "tolerations": { "type": "object" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -600,15 +581,8 @@
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
-            "image": {
-              "type": "object",
-              "properties": {
-                "pull": { "type": "string" },
-                "repository": { "type": "string" },
-                "tag": { "type": "string" }
-              },
-              "additionalProperties": false
-            },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
             "labels": { "type": "object" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
@@ -626,6 +600,7 @@
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
+            "tolerations": { "type": "object" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -640,28 +615,9 @@
             "containerSecurityContext": { "type": "object" },
             "deviceType": { "type": "string" },
             "enabled": { "type": "boolean" },
-            "image": {
-              "type": "object",
-              "properties": {
-                "pull": { "type": "string" },
-                "repository": { "type": "string" },
-                "tag": { "type": "string" }
-              },
-              "additionalProperties": false
-            },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
             "labels": { "type": "object" },
-            "loadBalancer": {
-              "type": "object",
-              "properties": {
-                "ipType": { "type": "string" },
-                "isInternal": { "type": "boolean" },
-                "port": { "type": "integer" },
-                "ssl": { "type": "boolean" },
-                "timeout": { "type": "integer" }
-              },
-              "required": ["port", "ssl"],
-              "additionalProperties": false
-            },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
             "queue": { "type": "string" },
@@ -678,6 +634,7 @@
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
+            "tolerations": { "type": "object" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -691,15 +648,8 @@
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
-            "image": {
-              "type": "object",
-              "properties": {
-                "pull": { "type": "string" },
-                "repository": { "type": "string" },
-                "tag": { "type": "string" }
-              },
-              "additionalProperties": false
-            },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
             "labels": { "type": "object" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
@@ -717,6 +667,7 @@
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
+            "tolerations": { "type": "object" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -731,15 +682,8 @@
             "containerSecurityContext": { "type": "object" },
             "credentials": { "type": "string" },
             "enabled": { "type": "boolean" },
-            "image": {
-              "type": "object",
-              "properties": {
-                "pull": { "type": "string" },
-                "repository": { "type": "string" },
-                "tag": { "type": "string" }
-              },
-              "additionalProperties": false
-            },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
             "labels": { "type": "object" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
@@ -758,6 +702,7 @@
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
+            "tolerations": { "type": "object" },
             "type": { "type": "string" },
             "workers": { "type": "integer" }
           },
@@ -774,15 +719,8 @@
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
-            "image": {
-              "type": "object",
-              "properties": {
-                "pull": { "type": "string" },
-                "repository": { "type": "string" },
-                "tag": { "type": "string" }
-              },
-              "additionalProperties": false
-            },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
             "labels": { "type": "object" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
@@ -800,6 +738,7 @@
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
+            "tolerations": { "type": "object" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -813,15 +752,8 @@
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
-            "image": {
-              "type": "object",
-              "properties": {
-                "pull": { "type": "string" },
-                "repository": { "type": "string" },
-                "tag": { "type": "string" }
-              },
-              "additionalProperties": false
-            },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
             "labels": { "type": "object" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
@@ -839,6 +771,7 @@
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
+            "tolerations": { "type": "object" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -857,15 +790,8 @@
         "containerPort": { "type": "integer" },
         "containerSecurityContext": { "type": "object" },
         "enabled": { "type": "boolean" },
-        "image": {
-          "type": "object",
-          "properties": {
-            "pull": { "type": "string" },
-            "repository": { "type": "string" },
-            "tag": { "type": "string" }
-          },
-          "additionalProperties": false
-        },
+        "image": { "type": "string" },
+        "imagePullPolicy": { "type": "string" },
         "labels": { "type": "object" },
         "loadBalancer": {
           "type": "object",
@@ -893,7 +819,8 @@
         },
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
-        "serviceName": { "type": "string" }
+        "serviceName": { "type": "string" },
+        "tolerations": { "type": "object" }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -914,15 +841,8 @@
         "containerPort": { "type": "integer" },
         "containerSecurityContext": { "type": "object" },
         "enabled": { "type": "boolean" },
-        "image": {
-          "type": "object",
-          "properties": {
-            "pull": { "type": "string" },
-            "repository": { "type": "string" },
-            "tag": { "type": "string" }
-          },
-          "additionalProperties": false
-        },
+        "image": { "type": "string" },
+        "imagePullPolicy": { "type": "string" },
         "labels": { "type": "object" },
         "node": { "type": "string" },
         "nodeSelector": { "type": "object" },
@@ -939,7 +859,8 @@
         },
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
-        "serviceName": { "type": "string" }
+        "serviceName": { "type": "string" },
+        "tolerations": { "type": "object" }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -952,15 +873,8 @@
         "containerPort": { "type": "integer" },
         "containerSecurityContext": { "type": "object" },
         "enabled": { "type": "boolean" },
-        "image": {
-          "type": "object",
-          "properties": {
-            "pull": { "type": "string" },
-            "repository": { "type": "string" },
-            "tag": { "type": "string" }
-          },
-          "additionalProperties": false
-        },
+        "image": { "type": "string" },
+        "imagePullPolicy": { "type": "string" },
         "labels": { "type": "object" },
         "node": { "type": "string" },
         "nodeSelector": { "type": "object" },
@@ -977,7 +891,8 @@
         },
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
-        "serviceName": { "type": "string" }
+        "serviceName": { "type": "string" },
+        "tolerations": { "type": "object" }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -990,15 +905,8 @@
         "containerPort": { "type": "integer" },
         "containerSecurityContext": { "type": "object" },
         "enabled": { "type": "boolean" },
-        "image": {
-          "type": "object",
-          "properties": {
-            "pull": { "type": "string" },
-            "repository": { "type": "string" },
-            "tag": { "type": "string" }
-          },
-          "additionalProperties": false
-        },
+        "image": { "type": "string" },
+        "imagePullPolicy": { "type": "string" },
         "labels": { "type": "object" },
         "node": { "type": "string" },
         "nodeSelector": { "type": "object" },
@@ -1015,7 +923,8 @@
         },
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
-        "serviceName": { "type": "string" }
+        "serviceName": { "type": "string" },
+        "tolerations": { "type": "object" }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -1031,15 +940,8 @@
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
-            "image": {
-              "type": "object",
-              "properties": {
-                "pull": { "type": "string" },
-                "repository": { "type": "string" },
-                "tag": { "type": "string" }
-              },
-              "additionalProperties": false
-            },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
             "labels": { "type": "object" },
             "loadBalancer": {
               "type": "object",
@@ -1069,6 +971,7 @@
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
+            "tolerations": { "type": "object" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -1083,15 +986,8 @@
             "containerSecurityContext": { "type": "object" },
             "deviceType": { "type": "string" },
             "enabled": { "type": "boolean" },
-            "image": {
-              "type": "object",
-              "properties": {
-                "pull": { "type": "string" },
-                "repository": { "type": "string" },
-                "tag": { "type": "string" }
-              },
-              "additionalProperties": false
-            },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
             "labels": { "type": "object" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
@@ -1100,9 +996,9 @@
               "properties": {
                 "access": { "type": "string" },
                 "capacity": { "type": "string" },
+                "class": { "type": "string" },
                 "name": { "type": "string" }
               },
-              "required": ["access", "capacity", "name"],
               "additionalProperties": false
             },
             "queue": { "type": "string" },
@@ -1119,6 +1015,7 @@
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
+            "tolerations": { "type": "object" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -1137,15 +1034,8 @@
         "containerPort": { "type": "integer" },
         "containerSecurityContext": { "type": "object" },
         "enabled": { "type": "boolean" },
-        "image": {
-          "type": "object",
-          "properties": {
-            "pull": { "type": "string" },
-            "repository": { "type": "string" },
-            "tag": { "type": "string" }
-          },
-          "additionalProperties": false
-        },
+        "image": { "type": "string" },
+        "imagePullPolicy": { "type": "string" },
         "labels": { "type": "object" },
         "node": { "type": "string" },
         "nodeSelector": { "type": "object" },
@@ -1162,7 +1052,8 @@
         },
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
-        "serviceName": { "type": "string" }
+        "serviceName": { "type": "string" },
+        "tolerations": { "type": "object" }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -1175,15 +1066,8 @@
         "containerPort": { "type": "integer" },
         "containerSecurityContext": { "type": "object" },
         "enabled": { "type": "boolean" },
-        "image": {
-          "type": "object",
-          "properties": {
-            "pull": { "type": "string" },
-            "repository": { "type": "string" },
-            "tag": { "type": "string" }
-          },
-          "additionalProperties": false
-        },
+        "image": { "type": "string" },
+        "imagePullPolicy": { "type": "string" },
         "labels": { "type": "object" },
         "node": { "type": "string" },
         "nodeSelector": { "type": "object" },
@@ -1200,7 +1084,8 @@
         },
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
-        "serviceName": { "type": "string" }
+        "serviceName": { "type": "string" },
+        "tolerations": { "type": "object" }
       },
       "required": ["enabled"],
       "additionalProperties": false

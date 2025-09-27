@@ -29,16 +29,15 @@ true
 {{- end }}
 
 {{- define "groundx.queue.image" -}}
-{{- $b := .Values.queue | default dict -}}
-{{- $in := dig "image" dict $b -}}
-{{- $bs := printf "%s/eyelevel/queue" (include "groundx.imageRepository" .) -}}
-{{ printf "%s:%s" (dig "repository" $bs $in) (dig "repository" "latest" $in) }}
+{{- $in := .Values.queue | default dict -}}
+{{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
+{{- $fallback := printf "%s/eyelevel/queue:latest" $repoPrefix -}}
+{{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
-{{- define "groundx.queue.pull" -}}
-{{- $b := .Values.queue | default dict -}}
-{{- $in := dig "image" dict $b -}}
-{{ (dig "pull" "Always" $in) }}
+{{- define "groundx.queue.imagePullPolicy" -}}
+{{- $in := .Values.queue | default dict -}}
+{{ dig "imagePullPolicy" "Always" $in }}
 {{- end }}
 
 {{- define "groundx.queue.queueSize" -}}
@@ -79,7 +78,7 @@ true
 {{- $_ := set $cfg "name"         (include "groundx.queue.serviceName" .) -}}
 {{- $_ := set $cfg "image"        (include "groundx.queue.image" .) -}}
 {{- $_ := set $cfg "port"         (include "groundx.queue.containerPort" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.queue.pull" .) -}}
+{{- $_ := set $cfg "pull"         (include "groundx.queue.imagePullPolicy" .) -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

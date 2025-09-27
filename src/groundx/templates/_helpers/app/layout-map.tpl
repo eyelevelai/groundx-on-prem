@@ -23,16 +23,15 @@ true
 {{- define "groundx.layout.map.image" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "map" dict $b -}}
-{{- $img := dig "image" dict $in -}}
-{{- $bs := printf "%s/eyelevel/%s" (include "groundx.imageRepository" .) (include "groundx.layout.process.serviceName" .) -}}
-{{ printf "%s:%s" (dig "repository" $bs $img) (dig "repository" "latest" $img) }}
+{{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
+{{- $fallback := printf "%s/eyelevel/layout-process:latest" $repoPrefix -}}
+{{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
-{{- define "groundx.layout.map.pull" -}}
+{{- define "groundx.layout.map.imagePullPolicy" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "map" dict $b -}}
-{{- $img := dig "image" dict $in -}}
-{{ (dig "pull" "Always" $img) }}
+{{ dig "imagePullPolicy" "Always" $in }}
 {{- end }}
 
 {{- define "groundx.layout.map.queue" -}}
@@ -73,7 +72,7 @@ true
 -}}
 {{- $_ := set $cfg "name"         (include "groundx.layout.map.serviceName" .) -}}
 {{- $_ := set $cfg "image"        (include "groundx.layout.map.image" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.layout.map.pull" .) -}}
+{{- $_ := set $cfg "pull"         (include "groundx.layout.map.imagePullPolicy" .) -}}
 {{- $_ := set $cfg "queue"        (include "groundx.layout.map.queue" .) -}}
 {{- $_ := set $cfg "threads"      (include "groundx.layout.map.threads" .) -}}
 {{- $_ := set $cfg "workers"      (include "groundx.layout.map.workers" .) -}}

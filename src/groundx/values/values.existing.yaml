@@ -1,0 +1,89 @@
+namespace: eyelevel
+
+cluster:
+  pvClass: eyelevel-pv
+  type: eks
+
+cache:
+  existing:
+    addr: cache.existing.com
+    isCluster: false
+    port: 6379
+
+  metrics:
+    existing:
+      addr: metrics-cache.existing.com
+      isCluster: false
+      port: 6379
+
+db:
+  dbName: mydb
+  username: myuser
+  password: mypass
+
+  privilegedUsername: admin
+  privilegedPassword: root
+
+  existing:
+    ro: db-ro.existing.com
+    rw: db-rw.existing.com
+    port: 3306
+
+file:
+  bucketName: mybucket
+  username: myuser
+  password: mypass
+
+  existing:
+    domain: file.existing.com
+    port: 9000
+    serviceType: minio
+    ssl: true
+
+search:
+  indexName: other-1
+  username: myuser
+  password: mypass
+  privilegedPassword: admin
+  privilegedUsername: root
+
+  existing:
+    url: https://search.existing.com
+
+stream:
+  existing:
+    domain: kafka.existing.com
+    port: 9001
+
+  topics:
+    preProcess:
+      groupId: my-kafka
+      topic: my-pre-process
+      type: kafka
+    process:
+      broker: other-kafka.existing.com:9002
+      groupId: my-kafka
+      topic: my-process
+      type: kafka
+    summary:
+      topic: my-summary
+      type: kafka
+    update:
+      groupId: my-kafka
+      type: kafka
+    upload:
+      groupId: my-kafka
+      topic: my-upload
+      type: kafka
+
+engines:
+  gpt-5-mini:
+    engineID: gpt-5-mini
+    reasoningEffort: low
+    vision: true
+
+summary:
+  existing:
+    apiKey: openai-api-key
+    serviceType: openai
+    url: https://api.openai.com/v1

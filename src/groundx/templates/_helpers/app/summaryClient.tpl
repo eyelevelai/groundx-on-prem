@@ -29,16 +29,15 @@ true
 {{- end }}
 
 {{- define "groundx.summaryClient.image" -}}
-{{- $b := .Values.summaryClient | default dict -}}
-{{- $in := dig "image" dict $b -}}
-{{- $bs := printf "%s/eyelevel/summary-client" (include "groundx.imageRepository" .) -}}
-{{ printf "%s:%s" (dig "repository" $bs $in) (dig "repository" "latest" $in) }}
+{{- $in := .Values.summaryClient | default dict -}}
+{{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
+{{- $fallback := printf "%s/eyelevel/summary-client:latest" $repoPrefix -}}
+{{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
-{{- define "groundx.summaryClient.pull" -}}
-{{- $b := .Values.summaryClient | default dict -}}
-{{- $in := dig "image" dict $b -}}
-{{ (dig "pull" "Always" $in) }}
+{{- define "groundx.summaryClient.imagePullPolicy" -}}
+{{- $in := .Values.summaryClient | default dict -}}
+{{ dig "imagePullPolicy" "Always" $in }}
 {{- end }}
 
 {{- define "groundx.summaryClient.queueSize" -}}
@@ -79,7 +78,7 @@ true
 {{- $_ := set $cfg "name"         (include "groundx.summaryClient.serviceName" .) -}}
 {{- $_ := set $cfg "image"        (include "groundx.summaryClient.image" .) -}}
 {{- $_ := set $cfg "port"         (include "groundx.summaryClient.containerPort" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.summaryClient.pull" .) -}}
+{{- $_ := set $cfg "pull"         (include "groundx.summaryClient.imagePullPolicy" .) -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}
