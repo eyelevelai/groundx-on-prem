@@ -1,3 +1,6 @@
+{{- $ic := include "groundx.ranker.api.create" . -}}
+
+{{- if eq $ic "true" }}
 {{- $svc := include "groundx.ranker.serviceName" . -}}
 
 apiVersion: v1
@@ -24,3 +27,4 @@ data:
     bind = "0.0.0.0:{{ include "groundx.ranker.api.containerPort" . }}"
 
     wsgi_app = "ranker_server:app"
+{{- end }}

@@ -60,3 +60,11 @@ tests:
       - ../values/values.metadata.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "disabled: cache"
+    templates:
+      - ../templates/services/cache.yaml
+      - ../templates/services/cache-metrics.yaml
+    values:
+      - ./files/values.disabled.yaml
+    asserts:
+      - matchSnapshot: {}

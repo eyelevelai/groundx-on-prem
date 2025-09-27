@@ -1,3 +1,7 @@
+{{- $svcs := (include "groundx.inference.services" . | fromYaml) -}}
+{{- $ic := include "groundx.createSymlink" . -}}
+
+{{- if and (gt (len $svcs) 0) (eq $ic "true") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -23,3 +27,4 @@ data:
     else
       echo "Failed to find ldconfig in the specified paths."
     fi
+{{- end }}

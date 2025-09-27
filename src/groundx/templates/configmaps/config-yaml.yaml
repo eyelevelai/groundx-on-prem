@@ -1,3 +1,4 @@
+{{- $svcs := (include "groundx.golang.services" . | fromYaml) -}}
 {{- $engs := (include "groundx.engines" . | fromYaml) -}}
 {{- $fs := (include "groundx.file.settings" . | fromYaml) -}}
 {{- $ppq := (include "groundx.stream.topic.preProcess" . | fromYaml) -}}
@@ -5,6 +6,7 @@
 {{- $sq := (include "groundx.stream.topic.summary" . | fromYaml) -}}
 {{- $uq := (include "groundx.stream.topic.update" . | fromYaml) -}}
 {{- $lq := (include "groundx.stream.topic.upload" . | fromYaml) -}}
+{{- if gt (len $svcs) 0 }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -274,3 +276,4 @@ data:
       maxConcurrent: {{ include "groundx.upload.queueSize" . }}
       port: {{ include "groundx.upload.containerPort" . }}
       serviceName: {{ include "groundx.upload.serviceName" . }}
+{{- end }}

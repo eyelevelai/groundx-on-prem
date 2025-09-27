@@ -1,3 +1,6 @@
+{{- $ic := include "groundx.ranker.inference.create" . -}}
+
+{{- if eq $ic "true" }}
 {{- $ns := include "groundx.ns" . -}}
 {{- $svc := include "groundx.ranker.serviceName" . -}}
 {{- $workers := int (include "groundx.ranker.inference.workers" .) -}}
@@ -29,3 +32,4 @@ data:
     stderr_logfile=/dev/stderr
     stderr_logfile_maxbytes=0
     {{ end }}
+{{- end }}

@@ -53,3 +53,10 @@ tests:
       - ../values/values.metadata.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "disabled: inference"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ./files/values.disabled.yaml
+    asserts:
+      - matchSnapshot: {}

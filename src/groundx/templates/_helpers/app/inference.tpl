@@ -8,7 +8,7 @@
 {{- if eq $ir "true" -}}
 {{- $_ := set $svcs "ranker.inference" "ranker.inference" -}}
 {{- end -}}
-{{- $is := include "groundx.summary.create" . -}}
+{{- $is := include "groundx.summary.inference.create" . -}}
 {{- if eq $is "true" -}}
 {{- $_ := set $svcs "summary.inference" "summary.inference" -}}
 {{- end -}}

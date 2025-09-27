@@ -60,3 +60,11 @@ tests:
       - ../values/values.metadata.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "disabled: stream"
+    templates:
+      - ../templates/services/stream-cluster.yaml
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ./files/values.disabled.yaml
+    asserts:
+      - matchSnapshot: {}

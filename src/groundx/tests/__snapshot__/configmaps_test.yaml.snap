@@ -576,256 +576,6 @@
       config.py: |
         env = dict(
             deviceType="cuda",
-            metricsAddr="X.X.X.use2.cache.amazonaws.com",
-            metricsPort=6379,
-            searchBroker="redis://X.X.X.use2.cache.amazonaws.com:6379/0",
-            searchLog="ranker",
-            searchResultBroker="redis://X.X.X.use2.cache.amazonaws.com:6379/0",
-            service="ranker",
-            validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
-            workers=14,
-        )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
-  14: |
-    apiVersion: v1
-    data:
-      gunicorn_conf.py: |
-        infolog = "-"
-        accesslog = "-"
-        errorlog = "-"
-
-        loglevel = "warn"
-        workers = 1
-        threads = 3
-        timeout = 120
-        timeout_keep_alive = 15
-
-        worker_class = "uvicorn.workers.UvicornWorker"
-
-        bind = "0.0.0.0:8080"
-
-        wsgi_app = "ranker_server:app"
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-gunicorn-conf-py-map
-      namespace: eyelevel
-  15: |
-    apiVersion: v1
-    data:
-      supervisord.conf: |
-        [supervisord]
-        nodaemon=true
-        logfile=/dev/null
-
-        [program:celery_worker_1]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_2]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w2 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w2",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_3]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w3 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w3",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_4]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w4 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w4",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_5]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w5 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w5",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_6]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w6 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w6",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_7]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w7 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w7",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_8]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w8 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w8",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_9]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w9 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w9",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_10]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w10 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w10",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_11]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w11 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w11",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_12]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w12 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w12",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_13]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w13 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w13",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_14]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w14 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w14",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-inference-supervisord-conf-map
-      namespace: eyelevel
-  16: |
-    apiVersion: v1
-    data:
-      config.py: |
-        env = dict(
-            deviceType="cuda",
             deviceUtilize=0.9,
             metricsAddr="X.X.X.use2.cache.amazonaws.com",
             metricsPort=6379,
@@ -845,7 +595,7 @@
         version: 0.1.0
       name: summary-config-py-map
       namespace: eyelevel
-  17: |
+  14: |
     apiVersion: v1
     data:
       gunicorn_conf.py: |
@@ -873,7 +623,7 @@
         version: 0.1.0
       name: summary-gunicorn-conf-py-map
       namespace: eyelevel
-  18: |
+  15: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -1851,6 +1601,7 @@
         version: 0.1.0
       name: summary-inference-supervisord-conf-map
       namespace: eyelevel
+'disabled: configmaps':
 'empty: configmaps':
   1: |
     apiVersion: v1
@@ -3595,112 +3346,6 @@
         version: 0.1.0
       name: ranker-inference-supervisord-conf-map
       namespace: eyelevel
-  16: |
-    apiVersion: v1
-    data:
-      config.py: |
-        env = dict(
-            deviceType="cuda",
-            deviceUtilize=0.9,
-            metricsAddr="metrics-cache.existing.com",
-            metricsPort=6379,
-            service="summary",
-            summaryBroker="redis://cache.existing.com:6379/0",
-            summaryLog="summary",
-            summaryResultBroker="redis://cache.existing.com:6379/0",
-            validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
-            workers=1,
-        )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-config-py-map
-      namespace: eyelevel
-  17: |
-    apiVersion: v1
-    data:
-      gunicorn_conf.py: |
-        infolog = "-"
-        accesslog = "-"
-        errorlog = "-"
-
-        loglevel = "warn"
-        workers = 1
-        threads = 4
-        timeout = 240
-        timeout_keep_alive = 15
-
-        worker_class = "uvicorn.workers.UvicornWorker"
-
-        bind = "0.0.0.0:8080"
-
-        wsgi_app = "summary_server:app"
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-gunicorn-conf-py-map
-      namespace: eyelevel
-  18: |
-    apiVersion: v1
-    data:
-      supervisord.conf: |
-        [supervisord]
-        nodaemon=true
-        logfile=/dev/null
-
-        [program:celery_worker_1]
-        command=celery -A summary.celery_inference.appSummary worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=summary_inference_queue --pool=solo
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_monitor]
-        command=python /workspace/summary_monitor.py
-        environment=
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_health]
-        command=python /workspace/summary_health.py
-        environment=
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-inference-supervisord-conf-map
-      namespace: eyelevel
 'metadata: configmaps':
   1: |
     apiVersion: v1
@@ -5149,35 +4794,6 @@
   12: |
     apiVersion: v1
     data:
-      ldconfig_symlink.sh: |
-        #!/bin/sh
-        LDCONFIG_PATHS="/host-sbin/ldconfig /host-usr-sbin/ldconfig /host-bin/ldconfig /host-usr-bin/ldconfig"
-
-        for path in $LDCONFIG_PATHS; do
-          if [ -f "$path" ]; then
-            echo "Found ldconfig at $path"
-            cd "$(dirname "$path")" && ln -sf ldconfig /host-sbin/ldconfig.real
-            break
-          fi
-        done
-
-        if [ -L /host-sbin/ldconfig.real ]; then
-          echo "Symbolic link created at /sbin/ldconfig.real"
-        else
-          echo "Failed to find ldconfig in the specified paths."
-        fi
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ldconfig-symlink-map
-      namespace: eyelevel
-  13: |
-    apiVersion: v1
-    data:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -5199,7 +4815,7 @@
         version: 0.1.0
       name: ranker-config-py-map
       namespace: eyelevel
-  14: |
+  13: |
     apiVersion: v1
     data:
       gunicorn_conf.py: |
@@ -5227,7 +4843,7 @@
         version: 0.1.0
       name: ranker-gunicorn-conf-py-map
       namespace: eyelevel
-  15: |
+  14: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -5425,7 +5041,7 @@
         version: 0.1.0
       name: ranker-inference-supervisord-conf-map
       namespace: eyelevel
-  16: |
+  15: |
     apiVersion: v1
     data:
       config.py: |
@@ -5450,7 +5066,7 @@
         version: 0.1.0
       name: summary-config-py-map
       namespace: eyelevel
-  17: |
+  16: |
     apiVersion: v1
     data:
       gunicorn_conf.py: |
@@ -5478,7 +5094,7 @@
         version: 0.1.0
       name: summary-gunicorn-conf-py-map
       namespace: eyelevel
-  18: |
+  17: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -6074,35 +5690,6 @@
   12: |
     apiVersion: v1
     data:
-      ldconfig_symlink.sh: |
-        #!/bin/sh
-        LDCONFIG_PATHS="/host-sbin/ldconfig /host-usr-sbin/ldconfig /host-bin/ldconfig /host-usr-bin/ldconfig"
-
-        for path in $LDCONFIG_PATHS; do
-          if [ -f "$path" ]; then
-            echo "Found ldconfig at $path"
-            cd "$(dirname "$path")" && ln -sf ldconfig /host-sbin/ldconfig.real
-            break
-          fi
-        done
-
-        if [ -L /host-sbin/ldconfig.real ]; then
-          echo "Symbolic link created at /sbin/ldconfig.real"
-        else
-          echo "Failed to find ldconfig in the specified paths."
-        fi
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ldconfig-symlink-map
-      namespace: eyelevel
-  13: |
-    apiVersion: v1
-    data:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -6124,7 +5711,7 @@
         version: 0.1.0
       name: ranker-config-py-map
       namespace: eyelevel
-  14: |
+  13: |
     apiVersion: v1
     data:
       gunicorn_conf.py: |
@@ -6152,7 +5739,7 @@
         version: 0.1.0
       name: ranker-gunicorn-conf-py-map
       namespace: eyelevel
-  15: |
+  14: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -6350,7 +5937,7 @@
         version: 0.1.0
       name: ranker-inference-supervisord-conf-map
       namespace: eyelevel
-  16: |
+  15: |
     apiVersion: v1
     data:
       config.py: |
@@ -6375,7 +5962,7 @@
         version: 0.1.0
       name: summary-config-py-map
       namespace: eyelevel
-  17: |
+  16: |
     apiVersion: v1
     data:
       gunicorn_conf.py: |
@@ -6403,7 +5990,7 @@
         version: 0.1.0
       name: summary-gunicorn-conf-py-map
       namespace: eyelevel
-  18: |
+  17: |
     apiVersion: v1
     data:
       supervisord.conf: |

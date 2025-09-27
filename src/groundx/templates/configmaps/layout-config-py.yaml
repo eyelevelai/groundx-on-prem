@@ -1,3 +1,7 @@
+{{- $ic := include "groundx.layout.api.create" . -}}
+{{- $ec := include "groundx.layout.inference.create" . -}}
+
+{{- if or (eq $ic "true") (eq $ec "true") }}
 {{- $svc := include "groundx.layout.serviceName" . -}}
 
 {{- $fs := (include "groundx.file.settings" . | fromYaml) }}
@@ -42,3 +46,4 @@ data:
         validAPIKeys=[{{ include "groundx.admin.apiKey" . | quote }}, {{ include "groundx.admin.username" . | quote }}],
         workers={{ include "groundx.layout.inference.workers" . }},
     )
+{{- end }}

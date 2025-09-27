@@ -53,3 +53,10 @@ tests:
       - ../values/values.metadata.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "disabled: api"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ./files/values.disabled.yaml
+    asserts:
+      - matchSnapshot: {}

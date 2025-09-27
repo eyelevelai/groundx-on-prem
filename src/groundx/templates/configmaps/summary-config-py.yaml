@@ -1,3 +1,7 @@
+{{- $ic := include "groundx.summary.api.create" . -}}
+{{- $ec := include "groundx.summary.inference.create" . -}}
+
+{{- if or (eq $ic "true") (eq $ec "true") }}
 {{- $svc := include "groundx.summary.serviceName" . -}}
 
 apiVersion: v1
@@ -21,3 +25,4 @@ data:
         validAPIKeys=[{{ include "groundx.admin.apiKey" . | quote }}, {{ include "groundx.admin.username" . | quote }}],
         workers={{ include "groundx.summary.inference.workers" . }},
     )
+{{- end }}
