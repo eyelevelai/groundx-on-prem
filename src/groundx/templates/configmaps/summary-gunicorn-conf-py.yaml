@@ -21,6 +21,6 @@ data:
 
     worker_class = "uvicorn.workers.UvicornWorker"
 
-    bind = "0.0.0.0:8080"
+    bind = "0.0.0.0:{{ include "groundx.summary.api.containerPort" . }}"
 
     wsgi_app = "summary_server:app"

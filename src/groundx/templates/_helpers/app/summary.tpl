@@ -20,9 +20,7 @@
 {{- define "groundx.summary.baseURL" -}}
 {{- $in := .Values.summary | default dict -}}
 {{- $ex := dig "existing" dict $in -}}
-{{- $svc := include "groundx.summary.serviceName" . -}}
-{{- $ns := include "groundx.ns" . -}}
-{{- coalesce (dig "url" "" $ex) (printf "http://%s-api.%s.svc.cluster.local" $svc $ns) -}}
+{{- coalesce (dig "url" "" $ex) (include "groundx.summary.api.serviceUrl" .) -}}
 {{- end }}
 
 {{- define "groundx.summary.defaultKitId" -}}

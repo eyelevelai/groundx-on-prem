@@ -46,7 +46,7 @@ data:
         apiKey: {{ include "groundx.summary.apiKey" . }}
         baseURL: {{ include "groundx.summary.baseURL" . }}
         defaultKitId: {{ include "groundx.summary.defaultKitId" . }}
-      summaryType: {{ include "groundx.summary.serviceName" . }}
+      summaryType: summary
       searchIndexes:
         {{ include "groundx.search.indexName" . }}:
           languages:
@@ -73,6 +73,9 @@ data:
         {{- end }}
         {{- if hasKey $e "maxOutputTokens" }}
         maxTokens: {{ get $e "maxOutputTokens" }}
+        {{- end }}
+        {{- if hasKey $e "reasoningEffort" }}
+        reasoningEffort: {{ get $e "reasoningEffort" }}
         {{- end }}
         {{- if hasKey $e "requestLimit" }}
         requestLimit: {{ get $e "requestLimit" }}

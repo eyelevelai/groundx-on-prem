@@ -1730,14 +1730,14 @@
             - command:
                 - sh
                 - -c
-                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+                - until nc -z cache.existing.com 6379; do echo waiting for cache; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-cache
             - command:
                 - sh
                 - -c
-                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+                - until nc -z file.existing.com 9000; do echo waiting for file storage; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-file-storage
@@ -1840,14 +1840,14 @@
             - command:
                 - sh
                 - -c
-                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+                - until nc -z cache.existing.com 6379; do echo waiting for cache; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-cache
             - command:
                 - sh
                 - -c
-                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+                - until nc -z file.existing.com 9000; do echo waiting for file storage; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-file-storage
@@ -1950,14 +1950,14 @@
             - command:
                 - sh
                 - -c
-                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+                - until nc -z cache.existing.com 6379; do echo waiting for cache; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-cache
             - command:
                 - sh
                 - -c
-                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+                - until nc -z file.existing.com 9000; do echo waiting for file storage; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-file-storage
@@ -2060,14 +2060,14 @@
             - command:
                 - sh
                 - -c
-                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+                - until nc -z cache.existing.com 6379; do echo waiting for cache; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-cache
             - command:
                 - sh
                 - -c
-                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+                - until nc -z file.existing.com 9000; do echo waiting for file storage; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-file-storage
@@ -2170,14 +2170,14 @@
             - command:
                 - sh
                 - -c
-                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+                - until nc -z cache.existing.com 6379; do echo waiting for cache; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-cache
             - command:
                 - sh
                 - -c
-                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+                - until nc -z file.existing.com 9000; do echo waiting for file storage; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-file-storage
@@ -2208,22 +2208,22 @@
     kind: Deployment
     metadata:
       labels:
-        app: layout-correct
+        app: myapp-correct
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: layout-correct
+      name: myapp-correct
       namespace: eyelevel
     spec:
       replicas: 1
       selector:
         matchLabels:
-          app: layout-correct
+          app: myapp-correct
       template:
         metadata:
           labels:
-            app: layout-correct
+            app: myapp-correct
         spec:
           containers:
             - command:
@@ -2246,7 +2246,7 @@
                     - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
                 initialDelaySeconds: 30
                 periodSeconds: 30
-              name: layout-correct
+              name: myapp-correct
               readinessProbe:
                 exec:
                   command:
@@ -2281,7 +2281,7 @@
             - command:
                 - sh
                 - -c
-                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+                - until nc -z myapp.eyelevel.svc.cluster.local 6377; do echo waiting for cache; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-cache
@@ -2311,30 +2311,42 @@
                 name: layout-config-py-map
               name: config-volume
             - configMap:
-                name: layout-correct-supervisord-conf-map
+                name: myapp-correct-supervisord-conf-map
               name: supervisord-volume
   2: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
       labels:
-        app: layout-map
+        app: myapp-map
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: layout-map
+      name: myapp-map
       namespace: eyelevel
     spec:
       replicas: 1
       selector:
         matchLabels:
-          app: layout-map
+          app: myapp-map
       template:
         metadata:
+          annotations:
+            prometheus.io/port: "8081"
           labels:
-            app: layout-map
+            app: myapp-map
+            app.kubernetes.io/name: myapp
         spec:
+          affinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - myapp
+                topologyKey: kubernetes.io/hostname
           containers:
             - command:
                 - /bin/sh
@@ -2346,8 +2358,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: test.image:v1
+              imagePullPolicy: Never
               livenessProbe:
                 exec:
                   command:
@@ -2356,7 +2368,7 @@
                     - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
                 initialDelaySeconds: 30
                 periodSeconds: 30
-              name: layout-map
+              name: myapp-map
               readinessProbe:
                 exec:
                   command:
@@ -2370,15 +2382,7 @@
                   cpu: 100m
                   memory: 256Mi
               securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 1001
-                runAsNonRoot: true
-                runAsUser: 1001
-                seccompProfile:
-                  type: RuntimeDefault
+                readOnlyRootFilesystem: true
               volumeMounts:
                 - mountPath: /app/config.py
                   name: config-volume
@@ -2391,7 +2395,7 @@
             - command:
                 - sh
                 - -c
-                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+                - until nc -z myapp.eyelevel.svc.cluster.local 6377; do echo waiting for cache; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-cache
@@ -2402,48 +2406,36 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
-            fsGroup: 1001
-            fsGroupChangePolicy: OnRootMismatch
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
-            seccompProfile:
-              type: RuntimeDefault
-          tolerations:
-            - effect: NoSchedule
-              key: node
-              value: eyelevel-cpu-only
+            fsGroup: 2000
           volumes:
             - configMap:
                 name: layout-config-py-map
               name: config-volume
             - configMap:
-                name: layout-map-supervisord-conf-map
+                name: myapp-map-supervisord-conf-map
               name: supervisord-volume
   3: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
       labels:
-        app: layout-ocr
+        app: myapp-ocr
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: layout-ocr
+      name: myapp-ocr
       namespace: eyelevel
     spec:
       replicas: 1
       selector:
         matchLabels:
-          app: layout-ocr
+          app: myapp-ocr
       template:
         metadata:
           labels:
-            app: layout-ocr
+            app: myapp-ocr
         spec:
           containers:
             - command:
@@ -2466,7 +2458,7 @@
                     - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
                 initialDelaySeconds: 30
                 periodSeconds: 30
-              name: layout-ocr
+              name: myapp-ocr
               readinessProbe:
                 exec:
                   command:
@@ -2501,7 +2493,7 @@
             - command:
                 - sh
                 - -c
-                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+                - until nc -z myapp.eyelevel.svc.cluster.local 6377; do echo waiting for cache; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-cache
@@ -2513,7 +2505,7 @@
               imagePullPolicy: Always
               name: wait-for-file-storage
           nodeSelector:
-            node: eyelevel-cpu-memory
+            disktype: ssd
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2522,38 +2514,34 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
-          tolerations:
-            - effect: NoSchedule
-              key: node
-              value: eyelevel-cpu-memory
           volumes:
             - configMap:
                 name: layout-config-py-map
               name: config-volume
             - configMap:
-                name: layout-ocr-supervisord-conf-map
+                name: myapp-ocr-supervisord-conf-map
               name: supervisord-volume
   4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
       labels:
-        app: layout-process
+        app: myapp-process
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: layout-process
+      name: myapp-process
       namespace: eyelevel
     spec:
       replicas: 1
       selector:
         matchLabels:
-          app: layout-process
+          app: myapp-process
       template:
         metadata:
           labels:
-            app: layout-process
+            app: myapp-process
         spec:
           containers:
             - command:
@@ -2576,7 +2564,7 @@
                     - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
                 initialDelaySeconds: 30
                 periodSeconds: 30
-              name: layout-process
+              name: myapp-process
               readinessProbe:
                 exec:
                   command:
@@ -2611,7 +2599,7 @@
             - command:
                 - sh
                 - -c
-                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+                - until nc -z myapp.eyelevel.svc.cluster.local 6377; do echo waiting for cache; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-cache
@@ -2622,8 +2610,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2634,36 +2620,37 @@
               type: RuntimeDefault
           tolerations:
             - effect: NoSchedule
-              key: node
-              value: eyelevel-cpu-memory
+              key: workload-type
+              operator: Equal
+              value: batch
           volumes:
             - configMap:
                 name: layout-config-py-map
               name: config-volume
             - configMap:
-                name: layout-process-supervisord-conf-map
+                name: myapp-process-supervisord-conf-map
               name: supervisord-volume
   5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
       labels:
-        app: layout-save
+        app: myapp-save
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: layout-save
+      name: myapp-save
       namespace: eyelevel
     spec:
       replicas: 1
       selector:
         matchLabels:
-          app: layout-save
+          app: myapp-save
       template:
         metadata:
           labels:
-            app: layout-save
+            app: myapp-save
         spec:
           containers:
             - command:
@@ -2686,7 +2673,7 @@
                     - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
                 initialDelaySeconds: 30
                 periodSeconds: 30
-              name: layout-save
+              name: myapp-save
               readinessProbe:
                 exec:
                   command:
@@ -2721,7 +2708,7 @@
             - command:
                 - sh
                 - -c
-                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+                - until nc -z myapp.eyelevel.svc.cluster.local 6377; do echo waiting for cache; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
               imagePullPolicy: Always
               name: wait-for-cache
@@ -2733,7 +2720,7 @@
               imagePullPolicy: Always
               name: wait-for-file-storage
           nodeSelector:
-            node: eyelevel-cpu-memory
+            node: test-label-1
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2745,13 +2732,13 @@
           tolerations:
             - effect: NoSchedule
               key: node
-              value: eyelevel-cpu-memory
+              value: test-label-1
           volumes:
             - configMap:
                 name: layout-config-py-map
               name: config-volume
             - configMap:
-                name: layout-save-supervisord-conf-map
+                name: myapp-save-supervisord-conf-map
               name: supervisord-volume
 'minikube: layout':
   1: |

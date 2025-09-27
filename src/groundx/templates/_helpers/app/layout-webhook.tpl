@@ -48,8 +48,12 @@ false
 
 {{- define "groundx.layoutWebhook.port" -}}
 {{- $in := .Values.layoutWebhook | default dict -}}
+{{- if hasKey $in "loadBalancer" -}}
 {{- $lb := dig "loadBalancer" dict $in -}}
 {{ dig "port" 80 $lb }}
+{{- else -}}
+80
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.layoutWebhook.replicas" -}}
@@ -63,8 +67,12 @@ false
 
 {{- define "groundx.layoutWebhook.ssl" -}}
 {{- $in := .Values.layoutWebhook | default dict -}}
+{{- if hasKey $in "loadBalancer" -}}
 {{- $lb := dig "loadBalancer" dict $in -}}
 {{ dig "ssl" "false" $lb  }}
+{{- else -}}
+false
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.layoutWebhook.serviceUrl" -}}
@@ -89,7 +97,7 @@ false
 {{- dict
     "isInternal" (dig "isInternal" "false" $lb)
     "port"       (include "groundx.layoutWebhook.port" .)
-    "ssl"        (dig "ssl" "false" $lb)
+    "ssl"        (include "groundx.layoutWebhook.ssl" .)
     "targetPort" (include "groundx.layoutWebhook.containerPort" .)
     "timeout"    (dig "timeout" "" $lb)
     "type"       (dig "type" "ClusterIP" $lb)
@@ -112,15 +120,15 @@ false
   "dependencies" (dict
     "groundx" "groundx"
   )
+  "image"        (include "groundx.layoutWebhook.image" .)
   "isRoute"      (include "groundx.layoutWebhook.isRoute" .)
+  "loadBalancer" (include "groundx.layoutWebhook.loadBalancer" . | trim)
+  "name"         (include "groundx.layoutWebhook.serviceName" .)
   "node"         (include "groundx.layoutWebhook.node" .)
+  "port"         (include "groundx.layoutWebhook.containerPort" .)
+  "pull"         (include "groundx.layoutWebhook.imagePullPolicy" .)
   "replicas"     ($rep)
 -}}
-{{- $_ := set $cfg "name"         (include "groundx.layoutWebhook.serviceName" .) -}}
-{{- $_ := set $cfg "image"        (include "groundx.layoutWebhook.image" .) -}}
-{{- $_ := set $cfg "loadBalancer" (include "groundx.layoutWebhook.loadBalancer" . | trim) -}}
-{{- $_ := set $cfg "port"         (include "groundx.layoutWebhook.containerPort" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.layoutWebhook.imagePullPolicy" .) -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

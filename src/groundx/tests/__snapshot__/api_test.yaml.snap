@@ -1232,17 +1232,17 @@
                 failureThreshold: 12
                 httpGet:
                   path: /health
-                  port: 8080
+                  port: 8081
                 initialDelaySeconds: 10
                 periodSeconds: 30
               name: myapp-api
               ports:
-                - containerPort: 8080
+                - containerPort: 8081
                   protocol: TCP
               readinessProbe:
                 httpGet:
                   path: /health
-                  port: 8080
+                  port: 8081
                 initialDelaySeconds: 10
                 periodSeconds: 30
               resources:
@@ -1308,7 +1308,7 @@
       ports:
         - port: 80
           protocol: TCP
-          targetPort: 8080
+          targetPort: 8081
       selector:
         app: myapp-api
       type: ClusterIP

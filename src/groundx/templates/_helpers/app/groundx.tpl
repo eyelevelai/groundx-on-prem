@@ -129,7 +129,8 @@ false
   "db"     "db"
 -}}
 {{- $cd := include "groundx.stream.create" . -}}
-{{- if eq $cd "true" -}}
+{{- $ed := include "groundx.stream.existing" . -}}
+{{- if or (eq $cd "true") (eq $ed "true") -}}
 {{- $_ := set $dpnd "stream" "stream" -}}
 {{- end -}}
 

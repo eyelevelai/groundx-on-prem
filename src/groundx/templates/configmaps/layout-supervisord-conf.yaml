@@ -1,10 +1,11 @@
 {{- $sups := (include "groundx.layout.supervisor" . | fromYaml) -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- $svc := include "groundx.layout.serviceName" . -}}
-{{- range $name, $entry := $sups }}
+{{- range $n, $entry := $sups }}
 {{- $svcKey := printf "groundx.%s.settings" $entry -}}
 {{- $svcData := include $svcKey $ | fromYaml -}}
 
+{{- $name := get $svcData "name" -}}
 {{- $queue := get $svcData "queue" -}}
 {{- $threads := get $svcData "threads" -}}
 {{- $workers := int (get $svcData "workers") -}}
@@ -12,7 +13,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ $svc }}-{{ $name }}-supervisord-conf-map
+  name: {{ $name }}-supervisord-conf-map
   namespace: {{ $ns }}
   labels:
 {{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
@@ -27,7 +28,7 @@ data:
     [program:celery_worker_{{ add $i 1 }}]
     command=celery -A document.celery_process.app worker -n %(ENV_POD_NAME)s-w{{ add $i 1 }} --loglevel=INFO --queues={{ join "," $queue }} --concurrency={{ $threads }}
     environment=
-      {{- if eq $name "inference" }}
+      {{- if contains "inference" $name }}
       CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w{{ add $i 1 }}",
       {{- end }}
       LOCAL="0",
@@ -40,7 +41,7 @@ data:
     stderr_logfile_maxbytes=0
     {{ end }}
 
-    {{- if eq $name "inference" }}
+    {{- if contains "inference" $name }}
     [program:celery_monitor]
     command=python /app/document_monitor.py
     environment=
