@@ -638,158 +638,156 @@
     kind: StatefulSet
     metadata:
       labels:
-        app: cache-metrics
+        app: myapp-myapp
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: cache-metrics
+      name: myapp-myapp
       namespace: eyelevel
     spec:
       replicas: 1
       selector:
         matchLabels:
-          app: cache-metrics
-      serviceName: cache-metrics
+          app: myapp-myapp
+      serviceName: myapp-myapp
       template:
         metadata:
+          annotations:
+            prometheus.io/port: "8081"
           labels:
-            app: cache-metrics
+            app: myapp-myapp
+            app.kubernetes.io/name: myapp
         spec:
+          affinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - myapp
+                topologyKey: kubernetes.io/hostname
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:latest
-              imagePullPolicy: Always
-              name: cache-metrics
+            - image: test.image:v1
+              imagePullPolicy: Never
+              name: myapp-myapp
               ports:
-                - containerPort: 6379
+                - containerPort: 8081
                   protocol: TCP
               resources:
                 requests:
                   cpu: 200m
                   memory: 512Mi
               securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 1001
-                runAsNonRoot: true
-                runAsUser: 1001
-                seccompProfile:
-                  type: RuntimeDefault
+                readOnlyRootFilesystem: true
               volumeMounts:
-                - mountPath: /mnt/redis
-                  name: cache-metrics-persistent-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
+                - mountPath: /ok/here
+                  name: myapp-myapp-persistent-storage
           securityContext:
-            fsGroup: 1001
-            fsGroupChangePolicy: OnRootMismatch
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
-            seccompProfile:
-              type: RuntimeDefault
+            fsGroup: 2000
           tolerations:
             - effect: NoSchedule
-              key: node
-              value: eyelevel-cpu-only
+              key: workload-type
+              operator: Equal
+              value: batch
           volumes:
             - emptyDir: {}
-              name: cache-metrics-persistent-storage
+              name: myapp-myapp-persistent-storage
   2: |
     apiVersion: v1
     kind: Service
     metadata:
+      annotations:
+        service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "30"
       labels:
-        app: cache-metrics
-      name: cache-metrics
+        app: myapp-myapp
+      name: myapp-myapp
       namespace: eyelevel
     spec:
       ports:
-        - port: 6379
+        - port: 6377
           protocol: TCP
-          targetPort: 6379
+          targetPort: 8081
       selector:
-        app: cache-metrics
+        app: myapp-myapp
       type: ClusterIP
   3: |
     apiVersion: apps/v1
     kind: StatefulSet
     metadata:
       labels:
-        app: cache
+        app: myapp
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: cache
+      name: myapp
       namespace: eyelevel
     spec:
       replicas: 1
       selector:
         matchLabels:
-          app: cache
-      serviceName: cache
+          app: myapp
+      serviceName: myapp
       template:
         metadata:
+          annotations:
+            prometheus.io/port: "8081"
+            prometheus.io/scrape: "true"
           labels:
-            app: cache
+            app: myapp
+            app.kubernetes.io/component: backend
+            app.kubernetes.io/name: myapp
         spec:
+          affinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - myapp
+                topologyKey: kubernetes.io/hostname
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:latest
-              imagePullPolicy: Always
-              name: cache
+            - image: test.image:v1
+              imagePullPolicy: Never
+              name: myapp
               ports:
-                - containerPort: 6379
+                - containerPort: 8081
                   protocol: TCP
               resources:
                 requests:
                   cpu: 200m
                   memory: 512Mi
               securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 1001
-                runAsNonRoot: true
-                runAsUser: 1001
-                seccompProfile:
-                  type: RuntimeDefault
+                readOnlyRootFilesystem: true
               volumeMounts:
-                - mountPath: /mnt/redis
-                  name: cache-persistent-storage
+                - mountPath: /ok/here
+                  name: myapp-persistent-storage
           nodeSelector:
-            node: eyelevel-cpu-only
+            disktype: ssd
+            kubernetes.io/os: linux
           securityContext:
-            fsGroup: 1001
-            fsGroupChangePolicy: OnRootMismatch
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
-            seccompProfile:
-              type: RuntimeDefault
-          tolerations:
-            - effect: NoSchedule
-              key: node
-              value: eyelevel-cpu-only
+            fsGroup: 2000
           volumes:
             - emptyDir: {}
-              name: cache-persistent-storage
+              name: myapp-persistent-storage
   4: |
     apiVersion: v1
     kind: Service
     metadata:
+      annotations:
+        service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "30"
       labels:
-        app: cache
-      name: cache
+        app: myapp
+      name: myapp
       namespace: eyelevel
     spec:
       ports:
-        - port: 6379
+        - port: 6377
           protocol: TCP
-          targetPort: 6379
+          targetPort: 8081
       selector:
-        app: cache
+        app: myapp
       type: ClusterIP

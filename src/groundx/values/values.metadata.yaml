@@ -6,7 +6,6 @@ cluster:
 
 cache:
   affinity:
-    podAntiAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       - labelSelector:
           matchExpressions:
@@ -33,7 +32,7 @@ cache:
     ssl: true
     timeout: 30
   mountPath: /ok/here
-  node: test-label-1
+  node: ""
   nodeSelector:
     disktype: ssd
     kubernetes.io/os: linux
@@ -41,18 +40,9 @@ cache:
   securityContext:
     fsGroup: 2000
   serviceName: myapp
-  tolerations:
-    - key: "workload-type"
-      operator: "Equal"
-      value: "batch"
-      effect: "NoSchedule"
-    - key: "gpu"
-      operator: "Exists"
-      effect: "NoExecute"
 
   metrics:
     affinity:
-      podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         - labelSelector:
             matchExpressions:
@@ -77,18 +67,16 @@ cache:
       ssl: true
       timeout: 30
     mountPath: /ok/here
-    node: test-label-1
-    nodeSelector:
-      disktype: ssd
+    node: ""
     port: 8082
     securityContext:
       fsGroup: 2000
     serviceName: myapp
     tolerations:
-      - key: "workload-type"
+      - effect: "NoSchedule"
+        key: "workload-type"
         operator: "Equal"
         value: "batch"
-        effect: "NoSchedule"
 
 summary:
   defaultKitId: 1
@@ -96,7 +84,6 @@ summary:
 
   api:
     affinity:
-      podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         - labelSelector:
             matchExpressions:
@@ -120,22 +107,16 @@ summary:
       port: 6377
       ssl: true
       timeout: 30
-    node: test-label-1
+    node: ""
     nodeSelector:
       disktype: ssd
     securityContext:
       fsGroup: 2000
     threads: 2
     timeout: 5
-    tolerations:
-      - key: "workload-type"
-        operator: "Equal"
-        value: "batch"
-        effect: "NoSchedule"
     workers: 4
   inference:
     affinity:
-      podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         - labelSelector:
             matchExpressions:
@@ -168,10 +149,10 @@ summary:
       fsGroup: 2000
     threads: 2
     tolerations:
-      - key: "workload-type"
+      - effect: "NoSchedule"
+        key: "workload-type"
         operator: "Equal"
         value: "batch"
-        effect: "NoSchedule"
     workers: 4
 
 groundx:
@@ -207,57 +188,16 @@ groundx:
     fsGroup: 2000
   serviceName: myapp
   tolerations:
-    - key: "workload-type"
+    - effect: "NoSchedule"
+      key: "workload-type"
       operator: "Equal"
       value: "batch"
-      effect: "NoSchedule"
 
 layout:
   serviceName: myapp
 
-  api:
-    affinity:
-      podAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchExpressions:
-              - key: app
-                operator: In
-                values:
-                  - myapp
-          topologyKey: "kubernetes.io/hostname"
-    annotations:
-      prometheus.io/port: "8081"
-    containerPort: 8081
-    containerSecurityContext:
-      readOnlyRootFilesystem: true
-    image: test.image:v1
-    imagePullPolicy: Never
-    labels:
-      app.kubernetes.io/name: myapp
-    loadBalancer:
-      ipType: LoadBalancer
-      isInternal: true
-      port: 6377
-      ssl: true
-      timeout: 30
-    node: test-label-1
-    nodeSelector:
-      disktype: ssd
-    securityContext:
-      fsGroup: 2000
-    threads: 2
-    timeout: 30
-    tolerations:
-      - key: "workload-type"
-        operator: "Equal"
-        value: "batch"
-        effect: "NoSchedule"
-    workers: 4
-
   correct:
     affinity:
-      podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         - labelSelector:
             matchExpressions:
@@ -283,15 +223,14 @@ layout:
       fsGroup: 2000
     threads: 2
     tolerations:
-      - key: "workload-type"
+      - effect: "NoSchedule"
+        key: "workload-type"
         operator: "Equal"
         value: "batch"
-        effect: "NoSchedule"
     workers: 4
 
   inference:
     affinity:
-      podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         - labelSelector:
             matchExpressions:
@@ -318,15 +257,14 @@ layout:
       fsGroup: 2000
     threads: 2
     tolerations:
-      - key: "workload-type"
+      - effect: "NoSchedule"
+        key: "workload-type"
         operator: "Equal"
         value: "batch"
-        effect: "NoSchedule"
     workers: 4
 
   map:
     affinity:
-      podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         - labelSelector:
             matchExpressions:
@@ -352,15 +290,14 @@ layout:
       fsGroup: 2000
     threads: 2
     tolerations:
-      - key: "workload-type"
+      - effect: "NoSchedule"
+        key: "workload-type"
         operator: "Equal"
         value: "batch"
-        effect: "NoSchedule"
     workers: 4
 
   ocr:
     affinity:
-      podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         - labelSelector:
             matchExpressions:
@@ -387,16 +324,15 @@ layout:
       fsGroup: 2000
     threads: 2
     tolerations:
-      - key: "workload-type"
+      - effect: "NoSchedule"
+        key: "workload-type"
         operator: "Equal"
         value: "batch"
-        effect: "NoSchedule"
     type: google
     workers: 4
 
   process:
     affinity:
-      podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         - labelSelector:
             matchExpressions:
@@ -423,15 +359,14 @@ layout:
       fsGroup: 2000
     threads: 2
     tolerations:
-      - key: "workload-type"
+      - effect: "NoSchedule"
+        key: "workload-type"
         operator: "Equal"
         value: "batch"
-        effect: "NoSchedule"
     workers: 4
 
   save:
     affinity:
-      podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         - labelSelector:
             matchExpressions:
@@ -457,10 +392,10 @@ layout:
       fsGroup: 2000
     threads: 2
     tolerations:
-      - key: "workload-type"
+      - effect: "NoSchedule"
+        key: "workload-type"
         operator: "Equal"
         value: "batch"
-        effect: "NoSchedule"
     workers: 4
 
 layoutWebhook:
@@ -496,10 +431,10 @@ layoutWebhook:
     fsGroup: 2000
   serviceName: myapp
   tolerations:
-    - key: "workload-type"
+    - effect: "NoSchedule"
+      key: "workload-type"
       operator: "Equal"
       value: "batch"
-      effect: "NoSchedule"
 
 preProcess:
   affinity:
@@ -529,10 +464,10 @@ preProcess:
     fsGroup: 2000
   serviceName: myapp
   tolerations:
-    - key: "workload-type"
+    - effect: "NoSchedule"
+      key: "workload-type"
       operator: "Equal"
       value: "batch"
-      effect: "NoSchedule"
 
 process:
   affinity:
@@ -562,10 +497,10 @@ process:
     fsGroup: 2000
   serviceName: myapp
   tolerations:
-    - key: "workload-type"
+    - effect: "NoSchedule"
+      key: "workload-type"
       operator: "Equal"
       value: "batch"
-      effect: "NoSchedule"
 
 queue:
   affinity:
@@ -595,17 +530,16 @@ queue:
     fsGroup: 2000
   serviceName: myapp
   tolerations:
-    - key: "workload-type"
+    - effect: "NoSchedule"
+      key: "workload-type"
       operator: "Equal"
       value: "batch"
-      effect: "NoSchedule"
 
 ranker:
   serviceName: myapp
 
   api:
     affinity:
-      podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         - labelSelector:
             matchExpressions:
@@ -629,23 +563,20 @@ ranker:
       port: 6377
       ssl: true
       timeout: 30
-    node: test-label-1
-    nodeSelector:
-      disktype: ssd
+    node: ""
     securityContext:
       fsGroup: 2000
     threads: 2
     timeout: 30
     tolerations:
-      - key: "workload-type"
+      - effect: "NoSchedule"
+        key: "workload-type"
         operator: "Equal"
         value: "batch"
-        effect: "NoSchedule"
     workers: 4
 
   inference:
     affinity:
-      podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         - labelSelector:
             matchExpressions:
@@ -677,10 +608,10 @@ ranker:
       fsGroup: 2000
     threads: 2
     tolerations:
-      - key: "workload-type"
+      - effect: "NoSchedule"
+        key: "workload-type"
         operator: "Equal"
         value: "batch"
-        effect: "NoSchedule"
     workers: 4
 
 summaryClient:
@@ -711,10 +642,10 @@ summaryClient:
     fsGroup: 2000
   serviceName: myapp
   tolerations:
-    - key: "workload-type"
+    - effect: "NoSchedule"
+      key: "workload-type"
       operator: "Equal"
       value: "batch"
-      effect: "NoSchedule"
 
 upload:
   affinity:
@@ -744,7 +675,7 @@ upload:
     fsGroup: 2000
   serviceName: myapp
   tolerations:
-    - key: "workload-type"
+    - effect: "NoSchedule"
+      key: "workload-type"
       operator: "Equal"
       value: "batch"
-      effect: "NoSchedule"

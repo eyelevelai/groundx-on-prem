@@ -159,7 +159,9 @@ false
 {{- if not (empty (dig "addr" "" $ex)) -}}
 {{ dig "port" 6379 $ex }}
 {{- else -}}
-{{ dig "port" 6379 $in }}
+{{- $port := dig "port" 6379 $in -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
+{{ coalesce (dig "port" "" $lb) $port }}
 {{- end -}}
 {{- end }}
 
@@ -207,7 +209,9 @@ false
 {{- if not (empty (dig "addr" "" $ex)) -}}
 {{ dig "port" 6379 $ex }}
 {{- else -}}
-{{ dig "port" 6379 $m }}
+{{- $port := dig "port" 6379 $m -}}
+{{- $lb := dig "loadBalancer" dict $m -}}
+{{ coalesce (dig "port" "" $lb) $port }}
 {{- end -}}
 {{- else -}}
 {{ include "groundx.cache.port" . }}
