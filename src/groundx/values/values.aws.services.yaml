@@ -1,5 +1,13 @@
-namespace: eyelevel
+groundxKey: "00000000-0000-0000-0000-000000000000"
+
+# delete or set false to enable search
 ingestOnly: true
+
+admin:
+  apiKey: "00000000-0000-0000-0000-000000000000"
+  email: "support@mycorp.net"
+  password: "password"
+  username: "00000000-0000-0000-0000-000000000000"
 
 cluster:
   pvClass: eyelevel-pv
@@ -13,8 +21,17 @@ cache:
     addr: X.X.X.use2.cache.amazonaws.com
     isCluster: true
     port: 6379
+    ssl: true
 
 db:
+  username: eyelevel
+  password: password
+
+  # used to initialize DB
+  # creates service user, db, and tables
+  privilegedUsername: root
+  privilegedPassword: password
+
   existing:
     ro: X.X.us-east-2.rds.amazonaws.com
     rw: X.X.us-east-2.rds.amazonaws.com
@@ -22,12 +39,21 @@ db:
 
 file:
   bucketName: eyelevel
+  region: us-east-2
+
+  username: awsKey
+  password: awsSecret
 
   existing:
     url: https://X.s3.us-west-2.amazonaws.com
     serviceType: s3
 
 search:
+  username: eyelevel
+  password: R0otb_*t!kazs
+  privilegedUsername: admin
+  privilegedPassword: R0otb_*t!kazs
+
   existing:
     url: https://X.us-east-2.es.amazonaws.com
 

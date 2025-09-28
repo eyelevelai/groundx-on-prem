@@ -175,6 +175,11 @@ false
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.file.token" -}}
+{{- $in := .Values.file | default dict -}}
+{{ dig "token" "" $in }}
+{{- end }}
+
 {{- define "groundx.file.username" -}}
 {{- $in := .Values.file | default dict -}}
 {{ dig "username" "eyelevel" $in }}
@@ -198,6 +203,7 @@ false
 {{- $ns := include "groundx.ns" . -}}
 {{- $svc := include "groundx.file.serviceName" . -}}
 {{- $ssl := include "groundx.file.ssl" . -}}
+{{- $token := include "groundx.file.token" . -}}
 {{- $sslStr := printf "%v" $ssl -}}
 {{- $scheme := "http" -}}
 {{- if eq $sslStr "true" -}}{{- $scheme = "https" -}}{{- end -}}
@@ -218,5 +224,6 @@ false
     "port"         (include "groundx.file.port" .)
     "scheme"       $scheme
     "ssl"          $ssl
+    "token"        $token
   | toYaml -}}
 {{- end }}

@@ -19,9 +19,9 @@ data:
         metricsAddr={{ include "groundx.metrics.cache.addr" . | quote }},
         metricsPort={{ include "groundx.metrics.cache.port" . }},
         service={{ include "groundx.summary.serviceName" . | quote }},
-        summaryBroker={{ printf "redis://%s:%v/0" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
+        summaryBroker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
         summaryLog={{ include "groundx.summary.serviceName" . | quote }},
-        summaryResultBroker={{ printf "redis://%s:%v/0" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
+        summaryResultBroker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
         validAPIKeys=[{{ include "groundx.admin.apiKey" . | quote }}, {{ include "groundx.admin.username" . | quote }}],
         workers={{ include "groundx.summary.inference.workers" . }},
     )

@@ -155,6 +155,7 @@ data:
       session:
         addr: {{ printf "%s:%v" (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) }}
         notCluster: {{ include "groundx.metrics.cache.notCluster" . }}
+        ssl: {{ include "groundx.metrics.cache.ssl" . }}
       summaryRequest:
         tokensPerMinute: {{ include "groundx.throughput.tpm.summaryRequest" . }}
       task:
@@ -248,6 +249,7 @@ data:
       session:
         addr: {{ printf "%s:%v" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) }}
         notCluster: {{ include "groundx.cache.notCluster" . }}
+        ssl: {{ include "groundx.cache.ssl" . }}
 
     {{- if .Values.dashboard }}
     ssp:
@@ -270,6 +272,7 @@ data:
       secret: {{ get $fs "password" }}
       service: {{ get $fs "serviceType" }}
       ssl: {{ get $fs "ssl" }}
+      token: {{ get $fs "token" }}
 
     uploadFileServer:
       baseURL: {{ include "groundx.upload.serviceUrl" . }}

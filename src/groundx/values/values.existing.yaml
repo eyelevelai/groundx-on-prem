@@ -1,4 +1,10 @@
-namespace: eyelevel
+groundxKey: "00000000-0000-0000-0000-000000000000"
+
+admin:
+  apiKey: "00000000-0000-0000-0000-000000000000"
+  email: "support@mycorp.net"
+  password: "password"
+  username: "00000000-0000-0000-0000-000000000000"
 
 cluster:
   pvClass: eyelevel-pv
@@ -9,18 +15,22 @@ cache:
     addr: cache.existing.com
     isCluster: false
     port: 6379
+    ssl: true
 
   metrics:
     existing:
       addr: metrics-cache.existing.com
       isCluster: false
       port: 6379
+      ssl: true
 
 db:
   dbName: mydb
   username: myuser
   password: mypass
 
+  # used to initialize DB
+  # creates service user, db, and tables
   privilegedUsername: admin
   privilegedPassword: root
 
@@ -42,8 +52,8 @@ search:
   indexName: other-1
   username: myuser
   password: mypass
-  privilegedPassword: admin
   privilegedUsername: root
+  privilegedPassword: admin
 
   existing:
     url: https://search.existing.com

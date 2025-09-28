@@ -1,6 +1,7 @@
 {
   "type": "object",
   "properties": {
+    "groundxKey": { "type": "string", "minLength": 1 },
     "namespace": { "type": "string", "minLength": 1 },
     "imageType": { "type": "string" },
     "ingestOnly": { "type": "boolean" },
@@ -85,7 +86,8 @@
           "properties": {
             "addr": { "type": "string" },
             "isCluster": { "type": "boolean" },
-            "port": { "type": "integer" }
+            "port": { "type": "integer" },
+            "ssl": { "type": "boolean" }
           },
           "additionalProperties": false
         },
@@ -134,7 +136,8 @@
               "properties": {
                 "addr": { "type": "string" },
                 "isCluster": { "type": "boolean" },
-                "port": { "type": "integer" }
+                "port": { "type": "integer" },
+                "ssl": { "type": "boolean" }
               },
               "additionalProperties": false
             },
@@ -233,8 +236,10 @@
         },
         "password": { "type": "string" },
         "port": { "type": "integer" },
+        "region": { "type": "string" },
         "serviceName": { "type": "string" },
         "serviceType": { "type": "string" },
+        "token": { "type": "string" },
         "username": { "type": "string" }
       },
       "required": ["bucketName", "existing", "username", "password"],
@@ -1214,6 +1219,6 @@
       "additionalProperties": false
     }
   },
-  "required": ["cluster", "namespace"],
+  "required": ["admin", "cluster", "groundxKey"],
   "additionalProperties": false
 }

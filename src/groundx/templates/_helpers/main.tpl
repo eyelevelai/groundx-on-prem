@@ -1,5 +1,5 @@
 {{- define "groundx.ns" -}}
-{{- if .Values.namespace -}}{{ .Values.namespace }}{{- else -}}{{ .Release.Namespace }}{{- end -}}
+{{ coalesce .Values.namespace .Release.Namespace "eyelevel" }}
 {{- end }}
 
 {{- define "groundx.admin.apiKey" -}}

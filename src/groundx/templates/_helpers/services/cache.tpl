@@ -165,6 +165,26 @@ false
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.cache.scheme" -}}
+{{- $ic := include "groundx.cache.ssl" . -}}
+{{- if eq $ic "true" -}}
+rediss
+{{- else -}}
+redis
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.cache.ssl" -}}
+{{- $in := .Values.cache | default dict -}}
+{{- $ex := (dig "existing" nil $in) | default dict -}}
+{{- if not (empty (dig "addr" "" $ex)) -}}
+{{ dig "ssl" "false" $ex }}
+{{- else -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
+{{ dig "ssl" "false" $lb }}
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.metrics.cache.addr" -}}
 {{- $b := .Values.cache | default dict -}}
 {{- $m := (dig "metrics" nil $b) | default dict -}}
@@ -215,6 +235,26 @@ false
 {{- end -}}
 {{- else -}}
 {{ include "groundx.cache.port" . }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.metrics.cache.scheme" -}}
+{{- $ic := include "groundx.metrics.cache.ssl" . -}}
+{{- if eq $ic "true" -}}
+rediss
+{{- else -}}
+redis
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.metrics.cache.ssl" -}}
+{{- $in := .Values.cache | default dict -}}
+{{- $ex := (dig "existing" nil $in) | default dict -}}
+{{- if not (empty (dig "addr" "" $ex)) -}}
+{{ dig "ssl" "false" $ex }}
+{{- else -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
+{{ dig "ssl" "false" $lb }}
 {{- end -}}
 {{- end }}
 
