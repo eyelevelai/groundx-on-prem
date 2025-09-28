@@ -34,13 +34,18 @@ search:
 stream:
   enabled: false
 
+  key: awsKey
+  secret: awsSecret
+
   topics:
     preProcess:
       region: us-east-2
       type: sqs
       url: https://sqs.us-east-2.amazonaws.com/X/file-pre-process
     process:
+      key: otherAwsKey
       region: us-east-2
+      secret: otherAwsSecret
       type: sqs
       url: https://sqs.us-east-2.amazonaws.com/X/file-process
     summary:

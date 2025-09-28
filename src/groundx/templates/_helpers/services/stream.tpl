@@ -27,6 +27,11 @@ true
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.stream.key" -}}
+{{- $in := .Values.stream | default dict -}}
+{{ dig "key" nil $in }}
+{{- end }}
+
 {{- define "groundx.stream.nodepool.replicas" -}}
 {{- $in := .Values.stream | default dict -}}
 {{- $np := dig "nodepool" dict $in -}}
@@ -42,6 +47,11 @@ true
 {{- define "groundx.stream.replicas" -}}
 {{- $in := .Values.stream | default dict -}}
 {{ dig "replicas" 1 $in }}
+{{- end }}
+
+{{- define "groundx.stream.secret" -}}
+{{- $in := .Values.stream | default dict -}}
+{{ dig "secret" nil $in }}
 {{- end }}
 
 {{- define "groundx.stream.storage" -}}
@@ -90,6 +100,8 @@ true
 {{- define "groundx.stream.topic.preProcess" -}}
 {{- $in := .Values.stream | default dict -}}
 {{- $topics := dig "topics" dict $in -}}
+{{- $key := include "groundx.stream.key" . -}}
+{{- $secret := include "groundx.stream.secret" . -}}
 {{- $cfg := dict
   "broker"  (printf "%s:%v" (include "groundx.stream.domain" .) (include "groundx.stream.port" .))
   "groupId" (printf "%s-%s" (include "groundx.ns" .) (include "groundx.stream.serviceName" .))
@@ -117,6 +129,12 @@ true
   "type"   ("sqs")
   "url"    (index $pp "url")
 -}}
+{{- if or (hasKey $pp "key") $key -}}
+{{- $_ := set $cfg "key" (coalesce (index $pp "key") $key) -}}
+{{- end -}}
+{{- if or (hasKey $pp "secret") $secret -}}
+{{- $_ := set $cfg "secret" (coalesce (index $pp "secret") $secret) -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -126,6 +144,8 @@ true
 {{- define "groundx.stream.topic.process" -}}
 {{- $in := .Values.stream | default dict -}}
 {{- $topics := dig "topics" dict $in -}}
+{{- $key := include "groundx.stream.key" . -}}
+{{- $secret := include "groundx.stream.secret" . -}}
 {{- $cfg := dict
   "broker"  (printf "%s:%v" (include "groundx.stream.domain" .) (include "groundx.stream.port" .))
   "groupId" (printf "%s-%s" (include "groundx.ns" .) (include "groundx.stream.serviceName" .))
@@ -153,6 +173,12 @@ true
   "type"   ("sqs")
   "url"    (index $pp "url")
 -}}
+{{- if or (hasKey $pp "key") $key -}}
+{{- $_ := set $cfg "key" (coalesce (index $pp "key") $key) -}}
+{{- end -}}
+{{- if or (hasKey $pp "secret") $secret -}}
+{{- $_ := set $cfg "secret" (coalesce (index $pp "secret") $secret) -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -162,6 +188,8 @@ true
 {{- define "groundx.stream.topic.summary" -}}
 {{- $in := .Values.stream | default dict -}}
 {{- $topics := dig "topics" dict $in -}}
+{{- $key := include "groundx.stream.key" . -}}
+{{- $secret := include "groundx.stream.secret" . -}}
 {{- $cfg := dict
   "broker"  (printf "%s:%v" (include "groundx.stream.domain" .) (include "groundx.stream.port" .))
   "groupId" (printf "%s-%s" (include "groundx.ns" .) (include "groundx.stream.serviceName" .))
@@ -189,6 +217,12 @@ true
   "type"   ("sqs")
   "url"    (index $pp "url")
 -}}
+{{- if or (hasKey $pp "key") $key -}}
+{{- $_ := set $cfg "key" (coalesce (index $pp "key") $key) -}}
+{{- end -}}
+{{- if or (hasKey $pp "secret") $secret -}}
+{{- $_ := set $cfg "secret" (coalesce (index $pp "secret") $secret) -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -198,6 +232,8 @@ true
 {{- define "groundx.stream.topic.update" -}}
 {{- $in := .Values.stream | default dict -}}
 {{- $topics := dig "topics" dict $in -}}
+{{- $key := include "groundx.stream.key" . -}}
+{{- $secret := include "groundx.stream.secret" . -}}
 {{- $cfg := dict
   "broker"  (printf "%s:%v" (include "groundx.stream.domain" .) (include "groundx.stream.port" .))
   "groupId" (printf "%s-%s" (include "groundx.ns" .) (include "groundx.stream.serviceName" .))
@@ -225,6 +261,12 @@ true
   "type"   ("sqs")
   "url"    (index $pp "url")
 -}}
+{{- if or (hasKey $pp "key") $key -}}
+{{- $_ := set $cfg "key" (coalesce (index $pp "key") $key) -}}
+{{- end -}}
+{{- if or (hasKey $pp "secret") $secret -}}
+{{- $_ := set $cfg "secret" (coalesce (index $pp "secret") $secret) -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -234,6 +276,8 @@ true
 {{- define "groundx.stream.topic.upload" -}}
 {{- $in := .Values.stream | default dict -}}
 {{- $topics := dig "topics" dict $in -}}
+{{- $key := include "groundx.stream.key" . -}}
+{{- $secret := include "groundx.stream.secret" . -}}
 {{- $cfg := dict
   "broker"  (printf "%s:%v" (include "groundx.stream.domain" .) (include "groundx.stream.port" .))
   "groupId" (printf "%s-%s" (include "groundx.ns" .) (include "groundx.stream.serviceName" .))
@@ -261,6 +305,12 @@ true
   "type"   ("sqs")
   "url"    (index $pp "url")
 -}}
+{{- if or (hasKey $pp "key") $key -}}
+{{- $_ := set $cfg "key" (coalesce (index $pp "key") $key) -}}
+{{- end -}}
+{{- if or (hasKey $pp "secret") $secret -}}
+{{- $_ := set $cfg "secret" (coalesce (index $pp "secret") $secret) -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
