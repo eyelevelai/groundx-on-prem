@@ -1,0 +1,142 @@
+{{- $svcs := (include "groundx.golang.services" . | fromYaml) -}}
+
+{{- range $idx, $entry := $svcs }}
+{{- $svcKey := printf "groundx.%s.settings" $entry -}}
+{{- $svcData := include $svcKey $ | fromYaml -}}
+
+{{- $aff := get $svcData "affinity" -}}
+{{- $anns := get $svcData "annotations" -}}
+{{- $cport := get $svcData "port" -}}
+{{- $csct := get $svcData "containerSecurityContext" -}}
+{{- $dpnd := get $svcData "dependencies" | default dict -}}
+{{- $image := get $svcData "image" -}}
+{{- $io := include "groundx.ingestOnly" $ -}}
+{{- $ir := get $svcData "isRoute" -}}
+{{- $lb := get $svcData "loadBalancer" -}}
+{{- $lbls := get $svcData "labels" -}}
+{{- $node := get $svcData "node" -}}
+{{- $nsl := get $svcData "nodeSelector" -}}
+{{- $rp := get $svcData "replicas" -}}
+{{- $rs := get $svcData "resources" -}}
+{{- $pull := get $svcData "pull" -}}
+{{- $sct := get $svcData "securityContext" -}}
+{{- $svc := get $svcData "name" -}}
+{{- $tl := get $svcData "tolerations" -}}
+
+{{- $desired := get $rp "desired" -}}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $svc }}
+  namespace: {{ include "groundx.ns" $ | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
+spec:
+  replicas: {{ $desired }}
+  selector:
+    matchLabels:
+      app: {{ $svc }}
+  template:
+    metadata:
+      labels:
+        app: {{ $svc }}
+{{- if gt (len $lbls) 0 }}
+{{ toYaml $lbls | nindent 8 }}
+{{- end }}
+{{- if gt (len $anns) 0 }}
+      annotations:
+{{ toYaml $anns | nindent 8 }}
+{{- end }}
+    spec:
+{{- if gt (len $aff) 0 }}
+      affinity:
+{{ toYaml $aff | nindent 8 }}
+{{- end }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
+{{ include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
+{{ include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
+{{- if not (empty $dpnd) }}
+      initContainers:
+{{- if hasKey $dpnd "groundx" }}
+        - name: wait-for-groundx
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until wget --spider -q {{ include "groundx.groundx.serviceUrl" $ }}/health; do echo waiting for groundx; sleep 2; done"]
+{{- end }}
+{{- if hasKey $dpnd "cache" }}
+        - name: wait-for-cache
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.cache.addr" $) (include "groundx.cache.port" $) }}; do echo waiting for cache; sleep 2; done"]
+{{- end }}
+{{- if hasKey $dpnd "file" }}
+        - name: wait-for-file-storage
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.file.serviceDependency" $) (include "groundx.file.port" $) }}; do echo waiting for file storage; sleep 2; done"]
+{{- end }}
+{{- if hasKey $dpnd "search" }}
+        - name: wait-for-search
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.search.baseDomain" $) (include "groundx.search.port" $) }}; do echo waiting for search; sleep 2; done"]
+{{- end }}
+{{- if hasKey $dpnd "db" }}
+        - name: wait-for-database
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.db.ro" $) (include "groundx.db.port" $) }}; do echo waiting for database; sleep 2; done"]
+{{- end }}
+{{- if hasKey $dpnd "stream" }}
+        - name: wait-for-stream
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.stream.domain" $) (include "groundx.stream.port" $) }}; do echo waiting for stream; sleep 2; done"]
+{{- end }}
+{{- end }}
+      containers:
+        - name: {{ $svc | quote }}
+          image: {{ $image | quote }}
+          imagePullPolicy: {{ $pull | quote }}
+          ports:
+            - containerPort: {{ $cport }}
+              protocol: TCP
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ $cport }}
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ $cport }}
+            initialDelaySeconds: 10
+            periodSeconds: 30
+{{ include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /home/{{ include "groundx.golang.username" $ }}/.cashbot/config.yaml
+              subPath: config.yaml
+            - name: init-db-volume
+              mountPath: /app/init-db.sql
+              subPath: init-db.sql
+      volumes:
+        - name: config-volume
+          configMap:
+            name: config-yaml-map
+        - name: init-db-volume
+          configMap:
+            name: init-database-file
+{{- if $lb }}
+{{- if eq $ir "true" }}
+{{ include "groundx.renderRoute" (dict "name" $svc "lb" $lb "root" $) }}
+{{- else }}
+{{ include "groundx.renderLoadBalancer" (dict "name" $svc "lb" $lb "root" $) }}
+{{- end }}
+{{- end }}
+
+{{ end }}

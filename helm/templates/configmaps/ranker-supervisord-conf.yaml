@@ -1,0 +1,35 @@
+{{- $ic := include "groundx.ranker.inference.create" . -}}
+
+{{- if eq $ic "true" }}
+{{- $ns := include "groundx.ns" . -}}
+{{- $svc := include "groundx.ranker.serviceName" . -}}
+{{- $workers := int (include "groundx.ranker.inference.workers" .) -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $svc }}-inference-supervisord-conf-map
+  namespace: {{ include "groundx.ns" $ }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
+data:
+  supervisord.conf: |
+    [supervisord]
+    nodaemon=true
+    logfile=/dev/null
+    {{ printf "" }}
+
+    {{- range $i, $_ := until $workers }}
+    [program:celery_worker_{{ add $i 1 }}]
+    command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w{{ add $i 1 }} --loglevel=INFO --concurrency={{ include "groundx.ranker.inference.threads" $ }} --queues={{ include "groundx.ranker.inference.queue" $ }}
+    environment=
+      CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w{{ add $i 1 }}",
+      LOCAL="0",
+      PYTHONUNBUFFERED="1"
+    autostart=true
+    autorestart=true
+    stdout_logfile=/dev/stdout
+    stdout_logfile_maxbytes=0
+    stderr_logfile=/dev/stderr
+    stderr_logfile_maxbytes=0
+    {{ end }}
+{{- end }}

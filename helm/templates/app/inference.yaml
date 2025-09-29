@@ -1,0 +1,263 @@
+{{- $svcs := (include "groundx.inference.services" . | fromYaml) -}}
+{{- $csym := include "groundx.createSymlink" . -}}
+
+{{- range $idx, $entry := $svcs }}
+{{- $svcKey := printf "groundx.%s.settings" $entry -}}
+{{- $svcData := include $svcKey $ | fromYaml -}}
+
+{{- $aff := get $svcData "affinity" -}}
+{{- $anns := get $svcData "annotations" -}}
+{{- $bn := get $svcData "baseName" -}}
+{{- $cfg := get $svcData "cfg" -}}
+{{- $cport := get $svcData "port" | default "0" -}}
+{{- $csct := get $svcData "containerSecurityContext" -}}
+{{- $eopts := get $svcData "execOpts" | default "" -}}
+{{- $fs := get $svcData "fileSync" | default false -}}
+{{- $image := get $svcData "image" -}}
+{{- $ic := get $svcData "celery" | default "false" -}}
+{{- $lb := get $svcData "loadBalancer" -}}
+{{- $lbls := get $svcData "labels" -}}
+{{- $mpr := get $svcData "modelParts" -}}
+{{- $mv := get $svcData "modelVersion" -}}
+{{- $node := get $svcData "node" -}}
+{{- $nsl := get $svcData "nodeSelector" -}}
+{{- $rp := get $svcData "replicas" -}}
+{{- $rs := get $svcData "resources" -}}
+{{- $pull := get $svcData "pull" -}}
+{{- $pvc := get $svcData "pvc" | default dict -}}
+{{- $sct := get $svcData "securityContext" -}}
+{{- $supe := get $svcData "supervisord" -}}
+{{- $svc := get $svcData "name" -}}
+{{- $tl := get $svcData "tolerations" -}}
+{{- $wd := get $svcData "workingDir" -}}
+
+{{- $desired := get $rp "desired" -}}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $svc }}
+  namespace: {{ include "groundx.ns" $ | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
+spec:
+  replicas: {{ $desired }}
+  selector:
+    matchLabels:
+      app: {{ $svc }}
+  template:
+    metadata:
+      labels:
+        app: {{ $svc }}
+{{- if gt (len $lbls) 0 }}
+{{ toYaml $lbls | nindent 8 }}
+{{- end }}
+{{- if gt (len $anns) 0 }}
+      annotations:
+{{ toYaml $anns | nindent 8 }}
+{{- end }}
+    spec:
+{{- if gt (len $aff) 0 }}
+      affinity:
+{{ toYaml $aff | nindent 8 }}
+{{- end }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
+{{- include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
+{{- include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
+      initContainers:
+        - name: wait-for-cache
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.cache.addr" $) (include "groundx.cache.port" $) }}; do echo waiting for cache; sleep 2; done"]
+{{- if $fs }}
+        - name: wait-for-file-storage
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.file.serviceDependency" $) (include "groundx.file.port" $) }}; do echo waiting for file storage; sleep 2; done"]
+{{- end }}
+{{- if eq $csym "true" }}
+        - name: create-symlink
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ["/bin/sh", "-c", "--"]
+          args: ["echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh"]
+          securityContext:
+            privileged: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 50Mi
+          volumeMounts:
+            - name: {{ $svc }}
+              mountPath: /scripts/ldconfig_symlink.sh
+              subPath: ldconfig_symlink.sh
+            - name: host-sbin
+              mountPath: /host-sbin
+            - name: host-usr-sbin
+              mountPath: /host-usr-sbin
+            - name: host-bin
+              mountPath: /host-bin
+            - name: host-usr-bin
+              mountPath: /host-usr-bin
+{{- end }}
+{{- if not (empty $pvc) }}
+        - name: download-model
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              download_and_extract_model() {
+                echo "Model downloading started..."
+
+                touch {{ $wd }}/hf_models_cache/downloading
+
+                echo "{{ $mpr }}" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
+                  'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/{{ $bn }}/model/current/{{ $mv }}.tar.gz.part.$PART; \
+                  while [ $RETRIES -lt $MAX_RETRIES ]; do \
+                    echo "Download [attempt $RETRIES] {{ $bn }}.tar.gz.part.$PART"; \
+                    wget -q -O {{ $wd }}/hf_models_cache/{{ $bn }}.tar.gz.part.$PART $URL && { echo "Downloaded {{ $bn }}.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
+                    echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
+                  done; \
+                  [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm {{ $wd }}/hf_models_cache/downloading; exit 1; }; \
+                  echo "Unzipping {{ $bn }}.tar.gz.part.$PART..."; tar -xzf {{ $wd }}/hf_models_cache/{{ $bn }}.tar.gz.part.$PART -C {{ $wd }}/hf_models_cache/; echo "Unzipping {{ $bn }}.tar.gz.part.$PART complete...";'
+
+                rm {{ $wd }}/hf_models_cache/{{ $bn }}.tar.*
+                rm {{ $wd }}/hf_models_cache/downloading
+                touch {{ $wd }}/hf_models_cache/complete.{{ $mv }}
+              }
+              if [ ! -f {{ $wd }}/hf_models_cache/complete.{{ $mv }} ]; then
+                if [ ! -f {{ $wd }}/hf_models_cache/downloading ]; then
+                  download_and_extract_model
+                else
+                  echo "Download in progress by another pod. Waiting..."
+                  while [ -f {{ $wd }}/hf_models_cache/downloading ] || [ ! -f {{ $wd }}/hf_models_cache/complete.{{ $mv }} ]; do
+                    sleep $((3 + RANDOM % 2))
+                  done
+
+                  if [ ! -f {{ $wd }}/hf_models_cache/complete.{{ $mv }} ]; then
+                    download_and_extract_model
+                  else
+                    echo "Model cache ready."
+                  fi
+                fi
+              else
+                echo "Model cache already exists. Skipping download."
+              fi
+
+              echo "Model load done."
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
+          volumeMounts:
+            - name: model-volume
+              mountPath: {{ $wd }}/hf_models_cache
+{{- end }}
+      containers:
+        - name: {{ $svc | quote }}
+          image: {{ $image | quote }}
+          imagePullPolicy: {{ $pull | quote }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          workingDir: {{ $wd }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              export PYTHONPATH={{ $wd }}:$PYTHONPATH && {{ $eopts }} supervisord -c {{ $wd }}/supervisord.conf
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
+{{- if ne $ic "false" }}
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - ps aux | grep '{{ $ic }}' | grep -v grep || exit 1
+            initialDelaySeconds: 60
+            failureThreshold: 10
+            periodSeconds: 30
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - ps aux | grep '{{ $ic }}' | grep -v grep || exit 1
+            initialDelaySeconds: 60
+            periodSeconds: 30
+{{- else }}
+          ports:
+            - containerPort: {{ $cport }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /alive
+              port: {{ $cport }}
+            initialDelaySeconds: 30
+            failureThreshold: 8
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ $cport }}
+            initialDelaySeconds: 30
+            failureThreshold: 30
+            periodSeconds: 15
+{{- end }}
+{{ include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
+          volumeMounts:
+            - name: config-models
+              mountPath: {{ $wd }}/config_models.py
+              subPath: config_models.py
+            - name: config-volume
+              mountPath: {{ $wd }}/config.py
+              subPath: config.py
+            - name: supervisord-volume
+              mountPath: {{ $wd }}/supervisord.conf
+              subPath: supervisord.conf
+{{- if not (empty $pvc) }}
+            - name: model-volume
+              mountPath: {{ $wd }}/hf_models_cache
+{{- end }}
+      volumes:
+        - name: config-models
+          configMap:
+            name: config-models-map
+        - name: config-volume
+          configMap:
+            name: {{ $cfg }}
+        - name: supervisord-volume
+          configMap:
+            name: {{ $supe }}
+{{- if eq $csym "true" }}
+        - name: {{ $svc }}
+          configMap:
+            name: ldconfig-symlink-map
+            defaultMode: 0555
+        - name: host-sbin
+          hostPath:
+            path: /sbin
+            type: Directory
+        - name: host-usr-sbin
+          hostPath:
+            path: /usr/sbin
+            type: Directory
+        - name: host-bin
+          hostPath:
+            path: /bin
+            type: Directory
+        - name: host-usr-bin
+          hostPath:
+            path: /usr/bin
+            type: Directory
+{{- end }}
+{{- if not (empty $pvc) }}
+        - name: model-volume
+          persistentVolumeClaim:
+            claimName: {{ dig "name" "" $pvc }}
+{{ include "groundx.renderPVC" (dict "ctx" $pvc "app" $svc "root" $) }}
+{{- end }}
+
+{{ end }}

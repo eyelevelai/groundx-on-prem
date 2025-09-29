@@ -1,0 +1,122 @@
+{{- $svcs := (include "groundx.layout.process.services" . | fromYaml) -}}
+{{- $hasOCR := include "groundx.layout.hasOCRCredentials" . -}}
+
+{{- range $idx, $entry := $svcs }}
+{{- $svcKey := printf "groundx.%s.settings" $entry -}}
+{{- $svcData := include $svcKey $ | fromYaml -}}
+
+{{- $aff := get $svcData "affinity" -}}
+{{- $anns := get $svcData "annotations" -}}
+{{- $csct := get $svcData "containerSecurityContext" -}}
+{{- $image := get $svcData "image" -}}
+{{- $lbls := get $svcData "labels" -}}
+{{- $node := get $svcData "node" -}}
+{{- $nsl := get $svcData "nodeSelector" -}}
+{{- $rp := get $svcData "replicas" -}}
+{{- $rs := get $svcData "resources" -}}
+{{- $pull := get $svcData "pull" -}}
+{{- $sct := get $svcData "securityContext" -}}
+{{- $svc := get $svcData "name" -}}
+{{- $tl := get $svcData "tolerations" -}}
+
+{{- $desired := get $rp "desired" -}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $svc }}
+  namespace: {{ include "groundx.ns" $ | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
+spec:
+  replicas: {{ $desired }}
+  selector:
+    matchLabels:
+      app: {{ $svc }}
+  template:
+    metadata:
+      labels:
+        app: {{ $svc }}
+{{- if gt (len $lbls) 0 }}
+{{ toYaml $lbls | nindent 8 }}
+{{- end }}
+{{- if gt (len $anns) 0 }}
+      annotations:
+{{ toYaml $anns | nindent 8 }}
+{{- end }}
+    spec:
+{{- if gt (len $aff) 0 }}
+      affinity:
+{{ toYaml $aff | nindent 8 }}
+{{- end }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
+{{- include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
+{{- include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
+      initContainers:
+        - name: wait-for-cache
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.cache.addr" $) (include "groundx.cache.port" $) }}; do echo waiting for cache; sleep 2; done"]
+        - name: wait-for-file-storage
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.file.serviceDependency" $) (include "groundx.file.port" $) }}; do echo waiting for file storage; sleep 2; done"]
+      containers:
+        - name: {{ $svc | quote }}
+          image: {{ $image | quote }}
+          imagePullPolicy: {{ $pull | quote }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          workingDir: /app
+          command:
+            - /bin/sh
+            - -c
+            - |
+              export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
+          livenessProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+            initialDelaySeconds: 10
+            periodSeconds: 30
+{{ include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config.py
+              subPath: config.py
+{{- if eq $hasOCR "true" -}}
+            - name: credentials-volume
+              mountPath: /app/credentials.json
+              subPath: credentials.json
+{{- end }}
+            - name: supervisord-volume
+              mountPath: /app/supervisord.conf
+              subPath: supervisord.conf
+      volumes:
+        - name: config-volume
+          configMap:
+            name: layout-config-py-map
+{{- if eq $hasOCR "true" -}}
+        - name: credentials-volume
+          configMap:
+            name: layout-ocr-credentials-map
+{{- end }}
+        - name: supervisord-volume
+          configMap:
+            name: {{ $svc }}-supervisord-conf-map
+
+{{ end }}

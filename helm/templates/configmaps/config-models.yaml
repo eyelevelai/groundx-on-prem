@@ -1,0 +1,25 @@
+{{- $svcs := (include "groundx.inference.services" . | fromYaml) -}}
+{{- $hasEngs := include "groundx.hasCustomEngines" . }}
+{{- $engDict := (include "groundx.engines" . | fromYaml) -}}
+{{- $engs := dig "engines" dict $engDict -}}
+{{- $first := (dig "default" dict $engs) -}}
+
+{{- if gt (len $svcs) 0 }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-models-map
+  namespace: {{ include "groundx.ns" . }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
+data:
+  config_models.py: |
+    env = dict(
+{{- if ne $hasEngs "false" -}}
+      summary = dict(
+        dtype = {{ dig "dataType" (include "groundx.defaultDataType" .) $first | quote }},
+        name = {{ dig "engineId" (include "groundx.defaultEngine" .) $first | quote }},
+      )
+{{- end }}
+    )
+{{- end }}

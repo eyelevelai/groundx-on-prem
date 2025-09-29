@@ -291,7 +291,7 @@ summaryClient.node
 upload.node
 ```
 
-See the values.yaml [README.md](src/groundx/README.md) for more information about these values.
+See the values.yaml [README.md](helm/README.md) for more information about these values.
 
 You will also need to update values for any services you deploy as well.
 
@@ -367,8 +367,8 @@ If you'd like to install MySQL to your cluster, use the following commands below
 helm repo add percona https://percona.github.io/percona-helm-charts/
 helm repo update
 
-helm install db-operator percona/pxc-operator -n eyelevel -f src/groundx/values/values.db.operator.yaml --version 1.15.1
-helm install db-cluster percona/pxc-db -n eyelevel -f src/groundx/values/values.db.cluster.yaml --version 1.15.1
+helm install db-operator percona/pxc-operator -n eyelevel -f helm/values/values.db.operator.yaml --version 1.15.1
+helm install db-cluster percona/pxc-db -n eyelevel -f helm/values/values.db.cluster.yaml --version 1.15.1
 ```
 
 ### MinIO
@@ -389,8 +389,8 @@ If you'd like to install MinIO to your cluster, use the following commands below
 helm repo add minio-operator https://operator.min.io/
 helm repo update
 
-helm install minio-operator minio-operator/operator -n eyelevel -f src/groundx/values/values.file.operator.yaml --version 6.0.3
-helm install minio-cluster minio-operator/tenant -n eyelevel -f src/groundx/values/values.file.tenant.yaml --version 6.0.3
+helm install minio-operator minio-operator/operator -n eyelevel -f helm/values/values.file.operator.yaml --version 6.0.3
+helm install minio-cluster minio-operator/tenant -n eyelevel -f helm/values/values.file.tenant.yaml --version 6.0.3
 ```
 
 ### OpenSearch
@@ -407,7 +407,7 @@ If you'd like to install OpenSearch to your cluster, use the following commands 
 helm repo add opensearch https://opensearch-project.github.io/helm-charts/
 helm repo update
 
-helm install opensearch opensearch/opensearch -n eyelevel -f src/groundx/values/values.search.yaml --version 2.23.1
+helm install opensearch opensearch/opensearch -n eyelevel -f helm/values/values.search.yaml --version 2.23.1
 ```
 
 ### Kafka
@@ -425,7 +425,7 @@ If you wish to use existing AWS SQS queues, you must configure the `stream.exist
 If you'd like to install Kafka to your cluster, use the following commands below:
 
 ```bash
-helm install stream-operator oci://quay.io/strimzi-helm/strimzi-kafka-operator -n eyelevel -f src/groundx/values/values.stream.yaml --version 0.47.0
+helm install stream-operator oci://quay.io/strimzi-helm/strimzi-kafka-operator -n eyelevel -f helm/values/values.stream.yaml --version 0.47.0
 ```
 
 ## Installing the GroundX Application
@@ -442,7 +442,7 @@ You must have completed the following steps before attempting to install the Gro
 
 ### Configuration
 
-Instructions on how to configure GroundX On-Prem can by found in the main [README.md](src/groundx/README.md). A set of example configurations can be found at [src/groundx/values](src/groundx/values).
+Instructions on how to configure GroundX On-Prem can by found in the main [README.md](helm/README.md). A set of example configurations can be found at [helm/values](helm/values).
 
 For a GroundX deployment with default settings:
 
