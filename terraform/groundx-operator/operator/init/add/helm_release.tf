@@ -1,1 +1,1 @@
-../../../../terraform/shared/helm_release.tf
+../../../../shared/helm_release.tf

@@ -1,1 +1,1 @@
-../../../../terraform/shared/node_assignments.tf
+../../../../shared/node_assignments.tf
