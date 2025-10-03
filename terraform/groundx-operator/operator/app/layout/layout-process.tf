@@ -26,6 +26,7 @@ resource "helm_release" "layout_process_service" {
       nodeSelector    = {
         node          = local.node_assignment.layout_process
       }
+      opts            = local.lp_image_tag == "chainguard" ? " export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python &&" : ""
       replicas        = {
         cooldown      = var.layout_resources.process.replicas.cooldown
         max           = local.replicas.layout.process.max

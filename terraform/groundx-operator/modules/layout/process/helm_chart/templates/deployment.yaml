@@ -44,7 +44,7 @@ spec:
           - /bin/sh
           - -c
           - |
-            export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+            export PYTHONPATH=/app &&{{ .Values.opts }} supervisord -c /app/supervisord.conf
         securityContext:
           runAsUser: {{ .Values.securityContext.runAsUser }}
           runAsGroup: {{ .Values.securityContext.runAsGroup }}

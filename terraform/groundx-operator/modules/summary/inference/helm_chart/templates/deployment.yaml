@@ -15,6 +15,7 @@ spec:
       labels:
         app: {{ .Values.service.name }}
     spec:
+      runtimeClassName: {{ .Values.runtime }}
       securityContext:
         runAsUser: {{ .Values.securityContext.runAsUser }}
         runAsGroup: {{ .Values.securityContext.runAsGroup }}

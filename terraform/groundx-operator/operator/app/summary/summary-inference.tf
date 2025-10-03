@@ -43,6 +43,7 @@ resource "helm_release" "summary_inference_service" {
         threshold         = var.summary_resources.inference.replicas.threshold
       }
       resources           = var.summary_resources.inference.resources
+      runtime             = var.cluster.type == "aks" ? "nvidia-container-runtime" : "nvidia"
       securityContext     = {
         fsGroup           = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : var.deployment_type.user != null ? var.deployment_type.user : 1001
         runAsUser         = local.is_openshift ? coalesce(data.external.get_uid_gid[0].result.UID, 1001) : var.deployment_type.user != null ? var.deployment_type.user : 1001

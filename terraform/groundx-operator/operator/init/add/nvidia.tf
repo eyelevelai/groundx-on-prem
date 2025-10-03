@@ -29,7 +29,7 @@ resource "helm_release" "gpu_operator" {
   ] : [
     yamlencode({
       operator = {
-        runtimeClass = "nvidia-container-runtime"
+        runtimeClass = "nvidia"
       }
     })
   ]

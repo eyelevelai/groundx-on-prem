@@ -26,6 +26,7 @@ resource "helm_release" "layout_correct_service" {
       nodeSelector    = {
         node          = local.node_assignment.layout_correct
       }
+      opts            = local.lc_image_tag == "chainguard" ? " export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python &&" : ""
       replicas        = {
         cooldown      = var.layout_resources.correct.replicas.cooldown
         max           = local.replicas.layout.correct.max
