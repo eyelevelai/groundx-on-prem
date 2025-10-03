@@ -26,5 +26,11 @@ resource "helm_release" "gpu_operator" {
         enabled = false
       }
     })
-  ] : []
+  ] : [
+    yamlencode({
+      operator = {
+        runtimeClass = "nvidia"
+      }
+    })
+  ]
 }

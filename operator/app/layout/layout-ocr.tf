@@ -28,6 +28,7 @@ resource "helm_release" "layout_ocr_service" {
       nodeSelector    = {
         node          = local.node_assignment.layout_ocr
       }
+      opts            = local.lo_image_tag == "chainguard" ? " export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python &&" : ""
       replicas        = {
         cooldown      = var.layout_resources.ocr.replicas.cooldown
         max           = local.replicas.layout.ocr.max

@@ -29,6 +29,7 @@ resource "helm_release" "layout_inference_service" {
       nodeSelector    = {
         node          = local.node_assignment.layout_inference
       }
+      opts            = local.li_image_tag == "chainguard" ? " export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python &&" : ""
       replicas        = {
         cooldown      = var.layout_resources.inference.replicas.cooldown
         max           = local.replicas.layout.inference.max

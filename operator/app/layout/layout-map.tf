@@ -26,6 +26,7 @@ resource "helm_release" "layout_map_service" {
       nodeSelector    = {
         node          = local.node_assignment.layout_map
       }
+      opts            = local.lm_image_tag == "chainguard" ? " export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python &&" : ""
       replicas        = {
         cooldown      = var.layout_resources.map.replicas.cooldown
         max           = local.replicas.layout.map.max
