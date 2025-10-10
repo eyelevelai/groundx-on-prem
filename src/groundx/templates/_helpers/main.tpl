@@ -69,11 +69,16 @@ public.ecr.aws/c9r4x6y5
 {{- end }}
 
 {{- define "groundx.busybox.image" -}}
-{{- printf "%s/eyelevel/busybox:latest" (include "groundx.imageRepository" .) -}}
+{{- $in := .Values.busybox | default dict -}}
+{{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
+{{- $ver := coalesce .Chart.AppVersion .Chart.Version -}}
+{{- $fallback := printf "%s/eyelevel/busybox:1.0.0" $repoPrefix -}}
+{{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
 {{- define "groundx.busybox.pull" -}}
-Always
+{{- $in := .Values.busybox | default dict -}}
+{{ dig "imagePullPolicy" "IfNotPresent" $in }}
 {{- end }}
 
 {{- define "groundx.node.cpuMemory" -}}

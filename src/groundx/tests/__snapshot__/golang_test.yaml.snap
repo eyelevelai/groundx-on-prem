@@ -22,8 +22,8 @@
             app: groundx
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -66,29 +66,29 @@
                 - sh
                 - -c
                 - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z X.s3.us-west-2.amazonaws.com 443; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
             - command:
                 - sh
                 - -c
                 - until nc -z X.us-east-2.es.amazonaws.com 443; do echo waiting for search; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-search
             - command:
                 - sh
                 - -c
                 - until nc -z X.X.us-east-2.rds.amazonaws.com 3306; do echo waiting for database; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-database
           nodeSelector:
             node: eyelevel-cpu-only
@@ -150,8 +150,8 @@
             app: layout-webhook
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -194,8 +194,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -257,8 +257,8 @@
             app: pre-process
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -301,8 +301,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -348,8 +348,8 @@
             app: process
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -392,8 +392,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -439,8 +439,8 @@
             app: queue
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -483,8 +483,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -530,8 +530,8 @@
             app: summary-client
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -574,8 +574,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -621,8 +621,8 @@
             app: upload
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -665,8 +665,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -713,8 +713,8 @@
             app: groundx
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -757,36 +757,36 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
             - command:
                 - sh
                 - -c
                 - until nc -z opensearch-cluster-master.eyelevel.svc.cluster.local 9200; do echo waiting for search; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-search
             - command:
                 - sh
                 - -c
                 - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-database
             - command:
                 - sh
                 - -c
                 - until nc -z stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local 9092; do echo waiting for stream; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-stream
           nodeSelector:
             node: eyelevel-cpu-only
@@ -848,8 +848,8 @@
             app: layout-webhook
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -892,8 +892,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -955,8 +955,8 @@
             app: pre-process
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -999,8 +999,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -1046,8 +1046,8 @@
             app: process
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -1090,8 +1090,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -1137,8 +1137,8 @@
             app: queue
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -1181,8 +1181,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -1228,8 +1228,8 @@
             app: summary-client
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -1272,8 +1272,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -1319,8 +1319,8 @@
             app: upload
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -1363,8 +1363,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -1412,8 +1412,8 @@
             app: groundx
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -1456,36 +1456,36 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
             - command:
                 - sh
                 - -c
                 - until nc -z opensearch-cluster-master.eyelevel.svc.cluster.local 9200; do echo waiting for search; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-search
             - command:
                 - sh
                 - -c
                 - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-database
             - command:
                 - sh
                 - -c
                 - until nc -z stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local 9092; do echo waiting for stream; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-stream
           nodeSelector:
             node: eyelevel-cpu-only
@@ -1547,8 +1547,8 @@
             app: layout-webhook
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -1591,8 +1591,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -1654,8 +1654,8 @@
             app: pre-process
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -1698,8 +1698,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -1745,8 +1745,8 @@
             app: process
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -1789,8 +1789,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -1836,8 +1836,8 @@
             app: queue
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -1880,8 +1880,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -1927,8 +1927,8 @@
             app: summary-client
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -1971,8 +1971,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -2018,8 +2018,8 @@
             app: upload
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -2062,8 +2062,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -2110,8 +2110,8 @@
             app: groundx
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -2154,36 +2154,36 @@
                 - sh
                 - -c
                 - until nc -z cache.existing.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z file.existing.com 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
             - command:
                 - sh
                 - -c
                 - until nc -z search.existing.com 443; do echo waiting for search; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-search
             - command:
                 - sh
                 - -c
                 - until nc -z db-ro.existing.com 3306; do echo waiting for database; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-database
             - command:
                 - sh
                 - -c
                 - until nc -z kafka.existing.com 9001; do echo waiting for stream; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-stream
           nodeSelector:
             node: eyelevel-cpu-only
@@ -2245,8 +2245,8 @@
             app: layout-webhook
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -2289,8 +2289,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -2352,8 +2352,8 @@
             app: pre-process
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -2396,8 +2396,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -2443,8 +2443,8 @@
             app: process
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -2487,8 +2487,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -2534,8 +2534,8 @@
             app: queue
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -2578,8 +2578,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -2625,8 +2625,8 @@
             app: summary-client
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -2669,8 +2669,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -2716,8 +2716,8 @@
             app: upload
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -2760,8 +2760,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -2856,35 +2856,35 @@
                 - sh
                 - -c
                 - until nc -z myapp.eyelevel.svc.cluster.local 6377; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-file-storage
             - command:
                 - sh
                 - -c
                 - until nc -z opensearch-cluster-master.eyelevel.svc.cluster.local 9200; do echo waiting for search; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-search
             - command:
                 - sh
                 - -c
                 - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-database
             - command:
                 - sh
                 - -c
                 - until nc -z stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local 9092; do echo waiting for stream; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-stream
           nodeSelector:
@@ -2944,8 +2944,8 @@
             app: layout-webhook
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -2988,7 +2988,7 @@
                 - sh
                 - -c
                 - until wget --spider -q https://myapp.eyelevel.svc.cluster.local:6377/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-groundx
           nodeSelector:
@@ -3052,8 +3052,8 @@
             app: pre-process
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -3096,7 +3096,7 @@
                 - sh
                 - -c
                 - until wget --spider -q https://myapp.eyelevel.svc.cluster.local:6377/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-groundx
           nodeSelector:
@@ -3143,8 +3143,8 @@
             app: process
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -3187,7 +3187,7 @@
                 - sh
                 - -c
                 - until wget --spider -q https://myapp.eyelevel.svc.cluster.local:6377/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-groundx
           nodeSelector:
@@ -3234,8 +3234,8 @@
             app: queue
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -3278,7 +3278,7 @@
                 - sh
                 - -c
                 - until wget --spider -q https://myapp.eyelevel.svc.cluster.local:6377/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-groundx
           securityContext:
@@ -3319,8 +3319,8 @@
             app: summary-client
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -3363,7 +3363,7 @@
                 - sh
                 - -c
                 - until wget --spider -q https://myapp.eyelevel.svc.cluster.local:6377/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-groundx
           securityContext:
@@ -3409,8 +3409,8 @@
             app: upload
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -3453,7 +3453,7 @@
                 - sh
                 - -c
                 - until wget --spider -q https://myapp.eyelevel.svc.cluster.local:6377/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-groundx
           nodeSelector:
@@ -3497,8 +3497,8 @@
             app: groundx
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -3541,36 +3541,36 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
             - command:
                 - sh
                 - -c
                 - until nc -z opensearch-cluster-master.eyelevel.svc.cluster.local 9200; do echo waiting for search; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-search
             - command:
                 - sh
                 - -c
                 - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-database
             - command:
                 - sh
                 - -c
                 - until nc -z stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local 9092; do echo waiting for stream; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-stream
           nodeSelector:
             node: eyelevel-cpu-only
@@ -3632,8 +3632,8 @@
             app: layout-webhook
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -3676,8 +3676,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -3739,8 +3739,8 @@
             app: pre-process
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -3783,8 +3783,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -3830,8 +3830,8 @@
             app: process
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -3874,8 +3874,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -3921,8 +3921,8 @@
             app: queue
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -3965,8 +3965,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -4012,8 +4012,8 @@
             app: summary-client
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -4056,8 +4056,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -4103,8 +4103,8 @@
             app: upload
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -4147,8 +4147,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -4195,8 +4195,8 @@
             app: groundx
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -4237,36 +4237,36 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
             - command:
                 - sh
                 - -c
                 - until nc -z opensearch-cluster-master.eyelevel.svc.cluster.local 9200; do echo waiting for search; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-search
             - command:
                 - sh
                 - -c
                 - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-database
             - command:
                 - sh
                 - -c
                 - until nc -z stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local 9092; do echo waiting for stream; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-stream
           nodeSelector:
             node: eyelevel-cpu-only
@@ -4341,8 +4341,8 @@
             app: layout-webhook
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -4383,8 +4383,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -4442,8 +4442,8 @@
             app: pre-process
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -4484,8 +4484,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -4527,8 +4527,8 @@
             app: process
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -4569,8 +4569,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -4612,8 +4612,8 @@
             app: queue
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -4654,8 +4654,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -4697,8 +4697,8 @@
             app: summary-client
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -4739,8 +4739,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only
@@ -4782,8 +4782,8 @@
             app: upload
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:latest
-              imagePullPolicy: Always
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
@@ -4824,8 +4824,8 @@
                 - sh
                 - -c
                 - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-groundx
           nodeSelector:
             node: eyelevel-cpu-only

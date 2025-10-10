@@ -26,13 +26,14 @@ true
 {{- define "groundx.layoutWebhook.image" -}}
 {{- $in := .Values.layoutWebhook | default dict -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
-{{- $fallback := printf "%s/eyelevel/layout-webhook:latest" $repoPrefix -}}
+{{- $ver := coalesce .Chart.AppVersion .Chart.Version -}}
+{{- $fallback := printf "%s/eyelevel/layout-webhook:%s" $repoPrefix $ver -}}
 {{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
 {{- define "groundx.layoutWebhook.imagePullPolicy" -}}
 {{- $in := .Values.layoutWebhook | default dict -}}
-{{ dig "imagePullPolicy" "Always" $in }}
+{{ dig "imagePullPolicy" "IfNotPresent" $in }}
 {{- end }}
 
 {{- define "groundx.layoutWebhook.isRoute" -}}

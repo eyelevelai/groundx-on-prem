@@ -76,6 +76,14 @@
       },
       "required": ["default"]
     },
+    "busybox": {
+      "type": "object",
+      "properties": {
+        "image": { "type": "string" },
+        "imagePullPolicy": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
     "cache": {
       "type": "object",
       "properties": {
@@ -450,14 +458,23 @@
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
             "deviceType": { "type": "string" },
-            "dataType": { "type": "string" },
             "deviceUtilize": { "type": "number" },
             "enabled": { "type": "boolean" },
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
             "labels": { "type": "object" },
-            "maxModelLen": { "type": "integer" },
-            "maxNumSequences": { "type": "integer" },
+            "model": {
+              "type": "object",
+              "properties": {
+                "dataType": { "type": "string" },
+                "maxInputTokens": { "type": "integer" },
+                "maxRequests": { "type": "integer" },
+                "maxOutputTokens": { "type": "integer" },
+                "name": { "type": "string" },
+                "swapSpace": { "type": "integer" }
+              },
+              "additionalProperties": false
+            },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
             "pvc": {
@@ -484,7 +501,6 @@
             "resources": { "type": "object" },
             "runtimeClassName": { "type": "string" },
             "securityContext": { "type": "object" },
-            "swapSpace": { "type": "integer" },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
             "workers": { "type": "integer" }

@@ -1,23 +1,18 @@
-{{- define "groundx.defaultEngine" -}}
-google/gemma-3-4b-it
-{{- end }}
-
-{{- define "groundx.defaultDataType" -}}
-bfloat16
-{{- end }}
-
 {{- define "groundx.engines" -}}
 {{- $in := .Values.engines | default list -}}
 {{- if gt (len $in) 0 }}
 {{- $in | toYaml -}}
 {{- else -}}
+{{- $replicas := (include "groundx.summary.inference.replicas" . | fromYaml) -}}
+{{- $desired := get $replicas "desired" -}}
+{{- $scaled := mul $desired 2 -}}
 {{- $eng := dict
-  "dataType"        (include "groundx.defaultDataType" .)
-  "engineId"        (include "groundx.defaultEngine" .)
-  "maxInputTokens"  (100000)
-  "maxOutputTokens" (2000)
-  "maxRequests"     (4)
-  "requestLimit"    (4)
+  "dataType"        (include "groundx.summary.inference.model.dataType" .)
+  "engineId"        (include "groundx.summary.inference.model.name" .)
+  "maxInputTokens"  (include "groundx.summary.inference.model.maxInputTokens" .)
+  "maxOutputTokens" (include "groundx.summary.inference.model.maxOutputTokens" .)
+  "maxRequests"     ($scaled)
+  "requestLimit"    ($scaled)
   "vision"          (true)
 -}}
 {{- dict "default" $eng | toYaml -}}

@@ -1,3 +1,7 @@
+busybox:
+  image: test.image:v1
+  imagePullPolicy: Always
+
 cache:
   affinity:
     requiredDuringSchedulingIgnoredDuringExecution:
@@ -130,6 +134,13 @@ summary:
     imagePullPolicy: Never
     labels:
       app.kubernetes.io/name: myapp
+    model:
+      dataType: bfloat8
+      maxInputTokens: 50000
+      maxOutputTokens: 2000
+      maxRequests: 2
+      name: google/gemma-3-8b-it
+      swapSpace: 10
     node: ""
     pvc:
       access: ReadOnce

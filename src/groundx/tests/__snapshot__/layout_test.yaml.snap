@@ -32,8 +32,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -78,15 +78,15 @@
                 - sh
                 - -c
                 - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z X.s3.us-west-2.amazonaws.com 443; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -142,8 +142,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -188,15 +188,15 @@
                 - sh
                 - -c
                 - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z X.s3.us-west-2.amazonaws.com 443; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-only
@@ -252,8 +252,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -298,15 +298,15 @@
                 - sh
                 - -c
                 - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z X.s3.us-west-2.amazonaws.com 443; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -362,8 +362,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -408,15 +408,15 @@
                 - sh
                 - -c
                 - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z X.s3.us-west-2.amazonaws.com 443; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -472,8 +472,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -518,15 +518,15 @@
                 - sh
                 - -c
                 - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z X.s3.us-west-2.amazonaws.com 443; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -583,8 +583,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -629,15 +629,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -693,8 +693,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -739,15 +739,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-only
@@ -803,8 +803,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -849,15 +849,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -913,8 +913,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -959,15 +959,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -1023,8 +1023,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -1069,15 +1069,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -1135,8 +1135,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -1181,15 +1181,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -1245,8 +1245,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -1291,15 +1291,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-only
@@ -1355,8 +1355,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -1401,15 +1401,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -1465,8 +1465,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -1511,15 +1511,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -1575,8 +1575,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -1621,15 +1621,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -1686,8 +1686,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -1732,15 +1732,15 @@
                 - sh
                 - -c
                 - until nc -z cache.existing.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z file.existing.com 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -1796,8 +1796,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -1842,15 +1842,15 @@
                 - sh
                 - -c
                 - until nc -z cache.existing.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z file.existing.com 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-only
@@ -1906,8 +1906,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -1952,15 +1952,15 @@
                 - sh
                 - -c
                 - until nc -z cache.existing.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z file.existing.com 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -2016,8 +2016,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -2062,15 +2062,15 @@
                 - sh
                 - -c
                 - until nc -z cache.existing.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z file.existing.com 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -2126,8 +2126,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -2172,15 +2172,15 @@
                 - sh
                 - -c
                 - until nc -z cache.existing.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z file.existing.com 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -2237,8 +2237,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -2283,14 +2283,14 @@
                 - sh
                 - -c
                 - until nc -z myapp.eyelevel.svc.cluster.local 6377; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-file-storage
           nodeSelector:
@@ -2397,14 +2397,14 @@
                 - sh
                 - -c
                 - until nc -z myapp.eyelevel.svc.cluster.local 6377; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-file-storage
           securityContext:
@@ -2449,8 +2449,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -2495,14 +2495,14 @@
                 - sh
                 - -c
                 - until nc -z myapp.eyelevel.svc.cluster.local 6377; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-file-storage
           nodeSelector:
@@ -2555,8 +2555,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -2601,14 +2601,14 @@
                 - sh
                 - -c
                 - until nc -z myapp.eyelevel.svc.cluster.local 6377; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-file-storage
           securityContext:
@@ -2664,8 +2664,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -2710,14 +2710,14 @@
                 - sh
                 - -c
                 - until nc -z myapp.eyelevel.svc.cluster.local 6377; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-file-storage
           nodeSelector:
@@ -2775,8 +2775,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -2821,15 +2821,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -2885,8 +2885,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -2931,15 +2931,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-only
@@ -2995,8 +2995,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -3041,15 +3041,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -3105,8 +3105,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -3151,15 +3151,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -3215,8 +3215,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -3261,15 +3261,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -3326,8 +3326,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -3370,15 +3370,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -3430,8 +3430,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -3474,15 +3474,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-only
@@ -3534,8 +3534,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -3578,15 +3578,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -3638,8 +3638,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -3682,15 +3682,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory
@@ -3742,8 +3742,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -3786,15 +3786,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-cpu-memory

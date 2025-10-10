@@ -32,8 +32,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 8
                 httpGet:
@@ -85,15 +85,15 @@
                 - sh
                 - -c
                 - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z X.s3.us-west-2.amazonaws.com 443; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
             - args:
                 - echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh
@@ -101,8 +101,8 @@
                 - /bin/sh
                 - -c
                 - --
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: create-symlink
               resources:
                 requests:
@@ -199,8 +199,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 8
                 httpGet:
@@ -251,8 +251,8 @@
                 - sh
                 - -c
                 - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - args:
                 - echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh
@@ -260,8 +260,8 @@
                 - /bin/sh
                 - -c
                 - --
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: create-symlink
               resources:
                 requests:
@@ -324,8 +324,8 @@
                   fi
 
                   echo "Model load done."
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: download-model
               securityContext:
                 allowPrivilegeEscalation: false
@@ -437,8 +437,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 8
                 httpGet:
@@ -490,15 +490,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
             - args:
                 - echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh
@@ -506,8 +506,8 @@
                 - /bin/sh
                 - -c
                 - --
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: create-symlink
               resources:
                 requests:
@@ -604,8 +604,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -659,8 +659,8 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - args:
                 - echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh
@@ -668,8 +668,8 @@
                 - /bin/sh
                 - -c
                 - --
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: create-symlink
               resources:
                 requests:
@@ -732,8 +732,8 @@
                   fi
 
                   echo "Model load done."
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: download-model
               securityContext:
                 allowPrivilegeEscalation: false
@@ -843,8 +843,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 8
                 httpGet:
@@ -895,8 +895,8 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - args:
                 - echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh
@@ -904,8 +904,8 @@
                 - /bin/sh
                 - -c
                 - --
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: create-symlink
               resources:
                 requests:
@@ -968,8 +968,8 @@
                   fi
 
                   echo "Model load done."
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: download-model
               securityContext:
                 allowPrivilegeEscalation: false
@@ -1082,8 +1082,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 8
                 httpGet:
@@ -1135,15 +1135,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
             - args:
                 - echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh
@@ -1151,8 +1151,8 @@
                 - /bin/sh
                 - -c
                 - --
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: create-symlink
               resources:
                 requests:
@@ -1249,8 +1249,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -1304,8 +1304,8 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - args:
                 - echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh
@@ -1313,8 +1313,8 @@
                 - /bin/sh
                 - -c
                 - --
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: create-symlink
               resources:
                 requests:
@@ -1377,8 +1377,8 @@
                   fi
 
                   echo "Model load done."
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: download-model
               securityContext:
                 allowPrivilegeEscalation: false
@@ -1488,8 +1488,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 8
                 httpGet:
@@ -1540,8 +1540,8 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - args:
                 - echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh
@@ -1549,8 +1549,8 @@
                 - /bin/sh
                 - -c
                 - --
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: create-symlink
               resources:
                 requests:
@@ -1613,8 +1613,8 @@
                   fi
 
                   echo "Model load done."
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: download-model
               securityContext:
                 allowPrivilegeEscalation: false
@@ -1726,8 +1726,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 8
                 httpGet:
@@ -1779,15 +1779,15 @@
                 - sh
                 - -c
                 - until nc -z cache.existing.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z file.existing.com 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
             - args:
                 - echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh
@@ -1795,8 +1795,8 @@
                 - /bin/sh
                 - -c
                 - --
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: create-symlink
               resources:
                 requests:
@@ -1893,8 +1893,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -1948,8 +1948,8 @@
                 - sh
                 - -c
                 - until nc -z cache.existing.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - args:
                 - echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh
@@ -1957,8 +1957,8 @@
                 - /bin/sh
                 - -c
                 - --
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: create-symlink
               resources:
                 requests:
@@ -2021,8 +2021,8 @@
                   fi
 
                   echo "Model load done."
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: download-model
               securityContext:
                 allowPrivilegeEscalation: false
@@ -2190,14 +2190,14 @@
                 - sh
                 - -c
                 - until nc -z myapp.eyelevel.svc.cluster.local 6377; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-file-storage
             - args:
@@ -2206,7 +2206,7 @@
                 - /bin/sh
                 - -c
                 - --
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: create-symlink
               resources:
@@ -2298,8 +2298,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -2353,7 +2353,7 @@
                 - sh
                 - -c
                 - until nc -z myapp.eyelevel.svc.cluster.local 6377; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-cache
             - args:
@@ -2362,7 +2362,7 @@
                 - /bin/sh
                 - -c
                 - --
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: create-symlink
               resources:
@@ -2426,7 +2426,7 @@
                   fi
 
                   echo "Model load done."
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: download-model
               securityContext:
@@ -2594,7 +2594,7 @@
                 - sh
                 - -c
                 - until nc -z myapp.eyelevel.svc.cluster.local 6377; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-cache
             - args:
@@ -2603,7 +2603,7 @@
                 - /bin/sh
                 - -c
                 - --
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: create-symlink
               resources:
@@ -2667,7 +2667,7 @@
                   fi
 
                   echo "Model load done."
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
+              image: test.image:v1
               imagePullPolicy: Always
               name: download-model
               securityContext:
@@ -2760,8 +2760,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 8
                 httpGet:
@@ -2813,15 +2813,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-gpu-layout
@@ -2880,8 +2880,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -2935,8 +2935,8 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - /bin/sh
@@ -2981,8 +2981,8 @@
                   fi
 
                   echo "Model load done."
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: download-model
               securityContext:
                 allowPrivilegeEscalation: false
@@ -3072,8 +3072,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 8
                 httpGet:
@@ -3124,8 +3124,8 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - /bin/sh
@@ -3170,8 +3170,8 @@
                   fi
 
                   echo "Model load done."
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: download-model
               securityContext:
                 allowPrivilegeEscalation: false
@@ -3263,8 +3263,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 8
                 httpGet:
@@ -3314,15 +3314,15 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - sh
                 - -c
                 - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
           nodeSelector:
             node: eyelevel-gpu-layout
@@ -3377,8 +3377,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 exec:
                   command:
@@ -3430,8 +3430,8 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - /bin/sh
@@ -3476,8 +3476,8 @@
                   fi
 
                   echo "Model load done."
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: download-model
               securityContext:
                 allowPrivilegeEscalation: false
@@ -3561,8 +3561,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 8
                 httpGet:
@@ -3611,8 +3611,8 @@
                 - sh
                 - -c
                 - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
             - command:
                 - /bin/sh
@@ -3657,8 +3657,8 @@
                   fi
 
                   echo "Model load done."
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:latest
-              imagePullPolicy: Always
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
               name: download-model
               securityContext:
                 allowPrivilegeEscalation: false

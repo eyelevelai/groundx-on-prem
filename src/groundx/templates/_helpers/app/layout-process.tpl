@@ -30,14 +30,15 @@ true
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "process" dict $b -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
-{{- $fallback := printf "%s/eyelevel/layout-process:latest" $repoPrefix -}}
+{{- $ver := coalesce .Chart.AppVersion .Chart.Version -}}
+{{- $fallback := printf "%s/eyelevel/layout-process:%s" $repoPrefix $ver -}}
 {{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
 {{- define "groundx.layout.process.imagePullPolicy" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "process" dict $b -}}
-{{ dig "imagePullPolicy" "Always" $in }}
+{{ dig "imagePullPolicy" "IfNotPresent" $in }}
 {{- end }}
 
 {{- define "groundx.layout.process.queue" -}}

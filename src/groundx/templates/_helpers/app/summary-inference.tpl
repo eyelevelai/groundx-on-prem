@@ -40,39 +40,64 @@ true
 {{- define "groundx.summary.inference.deviceUtilize" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
-{{ (dig "deviceUtilize" 0.98 $in) }}
+{{ (dig "deviceUtilize" 0.48 $in) }}
 {{- end }}
 
-{{- define "groundx.summary.inference.dataType" -}}
+{{- define "groundx.summary.inference.model.dataType" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
-{{ (dig "dataType" "torch.bfloat16" $in) }}
+{{- $md := dig "model" dict $in -}}
+{{ (dig "dataType" "bfloat16" $md) }}
 {{- end }}
 
 {{- define "groundx.summary.inference.image" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
-{{- $fallback := printf "%s/eyelevel/summary-inference:latest" $repoPrefix -}}
+{{- $ver := coalesce .Chart.AppVersion .Chart.Version -}}
+{{- $fallback := printf "%s/eyelevel/summary-inference:%s" $repoPrefix $ver -}}
 {{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
 {{- define "groundx.summary.inference.imagePullPolicy" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
-{{ (dig "imagePullPolicy" "Always" $in) }}
+{{ (dig "imagePullPolicy" "IfNotPresent" $in) }}
 {{- end }}
 
-{{- define "groundx.summary.inference.maxModelLen" -}}
+{{- define "groundx.summary.inference.model.maxInputTokens" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
-{{ (dig "maxModelLen" 100000 $in) }}
+{{- $md := dig "model" dict $in -}}
+{{ (dig "maxInputTokens" 100000 $md) }}
 {{- end }}
 
-{{- define "groundx.summary.inference.maxNumSequences" -}}
+{{- define "groundx.summary.inference.model.maxOutputTokens" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
-{{ (dig "maxNumSequences" 1 $in) }}
+{{- $md := dig "model" dict $in -}}
+{{ (dig "maxOutputTokens" 4096 $md) }}
+{{- end }}
+
+{{- define "groundx.summary.inference.model.maxRequests" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{- $md := dig "model" dict $in -}}
+{{ (dig "maxRequests" 1 $md) }}
+{{- end }}
+
+{{- define "groundx.summary.inference.model.name" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{- $md := dig "model" dict $in -}}
+{{ (dig "name" "google/gemma-3-4b-it" $md) }}
+{{- end }}
+
+{{- define "groundx.summary.inference.model.swapSpace" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{- $md := dig "model" dict $in -}}
+{{ (dig "swapSpace" 16 $md) }}
 {{- end }}
 
 {{- define "groundx.summary.inference.pvc" -}}
@@ -101,7 +126,7 @@ true
 {{- $c := dig "inference" dict $b -}}
 {{- $in := dig "replicas" dict $c -}}
 {{- if not $in }}
-  {{- $in = dict "desired" 1 "max" 1 "min" 1 -}}
+  {{- $in = dict "desired" 2 "max" 2 "min" 1 -}}
 {{- end }}
 {{- toYaml $in | nindent 0 }}
 {{- end }}

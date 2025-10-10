@@ -4,6 +4,14 @@
     data:
       config_models.py: |
         env = dict(
+          summary = dict(
+            dtype = "bfloat16",
+            maxInputTokens = 100000,
+            maxOutputTokens = 4096,
+            maxRequests = 1,
+            name = "google/gemma-3-4b-it",
+            swapSpace = 16,
+          ),
         )
     kind: ConfigMap
     metadata:
@@ -60,7 +68,7 @@
             service: eyelevel
             maxInputTokens: 100000
             maxRequests: 4
-            maxTokens: 2000
+            maxTokens: 4096
             requestLimit: 4
             vision: true
 
@@ -592,15 +600,11 @@
         env = dict(
             deviceType="cuda",
             deviceUtilize=0.48,
-            dtype="torch.bfloat16",
-            maxModelLen=100000,
-            maxNumSequences=1,
             metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             service="summary",
             summaryBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             summaryLog="summary",
             summaryResultBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
-            swapSpace=16,
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=1,
         )
@@ -700,6 +704,14 @@
     data:
       config_models.py: |
         env = dict(
+          summary = dict(
+            dtype = "bfloat16",
+            maxInputTokens = 100000,
+            maxOutputTokens = 4096,
+            maxRequests = 1,
+            name = "google/gemma-3-4b-it",
+            swapSpace = 16,
+          ),
         )
     kind: ConfigMap
     metadata:
@@ -756,7 +768,7 @@
             service: eyelevel
             maxInputTokens: 100000
             maxRequests: 4
-            maxTokens: 2000
+            maxTokens: 4096
             requestLimit: 4
             vision: true
 
@@ -1521,15 +1533,11 @@
         env = dict(
             deviceType="cuda",
             deviceUtilize=0.48,
-            dtype="torch.bfloat16",
-            maxModelLen=100000,
-            maxNumSequences=1,
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             service="summary",
             summaryBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             summaryLog="summary",
             summaryResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
-            swapSpace=16,
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=1,
         )
@@ -1630,6 +1638,14 @@
     data:
       config_models.py: |
         env = dict(
+          summary = dict(
+            dtype = "bfloat16",
+            maxInputTokens = 100000,
+            maxOutputTokens = 4096,
+            maxRequests = 1,
+            name = "google/gemma-3-4b-it",
+            swapSpace = 16,
+          ),
         )
     kind: ConfigMap
     metadata:
@@ -1686,7 +1702,7 @@
             service: eyelevel
             maxInputTokens: 100000
             maxRequests: 4
-            maxTokens: 2000
+            maxTokens: 4096
             requestLimit: 4
             vision: true
 
@@ -2451,15 +2467,11 @@
         env = dict(
             deviceType="cuda",
             deviceUtilize=0.48,
-            dtype="torch.bfloat16",
-            maxModelLen=100000,
-            maxNumSequences=1,
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             service="summary",
             summaryBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             summaryLog="summary",
             summaryResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
-            swapSpace=16,
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=1,
         )
@@ -2558,10 +2570,15 @@
     apiVersion: v1
     data:
       config_models.py: |
-        env = dict(summary = dict(
+        env = dict(
+          summary = dict(
             dtype = "bfloat16",
+            maxInputTokens = 100000,
+            maxOutputTokens = 4096,
+            maxRequests = 1,
             name = "google/gemma-3-4b-it",
-          )
+            swapSpace = 16,
+          ),
         )
     kind: ConfigMap
     metadata:
@@ -3378,6 +3395,14 @@
     data:
       config_models.py: |
         env = dict(
+          summary = dict(
+            dtype = "bfloat8",
+            maxInputTokens = 50000,
+            maxOutputTokens = 2000,
+            maxRequests = 2,
+            name = "google/gemma-3-8b-it",
+            swapSpace = 10,
+          ),
         )
     kind: ConfigMap
     metadata:
@@ -3429,13 +3454,13 @@
                 - en
 
         engines:
-          google/gemma-3-4b-it:
-            engineID: "google/gemma-3-4b-it"
+          google/gemma-3-8b-it:
+            engineID: "google/gemma-3-8b-it"
             service: eyelevel
-            maxInputTokens: 100000
-            maxRequests: 4
+            maxInputTokens: 50000
+            maxRequests: 2
             maxTokens: 2000
-            requestLimit: 4
+            requestLimit: 2
             vision: true
 
         environment: prod
@@ -4166,15 +4191,11 @@
         env = dict(
             deviceType="cpu",
             deviceUtilize=0.37,
-            dtype="torch.bfloat16",
-            maxModelLen=100000,
-            maxNumSequences=1,
             metricsBroker="rediss://myapp-myapp.eyelevel.svc.cluster.local:6377/0",
             service="myapp",
             summaryBroker="rediss://myapp.eyelevel.svc.cluster.local:6377/0",
             summaryLog="myapp",
             summaryResultBroker="rediss://myapp.eyelevel.svc.cluster.local:6377/0",
-            swapSpace=16,
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=2,
         )
@@ -4287,6 +4308,14 @@
     data:
       config_models.py: |
         env = dict(
+          summary = dict(
+            dtype = "bfloat16",
+            maxInputTokens = 100000,
+            maxOutputTokens = 4096,
+            maxRequests = 1,
+            name = "google/gemma-3-4b-it",
+            swapSpace = 16,
+          ),
         )
     kind: ConfigMap
     metadata:
@@ -4343,7 +4372,7 @@
             service: eyelevel
             maxInputTokens: 100000
             maxRequests: 4
-            maxTokens: 2000
+            maxTokens: 4096
             requestLimit: 4
             vision: true
 
@@ -5079,15 +5108,11 @@
         env = dict(
             deviceType="cuda",
             deviceUtilize=0.48,
-            dtype="torch.bfloat16",
-            maxModelLen=100000,
-            maxNumSequences=1,
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             service="summary",
             summaryBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             summaryLog="summary",
             summaryResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
-            swapSpace=16,
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=1,
         )
@@ -5187,6 +5212,14 @@
     data:
       config_models.py: |
         env = dict(
+          summary = dict(
+            dtype = "bfloat16",
+            maxInputTokens = 100000,
+            maxOutputTokens = 4096,
+            maxRequests = 1,
+            name = "google/gemma-3-4b-it",
+            swapSpace = 16,
+          ),
         )
     kind: ConfigMap
     metadata:
@@ -5243,7 +5276,7 @@
             service: eyelevel
             maxInputTokens: 100000
             maxRequests: 4
-            maxTokens: 2000
+            maxTokens: 4096
             requestLimit: 4
             vision: true
 
@@ -5979,15 +6012,11 @@
         env = dict(
             deviceType="cuda",
             deviceUtilize=0.48,
-            dtype="torch.bfloat16",
-            maxModelLen=100000,
-            maxNumSequences=1,
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             service="summary",
             summaryBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             summaryLog="summary",
             summaryResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
-            swapSpace=16,
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=1,
         )

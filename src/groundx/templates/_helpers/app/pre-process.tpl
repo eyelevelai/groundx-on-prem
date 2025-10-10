@@ -31,13 +31,14 @@ true
 {{- define "groundx.preProcess.image" -}}
 {{- $in := .Values.preProcess | default dict -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
-{{- $fallback := printf "%s/eyelevel/pre-process:latest" $repoPrefix -}}
+{{- $ver := coalesce .Chart.AppVersion .Chart.Version -}}
+{{- $fallback := printf "%s/eyelevel/pre-process:%s" $repoPrefix $ver -}}
 {{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
 {{- define "groundx.preProcess.imagePullPolicy" -}}
 {{- $in := .Values.preProcess | default dict -}}
-{{ dig "imagePullPolicy" "Always" $in }}
+{{ dig "imagePullPolicy" "IfNotPresent" $in }}
 {{- end }}
 
 {{- define "groundx.preProcess.queueSize" -}}

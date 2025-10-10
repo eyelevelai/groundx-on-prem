@@ -26,13 +26,14 @@ true
 {{- define "groundx.groundx.image" -}}
 {{- $in := .Values.groundx | default dict -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
-{{- $fallback := printf "%s/eyelevel/groundx:latest" $repoPrefix -}}
+{{- $ver := coalesce .Chart.AppVersion .Chart.Version -}}
+{{- $fallback := printf "%s/eyelevel/groundx:%s" $repoPrefix $ver -}}
 {{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
 {{- define "groundx.groundx.imagePullPolicy" -}}
 {{- $in := .Values.groundx | default dict -}}
-{{ dig "imagePullPolicy" "Always" $in }}
+{{ dig "imagePullPolicy" "IfNotPresent" $in }}
 {{- end }}
 
 {{- define "groundx.groundx.isRoute" -}}
