@@ -53,9 +53,12 @@
                 initialDelaySeconds: 30
                 periodSeconds: 15
               resources:
+                limits:
+                  nvidia.com/gpu: 1
                 requests:
                   cpu: 500m
                   memory: 2Gi
+                  nvidia.com/gpu: 1
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -176,7 +179,7 @@
       name: summary-inference
       namespace: eyelevel
     spec:
-      replicas: 1
+      replicas: 2
       selector:
         matchLabels:
           app: summary-inference
@@ -339,6 +342,7 @@
                   name: model-volume
           nodeSelector:
             node: eyelevel-gpu-summary
+          runtimeClassName: nvidia
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -454,9 +458,12 @@
                 initialDelaySeconds: 30
                 periodSeconds: 15
               resources:
+                limits:
+                  nvidia.com/gpu: 1
                 requests:
                   cpu: 500m
                   memory: 2Gi
+                  nvidia.com/gpu: 1
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -618,9 +625,12 @@
                 initialDelaySeconds: 60
                 periodSeconds: 30
               resources:
+                limits:
+                  nvidia.com/gpu: 1
                 requests:
                   cpu: 1.5
                   memory: 1Gi
+                  nvidia.com/gpu: 1
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -813,7 +823,7 @@
       name: summary-inference
       namespace: eyelevel
     spec:
-      replicas: 1
+      replicas: 2
       selector:
         matchLabels:
           app: summary-inference
@@ -976,6 +986,7 @@
                   name: model-volume
           nodeSelector:
             node: eyelevel-gpu-summary
+          runtimeClassName: nvidia
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1092,9 +1103,12 @@
                 initialDelaySeconds: 30
                 periodSeconds: 15
               resources:
+                limits:
+                  nvidia.com/gpu: 1
                 requests:
                   cpu: 500m
                   memory: 2Gi
+                  nvidia.com/gpu: 1
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -1256,9 +1270,12 @@
                 initialDelaySeconds: 60
                 periodSeconds: 30
               resources:
+                limits:
+                  nvidia.com/gpu: 1
                 requests:
                   cpu: 1.5
                   memory: 1Gi
+                  nvidia.com/gpu: 1
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -1451,7 +1468,7 @@
       name: summary-inference
       namespace: eyelevel
     spec:
-      replicas: 1
+      replicas: 2
       selector:
         matchLabels:
           app: summary-inference
@@ -1614,6 +1631,7 @@
                   name: model-volume
           nodeSelector:
             node: eyelevel-gpu-summary
+          runtimeClassName: nvidia
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1729,9 +1747,12 @@
                 initialDelaySeconds: 30
                 periodSeconds: 15
               resources:
+                limits:
+                  nvidia.com/gpu: 1
                 requests:
                   cpu: 500m
                   memory: 2Gi
+                  nvidia.com/gpu: 1
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -1893,9 +1914,12 @@
                 initialDelaySeconds: 60
                 periodSeconds: 30
               resources:
+                limits:
+                  nvidia.com/gpu: 1
                 requests:
                   cpu: 1.5
                   memory: 1Gi
+                  nvidia.com/gpu: 1
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -2142,9 +2166,12 @@
                 initialDelaySeconds: 30
                 periodSeconds: 15
               resources:
+                limits:
+                  nvidia.com/gpu: 1
                 requests:
                   cpu: 500m
                   memory: 2Gi
+                  nvidia.com/gpu: 1
               securityContext:
                 readOnlyRootFilesystem: true
               volumeMounts:
@@ -2292,9 +2319,12 @@
                 initialDelaySeconds: 60
                 periodSeconds: 30
               resources:
+                limits:
+                  nvidia.com/gpu: 1
                 requests:
                   cpu: 1.5
                   memory: 1Gi
+                  nvidia.com/gpu: 1
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -2645,6 +2675,7 @@
               volumeMounts:
                 - mountPath: /workspace/hf_models_cache
                   name: model-volume
+          runtimeClassName: abc
           securityContext:
             fsGroup: 2000
           volumes:
@@ -2750,9 +2781,12 @@
                 initialDelaySeconds: 30
                 periodSeconds: 15
               resources:
+                limits:
+                  nvidia.com/gpu: 1
                 requests:
                   cpu: 500m
                   memory: 2Gi
+                  nvidia.com/gpu: 1
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -2867,9 +2901,12 @@
                 initialDelaySeconds: 60
                 periodSeconds: 30
               resources:
+                limits:
+                  nvidia.com/gpu: 1
                 requests:
                   cpu: 1.5
                   memory: 1Gi
+                  nvidia.com/gpu: 1
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -3015,7 +3052,7 @@
       name: summary-inference
       namespace: eyelevel
     spec:
-      replicas: 1
+      replicas: 2
       selector:
         matchLabels:
           app: summary-inference
@@ -3151,6 +3188,7 @@
                   name: model-volume
           nodeSelector:
             node: eyelevel-gpu-summary
+          runtimeClassName: nvidia
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3246,9 +3284,12 @@
                 initialDelaySeconds: 30
                 periodSeconds: 15
               resources:
+                limits:
+                  nvidia.com/gpu: 1
                 requests:
                   cpu: 500m
                   memory: 2Gi
+                  nvidia.com/gpu: 1
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -3357,9 +3398,12 @@
                 initialDelaySeconds: 60
                 periodSeconds: 30
               resources:
+                limits:
+                  nvidia.com/gpu: 1
                 requests:
                   cpu: 1.5
                   memory: 1Gi
+                  nvidia.com/gpu: 1
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -3497,7 +3541,7 @@
       name: summary-inference
       namespace: eyelevel
     spec:
-      replicas: 1
+      replicas: 2
       selector:
         matchLabels:
           app: summary-inference
@@ -3629,6 +3673,7 @@
                   name: model-volume
           nodeSelector:
             node: eyelevel-gpu-summary
+          runtimeClassName: nvidia
           securityContext:
             runAsNonRoot: true
             seccompProfile:

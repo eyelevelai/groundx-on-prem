@@ -36,9 +36,10 @@ true
 {{- end }}
 
 {{- define "groundx.groundx.isRoute" -}}
-{{- $lb := (include "groundx.groundx.loadBalancer" . | fromYaml) -}}
+{{- $in := .Values.groundx | default dict -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
 {{- $os := include "groundx.isOpenshift" . -}}
-{{- $ty := (dig "type" "ClusterIP" $lb) | trim | lower -}}
+{{- $ty := (dig "type" "LoadBalancer" $lb) | trim | lower -}}
 {{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
 true
 {{- else -}}
@@ -101,6 +102,7 @@ false
 {{- $lb := dig "loadBalancer" dict $in -}}
 {{- dict
     "isInternal" (dig "isInternal" "false" $lb)
+    "isRoute"    (include "groundx.groundx.isRoute" .)
     "port"       (include "groundx.groundx.port" .)
     "ssl"        (include "groundx.groundx.ssl" .)
     "targetPort" (include "groundx.groundx.containerPort" .)
@@ -110,6 +112,7 @@ false
 {{- else -}}
 {{- dict
     "isInternal" "false"
+    "isRoute"    (include "groundx.groundx.isRoute" .)
     "port"       (include "groundx.groundx.port" .)
     "ssl"        "false"
     "targetPort" (include "groundx.groundx.containerPort" .)

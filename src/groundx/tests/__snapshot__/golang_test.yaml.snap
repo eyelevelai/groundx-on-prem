@@ -4295,7 +4295,6 @@
       namespace: eyelevel
     spec:
       port:
-        port: 80
         targetPort: 8080
       tls:
         insecureEdgeTerminationPolicy: Redirect
@@ -4304,6 +4303,22 @@
         kind: Service
         name: groundx
   3: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: groundx
+      name: groundx
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: groundx
+      type: ClusterIP
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4388,7 +4403,7 @@
             - configMap:
                 name: init-database-file
               name: init-db-volume
-  4: |
+  5: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -4404,7 +4419,7 @@
       selector:
         app: layout-webhook
       type: ClusterIP
-  5: |
+  6: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4489,7 +4504,7 @@
             - configMap:
                 name: init-database-file
               name: init-db-volume
-  6: |
+  7: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4574,7 +4589,7 @@
             - configMap:
                 name: init-database-file
               name: init-db-volume
-  7: |
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4659,7 +4674,7 @@
             - configMap:
                 name: init-database-file
               name: init-db-volume
-  8: |
+  9: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4744,7 +4759,7 @@
             - configMap:
                 name: init-database-file
               name: init-db-volume
-  9: |
+  10: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:

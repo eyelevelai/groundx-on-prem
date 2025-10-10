@@ -15,7 +15,6 @@ spec:
     kind: Service
     name: {{ $name | quote }}
   port:
-    port: {{ (dig "port" 8080 $lb) }}
     targetPort: {{ (dig "targetPort" 8080 $lb) }}
   tls:
     insecureEdgeTerminationPolicy: Redirect

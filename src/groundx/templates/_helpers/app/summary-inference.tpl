@@ -40,7 +40,13 @@ true
 {{- define "groundx.summary.inference.deviceUtilize" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
-{{ (dig "deviceUtilize" 0.9 $in) }}
+{{ (dig "deviceUtilize" 0.98 $in) }}
+{{- end }}
+
+{{- define "groundx.summary.inference.dataType" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{ (dig "dataType" "torch.bfloat16" $in) }}
 {{- end }}
 
 {{- define "groundx.summary.inference.image" -}}
@@ -55,6 +61,18 @@ true
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
 {{ (dig "imagePullPolicy" "Always" $in) }}
+{{- end }}
+
+{{- define "groundx.summary.inference.maxModelLen" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{ (dig "maxModelLen" 100000 $in) }}
+{{- end }}
+
+{{- define "groundx.summary.inference.maxNumSequences" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{ (dig "maxNumSequences" 1 $in) }}
 {{- end }}
 
 {{- define "groundx.summary.inference.pvc" -}}
@@ -88,6 +106,23 @@ true
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
+{{- define "groundx.summary.inference.runtimeClassName" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $ct := include "groundx.clusterType" . -}}
+{{- $in := dig "inference" dict $b -}}
+{{- if eq $ct "aks" -}}
+{{ dig "runtimeClassName" "nvidia-container-runtime" $in }}
+{{- else -}}
+{{ dig "runtimeClassName" "nvidia" $in }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.summary.inference.swapSpace" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{ (dig "swapSpace" 16 $in) }}
+{{- end }}
+
 {{- define "groundx.summary.inference.threads" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
@@ -109,17 +144,18 @@ true
   "node"     (include "groundx.summary.inference.node" .)
   "replicas" ($rep)
 -}}
-{{- $_ := set $cfg "baseName"     ($svc) -}}
-{{- $_ := set $cfg "cfg"          (printf "%s-config-py-map" $svc) -}}
-{{- $_ := set $cfg "name"         (include "groundx.summary.inference.serviceName" .) -}}
-{{- $_ := set $cfg "image"        (include "groundx.summary.inference.image" .) -}}
-{{- $_ := set $cfg "modelParts"   ("00 01 02 03 04") -}}
-{{- $_ := set $cfg "modelVersion" ("g34b") -}}
-{{- $_ := set $cfg "port"         (include "groundx.summary.inference.containerPort" .) -}}
-{{- $_ := set $cfg "pvc"          (include "groundx.summary.inference.pvc" . | fromYaml) -}}
-{{- $_ := set $cfg "supervisord"  (printf "%s-inference-supervisord-conf-map" $svc) -}}
-{{- $_ := set $cfg "workingDir"   ("/workspace") -}}
-{{- $_ := set $cfg "pull"         (include "groundx.summary.inference.imagePullPolicy" .) -}}
+{{- $_ := set $cfg "baseName"         ($svc) -}}
+{{- $_ := set $cfg "cfg"              (printf "%s-config-py-map" $svc) -}}
+{{- $_ := set $cfg "name"             (include "groundx.summary.inference.serviceName" .) -}}
+{{- $_ := set $cfg "image"            (include "groundx.summary.inference.image" .) -}}
+{{- $_ := set $cfg "modelParts"       ("00 01 02 03 04") -}}
+{{- $_ := set $cfg "modelVersion"     ("g34b") -}}
+{{- $_ := set $cfg "port"             (include "groundx.summary.inference.containerPort" .) -}}
+{{- $_ := set $cfg "pvc"              (include "groundx.summary.inference.pvc" . | fromYaml) -}}
+{{- $_ := set $cfg "supervisord"      (printf "%s-inference-supervisord-conf-map" $svc) -}}
+{{- $_ := set $cfg "runtimeClassName" (include "groundx.summary.inference.runtimeClassName" .) -}}
+{{- $_ := set $cfg "workingDir"       ("/workspace") -}}
+{{- $_ := set $cfg "pull"             (include "groundx.summary.inference.imagePullPolicy" .) -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

@@ -16,11 +16,15 @@ data:
     env = dict(
         deviceType={{ include "groundx.summary.inference.deviceType" . | quote }},
         deviceUtilize={{ include "groundx.summary.inference.deviceUtilize" . }},
+        dtype={{ include "groundx.summary.inference.dataType" . | quote }},
+        maxModelLen={{ include "groundx.summary.inference.maxModelLen" . }},
+        maxNumSequences={{ include "groundx.summary.inference.maxNumSequences" . }},
         metricsBroker={{ printf "%s://%s:%v/0" (include "groundx.metrics.cache.scheme" .) (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) | quote }},
         service={{ include "groundx.summary.serviceName" . | quote }},
         summaryBroker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
         summaryLog={{ include "groundx.summary.serviceName" . | quote }},
         summaryResultBroker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
+        swapSpace={{ include "groundx.summary.inference.swapSpace" . }},
         validAPIKeys=[{{ include "groundx.admin.apiKey" . | quote }}, {{ include "groundx.admin.username" . | quote }}],
         workers={{ include "groundx.summary.inference.workers" . }},
     )

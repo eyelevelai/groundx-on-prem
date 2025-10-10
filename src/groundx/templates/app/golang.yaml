@@ -6,21 +6,21 @@
 
 {{- $aff := get $svcData "affinity" -}}
 {{- $anns := get $svcData "annotations" -}}
-{{- $cport := get $svcData "port" -}}
 {{- $csct := get $svcData "containerSecurityContext" -}}
 {{- $dpnd := get $svcData "dependencies" | default dict -}}
 {{- $image := get $svcData "image" -}}
 {{- $io := include "groundx.ingestOnly" $ -}}
 {{- $ir := get $svcData "isRoute" -}}
-{{- $lb := get $svcData "loadBalancer" -}}
 {{- $lbls := get $svcData "labels" -}}
+{{- $lb := get $svcData "loadBalancer" -}}
+{{- $svc := get $svcData "name" -}}
 {{- $node := get $svcData "node" -}}
 {{- $nsl := get $svcData "nodeSelector" -}}
+{{- $cport := get $svcData "port" -}}
+{{- $pull := get $svcData "pull" -}}
 {{- $rp := get $svcData "replicas" -}}
 {{- $rs := get $svcData "resources" -}}
-{{- $pull := get $svcData "pull" -}}
 {{- $sct := get $svcData "securityContext" -}}
-{{- $svc := get $svcData "name" -}}
 {{- $tl := get $svcData "tolerations" -}}
 
 {{- $desired := get $rp "desired" -}}
@@ -134,9 +134,8 @@ spec:
 {{- if $lb }}
 {{- if eq $ir "true" }}
 {{ include "groundx.renderRoute" (dict "name" $svc "lb" $lb "root" $) }}
-{{- else }}
-{{ include "groundx.renderLoadBalancer" (dict "name" $svc "lb" $lb "root" $) }}
 {{- end }}
+{{ include "groundx.renderLoadBalancer" (dict "name" $svc "lb" $lb "root" $) }}
 {{- end }}
 
 {{ end }}

@@ -1,5 +1,5 @@
 {{- define "groundx.ns" -}}
-{{ coalesce .Values.namespace .Release.Namespace "eyelevel" }}
+{{ .Values.namespace | default "eyelevel" }}
 {{- end }}
 
 {{- define "groundx.admin.apiKey" -}}
@@ -24,7 +24,7 @@
 
 {{- define "groundx.clusterType" -}}
 {{- $b := .Values.cluster | default dict -}}
-{{- dig "type" "eks" $b -}}
+{{- (dig "type" "eks" $b) | lower -}}
 {{- end }}
 
 {{- define "groundx.ingestOnly" -}}

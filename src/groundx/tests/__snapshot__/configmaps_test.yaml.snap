@@ -57,6 +57,7 @@
         engines:
           google/gemma-3-4b-it:
             engineID: "google/gemma-3-4b-it"
+            service: eyelevel
             maxInputTokens: 100000
             maxRequests: 4
             maxTokens: 2000
@@ -126,6 +127,7 @@
           session:
             addr: X.X.X.use2.cache.amazonaws.com:6379
             notCluster: false
+            ssl: true
           summaryRequest:
             tokensPerMinute: 625
           task:
@@ -236,6 +238,7 @@
           session:
             addr: X.X.X.use2.cache.amazonaws.com:6379
             notCluster: false
+            ssl: true
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
@@ -248,8 +251,9 @@
           baseUrl: https://X.s3.us-west-2.amazonaws.com
           bucket: eyelevel
           bucketUrl: https://X.s3.us-west-2.amazonaws.com
-          id: minio
-          secret: minio123
+          id: awsKey
+          region: us-west-2
+          secret: awsSecret
           service: s3
           ssl: true
 
@@ -293,19 +297,18 @@
     data:
       config.py: |
         env = dict(
-            accessKey="minio",
-            accessSecret="minio123",
+            accessKey="awsKey",
+            accessSecret="awsSecret",
             annotationBase="layout/processed/",
             cacheDir="/app/hf_models_cache",
             callbackAPIKey="00000000-0000-0000-0000-000000000000",
             deviceType="cuda",
             env="prod",
             includeLS=False,
-            layoutBroker="redis://X.X.X.use2.cache.amazonaws.com:6379/0",
+            layoutBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             layoutLogger="layout",
-            layoutResultBroker="redis://X.X.X.use2.cache.amazonaws.com:6379/0",
-            metricsAddr="X.X.X.use2.cache.amazonaws.com",
-            metricsPort=6379,
+            layoutResultBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             minBatchSize=40,
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
@@ -317,10 +320,10 @@
             uploadBase="layout/processed/",
             uploadBaseURL="X.s3.us-west-2.amazonaws.com",
             uploadBucket="eyelevel",
-            uploadReplaceURL="https://X.s3.us-west-2.amazonaws.com/eyelevel/",
+            uploadReplaceURL="https://X.s3.us-west-2.amazonaws.com/",
             uploadSSL=True,
             uploadType="s3",
-            uploadURL="https://X.s3.us-west-2.amazonaws.com/eyelevel/",
+            uploadURL="https://X.s3.us-west-2.amazonaws.com/",
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=1,
         )
@@ -588,13 +591,16 @@
       config.py: |
         env = dict(
             deviceType="cuda",
-            deviceUtilize=0.9,
-            metricsAddr="X.X.X.use2.cache.amazonaws.com",
-            metricsPort=6379,
+            deviceUtilize=0.48,
+            dtype="torch.bfloat16",
+            maxModelLen=100000,
+            maxNumSequences=1,
+            metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             service="summary",
-            summaryBroker="redis://X.X.X.use2.cache.amazonaws.com:6379/0",
+            summaryBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             summaryLog="summary",
-            summaryResultBroker="redis://X.X.X.use2.cache.amazonaws.com:6379/0",
+            summaryResultBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            swapSpace=16,
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=1,
         )
@@ -747,6 +753,7 @@
         engines:
           google/gemma-3-4b-it:
             engineID: "google/gemma-3-4b-it"
+            service: eyelevel
             maxInputTokens: 100000
             maxRequests: 4
             maxTokens: 2000
@@ -816,6 +823,7 @@
           session:
             addr: cache-metrics.eyelevel.svc.cluster.local:6379
             notCluster: true
+            ssl: false
           summaryRequest:
             tokensPerMinute: 625
           task:
@@ -911,6 +919,7 @@
           session:
             addr: cache.eyelevel.svc.cluster.local:6379
             notCluster: true
+            ssl: false
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
@@ -979,8 +988,7 @@
             layoutBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             layoutLogger="layout",
             layoutResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
-            metricsAddr="cache-metrics.eyelevel.svc.cluster.local",
-            metricsPort=6379,
+            metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             minBatchSize=40,
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
@@ -1263,8 +1271,7 @@
       config.py: |
         env = dict(
             deviceType="cuda",
-            metricsAddr="cache-metrics.eyelevel.svc.cluster.local",
-            metricsPort=6379,
+            metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
@@ -1513,13 +1520,16 @@
       config.py: |
         env = dict(
             deviceType="cuda",
-            deviceUtilize=0.9,
-            metricsAddr="cache-metrics.eyelevel.svc.cluster.local",
-            metricsPort=6379,
+            deviceUtilize=0.48,
+            dtype="torch.bfloat16",
+            maxModelLen=100000,
+            maxNumSequences=1,
+            metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             service="summary",
             summaryBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             summaryLog="summary",
             summaryResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            swapSpace=16,
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=1,
         )
@@ -1673,6 +1683,7 @@
         engines:
           google/gemma-3-4b-it:
             engineID: "google/gemma-3-4b-it"
+            service: eyelevel
             maxInputTokens: 100000
             maxRequests: 4
             maxTokens: 2000
@@ -1742,6 +1753,7 @@
           session:
             addr: cache-metrics.eyelevel.svc.cluster.local:6379
             notCluster: true
+            ssl: false
           summaryRequest:
             tokensPerMinute: 625
           task:
@@ -1837,6 +1849,7 @@
           session:
             addr: cache.eyelevel.svc.cluster.local:6379
             notCluster: true
+            ssl: false
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
@@ -1905,8 +1918,7 @@
             layoutBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             layoutLogger="layout",
             layoutResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
-            metricsAddr="cache-metrics.eyelevel.svc.cluster.local",
-            metricsPort=6379,
+            metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             minBatchSize=40,
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
@@ -2189,8 +2201,7 @@
       config.py: |
         env = dict(
             deviceType="cuda",
-            metricsAddr="cache-metrics.eyelevel.svc.cluster.local",
-            metricsPort=6379,
+            metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
@@ -2439,13 +2450,16 @@
       config.py: |
         env = dict(
             deviceType="cuda",
-            deviceUtilize=0.9,
-            metricsAddr="cache-metrics.eyelevel.svc.cluster.local",
-            metricsPort=6379,
+            deviceUtilize=0.48,
+            dtype="torch.bfloat16",
+            maxModelLen=100000,
+            maxNumSequences=1,
+            metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             service="summary",
             summaryBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             summaryLog="summary",
             summaryResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            swapSpace=16,
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=1,
         )
@@ -2590,7 +2604,6 @@
               callbackURL: http://layout-webhook.eyelevel.svc.cluster.local
           openai:
             apiKey: openai-api-key
-            baseURL: https://api.openai.com/v1
             defaultKitId: 0
           summaryType: summary
           searchIndexes:
@@ -2601,6 +2614,7 @@
         engines:
           gpt-5-mini:
             engineID: "gpt-5-mini"
+            service: openai
             reasoningEffort: low
             vision: true
 
@@ -2667,6 +2681,7 @@
           session:
             addr: metrics-cache.existing.com:6379
             notCluster: true
+            ssl: true
           summaryRequest:
             tokensPerMinute: 625
           task:
@@ -2762,6 +2777,7 @@
           session:
             addr: cache.existing.com:6379
             notCluster: true
+            ssl: true
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
@@ -2827,11 +2843,10 @@
             deviceType="cuda",
             env="prod",
             includeLS=False,
-            layoutBroker="redis://cache.existing.com:6379/0",
+            layoutBroker="rediss://cache.existing.com:6379/0",
             layoutLogger="layout",
-            layoutResultBroker="redis://cache.existing.com:6379/0",
-            metricsAddr="metrics-cache.existing.com",
-            metricsPort=6379,
+            layoutResultBroker="rediss://cache.existing.com:6379/0",
+            metricsBroker="rediss://metrics-cache.existing.com:6379/0",
             minBatchSize=40,
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
@@ -3114,11 +3129,10 @@
       config.py: |
         env = dict(
             deviceType="cuda",
-            metricsAddr="metrics-cache.existing.com",
-            metricsPort=6379,
-            searchBroker="redis://cache.existing.com:6379/0",
+            metricsBroker="rediss://metrics-cache.existing.com:6379/0",
+            searchBroker="rediss://cache.existing.com:6379/0",
             searchLog="ranker",
-            searchResultBroker="redis://cache.existing.com:6379/0",
+            searchResultBroker="rediss://cache.existing.com:6379/0",
             service="ranker",
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=14,
@@ -3417,6 +3431,7 @@
         engines:
           google/gemma-3-4b-it:
             engineID: "google/gemma-3-4b-it"
+            service: eyelevel
             maxInputTokens: 100000
             maxRequests: 4
             maxTokens: 2000
@@ -3486,6 +3501,7 @@
           session:
             addr: myapp-myapp.eyelevel.svc.cluster.local:6377
             notCluster: true
+            ssl: true
           summaryRequest:
             tokensPerMinute: 625
           task:
@@ -3581,6 +3597,7 @@
           session:
             addr: myapp.eyelevel.svc.cluster.local:6377
             notCluster: true
+            ssl: true
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
@@ -3646,11 +3663,10 @@
             deviceType="cpu",
             env="prod",
             includeLS=False,
-            layoutBroker="redis://myapp.eyelevel.svc.cluster.local:6377/0",
+            layoutBroker="rediss://myapp.eyelevel.svc.cluster.local:6377/0",
             layoutLogger="myapp",
-            layoutResultBroker="redis://myapp.eyelevel.svc.cluster.local:6377/0",
-            metricsAddr="myapp-myapp.eyelevel.svc.cluster.local",
-            metricsPort=6377,
+            layoutResultBroker="rediss://myapp.eyelevel.svc.cluster.local:6377/0",
+            metricsBroker="rediss://myapp-myapp.eyelevel.svc.cluster.local:6377/0",
             minBatchSize=3,
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
@@ -4030,11 +4046,10 @@
       config.py: |
         env = dict(
             deviceType="cpu",
-            metricsAddr="myapp-myapp.eyelevel.svc.cluster.local",
-            metricsPort=6377,
-            searchBroker="redis://myapp.eyelevel.svc.cluster.local:6377/0",
+            metricsBroker="rediss://myapp-myapp.eyelevel.svc.cluster.local:6377/0",
+            searchBroker="rediss://myapp.eyelevel.svc.cluster.local:6377/0",
             searchLog="myapp",
-            searchResultBroker="redis://myapp.eyelevel.svc.cluster.local:6377/0",
+            searchResultBroker="rediss://myapp.eyelevel.svc.cluster.local:6377/0",
             service="myapp",
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=4,
@@ -4151,12 +4166,15 @@
         env = dict(
             deviceType="cpu",
             deviceUtilize=0.37,
-            metricsAddr="myapp-myapp.eyelevel.svc.cluster.local",
-            metricsPort=6377,
+            dtype="torch.bfloat16",
+            maxModelLen=100000,
+            maxNumSequences=1,
+            metricsBroker="rediss://myapp-myapp.eyelevel.svc.cluster.local:6377/0",
             service="myapp",
-            summaryBroker="redis://myapp.eyelevel.svc.cluster.local:6377/0",
+            summaryBroker="rediss://myapp.eyelevel.svc.cluster.local:6377/0",
             summaryLog="myapp",
-            summaryResultBroker="redis://myapp.eyelevel.svc.cluster.local:6377/0",
+            summaryResultBroker="rediss://myapp.eyelevel.svc.cluster.local:6377/0",
+            swapSpace=16,
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=2,
         )
@@ -4322,6 +4340,7 @@
         engines:
           google/gemma-3-4b-it:
             engineID: "google/gemma-3-4b-it"
+            service: eyelevel
             maxInputTokens: 100000
             maxRequests: 4
             maxTokens: 2000
@@ -4391,6 +4410,7 @@
           session:
             addr: cache-metrics.eyelevel.svc.cluster.local:6379
             notCluster: true
+            ssl: false
           summaryRequest:
             tokensPerMinute: 625
           task:
@@ -4486,6 +4506,7 @@
           session:
             addr: cache.eyelevel.svc.cluster.local:6379
             notCluster: true
+            ssl: false
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
@@ -4554,8 +4575,7 @@
             layoutBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             layoutLogger="layout",
             layoutResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
-            metricsAddr="cache-metrics.eyelevel.svc.cluster.local",
-            metricsPort=6379,
+            metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             minBatchSize=40,
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
@@ -4809,8 +4829,7 @@
       config.py: |
         env = dict(
             deviceType="cuda",
-            metricsAddr="cache-metrics.eyelevel.svc.cluster.local",
-            metricsPort=6379,
+            metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
@@ -5059,13 +5078,16 @@
       config.py: |
         env = dict(
             deviceType="cuda",
-            deviceUtilize=0.9,
-            metricsAddr="cache-metrics.eyelevel.svc.cluster.local",
-            metricsPort=6379,
+            deviceUtilize=0.48,
+            dtype="torch.bfloat16",
+            maxModelLen=100000,
+            maxNumSequences=1,
+            metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             service="summary",
             summaryBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             summaryLog="summary",
             summaryResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            swapSpace=16,
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=1,
         )
@@ -5218,6 +5240,7 @@
         engines:
           google/gemma-3-4b-it:
             engineID: "google/gemma-3-4b-it"
+            service: eyelevel
             maxInputTokens: 100000
             maxRequests: 4
             maxTokens: 2000
@@ -5287,6 +5310,7 @@
           session:
             addr: cache-metrics.eyelevel.svc.cluster.local:6379
             notCluster: true
+            ssl: false
           summaryRequest:
             tokensPerMinute: 625
           task:
@@ -5382,6 +5406,7 @@
           session:
             addr: cache.eyelevel.svc.cluster.local:6379
             notCluster: true
+            ssl: false
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
@@ -5450,8 +5475,7 @@
             layoutBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             layoutLogger="layout",
             layoutResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
-            metricsAddr="cache-metrics.eyelevel.svc.cluster.local",
-            metricsPort=6379,
+            metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             minBatchSize=40,
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
@@ -5705,8 +5729,7 @@
       config.py: |
         env = dict(
             deviceType="cuda",
-            metricsAddr="cache-metrics.eyelevel.svc.cluster.local",
-            metricsPort=6379,
+            metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
@@ -5955,13 +5978,16 @@
       config.py: |
         env = dict(
             deviceType="cuda",
-            deviceUtilize=0.9,
-            metricsAddr="cache-metrics.eyelevel.svc.cluster.local",
-            metricsPort=6379,
+            deviceUtilize=0.48,
+            dtype="torch.bfloat16",
+            maxModelLen=100000,
+            maxNumSequences=1,
+            metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             service="summary",
             summaryBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             summaryLog="summary",
             summaryResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            swapSpace=16,
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=1,
         )

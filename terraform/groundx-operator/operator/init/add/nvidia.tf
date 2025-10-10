@@ -16,14 +16,8 @@ resource "helm_release" "gpu_operator" {
 
   values = var.cluster.type == "aks" ? [
     yamlencode({
-      driver = {
-        enabled = false
-      }
       operator = {
         runtimeClass = "nvidia-container-runtime"
-      }
-      toolkit = {
-        enabled = false
       }
     })
   ] : [

@@ -8,7 +8,7 @@ variable "chart" {
   default     = {
     name       = "gpu-operator"
     repository = "https://helm.ngc.nvidia.com/nvidia"
-    version    = "v25.3.0"
+    version    = "v25.3.4"
   }
 }
 
