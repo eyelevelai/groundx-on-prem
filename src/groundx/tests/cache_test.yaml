@@ -68,3 +68,11 @@ tests:
       - ./files/values.disabled.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "extract: cache"
+    templates:
+      - ../templates/services/cache.yaml
+      - ../templates/services/cache-metrics.yaml
+    values:
+      - ./files/values.extract.yaml
+    asserts:
+      - matchSnapshot: {}

@@ -68,3 +68,11 @@ tests:
       - ./files/values.disabled.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "extract: stream"
+    templates:
+      - ../templates/services/stream-cluster.yaml
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ./files/values.extract.yaml
+    asserts:
+      - matchSnapshot: {}
