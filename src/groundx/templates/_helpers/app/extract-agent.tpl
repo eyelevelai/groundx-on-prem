@@ -137,6 +137,7 @@ false
   (include "groundx.extract.agent.apiKeyEnv" .) $apiKey
 -}}
 {{- $_ := set $cfg "data" $data -}}
+{{- $cfg | toYaml -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.settings" -}}
