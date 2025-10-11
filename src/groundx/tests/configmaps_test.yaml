@@ -7,6 +7,9 @@ tests:
   - it: "default: configmaps"
     templates:
       - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/extract-config-py.yaml
+      - ../templates/resources/extract-gunicorn-conf-py.yaml
+      - ../templates/resources/extract-supervisord-conf.yaml
       - ../templates/resources/layout-config-py.yaml
       - ../templates/resources/layout-gunicorn-conf-py.yaml
       - ../templates/resources/layout-ocr-credentials.yaml
@@ -27,6 +30,9 @@ tests:
   - it: "empty: configmaps"
     templates:
       - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/extract-config-py.yaml
+      - ../templates/resources/extract-gunicorn-conf-py.yaml
+      - ../templates/resources/extract-supervisord-conf.yaml
       - ../templates/resources/layout-config-py.yaml
       - ../templates/resources/layout-gunicorn-conf-py.yaml
       - ../templates/resources/layout-ocr-credentials.yaml
@@ -47,6 +53,9 @@ tests:
   - it: "aws: configmaps"
     templates:
       - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/extract-config-py.yaml
+      - ../templates/resources/extract-gunicorn-conf-py.yaml
+      - ../templates/resources/extract-supervisord-conf.yaml
       - ../templates/resources/layout-config-py.yaml
       - ../templates/resources/layout-gunicorn-conf-py.yaml
       - ../templates/resources/layout-ocr-credentials.yaml
@@ -67,6 +76,9 @@ tests:
   - it: "openshift: configmaps"
     templates:
       - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/extract-config-py.yaml
+      - ../templates/resources/extract-gunicorn-conf-py.yaml
+      - ../templates/resources/extract-supervisord-conf.yaml
       - ../templates/resources/layout-config-py.yaml
       - ../templates/resources/layout-gunicorn-conf-py.yaml
       - ../templates/resources/layout-ocr-credentials.yaml
@@ -87,6 +99,9 @@ tests:
   - it: "minikube: configmaps"
     templates:
       - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/extract-config-py.yaml
+      - ../templates/resources/extract-gunicorn-conf-py.yaml
+      - ../templates/resources/extract-supervisord-conf.yaml
       - ../templates/resources/layout-config-py.yaml
       - ../templates/resources/layout-gunicorn-conf-py.yaml
       - ../templates/resources/layout-ocr-credentials.yaml
@@ -107,6 +122,9 @@ tests:
   - it: "existing: configmaps"
     templates:
       - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/extract-config-py.yaml
+      - ../templates/resources/extract-gunicorn-conf-py.yaml
+      - ../templates/resources/extract-supervisord-conf.yaml
       - ../templates/resources/layout-config-py.yaml
       - ../templates/resources/layout-gunicorn-conf-py.yaml
       - ../templates/resources/layout-ocr-credentials.yaml
@@ -127,6 +145,9 @@ tests:
   - it: "metadata: configmaps"
     templates:
       - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/extract-config-py.yaml
+      - ../templates/resources/extract-gunicorn-conf-py.yaml
+      - ../templates/resources/extract-supervisord-conf.yaml
       - ../templates/resources/layout-config-py.yaml
       - ../templates/resources/layout-gunicorn-conf-py.yaml
       - ../templates/resources/layout-ocr-credentials.yaml
@@ -147,6 +168,9 @@ tests:
   - it: "disabled: configmaps"
     templates:
       - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/extract-config-py.yaml
+      - ../templates/resources/extract-gunicorn-conf-py.yaml
+      - ../templates/resources/extract-supervisord-conf.yaml
       - ../templates/resources/layout-config-py.yaml
       - ../templates/resources/layout-gunicorn-conf-py.yaml
       - ../templates/resources/layout-ocr-credentials.yaml
@@ -162,5 +186,28 @@ tests:
       - ../templates/resources/ldconfig-symlink.yaml
     values:
       - ./files/values.disabled.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "extract: configmaps"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/extract-config-py.yaml
+      - ../templates/resources/extract-gunicorn-conf-py.yaml
+      - ../templates/resources/extract-supervisord-conf.yaml
+      - ../templates/resources/layout-config-py.yaml
+      - ../templates/resources/layout-gunicorn-conf-py.yaml
+      - ../templates/resources/layout-ocr-credentials.yaml
+      - ../templates/resources/layout-supervisord-conf.yaml
+      - ../templates/resources/config-models.yaml
+      - ../templates/resources/ranker-config-py.yaml
+      - ../templates/resources/ranker-gunicorn-conf-py.yaml
+      - ../templates/resources/ranker-supervisord-conf.yaml
+      - ../templates/resources/summary-config-py.yaml
+      - ../templates/resources/summary-gunicorn-conf-py.yaml
+      - ../templates/resources/summary-supervisord-conf.yaml
+      - ../templates/resources/init-database-file.yaml
+      - ../templates/resources/ldconfig-symlink.yaml
+    values:
+      - ./files/values.extract.yaml
     asserts:
       - matchSnapshot: {}

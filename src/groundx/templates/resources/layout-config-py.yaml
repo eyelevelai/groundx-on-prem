@@ -6,9 +6,10 @@
 
 {{- $fs := (include "groundx.file.settings" . | fromYaml) -}}
 {{- $bucketSuffix := printf "%s/" (get $fs "bucketName") -}}
+{{- $baseDomain := get $fs "baseDomain" -}}
 {{- $st := include "groundx.file.serviceType" . -}}
 {{- if eq $st "s3" }}
-{{- $bucketSuffix = "/" -}}
+{{- $bucketSuffix = "" -}}
 {{- end }}
 
 apiVersion: v1
@@ -48,7 +49,7 @@ data:
         uploadReplaceURL={{ printf "%s://%s/%s" (get $fs "bucketScheme") (get $fs "bucketDomain") $bucketSuffix | quote }},
         uploadSSL={{ if eq (printf "%v" (get $fs "bucketSSL")) "true" }}True{{ else }}False{{ end }},
         uploadType={{ $st | quote }},
-        uploadURL={{ printf "%s://%s/%s" (get $fs "scheme") (get $fs "baseDomain") $bucketSuffix | quote }},
+        uploadURL={{ printf "%s://%s/%s" (get $fs "scheme") ($baseDomain) $bucketSuffix | quote }},
         validAPIKeys=[{{ include "groundx.admin.apiKey" . | quote }}, {{ include "groundx.admin.username" . | quote }}],
         workers={{ include "groundx.layout.inference.workers" . }},
     )

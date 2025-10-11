@@ -74,15 +74,15 @@ false
 {{- $rep := (include "groundx.extract.download.replicas" . | fromYaml) -}}
 {{- $cfg := dict
   "celery"   ("celery_agents")
-  "image"    (include "groundx.extract.save.image" .)
-  "name"     (include "groundx.extract.save.serviceName" .)
-  "node"     (include "groundx.extract.save.node" .)
-  "pull"     (include "groundx.extract.save.imagePullPolicy" .)
-  "queue"    (include "groundx.extract.save.queue" .)
+  "image"    (include "groundx.extract.download.image" .)
+  "name"     (include "groundx.extract.download.serviceName" .)
+  "node"     (include "groundx.extract.download.node" .)
+  "pull"     (include "groundx.extract.download.imagePullPolicy" .)
+  "queue"    (include "groundx.extract.download.queue" .)
   "replicas" ($rep)
-  "service"  (include "groundx.extract.secretName" .)
-  "threads"  (include "groundx.extract.save.threads" .)
-  "workers"  (include "groundx.extract.save.workers" .)
+  "service"  (include "groundx.extract.serviceName" .)
+  "threads"  (include "groundx.extract.download.threads" .)
+  "workers"  (include "groundx.extract.download.workers" .)
 -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}

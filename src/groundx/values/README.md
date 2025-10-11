@@ -20,6 +20,7 @@ The following example `values.yaml` files have been provided to demonstrate a va
 | File Name                   | Scenario                                                                                                                                 |
 |-----------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
 | `values.aws.services.yaml`  | Replaces services with AWS equivalents                                                                                                   |
+| `values.openai.yaml`      | Replaces hosted summary model with an OpenAI model (`eyelevel-gpu-summary` no longer needed)                                               |
 | `values.existing.yaml`      | Replaces services with existing versions of the services, uses OpenAI vs a self hosted model (`eyelevel-gpu-summary` no longer needed)   |
 | `values.minikube.yaml`      | Deploys GroundX to MiniKube with default configurations                                                                                  |
 | `values.openshift.yaml`     | Deploys GroundX to OpenShift with default configurations                                                                                 |

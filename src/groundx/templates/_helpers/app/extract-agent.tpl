@@ -34,20 +34,20 @@ false
 {{- define "groundx.extract.agent.baseUrl" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
-{{- $dflt := nil -}}
+{{- $dflt := "" -}}
 {{- $ic := include "groundx.summary.create" . -}}
 {{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- $svcAllowed := or (eq $stype "openai") (eq $stype "openai-base64") -}}
+{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") -}}
 {{- if and (eq $ic "true") (not $svcAllowed) -}}
 {{- $dflt = (include "groundx.summary.api.serviceUrl" .) -}}
-{{- else -}}
+{{- end -}}
 {{ dig "apiBaseUrl" $dflt $in }}
 {{- end }}
 
 {{- define "groundx.extract.agent.apiKey" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
-{{ dig "apiKey" nil $in }}
+{{ dig "apiKey" "" $in }}
 {{- end }}
 
 {{- define "groundx.extract.agent.apiKeyEnv" -}}
@@ -65,13 +65,13 @@ false
 {{- define "groundx.extract.agent.modelId" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
-{{- $dflt := nil -}}
+{{- $dflt := "" -}}
 {{- $ic := include "groundx.summary.create" . -}}
 {{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- $svcAllowed := or (eq $stype "openai") (eq $stype "openai-base64") -}}
+{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") -}}
 {{- if and (eq $ic "true") (not $svcAllowed) -}}
 {{- $dflt = (include "groundx.summary.inference.model.name" .) -}}
-{{- else -}}
+{{- end -}}
 {{ dig "modelId" $dflt $in }}
 {{- end }}
 
@@ -133,12 +133,9 @@ false
 {{- $cfg := dict
   "name" (include "groundx.extract.agent.secretName" .)
 -}}
-{{- $data := dict -}}
-{{- if $apiKey -}}
-  {{- $_ := set $data (include "groundx.extract.agent.apiKeyEnv" .) $apiKey -}}
-{{- else -}}
-  {{- $_ := set $data (include "groundx.extract.agent.apiKeyEnv" .) "" -}}
-{{- end -}}
+{{- $data := dict
+  (include "groundx.extract.agent.apiKeyEnv" .) $apiKey
+-}}
 {{- $_ := set $cfg "data" $data -}}
 {{- end }}
 
@@ -155,7 +152,7 @@ false
   "queue"    (include "groundx.extract.agent.queue" .)
   "replicas" ($rep)
   "secret"   (include "groundx.extract.agent.secretName" .)
-  "service"  (include "groundx.extract.secretName" .)
+  "service"  (include "groundx.extract.serviceName" .)
   "threads"  (include "groundx.extract.agent.threads" .)
   "workers"  (include "groundx.extract.agent.workers" .)
 -}}

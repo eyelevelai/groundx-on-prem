@@ -1,5 +1,17 @@
 {{- define "groundx.celery.process.services" -}}
 {{- $svcs := dict -}}
+{{- $ea := include "groundx.extract.agent.create" . -}}
+{{- if eq $ea "true" -}}
+{{- $_ := set $svcs "extract.agent" "extract.agent" -}}
+{{- end -}}
+{{- $ed := include "groundx.extract.download.create" . -}}
+{{- if eq $ed "true" -}}
+{{- $_ := set $svcs "extract.download" "extract.download" -}}
+{{- end -}}
+{{- $es := include "groundx.extract.save.create" . -}}
+{{- if eq $es "true" -}}
+{{- $_ := set $svcs "extract.save" "extract.save" -}}
+{{- end -}}
 {{- $ic := include "groundx.layout.correct.create" . -}}
 {{- if eq $ic "true" -}}
 {{- $_ := set $svcs "layout.correct" "layout.correct" -}}

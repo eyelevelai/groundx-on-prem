@@ -1137,33 +1137,159 @@
         "agent": {
           "type": "object",
           "properties": {
-            "enabled": { "type": "boolean" }
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
+            "apiBaseUrl": { "type": "string" },
+            "apiKey": { "type": "string" },
+            "apiKeyEnv": { "type": "string" },
+            "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
+            "enabled": { "type": "boolean" },
+            "existingSecret": { "type": "boolean" },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
+            "labels": { "type": "object" },
+            "modelId": { "type": "string" },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
+            "queue": { "type": "string" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "desired": { "type": "integer" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" }
+              },
+              "required": ["desired"],
+              "additionalProperties": false
+            },
+            "resources": { "type": "object" },
+            "secretName": { "type": "string" },
+            "securityContext": { "type": "object" },
+            "serviceType": { "type": "string" },
+            "threads": { "type": "integer" },
+            "tolerations": { "type": "array" },
+            "workers": { "type": "integer" }
           },
+          "required": ["enabled"],
           "additionalProperties": false
         },
         "api": {
           "type": "object",
           "properties": {
-            "enabled": { "type": "boolean" }
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
+            "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
+            "enabled": { "type": "boolean" },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
+            "labels": { "type": "object" },
+            "loadBalancer": {
+              "type": "object",
+              "properties": {
+                "ipType": { "type": "string" },
+                "isInternal": { "type": "boolean" },
+                "port": { "type": "integer" },
+                "ssl": { "type": "boolean" },
+                "timeout": { "type": "integer" }
+              },
+              "additionalProperties": false
+            },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "desired": { "type": "integer" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" }
+              },
+              "required": ["desired"],
+              "additionalProperties": false
+            },
+            "resources": { "type": "object" },
+            "securityContext": { "type": "object" },
+            "threads": { "type": "integer" },
+            "timeout": { "type": "integer" },
+            "tolerations": { "type": "array" },
+            "workers": { "type": "integer" }
           },
+          "required": ["enabled"],
           "additionalProperties": false
         },
         "download": {
           "type": "object",
           "properties": {
-            "enabled": { "type": "boolean" }
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
+            "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
+            "enabled": { "type": "boolean" },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
+            "labels": { "type": "object" },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
+            "queue": { "type": "string" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "desired": { "type": "integer" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" }
+              },
+              "required": ["desired"],
+              "additionalProperties": false
+            },
+            "resources": { "type": "object" },
+            "securityContext": { "type": "object" },
+            "threads": { "type": "integer" },
+            "tolerations": { "type": "array" },
+            "workers": { "type": "integer" }
           },
+          "required": ["enabled"],
           "additionalProperties": false
         },
         "enabled": { "type": "boolean" },
         "save": {
           "type": "object",
           "properties": {
-            "enabled": { "type": "boolean" }
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
+            "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
+            "driveId": { "type": "string" },
+            "enabled": { "type": "boolean" },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
+            "labels": { "type": "object" },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
+            "queue": { "type": "string" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "desired": { "type": "integer" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" }
+              },
+              "required": ["desired"],
+              "additionalProperties": false
+            },
+            "resources": { "type": "object" },
+            "securityContext": { "type": "object" },
+            "threads": { "type": "integer" },
+            "templateId": { "type": "string" },
+            "tolerations": { "type": "array" },
+            "workers": { "type": "integer" }
           },
+          "required": ["enabled"],
           "additionalProperties": false
-        }
+        },
+        "serviceName": { "type": "string" }
       },
+      "required": [ "agent", "api", "download", "enabled", "save" ],
       "additionalProperties": false
     },
     "integration": {

@@ -65,7 +65,7 @@ public.ecr.aws/c9r4x6y5
 {{- end }}
 
 {{- define "groundx.logLevel" -}}
-{{ .Values.logLevel | default "warn" }}
+{{ .Values.logLevel | default "info" }}
 {{- end }}
 
 {{- define "groundx.busybox.image" -}}

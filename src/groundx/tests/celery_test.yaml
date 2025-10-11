@@ -1,62 +1,69 @@
-suite: "layout renders as expected"
+suite: "celery renders as expected"
 chart:
   appVersion: 0.1.0
   version: 0.1.0
 
 tests:
-  - it: "default: layout"
+  - it: "default: celery"
     templates:
       - ../templates/app/celery.yaml
     values:
       - ../values.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "empty: layout"
+  - it: "empty: celery"
     templates:
       - ../templates/app/celery.yaml
     values:
       - ./files/values.empty.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "aws: layout"
+  - it: "aws: celery"
     templates:
       - ../templates/app/celery.yaml
     values:
       - ../values/values.aws.services.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "openshift: layout"
+  - it: "openshift: celery"
     templates:
       - ../templates/app/celery.yaml
     values:
       - ../values/values.openshift.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "minikube: layout"
+  - it: "minikube: celery"
     templates:
       - ../templates/app/celery.yaml
     values:
       - ../values/values.minikube.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "existing: layout"
+  - it: "existing: celery"
     templates:
       - ../templates/app/celery.yaml
     values:
       - ../values/values.existing.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "metadata: layout"
+  - it: "metadata: celery"
     templates:
       - ../templates/app/celery.yaml
     values:
       - ./files/values.metadata.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "disabled: layout"
+  - it: "disabled: celery"
     templates:
       - ../templates/app/celery.yaml
     values:
       - ./files/values.disabled.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "extract: celery"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.extract.yaml
     asserts:
       - matchSnapshot: {}

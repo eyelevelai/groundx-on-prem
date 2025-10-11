@@ -25,6 +25,18 @@ false
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.extract.save.driveId" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "save" dict $b -}}
+{{ dig "driveId" "" $in }}
+{{- end }}
+
+{{- define "groundx.extract.save.templateId" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "save" dict $b -}}
+{{ dig "templateId" "" $in }}
+{{- end }}
+
 {{- define "groundx.extract.save.image" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "save" dict $b -}}
@@ -80,7 +92,7 @@ false
   "pull"     (include "groundx.extract.save.imagePullPolicy" .)
   "queue"    (include "groundx.extract.save.queue" .)
   "replicas" ($rep)
-  "service"  (include "groundx.extract.secretName" .)
+  "service"  (include "groundx.extract.serviceName" .)
   "threads"  (include "groundx.extract.save.threads" .)
   "workers"  (include "groundx.extract.save.workers" .)
 -}}
