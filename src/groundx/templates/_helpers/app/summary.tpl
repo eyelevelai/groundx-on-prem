@@ -19,7 +19,7 @@
 {{- coalesce (dig "apiKey" "" $ex) (include "groundx.admin.apiKey" .) -}}
 {{- end }}
 
-{{- define "groundx.summary.baseURL" -}}
+{{- define "groundx.summary.baseUrl" -}}
 {{- $in := .Values.summary | default dict -}}
 {{- $ex := dig "existing" dict $in -}}
 {{- $ic := include "groundx.summary.create" . -}}

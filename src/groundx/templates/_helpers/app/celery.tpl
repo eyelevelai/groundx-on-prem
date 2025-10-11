@@ -1,26 +1,8 @@
-{{- define "groundx.layout.serviceName" -}}
-{{- $in := .Values.layout | default dict -}}
-{{ dig "serviceName" "layout" $in }}
-{{- end }}
-
-{{- define "groundx.layout.hasOCRCredentials" -}}
-{{- $path := include "groundx.layout.ocr.credentials" . -}}
-{{- if and (kindIs "string" $path) (ne $path "") -}}
-true
-{{- else -}}
-false
-{{- end -}}
-{{- end }}
-
-{{- define "groundx.layout.supervisor" -}}
+{{- define "groundx.celery.process.services" -}}
 {{- $svcs := dict -}}
 {{- $ic := include "groundx.layout.correct.create" . -}}
 {{- if eq $ic "true" -}}
 {{- $_ := set $svcs "layout.correct" "layout.correct" -}}
-{{- end -}}
-{{- $ii := include "groundx.layout.inference.create" . -}}
-{{- if eq $ii "true" -}}
-{{- $_ := set $svcs "layout.inference" "layout.inference" -}}
 {{- end -}}
 {{- $im := include "groundx.layout.map.create" . -}}
 {{- if eq $im "true" -}}
@@ -39,9 +21,4 @@ false
 {{- $_ := set $svcs "layout.save" "layout.save" -}}
 {{- end -}}
 {{- $svcs | toYaml -}}
-{{- end }}
-
-{{- define "groundx.layout.podMemory" -}}
-{{- $in := .Values.layout | default dict -}}
-{{ dig "podMemory" "2Gi" $in }}
 {{- end }}

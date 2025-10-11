@@ -1,7 +1,7 @@
-{{- $ic := include "groundx.layout.api.create" . -}}
+{{- $ic := include "groundx.extract.api.create" . -}}
 
 {{- if eq $ic "true" }}
-{{- $svc := include "groundx.layout.serviceName" . -}}
+{{- $svc := include "groundx.extract.serviceName" . -}}
 
 apiVersion: v1
 kind: ConfigMap
@@ -17,13 +17,13 @@ data:
     errorlog = "-"
 
     loglevel = {{ include "groundx.logLevel" . | quote }}
-    workers = {{ include "groundx.layout.api.workers" . }}
-    threads = {{ include "groundx.layout.api.threads" . }}
-    timeout = {{ include "groundx.layout.api.timeout" . }}
+    workers = {{ include "groundx.extract.api.workers" . }}
+    threads = {{ include "groundx.extract.api.threads" . }}
+    timeout = {{ include "groundx.extract.api.timeout" . }}
 
     worker_class = "uvicorn.workers.UvicornWorker"
 
-    bind = "0.0.0.0:{{ include "groundx.ranker.api.containerPort" . }}"
+    bind = "0.0.0.0:{{ include "groundx.extract.api.containerPort" . }}"
 
-    wsgi_app = "document_api_server:app"
+    wsgi_app = "server:app"
 {{- end }}

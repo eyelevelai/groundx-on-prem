@@ -8,8 +8,9 @@
 {{- $bucketSuffix := printf "%s/" (get $fs "bucketName") -}}
 {{- $st := include "groundx.file.serviceType" . -}}
 {{- if eq $st "s3" }}
-{{- $bucketSuffix = "" -}}
+{{- $bucketSuffix = "/" -}}
 {{- end }}
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -43,6 +44,7 @@ data:
         uploadBase="layout/processed/",
         uploadBaseURL={{ get $fs "bucketDomain" | quote }},
         uploadBucket={{ get $fs "bucketName" | quote }},
+        uploadRegion={{ get $fs "region" | quote }},
         uploadReplaceURL={{ printf "%s://%s/%s" (get $fs "bucketScheme") (get $fs "bucketDomain") $bucketSuffix | quote }},
         uploadSSL={{ if eq (printf "%v" (get $fs "bucketSSL")) "true" }}True{{ else }}False{{ end }},
         uploadType={{ $st | quote }},

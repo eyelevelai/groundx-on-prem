@@ -28,7 +28,7 @@ data:
     ai:
       aws:
         search:
-          baseURL: {{ include "groundx.search.baseURL" . }}
+          baseURL: {{ include "groundx.search.baseUrl" . }}
           index: {{ include "groundx.search.indexName" . }}
           languages:
           {{- range (include "groundx.languages" . | fromYamlArray) }}
@@ -46,8 +46,8 @@ data:
           callbackURL: {{ include "groundx.layoutWebhook.serviceUrl" . }}
       openai:
         apiKey: {{ include "groundx.summary.apiKey" . }}
-        {{- if ne (include "groundx.summary.baseURL" .) "" }}
-        baseURL: {{ include "groundx.summary.baseURL" . }}
+        {{- if ne (include "groundx.summary.baseUrl" .) "" }}
+        baseURL: {{ include "groundx.summary.baseUrl" . }}
         {{- end }}
         defaultKitId: {{ include "groundx.summary.defaultKitId" . }}
       summaryType: summary

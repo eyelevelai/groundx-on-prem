@@ -1,0 +1,61 @@
+{{- $ic := (include "groundx.extract.create" . | fromYaml) -}}
+
+{{- if eq $ic "true" }}
+{{- $fs := (include "groundx.file.settings" . | fromYaml) -}}
+{{- $svc := include "groundx.extract.serviceName" . -}}
+{{- $bucketSuffix := printf "%s/" (get $fs "bucketName") -}}
+{{- $st := include "groundx.file.serviceType" . -}}
+{{- $bu := include "groundx.extract.agent.baseUrl" . -}}
+{{- $mid := include "groundx.extract.agent.modelId" . -}}
+{{- if eq $st "s3" }}
+{{- $bucketSuffix = "/" -}}
+{{- end }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $svc }}-config-py-map
+  namespace: {{ include "groundx.ns" . }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
+data:
+  config.py: |
+    from classes.settings import (
+        AgentSettings,
+        ContainerSettings,
+        ContainerUploadSettings,
+    )
+
+    agent_settings = AgentSettings(
+        {{- if $bu }}
+        api_base={{ $bu | quote }}
+        {{- end }}
+        api_key_env={{ include "groundx.extract.agent.apiKeyEnv" . | quote }},
+        {{- if $mid }}
+        model_id={{ $mid | quote }}
+        {{- end }}
+    )
+
+    container_settings = ContainerSettings(
+        broker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
+        callback_api_key={{ include "groundx.admin.apiKey" . | quote }},
+==
+        google_sheets_drive_id="0AIczb_wA_1DPUk9PVA",
+        google_sheets_template_id="1xWf1d-pjv2teSTXQIsfnACJNYQES6983dKSFWcScTEY",
+==
+        metrics_broker={{ printf "%s://%s:%v/0" (include "groundx.metrics.cache.scheme" .) (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) | quote }},
+        service={{ $svc | quote }},
+        upload=ContainerUploadSettings(
+            base_domain={{ get $fs "bucketDomain" | quote }},
+            bucket={{ get $fs "bucketName" | quote }},
+            region={{ get $fs "region" | quote }},
+            ssl={{ if eq (printf "%v" (get $fs "bucketSSL")) "true" }}True{{ else }}False{{ end }},
+            type={{ $st | quote }},
+            url={{ printf "%s://%s/%s" (get $fs "scheme") (get $fs "baseDomain") $bucketSuffix | quote }},
+            key={{ include "groundx.file.username" . | quote }},
+            secret={{ include "groundx.file.password" . | quote }},
+        ),
+        valid_api_keys=[{{ include "groundx.admin.apiKey" . | quote }}, {{ include "groundx.admin.username" . | quote }}],
+        workers={{ include "groundx.extract.inference.workers" . }},
+    )
+{{- end }}
