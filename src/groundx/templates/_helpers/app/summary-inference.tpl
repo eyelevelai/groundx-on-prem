@@ -138,7 +138,7 @@ true
 {{- if eq $ct "aks" -}}
 {{ dig "runtimeClassName" "nvidia-container-runtime" $in }}
 {{- else -}}
-{{ dig "runtimeClassName" "nvidia" $in }}
+{{ dig "runtimeClassName" "" $in }}
 {{- end -}}
 {{- end }}
 
@@ -165,6 +165,7 @@ true
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
 {{- $rep := (include "groundx.summary.inference.replicas" . | fromYaml) -}}
+{{- $rt := include "groundx.summary.inference.runtimeClassName" . -}}
 {{- $cfg := dict
   "node"     (include "groundx.summary.inference.node" .)
   "replicas" ($rep)
@@ -178,9 +179,11 @@ true
 {{- $_ := set $cfg "port"             (include "groundx.summary.inference.containerPort" .) -}}
 {{- $_ := set $cfg "pvc"              (include "groundx.summary.inference.pvc" . | fromYaml) -}}
 {{- $_ := set $cfg "supervisord"      (printf "%s-inference-supervisord-conf-map" $svc) -}}
-{{- $_ := set $cfg "runtimeClassName" (include "groundx.summary.inference.runtimeClassName" .) -}}
 {{- $_ := set $cfg "workingDir"       ("/workspace") -}}
 {{- $_ := set $cfg "pull"             (include "groundx.summary.inference.imagePullPolicy" .) -}}
+{{- if ne $rt "" -}}
+{{- $_ := set $cfg "runtimeClassName" $rt -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}
