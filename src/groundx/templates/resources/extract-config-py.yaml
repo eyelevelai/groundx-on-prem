@@ -41,7 +41,7 @@ data:
     container_settings = ContainerSettings(
         broker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
         callback_api_key={{ include "groundx.admin.apiKey" . | quote }},
-        {{- if ne $did "" }},
+        {{- if ne $did "" }}
         google_sheets_drive_id={{ $did | quote }},
         {{- end }}
         {{- if ne $tid "" }}

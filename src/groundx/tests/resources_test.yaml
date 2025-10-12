@@ -6,208 +6,241 @@ chart:
 tests:
   - it: "default: resources"
     templates:
+      - ../templates/resources/config-models.yaml
       - ../templates/resources/config-yaml.yaml
       - ../templates/resources/extract-config-py.yaml
       - ../templates/resources/extract-gunicorn-conf-py.yaml
       - ../templates/resources/extract-supervisord-conf.yaml
+      - ../templates/resources/init-database-file.yaml
       - ../templates/resources/layout-config-py.yaml
       - ../templates/resources/layout-gunicorn-conf-py.yaml
       - ../templates/resources/layout-ocr-credentials.yaml
       - ../templates/resources/layout-supervisord-conf.yaml
-      - ../templates/resources/config-models.yaml
+      - ../templates/resources/ldconfig-symlink.yaml
       - ../templates/resources/ranker-config-py.yaml
       - ../templates/resources/ranker-gunicorn-conf-py.yaml
       - ../templates/resources/ranker-supervisord-conf.yaml
+      - ../templates/resources/secret.yaml
       - ../templates/resources/summary-config-py.yaml
       - ../templates/resources/summary-gunicorn-conf-py.yaml
       - ../templates/resources/summary-supervisord-conf.yaml
-      - ../templates/resources/init-database-file.yaml
-      - ../templates/resources/ldconfig-symlink.yaml
     values:
       - ../values.yaml
     asserts:
       - matchSnapshot: {}
   - it: "empty: resources"
     templates:
+      - ../templates/resources/config-models.yaml
       - ../templates/resources/config-yaml.yaml
       - ../templates/resources/extract-config-py.yaml
       - ../templates/resources/extract-gunicorn-conf-py.yaml
       - ../templates/resources/extract-supervisord-conf.yaml
+      - ../templates/resources/init-database-file.yaml
       - ../templates/resources/layout-config-py.yaml
       - ../templates/resources/layout-gunicorn-conf-py.yaml
       - ../templates/resources/layout-ocr-credentials.yaml
       - ../templates/resources/layout-supervisord-conf.yaml
-      - ../templates/resources/config-models.yaml
+      - ../templates/resources/ldconfig-symlink.yaml
       - ../templates/resources/ranker-config-py.yaml
       - ../templates/resources/ranker-gunicorn-conf-py.yaml
       - ../templates/resources/ranker-supervisord-conf.yaml
+      - ../templates/resources/secret.yaml
       - ../templates/resources/summary-config-py.yaml
       - ../templates/resources/summary-gunicorn-conf-py.yaml
       - ../templates/resources/summary-supervisord-conf.yaml
-      - ../templates/resources/init-database-file.yaml
-      - ../templates/resources/ldconfig-symlink.yaml
     values:
       - ./files/values.empty.yaml
     asserts:
       - matchSnapshot: {}
   - it: "aws: resources"
     templates:
+      - ../templates/resources/config-models.yaml
       - ../templates/resources/config-yaml.yaml
       - ../templates/resources/extract-config-py.yaml
       - ../templates/resources/extract-gunicorn-conf-py.yaml
       - ../templates/resources/extract-supervisord-conf.yaml
+      - ../templates/resources/init-database-file.yaml
       - ../templates/resources/layout-config-py.yaml
       - ../templates/resources/layout-gunicorn-conf-py.yaml
       - ../templates/resources/layout-ocr-credentials.yaml
       - ../templates/resources/layout-supervisord-conf.yaml
-      - ../templates/resources/config-models.yaml
+      - ../templates/resources/ldconfig-symlink.yaml
       - ../templates/resources/ranker-config-py.yaml
       - ../templates/resources/ranker-gunicorn-conf-py.yaml
       - ../templates/resources/ranker-supervisord-conf.yaml
+      - ../templates/resources/secret.yaml
       - ../templates/resources/summary-config-py.yaml
       - ../templates/resources/summary-gunicorn-conf-py.yaml
       - ../templates/resources/summary-supervisord-conf.yaml
-      - ../templates/resources/init-database-file.yaml
-      - ../templates/resources/ldconfig-symlink.yaml
     values:
       - ../values/values.aws.services.yaml
     asserts:
       - matchSnapshot: {}
   - it: "openshift: resources"
     templates:
+      - ../templates/resources/config-models.yaml
       - ../templates/resources/config-yaml.yaml
       - ../templates/resources/extract-config-py.yaml
       - ../templates/resources/extract-gunicorn-conf-py.yaml
       - ../templates/resources/extract-supervisord-conf.yaml
+      - ../templates/resources/init-database-file.yaml
       - ../templates/resources/layout-config-py.yaml
       - ../templates/resources/layout-gunicorn-conf-py.yaml
       - ../templates/resources/layout-ocr-credentials.yaml
       - ../templates/resources/layout-supervisord-conf.yaml
-      - ../templates/resources/config-models.yaml
+      - ../templates/resources/ldconfig-symlink.yaml
       - ../templates/resources/ranker-config-py.yaml
       - ../templates/resources/ranker-gunicorn-conf-py.yaml
       - ../templates/resources/ranker-supervisord-conf.yaml
+      - ../templates/resources/secret.yaml
       - ../templates/resources/summary-config-py.yaml
       - ../templates/resources/summary-gunicorn-conf-py.yaml
       - ../templates/resources/summary-supervisord-conf.yaml
-      - ../templates/resources/init-database-file.yaml
-      - ../templates/resources/ldconfig-symlink.yaml
     values:
       - ../values/values.openshift.yaml
     asserts:
       - matchSnapshot: {}
   - it: "minikube: resources"
     templates:
+      - ../templates/resources/config-models.yaml
       - ../templates/resources/config-yaml.yaml
       - ../templates/resources/extract-config-py.yaml
       - ../templates/resources/extract-gunicorn-conf-py.yaml
       - ../templates/resources/extract-supervisord-conf.yaml
+      - ../templates/resources/init-database-file.yaml
       - ../templates/resources/layout-config-py.yaml
       - ../templates/resources/layout-gunicorn-conf-py.yaml
       - ../templates/resources/layout-ocr-credentials.yaml
       - ../templates/resources/layout-supervisord-conf.yaml
-      - ../templates/resources/config-models.yaml
+      - ../templates/resources/ldconfig-symlink.yaml
       - ../templates/resources/ranker-config-py.yaml
       - ../templates/resources/ranker-gunicorn-conf-py.yaml
       - ../templates/resources/ranker-supervisord-conf.yaml
+      - ../templates/resources/secret.yaml
       - ../templates/resources/summary-config-py.yaml
       - ../templates/resources/summary-gunicorn-conf-py.yaml
       - ../templates/resources/summary-supervisord-conf.yaml
-      - ../templates/resources/init-database-file.yaml
-      - ../templates/resources/ldconfig-symlink.yaml
     values:
       - ../values/values.minikube.yaml
     asserts:
       - matchSnapshot: {}
   - it: "existing: resources"
     templates:
+      - ../templates/resources/config-models.yaml
       - ../templates/resources/config-yaml.yaml
       - ../templates/resources/extract-config-py.yaml
       - ../templates/resources/extract-gunicorn-conf-py.yaml
       - ../templates/resources/extract-supervisord-conf.yaml
+      - ../templates/resources/init-database-file.yaml
       - ../templates/resources/layout-config-py.yaml
       - ../templates/resources/layout-gunicorn-conf-py.yaml
       - ../templates/resources/layout-ocr-credentials.yaml
       - ../templates/resources/layout-supervisord-conf.yaml
-      - ../templates/resources/config-models.yaml
+      - ../templates/resources/ldconfig-symlink.yaml
       - ../templates/resources/ranker-config-py.yaml
       - ../templates/resources/ranker-gunicorn-conf-py.yaml
       - ../templates/resources/ranker-supervisord-conf.yaml
+      - ../templates/resources/secret.yaml
       - ../templates/resources/summary-config-py.yaml
       - ../templates/resources/summary-gunicorn-conf-py.yaml
       - ../templates/resources/summary-supervisord-conf.yaml
-      - ../templates/resources/init-database-file.yaml
-      - ../templates/resources/ldconfig-symlink.yaml
     values:
       - ../values/values.existing.yaml
     asserts:
       - matchSnapshot: {}
   - it: "metadata: resources"
     templates:
+      - ../templates/resources/config-models.yaml
       - ../templates/resources/config-yaml.yaml
       - ../templates/resources/extract-config-py.yaml
       - ../templates/resources/extract-gunicorn-conf-py.yaml
       - ../templates/resources/extract-supervisord-conf.yaml
+      - ../templates/resources/init-database-file.yaml
       - ../templates/resources/layout-config-py.yaml
       - ../templates/resources/layout-gunicorn-conf-py.yaml
       - ../templates/resources/layout-ocr-credentials.yaml
       - ../templates/resources/layout-supervisord-conf.yaml
-      - ../templates/resources/config-models.yaml
+      - ../templates/resources/ldconfig-symlink.yaml
       - ../templates/resources/ranker-config-py.yaml
       - ../templates/resources/ranker-gunicorn-conf-py.yaml
       - ../templates/resources/ranker-supervisord-conf.yaml
+      - ../templates/resources/secret.yaml
       - ../templates/resources/summary-config-py.yaml
       - ../templates/resources/summary-gunicorn-conf-py.yaml
       - ../templates/resources/summary-supervisord-conf.yaml
-      - ../templates/resources/init-database-file.yaml
-      - ../templates/resources/ldconfig-symlink.yaml
     values:
       - ./files/values.metadata.yaml
     asserts:
       - matchSnapshot: {}
   - it: "disabled: resources"
     templates:
+      - ../templates/resources/config-models.yaml
       - ../templates/resources/config-yaml.yaml
       - ../templates/resources/extract-config-py.yaml
       - ../templates/resources/extract-gunicorn-conf-py.yaml
       - ../templates/resources/extract-supervisord-conf.yaml
+      - ../templates/resources/init-database-file.yaml
       - ../templates/resources/layout-config-py.yaml
       - ../templates/resources/layout-gunicorn-conf-py.yaml
       - ../templates/resources/layout-ocr-credentials.yaml
       - ../templates/resources/layout-supervisord-conf.yaml
-      - ../templates/resources/config-models.yaml
+      - ../templates/resources/ldconfig-symlink.yaml
       - ../templates/resources/ranker-config-py.yaml
       - ../templates/resources/ranker-gunicorn-conf-py.yaml
       - ../templates/resources/ranker-supervisord-conf.yaml
+      - ../templates/resources/secret.yaml
       - ../templates/resources/summary-config-py.yaml
       - ../templates/resources/summary-gunicorn-conf-py.yaml
       - ../templates/resources/summary-supervisord-conf.yaml
-      - ../templates/resources/init-database-file.yaml
-      - ../templates/resources/ldconfig-symlink.yaml
     values:
       - ./files/values.disabled.yaml
     asserts:
       - matchSnapshot: {}
   - it: "extract: resources"
     templates:
+      - ../templates/resources/config-models.yaml
       - ../templates/resources/config-yaml.yaml
       - ../templates/resources/extract-config-py.yaml
       - ../templates/resources/extract-gunicorn-conf-py.yaml
       - ../templates/resources/extract-supervisord-conf.yaml
+      - ../templates/resources/init-database-file.yaml
       - ../templates/resources/layout-config-py.yaml
       - ../templates/resources/layout-gunicorn-conf-py.yaml
       - ../templates/resources/layout-ocr-credentials.yaml
       - ../templates/resources/layout-supervisord-conf.yaml
-      - ../templates/resources/config-models.yaml
+      - ../templates/resources/ldconfig-symlink.yaml
       - ../templates/resources/ranker-config-py.yaml
       - ../templates/resources/ranker-gunicorn-conf-py.yaml
       - ../templates/resources/ranker-supervisord-conf.yaml
+      - ../templates/resources/secret.yaml
       - ../templates/resources/summary-config-py.yaml
       - ../templates/resources/summary-gunicorn-conf-py.yaml
       - ../templates/resources/summary-supervisord-conf.yaml
-      - ../templates/resources/init-database-file.yaml
-      - ../templates/resources/ldconfig-symlink.yaml
     values:
       - ./files/values.extract.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "cloud: resources"
+    templates:
+      - ../templates/resources/config-models.yaml
+      - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/extract-config-py.yaml
+      - ../templates/resources/extract-gunicorn-conf-py.yaml
+      - ../templates/resources/extract-supervisord-conf.yaml
+      - ../templates/resources/init-database-file.yaml
+      - ../templates/resources/layout-config-py.yaml
+      - ../templates/resources/layout-gunicorn-conf-py.yaml
+      - ../templates/resources/layout-ocr-credentials.yaml
+      - ../templates/resources/layout-supervisord-conf.yaml
+      - ../templates/resources/ldconfig-symlink.yaml
+      - ../templates/resources/ranker-config-py.yaml
+      - ../templates/resources/ranker-gunicorn-conf-py.yaml
+      - ../templates/resources/ranker-supervisord-conf.yaml
+      - ../templates/resources/secret.yaml
+      - ../templates/resources/summary-config-py.yaml
+      - ../templates/resources/summary-gunicorn-conf-py.yaml
+      - ../templates/resources/summary-supervisord-conf.yaml
+    values:
+      - ./files/values.cloud.yaml
     asserts:
       - matchSnapshot: {}

@@ -549,6 +549,890 @@
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
+'cloud: celery':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: extract-agent
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: extract-agent
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: extract-agent
+      template:
+        metadata:
+          labels:
+            app: extract-agent
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: extract-agent-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/extract:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_agents.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: extract-agent
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_agents.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: extract-config-py-map
+              name: config-volume
+            - configMap:
+                name: extract-agent-supervisord-conf-map
+              name: supervisord-volume
+  2: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: extract-download
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: extract-download
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: extract-download
+      template:
+        metadata:
+          labels:
+            app: extract-download
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/extract:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_agents.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: extract-download
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_agents.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: extract-config-py-map
+              name: config-volume
+            - configMap:
+                name: extract-download-supervisord-conf-map
+              name: supervisord-volume
+  3: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: extract-save
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: extract-save
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: extract-save
+      template:
+        metadata:
+          labels:
+            app: extract-save
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/extract:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_agents.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: extract-save
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_agents.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: extract-config-py-map
+              name: config-volume
+            - configMap:
+                name: extract-save-supervisord-conf-map
+              name: supervisord-volume
+  4: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: layout-correct
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-correct
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: layout-correct
+      template:
+        metadata:
+          labels:
+            app: layout-correct
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: layout-correct
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 1
+                  memory: 1Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+          nodeSelector:
+            node: eyelevel-cpu-memory
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-memory
+          volumes:
+            - configMap:
+                name: layout-config-py-map
+              name: config-volume
+            - configMap:
+                name: layout-correct-supervisord-conf-map
+              name: supervisord-volume
+  5: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: layout-map
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-map
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: layout-map
+      template:
+        metadata:
+          labels:
+            app: layout-map
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: layout-map
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: layout-config-py-map
+              name: config-volume
+            - configMap:
+                name: layout-map-supervisord-conf-map
+              name: supervisord-volume
+  6: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: layout-ocr
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-ocr
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: layout-ocr
+      template:
+        metadata:
+          labels:
+            app: layout-ocr
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: layout-ocr
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 1
+                  memory: 1Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+          nodeSelector:
+            node: eyelevel-cpu-memory
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-memory
+          volumes:
+            - configMap:
+                name: layout-config-py-map
+              name: config-volume
+            - configMap:
+                name: layout-ocr-supervisord-conf-map
+              name: supervisord-volume
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: layout-process
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-process
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: layout-process
+      template:
+        metadata:
+          labels:
+            app: layout-process
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: layout-process
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 1Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+          nodeSelector:
+            node: eyelevel-cpu-memory
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-memory
+          volumes:
+            - configMap:
+                name: layout-config-py-map
+              name: config-volume
+            - configMap:
+                name: layout-process-supervisord-conf-map
+              name: supervisord-volume
+  8: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: layout-save
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-save
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: layout-save
+      template:
+        metadata:
+          labels:
+            app: layout-save
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: layout-save
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 1Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+          nodeSelector:
+            node: eyelevel-cpu-memory
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-memory
+          volumes:
+            - configMap:
+                name: layout-config-py-map
+              name: config-volume
+            - configMap:
+                name: layout-save-supervisord-conf-map
+              name: supervisord-volume
 'default: celery':
   1: |
     apiVersion: apps/v1

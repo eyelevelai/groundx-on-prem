@@ -67,3 +67,10 @@ tests:
       - ./files/values.extract.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "cloud: celery"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.cloud.yaml
+    asserts:
+      - matchSnapshot: {}

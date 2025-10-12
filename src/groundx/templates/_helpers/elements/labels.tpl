@@ -1,5 +1,5 @@
 {{- define "groundx.renderDefaultLabels" -}}
-{{- $name := .name -}}
+{{- $name := .name | default "" -}}
 {{- $indent := .indent | default 0 -}}
 {{- $root := .root -}}
 {{- if ne $name "" -}}
