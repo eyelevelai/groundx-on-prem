@@ -75,7 +75,7 @@ false
 {{- define "groundx.extract.save.imagePullPolicy" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "save" dict $b -}}
-{{ dig "imagePullPolicy" "Always" $in }}
+{{ dig "imagePullPolicy" "IfNotPresent" $in }}
 {{- end }}
 
 {{- define "groundx.extract.save.queue" -}}

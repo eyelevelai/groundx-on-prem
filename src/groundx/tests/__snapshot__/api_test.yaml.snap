@@ -271,6 +271,9 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: extract-agent-secret
               image: public.ecr.aws/c9r4x6y5/eyelevel/extract:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -345,6 +348,8 @@
     apiVersion: v1
     kind: Service
     metadata:
+      annotations:
+        service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "30"
       labels:
         app: extract-api
       name: extract-api
@@ -356,7 +361,7 @@
           targetPort: 8080
       selector:
         app: extract-api
-      type: ClusterIP
+      type: LoadBalancer
   3: |
     apiVersion: apps/v1
     kind: Deployment
@@ -1704,6 +1709,9 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: extract-agent-secret
               image: public.ecr.aws/c9r4x6y5/eyelevel/extract:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -2254,6 +2262,7 @@
     metadata:
       annotations:
         service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "30"
+        service.beta.kubernetes.io/aws-load-balancer-internal: "true"
       labels:
         app: myapp-api
       name: myapp-api
@@ -2265,7 +2274,7 @@
           targetPort: 8081
       selector:
         app: myapp-api
-      type: ClusterIP
+      type: LoadBalancer
   5: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2369,6 +2378,7 @@
     metadata:
       annotations:
         service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "30"
+        service.beta.kubernetes.io/aws-load-balancer-internal: "true"
       labels:
         app: myapp-api
       name: myapp-api
@@ -2380,7 +2390,7 @@
           targetPort: 8081
       selector:
         app: myapp-api
-      type: ClusterIP
+      type: LoadBalancer
 'minikube: api':
   1: |
     apiVersion: apps/v1

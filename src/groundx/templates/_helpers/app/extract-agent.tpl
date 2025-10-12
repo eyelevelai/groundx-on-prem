@@ -94,7 +94,7 @@ false
 {{- define "groundx.extract.agent.imagePullPolicy" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
-{{ dig "imagePullPolicy" "Always" $in }}
+{{ dig "imagePullPolicy" "IfNotPresent" $in }}
 {{- end }}
 
 {{- define "groundx.extract.agent.queue" -}}

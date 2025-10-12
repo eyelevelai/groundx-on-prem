@@ -37,7 +37,7 @@ false
 {{- define "groundx.extract.download.imagePullPolicy" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "download" dict $b -}}
-{{ dig "imagePullPolicy" "Always" $in }}
+{{ dig "imagePullPolicy" "IfNotPresent" $in }}
 {{- end }}
 
 {{- define "groundx.extract.download.queue" -}}

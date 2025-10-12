@@ -49,7 +49,7 @@ true
 {{- define "groundx.summary.api.isRoute" -}}
 {{- $lb := (include "groundx.summary.api.loadBalancer" . | fromYaml) -}}
 {{- $os := include "groundx.isOpenshift" . -}}
-{{- $ty := (dig "type" "ClusterIP" $lb) | trim | lower -}}
+{{- $ty := (dig "ipType" "ClusterIP" $lb) | trim | lower -}}
 {{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
 true
 {{- else -}}
@@ -125,7 +125,7 @@ false
     "ssl"        (dig "ssl" "false" $lb)
     "targetPort" (include "groundx.summary.api.containerPort" .)
     "timeout"    (dig "timeout" "" $lb)
-    "type"       (dig "type" "ClusterIP" $lb)
+    "type"       (dig "ipType" "ClusterIP" $lb)
   | toYaml -}}
 {{- else -}}
 {{- dict
