@@ -25,10 +25,36 @@ false
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.extract.save.apiKeyEnv" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "save" dict $b -}}
+{{ dig "apiKeyEnv" "GCP_CREDENTIALS" $in }}
+{{- end }}
+
 {{- define "groundx.extract.save.driveId" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "save" dict $b -}}
 {{ dig "driveId" "" $in }}
+{{- end }}
+
+{{- define "groundx.extract.save.existingSecret" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "save" dict $b -}}
+{{ dig "existingSecret" false $in }}
+{{- end }}
+
+{{- define "groundx.extract.save.gcpCredentials" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "save" dict $b -}}
+{{- $json := dig "gcpCredentials" "" $in -}}
+{{ coalesce $json "" }}
+{{- end }}
+
+{{- define "groundx.extract.save.secretName" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "save" dict $b -}}
+{{- $dflt := printf "%s-secret" (include "groundx.extract.save.serviceName" .) -}}
+{{ dig "secretName" $dflt $in }}
 {{- end }}
 
 {{- define "groundx.extract.save.templateId" -}}
@@ -43,13 +69,13 @@ false
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
 {{- $ver := coalesce .Chart.AppVersion .Chart.Version -}}
 {{- $fallback := printf "%s/eyelevel/extract:%s" $repoPrefix $ver -}}
-{{- coalesce (dig "image" "" $in) $fallback -}}
+{{ coalesce (dig "image" "" $in) $fallback }}
 {{- end }}
 
 {{- define "groundx.extract.save.imagePullPolicy" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "save" dict $b -}}
-{{ dig "imagePullPolicy" "IfNotPresent" $in }}
+{{ dig "imagePullPolicy" "Always" $in }}
 {{- end }}
 
 {{- define "groundx.extract.save.queue" -}}
@@ -68,6 +94,21 @@ false
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
+{{- define "groundx.extract.save.secrets" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "save" dict $b -}}
+{{- $gc := include "groundx.extract.save.gcpCredentials" . -}}
+
+{{- $cfg := dict
+  "name" (include "groundx.extract.save.secretName" .)
+-}}
+{{- $data := dict
+  (include "groundx.extract.save.apiKeyEnv" .) $gc
+-}}
+{{- $_ := set $cfg "data" $data -}}
+{{- $cfg | toYaml -}}
+{{- end }}
+
 {{- define "groundx.extract.save.threads" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "save" dict $b -}}
@@ -84,6 +125,10 @@ false
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "save" dict $b -}}
 {{- $rep := (include "groundx.extract.save.replicas" . | fromYaml) -}}
+{{- $data := dict
+  (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .)
+  (include "groundx.extract.save.secretName" .) (include "groundx.extract.save.secretName" .)
+-}}
 {{- $cfg := dict
   "celery"   ("celery_agents")
   "image"    (include "groundx.extract.save.image" .)
@@ -92,6 +137,7 @@ false
   "pull"     (include "groundx.extract.save.imagePullPolicy" .)
   "queue"    (include "groundx.extract.save.queue" .)
   "replicas" ($rep)
+  "secrets"  ($data)
   "service"  (include "groundx.extract.serviceName" .)
   "threads"  (include "groundx.extract.save.threads" .)
   "workers"  (include "groundx.extract.save.workers" .)

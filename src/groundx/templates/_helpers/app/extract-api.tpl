@@ -43,7 +43,7 @@ false
 {{- define "groundx.extract.api.imagePullPolicy" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{ dig "imagePullPolicy" "IfNotPresent" $in }}
+{{ dig "imagePullPolicy" "Always" $in }}
 {{- end }}
 
 {{- define "groundx.extract.api.isRoute" -}}
@@ -152,18 +152,22 @@ false
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "api" dict $b -}}
 {{- $rep := (include "groundx.extract.api.replicas" . | fromYaml) -}}
-{{- $cfg := dict
-  "node"     (include "groundx.extract.api.node" .)
-  "replicas" ($rep)
+{{- $data := dict
+  (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .)
 -}}
-{{- $_ := set $cfg "cfg"          (printf "%s-config-py-map" $svc) -}}
-{{- $_ := set $cfg "name"         (include "groundx.extract.api.serviceName" .) -}}
-{{- $_ := set $cfg "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc) -}}
-{{- $_ := set $cfg "image"        (include "groundx.extract.api.image" .) -}}
-{{- $_ := set $cfg "isRoute"      (include "groundx.extract.api.isRoute" .) -}}
-{{- $_ := set $cfg "loadBalancer" (include "groundx.extract.api.loadBalancer" .) -}}
-{{- $_ := set $cfg "port"         (include "groundx.extract.api.containerPort" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.extract.api.imagePullPolicy" .) -}}
+{{- $cfg := dict
+  "cfg"          (printf "%s-config-py-map" $svc)
+  "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
+  "image"        (include "groundx.extract.api.image" .)
+  "isRoute"      (include "groundx.extract.api.isRoute" .)
+  "loadBalancer" (include "groundx.extract.api.loadBalancer" .)
+  "name"         (include "groundx.extract.api.serviceName" .)
+  "node"         (include "groundx.extract.api.node" .)
+  "port"         (include "groundx.extract.api.containerPort" .)
+  "pull"         (include "groundx.extract.api.imagePullPolicy" .)
+  "replicas"     ($rep)
+  "secrets"      ($data)
+-}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

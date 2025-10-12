@@ -942,14 +942,15 @@
           serviceName: summary-client
 
         upload:
-          baseDomain: minio.eyelevel.svc.cluster.local
-          baseUrl: http://minio.eyelevel.svc.cluster.local
+          baseDomain: X.s3.us-west-2.amazonaws.com
+          baseUrl: https://X.s3.us-west-2.amazonaws.com
           bucket: eyelevel
-          bucketUrl: http://minio.eyelevel.svc.cluster.local
-          id: minio
-          secret: minio123
-          service: minio
-          ssl: false
+          bucketUrl: https://X.s3.us-west-2.amazonaws.com
+          id: awsKey
+          region: us-west-2
+          secret: awsSecret
+          service: s3
+          ssl: true
 
         uploadFileServer:
           baseURL: http://upload.eyelevel.svc.cluster.local:8080
@@ -987,14 +988,14 @@
             metrics_broker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             service="extract",
             upload=ContainerUploadSettings(
-                base_domain="minio.eyelevel.svc.cluster.local",
+                base_domain="X.s3.us-west-2.amazonaws.com",
                 bucket="eyelevel",
-                region="",
-                ssl=False,
-                type="minio",
-                url="http://minio.eyelevel.svc.cluster.local/eyelevel/",
-                key="minio",
-                secret="minio123",
+                region="us-west-2",
+                ssl=True,
+                type="s3",
+                url="https://X.s3.us-west-2.amazonaws.com/",
+                key="awsKey",
+                secret="awsSecret",
             ),
             valid_api_keys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=1,
@@ -1149,8 +1150,8 @@
     data:
       config.py: |
         env = dict(
-            accessKey="minio",
-            accessSecret="minio123",
+            accessKey="awsKey",
+            accessSecret="awsSecret",
             annotationBase="layout/processed/",
             cacheDir="/app/hf_models_cache",
             callbackAPIKey="00000000-0000-0000-0000-000000000000",
@@ -1170,13 +1171,13 @@
             queueType="kafka",
             service="layout",
             uploadBase="layout/processed/",
-            uploadBaseURL="minio.eyelevel.svc.cluster.local",
+            uploadBaseURL="X.s3.us-west-2.amazonaws.com",
             uploadBucket="eyelevel",
-            uploadRegion="",
-            uploadReplaceURL="http://minio.eyelevel.svc.cluster.local/eyelevel/",
-            uploadSSL=False,
-            uploadType="minio",
-            uploadURL="http://minio.eyelevel.svc.cluster.local/eyelevel/",
+            uploadRegion="us-west-2",
+            uploadReplaceURL="https://X.s3.us-west-2.amazonaws.com/",
+            uploadSSL=True,
+            uploadType="s3",
+            uploadURL="https://X.s3.us-west-2.amazonaws.com/",
             validAPIKeys=["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000"],
             workers=1,
         )

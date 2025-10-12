@@ -94,7 +94,7 @@ false
 {{- define "groundx.extract.agent.imagePullPolicy" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
-{{ dig "imagePullPolicy" "IfNotPresent" $in }}
+{{ dig "imagePullPolicy" "Always" $in }}
 {{- end }}
 
 {{- define "groundx.extract.agent.queue" -}}
@@ -144,6 +144,10 @@ false
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
 {{- $rep := (include "groundx.extract.agent.replicas" . | fromYaml) -}}
+{{- $data := dict
+  (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .)
+  (include "groundx.extract.save.secretName" .) (include "groundx.extract.save.secretName" .)
+-}}
 {{- $cfg := dict
   "celery"   ("celery_agents")
   "image"    (include "groundx.extract.agent.image" .)
@@ -152,7 +156,7 @@ false
   "pull"     (include "groundx.extract.agent.imagePullPolicy" .)
   "queue"    (include "groundx.extract.agent.queue" .)
   "replicas" ($rep)
-  "secret"   (include "groundx.extract.agent.secretName" .)
+  "secrets"  ($data)
   "service"  (include "groundx.extract.serviceName" .)
   "threads"  (include "groundx.extract.agent.threads" .)
   "workers"  (include "groundx.extract.agent.workers" .)

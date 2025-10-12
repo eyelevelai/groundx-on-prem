@@ -19,6 +19,7 @@
 {{- $rp := get $svcData "replicas" -}}
 {{- $rs := get $svcData "resources" -}}
 {{- $pull := get $svcData "pull" -}}
+{{- $scr := get $svcData "secrets" | default dict -}}
 {{- $sct := get $svcData "securityContext" -}}
 {{- $svc := get $svcData "name" -}}
 {{- $tl := get $svcData "tolerations" -}}
@@ -74,6 +75,13 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+{{- if gt (len $scr) 0 }}
+          envFrom:
+{{- range $kk, $vv := $scr }}
+            - secretRef:
+                name: {{ $kk }}
+{{- end }}
+{{- end }}
           workingDir: /app
           command:
             - /bin/bash

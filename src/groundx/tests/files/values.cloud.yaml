@@ -10,6 +10,17 @@ cluster:
   pvClass: eyelevel-pv
   type: eks
 
+file:
+  bucketName: eyelevel
+
+  username: awsKey
+  password: awsSecret
+
+  existing:
+    url: https://X.s3.us-west-2.amazonaws.com
+    region: us-west-2
+    serviceType: s3
+
 extract:
   enabled: true
 
@@ -26,6 +37,13 @@ extract:
 
   api:
     enabled: true
+
+    loadBalancer:
+      ipType: LoadBalancer
+      isInternal: false
+      port: 80
+      ssl: true
+      timeout: 30
 
     resources:
       requests:
@@ -45,6 +63,10 @@ extract:
 
     driveId: google-drive-id
     templateId: google-template-id
+
+    # gcpCredentials: JSON
+    # or
+    # --set-file extract.save.gcpCredentials=/path/to/gcp.json
 
     resources:
       requests:

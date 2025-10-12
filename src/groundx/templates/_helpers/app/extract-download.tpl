@@ -37,7 +37,7 @@ false
 {{- define "groundx.extract.download.imagePullPolicy" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "download" dict $b -}}
-{{ dig "imagePullPolicy" "IfNotPresent" $in }}
+{{ dig "imagePullPolicy" "Always" $in }}
 {{- end }}
 
 {{- define "groundx.extract.download.queue" -}}
@@ -72,6 +72,10 @@ false
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "download" dict $b -}}
 {{- $rep := (include "groundx.extract.download.replicas" . | fromYaml) -}}
+{{- $data := dict
+  (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .)
+  (include "groundx.extract.save.secretName" .) (include "groundx.extract.save.secretName" .)
+-}}
 {{- $cfg := dict
   "celery"   ("celery_agents")
   "image"    (include "groundx.extract.download.image" .)
@@ -80,6 +84,7 @@ false
   "pull"     (include "groundx.extract.download.imagePullPolicy" .)
   "queue"    (include "groundx.extract.download.queue" .)
   "replicas" ($rep)
+  "secrets"  ($data)
   "service"  (include "groundx.extract.serviceName" .)
   "threads"  (include "groundx.extract.download.threads" .)
   "workers"  (include "groundx.extract.download.workers" .)
