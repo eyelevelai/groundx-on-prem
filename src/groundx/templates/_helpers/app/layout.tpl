@@ -3,6 +3,11 @@
 {{ dig "serviceName" "layout" $in }}
 {{- end }}
 
+{{- define "groundx.layout.callbackApiKey" -}}
+{{- $in := .Values.layout | default dict -}}
+{{ dig "callbackApiKey" (include "groundx.admin.username" .) $in }}
+{{- end }}
+
 {{- define "groundx.layout.hasOCRCredentials" -}}
 {{- $path := include "groundx.layout.ocr.credentials" . -}}
 {{- if and (kindIs "string" $path) (ne $path "") -}}

@@ -46,7 +46,11 @@
           },
           "additionalProperties": false
         },
-        "type": { "type": "string" }
+        "type": { "type": "string" },
+        "validApiKeys": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
       },
       "required": ["pvClass", "type"],
       "additionalProperties": false
@@ -110,6 +114,7 @@
           "properties": {
             "ipType": { "type": "string" },
             "isInternal": { "type": "boolean" },
+            "name": { "type": "string" },
             "port": { "type": "integer" },
             "ssl": { "type": "boolean" },
             "timeout": { "type": "integer" }
@@ -160,6 +165,7 @@
               "properties": {
                 "ipType": { "type": "string" },
                 "isInternal": { "type": "boolean" },
+                "name": { "type": "string" },
                 "port": { "type": "integer" },
                 "ssl": { "type": "boolean" },
                 "timeout": { "type": "integer" }
@@ -241,6 +247,7 @@
           "properties": {
             "ipType": { "type": "string" },
             "isInternal": { "type": "boolean" },
+            "name": { "type": "string" },
             "port": { "type": "integer" },
             "ssl": { "type": "boolean" },
             "timeout": { "type": "integer" }
@@ -294,22 +301,12 @@
           "additionalProperties": false
         },
         "key": { "type": "string" },
-        "metaVersion": { "type": "string" },
-        "nodepool": {
-          "type": "object",
-          "properties": {
-            "replicas": { "type": "integer" },
-            "storage": { "type": "string" }
-          },
-          "additionalProperties": false
-        },
         "replicas": { "type": "integer" },
         "resources": { "type": "object" },
         "retention": { "type": "integer" },
         "secret": { "type": "string" },
         "segment": { "type": "integer" },
         "serviceName": { "type": "string" },
-        "storage": { "type": "string" },
         "port": { "type": "integer" },
         "topics": {
           "type": "object",
@@ -386,8 +383,7 @@
             }
           },
           "additionalProperties": false
-        },
-        "version": { "type": "string" }
+        }
       },
       "required": [
         "existing"
@@ -413,6 +409,7 @@
               "properties": {
                 "ipType": { "type": "string" },
                 "isInternal": { "type": "boolean" },
+                "name": { "type": "string" },
                 "port": { "type": "integer" },
                 "ssl": { "type": "boolean" },
                 "timeout": { "type": "integer" }
@@ -537,6 +534,7 @@
           "properties": {
             "ipType": { "type": "string" },
             "isInternal": { "type": "boolean" },
+            "name": { "type": "string" },
             "port": { "type": "integer" },
             "ssl": { "type": "boolean" },
             "timeout": { "type": "integer" }
@@ -582,6 +580,7 @@
               "properties": {
                 "ipType": { "type": "string" },
                 "isInternal": { "type": "boolean" },
+                "name": { "type": "string" },
                 "port": { "type": "integer" },
                 "ssl": { "type": "boolean" },
                 "timeout": { "type": "integer" }
@@ -835,6 +834,7 @@
           "properties": {
             "ipType": { "type": "string" },
             "isInternal": { "type": "boolean" },
+            "name": { "type": "string" },
             "port": { "type": "integer" },
             "ssl": { "type": "boolean" },
             "timeout": { "type": "integer" }
@@ -984,6 +984,7 @@
               "properties": {
                 "ipType": { "type": "string" },
                 "isInternal": { "type": "boolean" },
+                "name": { "type": "string" },
                 "port": { "type": "integer" },
                 "ssl": { "type": "boolean" },
                 "timeout": { "type": "integer" }
@@ -1191,6 +1192,7 @@
               "properties": {
                 "ipType": { "type": "string" },
                 "isInternal": { "type": "boolean" },
+                "name": { "type": "string" },
                 "port": { "type": "integer" },
                 "ssl": { "type": "boolean" },
                 "timeout": { "type": "integer" }
@@ -1219,6 +1221,7 @@
           "required": ["enabled"],
           "additionalProperties": false
         },
+        "callbackApiKey": { "type": "string" },
         "download": {
           "type": "object",
           "properties": {

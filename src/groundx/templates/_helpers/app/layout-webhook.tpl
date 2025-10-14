@@ -33,7 +33,7 @@ true
 
 {{- define "groundx.layoutWebhook.imagePullPolicy" -}}
 {{- $in := .Values.layoutWebhook | default dict -}}
-{{ dig "imagePullPolicy" "IfNotPresent" $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
 {{- end }}
 
 {{- define "groundx.layoutWebhook.isRoute" -}}
@@ -81,6 +81,10 @@ false
 {{- $name := include "groundx.layoutWebhook.serviceName" . -}}
 {{- $port := include "groundx.layoutWebhook.port" . -}}
 {{- $ssl := include "groundx.layoutWebhook.ssl" . -}}
+{{- $lb := include "groundx.layoutWebhook.loadBalancer" . | fromYaml -}}
+{{- if hasKey $lb "name" -}}
+{{- $name = dig "name" $name $lb -}}
+{{- end -}}
 {{- $sslStr := printf "%v" $ssl -}}
 {{- $scheme := "http" -}}
 {{- if eq $sslStr "true" -}}{{- $scheme = "https" -}}{{- end -}}
@@ -95,14 +99,19 @@ false
 {{- $in := .Values.layoutWebhook | default dict -}}
 {{- if hasKey $in "loadBalancer" -}}
 {{- $lb := dig "loadBalancer" dict $in -}}
-{{- dict
+{{- $name := dig "name" "" $lb -}}
+{{- $lbDict := dict
     "isInternal" (dig "isInternal" "false" $lb)
     "port"       (include "groundx.layoutWebhook.port" .)
     "ssl"        (include "groundx.layoutWebhook.ssl" .)
     "targetPort" (include "groundx.layoutWebhook.containerPort" .)
     "timeout"    (dig "timeout" "" $lb)
     "type"       (dig "type" "ClusterIP" $lb)
-  | toYaml -}}
+-}}
+{{- if ne $name "" -}}
+  {{- $_ := set $lbDict "name" $name -}}
+{{- end -}}
+{{- $lbDict | toYaml -}}
 {{- end -}}
 {{- dict
     "isInternal" "true"

@@ -36,12 +36,17 @@ data:
           {{- end }}
           username: {{ include "groundx.search.username" .  }}
           password: {{ include "groundx.search.password" . }}
+      extract:
+        client:
+          apiKey: {{ include "groundx.admin.username" . }}
+          baseURL: {{ include "groundx.extract.api.serviceUrl" . }}
+          callbackURL: {{ include "groundx.layoutWebhook.serviceUrl" . }}
       eyelevelSearch:
-        apiKey: {{ include "groundx.admin.apiKey" . }}
+        apiKey: {{ include "groundx.admin.username" . }}
         baseURL: {{ include "groundx.ranker.api.serviceUrl" . }}
       layout:
         client:
-          apiKey: {{ include "groundx.admin.apiKey" . }}
+          apiKey: {{ include "groundx.admin.username" . }}
           baseURL: {{ include "groundx.layout.api.serviceUrl" . }}
           callbackURL: {{ include "groundx.layoutWebhook.serviceUrl" . }}
       openai:
@@ -220,6 +225,11 @@ data:
       summarize: [8]
       summarizeChunks: [10]
       summarizeSections: [9]
+      {{- if eq (include "groundx.extract.create" .) "true" }}
+      extraPreDefaults:
+        - processorID: 13
+          type: extract
+      {{- end }}
       {{- if eq (include "groundx.ingestOnly" .) "true" }}
       extraPostDefaults:
         - processorID: 1

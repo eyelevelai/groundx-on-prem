@@ -43,11 +43,13 @@ false
 {{- define "groundx.extract.api.imagePullPolicy" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{ dig "imagePullPolicy" "IfNotPresent" $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
 {{- end }}
 
 {{- define "groundx.extract.api.isRoute" -}}
-{{- $lb := (include "groundx.extract.api.loadBalancer" . | fromYaml) -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
 {{- $os := include "groundx.isOpenshift" . -}}
 {{- $ty := (dig "ipType" "ClusterIP" $lb) | trim | lower -}}
 {{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
@@ -127,17 +129,24 @@ false
 {{- $in := dig "api" dict $b -}}
 {{- if hasKey $in "loadBalancer" -}}
 {{- $lb := dig "loadBalancer" dict $in -}}
-{{- dict
+{{- $name := dig "name" "" $lb -}}
+{{- $lbDict := dict
     "isInternal" (dig "isInternal" "false" $lb)
+    "isRoute"    (include "groundx.extract.api.isRoute" .)
     "port"       (include "groundx.extract.api.port" .)
     "ssl"        (dig "ssl" "false" $lb)
     "targetPort" (include "groundx.extract.api.containerPort" .)
     "timeout"    (dig "timeout" "" $lb)
     "type"       (dig "ipType" "ClusterIP" $lb)
-  | toYaml -}}
+-}}
+{{- if ne $name "" -}}
+  {{- $_ := set $lbDict "name" $name -}}
+{{- end -}}
+{{- $lbDict | toYaml -}}
 {{- else }}
 {{- dict
     "isInternal" "true"
+    "isRoute"    (include "groundx.extract.api.isRoute" .)
     "port"       (include "groundx.extract.api.port" .)
     "ssl"        "false"
     "targetPort" (include "groundx.extract.api.containerPort" .)
@@ -154,6 +163,7 @@ false
 {{- $rep := (include "groundx.extract.api.replicas" . | fromYaml) -}}
 {{- $data := dict
   (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .)
+  (include "groundx.extract.save.secretName" .) (include "groundx.extract.save.secretName" .)
 -}}
 {{- $cfg := dict
   "cfg"          (printf "%s-config-py-map" $svc)

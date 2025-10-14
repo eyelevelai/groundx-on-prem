@@ -34,7 +34,7 @@ true
 
 {{- define "groundx.upload.imagePullPolicy" -}}
 {{- $in := .Values.upload | default dict -}}
-{{ dig "imagePullPolicy" "IfNotPresent" $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
 {{- end }}
 
 {{- define "groundx.upload.queueSize" -}}

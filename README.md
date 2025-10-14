@@ -312,7 +312,7 @@ The default `values.yaml` namespace assumes a name of `eyelevel`. If you choose 
 GroundX requires a PV class for some of the pods. If you have not created one, we have included a chart that will create one. You can run it with the following comand:
 
 ```bash
-helm install prereqs groundx/prereqs -n eyelevel
+helm install storageclass groundx/prereqs/storageclass -n eyelevel
 ```
 
 ### NVIDIA GPU Operator
@@ -426,6 +426,12 @@ If you'd like to install Kafka to your cluster, use the following commands below
 
 ```bash
 helm install stream-operator oci://quay.io/strimzi-helm/strimzi-kafka-operator -n eyelevel -f helm/values/values.stream.yaml --version 0.47.0
+```
+
+Once the operator is ready, run the following command:
+
+```bash
+helm install kafka-cluster groundx/prereqs/kafka-cluster -n eyelevel
 ```
 
 ## Installing the GroundX Application

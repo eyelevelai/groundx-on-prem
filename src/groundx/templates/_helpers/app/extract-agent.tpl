@@ -94,7 +94,7 @@ false
 {{- define "groundx.extract.agent.imagePullPolicy" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
-{{ dig "imagePullPolicy" "IfNotPresent" $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
 {{- end }}
 
 {{- define "groundx.extract.agent.queue" -}}
@@ -108,7 +108,7 @@ false
 {{- $c := dig "agent" dict $b -}}
 {{- $in := dig "replicas" dict $c -}}
 {{- if not $in }}
-  {{- $in = dict "desired" 1 "max" 1 "min" 1 -}}
+  {{- $in = dict "desired" 4 "max" 4 "min" 4 -}}
 {{- end }}
 {{- toYaml $in | nindent 0 }}
 {{- end }}

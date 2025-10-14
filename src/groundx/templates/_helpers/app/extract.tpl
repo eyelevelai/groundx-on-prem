@@ -3,6 +3,11 @@
 {{ dig "serviceName" "extract" $in }}
 {{- end }}
 
+{{- define "groundx.extract.callbackApiKey" -}}
+{{- $in := .Values.extract | default dict -}}
+{{ dig "callbackApiKey" (include "groundx.admin.username" .) $in }}
+{{- end }}
+
 {{- define "groundx.extract.create" -}}
 {{- $in := .Values.extract | default dict -}}
 {{- if hasKey $in "enabled" -}}

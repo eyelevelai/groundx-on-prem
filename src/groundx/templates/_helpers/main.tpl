@@ -60,6 +60,11 @@ public.ecr.aws/c9r4x6y5
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.imagePull" -}}
+{{- $b := .Values.cluster | default dict -}}
+{{- dig "imagePull" "Always" $b -}}
+{{- end }}
+
 {{- define "groundx.languages" -}}
 {{ .Values.languages | default (list "en") }}
 {{- end }}
@@ -78,7 +83,7 @@ public.ecr.aws/c9r4x6y5
 
 {{- define "groundx.busybox.pull" -}}
 {{- $in := .Values.busybox | default dict -}}
-{{ dig "imagePullPolicy" "IfNotPresent" $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
 {{- end }}
 
 {{- define "groundx.node.cpuMemory" -}}
@@ -114,4 +119,9 @@ public.ecr.aws/c9r4x6y5
 {{- define "groundx.pvClass" -}}
 {{- $b := .Values.cluster | default dict -}}
 {{- dig "pvClass" "eyelevel-pv" $b -}}
+{{- end }}
+
+{{- define "groundx.validApiKeys" -}}
+{{- $b := .Values.cluster | default dict -}}
+{{- dig "validApiKeys" list $b -}}
 {{- end }}

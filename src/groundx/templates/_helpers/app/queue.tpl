@@ -38,7 +38,7 @@ true
 
 {{- define "groundx.queue.imagePullPolicy" -}}
 {{- $in := .Values.queue | default dict -}}
-{{ dig "imagePullPolicy" "IfNotPresent" $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
 {{- end }}
 
 {{- define "groundx.queue.queueSize" -}}

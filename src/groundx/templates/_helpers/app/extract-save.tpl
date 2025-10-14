@@ -75,13 +75,13 @@ false
 {{- define "groundx.extract.save.imagePullPolicy" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "save" dict $b -}}
-{{ dig "imagePullPolicy" "IfNotPresent" $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
 {{- end }}
 
 {{- define "groundx.extract.save.queue" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "save" dict $b -}}
-{{ dig "queue" "save_queue" $in }}
+{{ dig "queue" "save_agents_queue,celery" $in }}
 {{- end }}
 
 {{- define "groundx.extract.save.replicas" -}}

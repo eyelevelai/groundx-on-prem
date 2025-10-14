@@ -41,7 +41,7 @@ true
 {{- define "groundx.ranker.api.imagePullPolicy" -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{ dig "imagePullPolicy" "IfNotPresent" $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
 {{- end }}
 
 {{- define "groundx.ranker.api.isRoute" -}}
@@ -117,14 +117,19 @@ false
 {{- $in := dig "api" dict $b -}}
 {{- if hasKey $in "loadBalancer" -}}
 {{- $lb := dig "loadBalancer" dict $in -}}
-{{- dict
+{{- $name := dig "name" "" $lb -}}
+{{- $lbDict := dict
     "isInternal" (dig "isInternal" "false" $lb)
     "port"       (include "groundx.ranker.api.port" .)
     "ssl"        (dig "ssl" "false" $lb)
     "targetPort" (include "groundx.ranker.api.containerPort" .)
     "timeout"    (dig "timeout" "" $lb)
     "type"       (dig "ipType" "ClusterIP" $lb)
-  | toYaml -}}
+-}}
+{{- if ne $name "" -}}
+  {{- $_ := set $lbDict "name" $name -}}
+{{- end -}}
+{{- $lbDict | toYaml -}}
 {{- else -}}
 {{- dict
     "isInternal" "true"

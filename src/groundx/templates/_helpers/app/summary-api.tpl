@@ -43,11 +43,13 @@ true
 {{- define "groundx.summary.api.imagePullPolicy" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{ (dig "imagePullPolicy" "IfNotPresent" $in) }}
+{{ (dig "imagePullPolicy" (include "groundx.imagePull" .) $in) }}
 {{- end }}
 
 {{- define "groundx.summary.api.isRoute" -}}
-{{- $lb := (include "groundx.summary.api.loadBalancer" . | fromYaml) -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
 {{- $os := include "groundx.isOpenshift" . -}}
 {{- $ty := (dig "ipType" "ClusterIP" $lb) | trim | lower -}}
 {{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
@@ -119,14 +121,19 @@ false
 {{- $in := dig "api" dict $b -}}
 {{- if hasKey $in "loadBalancer" -}}
 {{- $lb := dig "loadBalancer" dict $in -}}
-{{- dict
+{{- $name := dig "name" "" $lb -}}
+{{- $lbDict := dict
     "isInternal" (dig "isInternal" "false" $lb)
     "port"       (include "groundx.summary.api.port" .)
     "ssl"        (dig "ssl" "false" $lb)
     "targetPort" (include "groundx.summary.api.containerPort" .)
     "timeout"    (dig "timeout" "" $lb)
     "type"       (dig "ipType" "ClusterIP" $lb)
-  | toYaml -}}
+-}}
+{{- if ne $name "" -}}
+  {{- $_ := set $lbDict "name" $name -}}
+{{- end -}}
+{{- $lbDict | toYaml -}}
 {{- else -}}
 {{- dict
     "isInternal" "true"

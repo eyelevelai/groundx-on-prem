@@ -32,18 +32,6 @@ true
 {{ dig "key" nil $in }}
 {{- end }}
 
-{{- define "groundx.stream.nodepool.replicas" -}}
-{{- $in := .Values.stream | default dict -}}
-{{- $np := dig "nodepool" dict $in -}}
-{{ dig "replicas" 1 $np }}
-{{- end }}
-
-{{- define "groundx.stream.nodepool.storage" -}}
-{{- $in := .Values.stream | default dict -}}
-{{- $np := dig "nodepool" dict $in -}}
-{{ dig "storage" "5Gi" $np }}
-{{- end }}
-
 {{- define "groundx.stream.replicas" -}}
 {{- $in := .Values.stream | default dict -}}
 {{ dig "replicas" 1 $in }}
@@ -52,11 +40,6 @@ true
 {{- define "groundx.stream.secret" -}}
 {{- $in := .Values.stream | default dict -}}
 {{ dig "secret" nil $in }}
-{{- end }}
-
-{{- define "groundx.stream.storage" -}}
-{{- $in := .Values.stream | default dict -}}
-{{ dig "storage" "10Gi" $in }}
 {{- end }}
 
 {{- define "groundx.stream.serviceHost" -}}
@@ -357,14 +340,4 @@ true
 
 {{- $cfg | toYaml -}}
 
-{{- end }}
-
-{{- define "groundx.stream.metaVersion" -}}
-{{- $in := .Values.stream | default dict -}}
-{{ dig "metaVersion" "4.0-IV3" $in }}
-{{- end }}
-
-{{- define "groundx.stream.version" -}}
-{{- $in := .Values.stream | default dict -}}
-{{ dig "version" "4.0.0" $in }}
 {{- end }}

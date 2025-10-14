@@ -26,7 +26,7 @@ data:
         accessSecret={{ include "groundx.file.password" . | quote }},
         annotationBase="layout/processed/",
         cacheDir="/app/hf_models_cache",
-        callbackAPIKey={{ include "groundx.admin.apiKey" . | quote }},
+        callbackAPIKey={{ include "groundx.layout.callbackApiKey" . | quote }},
         deviceType={{ include "groundx.layout.inference.deviceType" . | quote }},
         env="prod",
         includeLS=False,
@@ -50,7 +50,12 @@ data:
         uploadSSL={{ if eq (printf "%v" (get $fs "bucketSSL")) "true" }}True{{ else }}False{{ end }},
         uploadType={{ $st | quote }},
         uploadURL={{ printf "%s://%s/%s" (get $fs "scheme") ($baseDomain) $bucketSuffix | quote }},
-        validAPIKeys=[{{ include "groundx.admin.apiKey" . | quote }}, {{ include "groundx.admin.username" . | quote }}],
+        validAPIKeys=[
+          {{ include "groundx.admin.apiKey" . | quote }},
+          {{ include "groundx.admin.username" . | quote }},
+          {{- $extras := (get .Values "cluster") | default (dict) -}}{{- $list := (get $extras "validApiKeys") | default (list) -}}{{- range $list }}
+          {{ . | quote }},{{- end }}
+        ],
         workers={{ include "groundx.layout.inference.workers" . }},
     )
 {{- end }}

@@ -32,13 +32,13 @@ true
 {{- define "groundx.layout.save.imagePullPolicy" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "save" dict $b -}}
-{{ dig "imagePullPolicy" "IfNotPresent" $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
 {{- end }}
 
 {{- define "groundx.layout.save.queue" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "save" dict $b -}}
-{{ dig "queue" "save_queue" $in }}
+{{ dig "queue" "save_queue,celery" $in }}
 {{- end }}
 
 {{- define "groundx.layout.save.replicas" -}}

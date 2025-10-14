@@ -40,7 +40,7 @@ data:
 
     container_settings = ContainerSettings(
         broker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
-        callback_api_key={{ include "groundx.admin.apiKey" . | quote }},
+        callback_api_key={{ include "groundx.extract.callbackApiKey" . | quote }},
         {{- if ne $did "" }}
         google_sheets_drive_id={{ $did | quote }},
         {{- end }}
@@ -59,7 +59,12 @@ data:
             key={{ include "groundx.file.username" . | quote }},
             secret={{ include "groundx.file.password" . | quote }},
         ),
-        valid_api_keys=[{{ include "groundx.admin.apiKey" . | quote }}, {{ include "groundx.admin.username" . | quote }}],
+        valid_api_keys=[
+          {{ include "groundx.admin.apiKey" . | quote }},
+          {{ include "groundx.admin.username" . | quote }},
+          {{- $extras := (get .Values "cluster") | default (dict) -}}{{- $list := (get $extras "validApiKeys") | default (list) -}}{{- range $list }}
+          {{ . | quote }},{{- end }}
+        ],
         workers={{ include "groundx.extract.agent.workers" . }},
     )
 {{- end }}
