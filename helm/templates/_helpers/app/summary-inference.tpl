@@ -40,21 +40,64 @@ true
 {{- define "groundx.summary.inference.deviceUtilize" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
-{{ (dig "deviceUtilize" 0.9 $in) }}
+{{ (dig "deviceUtilize" 0.48 $in) }}
+{{- end }}
+
+{{- define "groundx.summary.inference.model.dataType" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{- $md := dig "model" dict $in -}}
+{{ (dig "dataType" "bfloat16" $md) }}
 {{- end }}
 
 {{- define "groundx.summary.inference.image" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
-{{- $fallback := printf "%s/eyelevel/summary-inference:latest" $repoPrefix -}}
+{{- $ver := coalesce .Chart.AppVersion .Chart.Version -}}
+{{- $fallback := printf "%s/eyelevel/summary-inference:%s" $repoPrefix $ver -}}
 {{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
 {{- define "groundx.summary.inference.imagePullPolicy" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
-{{ (dig "imagePullPolicy" "Always" $in) }}
+{{ (dig "imagePullPolicy" (include "groundx.imagePull" .) $in) }}
+{{- end }}
+
+{{- define "groundx.summary.inference.model.maxInputTokens" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{- $md := dig "model" dict $in -}}
+{{ (dig "maxInputTokens" 100000 $md) }}
+{{- end }}
+
+{{- define "groundx.summary.inference.model.maxOutputTokens" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{- $md := dig "model" dict $in -}}
+{{ (dig "maxOutputTokens" 4096 $md) }}
+{{- end }}
+
+{{- define "groundx.summary.inference.model.maxRequests" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{- $md := dig "model" dict $in -}}
+{{ (dig "maxRequests" 1 $md) }}
+{{- end }}
+
+{{- define "groundx.summary.inference.model.name" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{- $md := dig "model" dict $in -}}
+{{ (dig "name" "google/gemma-3-4b-it" $md) }}
+{{- end }}
+
+{{- define "groundx.summary.inference.model.swapSpace" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{- $md := dig "model" dict $in -}}
+{{ (dig "swapSpace" 16 $md) }}
 {{- end }}
 
 {{- define "groundx.summary.inference.pvc" -}}
@@ -83,9 +126,26 @@ true
 {{- $c := dig "inference" dict $b -}}
 {{- $in := dig "replicas" dict $c -}}
 {{- if not $in }}
-  {{- $in = dict "desired" 1 "max" 1 "min" 1 -}}
+  {{- $in = dict "desired" 2 "max" 2 "min" 1 -}}
 {{- end }}
 {{- toYaml $in | nindent 0 }}
+{{- end }}
+
+{{- define "groundx.summary.inference.runtimeClassName" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $ct := include "groundx.clusterType" . -}}
+{{- $in := dig "inference" dict $b -}}
+{{- if eq $ct "aks" -}}
+{{ dig "runtimeClassName" "nvidia-container-runtime" $in }}
+{{- else -}}
+{{ dig "runtimeClassName" "" $in }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.summary.inference.swapSpace" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{ (dig "swapSpace" 16 $in) }}
 {{- end }}
 
 {{- define "groundx.summary.inference.threads" -}}
@@ -105,21 +165,25 @@ true
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
 {{- $rep := (include "groundx.summary.inference.replicas" . | fromYaml) -}}
+{{- $rt := include "groundx.summary.inference.runtimeClassName" . -}}
 {{- $cfg := dict
   "node"     (include "groundx.summary.inference.node" .)
   "replicas" ($rep)
 -}}
-{{- $_ := set $cfg "baseName"     ($svc) -}}
-{{- $_ := set $cfg "cfg"          (printf "%s-config-py-map" $svc) -}}
-{{- $_ := set $cfg "name"         (include "groundx.summary.inference.serviceName" .) -}}
-{{- $_ := set $cfg "image"        (include "groundx.summary.inference.image" .) -}}
-{{- $_ := set $cfg "modelParts"   ("00 01 02 03 04") -}}
-{{- $_ := set $cfg "modelVersion" ("g34b") -}}
-{{- $_ := set $cfg "port"         (include "groundx.summary.inference.containerPort" .) -}}
-{{- $_ := set $cfg "pvc"          (include "groundx.summary.inference.pvc" . | fromYaml) -}}
-{{- $_ := set $cfg "supervisord"  (printf "%s-inference-supervisord-conf-map" $svc) -}}
-{{- $_ := set $cfg "workingDir"   ("/workspace") -}}
-{{- $_ := set $cfg "pull"         (include "groundx.summary.inference.imagePullPolicy" .) -}}
+{{- $_ := set $cfg "baseName"         ($svc) -}}
+{{- $_ := set $cfg "cfg"              (printf "%s-config-py-map" $svc) -}}
+{{- $_ := set $cfg "name"             (include "groundx.summary.inference.serviceName" .) -}}
+{{- $_ := set $cfg "image"            (include "groundx.summary.inference.image" .) -}}
+{{- $_ := set $cfg "modelParts"       ("00 01 02 03 04") -}}
+{{- $_ := set $cfg "modelVersion"     ("g34b") -}}
+{{- $_ := set $cfg "port"             (include "groundx.summary.inference.containerPort" .) -}}
+{{- $_ := set $cfg "pvc"              (include "groundx.summary.inference.pvc" . | fromYaml) -}}
+{{- $_ := set $cfg "supervisord"      (printf "%s-inference-supervisord-conf-map" $svc) -}}
+{{- $_ := set $cfg "workingDir"       ("/workspace") -}}
+{{- $_ := set $cfg "pull"             (include "groundx.summary.inference.imagePullPolicy" .) -}}
+{{- if ne $rt "" -}}
+{{- $_ := set $cfg "runtimeClassName" $rt -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

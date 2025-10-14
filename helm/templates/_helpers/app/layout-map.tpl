@@ -24,14 +24,15 @@ true
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "map" dict $b -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
-{{- $fallback := printf "%s/eyelevel/layout-process:latest" $repoPrefix -}}
+{{- $ver := coalesce .Chart.AppVersion .Chart.Version -}}
+{{- $fallback := printf "%s/eyelevel/layout-process:%s" $repoPrefix $ver -}}
 {{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
 {{- define "groundx.layout.map.imagePullPolicy" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "map" dict $b -}}
-{{ dig "imagePullPolicy" "Always" $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
 {{- end }}
 
 {{- define "groundx.layout.map.queue" -}}
@@ -67,8 +68,16 @@ true
 {{- $in := dig "map" dict $b -}}
 {{- $rep := (include "groundx.layout.map.replicas" . | fromYaml) -}}
 {{- $cfg := dict
+  "celery"   ("document.celery_process")
+  "image"    (include "groundx.layout.map.image" .)
+  "name"     (include "groundx.layout.map.serviceName" .)
   "node"     (include "groundx.layout.map.node" .)
+  "pull"     (include "groundx.layout.map.imagePullPolicy" .)
+  "queue"    (include "groundx.layout.map.queue" .)
   "replicas" ($rep)
+  "service"  (include "groundx.layout.serviceName" .)
+  "threads"  (include "groundx.layout.map.threads" .)
+  "workers"  (include "groundx.layout.map.workers" .)
 -}}
 {{- $_ := set $cfg "name"         (include "groundx.layout.map.serviceName" .) -}}
 {{- $_ := set $cfg "image"        (include "groundx.layout.map.image" .) -}}

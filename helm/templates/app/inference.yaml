@@ -19,15 +19,16 @@
 {{- $lbls := get $svcData "labels" -}}
 {{- $mpr := get $svcData "modelParts" -}}
 {{- $mv := get $svcData "modelVersion" -}}
+{{- $svc := get $svcData "name" -}}
 {{- $node := get $svcData "node" -}}
 {{- $nsl := get $svcData "nodeSelector" -}}
-{{- $rp := get $svcData "replicas" -}}
-{{- $rs := get $svcData "resources" -}}
 {{- $pull := get $svcData "pull" -}}
 {{- $pvc := get $svcData "pvc" | default dict -}}
+{{- $rp := get $svcData "replicas" -}}
+{{- $rs := get $svcData "resources" -}}
+{{- $rt := get $svcData "runtimeClassName" -}}
 {{- $sct := get $svcData "securityContext" -}}
 {{- $supe := get $svcData "supervisord" -}}
-{{- $svc := get $svcData "name" -}}
 {{- $tl := get $svcData "tolerations" -}}
 {{- $wd := get $svcData "workingDir" -}}
 
@@ -58,6 +59,9 @@ spec:
 {{ toYaml $anns | nindent 8 }}
 {{- end }}
     spec:
+{{- if $rt }}
+      runtimeClassName: {{ $rt }}
+{{- end }}
 {{- if gt (len $aff) 0 }}
       affinity:
 {{ toYaml $aff | nindent 8 }}

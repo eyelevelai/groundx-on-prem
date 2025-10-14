@@ -11,6 +11,7 @@ apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
   name: {{ $topic }}
+  namespace: {{ include "groundx.ns" $ | quote }}
   labels:
     strimzi.io/cluster: {{ $svc | quote }}
 spec:

@@ -28,7 +28,7 @@ data:
     ai:
       aws:
         search:
-          baseURL: {{ include "groundx.search.baseURL" . }}
+          baseURL: {{ include "groundx.search.baseUrl" . }}
           index: {{ include "groundx.search.indexName" . }}
           languages:
           {{- range (include "groundx.languages" . | fromYamlArray) }}
@@ -36,17 +36,24 @@ data:
           {{- end }}
           username: {{ include "groundx.search.username" .  }}
           password: {{ include "groundx.search.password" . }}
+      extract:
+        client:
+          apiKey: {{ include "groundx.admin.username" . }}
+          baseURL: {{ include "groundx.extract.api.serviceUrl" . }}
+          callbackURL: {{ include "groundx.layoutWebhook.serviceUrl" . }}
       eyelevelSearch:
-        apiKey: {{ include "groundx.admin.apiKey" . }}
+        apiKey: {{ include "groundx.admin.username" . }}
         baseURL: {{ include "groundx.ranker.api.serviceUrl" . }}
       layout:
         client:
-          apiKey: {{ include "groundx.admin.apiKey" . }}
+          apiKey: {{ include "groundx.admin.username" . }}
           baseURL: {{ include "groundx.layout.api.serviceUrl" . }}
           callbackURL: {{ include "groundx.layoutWebhook.serviceUrl" . }}
       openai:
         apiKey: {{ include "groundx.summary.apiKey" . }}
-        baseURL: {{ include "groundx.summary.baseURL" . }}
+        {{- if ne (include "groundx.summary.baseUrl" .) "" }}
+        baseURL: {{ include "groundx.summary.baseUrl" . }}
+        {{- end }}
         defaultKitId: {{ include "groundx.summary.defaultKitId" . }}
       summaryType: summary
       searchIndexes:
@@ -218,6 +225,11 @@ data:
       summarize: [8]
       summarizeChunks: [10]
       summarizeSections: [9]
+      {{- if eq (include "groundx.extract.create" .) "true" }}
+      extraPreDefaults:
+        - processorID: 13
+          type: extract
+      {{- end }}
       {{- if eq (include "groundx.ingestOnly" .) "true" }}
       extraPostDefaults:
         - processorID: 1
@@ -270,11 +282,15 @@ data:
       bucket: {{ get $fs "bucketName" }}
       bucketUrl: {{ printf "%s://%s" (get $fs "bucketScheme") (get $fs "bucketDomain") }}
       id: {{ get $fs "username" }}
+      {{- if and (hasKey $fs "region") (ne (get $fs "region") "") }}
       region: {{ get $fs "region" }}
+      {{- end }}
       secret: {{ get $fs "password" }}
       service: {{ get $fs "serviceType" }}
       ssl: {{ get $fs "ssl" }}
+      {{- if and (hasKey $fs "token") (ne (get $fs "token") "") }}
       token: {{ get $fs "token" }}
+      {{- end }}
 
     uploadFileServer:
       baseURL: {{ include "groundx.upload.serviceUrl" . }}

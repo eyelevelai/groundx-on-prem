@@ -24,20 +24,21 @@ true
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "save" dict $b -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
-{{- $fallback := printf "%s/eyelevel/layout-process:latest" $repoPrefix -}}
+{{- $ver := coalesce .Chart.AppVersion .Chart.Version -}}
+{{- $fallback := printf "%s/eyelevel/layout-process:%s" $repoPrefix $ver -}}
 {{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
 {{- define "groundx.layout.save.imagePullPolicy" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "save" dict $b -}}
-{{ dig "imagePullPolicy" "Always" $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
 {{- end }}
 
 {{- define "groundx.layout.save.queue" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "save" dict $b -}}
-{{ dig "queue" "save_queue" $in }}
+{{ dig "queue" "save_queue,celery" $in }}
 {{- end }}
 
 {{- define "groundx.layout.save.replicas" -}}
@@ -67,15 +68,17 @@ true
 {{- $in := dig "save" dict $b -}}
 {{- $rep := (include "groundx.layout.save.replicas" . | fromYaml) -}}
 {{- $cfg := dict
+  "celery"   ("document.celery_process")
+  "image"    (include "groundx.layout.save.image" .)
+  "name"     (include "groundx.layout.save.serviceName" .)
   "node"     (include "groundx.layout.save.node" .)
+  "pull"     (include "groundx.layout.save.imagePullPolicy" .)
+  "queue"    (include "groundx.layout.save.queue" .)
   "replicas" ($rep)
+  "service"  (include "groundx.layout.serviceName" .)
+  "threads"  (include "groundx.layout.save.threads" .)
+  "workers"  (include "groundx.layout.save.workers" .)
 -}}
-{{- $_ := set $cfg "name"         (include "groundx.layout.save.serviceName" .) -}}
-{{- $_ := set $cfg "image"        (include "groundx.layout.save.image" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.layout.save.imagePullPolicy" .) -}}
-{{- $_ := set $cfg "queue"        (include "groundx.layout.save.queue" .) -}}
-{{- $_ := set $cfg "threads"      (include "groundx.layout.save.threads" .) -}}
-{{- $_ := set $cfg "workers"      (include "groundx.layout.save.workers" .) -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

@@ -1,5 +1,9 @@
 {{- define "groundx.api.services" -}}
 {{- $svcs := dict -}}
+{{- $il := include "groundx.extract.api.create" . -}}
+{{- if eq $il "true" -}}
+{{- $_ := set $svcs "extract.api" "extract.api" -}}
+{{- end -}}
 {{- $il := include "groundx.layout.api.create" . -}}
 {{- if eq $il "true" -}}
 {{- $_ := set $svcs "layout.api" "layout.api" -}}

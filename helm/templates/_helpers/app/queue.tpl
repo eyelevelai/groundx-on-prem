@@ -31,13 +31,14 @@ true
 {{- define "groundx.queue.image" -}}
 {{- $in := .Values.queue | default dict -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
-{{- $fallback := printf "%s/eyelevel/queue:latest" $repoPrefix -}}
+{{- $ver := coalesce .Chart.AppVersion .Chart.Version -}}
+{{- $fallback := printf "%s/eyelevel/queue:%s" $repoPrefix $ver -}}
 {{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
 {{- define "groundx.queue.imagePullPolicy" -}}
 {{- $in := .Values.queue | default dict -}}
-{{ dig "imagePullPolicy" "Always" $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
 {{- end }}
 
 {{- define "groundx.queue.queueSize" -}}

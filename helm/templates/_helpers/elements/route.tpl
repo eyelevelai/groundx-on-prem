@@ -1,6 +1,10 @@
 {{- define "groundx.renderRoute" -}}
 {{- $lb := .lb | fromYaml -}}
 {{- $name := .name -}}
+{{- $lbName := dig "name" "" $lb -}}
+{{- if ne $lbName "" -}}
+{{- $name = $lbName -}}
+{{- end -}}
 {{- $root := .root -}}
 ---
 apiVersion: route.openshift.io/v1
@@ -15,7 +19,6 @@ spec:
     kind: Service
     name: {{ $name | quote }}
   port:
-    port: {{ (dig "port" 8080 $lb) }}
     targetPort: {{ (dig "targetPort" 8080 $lb) }}
   tls:
     insecureEdgeTerminationPolicy: Redirect

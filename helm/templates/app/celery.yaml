@@ -1,4 +1,4 @@
-{{- $svcs := (include "groundx.layout.process.services" . | fromYaml) -}}
+{{- $svcs := (include "groundx.celery.process.services" . | fromYaml) -}}
 {{- $hasOCR := include "groundx.layout.hasOCRCredentials" . -}}
 
 {{- range $idx, $entry := $svcs }}
@@ -7,16 +7,19 @@
 
 {{- $aff := get $svcData "affinity" -}}
 {{- $anns := get $svcData "annotations" -}}
+{{- $cel := get $svcData "celery" -}}
 {{- $csct := get $svcData "containerSecurityContext" -}}
 {{- $image := get $svcData "image" -}}
 {{- $lbls := get $svcData "labels" -}}
+{{- $name := get $svcData "name" -}}
 {{- $node := get $svcData "node" -}}
 {{- $nsl := get $svcData "nodeSelector" -}}
 {{- $rp := get $svcData "replicas" -}}
 {{- $rs := get $svcData "resources" -}}
 {{- $pull := get $svcData "pull" -}}
+{{- $scr := get $svcData "secrets" | default dict -}}
 {{- $sct := get $svcData "securityContext" -}}
-{{- $svc := get $svcData "name" -}}
+{{- $svc := get $svcData "service" -}}
 {{- $tl := get $svcData "tolerations" -}}
 
 {{- $desired := get $rp "desired" -}}
@@ -24,19 +27,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ $svc }}
+  name: {{ $name }}
   namespace: {{ include "groundx.ns" $ | quote }}
   labels:
-{{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
+{{ include "groundx.renderDefaultLabels" (dict "name" $name "indent" 4 "root" $) }}
 spec:
   replicas: {{ $desired }}
   selector:
     matchLabels:
-      app: {{ $svc }}
+      app: {{ $name }}
   template:
     metadata:
       labels:
-        app: {{ $svc }}
+        app: {{ $name }}
 {{- if gt (len $lbls) 0 }}
 {{ toYaml $lbls | nindent 8 }}
 {{- end }}
@@ -62,7 +65,7 @@ spec:
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
           command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.file.serviceDependency" $) (include "groundx.file.port" $) }}; do echo waiting for file storage; sleep 2; done"]
       containers:
-        - name: {{ $svc | quote }}
+        - name: {{ $name | quote }}
           image: {{ $image | quote }}
           imagePullPolicy: {{ $pull | quote }}
           env:
@@ -70,6 +73,13 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+{{- if gt (len $scr) 0 }}
+          envFrom:
+{{- range $kk, $vv := $scr }}
+            - secretRef:
+                name: {{ $vv }}
+{{- end }}
+{{- end }}
           workingDir: /app
           command:
             - /bin/sh
@@ -82,7 +92,7 @@ spec:
               command:
               - /bin/sh
               - -c
-              - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+              - ps aux | grep '{{ $cel }}.app' | grep -v grep || exit 1
             initialDelaySeconds: 30
             periodSeconds: 30
           readinessProbe:
@@ -90,7 +100,7 @@ spec:
               command:
               - /bin/sh
               - -c
-              - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+              - ps aux | grep '{{ $cel }}.app' | grep -v grep || exit 1
             initialDelaySeconds: 10
             periodSeconds: 30
 {{ include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
@@ -109,14 +119,14 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: layout-config-py-map
+            name: {{ $svc }}-config-py-map
 {{- if eq $hasOCR "true" -}}
         - name: credentials-volume
           configMap:
-            name: layout-ocr-credentials-map
+            name: {{ $svc }}-ocr-credentials-map
 {{- end }}
         - name: supervisord-volume
           configMap:
-            name: {{ $svc }}-supervisord-conf-map
+            name: {{ $name }}-supervisord-conf-map
 
 {{ end }}

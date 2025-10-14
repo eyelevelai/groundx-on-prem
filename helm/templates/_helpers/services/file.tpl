@@ -194,14 +194,19 @@ false
 {{- define "groundx.file.loadBalancer" -}}
 {{- $in := .Values.file | default dict -}}
 {{- $lb := dig "loadBalancer" dict $in -}}
+{{- $name := dig "name" "" $lb -}}
 {{- if hasKey $lb "port" }}
-{{- dict
+{{- $lbDict := dict
     "isInternal" (dig "isInternal" "false" $lb)
     "port"       (dig "port" "" $lb)
     "ssl"        (dig "ssl" "" $lb)
     "targetPort" (include "groundx.file.port" .)
     "timeout"    (dig "timeout" "" $lb)
-  | toYaml -}}
+-}}
+{{- if ne $name "" -}}
+  {{- $_ := set $lbDict "name" $name -}}
+{{- end -}}
+{{- $lbDict | toYaml -}}
 {{- end -}}
 {{- end }}
 

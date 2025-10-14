@@ -1,5 +1,5 @@
 {{- define "groundx.ns" -}}
-{{ coalesce .Values.namespace .Release.Namespace "eyelevel" }}
+{{ .Values.namespace | default "eyelevel" }}
 {{- end }}
 
 {{- define "groundx.admin.apiKey" -}}
@@ -24,7 +24,7 @@
 
 {{- define "groundx.clusterType" -}}
 {{- $b := .Values.cluster | default dict -}}
-{{- dig "type" "eks" $b -}}
+{{- (dig "type" "eks" $b) | lower -}}
 {{- end }}
 
 {{- define "groundx.ingestOnly" -}}
@@ -60,20 +60,30 @@ public.ecr.aws/c9r4x6y5
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.imagePull" -}}
+{{- $b := .Values.cluster | default dict -}}
+{{- dig "imagePull" "IfNotPresent" $b -}}
+{{- end }}
+
 {{- define "groundx.languages" -}}
 {{ .Values.languages | default (list "en") }}
 {{- end }}
 
 {{- define "groundx.logLevel" -}}
-{{ .Values.logLevel | default "warn" }}
+{{ .Values.logLevel | default "info" }}
 {{- end }}
 
 {{- define "groundx.busybox.image" -}}
-{{- printf "%s/eyelevel/busybox:latest" (include "groundx.imageRepository" .) -}}
+{{- $in := .Values.busybox | default dict -}}
+{{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
+{{- $ver := coalesce .Chart.AppVersion .Chart.Version -}}
+{{- $fallback := printf "%s/eyelevel/busybox:1.0.0" $repoPrefix -}}
+{{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
 {{- define "groundx.busybox.pull" -}}
-Always
+{{- $in := .Values.busybox | default dict -}}
+{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
 {{- end }}
 
 {{- define "groundx.node.cpuMemory" -}}
@@ -109,4 +119,9 @@ Always
 {{- define "groundx.pvClass" -}}
 {{- $b := .Values.cluster | default dict -}}
 {{- dig "pvClass" "eyelevel-pv" $b -}}
+{{- end }}
+
+{{- define "groundx.validApiKeys" -}}
+{{- $b := .Values.cluster | default dict -}}
+{{- dig "validApiKeys" list $b -}}
 {{- end }}

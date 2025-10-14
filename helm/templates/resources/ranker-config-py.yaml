@@ -20,7 +20,12 @@ data:
         searchLog={{ include "groundx.ranker.serviceName" . | quote }},
         searchResultBroker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
         service={{ include "groundx.ranker.serviceName" . | quote }},
-        validAPIKeys=[{{ include "groundx.admin.apiKey" . | quote }}, {{ include "groundx.admin.username" . | quote }}],
+        validAPIKeys=[
+          {{ include "groundx.admin.apiKey" . | quote }},
+          {{ include "groundx.admin.username" . | quote }},
+          {{- $extras := (get .Values "cluster") | default (dict) -}}{{- $list := (get $extras "validApiKeys") | default (list) -}}{{- range $list }}
+          {{ . | quote }},{{- end }}
+        ],
         workers={{ include "groundx.ranker.inference.workers" . }},
     )
 {{- end }}

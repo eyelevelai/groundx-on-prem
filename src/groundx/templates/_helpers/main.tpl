@@ -62,7 +62,7 @@ public.ecr.aws/c9r4x6y5
 
 {{- define "groundx.imagePull" -}}
 {{- $b := .Values.cluster | default dict -}}
-{{- dig "imagePull" "Always" $b -}}
+{{- dig "imagePull" "IfNotPresent" $b -}}
 {{- end }}
 
 {{- define "groundx.languages" -}}

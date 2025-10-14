@@ -63,7 +63,7 @@ false
 {{- define "groundx.cache.image" -}}
 {{- $in := .Values.cache | default dict -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
-{{- $fallback := printf "%s/eyelevel/redis:latest" $repoPrefix -}}
+{{- $fallback := printf "%s/eyelevel/redis:1.0.0" $repoPrefix -}}
 {{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
@@ -71,19 +71,19 @@ false
 {{- $b := .Values.cache | default dict -}}
 {{- $in := (dig "metrics" nil $b) | default dict -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
-{{- $fallback := printf "%s/eyelevel/redis:latest" $repoPrefix -}}
+{{- $fallback := printf "%s/eyelevel/redis:1.0.0" $repoPrefix -}}
 {{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
 {{- define "groundx.cache.imagePullPolicy" -}}
 {{- $in := .Values.cache | default dict -}}
-{{ dig "imagePullPolicy" "Always" $in }}
+{{ dig "imagePullPolicy" "IfNotPresent" $in }}
 {{- end }}
 
 {{- define "groundx.metrics.cache.imagePullPolicy" -}}
 {{- $b := .Values.cache | default dict -}}
 {{- $in := (dig "metrics" nil $b) | default dict -}}
-{{ dig "imagePullPolicy" "Always" $in }}
+{{ dig "imagePullPolicy" "IfNotPresent" $in }}
 {{- end }}
 
 {{- define "groundx.cache.isRoute" -}}

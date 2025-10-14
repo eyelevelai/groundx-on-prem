@@ -26,19 +26,21 @@ true
 {{- define "groundx.groundx.image" -}}
 {{- $in := .Values.groundx | default dict -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
-{{- $fallback := printf "%s/eyelevel/groundx:latest" $repoPrefix -}}
+{{- $ver := coalesce .Chart.AppVersion .Chart.Version -}}
+{{- $fallback := printf "%s/eyelevel/groundx:%s" $repoPrefix $ver -}}
 {{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
 {{- define "groundx.groundx.imagePullPolicy" -}}
 {{- $in := .Values.groundx | default dict -}}
-{{ dig "imagePullPolicy" "Always" $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
 {{- end }}
 
 {{- define "groundx.groundx.isRoute" -}}
-{{- $lb := (include "groundx.groundx.loadBalancer" . | fromYaml) -}}
+{{- $in := .Values.groundx | default dict -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
 {{- $os := include "groundx.isOpenshift" . -}}
-{{- $ty := (dig "type" "ClusterIP" $lb) | trim | lower -}}
+{{- $ty := (dig "type" "LoadBalancer" $lb) | trim | lower -}}
 {{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
 true
 {{- else -}}
@@ -80,6 +82,10 @@ false
 {{- $name := include "groundx.groundx.serviceName" . -}}
 {{- $port := include "groundx.groundx.port" . -}}
 {{- $ssl := include "groundx.groundx.ssl" . -}}
+{{- $lb := include "groundx.groundx.loadBalancer" . | fromYaml -}}
+{{- if hasKey $lb "name" -}}
+{{- $name = dig "name" $name $lb -}}
+{{- end -}}
 {{- $sslStr := printf "%v" $ssl -}}
 {{- $scheme := "http" -}}
 {{- if eq $sslStr "true" -}}{{- $scheme = "https" -}}{{- end -}}
@@ -99,17 +105,24 @@ false
 {{- $in := .Values.groundx | default dict -}}
 {{- if hasKey $in "loadBalancer" -}}
 {{- $lb := dig "loadBalancer" dict $in -}}
-{{- dict
+{{- $name := dig "name" "" $lb -}}
+{{- $lbDict := dict
     "isInternal" (dig "isInternal" "false" $lb)
+    "isRoute"    (include "groundx.groundx.isRoute" .)
     "port"       (include "groundx.groundx.port" .)
     "ssl"        (include "groundx.groundx.ssl" .)
     "targetPort" (include "groundx.groundx.containerPort" .)
     "timeout"    (dig "timeout" "" $lb)
     "type"       (dig "type" "LoadBalancer" $lb)
-  | toYaml -}}
+-}}
+{{- if ne $name "" -}}
+  {{- $_ := set $lbDict "name" $name -}}
+{{- end -}}
+{{- $lbDict | toYaml -}}
 {{- else -}}
 {{- dict
     "isInternal" "false"
+    "isRoute"    (include "groundx.groundx.isRoute" .)
     "port"       (include "groundx.groundx.port" .)
     "ssl"        "false"
     "targetPort" (include "groundx.groundx.containerPort" .)

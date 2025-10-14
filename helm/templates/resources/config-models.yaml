@@ -15,11 +15,13 @@ metadata:
 data:
   config_models.py: |
     env = dict(
-{{- if ne $hasEngs "false" -}}
       summary = dict(
-        dtype = {{ dig "dataType" (include "groundx.defaultDataType" .) $first | quote }},
-        name = {{ dig "engineId" (include "groundx.defaultEngine" .) $first | quote }},
-      )
-{{- end }}
+        dtype = {{ include "groundx.summary.inference.model.dataType" . | quote }},
+        maxInputTokens = {{ include "groundx.summary.inference.model.maxInputTokens" . }},
+        maxOutputTokens = {{ include "groundx.summary.inference.model.maxOutputTokens" . }},
+        maxRequests = {{ include "groundx.summary.inference.model.maxRequests" . }},
+        name = {{ include "groundx.summary.inference.model.name" . | quote }},
+        swapSpace = {{ include "groundx.summary.inference.model.swapSpace" . }},
+      ),
     )
 {{- end }}

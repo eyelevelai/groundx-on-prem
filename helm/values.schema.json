@@ -46,7 +46,11 @@
           },
           "additionalProperties": false
         },
-        "type": { "type": "string" }
+        "type": { "type": "string" },
+        "validApiKeys": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
       },
       "required": ["pvClass", "type"],
       "additionalProperties": false
@@ -76,6 +80,14 @@
       },
       "required": ["default"]
     },
+    "busybox": {
+      "type": "object",
+      "properties": {
+        "image": { "type": "string" },
+        "imagePullPolicy": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
     "cache": {
       "type": "object",
       "properties": {
@@ -102,6 +114,7 @@
           "properties": {
             "ipType": { "type": "string" },
             "isInternal": { "type": "boolean" },
+            "name": { "type": "string" },
             "port": { "type": "integer" },
             "ssl": { "type": "boolean" },
             "timeout": { "type": "integer" }
@@ -152,6 +165,7 @@
               "properties": {
                 "ipType": { "type": "string" },
                 "isInternal": { "type": "boolean" },
+                "name": { "type": "string" },
                 "port": { "type": "integer" },
                 "ssl": { "type": "boolean" },
                 "timeout": { "type": "integer" }
@@ -231,7 +245,9 @@
         "loadBalancer": {
           "type": "object",
           "properties": {
+            "ipType": { "type": "string" },
             "isInternal": { "type": "boolean" },
+            "name": { "type": "string" },
             "port": { "type": "integer" },
             "ssl": { "type": "boolean" },
             "timeout": { "type": "integer" }
@@ -285,22 +301,12 @@
           "additionalProperties": false
         },
         "key": { "type": "string" },
-        "metaVersion": { "type": "string" },
-        "nodepool": {
-          "type": "object",
-          "properties": {
-            "replicas": { "type": "integer" },
-            "storage": { "type": "string" }
-          },
-          "additionalProperties": false
-        },
         "replicas": { "type": "integer" },
         "resources": { "type": "object" },
         "retention": { "type": "integer" },
         "secret": { "type": "string" },
         "segment": { "type": "integer" },
         "serviceName": { "type": "string" },
-        "storage": { "type": "string" },
         "port": { "type": "integer" },
         "topics": {
           "type": "object",
@@ -377,8 +383,7 @@
             }
           },
           "additionalProperties": false
-        },
-        "version": { "type": "string" }
+        }
       },
       "required": [
         "existing"
@@ -404,6 +409,7 @@
               "properties": {
                 "ipType": { "type": "string" },
                 "isInternal": { "type": "boolean" },
+                "name": { "type": "string" },
                 "port": { "type": "integer" },
                 "ssl": { "type": "boolean" },
                 "timeout": { "type": "integer" }
@@ -455,6 +461,18 @@
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
             "labels": { "type": "object" },
+            "model": {
+              "type": "object",
+              "properties": {
+                "dataType": { "type": "string" },
+                "maxInputTokens": { "type": "integer" },
+                "maxRequests": { "type": "integer" },
+                "maxOutputTokens": { "type": "integer" },
+                "name": { "type": "string" },
+                "swapSpace": { "type": "integer" }
+              },
+              "additionalProperties": false
+            },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
             "pvc": {
@@ -479,6 +497,7 @@
               "additionalProperties": false
             },
             "resources": { "type": "object" },
+            "runtimeClassName": { "type": "string" },
             "securityContext": { "type": "object" },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
@@ -515,6 +534,7 @@
           "properties": {
             "ipType": { "type": "string" },
             "isInternal": { "type": "boolean" },
+            "name": { "type": "string" },
             "port": { "type": "integer" },
             "ssl": { "type": "boolean" },
             "timeout": { "type": "integer" }
@@ -560,6 +580,7 @@
               "properties": {
                 "ipType": { "type": "string" },
                 "isInternal": { "type": "boolean" },
+                "name": { "type": "string" },
                 "port": { "type": "integer" },
                 "ssl": { "type": "boolean" },
                 "timeout": { "type": "integer" }
@@ -813,6 +834,7 @@
           "properties": {
             "ipType": { "type": "string" },
             "isInternal": { "type": "boolean" },
+            "name": { "type": "string" },
             "port": { "type": "integer" },
             "ssl": { "type": "boolean" },
             "timeout": { "type": "integer" }
@@ -962,6 +984,7 @@
               "properties": {
                 "ipType": { "type": "string" },
                 "isInternal": { "type": "boolean" },
+                "name": { "type": "string" },
                 "port": { "type": "integer" },
                 "ssl": { "type": "boolean" },
                 "timeout": { "type": "integer" }
@@ -1108,6 +1131,173 @@
       "properties": {
         "serviceName": { "type": "string" }
       },
+      "additionalProperties": false
+    },
+    "extract": {
+      "type": "object",
+      "properties": {
+        "agent": {
+          "type": "object",
+          "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
+            "apiBaseUrl": { "type": "string" },
+            "apiKey": { "type": "string" },
+            "apiKeyEnv": { "type": "string" },
+            "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
+            "enabled": { "type": "boolean" },
+            "existingSecret": { "type": "boolean" },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
+            "labels": { "type": "object" },
+            "modelId": { "type": "string" },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
+            "queue": { "type": "string" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "desired": { "type": "integer" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" }
+              },
+              "required": ["desired"],
+              "additionalProperties": false
+            },
+            "resources": { "type": "object" },
+            "secretName": { "type": "string" },
+            "securityContext": { "type": "object" },
+            "serviceType": { "type": "string" },
+            "threads": { "type": "integer" },
+            "tolerations": { "type": "array" },
+            "workers": { "type": "integer" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        },
+        "api": {
+          "type": "object",
+          "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
+            "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
+            "enabled": { "type": "boolean" },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
+            "labels": { "type": "object" },
+            "loadBalancer": {
+              "type": "object",
+              "properties": {
+                "ipType": { "type": "string" },
+                "isInternal": { "type": "boolean" },
+                "name": { "type": "string" },
+                "port": { "type": "integer" },
+                "ssl": { "type": "boolean" },
+                "timeout": { "type": "integer" }
+              },
+              "additionalProperties": false
+            },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "desired": { "type": "integer" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" }
+              },
+              "required": ["desired"],
+              "additionalProperties": false
+            },
+            "resources": { "type": "object" },
+            "securityContext": { "type": "object" },
+            "threads": { "type": "integer" },
+            "timeout": { "type": "integer" },
+            "tolerations": { "type": "array" },
+            "workers": { "type": "integer" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        },
+        "callbackApiKey": { "type": "string" },
+        "download": {
+          "type": "object",
+          "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
+            "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
+            "enabled": { "type": "boolean" },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
+            "labels": { "type": "object" },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
+            "queue": { "type": "string" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "desired": { "type": "integer" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" }
+              },
+              "required": ["desired"],
+              "additionalProperties": false
+            },
+            "resources": { "type": "object" },
+            "securityContext": { "type": "object" },
+            "threads": { "type": "integer" },
+            "tolerations": { "type": "array" },
+            "workers": { "type": "integer" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        },
+        "enabled": { "type": "boolean" },
+        "save": {
+          "type": "object",
+          "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
+            "apiKeyEnv": { "type": "string" },
+            "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
+            "driveId": { "type": "string" },
+            "enabled": { "type": "boolean" },
+            "existingSecret": { "type": "boolean" },
+            "gcpCredentials": { "type": "string" },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
+            "labels": { "type": "object" },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
+            "queue": { "type": "string" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "desired": { "type": "integer" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" }
+              },
+              "required": ["desired"],
+              "additionalProperties": false
+            },
+            "resources": { "type": "object" },
+            "secretName": { "type": "string" },
+            "securityContext": { "type": "object" },
+            "threads": { "type": "integer" },
+            "templateId": { "type": "string" },
+            "tolerations": { "type": "array" },
+            "workers": { "type": "integer" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        },
+        "serviceName": { "type": "string" }
+      },
+      "required": [ "agent", "api", "download", "enabled", "save" ],
       "additionalProperties": false
     },
     "integration": {

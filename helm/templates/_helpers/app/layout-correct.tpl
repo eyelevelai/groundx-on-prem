@@ -24,14 +24,15 @@ true
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "correct" dict $b -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
-{{- $fallback := printf "%s/eyelevel/layout-process:latest" $repoPrefix -}}
+{{- $ver := coalesce .Chart.AppVersion .Chart.Version -}}
+{{- $fallback := printf "%s/eyelevel/layout-process:%s" $repoPrefix $ver -}}
 {{- coalesce (dig "image" "" $in) $fallback -}}
 {{- end }}
 
 {{- define "groundx.layout.correct.imagePullPolicy" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "correct" dict $b -}}
-{{ dig "imagePullPolicy" "Always" $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
 {{- end }}
 
 {{- define "groundx.layout.correct.queue" -}}
@@ -67,15 +68,17 @@ true
 {{- $in := dig "correct" dict $b -}}
 {{- $rep := (include "groundx.layout.api.replicas" . | fromYaml) -}}
 {{- $cfg := dict
+  "celery"   ("document.celery_process")
+  "image"    (include "groundx.layout.correct.image" .)
+  "name"     (include "groundx.layout.correct.serviceName" .)
   "node"     (include "groundx.layout.correct.node" .)
+  "pull"     (include "groundx.layout.correct.imagePullPolicy" .)
+  "queue"    (include "groundx.layout.correct.queue" .)
   "replicas" ($rep)
+  "service"  (include "groundx.layout.serviceName" .)
+  "threads"  (include "groundx.layout.correct.threads" .)
+  "workers"  (include "groundx.layout.correct.workers" .)
 -}}
-{{- $_ := set $cfg "name"         (include "groundx.layout.correct.serviceName" .) -}}
-{{- $_ := set $cfg "image"        (include "groundx.layout.correct.image" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.layout.correct.imagePullPolicy" .) -}}
-{{- $_ := set $cfg "queue"        (include "groundx.layout.correct.queue" .) -}}
-{{- $_ := set $cfg "threads"      (include "groundx.layout.correct.threads" .) -}}
-{{- $_ := set $cfg "workers"      (include "groundx.layout.correct.workers" .) -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

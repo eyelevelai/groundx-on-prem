@@ -30,7 +30,7 @@ true
 {{- define "groundx.search.baseDomain" -}}
 {{- $ic := include "groundx.search.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
-{{- $url := include "groundx.search.baseURL" . -}}
+{{- $url := include "groundx.search.baseUrl" . -}}
 {{- $parts := splitList "://" $url -}}
 {{- if and (kindIs "slice" $parts) (eq (len $parts) 2) -}}
 {{ index $parts 1 }}
@@ -42,7 +42,7 @@ true
 {{- end -}}
 {{- end }}
 
-{{- define "groundx.search.baseURL" -}}
+{{- define "groundx.search.baseUrl" -}}
 {{- $ic := include "groundx.search.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
 {{- $in := .Values.search | default dict -}}
@@ -58,10 +58,10 @@ true
 {{- define "groundx.search.port" -}}
 {{- $ic := include "groundx.search.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
-{{- $url := include "groundx.search.baseURL" . }}
+{{- $url := include "groundx.search.baseUrl" . }}
 {{- $sch := "http" -}}
 {{- $sparts := splitList "://" $url -}}
-{{- $domain := include "groundx.search.baseURL" . -}}
+{{- $domain := include "groundx.search.baseUrl" . -}}
 {{- if and (kindIs "slice" $sparts) (eq (len $sparts) 2) -}}
 {{- $sch = index $sparts 0 -}}
 {{- $domain = index $sparts 1 -}}

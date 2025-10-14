@@ -6,10 +6,12 @@
 
 {{- $fs := (include "groundx.file.settings" . | fromYaml) -}}
 {{- $bucketSuffix := printf "%s/" (get $fs "bucketName") -}}
+{{- $baseDomain := get $fs "baseDomain" -}}
 {{- $st := include "groundx.file.serviceType" . -}}
 {{- if eq $st "s3" }}
 {{- $bucketSuffix = "" -}}
 {{- end }}
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -24,7 +26,7 @@ data:
         accessSecret={{ include "groundx.file.password" . | quote }},
         annotationBase="layout/processed/",
         cacheDir="/app/hf_models_cache",
-        callbackAPIKey={{ include "groundx.admin.apiKey" . | quote }},
+        callbackAPIKey={{ include "groundx.layout.callbackApiKey" . | quote }},
         deviceType={{ include "groundx.layout.inference.deviceType" . | quote }},
         env="prod",
         includeLS=False,
@@ -43,11 +45,17 @@ data:
         uploadBase="layout/processed/",
         uploadBaseURL={{ get $fs "bucketDomain" | quote }},
         uploadBucket={{ get $fs "bucketName" | quote }},
+        uploadRegion={{ get $fs "region" | quote }},
         uploadReplaceURL={{ printf "%s://%s/%s" (get $fs "bucketScheme") (get $fs "bucketDomain") $bucketSuffix | quote }},
         uploadSSL={{ if eq (printf "%v" (get $fs "bucketSSL")) "true" }}True{{ else }}False{{ end }},
         uploadType={{ $st | quote }},
-        uploadURL={{ printf "%s://%s/%s" (get $fs "scheme") (get $fs "baseDomain") $bucketSuffix | quote }},
-        validAPIKeys=[{{ include "groundx.admin.apiKey" . | quote }}, {{ include "groundx.admin.username" . | quote }}],
+        uploadURL={{ printf "%s://%s/%s" (get $fs "scheme") ($baseDomain) $bucketSuffix | quote }},
+        validAPIKeys=[
+          {{ include "groundx.admin.apiKey" . | quote }},
+          {{ include "groundx.admin.username" . | quote }},
+          {{- $extras := (get .Values "cluster") | default (dict) -}}{{- $list := (get $extras "validApiKeys") | default (list) -}}{{- range $list }}
+          {{ . | quote }},{{- end }}
+        ],
         workers={{ include "groundx.layout.inference.workers" . }},
     )
 {{- end }}

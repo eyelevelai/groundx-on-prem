@@ -1,10 +1,19 @@
 {{- define "groundx.renderLoadBalancer" -}}
 {{- $lb := .lb | fromYaml -}}
 {{- $name := .name -}}
+{{- $lbName := dig "name" "" $lb -}}
+{{- if ne $lbName "" -}}
+{{- $name = $lbName -}}
+{{- end -}}
 {{- $root := .root -}}
 {{- $ii := dig "isInternal" "" $lb -}}
 {{- if ne (kindOf $ii) "string" -}}
 {{- $ii = printf "%v" $ii -}}
+{{- end -}}
+{{- $ir := dig "isRoute" "false" $lb -}}
+{{- $ty := dig "type" "ClusterIP" $lb -}}
+{{- if eq $ir "true" -}}
+{{- $ty = "ClusterIP" -}}
 {{- end -}}
 {{- $hasInternal := and (eq $ii "true") (eq (dig "type" "" $lb) "LoadBalancer") -}}
 {{- $hasTO := and (hasKey $lb "timeout") (not (empty (dig "timeout" "" $lb))) -}}
@@ -33,6 +42,6 @@ spec:
     - protocol: TCP
       port: {{ dig "port" 8080 $lb }}
       targetPort: {{ dig "targetPort" 8080 $lb }}
-  type: {{ dig "type" "ClusterIP" $lb }}
+  type: {{ $ty }}
 
 {{- end }}
