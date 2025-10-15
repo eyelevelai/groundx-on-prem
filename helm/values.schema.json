@@ -26,6 +26,7 @@
       "type": "object",
       "properties": {
         "hasMig": { "type": "boolean" },
+        "imagePull": { "type": "string" },
         "nodeLabels": {
           "type": "object",
           "properties": {
@@ -36,6 +37,18 @@
             "gpuSummary": { "type": "string" }
           },
           "required": ["cpuMemory", "cpuOnly", "gpuLayout", "gpuRanker", "gpuSummary"],
+          "additionalProperties": false
+        },
+        "preProcessors": {
+          "type": "array",
+          "items": {
+            "properties": {
+              "processorId": { "type": "integer" },
+              "type": { "type": "string" }
+            },
+            "required": ["processorId", "type"],
+            "additionalProperties": false
+          },
           "additionalProperties": false
         },
         "pvClass": { "type": "string" },
@@ -114,7 +127,6 @@
           "properties": {
             "ipType": { "type": "string" },
             "isInternal": { "type": "boolean" },
-            "name": { "type": "string" },
             "port": { "type": "integer" },
             "ssl": { "type": "boolean" },
             "timeout": { "type": "integer" }
@@ -165,7 +177,6 @@
               "properties": {
                 "ipType": { "type": "string" },
                 "isInternal": { "type": "boolean" },
-                "name": { "type": "string" },
                 "port": { "type": "integer" },
                 "ssl": { "type": "boolean" },
                 "timeout": { "type": "integer" }
@@ -247,7 +258,6 @@
           "properties": {
             "ipType": { "type": "string" },
             "isInternal": { "type": "boolean" },
-            "name": { "type": "string" },
             "port": { "type": "integer" },
             "ssl": { "type": "boolean" },
             "timeout": { "type": "integer" }
@@ -409,7 +419,6 @@
               "properties": {
                 "ipType": { "type": "string" },
                 "isInternal": { "type": "boolean" },
-                "name": { "type": "string" },
                 "port": { "type": "integer" },
                 "ssl": { "type": "boolean" },
                 "timeout": { "type": "integer" }
@@ -534,7 +543,6 @@
           "properties": {
             "ipType": { "type": "string" },
             "isInternal": { "type": "boolean" },
-            "name": { "type": "string" },
             "port": { "type": "integer" },
             "ssl": { "type": "boolean" },
             "timeout": { "type": "integer" }
@@ -580,7 +588,6 @@
               "properties": {
                 "ipType": { "type": "string" },
                 "isInternal": { "type": "boolean" },
-                "name": { "type": "string" },
                 "port": { "type": "integer" },
                 "ssl": { "type": "boolean" },
                 "timeout": { "type": "integer" }
@@ -834,7 +841,6 @@
           "properties": {
             "ipType": { "type": "string" },
             "isInternal": { "type": "boolean" },
-            "name": { "type": "string" },
             "port": { "type": "integer" },
             "ssl": { "type": "boolean" },
             "timeout": { "type": "integer" }
@@ -984,7 +990,6 @@
               "properties": {
                 "ipType": { "type": "string" },
                 "isInternal": { "type": "boolean" },
-                "name": { "type": "string" },
                 "port": { "type": "integer" },
                 "ssl": { "type": "boolean" },
                 "timeout": { "type": "integer" }
@@ -1192,7 +1197,6 @@
               "properties": {
                 "ipType": { "type": "string" },
                 "isInternal": { "type": "boolean" },
-                "name": { "type": "string" },
                 "port": { "type": "integer" },
                 "ssl": { "type": "boolean" },
                 "timeout": { "type": "integer" }

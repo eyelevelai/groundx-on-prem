@@ -1,10 +1,6 @@
 {{- define "groundx.renderLoadBalancer" -}}
 {{- $lb := .lb | fromYaml -}}
 {{- $name := .name -}}
-{{- $lbName := dig "name" "" $lb -}}
-{{- if ne $lbName "" -}}
-{{- $name = $lbName -}}
-{{- end -}}
 {{- $root := .root -}}
 {{- $ii := dig "isInternal" "" $lb -}}
 {{- if ne (kindOf $ii) "string" -}}

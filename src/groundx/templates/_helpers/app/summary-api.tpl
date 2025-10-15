@@ -89,12 +89,10 @@ false
 {{- $port := include "groundx.summary.api.port" . -}}
 {{- $ssl := include "groundx.summary.api.ssl" . -}}
 {{- $sslStr := printf "%v" $ssl -}}
-{{- $scheme := "http" -}}
-{{- if eq $sslStr "true" -}}{{- $scheme = "https" -}}{{- end -}}
 {{- if or (and (eq $sslStr "true") (eq $port "443")) (eq $port "80") -}}
-{{ printf "%s://%s-api.%s.svc.cluster.local" $scheme $name $ns }}
+{{ printf "http://%s-api.%s.svc.cluster.local" $name $ns }}
 {{- else -}}
-{{ printf "%s://%s-api.%s.svc.cluster.local:%v" $scheme $name $ns $port }}
+{{ printf "http://%s-api.%s.svc.cluster.local:%v" $name $ns $port }}
 {{- end -}}
 {{- end }}
 
@@ -121,19 +119,14 @@ false
 {{- $in := dig "api" dict $b -}}
 {{- if hasKey $in "loadBalancer" -}}
 {{- $lb := dig "loadBalancer" dict $in -}}
-{{- $name := dig "name" "" $lb -}}
-{{- $lbDict := dict
+{{- dict
     "isInternal" (dig "isInternal" "false" $lb)
     "port"       (include "groundx.summary.api.port" .)
     "ssl"        (dig "ssl" "false" $lb)
     "targetPort" (include "groundx.summary.api.containerPort" .)
     "timeout"    (dig "timeout" "" $lb)
     "type"       (dig "ipType" "ClusterIP" $lb)
--}}
-{{- if ne $name "" -}}
-  {{- $_ := set $lbDict "name" $name -}}
-{{- end -}}
-{{- $lbDict | toYaml -}}
+  | toYaml -}}
 {{- else -}}
 {{- dict
     "isInternal" "true"

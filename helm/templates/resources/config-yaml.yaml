@@ -1,5 +1,7 @@
 {{- $svcs := (include "groundx.golang.services" . | fromYaml) -}}
 {{- $engs := (include "groundx.engines" . | fromYaml) -}}
+{{- $pp := include "groundx.preProcessors" . | fromYaml -}}
+{{- $pres := $pp.preProcessors | default list -}}
 {{- $fs := (include "groundx.file.settings" . | fromYaml) -}}
 {{- $ppq := (include "groundx.stream.topic.preProcess" . | fromYaml) -}}
 {{- $pq := (include "groundx.stream.topic.process" . | fromYaml) -}}
@@ -225,10 +227,12 @@ data:
       summarize: [8]
       summarizeChunks: [10]
       summarizeSections: [9]
-      {{- if eq (include "groundx.extract.create" .) "true" }}
+      {{- if gt (len $pres) 0 }}
       extraPreDefaults:
-        - processorID: 13
-          type: extract
+        {{- range $pres }}
+        - processorID: {{ .processorId }}
+          type: {{ .type }}
+        {{- end }}
       {{- end }}
       {{- if eq (include "groundx.ingestOnly" .) "true" }}
       extraPostDefaults:

@@ -116,6 +116,18 @@ public.ecr.aws/c9r4x6y5
 {{ dig "gpuSummary" "eyelevel-gpu-summary" $in }}
 {{- end }}
 
+{{- define "groundx.preProcessors" -}}
+{{- $in := .Values.cluster | default dict -}}
+{{- $pres := dig "preProcessors" list $in -}}
+{{- if gt (len $pres) 0 }}
+extraPreDefaults:
+{{- range $pres }}
+  - processorID: {{ .processorId }}
+    type: {{ .type }}
+{{- end }}
+{{- end }}
+{{- end }}
+
 {{- define "groundx.pvClass" -}}
 {{- $b := .Values.cluster | default dict -}}
 {{- dig "pvClass" "eyelevel-pv" $b -}}

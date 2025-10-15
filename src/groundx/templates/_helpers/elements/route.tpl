@@ -1,10 +1,6 @@
 {{- define "groundx.renderRoute" -}}
 {{- $lb := .lb | fromYaml -}}
 {{- $name := .name -}}
-{{- $lbName := dig "name" "" $lb -}}
-{{- if ne $lbName "" -}}
-{{- $name = $lbName -}}
-{{- end -}}
 {{- $root := .root -}}
 ---
 apiVersion: route.openshift.io/v1

@@ -82,17 +82,11 @@ false
 {{- $name := include "groundx.groundx.serviceName" . -}}
 {{- $port := include "groundx.groundx.port" . -}}
 {{- $ssl := include "groundx.groundx.ssl" . -}}
-{{- $lb := include "groundx.groundx.loadBalancer" . | fromYaml -}}
-{{- if hasKey $lb "name" -}}
-{{- $name = dig "name" $name $lb -}}
-{{- end -}}
 {{- $sslStr := printf "%v" $ssl -}}
-{{- $scheme := "http" -}}
-{{- if eq $sslStr "true" -}}{{- $scheme = "https" -}}{{- end -}}
 {{- if or (and (eq $sslStr "true") (eq $port "443")) (eq $port "80") -}}
-{{ printf "%s://%s.%s.svc.cluster.local" $scheme $name $ns }}
+{{ printf "http://%s.%s.svc.cluster.local" $name $ns }}
 {{- else -}}
-{{ printf "%s://%s.%s.svc.cluster.local:%v" $scheme $name $ns $port }}
+{{ printf "http://%s.%s.svc.cluster.local:%v" $name $ns $port }}
 {{- end -}}
 {{- end }}
 
@@ -105,8 +99,7 @@ false
 {{- $in := .Values.groundx | default dict -}}
 {{- if hasKey $in "loadBalancer" -}}
 {{- $lb := dig "loadBalancer" dict $in -}}
-{{- $name := dig "name" "" $lb -}}
-{{- $lbDict := dict
+{{- dict
     "isInternal" (dig "isInternal" "false" $lb)
     "isRoute"    (include "groundx.groundx.isRoute" .)
     "port"       (include "groundx.groundx.port" .)
@@ -114,11 +107,7 @@ false
     "targetPort" (include "groundx.groundx.containerPort" .)
     "timeout"    (dig "timeout" "" $lb)
     "type"       (dig "type" "LoadBalancer" $lb)
--}}
-{{- if ne $name "" -}}
-  {{- $_ := set $lbDict "name" $name -}}
-{{- end -}}
-{{- $lbDict | toYaml -}}
+  | toYaml -}}
 {{- else -}}
 {{- dict
     "isInternal" "false"
