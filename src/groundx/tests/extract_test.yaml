@@ -1,0 +1,29 @@
+suite: "extract renders as expected"
+chart:
+  appVersion: 0.1.0
+  version: 0.1.0
+
+tests:
+  - it: "default: extract"
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.extract.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "default: extract.microservice"
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.extract.microservice.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "default: extract.existing.1"
+    set:
+      extract.file.url: http://s3.com
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.extract.microservice.yaml
+    asserts:
+      - matchSnapshot: {}

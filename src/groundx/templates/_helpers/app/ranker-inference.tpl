@@ -93,20 +93,21 @@ true
 {{- $in := dig "inference" dict $b -}}
 {{- $rep := (include "groundx.ranker.inference.replicas" . | fromYaml) -}}
 {{- $cfg := dict
-  "node"     (include "groundx.ranker.inference.node" .)
-  "replicas" ($rep)
+  "baseName"     ($svc)
+  "celery"       ("ranker.celery.appSearch")
+  "cfg"          (printf "%s-config-py-map" $svc)
+  "image"        (include "groundx.ranker.inference.image" .)
+  "mapPrefix"    ("ranker")
+  "modelParts"   ("00 01 02")
+  "modelVersion" ("model")
+  "name"         (include "groundx.ranker.inference.serviceName" .)
+  "node"         (include "groundx.ranker.inference.node" .)
+  "pull"         (include "groundx.ranker.inference.imagePullPolicy" .)
+  "pvc"          (include "groundx.ranker.inference.pvc" . | fromYaml)
+  "replicas"     ($rep)
+  "supervisord"  (printf "%s-inference-supervisord-conf-map" $svc)
+  "workingDir"   ("/workspace")
 -}}
-{{- $_ := set $cfg "baseName"     ($svc) -}}
-{{- $_ := set $cfg "celery"       ("ranker.celery.appSearch") -}}
-{{- $_ := set $cfg "cfg"          (printf "%s-config-py-map" $svc) -}}
-{{- $_ := set $cfg "name"         (include "groundx.ranker.inference.serviceName" .) -}}
-{{- $_ := set $cfg "image"        (include "groundx.ranker.inference.image" .) -}}
-{{- $_ := set $cfg "modelParts"   ("00 01 02") -}}
-{{- $_ := set $cfg "modelVersion" ("model") -}}
-{{- $_ := set $cfg "pvc"          (include "groundx.ranker.inference.pvc" . | fromYaml) -}}
-{{- $_ := set $cfg "supervisord"  (printf "%s-inference-supervisord-conf-map" $svc) -}}
-{{- $_ := set $cfg "workingDir"   ("/workspace") -}}
-{{- $_ := set $cfg "pull"         (include "groundx.ranker.inference.imagePullPolicy" .) -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

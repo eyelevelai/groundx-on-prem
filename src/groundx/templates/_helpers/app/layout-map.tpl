@@ -68,23 +68,18 @@ true
 {{- $in := dig "map" dict $b -}}
 {{- $rep := (include "groundx.layout.map.replicas" . | fromYaml) -}}
 {{- $cfg := dict
-  "celery"   ("document.celery_process")
-  "image"    (include "groundx.layout.map.image" .)
-  "name"     (include "groundx.layout.map.serviceName" .)
-  "node"     (include "groundx.layout.map.node" .)
-  "pull"     (include "groundx.layout.map.imagePullPolicy" .)
-  "queue"    (include "groundx.layout.map.queue" .)
-  "replicas" ($rep)
-  "service"  (include "groundx.layout.serviceName" .)
-  "threads"  (include "groundx.layout.map.threads" .)
-  "workers"  (include "groundx.layout.map.workers" .)
+  "celery"    ("document.celery_process")
+  "image"     (include "groundx.layout.map.image" .)
+  "mapPrefix" ("layout")
+  "name"      (include "groundx.layout.map.serviceName" .)
+  "node"      (include "groundx.layout.map.node" .)
+  "pull"      (include "groundx.layout.map.imagePullPolicy" .)
+  "queue"     (include "groundx.layout.map.queue" .)
+  "replicas"  ($rep)
+  "service"   (include "groundx.layout.serviceName" .)
+  "threads"   (include "groundx.layout.map.threads" .)
+  "workers"   (include "groundx.layout.map.workers" .)
 -}}
-{{- $_ := set $cfg "name"         (include "groundx.layout.map.serviceName" .) -}}
-{{- $_ := set $cfg "image"        (include "groundx.layout.map.image" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.layout.map.imagePullPolicy" .) -}}
-{{- $_ := set $cfg "queue"        (include "groundx.layout.map.queue" .) -}}
-{{- $_ := set $cfg "threads"      (include "groundx.layout.map.threads" .) -}}
-{{- $_ := set $cfg "workers"      (include "groundx.layout.map.workers" .) -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

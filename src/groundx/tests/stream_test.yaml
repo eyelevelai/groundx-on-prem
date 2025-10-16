@@ -6,7 +6,6 @@ chart:
 tests:
   - it: "default: stream"
     templates:
-      - ../templates/services/stream-cluster.yaml
       - ../templates/services/stream-topics.yaml
     values:
       - ../values.yaml
@@ -14,7 +13,6 @@ tests:
       - matchSnapshot: {}
   - it: "empty: stream"
     templates:
-      - ../templates/services/stream-cluster.yaml
       - ../templates/services/stream-topics.yaml
     values:
       - ./files/values.empty.yaml
@@ -22,7 +20,6 @@ tests:
       - matchSnapshot: {}
   - it: "aws: stream"
     templates:
-      - ../templates/services/stream-cluster.yaml
       - ../templates/services/stream-topics.yaml
     values:
       - ../values/values.aws.services.yaml
@@ -30,7 +27,6 @@ tests:
       - matchSnapshot: {}
   - it: "openshift: stream"
     templates:
-      - ../templates/services/stream-cluster.yaml
       - ../templates/services/stream-topics.yaml
     values:
       - ../values/values.openshift.yaml
@@ -38,7 +34,6 @@ tests:
       - matchSnapshot: {}
   - it: "minikube: stream"
     templates:
-      - ../templates/services/stream-cluster.yaml
       - ../templates/services/stream-topics.yaml
     values:
       - ../values/values.minikube.yaml
@@ -46,7 +41,6 @@ tests:
       - matchSnapshot: {}
   - it: "existing: stream"
     templates:
-      - ../templates/services/stream-cluster.yaml
       - ../templates/services/stream-topics.yaml
     values:
       - ../values/values.existing.yaml
@@ -54,7 +48,6 @@ tests:
       - matchSnapshot: {}
   - it: "metadata: stream"
     templates:
-      - ../templates/services/stream-cluster.yaml
       - ../templates/services/stream-topics.yaml
     values:
       - ./files/values.metadata.yaml
@@ -62,7 +55,6 @@ tests:
       - matchSnapshot: {}
   - it: "disabled: stream"
     templates:
-      - ../templates/services/stream-cluster.yaml
       - ../templates/services/stream-topics.yaml
     values:
       - ./files/values.disabled.yaml
@@ -70,7 +62,6 @@ tests:
       - matchSnapshot: {}
   - it: "extract: stream"
     templates:
-      - ../templates/services/stream-cluster.yaml
       - ../templates/services/stream-topics.yaml
     values:
       - ./files/values.extract.yaml
@@ -78,9 +69,15 @@ tests:
       - matchSnapshot: {}
   - it: "cloud: stream"
     templates:
-      - ../templates/services/stream-cluster.yaml
       - ../templates/services/stream-topics.yaml
     values:
       - ./files/values.cloud.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "extract.microservice: stream"
+    templates:
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ./files/values.extract.microservice.yaml
     asserts:
       - matchSnapshot: {}

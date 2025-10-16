@@ -87,12 +87,15 @@ false
 {{- $ns := include "groundx.ns" . -}}
 {{- $name := include "groundx.summary.serviceName" . -}}
 {{- $port := include "groundx.summary.api.port" . -}}
+{{- $ir := include "groundx.groundx.isRoute" . -}}
 {{- $ssl := include "groundx.summary.api.ssl" . -}}
 {{- $sslStr := printf "%v" $ssl -}}
+{{- $scheme := "http" -}}
+{{- if and (eq $sslStr "true") (ne $ir "true") -}}{{- $scheme = "https" -}}{{- end -}}
 {{- if or (and (eq $sslStr "true") (eq $port "443")) (eq $port "80") -}}
-{{ printf "http://%s-api.%s.svc.cluster.local" $name $ns }}
+{{ printf "%s://%s-api.%s.svc.cluster.local" $scheme $name $ns }}
 {{- else -}}
-{{ printf "http://%s-api.%s.svc.cluster.local:%v" $name $ns $port }}
+{{ printf "%s://%s-api.%s.svc.cluster.local:%v" $scheme $name $ns $port }}
 {{- end -}}
 {{- end }}
 
@@ -121,6 +124,7 @@ false
 {{- $lb := dig "loadBalancer" dict $in -}}
 {{- dict
     "isInternal" (dig "isInternal" "false" $lb)
+    "isRoute"    (include "groundx.extract.api.isRoute" .)
     "port"       (include "groundx.summary.api.port" .)
     "ssl"        (dig "ssl" "false" $lb)
     "targetPort" (include "groundx.summary.api.containerPort" .)
@@ -130,6 +134,7 @@ false
 {{- else -}}
 {{- dict
     "isInternal" "true"
+    "isRoute"    (include "groundx.extract.api.isRoute" .)
     "port"       (include "groundx.summary.api.port" .)
     "ssl"        "false"
     "targetPort" (include "groundx.summary.api.containerPort" .)
@@ -145,8 +150,17 @@ false
 {{- $in := dig "api" dict $b -}}
 {{- $rep := (include "groundx.summary.api.replicas" . | fromYaml) -}}
 {{- $cfg := dict
-  "node"     (include "groundx.summary.api.node" .)
-  "replicas" ($rep)
+  "cfg"          (printf "%s-config-py-map" $svc)
+  "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
+  "image"        (include "groundx.summary.api.image" .)
+  "isRoute"      (include "groundx.summary.api.isRoute" .)
+  "loadBalancer" (include "groundx.summary.api.loadBalancer" .)
+  "mapPrefix"    ("summary")
+  "name"         (include "groundx.summary.api.serviceName" .)
+  "node"         (include "groundx.summary.api.node" .)
+  "port"         (include "groundx.summary.api.containerPort" .)
+  "pull"         (include "groundx.summary.api.imagePullPolicy" .)
+  "replicas"     ($rep)
 -}}
 {{- $_ := set $cfg "cfg"          (printf "%s-config-py-map" $svc) -}}
 {{- $_ := set $cfg "name"         (include "groundx.summary.api.serviceName" .) -}}

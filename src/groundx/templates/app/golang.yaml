@@ -45,8 +45,10 @@ spec:
 {{- if gt (len $lbls) 0 }}
 {{ toYaml $lbls | nindent 8 }}
 {{- end }}
-{{- if gt (len $anns) 0 }}
       annotations:
+        config-hash: {{ include (print $.Template.BasePath "/resources/config-yaml.yaml") $ | sha256sum }}
+        config-models-hash: {{ include (print $.Template.BasePath "/resources/init-database-file.yaml") $ | sha256sum }}
+{{- if gt (len $anns) 0 }}
 {{ toYaml $anns | nindent 8 }}
 {{- end }}
     spec:

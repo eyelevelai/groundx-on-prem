@@ -17,6 +17,7 @@
 {{- $ic := get $svcData "celery" | default "false" -}}
 {{- $lb := get $svcData "loadBalancer" -}}
 {{- $lbls := get $svcData "labels" -}}
+{{- $mapPrefix := get $svcData "mapPrefix" -}}
 {{- $mpr := get $svcData "modelParts" -}}
 {{- $mv := get $svcData "modelVersion" -}}
 {{- $svc := get $svcData "name" -}}
@@ -54,8 +55,14 @@ spec:
 {{- if gt (len $lbls) 0 }}
 {{ toYaml $lbls | nindent 8 }}
 {{- end }}
-{{- if gt (len $anns) 0 }}
       annotations:
+        config-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-config-py.yaml") $ | sha256sum }}
+        config-models-hash: {{ include (print $.Template.BasePath "/resources/config-models.yaml") $ | sha256sum }}
+        supervisord-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-supervisord-conf.yaml") $ | sha256sum }}
+{{- if eq $csym "true" }}
+        ldconfig-symlink-hash: {{ include (print $.Template.BasePath "/resources/ldconfig-symlink.yaml") $ | sha256sum }}
+{{- end }}
+{{- if gt (len $anns) 0 }}
 {{ toYaml $anns | nindent 8 }}
 {{- end }}
     spec:

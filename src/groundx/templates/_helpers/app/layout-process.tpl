@@ -74,16 +74,17 @@ true
 {{- $in := dig "process" dict $b -}}
 {{- $rep := (include "groundx.layout.process.replicas" . | fromYaml) -}}
 {{- $cfg := dict
-  "celery"   ("document.celery_process")
-  "image"    (include "groundx.layout.process.image" .)
-  "name"     (include "groundx.layout.process.serviceName" .)
-  "node"     (include "groundx.layout.process.node" .)
-  "pull"     (include "groundx.layout.process.imagePullPolicy" .)
-  "queue"    (include "groundx.layout.process.queue" .)
-  "replicas" ($rep)
-  "service"  (include "groundx.layout.serviceName" .)
-  "threads"  (include "groundx.layout.process.threads" .)
-  "workers"  (include "groundx.layout.process.workers" .)
+  "celery"    ("document.celery_process")
+  "image"     (include "groundx.layout.process.image" .)
+  "mapPrefix" ("layout")
+  "name"      (include "groundx.layout.process.serviceName" .)
+  "node"      (include "groundx.layout.process.node" .)
+  "pull"      (include "groundx.layout.process.imagePullPolicy" .)
+  "queue"     (include "groundx.layout.process.queue" .)
+  "replicas"  ($rep)
+  "service"   (include "groundx.layout.serviceName" .)
+  "threads"   (include "groundx.layout.process.threads" .)
+  "workers"   (include "groundx.layout.process.workers" .)
 -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}

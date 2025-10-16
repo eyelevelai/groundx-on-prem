@@ -14,6 +14,7 @@
 {{- $ir := get $svcData "isRoute" -}}
 {{- $lb := get $svcData "loadBalancer" -}}
 {{- $lbls := get $svcData "labels" -}}
+{{- $mapPrefix := get $svcData "mapPrefix" -}}
 {{- $node := get $svcData "node" -}}
 {{- $nsl := get $svcData "nodeSelector" -}}
 {{- $rp := get $svcData "replicas" -}}
@@ -46,8 +47,10 @@ spec:
 {{- if gt (len $lbls) 0 }}
 {{ toYaml $lbls | nindent 8 }}
 {{- end }}
-{{- if gt (len $anns) 0 }}
       annotations:
+        config-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-config-py.yaml") $ | sha256sum }}
+        gunicorn-conf-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-gunicorn-conf-py.yaml") $ | sha256sum }}
+{{- if gt (len $anns) 0 }}
 {{ toYaml $anns | nindent 8 }}
 {{- end }}
     spec:

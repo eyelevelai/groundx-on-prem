@@ -74,3 +74,10 @@ tests:
       - ./files/values.cloud.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "extract.microservice: celery"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.extract.microservice.yaml
+    asserts:
+      - matchSnapshot: {}

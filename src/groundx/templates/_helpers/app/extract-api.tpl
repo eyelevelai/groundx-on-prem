@@ -95,12 +95,15 @@ false
 {{- $ns := include "groundx.ns" . -}}
 {{- $name := include "groundx.extract.serviceName" . -}}
 {{- $port := include "groundx.extract.api.port" . -}}
+{{- $ir := include "groundx.groundx.isRoute" . -}}
 {{- $ssl := include "groundx.extract.api.ssl" . -}}
 {{- $sslStr := printf "%v" $ssl -}}
+{{- $scheme := "http" -}}
+{{- if and (eq $sslStr "true") (ne $ir "true") -}}{{- $scheme = "https" -}}{{- end -}}
 {{- if or (and (eq $sslStr "true") (eq $port "443")) (eq $port "80") -}}
-{{ printf "http://%s-api.%s.svc.cluster.local" $name $ns }}
+{{ printf "%s://%s-api.%s.svc.cluster.local" $scheme $name $ns }}
 {{- else -}}
-{{ printf "http://%s-api.%s.svc.cluster.local:%v" $name $ns $port }}
+{{ printf "%s://%s-api.%s.svc.cluster.local:%v" $scheme $name $ns $port }}
 {{- end -}}
 {{- end }}
 
@@ -160,10 +163,13 @@ false
 -}}
 {{- $cfg := dict
   "cfg"          (printf "%s-config-py-map" $svc)
+  "fileDomain"   (include "groundx.extract.file.serviceDependency" .)
+  "filePort"     (include "groundx.extract.file.port" .)
   "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
   "image"        (include "groundx.extract.api.image" .)
   "isRoute"      (include "groundx.extract.api.isRoute" .)
   "loadBalancer" (include "groundx.extract.api.loadBalancer" .)
+  "mapPrefix"    ("extract")
   "name"         (include "groundx.extract.api.serviceName" .)
   "node"         (include "groundx.extract.api.node" .)
   "port"         (include "groundx.extract.api.containerPort" .)

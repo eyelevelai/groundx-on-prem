@@ -74,3 +74,10 @@ tests:
       - ./files/values.cloud.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "extract.microservice: inference"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ./files/values.extract.microservice.yaml
+    asserts:
+      - matchSnapshot: {}

@@ -153,17 +153,18 @@ false
 {{- $in := dig "api" dict $b -}}
 {{- $rep := (include "groundx.layout.api.replicas" . | fromYaml) -}}
 {{- $cfg := dict
-  "node"     (include "groundx.layout.api.node" .)
-  "replicas" ($rep)
+  "cfg"          (printf "%s-config-py-map" $svc)
+  "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
+  "image"        (include "groundx.layout.api.image" .)
+  "isRoute"      (include "groundx.layout.api.isRoute" .)
+  "loadBalancer" (include "groundx.layout.api.loadBalancer" .)
+  "mapPrefix"    ("layout")
+  "name"         (include "groundx.layout.api.serviceName" .)
+  "node"         (include "groundx.layout.api.node" .)
+  "port"         (include "groundx.layout.api.containerPort" .)
+  "pull"         (include "groundx.layout.api.imagePullPolicy" .)
+  "replicas"     ($rep)
 -}}
-{{- $_ := set $cfg "cfg"          (printf "%s-config-py-map" $svc) -}}
-{{- $_ := set $cfg "name"         (include "groundx.layout.api.serviceName" .) -}}
-{{- $_ := set $cfg "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc) -}}
-{{- $_ := set $cfg "image"        (include "groundx.layout.api.image" .) -}}
-{{- $_ := set $cfg "isRoute"      (include "groundx.layout.api.isRoute" .) -}}
-{{- $_ := set $cfg "loadBalancer" (include "groundx.layout.api.loadBalancer" .) -}}
-{{- $_ := set $cfg "port"         (include "groundx.layout.api.containerPort" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.layout.api.imagePullPolicy" .) -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

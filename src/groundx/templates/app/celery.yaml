@@ -9,8 +9,11 @@
 {{- $anns := get $svcData "annotations" -}}
 {{- $cel := get $svcData "celery" -}}
 {{- $csct := get $svcData "containerSecurityContext" -}}
+{{- $fileDomain := get $svcData "fileDomain" | default (include "groundx.file.serviceDependency" $) -}}
+{{- $filePort := get $svcData "filePort" | default (include "groundx.file.port" $) -}}
 {{- $image := get $svcData "image" -}}
 {{- $lbls := get $svcData "labels" -}}
+{{- $mapPrefix := get $svcData "mapPrefix" -}}
 {{- $name := get $svcData "name" -}}
 {{- $node := get $svcData "node" -}}
 {{- $nsl := get $svcData "nodeSelector" -}}
@@ -43,8 +46,13 @@ spec:
 {{- if gt (len $lbls) 0 }}
 {{ toYaml $lbls | nindent 8 }}
 {{- end }}
-{{- if gt (len $anns) 0 }}
       annotations:
+        config-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-config-py.yaml") $ | sha256sum }}
+        supervisord-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-supervisord-conf.yaml") $ | sha256sum }}
+{{- if eq $hasOCR "true" -}}
+        ocr-credentials-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-ocr-credentials.yaml") $ | sha256sum }}
+{{- end }}
+{{- if gt (len $anns) 0 }}
 {{ toYaml $anns | nindent 8 }}
 {{- end }}
     spec:
@@ -63,7 +71,7 @@ spec:
         - name: wait-for-file-storage
           image: {{ include "groundx.busybox.image" $ }}
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
-          command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.file.serviceDependency" $) (include "groundx.file.port" $) }}; do echo waiting for file storage; sleep 2; done"]
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" $fileDomain $filePort }}; do echo waiting for file storage; sleep 2; done"]
       containers:
         - name: {{ $name | quote }}
           image: {{ $image | quote }}

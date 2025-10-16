@@ -86,16 +86,17 @@ true
 {{- $in := dig "ocr" dict $b -}}
 {{- $rep := (include "groundx.layout.ocr.replicas" . | fromYaml) -}}
 {{- $cfg := dict
-  "celery"   ("document.celery_process")
-  "image"    (include "groundx.layout.ocr.image" .)
-  "name"     (include "groundx.layout.ocr.serviceName" .)
-  "node"     (include "groundx.layout.ocr.node" .)
-  "pull"     (include "groundx.layout.ocr.imagePullPolicy" .)
-  "queue"    (include "groundx.layout.ocr.queue" .)
-  "replicas" ($rep)
-  "service"  (include "groundx.layout.serviceName" .)
-  "threads"  (include "groundx.layout.ocr.threads" .)
-  "workers"  (include "groundx.layout.ocr.workers" .)
+  "celery"    ("document.celery_process")
+  "image"     (include "groundx.layout.ocr.image" .)
+  "mapPrefix" ("layout")
+  "name"      (include "groundx.layout.ocr.serviceName" .)
+  "node"      (include "groundx.layout.ocr.node" .)
+  "pull"      (include "groundx.layout.ocr.imagePullPolicy" .)
+  "queue"     (include "groundx.layout.ocr.queue" .)
+  "replicas"  ($rep)
+  "service"   (include "groundx.layout.serviceName" .)
+  "threads"   (include "groundx.layout.ocr.threads" .)
+  "workers"   (include "groundx.layout.ocr.workers" .)
 -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}

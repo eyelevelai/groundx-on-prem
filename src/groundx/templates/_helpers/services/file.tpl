@@ -65,6 +65,8 @@ true
 {{- $parts := splitList "://" $url -}}
 {{- if and (kindIs "slice" $parts) (eq (len $parts) 2) -}}
 {{ index $parts 1 }}
+{{- else -}}
+{{ include "groundx.file.serviceHost" . }}
 {{- end -}}
 {{- else if and (hasKey $in "customDomain") (not (empty $in.customDomain)) }}
 {{ $in.customDomain }}

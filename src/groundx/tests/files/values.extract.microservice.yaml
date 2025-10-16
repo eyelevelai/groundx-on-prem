@@ -1,0 +1,183 @@
+groundxKey: "00000000-0000-0000-0000-000000000000"
+
+admin:
+  apiKey: "00000000-0000-0000-0000-000000000000"
+  email: "support@mycorp.net"
+  password: "password"
+  username: "00000000-0000-0000-0000-000000000000"
+
+cluster:
+  imagePull: Always
+
+  pvClass: eyelevel-pv
+  type: openshift
+  nodeLabels:
+    cpuMemory: eyelevel-gpu
+    cpuOnly: eyelevel-gpu
+    gpuLayout: eyelevel-gpu
+    gpuRanker: eyelevel-gpu
+    gpuSummary: eyelevel-gpu
+  validApiKeys:
+    - 00000000-0000-0000-0000-000000000002
+
+db:
+  existing:
+    ro: db-ro.existing.com
+    rw: db-rw.existing.com
+
+groundx:
+  serviceName: groundx-service
+
+  replicas:
+    desired: 1
+
+layout:
+  api:
+    replicas:
+      desired: 1
+
+  correct:
+    replicas:
+      desired: 2
+
+  inference:
+    replicas:
+      desired: 2
+
+  map:
+    replicas:
+      desired: 2
+
+  ocr:
+    replicas:
+      desired: 2
+
+  process:
+    replicas:
+      desired: 2
+
+  save:
+    replicas:
+      desired: 2
+
+layoutWebhook:
+  replicas:
+    desired: 1
+
+preProcess:
+  replicas:
+    desired: 3
+
+process:
+  replicas:
+    desired: 2
+
+queue:
+  replicas:
+    desired: 2
+
+ranker:
+  api:
+    replicas:
+      desired: 2
+
+  inference:
+    replicas:
+      desired: 4
+
+summary:
+  api:
+    loadBalancer:
+      ipType: LoadBalancer
+      isInternal: false
+      port: 80
+      ssl: true
+      timeout: 30
+
+    replicas:
+      desired: 7
+
+  inference:
+    deviceUtilize: 0.95
+
+    replicas:
+      desired: 24
+
+    resources:
+      limits:
+        nvidia.com/gpu: 1
+      requests:
+        cpu: 500m
+        memory: 1Gi
+        nvidia.com/gpu: 1
+
+summaryClient:
+  replicas:
+    desired: 4
+
+upload:
+  replicas:
+    desired: 2
+
+extract:
+  enabled: true
+  callbackApiKey: 00000000-0000-0000-0000-000000000001
+
+  file:
+    bucketName: test
+    password: pass
+    region: us-east-1
+    serviceType: s3
+    url: https://X.s3.us-east-1.amazonaws.com
+    username: key
+
+  agent:
+    enabled: true
+
+    node: eyelevel-cpu
+
+    apiKey: openai-api-key
+    serviceType: openai
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+
+  api:
+    enabled: true
+
+    node: eyelevel-cpu
+
+    loadBalancer:
+      ipType: LoadBalancer
+      isInternal: false
+      port: 80
+      ssl: true
+      timeout: 30
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+  download:
+    enabled: true
+
+    node: eyelevel-cpu
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+  save:
+    enabled: true
+
+    driveId: abc
+    templateId: a123
+
+    resources:
+      requests:
+        cpu: 1
+        memory: 2Gi

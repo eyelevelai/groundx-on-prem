@@ -149,17 +149,20 @@ false
   (include "groundx.extract.save.secretName" .) (include "groundx.extract.save.secretName" .)
 -}}
 {{- $cfg := dict
-  "celery"   ("celery_agents")
-  "image"    (include "groundx.extract.agent.image" .)
-  "name"     (include "groundx.extract.agent.serviceName" .)
-  "node"     (include "groundx.extract.agent.node" .)
-  "pull"     (include "groundx.extract.agent.imagePullPolicy" .)
-  "queue"    (include "groundx.extract.agent.queue" .)
-  "replicas" ($rep)
-  "secrets"  ($data)
-  "service"  (include "groundx.extract.serviceName" .)
-  "threads"  (include "groundx.extract.agent.threads" .)
-  "workers"  (include "groundx.extract.agent.workers" .)
+  "celery"     ("celery_agents")
+  "fileDomain" (include "groundx.extract.file.serviceDependency" .)
+  "filePort"   (include "groundx.extract.file.port" .)
+  "image"      (include "groundx.extract.agent.image" .)
+  "mapPrefix"  ("extract")
+  "name"       (include "groundx.extract.agent.serviceName" .)
+  "node"       (include "groundx.extract.agent.node" .)
+  "pull"       (include "groundx.extract.agent.imagePullPolicy" .)
+  "queue"      (include "groundx.extract.agent.queue" .)
+  "replicas"   ($rep)
+  "secrets"    ($data)
+  "service"    (include "groundx.extract.serviceName" .)
+  "threads"    (include "groundx.extract.agent.threads" .)
+  "workers"    (include "groundx.extract.agent.workers" .)
 -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}

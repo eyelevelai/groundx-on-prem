@@ -82,10 +82,12 @@ false
 {{- $port := include "groundx.layoutWebhook.port" . -}}
 {{- $ssl := include "groundx.layoutWebhook.ssl" . -}}
 {{- $sslStr := printf "%v" $ssl -}}
+{{- $scheme := "http" -}}
+{{- if eq $sslStr "true" -}}{{- $scheme = "https" -}}{{- end -}}
 {{- if or (and (eq $sslStr "true") (eq $port "443")) (eq $port "80") -}}
-{{ printf "http://%s.%s.svc.cluster.local" $name $ns }}
+{{ printf "%s://%s.%s.svc.cluster.local" $scheme $name $ns }}
 {{- else -}}
-{{ printf "http://%s.%s.svc.cluster.local:%v" $name $ns $port }}
+{{ printf "%s://%s.%s.svc.cluster.local:%v" $scheme $name $ns $port }}
 {{- end -}}
 {{- end }}
 
