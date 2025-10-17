@@ -130,9 +130,15 @@ false
 {{- $dpnd := dict
   "cache"  "cache"
   "file"   "file"
-  "search" "search"
   "db"     "db"
 -}}
+
+{{- $cs := include "groundx.search.create" . -}}
+{{- $es := include "groundx.search.existing" . -}}
+{{- if or (eq $cs "true") (eq $es "true") -}}
+{{- $_ := set $dpnd "search" "search" -}}
+{{- end -}}
+
 {{- $cd := include "groundx.stream.create" . -}}
 {{- $ed := include "groundx.stream.existing" . -}}
 {{- if or (eq $cd "true") (eq $ed "true") -}}

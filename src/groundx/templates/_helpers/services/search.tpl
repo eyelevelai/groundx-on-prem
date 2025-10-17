@@ -10,6 +10,10 @@
 {{- end }}
 
 {{- define "groundx.search.create" -}}
+{{- $md := include "groundx.mode" . -}}
+{{- if eq $md "ingest" -}}
+false
+{{- else -}}
 {{- $in := .Values.search | default dict -}}
 {{- $ic := include "groundx.search.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
@@ -18,6 +22,7 @@ false
   {{- if (dig "enabled" false $in) -}}true{{- else -}}false{{- end -}}
 {{- else -}}
 true
+{{- end -}}
 {{- end -}}
 {{- end }}
 

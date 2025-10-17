@@ -59,8 +59,14 @@ file:
   enabled: true
 
   bucketName: eyelevel
-  username: minio
-  password: minio123
+
+  # must set username/password explicitly
+  # or via AWS or MinIO env variables
+  # AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, etc...
+  # MINIO_ACCESS_KEY_ID, MINIO_SECRET_ACCESS_KEY, etc...
+
+  # username: minio
+  # password: minio123
 
   # set to expose minio externally
   # in openshift, creates a route
@@ -68,10 +74,16 @@ file:
 
   # set to use existing minio file storage
   existing: {}
-    # port: 9000
-    # minio or s3
-    # serviceType: minio
+    # serviceType: minio OR s3
     # url: https://minio.mycorp.net
+
+    # if s3, must set region explicitly
+    # AWS_REGION or MINIO_REGION
+
+    # region: us-west-2
+
+    # optional
+    # port: 9000
 
 search:
   enabled: true

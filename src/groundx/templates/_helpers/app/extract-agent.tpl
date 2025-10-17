@@ -82,6 +82,13 @@ false
 {{ dig "secretName" $dflt $in }}
 {{- end }}
 
+{{- define "groundx.extract.agent.serviceAccountName" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
 {{- define "groundx.extract.agent.image" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}

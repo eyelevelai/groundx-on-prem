@@ -1,7 +1,6 @@
 groundxKey: "00000000-0000-0000-0000-000000000000"
 
-# delete or set false to enable search
-ingestOnly: true
+mode: "ingest"
 
 admin:
   apiKey: "00000000-0000-0000-0000-000000000000"
@@ -12,6 +11,9 @@ admin:
 cluster:
   pvClass: eyelevel-pv
   type: eks
+
+serviceAccount:
+  name: existing-service-account
 
 cache:
   metrics:
@@ -40,49 +42,26 @@ db:
 file:
   bucketName: eyelevel
 
-  username: awsKey
-  password: awsSecret
-
   existing:
     url: https://X.s3.us-west-2.amazonaws.com
-    region: us-west-2
     serviceType: s3
-
-search:
-  username: eyelevel
-  password: R0otb_*t!kazs
-  privilegedUsername: admin
-  privilegedPassword: R0otb_*t!kazs
-
-  existing:
-    url: https://X.us-east-2.es.amazonaws.com
 
 stream:
   enabled: false
 
-  key: awsKey
-  secret: awsSecret
-
   topics:
     preProcess:
-      region: us-east-2
       type: sqs
       url: https://sqs.us-east-2.amazonaws.com/X/file-pre-process
     process:
-      key: otherAwsKey
-      region: us-east-2
-      secret: otherAwsSecret
       type: sqs
       url: https://sqs.us-east-2.amazonaws.com/X/file-process
     summary:
-      region: us-east-2
       type: sqs
       url: https://sqs.us-east-2.amazonaws.com/X/file-summary
     update:
-      region: us-east-2
       type: sqs
       url: https://sqs.us-east-2.amazonaws.com/X/file-update
     upload:
-      region: us-east-2
       type: sqs
       url: https://sqs.us-east-2.amazonaws.com/X/file-upload

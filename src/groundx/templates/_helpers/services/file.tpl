@@ -77,7 +77,7 @@ true
 
 {{- define "groundx.file.password" -}}
 {{- $in := .Values.file | default dict -}}
-{{ dig "password" "password" $in }}
+{{ dig "password" "" $in }}
 {{- end }}
 
 {{- define "groundx.file.port" -}}
@@ -190,7 +190,7 @@ false
 
 {{- define "groundx.file.username" -}}
 {{- $in := .Values.file | default dict -}}
-{{ dig "username" "eyelevel" $in }}
+{{ dig "username" "" $in }}
 {{- end }}
 
 {{- define "groundx.file.loadBalancer" -}}

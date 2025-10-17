@@ -4,12 +4,12 @@
     "groundxKey": { "type": "string", "minLength": 1 },
     "namespace": { "type": "string", "minLength": 1 },
     "imageType": { "type": "string" },
-    "ingestOnly": { "type": "boolean" },
     "languages": {
       "type": "array",
       "items": { "type": "string" }
     },
     "logLevel": { "type": "string" },
+    "mode": { "type": "string" },
     "admin": {
       "type": "object",
       "properties": {
@@ -66,6 +66,14 @@
         }
       },
       "required": ["pvClass", "type"],
+      "additionalProperties": false
+    },
+    "serviceAccount": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" }
+      },
+        "required": ["name"],
       "additionalProperties": false
     },
     "engines": {
@@ -271,7 +279,7 @@
         "token": { "type": "string" },
         "username": { "type": "string" }
       },
-      "required": ["bucketName", "existing", "username", "password"],
+      "required": ["bucketName", "existing"],
       "additionalProperties": false
     },
     "search": {
@@ -311,8 +319,8 @@
           "additionalProperties": false
         },
         "key": { "type": "string" },
+        "region": { "type": "string" },
         "replicas": { "type": "integer" },
-        "resources": { "type": "object" },
         "retention": { "type": "integer" },
         "secret": { "type": "string" },
         "segment": { "type": "integer" },
@@ -329,6 +337,7 @@
                 "key": { "type": "string" },
                 "region": { "type": "string" },
                 "secret": { "type": "string" },
+                "token": { "type": "string" },
                 "topic": { "type": "string" },
                 "type": { "type": "string" },
                 "url": { "type": "string" }
@@ -343,6 +352,7 @@
                 "key": { "type": "string" },
                 "region": { "type": "string" },
                 "secret": { "type": "string" },
+                "token": { "type": "string" },
                 "topic": { "type": "string" },
                 "type": { "type": "string" },
                 "url": { "type": "string" }
@@ -357,6 +367,7 @@
                 "key": { "type": "string" },
                 "region": { "type": "string" },
                 "secret": { "type": "string" },
+                "token": { "type": "string" },
                 "topic": { "type": "string" },
                 "type": { "type": "string" },
                 "url": { "type": "string" }
@@ -371,6 +382,7 @@
                 "key": { "type": "string" },
                 "region": { "type": "string" },
                 "secret": { "type": "string" },
+                "token": { "type": "string" },
                 "topic": { "type": "string" },
                 "type": { "type": "string" },
                 "url": { "type": "string" }
@@ -385,6 +397,7 @@
                 "key": { "type": "string" },
                 "region": { "type": "string" },
                 "secret": { "type": "string" },
+                "token": { "type": "string" },
                 "topic": { "type": "string" },
                 "type": { "type": "string" },
                 "url": { "type": "string" }
@@ -393,7 +406,8 @@
             }
           },
           "additionalProperties": false
-        }
+        },
+        "token": { "type": "string" }
       },
       "required": [
         "existing"
