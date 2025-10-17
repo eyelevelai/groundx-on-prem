@@ -4,18 +4,18 @@ chart:
   version: 0.1.0
 
 tests:
-  - it: "default: extract"
+  - it: "default: extract.ingest"
     templates:
       - ../templates/resources/extract-config-py.yaml
     values:
-      - ./files/values.extract.yaml
+      - ./files/values.extract.ingest.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "default: extract.microservice"
+  - it: "default: phoenix"
     templates:
       - ../templates/resources/extract-config-py.yaml
     values:
-      - ./files/values.extract.microservice.yaml
+      - ./files/values.phoenix.yaml
     asserts:
       - matchSnapshot: {}
   - it: "default: extract.existing.1"
@@ -24,6 +24,6 @@ tests:
     templates:
       - ../templates/resources/extract-config-py.yaml
     values:
-      - ./files/values.extract.microservice.yaml
+      - ./files/values.phoenix.yaml
     asserts:
       - matchSnapshot: {}

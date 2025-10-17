@@ -127,6 +127,129 @@
     kind: Deployment
     metadata:
       labels:
+        app: ranker-api
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-api
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: ranker-api
+      template:
+        metadata:
+          annotations:
+            config-hash: e2b2424c5b7abb54a00dd5b4962dca28b99fd19293932c6c556f786dc302eb03
+            gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
+          labels:
+            app: ranker-api
+        spec:
+          containers:
+            - command:
+                - /bin/bash
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 12
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              name: ranker-api
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/gunicorn_conf.py
+                  name: gunicorn-conf-volume
+                  subPath: gunicorn_conf.py
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: ranker-config-py-map
+              name: config-volume
+            - configMap:
+                name: ranker-gunicorn-conf-py-map
+              name: gunicorn-conf-volume
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: ranker-api
+      name: ranker-api
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: ranker-api
+      type: ClusterIP
+  5: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
         app: summary-api
         appVersion: 0.1.0
         chart: groundx-0.1.0
@@ -229,7 +352,7 @@
             - configMap:
                 name: summary-gunicorn-conf-py-map
               name: gunicorn-conf-volume
-  4: |
+  6: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -266,7 +389,7 @@
       template:
         metadata:
           annotations:
-            config-hash: bb482e18982d20be62d4a6bf303a19189d5a7f7bf793a7b7a566cd07af626bce
+            config-hash: 224e3184754669fe9f161a91b87f95cff7863ed96c324f1cd3c8c4b0fe333da7
             gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
           labels:
             app: extract-api
@@ -1721,7 +1844,7 @@
       selector:
         app: ranker-api
       type: ClusterIP
-'extract.microservice: api':
+'extract: api':
   1: |
     apiVersion: apps/v1
     kind: Deployment
@@ -1742,7 +1865,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cee2916752df3120edf821348fcd5144679ed5f5fae24034171cf5af19591fd3
+            config-hash: 85451cfbf8378395a6e0c350c6cbaa5bc4cd4ac637b8fa43a5efc6c86ef9aa1c
             gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
           labels:
             app: extract-api
@@ -1764,7 +1887,7 @@
                 - secretRef:
                     name: extract-save-secret
               image: public.ecr.aws/c9r4x6y5/eyelevel/extract:0.1.0
-              imagePullPolicy: Always
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 12
                 httpGet:
@@ -1791,7 +1914,9 @@
                 capabilities:
                   drop:
                     - ALL
+                runAsGroup: 1001
                 runAsNonRoot: true
+                runAsUser: 1001
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
@@ -1806,20 +1931,25 @@
             - command:
                 - sh
                 - -c
-                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: Always
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
           nodeSelector:
-            node: eyelevel-cpu
+            node: eyelevel-cpu-only
           securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
             runAsNonRoot: true
+            runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: existing-service-account
           tolerations:
             - effect: NoSchedule
               key: node
-              value: eyelevel-cpu
+              value: eyelevel-cpu-only
           volumes:
             - configMap:
                 name: extract-config-py-map
@@ -1828,28 +1958,9 @@
                 name: extract-gunicorn-conf-py-map
               name: gunicorn-conf-volume
   2: |
-    apiVersion: route.openshift.io/v1
-    kind: Route
-    metadata:
-      labels:
-        app: extract-api
-      name: extract-api
-      namespace: eyelevel
-    spec:
-      port:
-        targetPort: 8080
-      tls:
-        insecureEdgeTerminationPolicy: Redirect
-        termination: edge
-      to:
-        kind: Service
-        name: extract-api
-  3: |
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "30"
       labels:
         app: extract-api
       name: extract-api
@@ -1862,7 +1973,7 @@
       selector:
         app: extract-api
       type: ClusterIP
-  4: |
+  3: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1882,7 +1993,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 85dbe7ef96e5e50dfb1748bbfc2a95233bdd20a32502740ce2aa3925611fef31
+            config-hash: 7ceb284dc3b869a93078dc13391866ce9c9dfbcef7aa4a5b0d8a7edf2626c888
             gunicorn-conf-hash: 4f846d74ead22c202a0dd1f27013148a62ca125c7816138dcd2459a45378dc07
           labels:
             app: layout-api
@@ -1899,7 +2010,7 @@
                     fieldRef:
                       fieldPath: metadata.name
               image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
-              imagePullPolicy: Always
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 12
                 httpGet:
@@ -1926,7 +2037,9 @@
                 capabilities:
                   drop:
                     - ALL
+                runAsGroup: 1001
                 runAsNonRoot: true
+                runAsUser: 1001
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
@@ -1941,20 +2054,25 @@
             - command:
                 - sh
                 - -c
-                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: Always
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
           nodeSelector:
-            node: eyelevel-gpu
+            node: eyelevel-cpu-only
           securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
             runAsNonRoot: true
+            runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: existing-service-account
           tolerations:
             - effect: NoSchedule
               key: node
-              value: eyelevel-gpu
+              value: eyelevel-cpu-only
           volumes:
             - configMap:
                 name: layout-config-py-map
@@ -1962,7 +2080,7 @@
             - configMap:
                 name: layout-gunicorn-conf-py-map
               name: gunicorn-conf-volume
-  5: |
+  4: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -1978,123 +2096,7 @@
       selector:
         app: layout-api
       type: ClusterIP
-  6: |
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      labels:
-        app: ranker-api
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-api
-      namespace: eyelevel
-    spec:
-      replicas: 2
-      selector:
-        matchLabels:
-          app: ranker-api
-      template:
-        metadata:
-          annotations:
-            config-hash: 12670fa00af2b4327652923b4de6a502c3c291975dad44bbe6726f2b1086d7fb
-            gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
-          labels:
-            app: ranker-api
-        spec:
-          containers:
-            - command:
-                - /bin/bash
-                - -c
-                - |
-                  export PYTHONPATH=/app:$PYTHONPATH && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
-              env:
-                - name: POD_NAME
-                  valueFrom:
-                    fieldRef:
-                      fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
-              imagePullPolicy: Always
-              livenessProbe:
-                failureThreshold: 12
-                httpGet:
-                  path: /health
-                  port: 8080
-                initialDelaySeconds: 10
-                periodSeconds: 30
-              name: ranker-api
-              ports:
-                - containerPort: 8080
-                  protocol: TCP
-              readinessProbe:
-                httpGet:
-                  path: /health
-                  port: 8080
-                initialDelaySeconds: 10
-                periodSeconds: 30
-              resources:
-                requests:
-                  cpu: 100m
-                  memory: 128Mi
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsNonRoot: true
-                seccompProfile:
-                  type: RuntimeDefault
-              volumeMounts:
-                - mountPath: /app/config.py
-                  name: config-volume
-                  subPath: config.py
-                - mountPath: /app/gunicorn_conf.py
-                  name: gunicorn-conf-volume
-                  subPath: gunicorn_conf.py
-              workingDir: /app
-          initContainers:
-            - command:
-                - sh
-                - -c
-                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: Always
-              name: wait-for-cache
-          nodeSelector:
-            node: eyelevel-gpu
-          securityContext:
-            runAsNonRoot: true
-            seccompProfile:
-              type: RuntimeDefault
-          tolerations:
-            - effect: NoSchedule
-              key: node
-              value: eyelevel-gpu
-          volumes:
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
-            - configMap:
-                name: ranker-gunicorn-conf-py-map
-              name: gunicorn-conf-volume
-  7: |
-    apiVersion: v1
-    kind: Service
-    metadata:
-      labels:
-        app: ranker-api
-      name: ranker-api
-      namespace: eyelevel
-    spec:
-      ports:
-        - port: 80
-          protocol: TCP
-          targetPort: 8080
-      selector:
-        app: ranker-api
-      type: ClusterIP
-  8: |
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2107,14 +2109,14 @@
       name: summary-api
       namespace: eyelevel
     spec:
-      replicas: 7
+      replicas: 1
       selector:
         matchLabels:
           app: summary-api
       template:
         metadata:
           annotations:
-            config-hash: 4307fbece5ce04051de2de2bb0cb57513a97cac104ca46e86991456a0d827081
+            config-hash: 2e9432e7927d2f5c53c8cdb87fa2a9a545c618f950c4ea653afe64e36ae0aa39
             gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
           labels:
             app: summary-api
@@ -2131,7 +2133,7 @@
                     fieldRef:
                       fieldPath: metadata.name
               image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
-              imagePullPolicy: Always
+              imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 12
                 httpGet:
@@ -2158,7 +2160,9 @@
                 capabilities:
                   drop:
                     - ALL
+                runAsGroup: 1001
                 runAsNonRoot: true
+                runAsUser: 1001
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
@@ -2173,20 +2177,25 @@
             - command:
                 - sh
                 - -c
-                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: Always
+              imagePullPolicy: IfNotPresent
               name: wait-for-cache
           nodeSelector:
-            node: eyelevel-gpu
+            node: eyelevel-cpu-only
           securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
             runAsNonRoot: true
+            runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: existing-service-account
           tolerations:
             - effect: NoSchedule
               key: node
-              value: eyelevel-gpu
+              value: eyelevel-cpu-only
           volumes:
             - configMap:
                 name: summary-config-py-map
@@ -2194,29 +2203,10 @@
             - configMap:
                 name: summary-gunicorn-conf-py-map
               name: gunicorn-conf-volume
-  9: |
-    apiVersion: route.openshift.io/v1
-    kind: Route
-    metadata:
-      labels:
-        app: summary-api
-      name: summary-api
-      namespace: eyelevel
-    spec:
-      port:
-        targetPort: 8080
-      tls:
-        insecureEdgeTerminationPolicy: Redirect
-        termination: edge
-      to:
-        kind: Service
-        name: summary-api
-  10: |
+  6: |
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "30"
       labels:
         app: summary-api
       name: summary-api
@@ -2229,7 +2219,7 @@
       selector:
         app: summary-api
       type: ClusterIP
-'extract: api':
+'extract.ingest: api':
   1: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2250,7 +2240,7 @@
       template:
         metadata:
           annotations:
-            config-hash: bbb1dabc7db4eb9201c335aa56e004d074f3f2ed4c960cfa70ef9089c65ec4b6
+            config-hash: d0e2d06b1b01e1e5982e7f4df6beded833eb46c39f9ece136ba2477890d00b49
             gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
           labels:
             app: extract-api
@@ -3670,6 +3660,514 @@
     apiVersion: v1
     kind: Service
     metadata:
+      labels:
+        app: summary-api
+      name: summary-api
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: summary-api
+      type: ClusterIP
+'phoenix: api':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: extract-api
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: extract-api
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: extract-api
+      template:
+        metadata:
+          annotations:
+            config-hash: 68f0d6fba9b311577e1fa8ce6dde0b1b7e99be0bbcd6ca4f9914373c0bae6333
+            gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
+          labels:
+            app: extract-api
+        spec:
+          containers:
+            - command:
+                - /bin/bash
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: extract-agent-secret
+                - secretRef:
+                    name: extract-save-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/extract:0.1.0
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 12
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              name: extract-api
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/gunicorn_conf.py
+                  name: gunicorn-conf-volume
+                  subPath: gunicorn_conf.py
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: Always
+              name: wait-for-cache
+          nodeSelector:
+            node: eyelevel-cpu
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu
+          volumes:
+            - configMap:
+                name: extract-config-py-map
+              name: config-volume
+            - configMap:
+                name: extract-gunicorn-conf-py-map
+              name: gunicorn-conf-volume
+  2: |
+    apiVersion: route.openshift.io/v1
+    kind: Route
+    metadata:
+      labels:
+        app: extract-api
+      name: extract-api
+      namespace: eyelevel
+    spec:
+      port:
+        targetPort: 8080
+      tls:
+        insecureEdgeTerminationPolicy: Redirect
+        termination: edge
+      to:
+        kind: Service
+        name: extract-api
+  3: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "30"
+      labels:
+        app: extract-api
+      name: extract-api
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: extract-api
+      type: ClusterIP
+  4: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: layout-api
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-api
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: layout-api
+      template:
+        metadata:
+          annotations:
+            config-hash: 85dbe7ef96e5e50dfb1748bbfc2a95233bdd20a32502740ce2aa3925611fef31
+            gunicorn-conf-hash: 4f846d74ead22c202a0dd1f27013148a62ca125c7816138dcd2459a45378dc07
+          labels:
+            app: layout-api
+        spec:
+          containers:
+            - command:
+                - /bin/bash
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 12
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              name: layout-api
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/gunicorn_conf.py
+                  name: gunicorn-conf-volume
+                  subPath: gunicorn_conf.py
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: Always
+              name: wait-for-cache
+          nodeSelector:
+            node: eyelevel-gpu
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-gpu
+          volumes:
+            - configMap:
+                name: layout-config-py-map
+              name: config-volume
+            - configMap:
+                name: layout-gunicorn-conf-py-map
+              name: gunicorn-conf-volume
+  5: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: layout-api
+      name: layout-api
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: layout-api
+      type: ClusterIP
+  6: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: ranker-api
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-api
+      namespace: eyelevel
+    spec:
+      replicas: 2
+      selector:
+        matchLabels:
+          app: ranker-api
+      template:
+        metadata:
+          annotations:
+            config-hash: 12670fa00af2b4327652923b4de6a502c3c291975dad44bbe6726f2b1086d7fb
+            gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
+          labels:
+            app: ranker-api
+        spec:
+          containers:
+            - command:
+                - /bin/bash
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 12
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              name: ranker-api
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/gunicorn_conf.py
+                  name: gunicorn-conf-volume
+                  subPath: gunicorn_conf.py
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: Always
+              name: wait-for-cache
+          nodeSelector:
+            node: eyelevel-gpu
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-gpu
+          volumes:
+            - configMap:
+                name: ranker-config-py-map
+              name: config-volume
+            - configMap:
+                name: ranker-gunicorn-conf-py-map
+              name: gunicorn-conf-volume
+  7: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: ranker-api
+      name: ranker-api
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: ranker-api
+      type: ClusterIP
+  8: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: summary-api
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-api
+      namespace: eyelevel
+    spec:
+      replicas: 7
+      selector:
+        matchLabels:
+          app: summary-api
+      template:
+        metadata:
+          annotations:
+            config-hash: 4307fbece5ce04051de2de2bb0cb57513a97cac104ca46e86991456a0d827081
+            gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
+          labels:
+            app: summary-api
+        spec:
+          containers:
+            - command:
+                - /bin/bash
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 12
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              name: summary-api
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/gunicorn_conf.py
+                  name: gunicorn-conf-volume
+                  subPath: gunicorn_conf.py
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: Always
+              name: wait-for-cache
+          nodeSelector:
+            node: eyelevel-gpu
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-gpu
+          volumes:
+            - configMap:
+                name: summary-config-py-map
+              name: config-volume
+            - configMap:
+                name: summary-gunicorn-conf-py-map
+              name: gunicorn-conf-volume
+  9: |
+    apiVersion: route.openshift.io/v1
+    kind: Route
+    metadata:
+      labels:
+        app: summary-api
+      name: summary-api
+      namespace: eyelevel
+    spec:
+      port:
+        targetPort: 8080
+      tls:
+        insecureEdgeTerminationPolicy: Redirect
+        termination: edge
+      to:
+        kind: Service
+        name: summary-api
+  10: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "30"
       labels:
         app: summary-api
       name: summary-api

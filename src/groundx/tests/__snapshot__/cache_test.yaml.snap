@@ -484,156 +484,8 @@
         app: cache
       type: ClusterIP
 'existing: cache':
-'extract.microservice: cache':
-  1: |
-    apiVersion: apps/v1
-    kind: StatefulSet
-    metadata:
-      labels:
-        app: cache-metrics
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: cache-metrics
-      namespace: eyelevel
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: cache-metrics
-      serviceName: cache-metrics
-      template:
-        metadata:
-          labels:
-            app: cache-metrics
-        spec:
-          containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
-              imagePullPolicy: Always
-              name: cache-metrics
-              ports:
-                - containerPort: 6379
-                  protocol: TCP
-              resources:
-                requests:
-                  cpu: 200m
-                  memory: 512Mi
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsNonRoot: true
-                seccompProfile:
-                  type: RuntimeDefault
-              volumeMounts:
-                - mountPath: /mnt/redis
-                  name: cache-metrics-persistent-storage
-          nodeSelector:
-            node: eyelevel-gpu
-          securityContext:
-            runAsNonRoot: true
-            seccompProfile:
-              type: RuntimeDefault
-          tolerations:
-            - effect: NoSchedule
-              key: node
-              value: eyelevel-gpu
-          volumes:
-            - emptyDir: {}
-              name: cache-metrics-persistent-storage
-  2: |
-    apiVersion: v1
-    kind: Service
-    metadata:
-      labels:
-        app: cache-metrics
-      name: cache-metrics
-      namespace: eyelevel
-    spec:
-      ports:
-        - port: 6379
-          protocol: TCP
-          targetPort: 6379
-      selector:
-        app: cache-metrics
-      type: ClusterIP
-  3: |
-    apiVersion: apps/v1
-    kind: StatefulSet
-    metadata:
-      labels:
-        app: cache
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: cache
-      namespace: eyelevel
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: cache
-      serviceName: cache
-      template:
-        metadata:
-          labels:
-            app: cache
-        spec:
-          containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
-              imagePullPolicy: Always
-              name: cache
-              ports:
-                - containerPort: 6379
-                  protocol: TCP
-              resources:
-                requests:
-                  cpu: 200m
-                  memory: 512Mi
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsNonRoot: true
-                seccompProfile:
-                  type: RuntimeDefault
-              volumeMounts:
-                - mountPath: /mnt/redis
-                  name: cache-persistent-storage
-          nodeSelector:
-            node: eyelevel-gpu
-          securityContext:
-            runAsNonRoot: true
-            seccompProfile:
-              type: RuntimeDefault
-          tolerations:
-            - effect: NoSchedule
-              key: node
-              value: eyelevel-gpu
-          volumes:
-            - emptyDir: {}
-              name: cache-persistent-storage
-  4: |
-    apiVersion: v1
-    kind: Service
-    metadata:
-      labels:
-        app: cache
-      name: cache
-      namespace: eyelevel
-    spec:
-      ports:
-        - port: 6379
-          protocol: TCP
-          targetPort: 6379
-      selector:
-        app: cache
-      type: ClusterIP
 'extract: cache':
+'extract.ingest: cache':
 'metadata: cache':
   1: |
     apiVersion: apps/v1
@@ -1084,6 +936,155 @@
             - effect: NoSchedule
               key: node
               value: eyelevel-cpu-only
+          volumes:
+            - emptyDir: {}
+              name: cache-persistent-storage
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: cache
+      name: cache
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 6379
+          protocol: TCP
+          targetPort: 6379
+      selector:
+        app: cache
+      type: ClusterIP
+'phoenix: cache':
+  1: |
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      labels:
+        app: cache-metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: cache-metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: cache-metrics
+      serviceName: cache-metrics
+      template:
+        metadata:
+          labels:
+            app: cache-metrics
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
+              imagePullPolicy: Always
+              name: cache-metrics
+              ports:
+                - containerPort: 6379
+                  protocol: TCP
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /mnt/redis
+                  name: cache-metrics-persistent-storage
+          nodeSelector:
+            node: eyelevel-gpu
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-gpu
+          volumes:
+            - emptyDir: {}
+              name: cache-metrics-persistent-storage
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: cache-metrics
+      name: cache-metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 6379
+          protocol: TCP
+          targetPort: 6379
+      selector:
+        app: cache-metrics
+      type: ClusterIP
+  3: |
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      labels:
+        app: cache
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: cache
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: cache
+      serviceName: cache
+      template:
+        metadata:
+          labels:
+            app: cache
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
+              imagePullPolicy: Always
+              name: cache
+              ports:
+                - containerPort: 6379
+                  protocol: TCP
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /mnt/redis
+                  name: cache-persistent-storage
+          nodeSelector:
+            node: eyelevel-gpu
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-gpu
           volumes:
             - emptyDir: {}
               name: cache-persistent-storage

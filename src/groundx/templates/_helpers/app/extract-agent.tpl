@@ -28,7 +28,11 @@ false
 {{- define "groundx.extract.agent.apiKey" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
-{{ dig "apiKey" "" $in }}
+{{ dig "apiKey" (include "groundx.admin.apiKey" .) $in }}
+{{- end }}
+
+{{- define "groundx.extract.agent.defaultApiKeyEnv" -}}
+GROUNDX_AGENT_API_KEY
 {{- end }}
 
 {{- define "groundx.extract.agent.apiKeyEnv" -}}

@@ -5,7 +5,10 @@
 {{- $svc := include "groundx.extract.serviceName" . -}}
 {{- $bucketSuffix := printf "%s/" (get $fs "bucketName") -}}
 {{- $st := include "groundx.extract.file.serviceType" . -}}
+{{- $ak := include "groundx.extract.agent.apiKey" . -}}
+{{- $ake := include "groundx.extract.agent.apiKeyEnv" . -}}
 {{- $bu := include "groundx.extract.agent.baseUrl" . -}}
+{{- $es := include "groundx.extract.agent.existingSecret" . -}}
 {{- $mid := include "groundx.extract.agent.modelId" . -}}
 {{- $did := include "groundx.extract.save.driveId" . -}}
 {{- $tid := include "groundx.extract.save.templateId" . -}}
@@ -32,7 +35,12 @@ data:
         {{- if ne $bu "" }}
         api_base={{ $bu | quote }},
         {{- end }}
-        api_key_env={{ include "groundx.extract.agent.apiKeyEnv" . | quote }},
+        {{- if and (ne $ak "") (ne $es "true") }}
+        api_key={{ $ak | quote }},
+        {{- end }}
+        {{- if ne $ake (include "groundx.extract.agent.defaultApiKeyEnv" .) }}
+        api_key_env={{ $ake | quote }},
+        {{- end }}
         {{- if ne $mid "" }}
         model_id={{ $mid | quote }},
         {{- end }}
@@ -56,8 +64,8 @@ data:
             ssl={{ if eq (printf "%v" (get $fs "bucketSSL")) "true" }}True{{ else }}False{{ end }},
             type={{ $st | quote }},
             url={{ printf "%s://%s/%s" (get $fs "scheme") (get $fs "baseDomain") $bucketSuffix | quote }},
-            key={{ include "groundx.extract.file.username" . | quote }},
-            secret={{ include "groundx.extract.file.password" . | quote }},
+            key={{ get $fs "username" | quote }},
+            secret={{ get $fs "password" | quote }},
         ),
         valid_api_keys=[
           {{ include "groundx.admin.apiKey" . | quote }},

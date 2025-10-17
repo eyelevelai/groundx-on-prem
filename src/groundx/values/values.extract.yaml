@@ -1,5 +1,7 @@
 groundxKey: "00000000-0000-0000-0000-000000000000"
 
+mode: ingest
+
 admin:
   apiKey: "00000000-0000-0000-0000-000000000000"
   email: "support@mycorp.net"
@@ -44,15 +46,6 @@ file:
     url: https://X.s3.us-west-2.amazonaws.com
     serviceType: s3
 
-search:
-  username: eyelevel
-  password: R0otb_*t!kazs
-  privilegedUsername: admin
-  privilegedPassword: R0otb_*t!kazs
-
-  existing:
-    url: https://X.us-east-2.es.amazonaws.com
-
 stream:
   enabled: false
 
@@ -72,3 +65,38 @@ stream:
     upload:
       type: sqs
       url: https://sqs.us-east-2.amazonaws.com/X/file-upload
+
+extract:
+  enabled: true
+
+  agent:
+    enabled: true
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+
+  api:
+    enabled: true
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+  download:
+    enabled: true
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+  save:
+    enabled: true
+
+    resources:
+      requests:
+        cpu: 1
+        memory: 2Gi

@@ -73,7 +73,15 @@ tests:
       - ../templates/services/cache.yaml
       - ../templates/services/cache-metrics.yaml
     values:
-      - ./files/values.extract.yaml
+      - ../values/values.extract.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "extract.ingest: cache"
+    templates:
+      - ../templates/services/cache.yaml
+      - ../templates/services/cache-metrics.yaml
+    values:
+      - ./files/values.extract.ingest.yaml
     asserts:
       - matchSnapshot: {}
   - it: "cloud: cache"
@@ -84,11 +92,11 @@ tests:
       - ./files/values.cloud.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "extract.microservice: cache"
+  - it: "phoenix: cache"
     templates:
       - ../templates/services/cache.yaml
       - ../templates/services/cache-metrics.yaml
     values:
-      - ./files/values.extract.microservice.yaml
+      - ./files/values.phoenix.yaml
     asserts:
       - matchSnapshot: {}

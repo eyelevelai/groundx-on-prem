@@ -64,7 +64,14 @@ tests:
     templates:
       - ../templates/services/stream-topics.yaml
     values:
-      - ./files/values.extract.yaml
+      - ../values/values.extract.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "extract.ingest: stream"
+    templates:
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ./files/values.extract.ingest.yaml
     asserts:
       - matchSnapshot: {}
   - it: "cloud: stream"
@@ -74,10 +81,10 @@ tests:
       - ./files/values.cloud.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "extract.microservice: stream"
+  - it: "phoenix: stream"
     templates:
       - ../templates/services/stream-topics.yaml
     values:
-      - ./files/values.extract.microservice.yaml
+      - ./files/values.phoenix.yaml
     asserts:
       - matchSnapshot: {}

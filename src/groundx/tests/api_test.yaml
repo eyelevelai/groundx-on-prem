@@ -64,7 +64,14 @@ tests:
     templates:
       - ../templates/app/api.yaml
     values:
-      - ./files/values.extract.yaml
+      - ../values/values.extract.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "extract.ingest: api"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ./files/values.extract.ingest.yaml
     asserts:
       - matchSnapshot: {}
   - it: "cloud: api"
@@ -74,10 +81,10 @@ tests:
       - ./files/values.cloud.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "extract.microservice: api"
+  - it: "phoenix: api"
     templates:
       - ../templates/app/api.yaml
     values:
-      - ./files/values.extract.microservice.yaml
+      - ./files/values.phoenix.yaml
     asserts:
       - matchSnapshot: {}

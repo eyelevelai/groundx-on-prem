@@ -64,7 +64,14 @@ tests:
     templates:
       - ../templates/app/golang.yaml
     values:
-      - ./files/values.extract.yaml
+      - ../values/values.extract.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "extract.ingest: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.extract.ingest.yaml
     asserts:
       - matchSnapshot: {}
   - it: "cloud: golang"
@@ -74,10 +81,10 @@ tests:
       - ./files/values.cloud.yaml
     asserts:
       - matchSnapshot: {}
-  - it: "extract.microservice: golang"
+  - it: "phoenix: golang"
     templates:
       - ../templates/app/golang.yaml
     values:
-      - ./files/values.extract.microservice.yaml
+      - ./files/values.phoenix.yaml
     asserts:
       - matchSnapshot: {}
