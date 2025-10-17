@@ -84,6 +84,14 @@ tests:
       - ./files/values.extract.ingest.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "extract.oai: cache"
+    templates:
+      - ../templates/services/cache.yaml
+      - ../templates/services/cache-metrics.yaml
+    values:
+      - ../values/values.extract.oai.yaml
+    asserts:
+      - matchSnapshot: {}
   - it: "cloud: cache"
     templates:
       - ../templates/services/cache.yaml

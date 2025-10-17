@@ -35,9 +35,6 @@ data:
         {{- if ne $bu "" }}
         api_base={{ $bu | quote }},
         {{- end }}
-        {{- if and (ne $ak "") (ne $es "true") }}
-        api_key={{ $ak | quote }},
-        {{- end }}
         {{- if ne $ake (include "groundx.extract.agent.defaultApiKeyEnv" .) }}
         api_key_env={{ $ake | quote }},
         {{- end }}

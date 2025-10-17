@@ -74,6 +74,13 @@ tests:
       - ./files/values.extract.ingest.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "extract.oai: celery"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values/values.extract.oai.yaml
+    asserts:
+      - matchSnapshot: {}
   - it: "cloud: celery"
     templates:
       - ../templates/app/celery.yaml

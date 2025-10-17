@@ -74,6 +74,13 @@ tests:
       - ./files/values.extract.ingest.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "extract.oai: stream"
+    templates:
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ../values/values.extract.oai.yaml
+    asserts:
+      - matchSnapshot: {}
   - it: "cloud: stream"
     templates:
       - ../templates/services/stream-topics.yaml

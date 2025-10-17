@@ -590,7 +590,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 224e3184754669fe9f161a91b87f95cff7863ed96c324f1cd3c8c4b0fe333da7
+            config-hash: cd06ef598e5a41914e1046a6634631d858f3db20d1d82911f0e063f490699738
             supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
           labels:
             app: extract-agent
@@ -708,7 +708,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 224e3184754669fe9f161a91b87f95cff7863ed96c324f1cd3c8c4b0fe333da7
+            config-hash: cd06ef598e5a41914e1046a6634631d858f3db20d1d82911f0e063f490699738
             supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
           labels:
             app: extract-download
@@ -826,7 +826,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 224e3184754669fe9f161a91b87f95cff7863ed96c324f1cd3c8c4b0fe333da7
+            config-hash: cd06ef598e5a41914e1046a6634631d858f3db20d1d82911f0e063f490699738
             supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
           labels:
             app: extract-save
@@ -3209,7 +3209,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 85451cfbf8378395a6e0c350c6cbaa5bc4cd4ac637b8fa43a5efc6c86ef9aa1c
+            config-hash: e006935e5f8a29e2cec1e9b3aefdc5f94043ebbe2c4a6d9688b582ef1b9200a4
             supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
           labels:
             app: extract-agent
@@ -3328,7 +3328,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 85451cfbf8378395a6e0c350c6cbaa5bc4cd4ac637b8fa43a5efc6c86ef9aa1c
+            config-hash: e006935e5f8a29e2cec1e9b3aefdc5f94043ebbe2c4a6d9688b582ef1b9200a4
             supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
           labels:
             app: extract-download
@@ -3447,7 +3447,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 85451cfbf8378395a6e0c350c6cbaa5bc4cd4ac637b8fa43a5efc6c86ef9aa1c
+            config-hash: e006935e5f8a29e2cec1e9b3aefdc5f94043ebbe2c4a6d9688b582ef1b9200a4
             supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
           labels:
             app: extract-save
@@ -4137,7 +4137,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d0e2d06b1b01e1e5982e7f4df6beded833eb46c39f9ece136ba2477890d00b49
+            config-hash: 14f3ceb350eb93f88d931d51b6a761155cce5b7398accda10f6634a5a15bda9d
             supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
           labels:
             app: extract-agent
@@ -4255,7 +4255,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d0e2d06b1b01e1e5982e7f4df6beded833eb46c39f9ece136ba2477890d00b49
+            config-hash: 14f3ceb350eb93f88d931d51b6a761155cce5b7398accda10f6634a5a15bda9d
             supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
           labels:
             app: extract-download
@@ -4373,7 +4373,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d0e2d06b1b01e1e5982e7f4df6beded833eb46c39f9ece136ba2477890d00b49
+            config-hash: 14f3ceb350eb93f88d931d51b6a761155cce5b7398accda10f6634a5a15bda9d
             supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
           labels:
             app: extract-save
@@ -5025,6 +5025,934 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-memory
+          volumes:
+            - configMap:
+                name: layout-config-py-map
+              name: config-volume
+            - configMap:
+                name: layout-save-supervisord-conf-map
+              name: supervisord-volume
+'extract.oai: celery':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: extract-agent
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: extract-agent
+      namespace: eyelevel
+    spec:
+      replicas: 4
+      selector:
+        matchLabels:
+          app: extract-agent
+      template:
+        metadata:
+          annotations:
+            config-hash: d584456c8e15d07061c97c260c7b5ed347c7844beeecc925f11a695d18a2dcf9
+            supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
+          labels:
+            app: extract-agent
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: extract-agent-secret
+                - secretRef:
+                    name: extract-save-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/extract:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_agents.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: extract-agent
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_agents.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z X.s3.us-west-2.amazonaws.com 443; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: extract-config-py-map
+              name: config-volume
+            - configMap:
+                name: extract-agent-supervisord-conf-map
+              name: supervisord-volume
+  2: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: extract-download
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: extract-download
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: extract-download
+      template:
+        metadata:
+          annotations:
+            config-hash: d584456c8e15d07061c97c260c7b5ed347c7844beeecc925f11a695d18a2dcf9
+            supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
+          labels:
+            app: extract-download
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: extract-agent-secret
+                - secretRef:
+                    name: extract-save-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/extract:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_agents.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: extract-download
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_agents.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z X.s3.us-west-2.amazonaws.com 443; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: extract-config-py-map
+              name: config-volume
+            - configMap:
+                name: extract-download-supervisord-conf-map
+              name: supervisord-volume
+  3: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: extract-save
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: extract-save
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: extract-save
+      template:
+        metadata:
+          annotations:
+            config-hash: d584456c8e15d07061c97c260c7b5ed347c7844beeecc925f11a695d18a2dcf9
+            supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
+          labels:
+            app: extract-save
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: extract-agent-secret
+                - secretRef:
+                    name: extract-save-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/extract:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_agents.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: extract-save
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_agents.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 1
+                  memory: 2Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z X.s3.us-west-2.amazonaws.com 443; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: extract-config-py-map
+              name: config-volume
+            - configMap:
+                name: extract-save-supervisord-conf-map
+              name: supervisord-volume
+  4: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: layout-correct
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-correct
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: layout-correct
+      template:
+        metadata:
+          annotations:
+            config-hash: 7ceb284dc3b869a93078dc13391866ce9c9dfbcef7aa4a5b0d8a7edf2626c888
+            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+          labels:
+            app: layout-correct
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: layout-correct
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 1
+                  memory: 1Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z X.s3.us-west-2.amazonaws.com 443; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+          nodeSelector:
+            node: eyelevel-cpu-memory
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-memory
+          volumes:
+            - configMap:
+                name: layout-config-py-map
+              name: config-volume
+            - configMap:
+                name: layout-correct-supervisord-conf-map
+              name: supervisord-volume
+  5: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: layout-map
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-map
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: layout-map
+      template:
+        metadata:
+          annotations:
+            config-hash: 7ceb284dc3b869a93078dc13391866ce9c9dfbcef7aa4a5b0d8a7edf2626c888
+            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+          labels:
+            app: layout-map
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: layout-map
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z X.s3.us-west-2.amazonaws.com 443; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: layout-config-py-map
+              name: config-volume
+            - configMap:
+                name: layout-map-supervisord-conf-map
+              name: supervisord-volume
+  6: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: layout-ocr
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-ocr
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: layout-ocr
+      template:
+        metadata:
+          annotations:
+            config-hash: 7ceb284dc3b869a93078dc13391866ce9c9dfbcef7aa4a5b0d8a7edf2626c888
+            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+          labels:
+            app: layout-ocr
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: layout-ocr
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 1
+                  memory: 1Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z X.s3.us-west-2.amazonaws.com 443; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+          nodeSelector:
+            node: eyelevel-cpu-memory
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-memory
+          volumes:
+            - configMap:
+                name: layout-config-py-map
+              name: config-volume
+            - configMap:
+                name: layout-ocr-supervisord-conf-map
+              name: supervisord-volume
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: layout-process
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-process
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: layout-process
+      template:
+        metadata:
+          annotations:
+            config-hash: 7ceb284dc3b869a93078dc13391866ce9c9dfbcef7aa4a5b0d8a7edf2626c888
+            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+          labels:
+            app: layout-process
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: layout-process
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 1Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z X.s3.us-west-2.amazonaws.com 443; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+          nodeSelector:
+            node: eyelevel-cpu-memory
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-memory
+          volumes:
+            - configMap:
+                name: layout-config-py-map
+              name: config-volume
+            - configMap:
+                name: layout-process-supervisord-conf-map
+              name: supervisord-volume
+  8: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: layout-save
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-save
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: layout-save
+      template:
+        metadata:
+          annotations:
+            config-hash: 7ceb284dc3b869a93078dc13391866ce9c9dfbcef7aa4a5b0d8a7edf2626c888
+            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+          labels:
+            app: layout-save
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: layout-save
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'document.celery_process.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 1Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z X.s3.us-west-2.amazonaws.com 443; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+          nodeSelector:
+            node: eyelevel-cpu-memory
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
           tolerations:
             - effect: NoSchedule
               key: node
@@ -6716,7 +7644,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 68f0d6fba9b311577e1fa8ce6dde0b1b7e99be0bbcd6ca4f9914373c0bae6333
+            config-hash: 6fec848d0d3e8c7b39bf74b814023568513e33f62123f18dbbb013f0e9e37c09
             supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
           labels:
             app: extract-agent
@@ -6828,7 +7756,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 68f0d6fba9b311577e1fa8ce6dde0b1b7e99be0bbcd6ca4f9914373c0bae6333
+            config-hash: 6fec848d0d3e8c7b39bf74b814023568513e33f62123f18dbbb013f0e9e37c09
             supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
           labels:
             app: extract-download
@@ -6940,7 +7868,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 68f0d6fba9b311577e1fa8ce6dde0b1b7e99be0bbcd6ca4f9914373c0bae6333
+            config-hash: 6fec848d0d3e8c7b39bf74b814023568513e33f62123f18dbbb013f0e9e37c09
             supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
           labels:
             app: extract-save

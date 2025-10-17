@@ -244,6 +244,30 @@ tests:
       - ./files/values.extract.ingest.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "extract.oai: resources"
+    templates:
+      - ../templates/resources/config-models.yaml
+      - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/extract-config-py.yaml
+      - ../templates/resources/extract-gunicorn-conf-py.yaml
+      - ../templates/resources/extract-supervisord-conf.yaml
+      - ../templates/resources/init-database-file.yaml
+      - ../templates/resources/layout-config-py.yaml
+      - ../templates/resources/layout-gunicorn-conf-py.yaml
+      - ../templates/resources/layout-ocr-credentials.yaml
+      - ../templates/resources/layout-supervisord-conf.yaml
+      - ../templates/resources/ldconfig-symlink.yaml
+      - ../templates/resources/ranker-config-py.yaml
+      - ../templates/resources/ranker-gunicorn-conf-py.yaml
+      - ../templates/resources/ranker-supervisord-conf.yaml
+      - ../templates/resources/secret.yaml
+      - ../templates/resources/summary-config-py.yaml
+      - ../templates/resources/summary-gunicorn-conf-py.yaml
+      - ../templates/resources/summary-supervisord-conf.yaml
+    values:
+      - ../values/values.extract.oai.yaml
+    asserts:
+      - matchSnapshot: {}
   - it: "cloud: resources"
     templates:
       - ../templates/resources/config-models.yaml

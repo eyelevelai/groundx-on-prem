@@ -3881,6 +3881,180 @@
         requests:
           storage: 20Gi
       storageClassName: eyelevel-pv
+'extract.oai: inference':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: layout-inference
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-inference
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: layout-inference
+      template:
+        metadata:
+          annotations:
+            config-hash: 7ceb284dc3b869a93078dc13391866ce9c9dfbcef7aa4a5b0d8a7edf2626c888
+            config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
+            ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
+            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+          labels:
+            app: layout-inference
+        spec:
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 8
+                httpGet:
+                  path: /alive
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
+              name: layout-inference
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 30
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
+              resources:
+                limits:
+                  nvidia.com/gpu: 1
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+                  nvidia.com/gpu: 1
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config_models.py
+                  name: config-models
+                  subPath: config_models.py
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z X.s3.us-west-2.amazonaws.com 443; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+            - args:
+                - echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh
+              command:
+                - /bin/sh
+                - -c
+                - --
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: create-symlink
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 50Mi
+              securityContext:
+                privileged: true
+              volumeMounts:
+                - mountPath: /scripts/ldconfig_symlink.sh
+                  name: layout-inference
+                  subPath: ldconfig_symlink.sh
+                - mountPath: /host-sbin
+                  name: host-sbin
+                - mountPath: /host-usr-sbin
+                  name: host-usr-sbin
+                - mountPath: /host-bin
+                  name: host-bin
+                - mountPath: /host-usr-bin
+                  name: host-usr-bin
+          nodeSelector:
+            node: eyelevel-gpu-layout
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-gpu-layout
+          volumes:
+            - configMap:
+                name: config-models-map
+              name: config-models
+            - configMap:
+                name: layout-config-py-map
+              name: config-volume
+            - configMap:
+                name: layout-inference-supervisord-conf-map
+              name: supervisord-volume
+            - configMap:
+                defaultMode: 365
+                name: ldconfig-symlink-map
+              name: layout-inference
+            - hostPath:
+                path: /sbin
+                type: Directory
+              name: host-sbin
+            - hostPath:
+                path: /usr/sbin
+                type: Directory
+              name: host-usr-sbin
+            - hostPath:
+                path: /bin
+                type: Directory
+              name: host-bin
+            - hostPath:
+                path: /usr/bin
+                type: Directory
+              name: host-usr-bin
 'metadata: inference':
   1: |
     apiVersion: apps/v1

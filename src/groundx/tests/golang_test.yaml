@@ -74,6 +74,13 @@ tests:
       - ./files/values.extract.ingest.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "extract.oai: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/values.extract.oai.yaml
+    asserts:
+      - matchSnapshot: {}
   - it: "cloud: golang"
     templates:
       - ../templates/app/golang.yaml

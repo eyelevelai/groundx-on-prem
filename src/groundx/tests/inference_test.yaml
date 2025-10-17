@@ -74,6 +74,13 @@ tests:
       - ./files/values.extract.ingest.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "extract.oai: inference"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values/values.extract.oai.yaml
+    asserts:
+      - matchSnapshot: {}
   - it: "cloud: inference"
     templates:
       - ../templates/app/inference.yaml

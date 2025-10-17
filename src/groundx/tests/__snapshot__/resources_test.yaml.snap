@@ -1202,7 +1202,6 @@
         )
 
         agent_settings = AgentSettings(
-            api_key="openai-api-key",
         )
 
         container_settings = ContainerSettings(
@@ -5047,7 +5046,6 @@
 
         agent_settings = AgentSettings(
             api_base="http://summary-api.eyelevel.svc.cluster.local",
-            api_key="00000000-0000-0000-0000-000000000000",
             model_id="google/gemma-3-4b-it",
         )
 
@@ -6505,6 +6503,753 @@
         version: 0.1.0
       name: summary-inference-supervisord-conf-map
       namespace: eyelevel
+'extract.oai: resources':
+  1: |
+    apiVersion: v1
+    data:
+      config_models.py: |
+        env = dict(
+          summary = dict(
+            dtype = "bfloat16",
+            maxInputTokens = 100000,
+            maxOutputTokens = 4096,
+            maxRequests = 1,
+            name = "google/gemma-3-4b-it",
+            swapSpace = 16,
+          ),
+        )
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-models-map
+      namespace: eyelevel
+  2: |
+    apiVersion: v1
+    data:
+      config.yaml: |
+        _mysql: &mysql
+          ro_addr: X.X.us-east-2.rds.amazonaws.com
+          rw_addr: X.X.us-east-2.rds.amazonaws.com
+          user: eyelevel
+          password: password
+          database: eyelevel
+          maxIdle: 5
+          maxOpen: 10
+
+        ai:
+          aws:
+            search:
+              baseURL: https://opensearch-cluster-master.eyelevel.svc.cluster.local:9200
+              index: prod-1
+              languages:
+                - en
+              username: eyelevel
+              password: R0otb_*t!kazs
+          extract:
+            client:
+              apiKey: 00000000-0000-0000-0000-000000000000
+              baseURL: http://extract-api.eyelevel.svc.cluster.local
+              callbackURL: http://layout-webhook.eyelevel.svc.cluster.local
+          eyelevelSearch:
+            apiKey: 00000000-0000-0000-0000-000000000000
+            baseURL: http://ranker-api.eyelevel.svc.cluster.local
+          layout:
+            client:
+              apiKey: 00000000-0000-0000-0000-000000000000
+              baseURL: http://layout-api.eyelevel.svc.cluster.local
+              callbackURL: http://layout-webhook.eyelevel.svc.cluster.local
+          openai:
+            apiKey: openai-api-key
+            defaultKitId: 0
+          summaryType: summary
+          searchIndexes:
+            prod-1:
+              languages:
+                - en
+
+        engines:
+          gpt-5-mini:
+            engineID: "gpt-5-mini"
+            service: openai
+            reasoningEffort: low
+            vision: true
+
+        environment: prod
+
+        groundxServer:
+          baseURL: http://groundx.eyelevel.svc.cluster.local
+          port: 8080
+          serviceName: groundx
+
+        init:
+          ingestOnly: true
+          mysql:
+            user: root
+            password: password
+          search:
+            password: R0otb_*t!kazs
+            searchModel: all_access
+            username: admin
+
+        integrationTests:
+          search:
+            duration: 3660
+            fileId: "ey-mtr6hapxq7d94zigammwir6xz4"
+            modelId: 1
+
+        layoutWebhookServer:
+          baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          port: 8080
+          serviceName: layout-webhook
+
+        metrics:
+          active: true
+          api:
+            - name: groundx
+            - name: layout-api
+            - name: layout-webhook
+          document:
+            tokensPerMinute: 12500
+          inference:
+            - name: layout-inference
+              tokensPerMinute: 120000
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 3200
+            - name: summary-client
+              tokensPerMinute: 9600
+          page:
+            tokensPerMinute: 500
+          session:
+            addr: X.X.X.use2.cache.amazonaws.com:6379
+            notCluster: false
+            ssl: true
+          summaryRequest:
+            tokensPerMinute: 625
+          task:
+            - name: layout-correct
+              target: correct_queue
+              threshold: 500
+            - name: layout-map
+              target: map_queue
+              threshold: 500
+            - name: layout-ocr
+              target: ocr_queue
+              threshold: 500
+            - name: layout-process
+              target: process_queue
+              threshold: 500
+            - name: layout-save
+              target: save_queue,celery
+              threshold: 500
+
+        owner:
+          baseURL: http://groundx.eyelevel.svc.cluster.local/api/v1
+          name: on-prem
+          type: all
+          username: 00000000-0000-0000-0000-000000000000
+
+        preProcessFileServer:
+          baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: pre-process
+
+        processFileServer:
+          baseURL: http://process.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: process
+
+        processors:
+          convert: [11]
+          layout: [3]
+          map: [4]
+          saveFile: [2]
+          skipConvert: [12]
+          skipGenerate: [1]
+          skipLayout: [5]
+          skipMap: [6]
+          skipSummarize: [7]
+          summarize: [8]
+          summarizeChunks: [10]
+          summarizeSections: [9]
+          extraPostDefaults:
+            - processorID: 1
+              type: skip-generate
+
+        queueFileServer:
+          baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          pollTime: 1
+          port: 8080
+          serviceName: queue
+
+        queues:
+          filePreProcess:
+            type: sqs
+            url: https://sqs.us-east-2.amazonaws.com/X/file-pre-process
+          fileProcess:
+            type: sqs
+            url: https://sqs.us-east-2.amazonaws.com/X/file-process
+          fileSummaryDev:
+            type: sqs
+            url: https://sqs.us-east-2.amazonaws.com/X/file-summary
+          fileSummaryProd:
+            type: sqs
+            url: https://sqs.us-east-2.amazonaws.com/X/file-summary
+          fileUpdate:
+            type: sqs
+            url: https://sqs.us-east-2.amazonaws.com/X/file-update
+          fileUpload:
+            type: sqs
+            url: https://sqs.us-east-2.amazonaws.com/X/file-upload
+
+        rec:
+          mysql: *mysql
+          session:
+            addr: X.X.X.use2.cache.amazonaws.com:6379
+            notCluster: false
+            ssl: true
+
+        summaryServer:
+          baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 3
+          port: 8080
+          serviceName: summary-client
+
+        upload:
+          baseDomain: X.s3.us-west-2.amazonaws.com
+          baseUrl: https://X.s3.us-west-2.amazonaws.com
+          bucket: eyelevel
+          bucketUrl: https://X.s3.us-west-2.amazonaws.com
+          service: s3
+          ssl: true
+
+        uploadFileServer:
+          baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: upload
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+  3: |
+    apiVersion: v1
+    data:
+      config.py: |
+        from classes.settings import (
+            AgentSettings,
+            ContainerSettings,
+            ContainerUploadSettings,
+        )
+
+        agent_settings = AgentSettings(
+        )
+
+        container_settings = ContainerSettings(
+            broker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            callback_api_key="00000000-0000-0000-0000-000000000000",
+            metrics_broker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            service="extract",
+            upload=ContainerUploadSettings(
+                base_domain="X.s3.us-west-2.amazonaws.com",
+                bucket="eyelevel",
+                region="",
+                ssl=True,
+                type="s3",
+                url="https://X.s3.us-west-2.amazonaws.com/",
+                key="",
+                secret="",
+            ),
+            valid_api_keys=[
+              "00000000-0000-0000-0000-000000000000",
+              "00000000-0000-0000-0000-000000000000",
+            ],
+            workers=1,
+        )
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: extract-config-py-map
+      namespace: eyelevel
+  4: |
+    apiVersion: v1
+    data:
+      gunicorn_conf.py: |
+        infolog = "-"
+        accesslog = "-"
+        errorlog = "-"
+
+        loglevel = "info"
+        workers = 2
+        threads = 2
+        timeout = 120
+        timeout_keep_alive = 15
+
+        worker_class = "uvicorn.workers.UvicornWorker"
+
+        bind = "0.0.0.0:8080"
+
+        wsgi_app = "server:app"
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: extract-gunicorn-conf-py-map
+      namespace: eyelevel
+  5: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=agent_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: extract-agent-supervisord-conf-map
+      namespace: eyelevel
+  6: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=download_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: extract-download-supervisord-conf-map
+      namespace: eyelevel
+  7: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=save_agents_queue,celery
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: extract-save-supervisord-conf-map
+      namespace: eyelevel
+  8: |
+    apiVersion: v1
+    data:
+      init-db.sql: |
+        INSERT INTO partner_users (customer_username, customer_email, partner_username, status) values ('00000000-0000-0000-0000-000000000000', 'support@mycorp.net', '00000000-0000-0000-0000-000000000000', 'admin');
+
+        INSERT INTO apikeys (apikey, name, username) values ('00000000-0000-0000-0000-000000000000', 'Admin Service Key', '00000000-0000-0000-0000-000000000000');
+
+        INSERT INTO processors (name, description, username, ptype, priority) values
+        ('Skip Generation', 'Does not add content to search database', 'system', 'skip-generate', 50), ('Save File', 'Saves output to a file', 'system', 'save-file', 50), ('System Document Layout', 'The default document layout processor', 'system', 'layout', 10), ('System Document Layout Mapping', 'The default document layout mapping processor', 'system', 'map', 15), ('Skip Document Layout', 'Does not process documents through layout pipeline', 'system', 'skip-layout', 50), ('Skip Document Mapping Layout', 'Does not map text through pipeline', 'system', 'skip-map', 50), ('Skip Molecule Summarizer', 'Does not summarize molecules in pipeline', 'system', 'skip-summarize', 50), ('System Combined Summarizer', 'The combined default summarizer', 'system', 'summarize', 20), ('System Section Summarizer', 'The default document and page summarizer', 'system', 'summarize-sections', 22), ('System Molecule Summarizer', 'The default molecule summarizer', 'system', 'summarize-chunks', 24), ('System Document Convert', 'The default document convert processor', 'system', 'convert', 7), ('Skip Document Convert', 'Does not convert documents', 'system', 'skip-convert', 50), ('System Document Extract', 'The default document extract processor', 'system', 'extract', 30);
+
+        INSERT INTO nlp_models (model_id, name, username, type, settings, indices) values (1, 'System Status - Search', '00000000-0000-0000-0000-000000000000', 'gpt3', '{"trainingFilesData":{"mainKit":{"fileId":"ey-mtr6hapxq7d94zigammwir6xz4","priority":20,"trainingFile":""}}}', 'prod-1');
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: init-database-file
+      namespace: eyelevel
+  9: |
+    apiVersion: v1
+    data:
+      config.py: |
+        env = dict(
+            accessKey="",
+            accessSecret="",
+            annotationBase="layout/processed/",
+            cacheDir="/app/hf_models_cache",
+            callbackAPIKey="00000000-0000-0000-0000-000000000000",
+            deviceType="cuda",
+            env="prod",
+            includeLS=False,
+            layoutBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            layoutLogger="layout",
+            layoutResultBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            minBatchSize=40,
+            ocrBase="layout/raw/",
+            ocrCredentials="credentials.json",
+            ocrProject="",
+            ocrType="tesseract",
+            podMemory="2Gi",
+            queueType="kafka",
+            service="layout",
+            uploadBase="layout/processed/",
+            uploadBaseURL="X.s3.us-west-2.amazonaws.com",
+            uploadBucket="eyelevel",
+            uploadRegion="",
+            uploadReplaceURL="https://X.s3.us-west-2.amazonaws.com/",
+            uploadSSL=True,
+            uploadType="s3",
+            uploadURL="https://X.s3.us-west-2.amazonaws.com/",
+            validAPIKeys=[
+              "00000000-0000-0000-0000-000000000000",
+              "00000000-0000-0000-0000-000000000000",
+            ],
+            workers=1,
+        )
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-config-py-map
+      namespace: eyelevel
+  10: |
+    apiVersion: v1
+    data:
+      gunicorn_conf.py: |
+        infolog = "-"
+        accesslog = "-"
+        errorlog = "-"
+
+        loglevel = "info"
+        workers = 2
+        threads = 2
+        timeout = 120
+        timeout_keep_alive = 15
+
+        worker_class = "uvicorn.workers.UvicornWorker"
+
+        bind = "0.0.0.0:8080"
+
+        wsgi_app = "document_api_server:app"
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-gunicorn-conf-py-map
+      namespace: eyelevel
+  11: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A document.celery_process.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --queues=correct_queue --concurrency=1
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-correct-supervisord-conf-map
+      namespace: eyelevel
+  12: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A document.celery_process.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --queues=layout_queue --concurrency=6
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_monitor]
+        command=python /app/document_monitor.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_health]
+        command=python /app/document_health.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-inference-supervisord-conf-map
+      namespace: eyelevel
+  13: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A document.celery_process.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --queues=map_queue --concurrency=1
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-map-supervisord-conf-map
+      namespace: eyelevel
+  14: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A document.celery_process.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --queues=ocr_queue --concurrency=1
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-ocr-supervisord-conf-map
+      namespace: eyelevel
+  15: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A document.celery_process.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --queues=process_queue --concurrency=1
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-process-supervisord-conf-map
+      namespace: eyelevel
+  16: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A document.celery_process.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --queues=save_queue,celery --concurrency=1
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-save-supervisord-conf-map
+      namespace: eyelevel
+  17: |
+    apiVersion: v1
+    data:
+      ldconfig_symlink.sh: |
+        #!/bin/sh
+        LDCONFIG_PATHS="/host-sbin/ldconfig /host-usr-sbin/ldconfig /host-bin/ldconfig /host-usr-bin/ldconfig"
+
+        for path in $LDCONFIG_PATHS; do
+          if [ -f "$path" ]; then
+            echo "Found ldconfig at $path"
+            cd "$(dirname "$path")" && ln -sf ldconfig /host-sbin/ldconfig.real
+            break
+          fi
+        done
+
+        if [ -L /host-sbin/ldconfig.real ]; then
+          echo "Symbolic link created at /sbin/ldconfig.real"
+        else
+          echo "Failed to find ldconfig in the specified paths."
+        fi
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ldconfig-symlink-map
+      namespace: eyelevel
+  18: |
+    apiVersion: v1
+    data:
+      GROUNDX_AGENT_API_KEY: b3BlbmFpLWFwaS1rZXk=
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: extract-agent-secret
+      namespace: eyelevel
+    type: Opaque
+  19: |
+    apiVersion: v1
+    data:
+      GCP_CREDENTIALS: PG5vIHZhbHVlPg==
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: extract-save-secret
+      namespace: eyelevel
+    type: Opaque
 'metadata: resources':
   1: |
     apiVersion: v1
@@ -9549,7 +10294,6 @@
         )
 
         agent_settings = AgentSettings(
-            api_key="openai-api-key",
         )
 
         container_settings = ContainerSettings(
