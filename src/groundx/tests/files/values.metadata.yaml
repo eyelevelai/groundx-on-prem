@@ -2,6 +2,9 @@ busybox:
   image: test.image:v1
   imagePullPolicy: Always
 
+serviceAccount:
+  name: existing-service-account
+
 cache:
   affinity:
     requiredDuringSchedulingIgnoredDuringExecution:
@@ -114,6 +117,8 @@ summary:
       disktype: ssd
     securityContext:
       fsGroup: 2000
+    serviceAccount:
+      name: other-service-account
     threads: 2
     timeout: 5
     workers: 2
@@ -156,6 +161,8 @@ summary:
     runtimeClassName: abc
     securityContext:
       fsGroup: 2000
+    serviceAccount:
+      name: other-service-account
     threads: 2
     workers: 2
 
@@ -189,6 +196,8 @@ groundx:
     disktype: ssd
   securityContext:
     fsGroup: 2000
+  serviceAccount:
+    name: other-service-account
   serviceName: myapp
   tolerations:
     - effect: "NoSchedule"
@@ -205,11 +214,15 @@ layout:
     threads: 3
     timeout: 10
     workers: 3
+    serviceAccount:
+      name: other-service-account
 
   correct:
     queue: my-queue
     threads: 2
     workers: 4
+    serviceAccount:
+      name: other-service-account
 
   inference:
     affinity:
@@ -237,6 +250,8 @@ layout:
     queue: my-queue
     securityContext:
       fsGroup: 2000
+    serviceAccount:
+      name: other-service-account
     threads: 2
     workers: 2
 
@@ -263,6 +278,8 @@ layout:
     queue: my-queue
     securityContext:
       fsGroup: 2000
+    serviceAccount:
+      name: other-service-account
     threads: 2
     workers: 2
 
@@ -275,6 +292,8 @@ layout:
     threads: 2
     type: google
     workers: 2
+    serviceAccount:
+      name: other-service-account
 
   process:
     batchSize: 3
@@ -287,15 +306,21 @@ layout:
         operator: "Equal"
         value: "batch"
     workers: 2
+    serviceAccount:
+      name: other-service-account
 
   save:
     node: test-label-1
     queue: my-queue
     threads: 2
     workers: 2
+    serviceAccount:
+      name: other-service-account
 
 layoutWebhook:
   node: test-label-1
+  serviceAccount:
+    name: other-service-account
   tolerations:
     - effect: "NoSchedule"
       key: "workload-type"
@@ -307,14 +332,20 @@ preProcess:
   nodeSelector:
     disktype: ssd
   queueSize: 2
+  serviceAccount:
+    name: other-service-account
 
 process:
   node: test-label-1
   queueSize: 2
+  serviceAccount:
+    name: other-service-account
 
 queue:
   node: ""
   queueSize: 2
+  serviceAccount:
+    name: other-service-account
 
 ranker:
   serviceName: myapp
@@ -347,6 +378,8 @@ ranker:
     node: ""
     securityContext:
       fsGroup: 2000
+    serviceAccount:
+      name: other-service-account
     threads: 2
     timeout: 30
     tolerations:
@@ -362,6 +395,8 @@ ranker:
     pvc:
       capacity: 1Gi
     queue: my-queue
+    serviceAccount:
+      name: other-service-account
     threads: 2
     tolerations:
       - effect: "NoSchedule"
@@ -373,6 +408,8 @@ ranker:
 summaryClient:
   node: ""
   queueSize: 5
+  serviceAccount:
+    name: other-service-account
   tolerations:
     - effect: "NoSchedule"
       key: "workload-type"
@@ -384,3 +421,5 @@ upload:
   nodeSelector:
     disktype: ssd
   queueSize: 2
+  serviceAccount:
+    name: other-service-account

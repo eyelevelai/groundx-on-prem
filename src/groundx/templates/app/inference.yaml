@@ -28,6 +28,7 @@
 {{- $rp := get $svcData "replicas" -}}
 {{- $rs := get $svcData "resources" -}}
 {{- $rt := get $svcData "runtimeClassName" -}}
+{{- $san := get $svcData "serviceAccountName" -}}
 {{- $sct := get $svcData "securityContext" -}}
 {{- $supe := get $svcData "supervisord" -}}
 {{- $tl := get $svcData "tolerations" -}}
@@ -68,6 +69,9 @@ spec:
     spec:
 {{- if $rt }}
       runtimeClassName: {{ $rt }}
+{{- end }}
+{{- if $san }}
+      serviceAccountName: {{ $san }}
 {{- end }}
 {{- if gt (len $aff) 0 }}
       affinity:

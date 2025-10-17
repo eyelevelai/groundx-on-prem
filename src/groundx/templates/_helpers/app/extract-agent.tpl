@@ -25,10 +25,16 @@ false
 {{- end -}}
 {{- end }}
 
-{{- define "groundx.extract.agent.serviceType" -}}
+{{- define "groundx.extract.agent.apiKey" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
-{{ lower (coalesce (dig "serviceType" "" $in) "eyelevel") | trim }}
+{{ dig "apiKey" "" $in }}
+{{- end }}
+
+{{- define "groundx.extract.agent.apiKeyEnv" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{ dig "apiKeyEnv" "GROUNDX_AGENT_API_KEY" $in }}
 {{- end }}
 
 {{- define "groundx.extract.agent.baseUrl" -}}
@@ -44,49 +50,10 @@ false
 {{ dig "apiBaseUrl" $dflt $in }}
 {{- end }}
 
-{{- define "groundx.extract.agent.apiKey" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $in := dig "agent" dict $b -}}
-{{ dig "apiKey" "" $in }}
-{{- end }}
-
-{{- define "groundx.extract.agent.apiKeyEnv" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $in := dig "agent" dict $b -}}
-{{ dig "apiKeyEnv" "GROUNDX_AGENT_API_KEY" $in }}
-{{- end }}
-
 {{- define "groundx.extract.agent.existingSecret" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
 {{ dig "existingSecret" false $in }}
-{{- end }}
-
-{{- define "groundx.extract.agent.modelId" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $in := dig "agent" dict $b -}}
-{{- $dflt := "" -}}
-{{- $ic := include "groundx.summary.create" . -}}
-{{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") -}}
-{{- if and (eq $ic "true") (not $svcAllowed) -}}
-{{- $dflt = (include "groundx.summary.inference.model.name" .) -}}
-{{- end -}}
-{{ dig "modelId" $dflt $in }}
-{{- end }}
-
-{{- define "groundx.extract.agent.secretName" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $in := dig "agent" dict $b -}}
-{{- $dflt := printf "%s-secret" (include "groundx.extract.agent.serviceName" .) -}}
-{{ dig "secretName" $dflt $in }}
-{{- end }}
-
-{{- define "groundx.extract.agent.serviceAccountName" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $in := dig "agent" dict $b -}}
-{{- $ex := dig "serviceAccount" dict $in -}}
-{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
 {{- end }}
 
 {{- define "groundx.extract.agent.image" -}}
@@ -104,6 +71,19 @@ false
 {{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
 {{- end }}
 
+{{- define "groundx.extract.agent.modelId" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{- $dflt := "" -}}
+{{- $ic := include "groundx.summary.create" . -}}
+{{- $st := include "groundx.extract.agent.serviceType" . -}}
+{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") -}}
+{{- if and (eq $ic "true") (not $svcAllowed) -}}
+{{- $dflt = (include "groundx.summary.inference.model.name" .) -}}
+{{- end -}}
+{{ dig "modelId" $dflt $in }}
+{{- end }}
+
 {{- define "groundx.extract.agent.queue" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
@@ -118,6 +98,26 @@ false
   {{- $in = dict "desired" 4 "max" 4 "min" 4 -}}
 {{- end }}
 {{- toYaml $in | nindent 0 }}
+{{- end }}
+
+{{- define "groundx.extract.agent.secretName" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{- $dflt := printf "%s-secret" (include "groundx.extract.agent.serviceName" .) -}}
+{{ dig "secretName" $dflt $in }}
+{{- end }}
+
+{{- define "groundx.extract.agent.serviceAccountName" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
+{{- define "groundx.extract.agent.serviceType" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{ lower (coalesce (dig "serviceType" "" $in) "eyelevel") | trim }}
 {{- end }}
 
 {{- define "groundx.extract.agent.threads" -}}
@@ -151,6 +151,7 @@ false
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
 {{- $rep := (include "groundx.extract.agent.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.extract.agent.serviceAccountName" . -}}
 {{- $data := dict
   (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .)
   (include "groundx.extract.save.secretName" .) (include "groundx.extract.save.secretName" .)
@@ -171,6 +172,9 @@ false
   "threads"    (include "groundx.extract.agent.threads" .)
   "workers"    (include "groundx.extract.agent.workers" .)
 -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

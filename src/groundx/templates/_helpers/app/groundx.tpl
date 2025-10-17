@@ -67,14 +67,10 @@ false
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
-{{- define "groundx.groundx.ssl" -}}
+{{- define "groundx.groundx.serviceAccountName" -}}
 {{- $in := .Values.groundx | default dict -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "ssl" "false" $lb  }}
-{{- else -}}
-false
-{{- end -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
 {{- end }}
 
 {{- define "groundx.groundx.serviceUrl" -}}
@@ -90,6 +86,16 @@ false
 {{ printf "%s://%s.%s.svc.cluster.local" $scheme $name $ns }}
 {{- else -}}
 {{ printf "%s://%s.%s.svc.cluster.local:%v" $scheme $name $ns $port }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.groundx.ssl" -}}
+{{- $in := .Values.groundx | default dict -}}
+{{- if hasKey $in "loadBalancer" -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
+{{ dig "ssl" "false" $lb  }}
+{{- else -}}
+false
 {{- end -}}
 {{- end }}
 
@@ -146,6 +152,8 @@ false
 {{- end -}}
 
 {{- $rep := (include "groundx.groundx.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.groundx.serviceAccountName" . -}}
+
 {{- $cfg := dict
   "dependencies" $dpnd
   "image"        (include "groundx.groundx.image" .)
@@ -157,6 +165,9 @@ false
   "pull"         (include "groundx.groundx.imagePullPolicy" .)
   "replicas"     ($rep)
 -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

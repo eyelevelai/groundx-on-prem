@@ -101,6 +101,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: existing-service-account
           tolerations:
             - effect: NoSchedule
               key: node
@@ -214,6 +215,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: existing-service-account
           tolerations:
             - effect: NoSchedule
               key: node
@@ -327,6 +329,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: existing-service-account
           tolerations:
             - effect: NoSchedule
               key: node
@@ -440,6 +443,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: existing-service-account
           tolerations:
             - effect: NoSchedule
               key: node
@@ -553,6 +557,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: existing-service-account
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3533,7 +3538,7 @@
       name: layout-correct
       namespace: eyelevel
     spec:
-      replicas: 1
+      replicas: 2
       selector:
         matchLabels:
           app: layout-correct
@@ -5078,6 +5083,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: other-service-account
           tolerations:
             - effect: NoSchedule
               key: node
@@ -5186,6 +5192,7 @@
               name: wait-for-file-storage
           securityContext:
             fsGroup: 2000
+          serviceAccountName: other-service-account
           volumes:
             - configMap:
                 name: myapp-config-py-map
@@ -5295,6 +5302,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: other-service-account
           volumes:
             - configMap:
                 name: myapp-config-py-map
@@ -5402,6 +5410,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: other-service-account
           tolerations:
             - effect: NoSchedule
               key: workload-type
@@ -5516,6 +5525,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: other-service-account
           tolerations:
             - effect: NoSchedule
               key: node

@@ -20,6 +20,7 @@
 {{- $pull := get $svcData "pull" -}}
 {{- $rp := get $svcData "replicas" -}}
 {{- $rs := get $svcData "resources" -}}
+{{- $san := get $svcData "serviceAccountName" -}}
 {{- $sct := get $svcData "securityContext" -}}
 {{- $tl := get $svcData "tolerations" -}}
 
@@ -52,6 +53,9 @@ spec:
 {{ toYaml $anns | nindent 8 }}
 {{- end }}
     spec:
+{{- if $san }}
+      serviceAccountName: {{ $san }}
+{{- end }}
 {{- if gt (len $aff) 0 }}
       affinity:
 {{ toYaml $aff | nindent 8 }}

@@ -142,6 +142,13 @@ true
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.summary.inference.serviceAccountName" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
 {{- define "groundx.summary.inference.swapSpace" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
@@ -166,6 +173,7 @@ true
 {{- $in := dig "inference" dict $b -}}
 {{- $rep := (include "groundx.summary.inference.replicas" . | fromYaml) -}}
 {{- $rt := include "groundx.summary.inference.runtimeClassName" . -}}
+{{- $san := include "groundx.summary.inference.serviceAccountName" . -}}
 {{- $cfg := dict
   "baseName"     ($svc)
   "cfg"          (printf "%s-config-py-map" $svc)
@@ -183,7 +191,10 @@ true
   "workingDir"   ("/workspace")
 -}}
 {{- if ne $rt "" -}}
-{{- $_ := set $cfg "runtimeClassName" $rt -}}
+  {{- $_ := set $cfg "runtimeClassName" $rt -}}
+{{- end -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
 {{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}

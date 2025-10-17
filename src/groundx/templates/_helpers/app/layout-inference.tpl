@@ -63,6 +63,13 @@ true
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
+{{- define "groundx.layout.inference.serviceAccountName" -}}
+{{- $b := .Values.layout | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
 {{- define "groundx.layout.inference.threads" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "inference" dict $b -}}
@@ -80,6 +87,7 @@ true
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "inference" dict $b -}}
 {{- $rep := (include "groundx.layout.inference.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.layout.inference.serviceAccountName" . -}}
 {{- $cfg := dict
   "baseName"    ($svc)
   "cfg"         (printf "%s-config-py-map" $svc)
@@ -98,6 +106,9 @@ true
   "workers"     (include "groundx.layout.inference.workers" .)
   "workingDir"  ("/app")
 -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

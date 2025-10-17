@@ -51,6 +51,13 @@ true
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
+{{- define "groundx.layout.map.serviceAccountName" -}}
+{{- $b := .Values.layout | default dict -}}
+{{- $in := dig "map" dict $b -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
 {{- define "groundx.layout.map.threads" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "map" dict $b -}}
@@ -67,6 +74,7 @@ true
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "map" dict $b -}}
 {{- $rep := (include "groundx.layout.map.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.layout.map.serviceAccountName" . -}}
 {{- $cfg := dict
   "celery"    ("document.celery_process")
   "image"     (include "groundx.layout.map.image" .)
@@ -80,6 +88,9 @@ true
   "threads"   (include "groundx.layout.map.threads" .)
   "workers"   (include "groundx.layout.map.workers" .)
 -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

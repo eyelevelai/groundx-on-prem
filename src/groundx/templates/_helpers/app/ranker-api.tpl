@@ -72,11 +72,11 @@ false
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
-{{- define "groundx.ranker.api.ssl" -}}
+{{- define "groundx.ranker.api.serviceAccountName" -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "ssl" "false" $lb  }}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
 {{- end }}
 
 {{- define "groundx.ranker.api.serviceUrl" -}}
@@ -92,6 +92,13 @@ false
 {{- else -}}
 {{ printf "%s://%s-api.%s.svc.cluster.local:%v" $scheme $name $ns $port }}
 {{- end -}}
+{{- end }}
+
+{{- define "groundx.ranker.api.ssl" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
+{{ dig "ssl" "false" $lb  }}
 {{- end }}
 
 {{- define "groundx.ranker.api.threads" -}}
@@ -142,6 +149,7 @@ false
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "api" dict $b -}}
 {{- $rep := (include "groundx.ranker.api.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.ranker.api.serviceAccountName" . -}}
 {{- $cfg := dict
   "cfg"          (printf "%s-config-py-map" $svc)
   "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
@@ -155,6 +163,9 @@ false
   "pull"         (include "groundx.ranker.api.imagePullPolicy" .)
   "replicas"     ($rep)
 -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

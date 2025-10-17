@@ -80,15 +80,11 @@ false
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
-{{- define "groundx.extract.api.ssl" -}}
+{{- define "groundx.extract.api.serviceAccountName" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "ssl" "false" $lb  }}
-{{- else -}}
-false
-{{- end -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
 {{- end }}
 
 {{- define "groundx.extract.api.serviceUrl" -}}
@@ -104,6 +100,17 @@ false
 {{ printf "%s://%s-api.%s.svc.cluster.local" $scheme $name $ns }}
 {{- else -}}
 {{ printf "%s://%s-api.%s.svc.cluster.local:%v" $scheme $name $ns $port }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.extract.api.ssl" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- if hasKey $in "loadBalancer" -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
+{{ dig "ssl" "false" $lb  }}
+{{- else -}}
+false
 {{- end -}}
 {{- end }}
 
@@ -157,6 +164,7 @@ false
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "api" dict $b -}}
 {{- $rep := (include "groundx.extract.api.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.extract.api.serviceAccountName" . -}}
 {{- $data := dict
   (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .)
   (include "groundx.extract.save.secretName" .) (include "groundx.extract.save.secretName" .)
@@ -177,6 +185,9 @@ false
   "replicas"     ($rep)
   "secrets"      ($data)
 -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

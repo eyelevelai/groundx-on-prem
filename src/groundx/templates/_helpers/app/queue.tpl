@@ -55,6 +55,12 @@ true
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
+{{- define "groundx.queue.serviceAccountName" -}}
+{{- $in := .Values.queue | default dict -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
 {{- define "groundx.queue.serviceUrl" -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- $name := include "groundx.queue.serviceName" . -}}
@@ -69,17 +75,21 @@ true
 {{- define "groundx.queue.settings" -}}
 {{- $in := .Values.queue | default dict -}}
 {{- $rep := (include "groundx.queue.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.queue.serviceAccountName" . -}}
 {{- $cfg := dict
   "dependencies" (dict
     "groundx" "groundx"
   )
+  "image"        (include "groundx.queue.image" .)
+  "name"         (include "groundx.queue.serviceName" .)
   "node"         (include "groundx.queue.node" .)
+  "port"         (include "groundx.queue.containerPort" .)
+  "pull"         (include "groundx.queue.imagePullPolicy" .)
   "replicas"     ($rep)
 -}}
-{{- $_ := set $cfg "name"         (include "groundx.queue.serviceName" .) -}}
-{{- $_ := set $cfg "image"        (include "groundx.queue.image" .) -}}
-{{- $_ := set $cfg "port"         (include "groundx.queue.containerPort" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.queue.imagePullPolicy" .) -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

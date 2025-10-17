@@ -137,6 +137,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: existing-service-account
           tolerations:
             - effect: NoSchedule
               key: node
@@ -360,6 +361,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: existing-service-account
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3849,6 +3851,7 @@
             disktype: ssd
           securityContext:
             fsGroup: 2000
+          serviceAccountName: other-service-account
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4075,6 +4078,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: other-service-account
           tolerations:
             - effect: NoSchedule
               key: workload-type
@@ -4305,6 +4309,7 @@
           runtimeClassName: abc
           securityContext:
             fsGroup: 2000
+          serviceAccountName: other-service-account
           volumes:
             - configMap:
                 name: config-models-map

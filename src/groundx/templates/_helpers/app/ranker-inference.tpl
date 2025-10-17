@@ -75,6 +75,13 @@ true
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
+{{- define "groundx.ranker.inference.serviceAccountName" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
 {{- define "groundx.ranker.inference.threads" -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "inference" dict $b -}}
@@ -92,6 +99,7 @@ true
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "inference" dict $b -}}
 {{- $rep := (include "groundx.ranker.inference.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.ranker.inference.serviceAccountName" . -}}
 {{- $cfg := dict
   "baseName"     ($svc)
   "celery"       ("ranker.celery.appSearch")
@@ -108,6 +116,9 @@ true
   "supervisord"  (printf "%s-inference-supervisord-conf-map" $svc)
   "workingDir"   ("/workspace")
 -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

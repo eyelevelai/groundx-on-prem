@@ -55,6 +55,12 @@ true
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
+{{- define "groundx.summaryClient.serviceAccountName" -}}
+{{- $in := .Values.summaryClient | default dict -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
 {{- define "groundx.summaryClient.serviceUrl" -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- $name := include "groundx.summaryClient.serviceName" . -}}
@@ -69,17 +75,21 @@ true
 {{- define "groundx.summaryClient.settings" -}}
 {{- $in := .Values.summaryClient | default dict -}}
 {{- $rep := (include "groundx.summaryClient.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.summaryClient.serviceAccountName" . -}}
 {{- $cfg := dict
   "dependencies" (dict
     "groundx" "groundx"
   )
+  "image"        (include "groundx.summaryClient.image" .)
+  "name"         (include "groundx.summaryClient.serviceName" .)
   "node"         (include "groundx.summaryClient.node" .)
+  "port"         (include "groundx.summaryClient.containerPort" .)
+  "pull"         (include "groundx.summaryClient.imagePullPolicy" .)
   "replicas"     ($rep)
 -}}
-{{- $_ := set $cfg "name"         (include "groundx.summaryClient.serviceName" .) -}}
-{{- $_ := set $cfg "image"        (include "groundx.summaryClient.image" .) -}}
-{{- $_ := set $cfg "port"         (include "groundx.summaryClient.containerPort" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.summaryClient.imagePullPolicy" .) -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

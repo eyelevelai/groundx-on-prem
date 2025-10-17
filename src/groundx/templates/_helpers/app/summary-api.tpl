@@ -76,11 +76,11 @@ false
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
-{{- define "groundx.summary.api.ssl" -}}
+{{- define "groundx.summary.api.serviceAccountName" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "ssl" "false" $lb  }}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
 {{- end }}
 
 {{- define "groundx.summary.api.serviceUrl" -}}
@@ -97,6 +97,13 @@ false
 {{- else -}}
 {{ printf "%s://%s-api.%s.svc.cluster.local:%v" $scheme $name $ns $port }}
 {{- end -}}
+{{- end }}
+
+{{- define "groundx.summary.api.ssl" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
+{{ dig "ssl" "false" $lb  }}
 {{- end }}
 
 {{- define "groundx.summary.api.threads" -}}
@@ -149,6 +156,7 @@ false
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "api" dict $b -}}
 {{- $rep := (include "groundx.summary.api.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.summary.api.serviceAccountName" . -}}
 {{- $cfg := dict
   "cfg"          (printf "%s-config-py-map" $svc)
   "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
@@ -162,14 +170,9 @@ false
   "pull"         (include "groundx.summary.api.imagePullPolicy" .)
   "replicas"     ($rep)
 -}}
-{{- $_ := set $cfg "cfg"          (printf "%s-config-py-map" $svc) -}}
-{{- $_ := set $cfg "name"         (include "groundx.summary.api.serviceName" .) -}}
-{{- $_ := set $cfg "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc) -}}
-{{- $_ := set $cfg "image"        (include "groundx.summary.api.image" .) -}}
-{{- $_ := set $cfg "isRoute"      (include "groundx.summary.api.isRoute" .) -}}
-{{- $_ := set $cfg "loadBalancer" (include "groundx.summary.api.loadBalancer" .) -}}
-{{- $_ := set $cfg "port"         (include "groundx.summary.api.containerPort" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.summary.api.imagePullPolicy" .) -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

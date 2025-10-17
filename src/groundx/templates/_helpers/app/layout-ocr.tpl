@@ -63,6 +63,13 @@ true
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
+{{- define "groundx.layout.ocr.serviceAccountName" -}}
+{{- $b := .Values.layout | default dict -}}
+{{- $in := dig "ocr" dict $b -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
 {{- define "groundx.layout.ocr.threads" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "ocr" dict $b -}}
@@ -85,6 +92,7 @@ true
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "ocr" dict $b -}}
 {{- $rep := (include "groundx.layout.ocr.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.layout.ocr.serviceAccountName" . -}}
 {{- $cfg := dict
   "celery"    ("document.celery_process")
   "image"     (include "groundx.layout.ocr.image" .)
@@ -98,6 +106,9 @@ true
   "threads"   (include "groundx.layout.ocr.threads" .)
   "workers"   (include "groundx.layout.ocr.workers" .)
 -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

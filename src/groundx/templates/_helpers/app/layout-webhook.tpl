@@ -66,14 +66,10 @@ false
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
-{{- define "groundx.layoutWebhook.ssl" -}}
+{{- define "groundx.layoutWebhook.serviceAccountName" -}}
 {{- $in := .Values.layoutWebhook | default dict -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "ssl" "false" $lb  }}
-{{- else -}}
-false
-{{- end -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
 {{- end }}
 
 {{- define "groundx.layoutWebhook.serviceUrl" -}}
@@ -88,6 +84,16 @@ false
 {{ printf "%s://%s.%s.svc.cluster.local" $scheme $name $ns }}
 {{- else -}}
 {{ printf "%s://%s.%s.svc.cluster.local:%v" $scheme $name $ns $port }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.layoutWebhook.ssl" -}}
+{{- $in := .Values.layoutWebhook | default dict -}}
+{{- if hasKey $in "loadBalancer" -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
+{{ dig "ssl" "false" $lb  }}
+{{- else -}}
+false
 {{- end -}}
 {{- end }}
 
@@ -117,6 +123,7 @@ false
 {{- define "groundx.layoutWebhook.settings" -}}
 {{- $in := .Values.layoutWebhook | default dict -}}
 {{- $rep := (include "groundx.layoutWebhook.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.layoutWebhook.serviceAccountName" . -}}
 {{- $cfg := dict
   "dependencies" (dict
     "groundx" "groundx"
@@ -130,6 +137,9 @@ false
   "pull"         (include "groundx.layoutWebhook.imagePullPolicy" .)
   "replicas"     ($rep)
 -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}
