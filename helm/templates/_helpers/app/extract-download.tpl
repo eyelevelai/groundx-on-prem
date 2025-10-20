@@ -56,6 +56,13 @@ false
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
+{{- define "groundx.extract.download.serviceAccountName" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "download" dict $b -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
 {{- define "groundx.extract.download.threads" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "download" dict $b -}}
@@ -72,23 +79,30 @@ false
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "download" dict $b -}}
 {{- $rep := (include "groundx.extract.download.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.extract.download.serviceAccountName" . -}}
 {{- $data := dict
   (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .)
   (include "groundx.extract.save.secretName" .) (include "groundx.extract.save.secretName" .)
 -}}
 {{- $cfg := dict
-  "celery"   ("celery_agents")
-  "image"    (include "groundx.extract.download.image" .)
-  "name"     (include "groundx.extract.download.serviceName" .)
-  "node"     (include "groundx.extract.download.node" .)
-  "pull"     (include "groundx.extract.download.imagePullPolicy" .)
-  "queue"    (include "groundx.extract.download.queue" .)
-  "replicas" ($rep)
-  "secrets"  ($data)
-  "service"  (include "groundx.extract.serviceName" .)
-  "threads"  (include "groundx.extract.download.threads" .)
-  "workers"  (include "groundx.extract.download.workers" .)
+  "celery"     ("celery_agents")
+  "fileDomain" (include "groundx.extract.file.serviceDependency" .)
+  "filePort"   (include "groundx.extract.file.port" .)
+  "image"      (include "groundx.extract.download.image" .)
+  "mapPrefix"  ("extract")
+  "name"       (include "groundx.extract.download.serviceName" .)
+  "node"       (include "groundx.extract.download.node" .)
+  "pull"       (include "groundx.extract.download.imagePullPolicy" .)
+  "queue"      (include "groundx.extract.download.queue" .)
+  "replicas"   ($rep)
+  "secrets"    ($data)
+  "service"    (include "groundx.extract.serviceName" .)
+  "threads"    (include "groundx.extract.download.threads" .)
+  "workers"    (include "groundx.extract.download.workers" .)
 -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

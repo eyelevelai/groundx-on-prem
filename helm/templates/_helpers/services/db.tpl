@@ -27,6 +27,11 @@ true
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.db.customSQL" -}}
+{{- $b := .Values.db | default dict -}}
+{{- dig "customSQL" "" $b }}
+{{- end }}
+
 {{- define "groundx.db.dbName" -}}
 {{- $in := .Values.db | default dict -}}
 {{ dig "dbName" "eyelevel" $in }}

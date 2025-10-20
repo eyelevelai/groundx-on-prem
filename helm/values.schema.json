@@ -4,12 +4,12 @@
     "groundxKey": { "type": "string", "minLength": 1 },
     "namespace": { "type": "string", "minLength": 1 },
     "imageType": { "type": "string" },
-    "ingestOnly": { "type": "boolean" },
     "languages": {
       "type": "array",
       "items": { "type": "string" }
     },
     "logLevel": { "type": "string" },
+    "mode": { "type": "string" },
     "admin": {
       "type": "object",
       "properties": {
@@ -66,6 +66,14 @@
         }
       },
       "required": ["pvClass", "type"],
+      "additionalProperties": false
+    },
+    "serviceAccount": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" }
+      },
+        "required": ["name"],
       "additionalProperties": false
     },
     "engines": {
@@ -212,6 +220,7 @@
     "db": {
       "type": "object",
       "properties": {
+        "customSQL": { "type": "string" },
         "dbName": { "type": "string" },
         "enabled": { "type": "boolean" },
         "existing": {
@@ -271,7 +280,7 @@
         "token": { "type": "string" },
         "username": { "type": "string" }
       },
-      "required": ["bucketName", "existing", "username", "password"],
+      "required": ["bucketName", "existing"],
       "additionalProperties": false
     },
     "search": {
@@ -311,8 +320,8 @@
           "additionalProperties": false
         },
         "key": { "type": "string" },
+        "region": { "type": "string" },
         "replicas": { "type": "integer" },
-        "resources": { "type": "object" },
         "retention": { "type": "integer" },
         "secret": { "type": "string" },
         "segment": { "type": "integer" },
@@ -329,6 +338,7 @@
                 "key": { "type": "string" },
                 "region": { "type": "string" },
                 "secret": { "type": "string" },
+                "token": { "type": "string" },
                 "topic": { "type": "string" },
                 "type": { "type": "string" },
                 "url": { "type": "string" }
@@ -343,6 +353,7 @@
                 "key": { "type": "string" },
                 "region": { "type": "string" },
                 "secret": { "type": "string" },
+                "token": { "type": "string" },
                 "topic": { "type": "string" },
                 "type": { "type": "string" },
                 "url": { "type": "string" }
@@ -357,6 +368,7 @@
                 "key": { "type": "string" },
                 "region": { "type": "string" },
                 "secret": { "type": "string" },
+                "token": { "type": "string" },
                 "topic": { "type": "string" },
                 "type": { "type": "string" },
                 "url": { "type": "string" }
@@ -371,6 +383,7 @@
                 "key": { "type": "string" },
                 "region": { "type": "string" },
                 "secret": { "type": "string" },
+                "token": { "type": "string" },
                 "topic": { "type": "string" },
                 "type": { "type": "string" },
                 "url": { "type": "string" }
@@ -385,6 +398,7 @@
                 "key": { "type": "string" },
                 "region": { "type": "string" },
                 "secret": { "type": "string" },
+                "token": { "type": "string" },
                 "topic": { "type": "string" },
                 "type": { "type": "string" },
                 "url": { "type": "string" }
@@ -393,7 +407,8 @@
             }
           },
           "additionalProperties": false
-        }
+        },
+        "token": { "type": "string" }
       },
       "required": [
         "existing"
@@ -439,6 +454,14 @@
             },
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
+            "serviceAccount": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" }
+              },
+                "required": ["name"],
+              "additionalProperties": false
+            },
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
             "tolerations": { "type": "array" },
@@ -508,6 +531,14 @@
             "resources": { "type": "object" },
             "runtimeClassName": { "type": "string" },
             "securityContext": { "type": "object" },
+            "serviceAccount": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" }
+              },
+                "required": ["name"],
+              "additionalProperties": false
+            },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
@@ -563,6 +594,14 @@
         },
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
+        "serviceAccount": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" }
+          },
+            "required": ["name"],
+          "additionalProperties": false
+        },
         "serviceName": { "type": "string" },
         "tolerations": { "type": "array" }
       },
@@ -608,6 +647,14 @@
             },
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
+            "serviceAccount": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" }
+              },
+                "required": ["name"],
+              "additionalProperties": false
+            },
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
             "tolerations": { "type": "array" },
@@ -642,6 +689,14 @@
             },
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
+            "serviceAccount": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" }
+              },
+                "required": ["name"],
+              "additionalProperties": false
+            },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
@@ -676,6 +731,14 @@
             },
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
+            "serviceAccount": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" }
+              },
+                "required": ["name"],
+              "additionalProperties": false
+            },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
@@ -709,6 +772,14 @@
             },
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
+            "serviceAccount": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" }
+              },
+                "required": ["name"],
+              "additionalProperties": false
+            },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
@@ -744,6 +815,14 @@
             },
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
+            "serviceAccount": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" }
+              },
+                "required": ["name"],
+              "additionalProperties": false
+            },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
             "type": { "type": "string" },
@@ -780,6 +859,14 @@
             },
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
+            "serviceAccount": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" }
+              },
+                "required": ["name"],
+              "additionalProperties": false
+            },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
@@ -813,6 +900,14 @@
             },
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
+            "serviceAccount": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" }
+              },
+                "required": ["name"],
+              "additionalProperties": false
+            },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
@@ -861,6 +956,14 @@
         },
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
+        "serviceAccount": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" }
+          },
+            "required": ["name"],
+          "additionalProperties": false
+        },
         "serviceName": { "type": "string" },
         "tolerations": { "type": "array" }
       },
@@ -901,6 +1004,14 @@
         },
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
+        "serviceAccount": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" }
+          },
+            "required": ["name"],
+          "additionalProperties": false
+        },
         "serviceName": { "type": "string" },
         "tolerations": { "type": "array" }
       },
@@ -933,6 +1044,14 @@
         },
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
+        "serviceAccount": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" }
+          },
+            "required": ["name"],
+          "additionalProperties": false
+        },
         "serviceName": { "type": "string" },
         "tolerations": { "type": "array" }
       },
@@ -965,6 +1084,14 @@
         },
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
+        "serviceAccount": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" }
+          },
+            "required": ["name"],
+          "additionalProperties": false
+        },
         "serviceName": { "type": "string" },
         "tolerations": { "type": "array" }
       },
@@ -1010,6 +1137,14 @@
             },
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
+            "serviceAccount": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" }
+              },
+                "required": ["name"],
+              "additionalProperties": false
+            },
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
             "tolerations": { "type": "array" },
@@ -1055,6 +1190,14 @@
             },
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
+            "serviceAccount": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" }
+              },
+                "required": ["name"],
+              "additionalProperties": false
+            },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
@@ -1093,6 +1236,14 @@
         },
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
+        "serviceAccount": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" }
+          },
+            "required": ["name"],
+          "additionalProperties": false
+        },
         "serviceName": { "type": "string" },
         "tolerations": { "type": "array" }
       },
@@ -1125,6 +1276,14 @@
         },
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
+        "serviceAccount": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" }
+          },
+            "required": ["name"],
+          "additionalProperties": false
+        },
         "serviceName": { "type": "string" },
         "tolerations": { "type": "array" }
       },
@@ -1148,7 +1307,6 @@
             "annotations": { "type": "object" },
             "apiBaseUrl": { "type": "string" },
             "apiKey": { "type": "string" },
-            "apiKeyEnv": { "type": "string" },
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
@@ -1173,6 +1331,14 @@
             "resources": { "type": "object" },
             "secretName": { "type": "string" },
             "securityContext": { "type": "object" },
+            "serviceAccount": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" }
+              },
+                "required": ["name"],
+              "additionalProperties": false
+            },
             "serviceType": { "type": "string" },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
@@ -1217,6 +1383,14 @@
             },
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
+            "serviceAccount": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" }
+              },
+                "required": ["name"],
+              "additionalProperties": false
+            },
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
             "tolerations": { "type": "array" },
@@ -1252,6 +1426,14 @@
             },
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
+            "serviceAccount": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" }
+              },
+                "required": ["name"],
+              "additionalProperties": false
+            },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
@@ -1260,12 +1442,23 @@
           "additionalProperties": false
         },
         "enabled": { "type": "boolean" },
+        "file": {
+          "type": "object",
+          "properties": {
+            "bucketName": { "type": "string" },
+            "password": { "type": "string" },
+            "region": { "type": "string" },
+            "serviceType": { "type": "string" },
+            "url": { "type": "string" },
+            "username": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
         "save": {
           "type": "object",
           "properties": {
             "affinity": { "type": "object" },
             "annotations": { "type": "object" },
-            "apiKeyEnv": { "type": "string" },
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
             "driveId": { "type": "string" },
@@ -1291,6 +1484,14 @@
             "resources": { "type": "object" },
             "secretName": { "type": "string" },
             "securityContext": { "type": "object" },
+            "serviceAccount": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" }
+              },
+                "required": ["name"],
+              "additionalProperties": false
+            },
             "threads": { "type": "integer" },
             "templateId": { "type": "string" },
             "tolerations": { "type": "array" },

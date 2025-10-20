@@ -51,6 +51,13 @@ true
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
+{{- define "groundx.layout.save.serviceAccountName" -}}
+{{- $b := .Values.layout | default dict -}}
+{{- $in := dig "save" dict $b -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
 {{- define "groundx.layout.save.threads" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "save" dict $b -}}
@@ -67,18 +74,23 @@ true
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "save" dict $b -}}
 {{- $rep := (include "groundx.layout.save.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.layout.save.serviceAccountName" . -}}
 {{- $cfg := dict
-  "celery"   ("document.celery_process")
-  "image"    (include "groundx.layout.save.image" .)
-  "name"     (include "groundx.layout.save.serviceName" .)
-  "node"     (include "groundx.layout.save.node" .)
-  "pull"     (include "groundx.layout.save.imagePullPolicy" .)
-  "queue"    (include "groundx.layout.save.queue" .)
-  "replicas" ($rep)
-  "service"  (include "groundx.layout.serviceName" .)
-  "threads"  (include "groundx.layout.save.threads" .)
-  "workers"  (include "groundx.layout.save.workers" .)
+  "celery"    ("document.celery_process")
+  "image"     (include "groundx.layout.save.image" .)
+  "mapPrefix" ("layout")
+  "name"      (include "groundx.layout.save.serviceName" .)
+  "node"      (include "groundx.layout.save.node" .)
+  "pull"      (include "groundx.layout.save.imagePullPolicy" .)
+  "queue"     (include "groundx.layout.save.queue" .)
+  "replicas"  ($rep)
+  "service"   (include "groundx.layout.serviceName" .)
+  "threads"   (include "groundx.layout.save.threads" .)
+  "workers"   (include "groundx.layout.save.workers" .)
 -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

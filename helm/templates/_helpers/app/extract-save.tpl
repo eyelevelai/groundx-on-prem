@@ -26,9 +26,7 @@ false
 {{- end }}
 
 {{- define "groundx.extract.save.apiKeyEnv" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $in := dig "save" dict $b -}}
-{{ dig "apiKeyEnv" "GCP_CREDENTIALS" $in }}
+GCP_CREDENTIALS
 {{- end }}
 
 {{- define "groundx.extract.save.driveId" -}}
@@ -109,6 +107,13 @@ false
 {{- $cfg | toYaml -}}
 {{- end }}
 
+{{- define "groundx.extract.save.serviceAccountName" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "save" dict $b -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
 {{- define "groundx.extract.save.threads" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "save" dict $b -}}
@@ -125,23 +130,30 @@ false
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "save" dict $b -}}
 {{- $rep := (include "groundx.extract.save.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.extract.save.serviceAccountName" . -}}
 {{- $data := dict
   (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .)
   (include "groundx.extract.save.secretName" .) (include "groundx.extract.save.secretName" .)
 -}}
 {{- $cfg := dict
-  "celery"   ("celery_agents")
-  "image"    (include "groundx.extract.save.image" .)
-  "name"     (include "groundx.extract.save.serviceName" .)
-  "node"     (include "groundx.extract.save.node" .)
-  "pull"     (include "groundx.extract.save.imagePullPolicy" .)
-  "queue"    (include "groundx.extract.save.queue" .)
-  "replicas" ($rep)
-  "secrets"  ($data)
-  "service"  (include "groundx.extract.serviceName" .)
-  "threads"  (include "groundx.extract.save.threads" .)
-  "workers"  (include "groundx.extract.save.workers" .)
+  "celery"     ("celery_agents")
+  "fileDomain" (include "groundx.extract.file.serviceDependency" .)
+  "filePort"   (include "groundx.extract.file.port" .)
+  "image"      (include "groundx.extract.save.image" .)
+  "mapPrefix"  ("extract")
+  "name"       (include "groundx.extract.save.serviceName" .)
+  "node"       (include "groundx.extract.save.node" .)
+  "pull"       (include "groundx.extract.save.imagePullPolicy" .)
+  "queue"      (include "groundx.extract.save.queue" .)
+  "replicas"   ($rep)
+  "secrets"    ($data)
+  "service"    (include "groundx.extract.serviceName" .)
+  "threads"    (include "groundx.extract.save.threads" .)
+  "workers"    (include "groundx.extract.save.workers" .)
 -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

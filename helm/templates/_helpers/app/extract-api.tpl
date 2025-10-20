@@ -80,6 +80,29 @@ false
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
+{{- define "groundx.extract.api.serviceAccountName" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
+{{- define "groundx.extract.api.serviceUrl" -}}
+{{- $ns := include "groundx.ns" . -}}
+{{- $name := include "groundx.extract.serviceName" . -}}
+{{- $port := include "groundx.extract.api.port" . -}}
+{{- $ir := include "groundx.groundx.isRoute" . -}}
+{{- $ssl := include "groundx.extract.api.ssl" . -}}
+{{- $sslStr := printf "%v" $ssl -}}
+{{- $scheme := "http" -}}
+{{- if and (eq $sslStr "true") (ne $ir "true") -}}{{- $scheme = "https" -}}{{- end -}}
+{{- if or (and (eq $sslStr "true") (eq $port "443")) (eq $port "80") -}}
+{{ printf "%s://%s-api.%s.svc.cluster.local" $scheme $name $ns }}
+{{- else -}}
+{{ printf "%s://%s-api.%s.svc.cluster.local:%v" $scheme $name $ns $port }}
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.extract.api.ssl" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "api" dict $b -}}
@@ -88,19 +111,6 @@ false
 {{ dig "ssl" "false" $lb  }}
 {{- else -}}
 false
-{{- end -}}
-{{- end }}
-
-{{- define "groundx.extract.api.serviceUrl" -}}
-{{- $ns := include "groundx.ns" . -}}
-{{- $name := include "groundx.extract.serviceName" . -}}
-{{- $port := include "groundx.extract.api.port" . -}}
-{{- $ssl := include "groundx.extract.api.ssl" . -}}
-{{- $sslStr := printf "%v" $ssl -}}
-{{- if or (and (eq $sslStr "true") (eq $port "443")) (eq $port "80") -}}
-{{ printf "http://%s-api.%s.svc.cluster.local" $name $ns }}
-{{- else -}}
-{{ printf "http://%s-api.%s.svc.cluster.local:%v" $name $ns $port }}
 {{- end -}}
 {{- end }}
 
@@ -154,16 +164,20 @@ false
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "api" dict $b -}}
 {{- $rep := (include "groundx.extract.api.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.extract.api.serviceAccountName" . -}}
 {{- $data := dict
   (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .)
   (include "groundx.extract.save.secretName" .) (include "groundx.extract.save.secretName" .)
 -}}
 {{- $cfg := dict
   "cfg"          (printf "%s-config-py-map" $svc)
+  "fileDomain"   (include "groundx.extract.file.serviceDependency" .)
+  "filePort"     (include "groundx.extract.file.port" .)
   "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
   "image"        (include "groundx.extract.api.image" .)
   "isRoute"      (include "groundx.extract.api.isRoute" .)
   "loadBalancer" (include "groundx.extract.api.loadBalancer" .)
+  "mapPrefix"    ("extract")
   "name"         (include "groundx.extract.api.serviceName" .)
   "node"         (include "groundx.extract.api.node" .)
   "port"         (include "groundx.extract.api.containerPort" .)
@@ -171,6 +185,9 @@ false
   "replicas"     ($rep)
   "secrets"      ($data)
 -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

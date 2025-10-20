@@ -72,11 +72,11 @@ false
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
-{{- define "groundx.ranker.api.ssl" -}}
+{{- define "groundx.ranker.api.serviceAccountName" -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "ssl" "false" $lb  }}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
 {{- end }}
 
 {{- define "groundx.ranker.api.serviceUrl" -}}
@@ -85,11 +85,20 @@ false
 {{- $port := include "groundx.ranker.api.port" . -}}
 {{- $ssl := include "groundx.ranker.api.ssl" . -}}
 {{- $sslStr := printf "%v" $ssl -}}
+{{- $scheme := "http" -}}
+{{- if eq $sslStr "true" -}}{{- $scheme = "https" -}}{{- end -}}
 {{- if or (and (eq $sslStr "true") (eq $port "443")) (eq $port "80") -}}
-{{ printf "http://%s-api.%s.svc.cluster.local" $name $ns }}
+{{ printf "%s://%s-api.%s.svc.cluster.local" $scheme $name $ns }}
 {{- else -}}
-{{ printf "http://%s-api.%s.svc.cluster.local:%v" $name $ns $port }}
+{{ printf "%s://%s-api.%s.svc.cluster.local:%v" $scheme $name $ns $port }}
 {{- end -}}
+{{- end }}
+
+{{- define "groundx.ranker.api.ssl" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
+{{ dig "ssl" "false" $lb  }}
 {{- end }}
 
 {{- define "groundx.ranker.api.threads" -}}
@@ -140,18 +149,23 @@ false
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "api" dict $b -}}
 {{- $rep := (include "groundx.ranker.api.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.ranker.api.serviceAccountName" . -}}
 {{- $cfg := dict
-  "node"     (include "groundx.ranker.api.node" .)
-  "replicas" ($rep)
+  "cfg"          (printf "%s-config-py-map" $svc)
+  "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
+  "image"        (include "groundx.ranker.api.image" .)
+  "isRoute"      (include "groundx.ranker.api.isRoute" .)
+  "loadBalancer" (include "groundx.ranker.api.loadBalancer" .)
+  "mapPrefix"    ("ranker")
+  "name"         (include "groundx.ranker.api.serviceName" .)
+  "node"         (include "groundx.ranker.api.node" .)
+  "port"         (include "groundx.ranker.api.containerPort" .)
+  "pull"         (include "groundx.ranker.api.imagePullPolicy" .)
+  "replicas"     ($rep)
 -}}
-{{- $_ := set $cfg "cfg"          (printf "%s-config-py-map" $svc) -}}
-{{- $_ := set $cfg "name"         (include "groundx.ranker.api.serviceName" .) -}}
-{{- $_ := set $cfg "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc) -}}
-{{- $_ := set $cfg "image"        (include "groundx.ranker.api.image" .) -}}
-{{- $_ := set $cfg "isRoute"      (include "groundx.ranker.api.isRoute" .) -}}
-{{- $_ := set $cfg "loadBalancer" (include "groundx.ranker.api.loadBalancer" .) -}}
-{{- $_ := set $cfg "port"         (include "groundx.ranker.api.containerPort" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.ranker.api.imagePullPolicy" .) -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

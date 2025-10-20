@@ -67,6 +67,28 @@ false
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
+{{- define "groundx.groundx.serviceAccountName" -}}
+{{- $in := .Values.groundx | default dict -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
+{{- define "groundx.groundx.serviceUrl" -}}
+{{- $ns := include "groundx.ns" . -}}
+{{- $name := include "groundx.groundx.serviceName" . -}}
+{{- $port := include "groundx.groundx.port" . -}}
+{{- $ir := include "groundx.groundx.isRoute" . -}}
+{{- $ssl := include "groundx.groundx.ssl" . -}}
+{{- $sslStr := printf "%v" $ssl -}}
+{{- $scheme := "http" -}}
+{{- if and (eq $sslStr "true") (ne $ir "true") -}}{{- $scheme = "https" -}}{{- end -}}
+{{- if or (and (eq $sslStr "true") (eq $port "443")) (eq $port "80") -}}
+{{ printf "%s://%s.%s.svc.cluster.local" $scheme $name $ns }}
+{{- else -}}
+{{ printf "%s://%s.%s.svc.cluster.local:%v" $scheme $name $ns $port }}
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.groundx.ssl" -}}
 {{- $in := .Values.groundx | default dict -}}
 {{- if hasKey $in "loadBalancer" -}}
@@ -74,19 +96,6 @@ false
 {{ dig "ssl" "false" $lb  }}
 {{- else -}}
 false
-{{- end -}}
-{{- end }}
-
-{{- define "groundx.groundx.serviceUrl" -}}
-{{- $ns := include "groundx.ns" . -}}
-{{- $name := include "groundx.groundx.serviceName" . -}}
-{{- $port := include "groundx.groundx.port" . -}}
-{{- $ssl := include "groundx.groundx.ssl" . -}}
-{{- $sslStr := printf "%v" $ssl -}}
-{{- if or (and (eq $sslStr "true") (eq $port "443")) (eq $port "80") -}}
-{{ printf "http://%s.%s.svc.cluster.local" $name $ns }}
-{{- else -}}
-{{ printf "http://%s.%s.svc.cluster.local:%v" $name $ns $port }}
 {{- end -}}
 {{- end }}
 
@@ -127,9 +136,15 @@ false
 {{- $dpnd := dict
   "cache"  "cache"
   "file"   "file"
-  "search" "search"
   "db"     "db"
 -}}
+
+{{- $cs := include "groundx.search.create" . -}}
+{{- $es := include "groundx.search.existing" . -}}
+{{- if or (eq $cs "true") (eq $es "true") -}}
+{{- $_ := set $dpnd "search" "search" -}}
+{{- end -}}
+
 {{- $cd := include "groundx.stream.create" . -}}
 {{- $ed := include "groundx.stream.existing" . -}}
 {{- if or (eq $cd "true") (eq $ed "true") -}}
@@ -137,6 +152,8 @@ false
 {{- end -}}
 
 {{- $rep := (include "groundx.groundx.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.groundx.serviceAccountName" . -}}
+
 {{- $cfg := dict
   "dependencies" $dpnd
   "image"        (include "groundx.groundx.image" .)
@@ -148,6 +165,9 @@ false
   "pull"         (include "groundx.groundx.imagePullPolicy" .)
   "replicas"     ($rep)
 -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

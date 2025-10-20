@@ -63,6 +63,13 @@ true
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
+{{- define "groundx.layout.inference.serviceAccountName" -}}
+{{- $b := .Values.layout | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
 {{- define "groundx.layout.inference.threads" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "inference" dict $b -}}
@@ -80,23 +87,28 @@ true
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "inference" dict $b -}}
 {{- $rep := (include "groundx.layout.inference.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.layout.inference.serviceAccountName" . -}}
 {{- $cfg := dict
-  "node"     (include "groundx.layout.inference.node" .)
-  "replicas" ($rep)
+  "baseName"    ($svc)
+  "cfg"         (printf "%s-config-py-map" $svc)
+  "execOpts"    ("python /app/init-layout.py &&")
+  "fileSync"    ("true")
+  "image"       (include "groundx.layout.inference.image" .)
+  "mapPrefix"   ("layout")
+  "name"        (include "groundx.layout.inference.serviceName" .)
+  "node"        (include "groundx.layout.inference.node" .)
+  "port"        (include "groundx.layout.inference.containerPort" .)
+  "pull"        (include "groundx.layout.inference.imagePullPolicy" .)
+  "queue"       (include "groundx.layout.inference.queue" .)
+  "replicas"    ($rep)
+  "supervisord" (printf "%s-inference-supervisord-conf-map" $svc)
+  "threads"     (include "groundx.layout.inference.threads" .)
+  "workers"     (include "groundx.layout.inference.workers" .)
+  "workingDir"  ("/app")
 -}}
-{{- $_ := set $cfg "baseName"     ($svc) -}}
-{{- $_ := set $cfg "cfg"          (printf "%s-config-py-map" $svc) -}}
-{{- $_ := set $cfg "execOpts"     ("python /app/init-layout.py &&") -}}
-{{- $_ := set $cfg "fileSync"     ("true") -}}
-{{- $_ := set $cfg "name"         (include "groundx.layout.inference.serviceName" .) -}}
-{{- $_ := set $cfg "image"        (include "groundx.layout.inference.image" .) -}}
-{{- $_ := set $cfg "port"         (include "groundx.layout.inference.containerPort" .) -}}
-{{- $_ := set $cfg "supervisord"  (printf "%s-inference-supervisord-conf-map" $svc) -}}
-{{- $_ := set $cfg "workingDir"   ("/app") -}}
-{{- $_ := set $cfg "pull"         (include "groundx.layout.inference.imagePullPolicy" .) -}}
-{{- $_ := set $cfg "queue"        (include "groundx.layout.inference.queue" .) -}}
-{{- $_ := set $cfg "threads"      (include "groundx.layout.inference.threads" .) -}}
-{{- $_ := set $cfg "workers"      (include "groundx.layout.inference.workers" .) -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

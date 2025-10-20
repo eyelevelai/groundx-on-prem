@@ -65,6 +65,8 @@ true
 {{- $parts := splitList "://" $url -}}
 {{- if and (kindIs "slice" $parts) (eq (len $parts) 2) -}}
 {{ index $parts 1 }}
+{{- else -}}
+{{ include "groundx.file.serviceHost" . }}
 {{- end -}}
 {{- else if and (hasKey $in "customDomain") (not (empty $in.customDomain)) }}
 {{ $in.customDomain }}
@@ -75,7 +77,7 @@ true
 
 {{- define "groundx.file.password" -}}
 {{- $in := .Values.file | default dict -}}
-{{ dig "password" "password" $in }}
+{{ dig "password" "" $in }}
 {{- end }}
 
 {{- define "groundx.file.port" -}}
@@ -188,7 +190,7 @@ false
 
 {{- define "groundx.file.username" -}}
 {{- $in := .Values.file | default dict -}}
-{{ dig "username" "eyelevel" $in }}
+{{ dig "username" "" $in }}
 {{- end }}
 
 {{- define "groundx.file.loadBalancer" -}}

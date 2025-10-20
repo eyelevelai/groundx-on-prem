@@ -1,7 +1,6 @@
 {{- $svcs := (include "groundx.golang.services" . | fromYaml) -}}
 {{- $engs := (include "groundx.engines" . | fromYaml) -}}
-{{- $pp := include "groundx.preProcessors" . | fromYaml -}}
-{{- $pres := $pp.preProcessors | default list -}}
+{{- $pres := include "groundx.preProcessors" . | fromYaml -}}
 {{- $fs := (include "groundx.file.settings" . | fromYaml) -}}
 {{- $ppq := (include "groundx.stream.topic.preProcess" . | fromYaml) -}}
 {{- $pq := (include "groundx.stream.topic.process" . | fromYaml) -}}
@@ -149,19 +148,29 @@ data:
           tokensPerMinute: {{ include "groundx.throughput.services.summaryClient.api" . }}
       page:
         tokensPerMinute: {{ include "groundx.throughput.tpm.page" . }}
+      {{- if eq (include "groundx.stream.hasKafka" .) "true" }}
       queue:
+        {{- if eq (dig "type" "kafka" $ppq) "kafka" }}
         - name: {{ include "groundx.preProcess.serviceName" . }}
           target: {{ dig "topic" "" $ppq }}
           threshold: {{ include "groundx.throughput.services.preProcess.queue" . }}
+        {{- end }}
+        {{- if eq (dig "type" "kafka" $pq) "kafka" }}
         - name: {{ include "groundx.process.serviceName" . }}
           target: {{ dig "topic" "" $pq }}
           threshold: {{ include "groundx.throughput.services.process.queue" . }}
+        {{- end }}
+        {{- if eq (dig "type" "kafka" $uq) "kafka" }}
         - name: {{ include "groundx.queue.serviceName" . }}
           target: {{ dig "topic" "" $uq }}
           threshold: {{ include "groundx.throughput.services.queue.queue" . }}
+        {{- end }}
+        {{- if eq (dig "type" "kafka" $lq) "kafka" }}
         - name: {{ include "groundx.upload.serviceName" . }}
           target: {{ dig "topic" "" $lq }}
           threshold: {{ include "groundx.throughput.services.upload.queue" . }}
+        {{- end }}
+      {{- end }}
       session:
         addr: {{ printf "%s:%v" (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) }}
         notCluster: {{ include "groundx.metrics.cache.notCluster" . }}
@@ -227,13 +236,9 @@ data:
       summarize: [8]
       summarizeChunks: [10]
       summarizeSections: [9]
-      {{- if gt (len $pres) 0 }}
-      extraPreDefaults:
-        {{- range $pres }}
-        - processorID: {{ .processorId }}
-          type: {{ .type }}
-        {{- end }}
-      {{- end }}
+      {{- if $pres -}}
+      {{ toYaml $pres | nindent 6 }}
+      {{- end -}}
       {{- if eq (include "groundx.ingestOnly" .) "true" }}
       extraPostDefaults:
         - processorID: 1
@@ -285,11 +290,15 @@ data:
       baseUrl: {{ printf "%s://%s" (get $fs "scheme") (get $fs "baseDomain") }}
       bucket: {{ get $fs "bucketName" }}
       bucketUrl: {{ printf "%s://%s" (get $fs "bucketScheme") (get $fs "bucketDomain") }}
+      {{- if and (hasKey $fs "username") (ne (get $fs "username") "") }}
       id: {{ get $fs "username" }}
+      {{- end }}
       {{- if and (hasKey $fs "region") (ne (get $fs "region") "") }}
       region: {{ get $fs "region" }}
       {{- end }}
+      {{- if and (hasKey $fs "password") (ne (get $fs "password") "") }}
       secret: {{ get $fs "password" }}
+      {{- end }}
       service: {{ get $fs "serviceType" }}
       ssl: {{ get $fs "ssl" }}
       {{- if and (hasKey $fs "token") (ne (get $fs "token") "") }}

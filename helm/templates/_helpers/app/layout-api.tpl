@@ -73,15 +73,11 @@ false
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
-{{- define "groundx.layout.api.ssl" -}}
+{{- define "groundx.layout.api.serviceAccountName" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "ssl" "false" $lb  }}
-{{- else -}}
-false
-{{- end -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
 {{- end }}
 
 {{- define "groundx.layout.api.serviceUrl" -}}
@@ -96,6 +92,17 @@ false
 {{ printf "%s://%s-api.%s.svc.cluster.local" $scheme $name $ns }}
 {{- else -}}
 {{ printf "%s://%s-api.%s.svc.cluster.local:%v" $scheme $name $ns $port }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.layout.api.ssl" -}}
+{{- $b := .Values.layout | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- if hasKey $in "loadBalancer" -}}
+{{- $lb := dig "loadBalancer" dict $in -}}
+{{ dig "ssl" "false" $lb  }}
+{{- else -}}
+false
 {{- end -}}
 {{- end }}
 
@@ -152,18 +159,23 @@ false
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "api" dict $b -}}
 {{- $rep := (include "groundx.layout.api.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.layout.api.serviceAccountName" . -}}
 {{- $cfg := dict
-  "node"     (include "groundx.layout.api.node" .)
-  "replicas" ($rep)
+  "cfg"          (printf "%s-config-py-map" $svc)
+  "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
+  "image"        (include "groundx.layout.api.image" .)
+  "isRoute"      (include "groundx.layout.api.isRoute" .)
+  "loadBalancer" (include "groundx.layout.api.loadBalancer" .)
+  "mapPrefix"    ("layout")
+  "name"         (include "groundx.layout.api.serviceName" .)
+  "node"         (include "groundx.layout.api.node" .)
+  "port"         (include "groundx.layout.api.containerPort" .)
+  "pull"         (include "groundx.layout.api.imagePullPolicy" .)
+  "replicas"     ($rep)
 -}}
-{{- $_ := set $cfg "cfg"          (printf "%s-config-py-map" $svc) -}}
-{{- $_ := set $cfg "name"         (include "groundx.layout.api.serviceName" .) -}}
-{{- $_ := set $cfg "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc) -}}
-{{- $_ := set $cfg "image"        (include "groundx.layout.api.image" .) -}}
-{{- $_ := set $cfg "isRoute"      (include "groundx.layout.api.isRoute" .) -}}
-{{- $_ := set $cfg "loadBalancer" (include "groundx.layout.api.loadBalancer" .) -}}
-{{- $_ := set $cfg "port"         (include "groundx.layout.api.containerPort" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.layout.api.imagePullPolicy" .) -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

@@ -51,6 +51,13 @@ true
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
+{{- define "groundx.layout.correct.serviceAccountName" -}}
+{{- $b := .Values.layout | default dict -}}
+{{- $in := dig "correct" dict $b -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
 {{- define "groundx.layout.correct.threads" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "correct" dict $b -}}
@@ -66,19 +73,24 @@ true
 {{- define "groundx.layout.correct.settings" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "correct" dict $b -}}
-{{- $rep := (include "groundx.layout.api.replicas" . | fromYaml) -}}
+{{- $rep := (include "groundx.layout.correct.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.layout.correct.serviceAccountName" . -}}
 {{- $cfg := dict
-  "celery"   ("document.celery_process")
-  "image"    (include "groundx.layout.correct.image" .)
-  "name"     (include "groundx.layout.correct.serviceName" .)
-  "node"     (include "groundx.layout.correct.node" .)
-  "pull"     (include "groundx.layout.correct.imagePullPolicy" .)
-  "queue"    (include "groundx.layout.correct.queue" .)
-  "replicas" ($rep)
-  "service"  (include "groundx.layout.serviceName" .)
-  "threads"  (include "groundx.layout.correct.threads" .)
-  "workers"  (include "groundx.layout.correct.workers" .)
+  "celery"    ("document.celery_process")
+  "image"     (include "groundx.layout.correct.image" .)
+  "mapPrefix" ("layout")
+  "name"      (include "groundx.layout.correct.serviceName" .)
+  "node"      (include "groundx.layout.correct.node" .)
+  "pull"      (include "groundx.layout.correct.imagePullPolicy" .)
+  "queue"     (include "groundx.layout.correct.queue" .)
+  "replicas"  ($rep)
+  "service"   (include "groundx.layout.serviceName" .)
+  "threads"   (include "groundx.layout.correct.threads" .)
+  "workers"   (include "groundx.layout.correct.workers" .)
 -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

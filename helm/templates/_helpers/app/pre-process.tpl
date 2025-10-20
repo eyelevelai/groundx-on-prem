@@ -55,6 +55,12 @@ true
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
+{{- define "groundx.preProcess.serviceAccountName" -}}
+{{- $in := .Values.preProcess | default dict -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
 {{- define "groundx.preProcess.serviceUrl" -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- $name := include "groundx.preProcess.serviceName" . -}}
@@ -69,17 +75,21 @@ true
 {{- define "groundx.preProcess.settings" -}}
 {{- $in := .Values.preProcess | default dict -}}
 {{- $rep := (include "groundx.preProcess.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.preProcess.serviceAccountName" . -}}
 {{- $cfg := dict
   "dependencies" (dict
     "groundx" "groundx"
   )
+  "image"        (include "groundx.preProcess.image" .)
+  "name"         (include "groundx.preProcess.serviceName" .)
   "node"         (include "groundx.preProcess.node" .)
+  "port"         (include "groundx.preProcess.containerPort" .)
+  "pull"         (include "groundx.preProcess.imagePullPolicy" .)
   "replicas"     ($rep)
 -}}
-{{- $_ := set $cfg "name"         (include "groundx.preProcess.serviceName" .) -}}
-{{- $_ := set $cfg "image"        (include "groundx.preProcess.image" .) -}}
-{{- $_ := set $cfg "port"         (include "groundx.preProcess.containerPort" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.preProcess.imagePullPolicy" .) -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}

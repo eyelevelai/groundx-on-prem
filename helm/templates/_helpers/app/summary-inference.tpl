@@ -142,6 +142,13 @@ true
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.summary.inference.serviceAccountName" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
 {{- define "groundx.summary.inference.swapSpace" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
@@ -166,23 +173,28 @@ true
 {{- $in := dig "inference" dict $b -}}
 {{- $rep := (include "groundx.summary.inference.replicas" . | fromYaml) -}}
 {{- $rt := include "groundx.summary.inference.runtimeClassName" . -}}
+{{- $san := include "groundx.summary.inference.serviceAccountName" . -}}
 {{- $cfg := dict
-  "node"     (include "groundx.summary.inference.node" .)
-  "replicas" ($rep)
+  "baseName"     ($svc)
+  "cfg"          (printf "%s-config-py-map" $svc)
+  "image"        (include "groundx.summary.inference.image" .)
+  "mapPrefix"    ("summary")
+  "modelParts"   ("00 01 02 03 04")
+  "modelVersion" ("g34b")
+  "name"         (include "groundx.summary.inference.serviceName" .)
+  "node"         (include "groundx.summary.inference.node" .)
+  "port"         (include "groundx.summary.inference.containerPort" .)
+  "pull"         (include "groundx.summary.inference.imagePullPolicy" .)
+  "pvc"          (include "groundx.summary.inference.pvc" . | fromYaml)
+  "replicas"     ($rep)
+  "supervisord"  (printf "%s-inference-supervisord-conf-map" $svc)
+  "workingDir"   ("/workspace")
 -}}
-{{- $_ := set $cfg "baseName"         ($svc) -}}
-{{- $_ := set $cfg "cfg"              (printf "%s-config-py-map" $svc) -}}
-{{- $_ := set $cfg "name"             (include "groundx.summary.inference.serviceName" .) -}}
-{{- $_ := set $cfg "image"            (include "groundx.summary.inference.image" .) -}}
-{{- $_ := set $cfg "modelParts"       ("00 01 02 03 04") -}}
-{{- $_ := set $cfg "modelVersion"     ("g34b") -}}
-{{- $_ := set $cfg "port"             (include "groundx.summary.inference.containerPort" .) -}}
-{{- $_ := set $cfg "pvc"              (include "groundx.summary.inference.pvc" . | fromYaml) -}}
-{{- $_ := set $cfg "supervisord"      (printf "%s-inference-supervisord-conf-map" $svc) -}}
-{{- $_ := set $cfg "workingDir"       ("/workspace") -}}
-{{- $_ := set $cfg "pull"             (include "groundx.summary.inference.imagePullPolicy" .) -}}
 {{- if ne $rt "" -}}
-{{- $_ := set $cfg "runtimeClassName" $rt -}}
+  {{- $_ := set $cfg "runtimeClassName" $rt -}}
+{{- end -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
 {{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}

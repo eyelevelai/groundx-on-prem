@@ -51,6 +51,12 @@ true
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
+{{- define "groundx.upload.serviceAccountName" -}}
+{{- $in := .Values.upload | default dict -}}
+{{- $ex := dig "serviceAccount" dict $in -}}
+{{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
 {{- define "groundx.upload.serviceUrl" -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- $name := include "groundx.upload.serviceName" . -}}
@@ -65,17 +71,21 @@ true
 {{- define "groundx.upload.settings" -}}
 {{- $in := .Values.upload | default dict -}}
 {{- $rep := (include "groundx.upload.replicas" . | fromYaml) -}}
+{{- $san := include "groundx.upload.serviceAccountName" . -}}
 {{- $cfg := dict
   "dependencies" (dict
     "groundx" "groundx"
   )
+  "image"        (include "groundx.upload.image" .)
+  "name"         (include "groundx.upload.serviceName" .)
   "node"         (include "groundx.upload.node" .)
+  "port"         (include "groundx.upload.containerPort" .)
+  "pull"         (include "groundx.upload.imagePullPolicy" .)
   "replicas"     ($rep)
 -}}
-{{- $_ := set $cfg "name"         (include "groundx.upload.serviceName" .) -}}
-{{- $_ := set $cfg "image"        (include "groundx.upload.image" .) -}}
-{{- $_ := set $cfg "port"         (include "groundx.upload.containerPort" .) -}}
-{{- $_ := set $cfg "pull"         (include "groundx.upload.imagePullPolicy" .) -}}
+{{- if and $san (ne $san "") -}}
+  {{- $_ := set $cfg "serviceAccountName" $san -}}
+{{- end -}}
 {{- if and (hasKey $in "affinity") (not (empty (get $in "affinity"))) -}}
   {{- $_ := set $cfg "affinity" (get $in "affinity") -}}
 {{- end -}}
