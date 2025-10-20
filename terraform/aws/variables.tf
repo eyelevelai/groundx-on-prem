@@ -200,7 +200,7 @@ variable "nodes" {
           kms_key_id            = null
           snapshot_id           = null
           throughput            = null
-          volume_size           = 50
+          volume_size           = 75
           volume_type           = "gp2"
         }
         instance_types          = ["g4dn.xlarge"]

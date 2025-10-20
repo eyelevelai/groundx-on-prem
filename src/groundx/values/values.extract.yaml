@@ -12,6 +12,10 @@ cluster:
   pvClass: eyelevel-pv
   type: eks
 
+  preProcessors:
+    - processorId: 13
+      type: extract
+
   # nodeLabels:
     # cpuMemory: eyelevel-cpu-memory
     # cpuOnly: eyelevel-cpu-only
@@ -21,6 +25,11 @@ cluster:
 
 serviceAccount:
   name: existing-service-account
+
+# uncomment to make the groundx API only available internally
+# groundx:
+  # loadBalancer:
+    # isInternal: true
 
 cache:
   metrics:

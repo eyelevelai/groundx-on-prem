@@ -173,7 +173,7 @@ eyelevel-cpu-memory
 
 eyelevel-gpu-layout
     16 GB     GPU memory
-    35 GB     disk drive space
+    75 GB     disk drive space
     4         CPU cores
     12 GB     RAM
 
@@ -312,7 +312,7 @@ The default `values.yaml` namespace assumes a name of `eyelevel`. If you choose 
 GroundX requires a PV class for some of the pods. If you have not created one, we have included a chart that will create one. You can run it with the following comand:
 
 ```bash
-helm install storageclass groundx/prereqs/storageclass -n eyelevel
+helm install groundx-storageclass groundx/groundx-storageclass -n eyelevel
 ```
 
 ### NVIDIA GPU Operator
@@ -431,7 +431,7 @@ helm install stream-operator oci://quay.io/strimzi-helm/strimzi-kafka-operator -
 Once the operator is ready, run the following command:
 
 ```bash
-helm install kafka-cluster groundx/prereqs/kafka-cluster -n eyelevel
+helm install groundx-kafka-cluster groundx/groundx-strimzi-kafka-cluster -n eyelevel
 ```
 
 ## Installing the GroundX Application
@@ -453,7 +453,7 @@ Instructions on how to configure GroundX On-Prem can by found in the main [READM
 For a GroundX deployment with default settings:
 
 1. Copy `sample.values.yaml` to something like `values.yaml`
-2. Update the following values:
+2. We minimally suggest updating the following values:
 
 ```yaml
 groundxKey      # a valid GroundX API key, to be used to look up licensing information
@@ -463,6 +463,12 @@ admin.email
 admin.password
 cluster.pvClass # an existing storage class
 cluster.type    # type of Kubernetes cluster
+```
+
+**Note**: `admin.apiKey` and `admin.username` must be valid UUIDs. We provide a helper script to generate random UUIDs. You can run it using thefollowing command:
+
+```bash
+bin/uuid
 ```
 
 ### Helm Installation

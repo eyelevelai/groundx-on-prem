@@ -12,6 +12,10 @@ cluster:
   pvClass: eyelevel-pv
   type: eks
 
+  preProcessors:
+    - processorId: 13
+      type: extract
+
 cache:
   metrics:
     enabled: false
@@ -112,6 +116,10 @@ extract:
 
     existingSecret: true
     secretName: extract-save-secret
+
+# gcpCredentials: JSON
+# or
+# --set-file extract.save.gcpCredentials=/path/to/gcp.json
 
     resources:
       requests:

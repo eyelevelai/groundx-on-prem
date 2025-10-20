@@ -26,9 +26,7 @@ false
 {{- end }}
 
 {{- define "groundx.extract.save.apiKeyEnv" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $in := dig "save" dict $b -}}
-{{ dig "apiKeyEnv" "GCP_CREDENTIALS" $in }}
+GCP_CREDENTIALS
 {{- end }}
 
 {{- define "groundx.extract.save.driveId" -}}

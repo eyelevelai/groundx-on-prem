@@ -6,7 +6,6 @@
 {{- $bucketSuffix := printf "%s/" (get $fs "bucketName") -}}
 {{- $st := include "groundx.extract.file.serviceType" . -}}
 {{- $ak := include "groundx.extract.agent.apiKey" . -}}
-{{- $ake := include "groundx.extract.agent.apiKeyEnv" . -}}
 {{- $bu := include "groundx.extract.agent.baseUrl" . -}}
 {{- $es := include "groundx.extract.agent.existingSecret" . -}}
 {{- $mid := include "groundx.extract.agent.modelId" . -}}
@@ -34,9 +33,6 @@ data:
     agent_settings = AgentSettings(
         {{- if ne $bu "" }}
         api_base={{ $bu | quote }},
-        {{- end }}
-        {{- if ne $ake (include "groundx.extract.agent.defaultApiKeyEnv" .) }}
-        api_key_env={{ $ake | quote }},
         {{- end }}
         {{- if ne $mid "" }}
         model_id={{ $mid | quote }},
