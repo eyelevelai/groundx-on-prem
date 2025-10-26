@@ -24,7 +24,7 @@ metadata:
 {{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
 data:
   config.py: |
-    from classes.settings import (
+    from groundx.extract import (
         AgentSettings,
         ContainerSettings,
         ContainerUploadSettings,
@@ -41,6 +41,7 @@ data:
 
     container_settings = ContainerSettings(
         broker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
+        cache_dir={{ include "groundx.extract.cacheDirectory" . | quote }},
         callback_api_key={{ include "groundx.extract.callbackApiKey" . | quote }},
         {{- if ne $did "" }}
         google_sheets_drive_id={{ $did | quote }},

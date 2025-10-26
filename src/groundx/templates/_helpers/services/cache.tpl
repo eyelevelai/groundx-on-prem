@@ -128,6 +128,17 @@ false
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
+{{- define "groundx.cache.serviceAccountName" -}}
+{{- $b := .Values.cache | default dict -}}
+{{ dig "serviceAccountName" (include "groundx.serviceAccountName" .) $b }}
+{{- end }}
+
+{{- define "groundx.metrics.cache.serviceAccountName" -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $in := (dig "metrics" nil $b) | default dict -}}
+{{ dig "serviceAccountName" (include "groundx.cache.serviceAccountName" .) $in }}
+{{- end }}
+
 {{- define "groundx.cache.addr" -}}
 {{- $in := .Values.cache | default dict -}}
 {{- $ex := (dig "existing" nil $in) | default dict -}}

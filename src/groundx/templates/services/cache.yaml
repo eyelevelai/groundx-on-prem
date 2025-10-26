@@ -13,10 +13,12 @@
 {{- $aff := dig "affinity" dict $in -}}
 {{- $anns := dig "annotations" dict $in -}}
 {{- $csct := dig "containerSecurityContext" dict $in -}}
+{{- $ips := include "groundx.imagePullSecrets" . | fromYaml -}}
 {{- $lbls := dig "labels" dict $in -}}
 {{- $nsl := dig "nodeSelector" dict $in -}}
 {{- $rs := dig "resources" dict $in -}}
 {{- $sct := dig "securityContext" dict $in -}}
+{{- $san := include "groundx.cache.serviceAccountName" . -}}
 {{- $tl := dig "tolerations" list $in -}}
 apiVersion: apps/v1
 kind: StatefulSet
@@ -43,6 +45,15 @@ spec:
 {{ toYaml $anns | nindent 8 }}
 {{- end }}
     spec:
+{{- if and ($san) (ne $san "") }}
+      serviceAccountName: {{ $san }}
+{{- end }}
+{{- if gt (len $ips) 0 }}
+      imagePullSecrets:
+{{- range $j, $inm := $ips }}
+        - name: {{ $inm }}
+{{- end }}
+{{- end }}
 {{- if gt (len $aff) 0 }}
       affinity:
 {{ toYaml $aff | nindent 8 }}

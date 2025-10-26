@@ -27,6 +27,10 @@
       "properties": {
         "hasMig": { "type": "boolean" },
         "imagePull": { "type": "string" },
+        "imagePullSecrets": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
         "nodeLabels": {
           "type": "object",
           "properties": {
@@ -157,6 +161,7 @@
         },
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
+        "serviceAccountName": { "type": "string" },
         "serviceName": { "type": "string" },
         "tolerations": { "type": "array" },
         "metrics": {
@@ -207,6 +212,7 @@
             },
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
+            "serviceAccountName": { "type": "string" },
             "serviceName": { "type": "string" },
             "tolerations": { "type": "array" }
           },
@@ -1399,6 +1405,7 @@
           "required": ["enabled"],
           "additionalProperties": false
         },
+        "cacheDirectory": { "type": "string" },
         "callbackApiKey": { "type": "string" },
         "download": {
           "type": "object",

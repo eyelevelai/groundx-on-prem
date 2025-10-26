@@ -54,6 +54,21 @@
 {{- dig "hasMig" false $b -}}
 {{- end }}
 
+{{- define "groundx.imagePull" -}}
+{{- $b := .Values.cluster | default dict -}}
+{{- dig "imagePull" "IfNotPresent" $b -}}
+{{- end }}
+
+{{- define "groundx.imagePullSecrets" -}}
+{{- $b := .Values.cluster | default dict -}}
+{{- $arr := dig "imagePullSecrets" list $b -}}
+{{- $dict := dict -}}
+{{- range $arr }}
+  {{- $_ := set $dict . . -}}
+{{- end }}
+{{ $dict | toYaml }}
+{{- end }}
+
 {{- define "groundx.imageRepository" -}}
 {{- $in := .Values.admin | default dict -}}
 {{- $repo := dig "imageRepository" "" $in -}}
@@ -62,11 +77,6 @@
 {{- else -}}
 public.ecr.aws/c9r4x6y5
 {{- end -}}
-{{- end }}
-
-{{- define "groundx.imagePull" -}}
-{{- $b := .Values.cluster | default dict -}}
-{{- dig "imagePull" "IfNotPresent" $b -}}
 {{- end }}
 
 {{- define "groundx.ingestOnly" -}}
