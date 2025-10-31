@@ -9,6 +9,7 @@
 {{- $csct := get $svcData "containerSecurityContext" -}}
 {{- $dpnd := get $svcData "dependencies" | default dict -}}
 {{- $image := get $svcData "image" -}}
+{{- $ips := include "groundx.imagePullSecrets" $ | fromYaml -}}
 {{- $io := include "groundx.ingestOnly" $ -}}
 {{- $ir := get $svcData "isRoute" -}}
 {{- $lbls := get $svcData "labels" -}}
@@ -55,6 +56,12 @@ spec:
     spec:
 {{- if $san }}
       serviceAccountName: {{ $san }}
+{{- end }}
+{{- if gt (len $ips) 0 }}
+      imagePullSecrets:
+{{- range $j, $inm := $ips }}
+        - name: {{ $inm }}
+{{- end }}
 {{- end }}
 {{- if gt (len $aff) 0 }}
       affinity:

@@ -14,6 +14,7 @@
 {{- $eopts := get $svcData "execOpts" | default "" -}}
 {{- $fs := get $svcData "fileSync" | default false -}}
 {{- $image := get $svcData "image" -}}
+{{- $ips := include "groundx.imagePullSecrets" $ | fromYaml -}}
 {{- $ic := get $svcData "celery" | default "false" -}}
 {{- $lb := get $svcData "loadBalancer" -}}
 {{- $lbls := get $svcData "labels" -}}
@@ -72,6 +73,12 @@ spec:
 {{- end }}
 {{- if $san }}
       serviceAccountName: {{ $san }}
+{{- end }}
+{{- if gt (len $ips) 0 }}
+      imagePullSecrets:
+{{- range $j, $inm := $ips }}
+        - name: {{ $inm }}
+{{- end }}
 {{- end }}
 {{- if gt (len $aff) 0 }}
       affinity:
