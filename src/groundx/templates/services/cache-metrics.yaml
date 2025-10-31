@@ -16,6 +16,7 @@
 {{- $aff := dig "affinity" dict $in -}}
 {{- $anns := dig "annotations" dict $in -}}
 {{- $csct := dig "containerSecurityContext" dict $in -}}
+{{- $ips := include "groundx.imagePullSecrets" . | fromYaml -}}
 {{- $lbls := dig "labels" dict $in -}}
 {{- $nsl := dig "nodeSelector" dict $in -}}
 {{- $rs := dig "resources" dict $in -}}
@@ -46,6 +47,12 @@ spec:
 {{ toYaml $anns | nindent 8 }}
 {{- end }}
     spec:
+{{- if gt (len $ips) 0 }}
+      imagePullSecrets:
+{{- range $j, $inm := $ips }}
+        - name: {{ $inm }}
+{{- end }}
+{{- end }}
 {{- if gt (len $aff) 0 }}
       affinity:
 {{ toYaml $aff | nindent 8 }}
