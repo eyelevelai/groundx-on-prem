@@ -3,6 +3,11 @@
 {{ dig "serviceName" "extract" $in }}
 {{- end }}
 
+{{- define "groundx.extract.cacheDirectory" -}}
+{{- $in := .Values.extract | default dict -}}
+{{ dig "cacheDirectory" "/app/cache" $in }}
+{{- end }}
+
 {{- define "groundx.extract.callbackApiKey" -}}
 {{- $in := .Values.extract | default dict -}}
 {{ dig "callbackApiKey" (include "groundx.admin.username" .) $in }}
