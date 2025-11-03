@@ -26,6 +26,7 @@ data:
         AgentSettings,
         ContainerSettings,
         ContainerUploadSettings,
+        GroundXSettings,
     )
 
     agent_settings = AgentSettings(
@@ -75,7 +76,11 @@ data:
     )
 
     groundx_settings = GroundXSettings(
+      {{- if ne (include "groundx.extract.callbackApiKey" .) "" }}
       api_key={{ include "groundx.extract.callbackApiKey" . | quote }},
-      base_url={{ include "groundx.extract.callbackUrl" . | quote }},
+      {{- end }}
+      {{- if ne (include "groundx.extract.serviceUrl" .) "" }}
+      base_url={{ include "groundx.extract.serviceUrl" . | quote }},
+      {{- end }}
     )
 {{- end }}

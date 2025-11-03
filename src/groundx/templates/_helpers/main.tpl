@@ -4,7 +4,7 @@
 
 {{- define "groundx.admin.apiKey" -}}
 {{- $b := .Values.admin | default dict -}}
-{{- dig "apiKey" "" $b -}}
+{{- (dig "apiKey" "" $b) | trim -}}
 {{- end }}
 
 {{- define "groundx.admin.email" -}}
@@ -19,7 +19,7 @@
 
 {{- define "groundx.admin.username" -}}
 {{- $b := .Values.admin | default dict -}}
-{{- dig "username" "" $b -}}
+{{- (dig "username" "" $b) | trim -}}
 {{- end }}
 
 {{- define "groundx.busybox.image" -}}

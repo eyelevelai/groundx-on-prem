@@ -18,6 +18,22 @@
 {{ dig "callbackUrl" (include "groundx.groundx.serviceUrl" .) $in }}
 {{- end }}
 
+{{- define "groundx.extract.serviceUrl" -}}
+{{- $in := .Values.extract | default dict -}}
+{{- $ur := dig "callbackUrl" (include "groundx.groundx.serviceUrl" .) $in -}}
+{{- $parts := splitList "://" $ur -}}
+{{- $scheme := "http" -}}
+{{- $host := "" -}}
+{{- if and (kindIs "slice" $parts) (eq (len $parts) 2) -}}
+  {{- $scheme = index $parts 0 -}}
+  {{- $hostWithPath := index $parts 1 -}}
+  {{- $host = (splitList "/" $hostWithPath | first) -}}
+{{- else -}}
+  {{- $host = $ur -}}
+{{- end -}}
+{{ printf "%s://%s/api" $scheme $host }}
+{{- end }}
+
 {{- define "groundx.extract.create" -}}
 {{- $in := .Values.extract | default dict -}}
 {{- if hasKey $in "enabled" -}}
