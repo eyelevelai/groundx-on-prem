@@ -166,11 +166,17 @@ false
 {{- $rep := (include "groundx.extract.api.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.extract.api.serviceAccountName" . -}}
 {{- $data := dict
-  (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .)
   (include "groundx.extract.save.secretName" .) (include "groundx.extract.save.secretName" .)
 -}}
+{{- $apiKey := include "groundx.extract.agent.apiKey" . -}}
+{{- if ne $apiKey "" -}}
+{{- $_ := set $data (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .) -}}
+{{- end -}}
 {{- $cfg := dict
   "cfg"          (printf "%s-config-py-map" $svc)
+  "dependencies" (dict
+    "callback" (include "groundx.extract.callbackUrl" .)
+  )
   "fileDomain"   (include "groundx.extract.file.serviceDependency" .)
   "filePort"     (include "groundx.extract.file.port" .)
   "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)

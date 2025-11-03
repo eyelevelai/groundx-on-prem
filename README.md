@@ -312,33 +312,41 @@ The default `values.yaml` namespace assumes a name of `eyelevel`. If you choose 
 GroundX requires a PV class for some of the pods. If you have not created one, we have included a chart that will create one. You can run it with the following comand:
 
 ```bash
-helm install groundx-storageclass groundx/groundx-storageclass -n eyelevel
+helm install groundx-storageclass \
+  groundx/groundx-storageclass \
+  -n eyelevel
 ```
 
 ### NVIDIA GPU Operator
 
 Some of the GroundX pods require access to an NVIDIA GPU. The easiest way to ensure access is to install the NVIDIA GPU Operator, which will ensure the appropriate drivers and libraries are installed on the GPU nodes.
 
-We have included a terraform script that will deploy the NVIDIA GPU Operator to your cluster. To run it, use the following commands:
+If you'd like to install the NVIDIA GPU Operator to your cluster, use the following commands below:
 
 ```bash
-terraform -chdir=terraform/nvidia-operator init --upgrade
-terraform -chdir=terraform/nvidia-operator apply -auto-approve
-```
+helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
+helm repo update
 
-Note: the `-chdir` flag assumed you are in the root directory of this repository with the path `terraform/nvidia-operator` to the NVIDIA GPU operator scripts.
+helm install nvidia-gpu-operator \
+  nvidia/gpu-operator \
+  -n nvidia-gpu-operator \
+  --create-namespace \
+  --atomic \
+  -f helm/values/values.nvidia.yaml
+```
 
 #### Installing in Microsoft Azure
 
-If you're installing the NVIDIA GPU operator into Microsoft Azure, be sure to set the terraform variable `cluster_type` to aks as there are specific configurations that must be applied to the operator. Other cluster types such as Amazon EKS and RedHat OpenShift do not require modification from the default settings.
+If you're installing the NVIDIA GPU operator into Microsoft Azure, be sure to set the `runtimeClass` to `nvidia-container-runtime`. We have included an example yaml that shows how to do this at `helm/values/values.nvidia.aks.yaml`.
 
-#### Uninstalling the NVIDIA GPU Operator
-
-If, for some reason, you wish to uninstall the GPU operator, run the following commands from the root directory of this repository:
+If you'd like to install the NVIDIA GPU Operator with this AKS-specific yaml, use the following commands below:
 
 ```bash
-terraform -chdir=terraform/nvidia-operator init --upgrade
-terraform -chdir=terraform/nvidia-operator destroy -auto-approve
+helm install nvidia-gpu-operator nvidia/gpu-operator \
+  -n nvidia-gpu-operator \
+  --create-namespace \
+  --atomic \
+  -f helm/values/values.nvidia.aks.yaml
 ```
 
 ## Installing Services
@@ -367,8 +375,14 @@ If you'd like to install MySQL to your cluster, use the following commands below
 helm repo add percona https://percona.github.io/percona-helm-charts/
 helm repo update
 
-helm install db-operator percona/pxc-operator -n eyelevel -f helm/values/values.db.operator.yaml --version 1.15.1
-helm install db-cluster percona/pxc-db -n eyelevel -f helm/values/values.db.cluster.yaml --version 1.15.1
+helm install db-operator \
+  percona/pxc-operator \
+  -n eyelevel \
+  -f helm/values/values.db.operator.yaml
+helm install db-cluster \
+  percona/pxc-db \
+  -n eyelevel \
+  -f helm/values/values.db.cluster.yaml
 ```
 
 ### MinIO
@@ -389,8 +403,14 @@ If you'd like to install MinIO to your cluster, use the following commands below
 helm repo add minio-operator https://operator.min.io/
 helm repo update
 
-helm install minio-operator minio-operator/operator -n eyelevel -f helm/values/values.file.operator.yaml --version 6.0.3
-helm install minio-cluster minio-operator/tenant -n eyelevel -f helm/values/values.file.tenant.yaml --version 6.0.3
+helm install minio-operator \
+  minio-operator/operator \
+  -n eyelevel \
+  -f helm/values/values.file.operator.yaml
+helm install minio-cluster \
+  minio-operator/tenant \
+  -n eyelevel \
+  -f helm/values/values.file.tenant.yaml
 ```
 
 ### OpenSearch
@@ -425,13 +445,18 @@ If you wish to use existing AWS SQS queues, you must configure the `stream.exist
 If you'd like to install Kafka to your cluster, use the following commands below:
 
 ```bash
-helm install stream-operator oci://quay.io/strimzi-helm/strimzi-kafka-operator -n eyelevel -f helm/values/values.stream.yaml --version 0.47.0
+helm install stream-operator \
+  oci://quay.io/strimzi-helm/strimzi-kafka-operator \
+  -n eyelevel \
+  -f helm/values/values.stream.yaml
 ```
 
 Once the operator is ready, run the following command:
 
 ```bash
-helm install groundx-kafka-cluster groundx/groundx-strimzi-kafka-cluster -n eyelevel
+helm install groundx-kafka-cluster \
+  groundx/groundx-strimzi-kafka-cluster \
+  -n eyelevel
 ```
 
 ## Installing the GroundX Application
@@ -483,7 +508,10 @@ helm repo update
 Once the repo is added, you can install the GroundX application by running the following command:
 
 ```bash
-helm install groundx groundx/groundx -n eyelevel -f values.yaml
+helm install groundx \
+  groundx/groundx \
+  -n eyelevel \
+  -f values.yaml
 ```
 
 Replace `values.yaml` with the path to the `values.yaml` file you created in the previous [Configuration](#configuration) step.

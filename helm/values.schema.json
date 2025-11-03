@@ -1,7 +1,7 @@
 {
   "type": "object",
   "properties": {
-    "groundxKey": { "type": "string", "minLength": 1 },
+    "licenseKey": { "type": "string" },
     "namespace": { "type": "string", "minLength": 1 },
     "imageType": { "type": "string" },
     "languages": {
@@ -27,6 +27,10 @@
       "properties": {
         "hasMig": { "type": "boolean" },
         "imagePull": { "type": "string" },
+        "imagePullSecrets": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
         "nodeLabels": {
           "type": "object",
           "properties": {
@@ -52,6 +56,10 @@
           "additionalProperties": false
         },
         "pvClass": { "type": "string" },
+        "secrets": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
         "tls": {
           "type": "object",
           "properties": {
@@ -157,6 +165,7 @@
         },
         "resources": { "type": "object" },
         "securityContext": { "type": "object" },
+        "serviceAccountName": { "type": "string" },
         "serviceName": { "type": "string" },
         "tolerations": { "type": "array" },
         "metrics": {
@@ -207,6 +216,7 @@
             },
             "resources": { "type": "object" },
             "securityContext": { "type": "object" },
+            "serviceAccountName": { "type": "string" },
             "serviceName": { "type": "string" },
             "tolerations": { "type": "array" }
           },
@@ -242,7 +252,7 @@
         "username": { "type": "string" }
       },
       "required": [
-        "dbName", "existing", "password", "privilegedPassword", "privilegedUsername", "username"
+        "dbName", "existing"
       ],
       "additionalProperties": false
     },
@@ -1399,7 +1409,9 @@
           "required": ["enabled"],
           "additionalProperties": false
         },
+        "cacheDirectory": { "type": "string" },
         "callbackApiKey": { "type": "string" },
+        "callbackUrl": { "type": "string" },
         "download": {
           "type": "object",
           "properties": {
@@ -1617,6 +1629,5 @@
       "additionalProperties": false
     }
   },
-  "required": ["admin", "cluster", "groundxKey"],
   "additionalProperties": false
 }

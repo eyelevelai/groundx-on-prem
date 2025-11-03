@@ -4,22 +4,22 @@
 
 {{- define "groundx.admin.apiKey" -}}
 {{- $b := .Values.admin | default dict -}}
-{{- dig "apiKey" "00000000-0000-0000-0000-000000000000" $b -}}
+{{- (dig "apiKey" "" $b) | trim -}}
 {{- end }}
 
 {{- define "groundx.admin.email" -}}
 {{- $b := .Values.admin | default dict -}}
-{{- dig "email" "support@mycorp.net" $b -}}
+{{- dig "email" "" $b -}}
 {{- end }}
 
 {{- define "groundx.admin.password" -}}
 {{- $b := .Values.admin | default dict -}}
-{{- dig "password" "password" $b -}}
+{{- dig "password" "" $b -}}
 {{- end }}
 
 {{- define "groundx.admin.username" -}}
 {{- $b := .Values.admin | default dict -}}
-{{- dig "username" "00000000-0000-0000-0000-000000000000" $b -}}
+{{- (dig "username" "" $b) | trim -}}
 {{- end }}
 
 {{- define "groundx.busybox.image" -}}
@@ -49,9 +49,18 @@
 {{ .Values.environment | default "prod" }}
 {{- end }}
 
+{{- define "groundx.licenseKey" -}}
+{{ .Values.licenseKey | default "" }}
+{{- end }}
+
 {{- define "groundx.hasMig" -}}
 {{- $b := .Values.cluster | default dict -}}
 {{- dig "hasMig" false $b -}}
+{{- end }}
+
+{{- define "groundx.imagePull" -}}
+{{- $b := .Values.cluster | default dict -}}
+{{- dig "imagePull" "IfNotPresent" $b -}}
 {{- end }}
 
 {{- define "groundx.imagePullSecrets" -}}
@@ -72,11 +81,6 @@
 {{- else -}}
 public.ecr.aws/c9r4x6y5
 {{- end -}}
-{{- end }}
-
-{{- define "groundx.imagePull" -}}
-{{- $b := .Values.cluster | default dict -}}
-{{- dig "imagePull" "IfNotPresent" $b -}}
 {{- end }}
 
 {{- define "groundx.ingestOnly" -}}
@@ -150,6 +154,16 @@ extraPreDefaults:
 {{- define "groundx.pvClass" -}}
 {{- $b := .Values.cluster | default dict -}}
 {{- dig "pvClass" "eyelevel-pv" $b -}}
+{{- end }}
+
+{{- define "groundx.secrets" -}}
+{{- $b := .Values.cluster | default dict -}}
+{{- $arr := dig "secrets" list $b -}}
+{{- $dict := dict -}}
+{{- range $arr }}
+  {{- $_ := set $dict . . -}}
+{{- end }}
+{{ $dict | toYaml }}
 {{- end }}
 
 {{- define "groundx.serviceAccountName" -}}

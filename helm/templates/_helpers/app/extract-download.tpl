@@ -81,9 +81,12 @@ false
 {{- $rep := (include "groundx.extract.download.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.extract.download.serviceAccountName" . -}}
 {{- $data := dict
-  (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .)
   (include "groundx.extract.save.secretName" .) (include "groundx.extract.save.secretName" .)
 -}}
+{{- $apiKey := include "groundx.extract.agent.apiKey" . -}}
+{{- if ne $apiKey "" -}}
+{{- $_ := set $data (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .) -}}
+{{- end -}}
 {{- $cfg := dict
   "celery"     ("celery_agents")
   "fileDomain" (include "groundx.extract.file.serviceDependency" .)

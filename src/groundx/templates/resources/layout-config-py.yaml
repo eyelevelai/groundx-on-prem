@@ -51,8 +51,14 @@ data:
         uploadType={{ $st | quote }},
         uploadURL={{ printf "%s://%s/%s" (get $fs "scheme") ($baseDomain) $bucketSuffix | quote }},
         validAPIKeys=[
-          {{ include "groundx.admin.apiKey" . | quote }},
-          {{ include "groundx.admin.username" . | quote }},
+        {{- $apiKey := include "groundx.admin.apiKey" . -}}
+        {{- if ne $apiKey "" }}
+          {{ $apiKey | quote }},
+        {{- end }}
+        {{- $admin := include "groundx.admin.username" . -}}
+        {{- if ne $admin "" }}
+          {{ $admin | quote }},
+        {{- end }}
           {{- $extras := (get .Values "cluster") | default (dict) -}}{{- $list := (get $extras "validApiKeys") | default (list) -}}{{- range $list }}
           {{ . | quote }},{{- end }}
         ],

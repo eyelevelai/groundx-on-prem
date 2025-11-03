@@ -20,11 +20,35 @@ data:
     _mysql: &mysql
       ro_addr: {{ include "groundx.db.ro" . }}
       rw_addr: {{ include "groundx.db.rw" . }}
+      {{- if ne (include "groundx.db.username" .) "" }}
       user: {{ include "groundx.db.username" . }}
+      {{- end }}
+      {{- if ne (include "groundx.db.password" .) "" }}
       password: {{ include "groundx.db.password" . }}
+      {{- end }}
       database: {{ include "groundx.db.dbName" . }}
       maxIdle: {{ include "groundx.db.maxIdle" . }}
       maxOpen: {{ include "groundx.db.maxOpen" . }}
+
+
+    {{- if or (ne (include "groundx.admin.apiKey" .) "") (ne (include "groundx.admin.email" .) "") (ne (include "groundx.admin.password" .) "") (ne (include "groundx.admin.username" .) "") (ne (include "groundx.licenseKey" .) "") }}
+    admin:
+      {{- if ne (include "groundx.admin.apiKey" .) "" }}
+      apiKey: {{ include "groundx.admin.apiKey" . }}
+      {{- end }}
+      {{- if ne (include "groundx.admin.email" .) "" }}
+      email: {{ include "groundx.admin.email" . }}
+      {{- end }}
+      {{- if ne (include "groundx.licenseKey" .) "" }}
+      licenseKey: {{ include "groundx.licenseKey" . }}
+      {{- end }}
+      {{- if ne (include "groundx.admin.password" .) "" }}
+      password: {{ include "groundx.admin.password" . }}
+      {{- end }}
+      {{- if ne (include "groundx.admin.username" .) "" }}
+      username: {{ include "groundx.admin.username" . }}
+      {{- end }}
+    {{- end }}
 
     ai:
       aws:
@@ -35,23 +59,31 @@ data:
           {{- range (include "groundx.languages" . | fromYamlArray) }}
             - {{ . }}
           {{- end }}
-          username: {{ include "groundx.search.username" .  }}
+          username: {{ include "groundx.search.username" . }}
           password: {{ include "groundx.search.password" . }}
       extract:
         client:
+          {{- if ne (include "groundx.admin.username" .) "" }}
           apiKey: {{ include "groundx.admin.username" . }}
+          {{- end }}
           baseURL: {{ include "groundx.extract.api.serviceUrl" . }}
           callbackURL: {{ include "groundx.layoutWebhook.serviceUrl" . }}
       eyelevelSearch:
+        {{- if ne (include "groundx.admin.username" .) "" }}
         apiKey: {{ include "groundx.admin.username" . }}
+        {{- end }}
         baseURL: {{ include "groundx.ranker.api.serviceUrl" . }}
       layout:
         client:
+          {{- if ne (include "groundx.admin.username" .) "" }}
           apiKey: {{ include "groundx.admin.username" . }}
+          {{- end }}
           baseURL: {{ include "groundx.layout.api.serviceUrl" . }}
           callbackURL: {{ include "groundx.layoutWebhook.serviceUrl" . }}
       openai:
+        {{- if ne (include "groundx.summary.apiKey" .) "" }}
         apiKey: {{ include "groundx.summary.apiKey" . }}
+        {{- end }}
         {{- if ne (include "groundx.summary.baseUrl" .) "" }}
         baseURL: {{ include "groundx.summary.baseUrl" . }}
         {{- end }}
@@ -110,9 +142,15 @@ data:
 
     init:
       ingestOnly: {{ include "groundx.ingestOnly" . }}
+      {{- if or (ne (include "groundx.db.privilegedUsername" .) "") (ne (include "groundx.db.privilegedPassword" .) "") }}
       mysql:
+        {{- if ne (include "groundx.db.privilegedUsername" .) "" }}
         user: {{ include "groundx.db.privilegedUsername" . }}
+        {{- end }}
+        {{- if ne (include "groundx.db.privilegedPassword" .) "" }}
         password: {{ include "groundx.db.privilegedPassword" . }}
+        {{- end }}
+      {{- end }}
       search:
         password: {{ include "groundx.search.privilegedPassword" . }}
         searchModel: all_access
@@ -209,7 +247,9 @@ data:
       baseURL: {{ include "groundx.groundx.serviceUrl" . }}/api/v1
       name: on-prem
       type: {{ include "groundx.groundx.type" . }}
+      {{- if ne (include "groundx.admin.username" .) "" }}
       username: {{ include "groundx.admin.username" . }}
+      {{- end }}
 
     preProcessFileServer:
       baseURL: {{ include "groundx.preProcess.serviceUrl" . }}
@@ -225,6 +265,7 @@ data:
 
     processors:
       convert: [11]
+      extract: [13]
       layout: [3]
       map: [4]
       saveFile: [2]

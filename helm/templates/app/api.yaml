@@ -9,8 +9,10 @@
 {{- $cfg := get $svcData "cfg" -}}
 {{- $cport := get $svcData "port" -}}
 {{- $csct := get $svcData "containerSecurityContext" -}}
+{{- $dpnd := get $svcData "dependencies" | default dict -}}
 {{- $guni := get $svcData "gunicorn" -}}
 {{- $image := get $svcData "image" -}}
+{{- $ips := include "groundx.imagePullSecrets" $ | fromYaml -}}
 {{- $ir := get $svcData "isRoute" -}}
 {{- $lb := get $svcData "loadBalancer" -}}
 {{- $lbls := get $svcData "labels" -}}
@@ -22,6 +24,12 @@
 {{- $pull := get $svcData "pull" -}}
 {{- $san := get $svcData "serviceAccountName" -}}
 {{- $scr := get $svcData "secrets" | default dict -}}
+{{- $globalSecrets := include "groundx.secrets" $ | fromYaml | default dict -}}
+{{- if gt (len $globalSecrets) 0 }}
+  {{- range $k, $v := $globalSecrets }}
+    {{- $_ := set $scr $k $v -}}
+  {{- end }}
+{{- end }}
 {{- $sct := get $svcData "securityContext" -}}
 {{- $svc := get $svcData "name" -}}
 {{- $tl := get $svcData "tolerations" -}}
@@ -58,6 +66,12 @@ spec:
 {{- if $san }}
       serviceAccountName: {{ $san }}
 {{- end }}
+{{- if gt (len $ips) 0 }}
+      imagePullSecrets:
+{{- range $j, $inm := $ips }}
+        - name: {{ $inm }}
+{{- end }}
+{{- end }}
 {{- if gt (len $aff) 0 }}
       affinity:
 {{ toYaml $aff | nindent 8 }}
@@ -70,6 +84,12 @@ spec:
           image: {{ include "groundx.busybox.image" $ }}
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
           command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.cache.addr" $) (include "groundx.cache.port" $) }}; do echo waiting for cache; sleep 2; done"]
+{{- if hasKey $dpnd "callback" }}
+        - name: wait-for-callback
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until wget --spider -q {{ dig "callback" "" $dpnd }}/health; do echo waiting for callback; sleep 2; done"]
+{{- end }}
       containers:
         - name: {{ $svc | quote }}
           image: {{ $image | quote }}

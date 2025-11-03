@@ -18,6 +18,7 @@
 {{- $nsl := dig "nodeSelector" dict $in -}}
 {{- $rs := dig "resources" dict $in -}}
 {{- $sct := dig "securityContext" dict $in -}}
+{{- $san := include "groundx.cache.serviceAccountName" . -}}
 {{- $tl := dig "tolerations" list $in -}}
 apiVersion: apps/v1
 kind: StatefulSet
@@ -44,6 +45,9 @@ spec:
 {{ toYaml $anns | nindent 8 }}
 {{- end }}
     spec:
+{{- if and ($san) (ne $san "") }}
+      serviceAccountName: {{ $san }}
+{{- end }}
 {{- if gt (len $ips) 0 }}
       imagePullSecrets:
 {{- range $j, $inm := $ips }}

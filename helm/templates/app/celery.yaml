@@ -12,6 +12,7 @@
 {{- $fileDomain := get $svcData "fileDomain" | default (include "groundx.file.serviceDependency" $) -}}
 {{- $filePort := get $svcData "filePort" | default (include "groundx.file.port" $) -}}
 {{- $image := get $svcData "image" -}}
+{{- $ips := include "groundx.imagePullSecrets" $ | fromYaml -}}
 {{- $lbls := get $svcData "labels" -}}
 {{- $mapPrefix := get $svcData "mapPrefix" -}}
 {{- $name := get $svcData "name" -}}
@@ -22,6 +23,12 @@
 {{- $pull := get $svcData "pull" -}}
 {{- $san := get $svcData "serviceAccountName" -}}
 {{- $scr := get $svcData "secrets" | default dict -}}
+{{- $globalSecrets := include "groundx.secrets" $ | fromYaml | default dict -}}
+{{- if gt (len $globalSecrets) 0 }}
+  {{- range $k, $v := $globalSecrets }}
+    {{- $_ := set $scr $k $v -}}
+  {{- end }}
+{{- end }}
 {{- $sct := get $svcData "securityContext" -}}
 {{- $svc := get $svcData "service" -}}
 {{- $tl := get $svcData "tolerations" -}}
@@ -59,6 +66,12 @@ spec:
     spec:
 {{- if $san }}
       serviceAccountName: {{ $san }}
+{{- end }}
+{{- if gt (len $ips) 0 }}
+      imagePullSecrets:
+{{- range $j, $inm := $ips }}
+        - name: {{ $inm }}
+{{- end }}
 {{- end }}
 {{- if gt (len $aff) 0 }}
       affinity:

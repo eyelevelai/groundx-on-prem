@@ -6,17 +6,16 @@
 {{- define "groundx.summary.create" -}}
 {{- $in := .Values.summary | default dict -}}
 {{- $ex := dig "existing" dict $in -}}
-{{- $apiKeyEmpty := eq (dig "apiKey" "" $ex) "" -}}
 {{- $urlEmpty := eq (dig "url" "" $ex) "" -}}
 {{- $stype := lower (coalesce (dig "serviceType" "" $ex) "eyelevel") | trim -}}
 {{- $svcAllowed := or (eq $stype "openai") (eq $stype "openai-base64") (eq $stype "azure") -}}
-{{- or $apiKeyEmpty (and $urlEmpty (not $svcAllowed)) -}}
+{{- and $urlEmpty (not $svcAllowed) -}}
 {{- end }}
 
 {{- define "groundx.summary.apiKey" -}}
 {{- $in := .Values.summary | default dict -}}
 {{- $ex := dig "existing" dict $in -}}
-{{- coalesce (dig "apiKey" "" $ex) (include "groundx.admin.apiKey" .) -}}
+{{- coalesce (dig "apiKey" "" $ex) (include "groundx.admin.apiKey" .) | default "" -}}
 {{- end }}
 
 {{- define "groundx.summary.baseUrl" -}}
