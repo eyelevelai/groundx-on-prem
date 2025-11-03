@@ -22,6 +22,7 @@
 {{- $rp := get $svcData "replicas" -}}
 {{- $rs := get $svcData "resources" -}}
 {{- $san := get $svcData "serviceAccountName" -}}
+{{- $scr := include "groundx.secrets" . | fromYaml | default dict -}}
 {{- $sct := get $svcData "securityContext" -}}
 {{- $tl := get $svcData "tolerations" -}}
 
@@ -113,6 +114,13 @@ spec:
         - name: {{ $svc | quote }}
           image: {{ $image | quote }}
           imagePullPolicy: {{ $pull | quote }}
+{{- if gt (len $scr) 0 }}
+          envFrom:
+{{- range $kk, $vv := $scr }}
+            - secretRef:
+                name: {{ $vv }}
+{{- end }}
+{{- end }}
           ports:
             - containerPort: {{ $cport }}
               protocol: TCP
@@ -134,16 +142,10 @@ spec:
             - name: config-volume
               mountPath: /home/{{ include "groundx.golang.username" $ }}/.cashbot/config.yaml
               subPath: config.yaml
-            - name: init-db-volume
-              mountPath: /app/init-db.sql
-              subPath: init-db.sql
       volumes:
         - name: config-volume
           configMap:
             name: config-yaml-map
-        - name: init-db-volume
-          configMap:
-            name: init-database-file
 {{- if $lb }}
 {{- if eq $ir "true" }}
 {{ include "groundx.renderRoute" (dict "name" $svc "lb" $lb "root" $) }}

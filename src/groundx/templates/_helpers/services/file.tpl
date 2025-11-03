@@ -115,16 +115,6 @@ true
 {{- end -}}
 {{- end }}
 
-{{- define "groundx.file.privilegedPassword" -}}
-{{- $in := .Values.file | default dict -}}
-{{ dig "privilegedPassword" "password" $in }}
-{{- end }}
-
-{{- define "groundx.file.privilegedUsername" -}}
-{{- $in := .Values.file | default dict -}}
-{{ dig "privilegedUsername" "root" $in }}
-{{- end }}
-
 {{- define "groundx.file.region" -}}
 {{- $in := .Values.file | default dict -}}
 {{- $ex := dig "existing" dict $in -}}

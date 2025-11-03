@@ -23,6 +23,12 @@
 {{- $pull := get $svcData "pull" -}}
 {{- $san := get $svcData "serviceAccountName" -}}
 {{- $scr := get $svcData "secrets" | default dict -}}
+{{- $globalSecrets := include "groundx.secrets" . | fromYaml | default dict -}}
+{{- if gt (len $globalSecrets) 0 }}
+  {{- range $k, $v := $globalSecrets }}
+    {{- $_ := set $scr $k $v -}}
+  {{- end }}
+{{- end }}
 {{- $sct := get $svcData "securityContext" -}}
 {{- $svc := get $svcData "service" -}}
 {{- $tl := get $svcData "tolerations" -}}

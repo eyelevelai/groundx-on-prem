@@ -4,22 +4,22 @@
 
 {{- define "groundx.admin.apiKey" -}}
 {{- $b := .Values.admin | default dict -}}
-{{- dig "apiKey" "00000000-0000-0000-0000-000000000000" $b -}}
+{{- dig "apiKey" "" $b -}}
 {{- end }}
 
 {{- define "groundx.admin.email" -}}
 {{- $b := .Values.admin | default dict -}}
-{{- dig "email" "support@mycorp.net" $b -}}
+{{- dig "email" "" $b -}}
 {{- end }}
 
 {{- define "groundx.admin.password" -}}
 {{- $b := .Values.admin | default dict -}}
-{{- dig "password" "password" $b -}}
+{{- dig "password" "" $b -}}
 {{- end }}
 
 {{- define "groundx.admin.username" -}}
 {{- $b := .Values.admin | default dict -}}
-{{- dig "username" "00000000-0000-0000-0000-000000000000" $b -}}
+{{- dig "username" "" $b -}}
 {{- end }}
 
 {{- define "groundx.busybox.image" -}}
@@ -47,6 +47,10 @@
 
 {{- define "groundx.environment" -}}
 {{ .Values.environment | default "prod" }}
+{{- end }}
+
+{{- define "groundx.licenseKey" -}}
+{{ .Values.licenseKey | default "" }}
 {{- end }}
 
 {{- define "groundx.hasMig" -}}
@@ -150,6 +154,16 @@ extraPreDefaults:
 {{- define "groundx.pvClass" -}}
 {{- $b := .Values.cluster | default dict -}}
 {{- dig "pvClass" "eyelevel-pv" $b -}}
+{{- end }}
+
+{{- define "groundx.secrets" -}}
+{{- $b := .Values.cluster | default dict -}}
+{{- $arr := dig "secrets" list $b -}}
+{{- $dict := dict -}}
+{{- range $arr }}
+  {{- $_ := set $dict . . -}}
+{{- end }}
+{{ $dict | toYaml }}
 {{- end }}
 
 {{- define "groundx.serviceAccountName" -}}

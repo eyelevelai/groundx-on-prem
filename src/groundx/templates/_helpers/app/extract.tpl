@@ -13,6 +13,11 @@
 {{ dig "callbackApiKey" (include "groundx.admin.username" .) $in }}
 {{- end }}
 
+{{- define "groundx.extract.callbackUrl" -}}
+{{- $in := .Values.extract | default dict -}}
+{{ dig "callbackUrl" (include "groundx.groundx.serviceUrl" .) $in }}
+{{- end }}
+
 {{- define "groundx.extract.create" -}}
 {{- $in := .Values.extract | default dict -}}
 {{- if hasKey $in "enabled" -}}

@@ -1,7 +1,7 @@
 {
   "type": "object",
   "properties": {
-    "groundxKey": { "type": "string", "minLength": 1 },
+    "licenseKey": { "type": "string" },
     "namespace": { "type": "string", "minLength": 1 },
     "imageType": { "type": "string" },
     "languages": {
@@ -56,6 +56,10 @@
           "additionalProperties": false
         },
         "pvClass": { "type": "string" },
+        "secrets": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
         "tls": {
           "type": "object",
           "properties": {
@@ -1407,6 +1411,7 @@
         },
         "cacheDirectory": { "type": "string" },
         "callbackApiKey": { "type": "string" },
+        "callbackUrl": { "type": "string" },
         "download": {
           "type": "object",
           "properties": {
@@ -1624,6 +1629,5 @@
       "additionalProperties": false
     }
   },
-  "required": ["admin", "cluster", "groundxKey"],
   "additionalProperties": false
 }

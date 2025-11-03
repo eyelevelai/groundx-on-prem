@@ -49,7 +49,7 @@ true
 
 {{- define "groundx.db.password" -}}
 {{- $in := .Values.db | default dict -}}
-{{ dig "password" "password" $in }}
+{{ dig "password" "" $in }}
 {{- end }}
 
 {{- define "groundx.db.port" -}}
@@ -65,12 +65,12 @@ true
 
 {{- define "groundx.db.privilegedPassword" -}}
 {{- $in := .Values.db | default dict -}}
-{{ dig "privilegedPassword" "password" $in }}
+{{ dig "privilegedPassword" "" $in }}
 {{- end }}
 
 {{- define "groundx.db.privilegedUsername" -}}
 {{- $in := .Values.db | default dict -}}
-{{ dig "privilegedUsername" "root" $in }}
+{{ dig "privilegedUsername" "" $in }}
 {{- end }}
 
 {{- define "groundx.db.ro" -}}
@@ -101,5 +101,5 @@ true
 
 {{- define "groundx.db.username" -}}
 {{- $in := .Values.db | default dict -}}
-{{ dig "username" "eyelevel" $in }}
+{{ dig "username" "" $in }}
 {{- end }}

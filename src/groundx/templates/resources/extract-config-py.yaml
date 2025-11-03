@@ -5,9 +5,7 @@
 {{- $svc := include "groundx.extract.serviceName" . -}}
 {{- $bucketSuffix := printf "%s/" (get $fs "bucketName") -}}
 {{- $st := include "groundx.extract.file.serviceType" . -}}
-{{- $ak := include "groundx.extract.agent.apiKey" . -}}
 {{- $bu := include "groundx.extract.agent.baseUrl" . -}}
-{{- $es := include "groundx.extract.agent.existingSecret" . -}}
 {{- $mid := include "groundx.extract.agent.modelId" . -}}
 {{- $did := include "groundx.extract.save.driveId" . -}}
 {{- $tid := include "groundx.extract.save.templateId" . -}}
@@ -62,11 +60,22 @@ data:
             secret={{ get $fs "password" | quote }},
         ),
         valid_api_keys=[
-          {{ include "groundx.admin.apiKey" . | quote }},
-          {{ include "groundx.admin.username" . | quote }},
+        {{- $apiKey := include "groundx.admin.apiKey" . -}}
+        {{- if ne $apiKey "" }}
+          {{ $apiKey | quote }},
+        {{- end }}
+        {{- $admin := include "groundx.admin.username" . -}}
+        {{- if ne $admin "" }}
+          {{ $admin | quote }},
+        {{- end }}
           {{- $extras := (get .Values "cluster") | default (dict) -}}{{- $list := (get $extras "validApiKeys") | default (list) -}}{{- range $list }}
           {{ . | quote }},{{- end }}
         ],
         workers={{ include "groundx.extract.agent.workers" . }},
+    )
+
+    groundx_settings = GroundXSettings(
+      api_key={{ include "groundx.extract.callbackApiKey" . | quote }},
+      base_url={{ include "groundx.extract.callbackUrl" . | quote }},
     )
 {{- end }}

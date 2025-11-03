@@ -138,10 +138,12 @@ GROUNDX_AGENT_API_KEY
 {{- $cfg := dict
   "name" (include "groundx.extract.agent.secretName" .)
 -}}
+{{- if ne $apiKey "" -}}
 {{- $data := dict
   (include "groundx.extract.agent.apiKeyEnv" .) $apiKey
 -}}
 {{- $_ := set $cfg "data" $data -}}
+{{- end -}}
 {{- $cfg | toYaml -}}
 {{- end }}
 
