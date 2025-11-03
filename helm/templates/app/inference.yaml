@@ -30,6 +30,7 @@
 {{- $rs := get $svcData "resources" -}}
 {{- $rt := get $svcData "runtimeClassName" -}}
 {{- $san := get $svcData "serviceAccountName" -}}
+{{- $scr := include "groundx.secrets" $ | fromYaml | default dict -}}
 {{- $sct := get $svcData "securityContext" -}}
 {{- $supe := get $svcData "supervisord" -}}
 {{- $tl := get $svcData "tolerations" -}}
@@ -184,6 +185,13 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+{{- if gt (len $scr) 0 }}
+          envFrom:
+{{- range $kk, $vv := $scr }}
+            - secretRef:
+                name: {{ $vv }}
+{{- end }}
+{{- end }}
           workingDir: {{ $wd }}
           command:
             - /bin/sh

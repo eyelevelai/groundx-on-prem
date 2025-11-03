@@ -1,4 +1,4 @@
-{{- define "groundx.secrets" -}}
+{{- define "groundx.app.secrets" -}}
 
 {{- $svcs := dict -}}
 
