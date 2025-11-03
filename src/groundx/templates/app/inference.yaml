@@ -30,7 +30,7 @@
 {{- $rs := get $svcData "resources" -}}
 {{- $rt := get $svcData "runtimeClassName" -}}
 {{- $san := get $svcData "serviceAccountName" -}}
-{{- $scr := include "groundx.secrets" . | fromYaml | default dict -}}
+{{- $scr := include "groundx.secrets" $ | fromYaml | default dict -}}
 {{- $sct := get $svcData "securityContext" -}}
 {{- $supe := get $svcData "supervisord" -}}
 {{- $tl := get $svcData "tolerations" -}}

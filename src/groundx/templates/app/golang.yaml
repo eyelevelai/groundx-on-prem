@@ -22,7 +22,7 @@
 {{- $rp := get $svcData "replicas" -}}
 {{- $rs := get $svcData "resources" -}}
 {{- $san := get $svcData "serviceAccountName" -}}
-{{- $scr := include "groundx.secrets" . | fromYaml | default dict -}}
+{{- $scr := include "groundx.secrets" $ | fromYaml | default dict -}}
 {{- $sct := get $svcData "securityContext" -}}
 {{- $tl := get $svcData "tolerations" -}}
 
@@ -50,7 +50,6 @@ spec:
 {{- end }}
       annotations:
         config-hash: {{ include (print $.Template.BasePath "/resources/config-yaml.yaml") $ | sha256sum }}
-        config-models-hash: {{ include (print $.Template.BasePath "/resources/init-database-file.yaml") $ | sha256sum }}
 {{- if gt (len $anns) 0 }}
 {{ toYaml $anns | nindent 8 }}
 {{- end }}
