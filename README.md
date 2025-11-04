@@ -52,6 +52,9 @@
 - [Use the SDKs](#use-the-sdks)
 - [Use the APIs](#use-the-apis)
 
+**[Legacy Terraform Deployment](#legacy-terraform-deployment)**
+- [Accessing Legacy Scripts](#accessing-legacy-scripts)
+
 # What is GroundX On-Prem?
 
 With this repository you can deploy GroundX RAG document ingestion and search capabilities to a Kubernetes cluster in a manner that can be isolated from any external dependencies.
@@ -566,3 +569,10 @@ const groundx = new GroundXClient({
 The [API endpoint](#get-the-api-endpoint), in conjuction with the `admin.api_key` defined during deployment, can be used to interact with your On-Prem instance of GroundX.
 
 All of the methods and operations described in the [GroundX documentation](https://documentation.groundx.ai/reference) are supported with your On-Prem instance of GroundX. You simply have to substitute `https://api.groundx.ai` with your [API endpoint](#get-the-api-endpoint).
+
+# Legacy Terraform Deployment
+
+As of November 4, 2025, we have migrated to a pure helm release deployment. The previous hybrid terraform-helm approach is no longer supported.
+
+## Accessing Legacy Scripts
+If you would like to access the legacy terraform scripts, they can be pulled from [legacy-terraform-deployment](releases/tag/legacy-terraform-deployment).
