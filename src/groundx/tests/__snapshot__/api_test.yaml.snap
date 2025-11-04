@@ -3982,7 +3982,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d0db5d0f15573d68c6e7a73b45d8da78abbddb4b1af5c8880e26804c18b49eeb
+            config-hash: cb0f64265ed3a9f525a7b32009e3e98504290a1870b11d14b0e0fadf7951f9c2
             gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
           labels:
             app: extract-api
@@ -4042,6 +4042,8 @@
                   name: gunicorn-conf-volume
                   subPath: gunicorn_conf.py
               workingDir: /app
+          imagePullSecrets:
+            - name: ecr-public-pull
           initContainers:
             - command:
                 - sh
@@ -4053,7 +4055,7 @@
             - command:
                 - sh
                 - -c
-                - until wget --spider -q http://groundx-service.eyelevel.svc.cluster.local/health; do echo waiting for callback; sleep 2; done
+                - until wget --spider -q https://api.groundx.ai/api/health; do echo waiting for callback; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-callback
@@ -4129,7 +4131,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 85dbe7ef96e5e50dfb1748bbfc2a95233bdd20a32502740ce2aa3925611fef31
+            config-hash: 24b00d4d44a91abda122ce7cb3e58cbcb6b223eb9adac608bc599337e1c01d10
             gunicorn-conf-hash: 4f846d74ead22c202a0dd1f27013148a62ca125c7816138dcd2459a45378dc07
           labels:
             app: layout-api
@@ -4184,6 +4186,8 @@
                   name: gunicorn-conf-volume
                   subPath: gunicorn_conf.py
               workingDir: /app
+          imagePullSecrets:
+            - name: ecr-public-pull
           initContainers:
             - command:
                 - sh
@@ -4300,6 +4304,8 @@
                   name: gunicorn-conf-volume
                   subPath: gunicorn_conf.py
               workingDir: /app
+          imagePullSecrets:
+            - name: ecr-public-pull
           initContainers:
             - command:
                 - sh
@@ -4416,6 +4422,8 @@
                   name: gunicorn-conf-volume
                   subPath: gunicorn_conf.py
               workingDir: /app
+          imagePullSecrets:
+            - name: ecr-public-pull
           initContainers:
             - command:
                 - sh

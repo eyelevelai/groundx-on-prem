@@ -5734,7 +5734,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 85dbe7ef96e5e50dfb1748bbfc2a95233bdd20a32502740ce2aa3925611fef31
+            config-hash: 24b00d4d44a91abda122ce7cb3e58cbcb6b223eb9adac608bc599337e1c01d10
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
@@ -5797,6 +5797,8 @@
                   name: supervisord-volume
                   subPath: supervisord.conf
               workingDir: /app
+          imagePullSecrets:
+            - name: ecr-public-pull
           initContainers:
             - command:
                 - sh
@@ -5917,6 +5919,8 @@
                 - mountPath: /workspace/hf_models_cache
                   name: model-volume
               workingDir: /workspace
+          imagePullSecrets:
+            - name: ecr-public-pull
           initContainers:
             - command:
                 - sh
@@ -6105,6 +6109,8 @@
                 - mountPath: /workspace/hf_models_cache
                   name: model-volume
               workingDir: /workspace
+          imagePullSecrets:
+            - name: ecr-public-pull
           initContainers:
             - command:
                 - sh

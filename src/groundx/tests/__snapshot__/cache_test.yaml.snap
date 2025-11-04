@@ -1004,6 +1004,8 @@
               volumeMounts:
                 - mountPath: /mnt/redis
                   name: cache-metrics-persistent-storage
+          imagePullSecrets:
+            - name: ecr-public-pull
           nodeSelector:
             node: eyelevel-gpu
           securityContext:
@@ -1078,6 +1080,8 @@
               volumeMounts:
                 - mountPath: /mnt/redis
                   name: cache-persistent-storage
+          imagePullSecrets:
+            - name: ecr-public-pull
           nodeSelector:
             node: eyelevel-gpu
           securityContext:
