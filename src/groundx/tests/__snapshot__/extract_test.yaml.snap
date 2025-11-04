@@ -3,10 +3,11 @@
     apiVersion: v1
     data:
       config.py: |
-        from classes.settings import (
+        from groundx.extract import (
             AgentSettings,
             ContainerSettings,
             ContainerUploadSettings,
+            GroundXSettings,
         )
 
         agent_settings = AgentSettings(
@@ -16,6 +17,7 @@
 
         container_settings = ContainerSettings(
             broker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            cache_dir="/app/cache",
             callback_api_key="00000000-0000-0000-0000-000000000000",
             metrics_broker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             service="extract",
@@ -35,6 +37,11 @@
             ],
             workers=1,
         )
+
+        groundx_settings = GroundXSettings(
+          api_key="00000000-0000-0000-0000-000000000000",
+          base_url="http://groundx.eyelevel.svc.cluster.local/api",
+        )
     kind: ConfigMap
     metadata:
       labels:
@@ -49,10 +56,11 @@
     apiVersion: v1
     data:
       config.py: |
-        from classes.settings import (
+        from groundx.extract import (
             AgentSettings,
             ContainerSettings,
             ContainerUploadSettings,
+            GroundXSettings,
         )
 
         agent_settings = AgentSettings(
@@ -60,6 +68,7 @@
 
         container_settings = ContainerSettings(
             broker="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            cache_dir="/app/cache",
             callback_api_key="00000000-0000-0000-0000-000000000001",
             google_sheets_drive_id="abc",
             google_sheets_template_id="a123",
@@ -82,6 +91,11 @@
             ],
             workers=1,
         )
+
+        groundx_settings = GroundXSettings(
+          api_key="00000000-0000-0000-0000-000000000001",
+          base_url="http://groundx-service.eyelevel.svc.cluster.local/api",
+        )
     kind: ConfigMap
     metadata:
       labels:
@@ -96,10 +110,11 @@
     apiVersion: v1
     data:
       config.py: |
-        from classes.settings import (
+        from groundx.extract import (
             AgentSettings,
             ContainerSettings,
             ContainerUploadSettings,
+            GroundXSettings,
         )
 
         agent_settings = AgentSettings(
@@ -107,6 +122,7 @@
 
         container_settings = ContainerSettings(
             broker="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            cache_dir="/app/cache",
             callback_api_key="00000000-0000-0000-0000-000000000001",
             google_sheets_drive_id="abc",
             google_sheets_template_id="a123",
@@ -128,6 +144,11 @@
               "00000000-0000-0000-0000-000000000002",
             ],
             workers=1,
+        )
+
+        groundx_settings = GroundXSettings(
+          api_key="00000000-0000-0000-0000-000000000001",
+          base_url="http://groundx-service.eyelevel.svc.cluster.local/api",
         )
     kind: ConfigMap
     metadata:

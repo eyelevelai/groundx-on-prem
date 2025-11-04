@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 rm build/*
+find ./groundx -name '.DS_Store' -type f -delete
 helm package groundx -d build
 helm package groundx/prereqs/kafka-cluster -d build
 helm package groundx/prereqs/secret -d build

@@ -389,7 +389,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cd06ef598e5a41914e1046a6634631d858f3db20d1d82911f0e063f490699738
+            config-hash: bd15d242581d9d6046d16b51ec613036e3fa3bc57679db5525dcbea65af0c944
             gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
           labels:
             app: extract-api
@@ -459,6 +459,13 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for callback; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-callback
           nodeSelector:
             node: eyelevel-cpu-only
           securityContext:
@@ -885,7 +892,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ac70a23921bbd948745293be79d474cb3687af3882748951e056c20a584278a5
+            config-hash: 8f4fb323cb4661e9a26330a4768f0f27ec2064e6a2f0eb0dba447859f790202a
             gunicorn-conf-hash: 4f846d74ead22c202a0dd1f27013148a62ca125c7816138dcd2459a45378dc07
           labels:
             app: layout-api
@@ -1007,7 +1014,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 8de2baea042228f54db256891d5da302316aab7828362929c3145cbfcfa75146
+            config-hash: 26689a2f0448424ba74acbfa18aa3898e7b0275e0d250cfbd0e1195adc92e566
             gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
           labels:
             app: ranker-api
@@ -1129,7 +1136,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 51b3f74b62e64c36d06ea7360481e2bce39d6048899f71f252e65339efe9ee25
+            config-hash: 2e28e85d481cccdbf48f8e44f3206643979b3961c0d10c34231266e4ac9cbcb0
             gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
           labels:
             app: summary-api
@@ -1253,7 +1260,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ac70a23921bbd948745293be79d474cb3687af3882748951e056c20a584278a5
+            config-hash: 8f4fb323cb4661e9a26330a4768f0f27ec2064e6a2f0eb0dba447859f790202a
             gunicorn-conf-hash: 4f846d74ead22c202a0dd1f27013148a62ca125c7816138dcd2459a45378dc07
           labels:
             app: layout-api
@@ -1375,7 +1382,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 8de2baea042228f54db256891d5da302316aab7828362929c3145cbfcfa75146
+            config-hash: 26689a2f0448424ba74acbfa18aa3898e7b0275e0d250cfbd0e1195adc92e566
             gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
           labels:
             app: ranker-api
@@ -1497,7 +1504,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 51b3f74b62e64c36d06ea7360481e2bce39d6048899f71f252e65339efe9ee25
+            config-hash: 2e28e85d481cccdbf48f8e44f3206643979b3961c0d10c34231266e4ac9cbcb0
             gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
           labels:
             app: summary-api
@@ -1865,7 +1872,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e006935e5f8a29e2cec1e9b3aefdc5f94043ebbe2c4a6d9688b582ef1b9200a4
+            config-hash: d685fee8a09ac1bd6903eab2df3e4ed8d293969c9696377d63eae1e59b64841f
             gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
           labels:
             app: extract-api
@@ -1883,9 +1890,9 @@
                       fieldPath: metadata.name
               envFrom:
                 - secretRef:
-                    name: extract-agent-secret
-                - secretRef:
                     name: extract-save-secret
+                - secretRef:
+                    name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/extract:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1935,6 +1942,13 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for callback; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-callback
           nodeSelector:
             node: eyelevel-cpu-only
           securityContext:
@@ -1993,7 +2007,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 7ceb284dc3b869a93078dc13391866ce9c9dfbcef7aa4a5b0d8a7edf2626c888
+            config-hash: ea7759490240984054d12c28e242701f81e9e7dbea0577888f969312d1b45e3b
             gunicorn-conf-hash: 4f846d74ead22c202a0dd1f27013148a62ca125c7816138dcd2459a45378dc07
           labels:
             app: layout-api
@@ -2009,6 +2023,9 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -2116,7 +2133,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 2e9432e7927d2f5c53c8cdb87fa2a9a545c618f950c4ea653afe64e36ae0aa39
+            config-hash: 6cb3dee2e2b4d7b398a4852665c7f183b9d5c7dc5baaae06553d146f2b2f9cdf
             gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
           labels:
             app: summary-api
@@ -2132,6 +2149,9 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -2240,7 +2260,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 14f3ceb350eb93f88d931d51b6a761155cce5b7398accda10f6634a5a15bda9d
+            config-hash: e2e7af691f6acdf77c65cdc82fa582e870c8a57cff4693ad2bdb938d147cb35b
             gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
           labels:
             app: extract-api
@@ -2310,6 +2330,13 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for callback; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-callback
           nodeSelector:
             node: eyelevel-cpu-only
           securityContext:
@@ -2612,7 +2639,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d584456c8e15d07061c97c260c7b5ed347c7844beeecc925f11a695d18a2dcf9
+            config-hash: 7e60feb21b49c572428e99f9de437db31486f20399cd1d9269349f91623768b3
             gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
           labels:
             app: extract-api
@@ -2630,9 +2657,9 @@
                       fieldPath: metadata.name
               envFrom:
                 - secretRef:
-                    name: extract-agent-secret
-                - secretRef:
                     name: extract-save-secret
+                - secretRef:
+                    name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/extract:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -2682,6 +2709,13 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until wget --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for callback; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-callback
           nodeSelector:
             node: eyelevel-cpu-only
           securityContext:
@@ -2740,7 +2774,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 7ceb284dc3b869a93078dc13391866ce9c9dfbcef7aa4a5b0d8a7edf2626c888
+            config-hash: ea7759490240984054d12c28e242701f81e9e7dbea0577888f969312d1b45e3b
             gunicorn-conf-hash: 4f846d74ead22c202a0dd1f27013148a62ca125c7816138dcd2459a45378dc07
           labels:
             app: layout-api
@@ -2756,6 +2790,9 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -2864,7 +2901,7 @@
       template:
         metadata:
           annotations:
-            config-hash: f01ce7380e7f90d9ad1a77d0643c31af59769c162513beb386dccdb47f653e9f
+            config-hash: 7f0c7b0deae577ba6f01054925b21d4d8b357c3af3701b89dcbdd21de21f19d3
             gunicorn-conf-hash: 83c12b1b7b62e11b58c3977068cad50ec59ee79a1f19eb1261da2490d219c23c
           labels:
             app: myapp-api
@@ -2987,7 +3024,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 3ff5970cb3358e2055b9f63e2c99858bce5cf7f8021276fe621669c4d7a6095b
+            config-hash: 79a28d6ea765715b09a1287eb577fddd8d2157d8d9af27b6d5c0c100908268d3
             gunicorn-conf-hash: a549b26517e32f7a8ffda2515b3c71d7e219de4734ba5efb1178364200945858
             prometheus.io/port: "8081"
           labels:
@@ -3109,7 +3146,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 768b67abc53462b44e924bc5c0c1e34b98ebb80bf87cc2d09b92699666194fa3
+            config-hash: 77e8247cf11394831228473d17a341b006f2338ad460d31a76a060213372e62c
             gunicorn-conf-hash: 53cd8f931b746c1417345baed9c6a6b673f1f70836554d582f7040894bdeaa2b
             prometheus.io/port: "8081"
           labels:
@@ -3945,7 +3982,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6fec848d0d3e8c7b39bf74b814023568513e33f62123f18dbbb013f0e9e37c09
+            config-hash: d0db5d0f15573d68c6e7a73b45d8da78abbddb4b1af5c8880e26804c18b49eeb
             gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
           labels:
             app: extract-api
@@ -4013,6 +4050,13 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until wget --spider -q http://groundx-service.eyelevel.svc.cluster.local/health; do echo waiting for callback; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: Always
+              name: wait-for-callback
           nodeSelector:
             node: eyelevel-cpu
           securityContext:

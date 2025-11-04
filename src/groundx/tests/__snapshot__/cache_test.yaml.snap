@@ -541,6 +541,7 @@
                   name: myapp-myapp-persistent-storage
           securityContext:
             fsGroup: 2000
+          serviceAccountName: existing-service-account
           tolerations:
             - effect: NoSchedule
               key: workload-type
@@ -625,6 +626,7 @@
             kubernetes.io/os: linux
           securityContext:
             fsGroup: 2000
+          serviceAccountName: existing-service-account
           volumes:
             - emptyDir: {}
               name: myapp-persistent-storage
