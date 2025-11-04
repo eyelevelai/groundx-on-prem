@@ -3,7 +3,7 @@
 BIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$BIN_DIR/shared/util"
 
-ENV_BASE="$BIN_DIR/../environment"
+ENV_BASE="$BIN_DIR/../terraform"
 
 terraform -chdir="$ENV_BASE/estimate" destroy --auto-approve > /dev/null 2>&1
 terraform -chdir="$ENV_BASE/estimate" init -upgrade > /dev/null 2>&1

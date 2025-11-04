@@ -1,0 +1,152 @@
+{{- $svcs := (include "groundx.api.services" . | fromYaml) -}}
+
+{{- range $idx, $entry := $svcs }}
+{{- $svcKey := printf "groundx.%s.settings" $entry -}}
+{{- $svcData := include $svcKey $ | fromYaml -}}
+
+{{- $aff := get $svcData "affinity" -}}
+{{- $anns := get $svcData "annotations" -}}
+{{- $cfg := get $svcData "cfg" -}}
+{{- $cport := get $svcData "port" -}}
+{{- $csct := get $svcData "containerSecurityContext" -}}
+{{- $dpnd := get $svcData "dependencies" | default dict -}}
+{{- $guni := get $svcData "gunicorn" -}}
+{{- $image := get $svcData "image" -}}
+{{- $ips := include "groundx.imagePullSecrets" $ | fromYaml -}}
+{{- $ir := get $svcData "isRoute" -}}
+{{- $lb := get $svcData "loadBalancer" -}}
+{{- $lbls := get $svcData "labels" -}}
+{{- $mapPrefix := get $svcData "mapPrefix" -}}
+{{- $node := get $svcData "node" -}}
+{{- $nsl := get $svcData "nodeSelector" -}}
+{{- $rp := get $svcData "replicas" -}}
+{{- $rs := get $svcData "resources" -}}
+{{- $pull := get $svcData "pull" -}}
+{{- $san := get $svcData "serviceAccountName" -}}
+{{- $scr := get $svcData "secrets" | default dict -}}
+{{- $globalSecrets := include "groundx.secrets" $ | fromYaml | default dict -}}
+{{- if gt (len $globalSecrets) 0 }}
+  {{- range $k, $v := $globalSecrets }}
+    {{- $_ := set $scr $k $v -}}
+  {{- end }}
+{{- end }}
+{{- $sct := get $svcData "securityContext" -}}
+{{- $svc := get $svcData "name" -}}
+{{- $tl := get $svcData "tolerations" -}}
+
+{{- $desired := get $rp "desired" -}}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $svc }}
+  namespace: {{ include "groundx.ns" $ | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
+spec:
+  replicas: {{ $desired }}
+  selector:
+    matchLabels:
+      app: {{ $svc }}
+  template:
+    metadata:
+      labels:
+        app: {{ $svc }}
+{{- if gt (len $lbls) 0 }}
+{{ toYaml $lbls | nindent 8 }}
+{{- end }}
+      annotations:
+        config-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-config-py.yaml") $ | sha256sum }}
+        gunicorn-conf-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-gunicorn-conf-py.yaml") $ | sha256sum }}
+{{- if gt (len $anns) 0 }}
+{{ toYaml $anns | nindent 8 }}
+{{- end }}
+    spec:
+{{- if $san }}
+      serviceAccountName: {{ $san }}
+{{- end }}
+{{- if gt (len $ips) 0 }}
+      imagePullSecrets:
+{{- range $j, $inm := $ips }}
+        - name: {{ $inm }}
+{{- end }}
+{{- end }}
+{{- if gt (len $aff) 0 }}
+      affinity:
+{{ toYaml $aff | nindent 8 }}
+{{- end }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
+{{- include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
+{{- include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
+      initContainers:
+        - name: wait-for-cache
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.cache.addr" $) (include "groundx.cache.port" $) }}; do echo waiting for cache; sleep 2; done"]
+{{- if hasKey $dpnd "callback" }}
+        - name: wait-for-callback
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until wget --spider -q {{ dig "callback" "" $dpnd }}/health; do echo waiting for callback; sleep 2; done"]
+{{- end }}
+      containers:
+        - name: {{ $svc | quote }}
+          image: {{ $image | quote }}
+          imagePullPolicy: {{ $pull | quote }}
+          ports:
+            - containerPort: {{ $cport }}
+              protocol: TCP
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+{{- if gt (len $scr) 0 }}
+          envFrom:
+{{- range $kk, $vv := $scr }}
+            - secretRef:
+                name: {{ $kk }}
+{{- end }}
+{{- end }}
+          workingDir: /app
+          command:
+            - /bin/bash
+            - -c
+            - |
+              export PYTHONPATH=/app:$PYTHONPATH && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ $cport }}
+            initialDelaySeconds: 10
+            failureThreshold: 12
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ $cport }}
+            initialDelaySeconds: 10
+            periodSeconds: 30
+{{- include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config.py
+              subPath: config.py
+            - name: gunicorn-conf-volume
+              mountPath: /app/gunicorn_conf.py
+              subPath: gunicorn_conf.py
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ $cfg }}
+        - name: gunicorn-conf-volume
+          configMap:
+            name: {{ $guni }}
+{{- if eq $ir "true" }}
+{{ include "groundx.renderRoute" (dict "name" $svc "lb" $lb "root" $) }}
+{{- end }}
+{{ include "groundx.renderLoadBalancer" (dict "name" $svc "lb" $lb "root" $) }}
+
+{{ end }}

@@ -5,29 +5,9 @@ BIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 must_have git
 
-create_container_bundle() {
-    local container_name=$1
-    local bundle_dir=$2
-
-    files="bootstrap"
-
-    for f in ${EXTRA_FILES_CONTAINER[$container_name]}; do
-        if [ ! -e "$f" ]; then
-            error "extra file '$f' does not exist, aborting"
-            return 2
-        fi
-        mkdir -p "$bundle_dir/$(dirname $f)"
-        cp "$f" "$bundle_dir/$f"
-        files="$files $f"
-    done
-
-    echo -n "$files "
-}
-
 get_containers() {
     top="$(git rev-parse --show-toplevel)"
-    echo "$top/modules/busybox/container $top/modules/opensearch/container $top/modules/redis/container $top/modules/vllm/container "
-    echo "$top "
+    echo "$top/src/containers "
 }
 
 
@@ -37,6 +17,7 @@ container_dirs=$(get_containers)
 premium=""
 push_flag=true
 repo_target=""
+tag="latest"
 target="linux/amd64"
 
 while [[ $# -gt 0 ]]
@@ -63,12 +44,19 @@ do
             *)
                 repo_target=$2
                 top="$(git rev-parse --show-toplevel)"
-                container_dirs=("$top/modules/$repo_target/container")
                 shift 2
             ;;
         esac
     ;;
-    -target|-t)
+    -tag|-t)
+        case $2 in
+            *)
+                tag=$2
+                shift 2
+            ;;
+        esac
+    ;;
+    -target|-g)
         case $2 in
             arm64|linux/arm64)
                 target="linux/arm64"
@@ -132,20 +120,20 @@ for container_dir in $container_dirs; do
             fi
 
             pushd "$container_dir" > /dev/null
-            status "\t\u00b7 [$repo_name]\tBuilding"
+            status "\t\u00b7 [$repo_name:$tag]\tBuilding"
             if [ "$build_flag" = true ]; then
-                echo $'\t\t' "docker $build_command --platform $target -f $file_name -t public.ecr.aws/c9r4x6y5/eyelevel/$premium$repo_name:latest ." && echo
-                docker $build_command --platform $target -f $file_name -t public.ecr.aws/c9r4x6y5/eyelevel/$premium$repo_name:latest . && echo
+                echo $'\t\t' "docker $build_command --platform $target -f $file_name -t public.ecr.aws/c9r4x6y5/eyelevel/$premium$repo_name:$tag ." && echo
+                docker $build_command --platform $target -f $file_name -t public.ecr.aws/c9r4x6y5/eyelevel/$premium$repo_name:$tag . && echo
                 status "\tBuilt" && ok && echo
             else
                 warn "skipping" && echo
             fi
 
-            status "\t\u00b7 [$repo_name]\tPushing"
+            status "\t\u00b7 [$repo_name:$tag]\tPushing"
             if [ "$push_flag" = true ]; then
-                echo $'\t\t' "docker push public.ecr.aws/c9r4x6y5/eyelevel/$premium$repo_name:latest" && echo
+                echo $'\t\t' "docker push public.ecr.aws/c9r4x6y5/eyelevel/$premium$repo_name:$tag" && echo
 
-                docker push public.ecr.aws/c9r4x6y5/eyelevel/$premium$repo_name:latest && echo
+                docker push public.ecr.aws/c9r4x6y5/eyelevel/$premium$repo_name:$tag && echo
                 
                 status "\tPushed" && ok
             else

@@ -1,0 +1,39 @@
+name: helm
+
+on:
+    push:
+        branches: ["**"]
+    pull_request:
+    release:
+        types: [published, created]
+    workflow_dispatch:
+
+jobs:
+    helm-unittest:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Set up Helm
+              uses: azure/setup-helm@v4
+              with:
+                  version: v3.19.0
+
+            - name: Install helm-unittest plugin
+              run: helm plugin install https://github.com/helm-unittest/helm-unittest.git
+
+            - name: Run helm unittest (tap output to console)
+              run: helm unittest src/groundx
+
+            - name: Generate JUnit report
+              run: |
+                  mkdir -p reports
+                  helm unittest -o junit --output-file reports/helm-unittest.xml src/groundx
+
+            - name: Upload test report
+              uses: actions/upload-artifact@v4
+              with:
+                  name: helm-unittest-report
+                  path: reports/helm-unittest.xml

@@ -1,0 +1,117 @@
+mode: ingest
+
+cluster:
+  pvClass: eyelevel-pv
+  type: eks
+
+  preProcessors:
+    - processorId: 13
+      type: extract
+
+  secrets:
+    - eyelevel-secret-credentials
+
+  # nodeLabels:
+    # cpuMemory: eyelevel-cpu-memory
+    # cpuOnly: eyelevel-cpu-only
+    # gpuLayout: eyelevel-gpu-layout
+    # gpuRanker: this node is not needed for this deployment
+    # gpuSummary: this node is not needed for this deployment
+
+serviceAccount:
+  name: existing-service-account
+
+# uncomment to make the groundx API only available internally
+# groundx:
+  # loadBalancer:
+    # isInternal: true
+
+cache:
+  metrics:
+    enabled: false
+
+  existing:
+    addr: X.X.X.use2.cache.amazonaws.com
+    isCluster: true
+    port: 6379
+    ssl: true
+
+db:
+  existing:
+    ro: X.X.us-east-2.rds.amazonaws.com
+    rw: X.X.us-east-2.rds.amazonaws.com
+    port: 3306
+
+file:
+  bucketName: eyelevel
+
+  existing:
+    url: https://X.s3.us-west-2.amazonaws.com
+    serviceType: s3
+
+stream:
+  enabled: false
+
+  topics:
+    preProcess:
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/X/file-pre-process
+    process:
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/X/file-process
+    summary:
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/X/file-summary
+    update:
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/X/file-update
+    upload:
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/X/file-upload
+
+engines:
+  default:
+    engineId: gpt-5-mini
+    reasoningEffort: low
+    vision: true
+
+summary:
+  existing:
+    serviceType: openai
+
+extract:
+  enabled: true
+
+  agent:
+    enabled: true
+
+    serviceType: openai
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+
+  api:
+    enabled: true
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+  download:
+    enabled: true
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+  save:
+    enabled: true
+
+    resources:
+      requests:
+        cpu: 1
+        memory: 2Gi

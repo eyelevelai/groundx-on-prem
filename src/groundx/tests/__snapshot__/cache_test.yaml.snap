@@ -1,0 +1,1113 @@
+'aws: cache':
+'cloud: cache':
+  1: |
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      labels:
+        app: cache-metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: cache-metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: cache-metrics
+      serviceName: cache-metrics
+      template:
+        metadata:
+          labels:
+            app: cache-metrics
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: cache-metrics
+              ports:
+                - containerPort: 6379
+                  protocol: TCP
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /mnt/redis
+                  name: cache-metrics-persistent-storage
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - emptyDir: {}
+              name: cache-metrics-persistent-storage
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: cache-metrics
+      name: cache-metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 6379
+          protocol: TCP
+          targetPort: 6379
+      selector:
+        app: cache-metrics
+      type: ClusterIP
+  3: |
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      labels:
+        app: cache
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: cache
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: cache
+      serviceName: cache
+      template:
+        metadata:
+          labels:
+            app: cache
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: cache
+              ports:
+                - containerPort: 6379
+                  protocol: TCP
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /mnt/redis
+                  name: cache-persistent-storage
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - emptyDir: {}
+              name: cache-persistent-storage
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: cache
+      name: cache
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 6379
+          protocol: TCP
+          targetPort: 6379
+      selector:
+        app: cache
+      type: ClusterIP
+'default: cache':
+  1: |
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      labels:
+        app: cache-metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: cache-metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: cache-metrics
+      serviceName: cache-metrics
+      template:
+        metadata:
+          labels:
+            app: cache-metrics
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: cache-metrics
+              ports:
+                - containerPort: 6379
+                  protocol: TCP
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /mnt/redis
+                  name: cache-metrics-persistent-storage
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - emptyDir: {}
+              name: cache-metrics-persistent-storage
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: cache-metrics
+      name: cache-metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 6379
+          protocol: TCP
+          targetPort: 6379
+      selector:
+        app: cache-metrics
+      type: ClusterIP
+  3: |
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      labels:
+        app: cache
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: cache
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: cache
+      serviceName: cache
+      template:
+        metadata:
+          labels:
+            app: cache
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: cache
+              ports:
+                - containerPort: 6379
+                  protocol: TCP
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /mnt/redis
+                  name: cache-persistent-storage
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - emptyDir: {}
+              name: cache-persistent-storage
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: cache
+      name: cache
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 6379
+          protocol: TCP
+          targetPort: 6379
+      selector:
+        app: cache
+      type: ClusterIP
+'disabled: cache':
+'empty: cache':
+  1: |
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      labels:
+        app: cache-metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: cache-metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: cache-metrics
+      serviceName: cache-metrics
+      template:
+        metadata:
+          labels:
+            app: cache-metrics
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: cache-metrics
+              ports:
+                - containerPort: 6379
+                  protocol: TCP
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /mnt/redis
+                  name: cache-metrics-persistent-storage
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - emptyDir: {}
+              name: cache-metrics-persistent-storage
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: cache-metrics
+      name: cache-metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 6379
+          protocol: TCP
+          targetPort: 6379
+      selector:
+        app: cache-metrics
+      type: ClusterIP
+  3: |
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      labels:
+        app: cache
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: cache
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: cache
+      serviceName: cache
+      template:
+        metadata:
+          labels:
+            app: cache
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: cache
+              ports:
+                - containerPort: 6379
+                  protocol: TCP
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /mnt/redis
+                  name: cache-persistent-storage
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - emptyDir: {}
+              name: cache-persistent-storage
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: cache
+      name: cache
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 6379
+          protocol: TCP
+          targetPort: 6379
+      selector:
+        app: cache
+      type: ClusterIP
+'existing: cache':
+'extract: cache':
+'extract.ingest: cache':
+'extract.oai: cache':
+'metadata: cache':
+  1: |
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      labels:
+        app: myapp-myapp
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: myapp-myapp
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: myapp-myapp
+      serviceName: myapp-myapp
+      template:
+        metadata:
+          annotations:
+            prometheus.io/port: "8081"
+          labels:
+            app: myapp-myapp
+            app.kubernetes.io/name: myapp
+        spec:
+          affinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - myapp
+                topologyKey: kubernetes.io/hostname
+          containers:
+            - image: test.image:v1
+              imagePullPolicy: Never
+              name: myapp-myapp
+              ports:
+                - containerPort: 8081
+                  protocol: TCP
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 512Mi
+              securityContext:
+                readOnlyRootFilesystem: true
+              volumeMounts:
+                - mountPath: /ok/here
+                  name: myapp-myapp-persistent-storage
+          securityContext:
+            fsGroup: 2000
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: workload-type
+              operator: Equal
+              value: batch
+          volumes:
+            - emptyDir: {}
+              name: myapp-myapp-persistent-storage
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "30"
+      labels:
+        app: myapp-myapp
+      name: myapp-myapp
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 6377
+          protocol: TCP
+          targetPort: 8081
+      selector:
+        app: myapp-myapp
+      type: ClusterIP
+  3: |
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      labels:
+        app: myapp
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: myapp
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: myapp
+      serviceName: myapp
+      template:
+        metadata:
+          annotations:
+            prometheus.io/port: "8081"
+            prometheus.io/scrape: "true"
+          labels:
+            app: myapp
+            app.kubernetes.io/component: backend
+            app.kubernetes.io/name: myapp
+        spec:
+          affinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - myapp
+                topologyKey: kubernetes.io/hostname
+          containers:
+            - image: test.image:v1
+              imagePullPolicy: Never
+              name: myapp
+              ports:
+                - containerPort: 8081
+                  protocol: TCP
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 512Mi
+              securityContext:
+                readOnlyRootFilesystem: true
+              volumeMounts:
+                - mountPath: /ok/here
+                  name: myapp-persistent-storage
+          nodeSelector:
+            disktype: ssd
+            kubernetes.io/os: linux
+          securityContext:
+            fsGroup: 2000
+          serviceAccountName: existing-service-account
+          volumes:
+            - emptyDir: {}
+              name: myapp-persistent-storage
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "30"
+      labels:
+        app: myapp
+      name: myapp
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 6377
+          protocol: TCP
+          targetPort: 8081
+      selector:
+        app: myapp
+      type: ClusterIP
+'minikube: cache':
+  1: |
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      labels:
+        app: cache-metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: cache-metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: cache-metrics
+      serviceName: cache-metrics
+      template:
+        metadata:
+          labels:
+            app: cache-metrics
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: cache-metrics
+              ports:
+                - containerPort: 6379
+                  protocol: TCP
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /mnt/redis
+                  name: cache-metrics-persistent-storage
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - emptyDir: {}
+              name: cache-metrics-persistent-storage
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: cache-metrics
+      name: cache-metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 6379
+          protocol: TCP
+          targetPort: 6379
+      selector:
+        app: cache-metrics
+      type: ClusterIP
+  3: |
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      labels:
+        app: cache
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: cache
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: cache
+      serviceName: cache
+      template:
+        metadata:
+          labels:
+            app: cache
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: cache
+              ports:
+                - containerPort: 6379
+                  protocol: TCP
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /mnt/redis
+                  name: cache-persistent-storage
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - emptyDir: {}
+              name: cache-persistent-storage
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: cache
+      name: cache
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 6379
+          protocol: TCP
+          targetPort: 6379
+      selector:
+        app: cache
+      type: ClusterIP
+'openshift: cache':
+  1: |
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      labels:
+        app: cache-metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: cache-metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: cache-metrics
+      serviceName: cache-metrics
+      template:
+        metadata:
+          labels:
+            app: cache-metrics
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: cache-metrics
+              ports:
+                - containerPort: 6379
+                  protocol: TCP
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /mnt/redis
+                  name: cache-metrics-persistent-storage
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - emptyDir: {}
+              name: cache-metrics-persistent-storage
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: cache-metrics
+      name: cache-metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 6379
+          protocol: TCP
+          targetPort: 6379
+      selector:
+        app: cache-metrics
+      type: ClusterIP
+  3: |
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      labels:
+        app: cache
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: cache
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: cache
+      serviceName: cache
+      template:
+        metadata:
+          labels:
+            app: cache
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: cache
+              ports:
+                - containerPort: 6379
+                  protocol: TCP
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /mnt/redis
+                  name: cache-persistent-storage
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - emptyDir: {}
+              name: cache-persistent-storage
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: cache
+      name: cache
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 6379
+          protocol: TCP
+          targetPort: 6379
+      selector:
+        app: cache
+      type: ClusterIP
+'phoenix: cache':
+  1: |
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      labels:
+        app: cache-metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: cache-metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: cache-metrics
+      serviceName: cache-metrics
+      template:
+        metadata:
+          labels:
+            app: cache-metrics
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
+              imagePullPolicy: Always
+              name: cache-metrics
+              ports:
+                - containerPort: 6379
+                  protocol: TCP
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /mnt/redis
+                  name: cache-metrics-persistent-storage
+          imagePullSecrets:
+            - name: ecr-public-pull
+          nodeSelector:
+            node: eyelevel-gpu
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-gpu
+          volumes:
+            - emptyDir: {}
+              name: cache-metrics-persistent-storage
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: cache-metrics
+      name: cache-metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 6379
+          protocol: TCP
+          targetPort: 6379
+      selector:
+        app: cache-metrics
+      type: ClusterIP
+  3: |
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      labels:
+        app: cache
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: cache
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: cache
+      serviceName: cache
+      template:
+        metadata:
+          labels:
+            app: cache
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
+              imagePullPolicy: Always
+              name: cache
+              ports:
+                - containerPort: 6379
+                  protocol: TCP
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /mnt/redis
+                  name: cache-persistent-storage
+          imagePullSecrets:
+            - name: ecr-public-pull
+          nodeSelector:
+            node: eyelevel-gpu
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-gpu
+          volumes:
+            - emptyDir: {}
+              name: cache-persistent-storage
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: cache
+      name: cache
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 6379
+          protocol: TCP
+          targetPort: 6379
+      selector:
+        app: cache
+      type: ClusterIP

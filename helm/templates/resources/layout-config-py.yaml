@@ -1,0 +1,67 @@
+{{- $ic := include "groundx.layout.api.create" . -}}
+{{- $ec := include "groundx.layout.inference.create" . -}}
+
+{{- if or (eq $ic "true") (eq $ec "true") }}
+{{- $svc := include "groundx.layout.serviceName" . -}}
+
+{{- $fs := (include "groundx.file.settings" . | fromYaml) -}}
+{{- $bucketSuffix := printf "%s/" (get $fs "bucketName") -}}
+{{- $baseDomain := get $fs "baseDomain" -}}
+{{- $st := include "groundx.file.serviceType" . -}}
+{{- if eq $st "s3" }}
+{{- $bucketSuffix = "" -}}
+{{- end }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $svc }}-config-py-map
+  namespace: {{ include "groundx.ns" . }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
+data:
+  config.py: |
+    env = dict(
+        accessKey={{ include "groundx.file.username" . | quote }},
+        accessSecret={{ include "groundx.file.password" . | quote }},
+        annotationBase="layout/processed/",
+        cacheDir="/app/hf_models_cache",
+        callbackAPIKey={{ include "groundx.layout.callbackApiKey" . | quote }},
+        deviceType={{ include "groundx.layout.inference.deviceType" . | quote }},
+        env="prod",
+        includeLS=False,
+        layoutBroker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
+        layoutLogger={{ include "groundx.layout.serviceName" . | quote }},
+        layoutResultBroker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
+        metricsBroker={{ printf "%s://%s:%v/0" (include "groundx.metrics.cache.scheme" .) (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) | quote }},
+        minBatchSize={{ include "groundx.layout.process.batchSize" . }},
+        ocrBase="layout/raw/",
+        ocrCredentials="credentials.json",
+        ocrProject={{ include "groundx.layout.ocr.project" . | quote }},
+        ocrType={{ include "groundx.layout.ocr.type" . | quote }},
+        podMemory={{ include "groundx.layout.podMemory" . | quote }},
+        queueType="kafka",
+        service={{ include "groundx.layout.serviceName" . | quote }},
+        uploadBase="layout/processed/",
+        uploadBaseURL={{ get $fs "bucketDomain" | quote }},
+        uploadBucket={{ get $fs "bucketName" | quote }},
+        uploadRegion={{ get $fs "region" | quote }},
+        uploadReplaceURL={{ printf "%s://%s/%s" (get $fs "bucketScheme") (get $fs "bucketDomain") $bucketSuffix | quote }},
+        uploadSSL={{ if eq (printf "%v" (get $fs "bucketSSL")) "true" }}True{{ else }}False{{ end }},
+        uploadType={{ $st | quote }},
+        uploadURL={{ printf "%s://%s/%s" (get $fs "scheme") ($baseDomain) $bucketSuffix | quote }},
+        validAPIKeys=[
+        {{- $apiKey := include "groundx.admin.apiKey" . -}}
+        {{- if ne $apiKey "" }}
+          {{ $apiKey | quote }},
+        {{- end }}
+        {{- $admin := include "groundx.admin.username" . -}}
+        {{- if ne $admin "" }}
+          {{ $admin | quote }},
+        {{- end }}
+          {{- $extras := (get .Values "cluster") | default (dict) -}}{{- $list := (get $extras "validApiKeys") | default (list) -}}{{- range $list }}
+          {{ . | quote }},{{- end }}
+        ],
+        workers={{ include "groundx.layout.inference.workers" . }},
+    )
+{{- end }}

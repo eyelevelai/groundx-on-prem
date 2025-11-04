@@ -1,0 +1,355 @@
+{{- $svcs := (include "groundx.golang.services" . | fromYaml) -}}
+{{- $engs := (include "groundx.engines" . | fromYaml) -}}
+{{- $pres := include "groundx.preProcessors" . | fromYaml -}}
+{{- $fs := (include "groundx.file.settings" . | fromYaml) -}}
+{{- $ppq := (include "groundx.stream.topic.preProcess" . | fromYaml) -}}
+{{- $pq := (include "groundx.stream.topic.process" . | fromYaml) -}}
+{{- $sq := (include "groundx.stream.topic.summary" . | fromYaml) -}}
+{{- $uq := (include "groundx.stream.topic.update" . | fromYaml) -}}
+{{- $lq := (include "groundx.stream.topic.upload" . | fromYaml) -}}
+{{- if gt (len $svcs) 0 }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-yaml-map
+  namespace: {{ include "groundx.ns" . }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
+data:
+  config.yaml: |
+    _mysql: &mysql
+      ro_addr: {{ include "groundx.db.ro" . }}
+      rw_addr: {{ include "groundx.db.rw" . }}
+      {{- if ne (include "groundx.db.username" .) "" }}
+      user: {{ include "groundx.db.username" . }}
+      {{- end }}
+      {{- if ne (include "groundx.db.password" .) "" }}
+      password: {{ include "groundx.db.password" . }}
+      {{- end }}
+      database: {{ include "groundx.db.dbName" . }}
+      maxIdle: {{ include "groundx.db.maxIdle" . }}
+      maxOpen: {{ include "groundx.db.maxOpen" . }}
+
+
+    {{- if or (ne (include "groundx.admin.apiKey" .) "") (ne (include "groundx.admin.email" .) "") (ne (include "groundx.admin.password" .) "") (ne (include "groundx.admin.username" .) "") (ne (include "groundx.licenseKey" .) "") }}
+
+    admin:
+      {{- if ne (include "groundx.admin.apiKey" .) "" }}
+      apiKey: {{ include "groundx.admin.apiKey" . }}
+      {{- end }}
+      {{- if ne (include "groundx.admin.email" .) "" }}
+      email: {{ include "groundx.admin.email" . }}
+      {{- end }}
+      {{- if ne (include "groundx.licenseKey" .) "" }}
+      licenseKey: {{ include "groundx.licenseKey" . }}
+      {{- end }}
+      {{- if ne (include "groundx.admin.password" .) "" }}
+      password: {{ include "groundx.admin.password" . }}
+      {{- end }}
+      {{- if ne (include "groundx.admin.username" .) "" }}
+      username: {{ include "groundx.admin.username" . }}
+      {{- end }}
+    {{- end }}
+
+    ai:
+      aws:
+        search:
+          baseURL: {{ include "groundx.search.baseUrl" . }}
+          index: {{ include "groundx.search.indexName" . }}
+          languages:
+          {{- range (include "groundx.languages" . | fromYamlArray) }}
+            - {{ . }}
+          {{- end }}
+          username: {{ include "groundx.search.username" . }}
+          password: {{ include "groundx.search.password" . }}
+      extract:
+        client:
+          {{- if ne (include "groundx.admin.username" .) "" }}
+          apiKey: {{ include "groundx.admin.username" . }}
+          {{- end }}
+          baseURL: {{ include "groundx.extract.api.serviceUrl" . }}
+          callbackURL: {{ include "groundx.layoutWebhook.serviceUrl" . }}
+      eyelevelSearch:
+        {{- if ne (include "groundx.admin.username" .) "" }}
+        apiKey: {{ include "groundx.admin.username" . }}
+        {{- end }}
+        baseURL: {{ include "groundx.ranker.api.serviceUrl" . }}
+      layout:
+        client:
+          {{- if ne (include "groundx.admin.username" .) "" }}
+          apiKey: {{ include "groundx.admin.username" . }}
+          {{- end }}
+          baseURL: {{ include "groundx.layout.api.serviceUrl" . }}
+          callbackURL: {{ include "groundx.layoutWebhook.serviceUrl" . }}
+      openai:
+        {{- if ne (include "groundx.summary.apiKey" .) "" }}
+        apiKey: {{ include "groundx.summary.apiKey" . }}
+        {{- end }}
+        {{- if ne (include "groundx.summary.baseUrl" .) "" }}
+        baseURL: {{ include "groundx.summary.baseUrl" . }}
+        {{- end }}
+        defaultKitId: {{ include "groundx.summary.defaultKitId" . }}
+      summaryType: summary
+      searchIndexes:
+        {{ include "groundx.search.indexName" . }}:
+          languages:
+          {{- range (include "groundx.languages" . | fromYamlArray) }}
+            - {{ . }}
+          {{- end }}
+
+    engines:
+      {{ range $i, $e := $engs }}
+      {{- $engineID := get $e "engineId" -}}
+      {{ $engineID }}:
+        engineID: {{ $engineID | quote }}
+        service: {{ coalesce (get $e "serviceType") (include "groundx.summary.serviceType" $) }}
+        {{- if hasKey $e "apiKey" }}
+        apiKey: {{ get $e "apiKey" }}
+        {{- end }}
+        {{- if hasKey $e "baseUrl" }}
+        baseURL: {{ get $e "baseUrl" }}
+        {{- end }}
+        {{- if hasKey $e "maxInputTokens" }}
+        maxInputTokens: {{ get $e "maxInputTokens" }}
+        {{- end }}
+        {{- if hasKey $e "maxRequests" }}
+        maxRequests: {{ get $e "maxRequests" }}
+        {{- end }}
+        {{- if hasKey $e "maxOutputTokens" }}
+        maxTokens: {{ get $e "maxOutputTokens" }}
+        {{- end }}
+        {{- if hasKey $e "reasoningEffort" }}
+        reasoningEffort: {{ get $e "reasoningEffort" }}
+        {{- end }}
+        {{- if hasKey $e "requestLimit" }}
+        requestLimit: {{ get $e "requestLimit" }}
+        {{- end }}
+        {{- if hasKey $e "type" }}
+        type: {{ get $e "type" }}
+        {{- end }}
+        {{- if hasKey $e "vision" }}
+        vision: {{ get $e "vision" }}
+        {{- else }}
+        vision: true
+        {{- end }}
+      {{- end }}
+
+    environment: {{ include "groundx.environment" . }}
+
+    groundxServer:
+      baseURL: {{ include "groundx.groundx.serviceUrl" . }}
+      port: {{ include "groundx.groundx.containerPort" . }}
+      serviceName: {{ include "groundx.groundx.serviceName" . }}
+
+    init:
+      ingestOnly: {{ include "groundx.ingestOnly" . }}
+      {{- if or (ne (include "groundx.db.privilegedUsername" .) "") (ne (include "groundx.db.privilegedPassword" .) "") }}
+      mysql:
+        {{- if ne (include "groundx.db.privilegedUsername" .) "" }}
+        user: {{ include "groundx.db.privilegedUsername" . }}
+        {{- end }}
+        {{- if ne (include "groundx.db.privilegedPassword" .) "" }}
+        password: {{ include "groundx.db.privilegedPassword" . }}
+        {{- end }}
+      {{- end }}
+      search:
+        password: {{ include "groundx.search.privilegedPassword" . }}
+        searchModel: all_access
+        username: {{ include "groundx.search.privilegedUsername" . }}
+
+    integrationTests:
+      search:
+        duration: {{ include "groundx.integration.search.duration" . }}
+        fileId: {{ include "groundx.integration.search.fileId" . | quote }}
+        modelId: {{ include "groundx.integration.search.modelId" . }}
+
+    layoutWebhookServer:
+      baseURL: {{ include "groundx.layoutWebhook.serviceUrl" . }}
+      port: {{ include "groundx.layoutWebhook.containerPort" . }}
+      serviceName: {{ include "groundx.layoutWebhook.serviceName" . }}
+
+    metrics:
+      active: true
+      api:
+        - name: {{ include "groundx.groundx.serviceName" . }}
+        - name: {{ include "groundx.layout.serviceName" . }}-api
+        - name: {{ include "groundx.layoutWebhook.serviceName" . }}
+      document:
+        tokensPerMinute: {{ include "groundx.throughput.tpm.document" . }}
+      inference:
+        - name: {{ include "groundx.layout.serviceName" . }}-inference
+          tokensPerMinute: {{ include "groundx.throughput.services.layout.inference" . }}
+        - name: {{ include "groundx.summary.serviceName" . }}-api
+          tokensPerMinute: {{ include "groundx.throughput.services.summary.api" . }}
+        - name: {{ include "groundx.summary.serviceName" . }}-inference
+          tokensPerMinute: {{ include "groundx.throughput.services.summary.inference" . }}
+        - name: {{ include "groundx.summaryClient.serviceName" . }}
+          tokensPerMinute: {{ include "groundx.throughput.services.summaryClient.api" . }}
+      page:
+        tokensPerMinute: {{ include "groundx.throughput.tpm.page" . }}
+      {{- if eq (include "groundx.stream.hasKafka" .) "true" }}
+      queue:
+        {{- if eq (dig "type" "kafka" $ppq) "kafka" }}
+        - name: {{ include "groundx.preProcess.serviceName" . }}
+          target: {{ dig "topic" "" $ppq }}
+          threshold: {{ include "groundx.throughput.services.preProcess.queue" . }}
+        {{- end }}
+        {{- if eq (dig "type" "kafka" $pq) "kafka" }}
+        - name: {{ include "groundx.process.serviceName" . }}
+          target: {{ dig "topic" "" $pq }}
+          threshold: {{ include "groundx.throughput.services.process.queue" . }}
+        {{- end }}
+        {{- if eq (dig "type" "kafka" $uq) "kafka" }}
+        - name: {{ include "groundx.queue.serviceName" . }}
+          target: {{ dig "topic" "" $uq }}
+          threshold: {{ include "groundx.throughput.services.queue.queue" . }}
+        {{- end }}
+        {{- if eq (dig "type" "kafka" $lq) "kafka" }}
+        - name: {{ include "groundx.upload.serviceName" . }}
+          target: {{ dig "topic" "" $lq }}
+          threshold: {{ include "groundx.throughput.services.upload.queue" . }}
+        {{- end }}
+      {{- end }}
+      session:
+        addr: {{ printf "%s:%v" (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) }}
+        notCluster: {{ include "groundx.metrics.cache.notCluster" . }}
+        ssl: {{ include "groundx.metrics.cache.ssl" . }}
+      summaryRequest:
+        tokensPerMinute: {{ include "groundx.throughput.tpm.summaryRequest" . }}
+      task:
+        - name: {{ include "groundx.layout.correct.serviceName" . }}
+          target: {{ include "groundx.layout.correct.queue" . }}
+          threshold: {{ include "groundx.throughput.services.layout.correct" . }}
+        - name: {{ include "groundx.layout.map.serviceName" . }}
+          target: {{ include "groundx.layout.map.queue" . }}
+          threshold: {{ include "groundx.throughput.services.layout.map" . }}
+        - name: {{ include "groundx.layout.ocr.serviceName" . }}
+          target: {{ include "groundx.layout.ocr.queue" . }}
+          threshold: {{ include "groundx.throughput.services.layout.ocr" . }}
+        - name: {{ include "groundx.layout.process.serviceName" . }}
+          target: {{ include "groundx.layout.process.queue" . }}
+          threshold: {{ include "groundx.throughput.services.layout.process" . }}
+        - name: {{ include "groundx.layout.save.serviceName" . }}
+          target: {{ include "groundx.layout.save.queue" . }}
+          threshold: {{ include "groundx.throughput.services.layout.save" . }}
+
+    {{- if .Values.metrics }}
+    metricsServer:
+      baseURL: http://{{ .Values.metrics.serviceName }}.{{ include "groundx.ns" . }}.svc.cluster.local
+      port: {{ .Values.metrics.port }}
+      serviceName: {{ .Values.metrics.serviceName }}
+      sslCACert: /etc/ssl/tls/ca.crt
+      sslCert: /etc/ssl/tls/tls.crt
+      sslKey: /etc/ssl/tls/tls.key
+      sslPort: 8443
+    {{- end }}
+
+    owner:
+      baseURL: {{ include "groundx.groundx.serviceUrl" . }}/api/v1
+      name: on-prem
+      type: {{ include "groundx.groundx.type" . }}
+      {{- if ne (include "groundx.admin.username" .) "" }}
+      username: {{ include "groundx.admin.username" . }}
+      {{- end }}
+
+    preProcessFileServer:
+      baseURL: {{ include "groundx.preProcess.serviceUrl" . }}
+      maxConcurrent: {{ include "groundx.preProcess.queueSize" . }}
+      port: {{ include "groundx.preProcess.containerPort" . }}
+      serviceName: {{ include "groundx.preProcess.serviceName" . }}
+
+    processFileServer:
+      baseURL: {{ include "groundx.process.serviceUrl" . }}
+      maxConcurrent: {{ include "groundx.process.queueSize" . }}
+      port: {{ include "groundx.process.containerPort" . }}
+      serviceName: {{ include "groundx.process.serviceName" . }}
+
+    processors:
+      convert: [11]
+      extract: [13]
+      layout: [3]
+      map: [4]
+      saveFile: [2]
+      skipConvert: [12]
+      skipGenerate: [1]
+      skipLayout: [5]
+      skipMap: [6]
+      skipSummarize: [7]
+      summarize: [8]
+      summarizeChunks: [10]
+      summarizeSections: [9]
+      {{- if $pres -}}
+      {{ toYaml $pres | nindent 6 }}
+      {{- end -}}
+      {{- if eq (include "groundx.ingestOnly" .) "true" }}
+      extraPostDefaults:
+        - processorID: 1
+          type: skip-generate
+      {{- end }}
+
+    queueFileServer:
+      baseURL: {{ include "groundx.queue.serviceUrl" . }}
+      maxConcurrent: {{ include "groundx.queue.queueSize" . }}
+      pollTime: 1
+      port: {{ include "groundx.queue.containerPort" . }}
+      serviceName: {{ include "groundx.queue.serviceName" . }}
+
+    queues:
+      filePreProcess:
+        {{- $ppq | toYaml | nindent 8 }}
+      fileProcess:
+        {{- $pq | toYaml | nindent 8 }}
+      fileSummaryDev:
+        {{- $sq | toYaml | nindent 8 }}
+      fileSummaryProd:
+        {{- $sq | toYaml | nindent 8 }}
+      fileUpdate:
+        {{- $uq | toYaml | nindent 8 }}
+      fileUpload:
+        {{- $lq | toYaml | nindent 8 }}
+
+    rec:
+      mysql: *mysql
+      session:
+        addr: {{ printf "%s:%v" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) }}
+        notCluster: {{ include "groundx.cache.notCluster" . }}
+        ssl: {{ include "groundx.cache.ssl" . }}
+
+    {{- if .Values.dashboard }}
+    ssp:
+      baseURL: http://{{ .Values.dashboard.serviceName }}.{{ include "groundx.ns" . }}.svc.cluster.local
+      dashboardURL: http://{{ .Values.dashboard.serviceName }}.{{ include "groundx.ns" . }}.svc.cluster.local
+    {{- end }}
+
+    summaryServer:
+      baseURL: {{ include "groundx.summaryClient.serviceUrl" . }}
+      maxConcurrent: {{ include "groundx.summaryClient.queueSize" . }}
+      port: {{ include "groundx.summaryClient.containerPort" . }}
+      serviceName: {{ include "groundx.summaryClient.serviceName" . }}
+
+    upload:
+      baseDomain: {{ get $fs "baseDomain" }}
+      baseUrl: {{ printf "%s://%s" (get $fs "scheme") (get $fs "baseDomain") }}
+      bucket: {{ get $fs "bucketName" }}
+      bucketUrl: {{ printf "%s://%s" (get $fs "bucketScheme") (get $fs "bucketDomain") }}
+      {{- if and (hasKey $fs "username") (ne (get $fs "username") "") }}
+      id: {{ get $fs "username" }}
+      {{- end }}
+      {{- if and (hasKey $fs "region") (ne (get $fs "region") "") }}
+      region: {{ get $fs "region" }}
+      {{- end }}
+      {{- if and (hasKey $fs "password") (ne (get $fs "password") "") }}
+      secret: {{ get $fs "password" }}
+      {{- end }}
+      service: {{ get $fs "serviceType" }}
+      ssl: {{ get $fs "ssl" }}
+      {{- if and (hasKey $fs "token") (ne (get $fs "token") "") }}
+      token: {{ get $fs "token" }}
+      {{- end }}
+
+    uploadFileServer:
+      baseURL: {{ include "groundx.upload.serviceUrl" . }}
+      maxConcurrent: {{ include "groundx.upload.queueSize" . }}
+      port: {{ include "groundx.upload.containerPort" . }}
+      serviceName: {{ include "groundx.upload.serviceName" . }}
+{{- end }}

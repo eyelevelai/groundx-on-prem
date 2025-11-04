@@ -1,0 +1,17 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+{{- if .Values.isDefaultClass }}
+  annotations:
+    "storageclass.kubernetes.io/is-default-class": "true"
+{{- end }}
+  name: {{ .Values.storageClassName }}
+volumeBindingMode: WaitForFirstConsumer
+provisioner: {{ .Values.provisioner }}
+{{- with .Values.reclaimPolicy }}
+reclaimPolicy: {{ . }}
+{{- end }}
+{{- with .Values.parameters }}
+parameters:
+{{ toYaml . | nindent 2 }}
+{{- end }}

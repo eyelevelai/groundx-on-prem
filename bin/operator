@@ -147,41 +147,41 @@ if [[ -n "$GROUP" ]]; then
   if [[ " ${valid_groups[@]} " =~ " $GROUP " ]]; then
     if [[ " ${recursive_types[@]} " =~ " $GROUP " ]]; then
       if [[ "$GROUP" == "init" ]]; then
-        recurse_group $do "$BIN_DIR/../operator/$GROUP" $CONCURRENCY "${valid_init[@]}"
+        recurse_group $do "$BIN_DIR/../terraform/groundx-operator/operator/$GROUP" $CONCURRENCY "${valid_init[@]}"
       elif [[ "$GROUP" == "services" ]]; then
-        recurse_group $do "$BIN_DIR/../operator/$GROUP" $CONCURRENCY "${valid_services[@]}"
+        recurse_group $do "$BIN_DIR/../terraform/groundx-operator/operator/$GROUP" $CONCURRENCY "${valid_services[@]}"
       elif [[ "$GROUP" == "app" ]]; then
-        recurse_group $do "$BIN_DIR/../operator/$GROUP" $CONCURRENCY "${valid_apps[@]}"
+        recurse_group $do "$BIN_DIR/../terraform/groundx-operator/operator/$GROUP" $CONCURRENCY "${valid_apps[@]}"
       else
-        recurse_directories $do "$BIN_DIR/../operator/$GROUP" $CONCURRENCY
+        recurse_directories $do "$BIN_DIR/../terraform/groundx-operator/operator/$GROUP" $CONCURRENCY
       fi
     else
-      $do "$BIN_DIR/../operator/$GROUP"
+      $do "$BIN_DIR/../terraform/groundx-operator/operator/$GROUP"
     fi
   else
     echo "Unknown request type: $GROUP"
     exit 1
   fi
 elif [[ -n "$APP" ]]; then
-  $do "$BIN_DIR/../operator/app/$APP"
+  $do "$BIN_DIR/../terraform/groundx-operator/operator/app/$APP"
 elif [[ -n "$INIT" ]]; then
-  $do "$BIN_DIR/../operator/init/$INIT"
+  $do "$BIN_DIR/../terraform/groundx-operator/operator/init/$INIT"
 elif [[ -n "$SERVICE" ]]; then
-  $do "$BIN_DIR/../operator/services/$SERVICE"
+  $do "$BIN_DIR/../terraform/groundx-operator/operator/services/$SERVICE"
 else
   for dir in "${valid_groups[@]}"; do
     if [[ " ${recursive_types[@]} " =~ " $dir " ]]; then
       if [[ "$dir" == "init" ]]; then
-        recurse_group $do "$BIN_DIR/../operator/$dir" $CONCURRENCY "${valid_init[@]}"
+        recurse_group $do "$BIN_DIR/../terraform/groundx-operator/operator/$dir" $CONCURRENCY "${valid_init[@]}"
       elif [[ "$dir" == "services" ]]; then
-        recurse_group $do "$BIN_DIR/../operator/$dir" $CONCURRENCY "${valid_services[@]}"
+        recurse_group $do "$BIN_DIR/../terraform/groundx-operator/operator/$dir" $CONCURRENCY "${valid_services[@]}"
       elif [[ "$dir" == "app" ]]; then
-        recurse_group $do "$BIN_DIR/../operator/$dir" $CONCURRENCY "${valid_apps[@]}"
+        recurse_group $do "$BIN_DIR/../terraform/groundx-operator/operator/$dir" $CONCURRENCY "${valid_apps[@]}"
       else
-        recurse_directories $do "$BIN_DIR/../operator/$dir" $CONCURRENCY
+        recurse_directories $do "$BIN_DIR/../terraform/groundx-operator/operator/$dir" $CONCURRENCY
       fi
     else
-      $do "$BIN_DIR/../operator/$dir"
+      $do "$BIN_DIR/../terraform/groundx-operator/operator/$dir"
     fi
   done
 fi

@@ -1,0 +1,538 @@
+'aws: stream':
+'cloud: stream':
+  1: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-pre-process
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  2: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-process
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  3: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-summary
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  4: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-update
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  5: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-upload
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+'default: stream':
+  1: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-pre-process
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  2: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-process
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  3: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-summary
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  4: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-update
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  5: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-upload
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+'disabled: stream':
+'empty: stream':
+  1: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-pre-process
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  2: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-process
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  3: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-summary
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  4: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-update
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  5: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-upload
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+'existing: stream':
+'extract: stream':
+'extract.ingest: stream':
+'extract.oai: stream':
+'metadata: stream':
+  1: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-pre-process
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  2: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-process
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  3: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-summary
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  4: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-update
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  5: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-upload
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+'minikube: stream':
+  1: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-pre-process
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  2: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-process
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  3: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-summary
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  4: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-update
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  5: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-upload
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+'openshift: stream':
+  1: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-pre-process
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  2: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-process
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  3: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-summary
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  4: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-update
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+  5: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-upload
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 1
+      replicas: 1
+'phoenix: stream':
+  1: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-pre-process
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 3
+      replicas: 1
+  2: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-process
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 2
+      replicas: 1
+  3: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-summary
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 4
+      replicas: 1
+  4: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-update
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 2
+      replicas: 1
+  5: |
+    apiVersion: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    metadata:
+      labels:
+        strimzi.io/cluster: stream-cluster
+      name: file-upload
+      namespace: eyelevel
+    spec:
+      config:
+        retention.bytes: 1073741824
+        retention.ms: 7200000
+        segment.bytes: 1073741824
+      partitions: 2
+      replicas: 1

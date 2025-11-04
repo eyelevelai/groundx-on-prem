@@ -1,0 +1,157 @@
+{{- $svcs := (include "groundx.celery.process.services" . | fromYaml) -}}
+{{- $hasOCR := include "groundx.layout.hasOCRCredentials" . -}}
+
+{{- range $idx, $entry := $svcs }}
+{{- $svcKey := printf "groundx.%s.settings" $entry -}}
+{{- $svcData := include $svcKey $ | fromYaml -}}
+
+{{- $aff := get $svcData "affinity" -}}
+{{- $anns := get $svcData "annotations" -}}
+{{- $cel := get $svcData "celery" -}}
+{{- $csct := get $svcData "containerSecurityContext" -}}
+{{- $fileDomain := get $svcData "fileDomain" | default (include "groundx.file.serviceDependency" $) -}}
+{{- $filePort := get $svcData "filePort" | default (include "groundx.file.port" $) -}}
+{{- $image := get $svcData "image" -}}
+{{- $ips := include "groundx.imagePullSecrets" $ | fromYaml -}}
+{{- $lbls := get $svcData "labels" -}}
+{{- $mapPrefix := get $svcData "mapPrefix" -}}
+{{- $name := get $svcData "name" -}}
+{{- $node := get $svcData "node" -}}
+{{- $nsl := get $svcData "nodeSelector" -}}
+{{- $rp := get $svcData "replicas" -}}
+{{- $rs := get $svcData "resources" -}}
+{{- $pull := get $svcData "pull" -}}
+{{- $san := get $svcData "serviceAccountName" -}}
+{{- $scr := get $svcData "secrets" | default dict -}}
+{{- $globalSecrets := include "groundx.secrets" $ | fromYaml | default dict -}}
+{{- if gt (len $globalSecrets) 0 }}
+  {{- range $k, $v := $globalSecrets }}
+    {{- $_ := set $scr $k $v -}}
+  {{- end }}
+{{- end }}
+{{- $sct := get $svcData "securityContext" -}}
+{{- $svc := get $svcData "service" -}}
+{{- $tl := get $svcData "tolerations" -}}
+
+{{- $desired := get $rp "desired" -}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  namespace: {{ include "groundx.ns" $ | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $name "indent" 4 "root" $) }}
+spec:
+  replicas: {{ $desired }}
+  selector:
+    matchLabels:
+      app: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}
+{{- if gt (len $lbls) 0 }}
+{{ toYaml $lbls | nindent 8 }}
+{{- end }}
+      annotations:
+        config-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-config-py.yaml") $ | sha256sum }}
+        supervisord-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-supervisord-conf.yaml") $ | sha256sum }}
+{{- if eq $hasOCR "true" -}}
+        ocr-credentials-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-ocr-credentials.yaml") $ | sha256sum }}
+{{- end }}
+{{- if gt (len $anns) 0 }}
+{{ toYaml $anns | nindent 8 }}
+{{- end }}
+    spec:
+{{- if $san }}
+      serviceAccountName: {{ $san }}
+{{- end }}
+{{- if gt (len $ips) 0 }}
+      imagePullSecrets:
+{{- range $j, $inm := $ips }}
+        - name: {{ $inm }}
+{{- end }}
+{{- end }}
+{{- if gt (len $aff) 0 }}
+      affinity:
+{{ toYaml $aff | nindent 8 }}
+{{- end }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
+{{- include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
+{{- include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
+      initContainers:
+        - name: wait-for-cache
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.cache.addr" $) (include "groundx.cache.port" $) }}; do echo waiting for cache; sleep 2; done"]
+        - name: wait-for-file-storage
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" $fileDomain $filePort }}; do echo waiting for file storage; sleep 2; done"]
+      containers:
+        - name: {{ $name | quote }}
+          image: {{ $image | quote }}
+          imagePullPolicy: {{ $pull | quote }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+{{- if gt (len $scr) 0 }}
+          envFrom:
+{{- range $kk, $vv := $scr }}
+            - secretRef:
+                name: {{ $vv }}
+{{- end }}
+{{- end }}
+          workingDir: /app
+          command:
+            - /bin/sh
+            - -c
+            - |
+              export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
+          livenessProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - ps aux | grep '{{ $cel }}.app' | grep -v grep || exit 1
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - ps aux | grep '{{ $cel }}.app' | grep -v grep || exit 1
+            initialDelaySeconds: 10
+            periodSeconds: 30
+{{ include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config.py
+              subPath: config.py
+{{- if eq $hasOCR "true" -}}
+            - name: credentials-volume
+              mountPath: /app/credentials.json
+              subPath: credentials.json
+{{- end }}
+            - name: supervisord-volume
+              mountPath: /app/supervisord.conf
+              subPath: supervisord.conf
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ $svc }}-config-py-map
+{{- if eq $hasOCR "true" -}}
+        - name: credentials-volume
+          configMap:
+            name: {{ $svc }}-ocr-credentials-map
+{{- end }}
+        - name: supervisord-volume
+          configMap:
+            name: {{ $name }}-supervisord-conf-map
+
+{{ end }}

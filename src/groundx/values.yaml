@@ -1,0 +1,247 @@
+cluster:
+  pvClass: eyelevel-pv
+
+  # "", "eks", "aks", "gke", "openshift", etc.
+  type: eks
+
+cache:
+  enabled: true
+
+  metrics:
+    enabled: true
+    existing: {}
+
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+
+  # set to use external cache
+  # will supercede all other settings except metrics
+  existing: {}
+    # addr: redis.mycorp.net
+    # isCluster: true
+    # port: 6379
+    # ssl: true
+
+db:
+  enabled: true
+
+  dbName: eyelevel
+
+  # set to use external MySQL DB
+  existing: {}
+#    ro: myro.mycorp.net
+#    rw: myrw.mycorp.net
+#    port: 3306
+
+file:
+  enabled: true
+
+  bucketName: eyelevel
+
+  # must set username/password explicitly
+  # or via AWS or MinIO env variables
+  # AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, etc...
+  # GROUNDX_ACCESS_KEY_ID, GROUNDX_SECRET_ACCESS_KEY, etc...
+
+  # username: minio
+  # password: minio123
+
+  # set to expose minio externally
+  # in openshift, creates a route
+  loadBalancer: {}
+
+  # set to use existing minio file storage
+  existing: {}
+    # serviceType: minio OR s3
+    # url: https://minio.mycorp.net
+
+    # if s3, must set region explicitly
+    # AWS_REGION or GROUNDX_REGION
+
+    # region: us-west-2
+
+    # optional
+    # port: 9000
+
+search:
+  enabled: true
+
+  indexName: prod-1
+  username: eyelevel
+  password: R0otb_*t!kazs
+  privilegedUsername: admin
+  privilegedPassword: R0otb_*t!kazs
+
+  # set to use existing opensearch
+  existing: {}
+    # url: https://search.mycorp.net:9200
+
+stream:
+  enabled: true
+
+  existing: {}
+#    domain: kafka.mycorp.net
+#    port: 9092
+
+summary:
+  api:
+    enabled: true
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+  inference:
+    enabled: true
+
+    deviceUtilize: 0.48
+    replicas:
+      desired: 2
+
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+
+  # must be an OpenAI chat compatible endpoint
+  # /chat/completions
+  existing: {}
+#    apiKey: my-oai-key
+#    serviceType: openai
+#    url: https://api.openai.com/v1
+
+groundx:
+  enabled: true
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+layout:
+  api:
+    enabled: true
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+  correct:
+    enabled: true
+
+    resources:
+      requests:
+        cpu: 1
+        memory: 1Gi
+  inference:
+    enabled: true
+
+    resources:
+      limits:
+        nvidia.com/gpu: 1
+      requests:
+        cpu: 500m
+        memory: 2Gi
+        nvidia.com/gpu: 1
+  map:
+    enabled: true
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+  ocr:
+    enabled: true
+
+    resources:
+      requests:
+        cpu: 1
+        memory: 1Gi
+  process:
+    enabled: true
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 1Gi
+  save:
+    enabled: true
+
+    resources:
+      requests:
+        cpu: 200m
+        memory: 1Gi
+
+layoutWebhook:
+  enabled: true
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+preProcess:
+  enabled: true
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 1Gi
+
+process:
+  enabled: true
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+queue:
+  enabled: true
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+ranker:
+  api:
+    enabled: true
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  inference:
+    enabled: true
+
+    resources:
+      limits:
+        nvidia.com/gpu: 1
+      requests:
+        cpu: 1.5
+        memory: 1Gi
+        nvidia.com/gpu: 1
+
+summaryClient:
+  enabled: true
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+
+upload:
+  enabled: true
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi

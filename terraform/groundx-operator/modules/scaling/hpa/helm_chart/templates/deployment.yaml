@@ -1,0 +1,41 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Values.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.name }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Values.target }}
+  minReplicas: {{ .Values.minReplicaCount }}
+  maxReplicas: {{ .Values.maxReplicaCount }}
+  metrics:
+    - type: External
+      external:
+        metric:
+          name: {{ .Values.metric }}
+        target:
+          type: Value
+          value: {{ .Values.threshold }}
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: {{ .Values.upCooldown }}
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: {{ .Values.upCooldown }}
+        - type: Pods
+          value: 4
+          periodSeconds: {{ .Values.upCooldown }}
+    scaleDown:
+      stabilizationWindowSeconds: {{ .Values.downCooldown }}
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: {{ .Values.downCooldown }}
+        - type: Pods
+          value: 2
+          periodSeconds: {{ .Values.downCooldown }}

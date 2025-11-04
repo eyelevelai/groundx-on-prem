@@ -6,9 +6,9 @@
 - [GroundX Ingest Service](#groundx-ingest-service)
 - [GroundX Search Service](#groundx-search-service)
 
-**[Quick Start](#dependencies)**
-- [Dependencies](#dependencies)
-- [Deploy to an Existing Kubernetes Cluster](#deploy-to-an-existing-kubernetes-cluster)
+**[Installing GroundX](#installing-groundx)**
+- [Command Line Tool Dependencies](#command-line-tool-dependencies)
+- [Cluster Requirements](#cluster-requirements)
   - [Background](#background)
     - [Node Groups](#node-groups)
     - [Required Compute Resources](#required-compute-resources)
@@ -22,19 +22,38 @@
         - [eyelevel-gpu-ranker](#eyelevel-gpu-ranker)
         - [eyelevel-gpu-summary](#eyelevel-gpu-summary)
   - [Configure Node Groups](#configure-node-groups)
-  - [Create env.tfvars File](#create-envtfvars-file)
-  - [Deploy GroundX On-Prem to Your Kubernetes Cluster](#deploy-groundx-on-prem-to-your-kubernetes-cluster)
-- [Create and Deploy to a New Amazon EKS Cluster](#create-and-deploy-to-a-new-amazon-eks-cluster)
-  - [Create the VPC and EKS Cluster](#create-the-vpc-and-eks-cluster)
-  - [Deploy GroundX On-Prem to the New Amazon EKS Cluster](#deploy-groundx-on-prem-to-the-new-amazon-eks-cluster)
-  - [A Note on Cost](#a-note-on-cost)
+  - [Namespace](#namespace)
+  - [PV Class](#pv-class)
+  - [NVIDIA GPU Operator](#nvidia-gpu-operator)
+    - [Installing in Microsoft Azure](#installing-in-microsoft-azure)
+    - [Uninstalling the NVIDIA GPU Operator](#uninstalling-the-nvidia-gpu-operator)
+- [Installing Services](#installing-services)
+  - [Redis](#redis)
+    - [Using an Existing Redis Cluster](#using-an-existing-redis-cluster)
+    - [Deploying a Dedicated Redis Cluster](#deploying-a-dedicated-redis-cluster)
+  - [MySQL](#mysql)
+    - [Using an Existing MySQL Cluster](#using-an-existing-mysql-cluster)
+    - [Deploying a Dedicated MySQL Cluster](#deploying-a-dedicated-mysql-cluster)
+  - [MinIO](#minio)
+    - [Using an Existing MinIO Cluster](#using-an-existing-minio-cluster)
+    - [Using AWS S3](#using-aws-s3)
+    - [Deploying a Dedicated MinIO Cluster](#deploying-a-dedicated-minio-cluster)
+  - [OpenSearch](#opensearch)
+    - [Using an Existing OpenSearch Cluster](#using-an-existing-opensearch-cluster)
+    - [Deploying a Dedicated OpenSearch Cluster](#deploying-a-dedicated-opensearch-cluster)
+  - [Kafka](#kafka)
+    - [Using an Existing Kafka Cluster](#using-an-existing-kafka-cluster)
+    - [Using AWS SQS](#using-aws-sqs)
+    - [Deploying a Dedicated Kafka Cluster](#deploying-a-dedicated-kafka-cluster)
+- [Installing the GroundX Application](#installing-the-groundx-application)
 
 **[Using GroundX On-Prem](#using-groundx-on-prem)**
 - [Get the API Endpoint](#get-the-api-endpoint)
 - [Use the SDKs](#use-the-sdks)
 - [Use the APIs](#use-the-apis)
 
-**[Tearing Down](#tearing-down)**
+**[Legacy Terraform Deployment](#legacy-terraform-deployment)**
+- [Accessing Legacy Scripts](#accessing-legacy-scripts)
 
 # What is GroundX On-Prem?
 
@@ -79,49 +98,44 @@ Once documents have been processed via the ingest service they can be queried ag
 
 ![GroundX Search Service](doc/groundx-search.jpg)
 
-# Quick Start
+# Installing GroundX
 
-## Dependencies
+## Command Line Tool Dependencies
 
-GroundX On-Prem requires Kubernetes cluster `v1.18+`.
+You must have the following command line tools installed:
 
-Please ensure you also have the following software tools installed before proceeding:
-
+```markdown
 - `bash` shell (version 4.0 or later recommended. AWS Cloud Shell has insufficient resources.)
-- `terraform` ([Setup Docs](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli))
-- `kubectl` ([Setup Docs](https://kubernetes.io/docs/tasks/tools/))
+- `kubectl` (or `oc`) configured to a namespace you can write to (e.g., `eyelevel`) ([Setup Docs](https://kubernetes.io/docs/tasks/tools/))
+- `helm` v3.8+
+```
 
-If you will be using the Terraform scripts to set up infrastructure in AWS, you will also need:
-
-- `AWS CLI` ([Setup Docs](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html))
-
-## Deploy to an Existing Kubernetes Cluster
-
-If you do not have an existing Kubernetes cluster and would like to use our Terraform scripts to set up an Amazon EKS cluster, you should follow the new Amazon EKS cluster [Quick Start guide](#create-and-deploy-to-a-new-amazon-eks-cluster).
+## Cluster Requirements
 
 In order to deploy GroundX On-Prem to your Kubernetes cluster, you must:
 
 1. [Check](#required-compute-resources) that you have the required compute resources
 2. [Configure or create](#configure-node-groups) appropriate node groups and nodes
-3. [Update](#create-envtfvars-file) `operator/env.tfvars` with your cluster information
-4. [Run](#deploy-groundx-on-prem-to-your-kubernetes-cluster) the deploy script
+3. Create a [Namespace](#namespace) or use an existing one
+4. Create a [PV Class](#pv-class) or use an existing one
+5. Install the [NVIDIA GPU Operator](#nvidia-gpu-operator) if it's not already installed
 
 ### Background
 
 #### Node Groups
 
-The GroundX On-Prem pods deploy to nodes using node selector labels and tolerations. Here is [an example](modules/groundx/helm_chart/templates/deployment.yaml) from one of the k8 yaml configs:
+By default, the GroundX On-Prem pods deploy to nodes using node selector labels and tolerations. Here is an example from one of the k8 yaml configs:
 
 ```yaml
 nodeSelector:
-  node: "{{ .Values.nodeSelector.node }}"
+  node: "eyelevel-cpu-only"
 tolerations:
   - key: "node"
-    value: "{{ .Values.nodeSelector.node }}"
+    value: "eyelevel-cpu-only"
     effect: "NoSchedule"
 ```
 
-Node labels are defined in [shared/variables.tf](shared/variables.tf) and must be applied to appropriate nodes within your cluster. Default node label values are:
+Node labels are defined in the `values.yaml` and must be applied to appropriate nodes within your cluster. Default node label values are:
 
 ```text
 eyelevel-cpu-memory
@@ -141,7 +155,7 @@ The **publicly available** GroundX On-Prem Kubernetes pods are all built for `x8
 
 The GroundX On-Prem GPU pods are designed to run on NVIDIA GPUs with CUDA 12+. Other GPU types or older driver versions are not supported.
 
-As part of the deployment, unless otherwise specified, the [NVIDIA GPU operator](https://github.com/NVIDIA/gpu-operator) is installed. If you already have this operator installed in your cluster, set `cluster.has_nvidia` to `true` in your `operator/env.tfvars` config file.
+As part of the deployment, the [NVIDIA GPU Operator](#nvidia-gpu-operator) must be installed. We offer terraform scripts to deploy the [NVIDIA GPU Operator](#nvidia-gpu-operator) to your cluster, if you have not already done so.
 
 The NVIDIA GPU operator should update your NVIDIA drivers and other software components needed to provision the GPU, so long as you have [supported NVIDIA hardware](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/platform-support.html) on the machine.
 
@@ -162,7 +176,7 @@ eyelevel-cpu-memory
 
 eyelevel-gpu-layout
     16 GB     GPU memory
-    35 GB     disk drive space
+    75 GB     disk drive space
     4         CPU cores
     12 GB     RAM
 
@@ -191,7 +205,7 @@ The resource requirements are as follows:
 
 Pods in this node group have minimal requirements on CPU, RAM, and disk drive space. They can run on virtually any machine with the [supported architecture](#chip-architecture).
 
-The resource requirements for these pods are described detail in [operator/variables.tf](operator/variables.tf) and the [Total Recommended Resources](#total-recommended-resources) section above.
+The resource requirements for these pods are described in more detail in the [Total Recommended Resources](#total-recommended-resources) section above.
 
 ###### eyelevel-cpu-memory
 
@@ -199,41 +213,41 @@ Pods in this node group have a range of requirements on CPU, RAM, and disk drive
 
 CPU and memory intensive ingestion pipeline pods, such as `layout_ocr`, `layout_save`, and `pre_process`, will deploy to the **eyelevel-cpu-memory** nodes. The `layout_ocr` pod includes tesseract, which benefits from access to multiple vCPU cores.
 
-The resource requirements for these pods are described detail in [operator/variables.tf](operator/variables.tf) and the [Total Recommended Resources](#total-recommended-resources) section above.
+The resource requirements for these pods are described in more detail in the [Total Recommended Resources](#total-recommended-resources) section above.
 
 ###### eyelevel-gpu-layout
 
 Pods in this node group have specific requirements on GPU, CPU, RAM, and disk drive space.
 
-The resource requirements for these pods are described detail in [operator/variables.tf](operator/variables.tf) and the [Total Recommended Resources](#total-recommended-resources) section above.
+The resource requirements for these pods are described detail in more detail in the [Total Recommended Resources](#total-recommended-resources) section above.
 
-The current configuration for this service assumes an NVIDIA GPU with 16 GB of GPU memory, 4 CPU cores, and at least 12 GB RAM. It deploys 1 pod with 6 workers on this node (called `workers` in `operator/variables.tf`) and claims the GPU via the `nvidia.com/gpu` resource provided by the [NVIDIA GPU operator](https://github.com/NVIDIA/gpu-operator).
+The current configuration for this service assumes an NVIDIA GPU with 16 GB of GPU memory, 4 CPU cores, and at least 12 GB RAM. It deploys 1 pod with threads on this node (called `layout.inference.threads` in `values.yaml`) and claims the GPU via the `nvidia.com/gpu` resource provided by the [NVIDIA GPU operator](https://github.com/NVIDIA/gpu-operator).
 
-If your machine has different resources than this, you will need to modify `layout_resources.inference` in your `operator/env.tfvars` using the per pod requirements described above to optimize for your node resources.
+If your machine has different resources than this, you will need to modify `layout.inference` in your `values.yaml` using the per pod requirements described above to optimize for your node resources.
 
 ###### eyelevel-gpu-ranker
 
 Pods in this node group have specific requirements on GPU, CPU, RAM, and disk drive space.
 
-The resource requirements for these pods are described detail in [operator/variables.tf](operator/variables.tf) and the [Total Recommended Resources](#total-recommended-resources) section above.
+The resource requirements for these pods are described detail in more detail in the [Total Recommended Resources](#total-recommended-resources) section above.
 
-The current configuration for this service assumes an NVIDIA GPU with 16 GB of GPU memory, 4 CPU cores, and at least 30 GB RAM. It deploys 1 pod with 14 workers on this node (called `workers` in `operator/variables.tf`). It does not claim the GPU via the `nvidia.com/gpu` resource provided by the [NVIDIA GPU operator](https://github.com/NVIDIA/gpu-operator) but uses 16 GB of GPU memory.
+The current configuration for this service assumes an NVIDIA GPU with 16 GB of GPU memory, 4 CPU cores, and at least 30 GB RAM. It deploys 1 pod with 14 workers on this node (called `ranker.inference.workers` in `values.yaml`). It does not claim the GPU via the `nvidia.com/gpu` resource provided by the [NVIDIA GPU operator](https://github.com/NVIDIA/gpu-operator) but uses 16 GB of GPU memory.
 
-If your machine has different resources than this, you will need to modify `ranker_resources.inference` in your `operator/env.tfvars` using the per pod requirements described above to optimize for your node resources.
+If your machine has different resources than this, you will need to modify `ranker.inference` in your `values.yaml` using the per pod requirements described above to optimize for your node resources.
 
 ###### eyelevel-gpu-summary
 
 Pods in this node group have specific requirements on GPU, CPU, RAM, and disk drive space.
 
-The resource requirements for these pods are described detail in [operator/variables.tf](operator/variables.tf) and the [Total Recommended Resources](#total-recommended-resources) section above.
+The resource requirements for these pods are described detail in more detail in the [Total Recommended Resources](#total-recommended-resources) section above.
 
-The current configuration for this service assumes an NVIDIA GPU with 48 GB of GPU memory, 4 CPU cores, and at least 30 GB RAM. It deploys 2 pods on this node (called `workers` in `operator/variables.tf`). It does not claim the GPU via the `nvidia.com/gpu` resource provided by the [NVIDIA GPU operator](https://github.com/NVIDIA/gpu-operator) but uses 24 GB of GPU memory per worker.
+The current configuration for this service assumes an NVIDIA GPU with 48 GB of GPU memory, 4 CPU cores, and at least 30 GB RAM. It deploys 1 pod on this node (called `summary.inference.replicas.desired` in `values.yaml`). It does not claim the GPU via the `nvidia.com/gpu` resource provided by the [NVIDIA GPU operator](https://github.com/NVIDIA/gpu-operator) but uses 24 GB of GPU memory per worker.
 
-If your machine has different resources than this, you will need to modify `summary_resources.inference` in your `operator/env.tfvars` using the per pod requirements described above to optimize for your node resources.
+If your machine has different resources than this, you will need to modify `summary.inference` in your `values.yaml` using the per pod requirements described above to optimize for your node resources.
 
 ### Configure Node Groups
 
-As mentioned in the [node groups](#node-groups) section, node labels are defined in [shared/variables.tf](shared/variables.tf) and must be applied to appropriate nodes within your cluster. Default node label values include:
+As mentioned in the [node groups](#node-groups) section, node labels are defined in [values.yaml](./values.yaml) and must be applied to appropriate nodes within your cluster. Default node label values include:
 
 ```text
 eyelevel-cpu-memory
@@ -247,107 +261,263 @@ Multiple node labels can be applied to the same node group, so long as resources
 
 However, **all** node labels must exist on **at least 1 node group** within your cluster. The label should be applied with a string key named `node` and an enumerated string value from the list above.
 
-### Create env.tfvars File
+#### Applying Custom Node Groups
 
-1. Create `operator/env.tfvars` file by copying the example file
+##### Default Labels
+
+If you use the **default labels** described in [Configure Node Groups](#configure-node-groups), you **do not** need to do anything else. The helm chart assumes these default values during the deployment.
+
+##### Custom Labels
+
+If you use **custom labels**, you must update the following values during GroundX deployment:
+
+```yaml
+cache.node
+cache.metrics.node
+groundx.node
+layout.api.node
+layout.correct.node
+layout.inference.node
+layout.map.node
+layout.ocr.node
+layout.process.node
+layout.save.node
+layoutWebhook.node
+preProcess.node
+process.node
+queue.node
+ranker.api.node
+ranker.inference.node
+summary.api.node
+summary.inference.node
+summaryClient.node
+upload.node
+```
+
+See the values.yaml [README.md](helm/README.md) for more information about these values.
+
+You will also need to update values for any services you deploy as well.
+
+### Namespace
+
+You must have a namespace where the GroundX application can be installed. If you need to create one, you can do so by running the following command:
 
 ```bash
-cp operator/env.tfvars.example operator/env.tfvars
+kubectl create namespace eyelevel
 ```
 
-`env.tfvars` is the configuration file Terraform will use when setting up GroundX On-Prem.
+This will create a namespace called `eyelevel` where GroundX pods will be installed.
 
-2. Add admin credentials
+The default `values.yaml` namespace assumes a name of `eyelevel`. If you choose to use a different namespace name, you will have to update the `values.yaml` file accordingly.
 
-For security reasons, you **MUST** modify the following:
+### PV Class
 
-- `admin.api_key`: Set this to a random UUID. You can generate one by running `bin/uuid`. This will be the API key associated with the admin account and will be used for inter-service communications.
-- `admin.username`: Set this to a random UUID. You can generate one by running `bin/uuid`. This will be the user ID associated with the admin account and will be used for inter-service communications.
-- `admin.email`: Set this to the email address you want associated with the admin account.
-
-3. (Optional) Update passwords and pod resource configurations
-
-Service usernames and passwords can be set in the other variables copied over from `operator/env.tfvars.example` (e.g. MySQL passwords).
-
-If you need to make changes, as described in the [node group resouces](#node-group-resources) section, you will also add these to your `operator/env.tfvars` file.
-
-4. (Optional) Update kubeconfig path
-
-The setup scripts assume your kubeconfig file can be found at `~/.kube/config`. If that is not the case, you will need to modify `cluster.kube_config_path` in your `operator/env.tfvars` file.
-
-### Deploy GroundX On-Prem to Your Kubernetes Cluster
-
-Once `env.tfvars` has been properly configured, run:
+GroundX requires a PV class for some of the pods. If you have not created one, we have included a chart that will create one. You can run it with the following comand:
 
 ```bash
-operator/setup
+helm install groundx-storageclass \
+  groundx/groundx-storageclass \
+  -n eyelevel
 ```
 
-This will create a new namespace and deploy GroundX On-Prem into the Kubernetes cluster.
+### NVIDIA GPU Operator
 
-## Create and Deploy to a New Amazon EKS Cluster
+Some of the GroundX pods require access to an NVIDIA GPU. The easiest way to ensure access is to install the NVIDIA GPU Operator, which will ensure the appropriate drivers and libraries are installed on the GPU nodes.
 
-If you already have a Kubernetes cluster, including an existing AWS EKS cluster, you should follow the existing Kubernetes cluster [Quick Start guide](#deploy-to-an-existing-kubernetes-cluster).
-
-### Create the VPC and EKS Cluster
-
-1. Run the following command from the base directory:
+If you'd like to install the NVIDIA GPU Operator to your cluster, use the following commands below:
 
 ```bash
-environment/aws/setup-eks
+helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
+helm repo update
+
+helm install nvidia-gpu-operator \
+  nvidia/gpu-operator \
+  -n nvidia-gpu-operator \
+  --create-namespace \
+  --atomic \
+  -f helm/values/values.nvidia.yaml
 ```
 
-You will be prompted for an AWS region to set up your cluster, and will also be asked to double check that you're happy with the state of the configuration file.
+#### Installing in Microsoft Azure
 
-Once this command has executed, a VPC and Kubernetes cluster will be setup. You can proceed to deploying GroundX.
+If you're installing the NVIDIA GPU operator into Microsoft Azure, be sure to set the `runtimeClass` to `nvidia-container-runtime`. We have included an example yaml that shows how to do this at `helm/values/values.nvidia.aks.yaml`.
 
-### Deploy GroundX On-Prem to the New Amazon EKS Cluster
-
-1. Create env.tfvars file
+If you'd like to install the NVIDIA GPU Operator with this AKS-specific yaml, use the following commands below:
 
 ```bash
-cp operator/env.tfvars.example operator/env.tfvars
+helm install nvidia-gpu-operator nvidia/gpu-operator \
+  -n nvidia-gpu-operator \
+  --create-namespace \
+  --atomic \
+  -f helm/values/values.nvidia.aks.yaml
 ```
 
-This creates a Terraform configuration file for the GroundX application, similar to what was described in the previous section. Now, however, some configuration is required.
+## Installing Services
 
-2. Add admin credentials
+### Redis
 
-For security reasons, you **MUST** modify the following:
+#### Using an Existing Redis Cluster
 
-- `admin.api_key`: Set this to a random UUID. You can generate one by running `bin/uuid`. This will be the API key associated with the admin account and will be used for inter-service communications.
-- `admin.username`: Set this to a random UUID. You can generate one by running `bin/uuid`. This will be the user ID associated with the admin account and will be used for inter-service communications.
-- `admin.email`: Set this to the email address you want associated with the admin account.
+If you wish to use an existing redis cache, you must configure the `cache.existing` and `cache.metrics.existing` parameters in your `values.yaml`.
 
-3. Once `env.tfvars` has been properly configured, run:
+#### Deploying a Dedicated Redis Cluster
+
+If you'd like to install redis to your cluster, instances will be automatically created during the application installation for you so long as `cache.existing` is an empty dictionary and `cache.enabled` is `true`.
+
+### MySQL
+
+#### Using an Existing MySQL Cluster
+
+If you wish to use an existing MySQL cluster, you must configure the `db.existing` parameters in your `values.yaml`.
+
+#### Deploying a Dedicated MySQL Cluster
+
+If you'd like to install MySQL to your cluster, use the following commands below:
 
 ```bash
-operator/setup
+helm repo add percona https://percona.github.io/percona-helm-charts/
+helm repo update
+
+helm install db-operator \
+  percona/pxc-operator \
+  -n eyelevel \
+  -f helm/values/values.db.operator.yaml
+helm install db-cluster \
+  percona/pxc-db \
+  -n eyelevel \
+  -f helm/values/values.db.cluster.yaml
 ```
 
-This will create a new namespace and deploy GroundX On-Prem into the Kubernetes cluster.
+### MinIO
 
-### A Note on Cost
+#### Using an Existing MinIO Cluster
 
-The resources being created will incur cost via AWS. It is recommended to follow all instructions accurately and completely. So that setup and taredown are both executed completely. Experience with AWS is recommended.
+If you wish to use an existing MinIO cluster, you must configure the `file.existing` parameters in your `values.yaml`.
 
-### AWS EC2 Resources
+#### Using AWS S3
 
-The default resource configurations for AWS EC2 are specified [here](#total-recommended-resources), consisting of:
+If you wish to use an existing AWS S3 bucket, you must configure the `file.existing` parameters in your `values.yaml` **and** set `file.serviceType` to `s3`.
 
-```text
-1x m6a.xlarge
-4x t3a.medium
-1x g4dn.xlarge
-1x g4dn.2xlarge
-1x g6e.xlarge
-~300 GB gp2
+#### Deploying a Dedicated MinIO Cluster
+
+If you'd like to install MinIO to your cluster, use the following commands below:
+
+```bash
+helm repo add minio-operator https://operator.min.io/
+helm repo update
+
+helm install minio-operator \
+  minio-operator/operator \
+  -n eyelevel \
+  -f helm/values/values.file.operator.yaml
+helm install minio-cluster \
+  minio-operator/tenant \
+  -n eyelevel \
+  -f helm/values/values.file.tenant.yaml
 ```
 
-You may need to request a quota increase for your account for the following resources:
+### OpenSearch
 
-- Sufficient vCPUs
-- GPU instances (e.g. g6e.xlarge)
+#### Using an Existing OpenSearch Cluster
+
+If you wish to use an existing OpenSearch cluster, you must configure the `search.existing` parameters in your `values.yaml`.
+
+#### Deploying a Dedicated OpenSearch Cluster
+
+If you'd like to install OpenSearch to your cluster, use the following commands below:
+
+```bash
+helm repo add opensearch https://opensearch-project.github.io/helm-charts/
+helm repo update
+
+helm install opensearch opensearch/opensearch -n eyelevel -f helm/values/values.search.yaml --version 2.23.1
+```
+
+### Kafka
+
+#### Using an Existing Kafka Cluster
+
+If you wish to use an existing Kafka cluster, you must configure the `stream.existing` parameters in your `values.yaml`.
+
+#### Using AWS SQS
+
+If you wish to use existing AWS SQS queues, you must configure the `stream.existing` parameters in your `values.yaml` **and** set `stream.serviceType` to `sqs`.
+
+#### Deploying a Dedicated Kafka Cluster
+
+If you'd like to install Kafka to your cluster, use the following commands below:
+
+```bash
+helm install stream-operator \
+  oci://quay.io/strimzi-helm/strimzi-kafka-operator \
+  -n eyelevel \
+  -f helm/values/values.stream.yaml
+```
+
+Once the operator is ready, run the following command:
+
+```bash
+helm install groundx-kafka-cluster \
+  groundx/groundx-strimzi-kafka-cluster \
+  -n eyelevel
+```
+
+## Installing the GroundX Application
+
+### Pre-Requisites
+
+You must have completed the following steps before attempting to install the GroundX application:
+
+- [Configure Node Groups](#configure-node-groups)
+- Create or select a [Namespace](#namespace)
+- Create or select a [PV Class](#pv-class)
+- Install the [NVIDIA GPU Operator](#nvidia-gpu-operator)
+- [Install Services](#installing-services)
+
+### Configuration
+
+Instructions on how to configure GroundX On-Prem can by found in the main [README.md](helm/README.md). A set of example configurations can be found at [helm/values](helm/values).
+
+For a GroundX deployment with default settings:
+
+1. Copy `sample.values.yaml` to something like `values.yaml`
+2. We minimally suggest updating the following values:
+
+```yaml
+groundxKey      # a valid GroundX API key, to be used to look up licensing information
+admin.apiKey    # admin values are associated with
+admin.username  # the admin account for your deployment
+admin.email
+admin.password
+cluster.pvClass # an existing storage class
+cluster.type    # type of Kubernetes cluster
+```
+
+**Note**: `admin.apiKey` and `admin.username` must be valid UUIDs. We provide a helper script to generate random UUIDs. You can run it using thefollowing command:
+
+```bash
+bin/uuid
+```
+
+### Helm Installation
+
+To install GroundX, add the chart repo to helm by running the following commands:
+
+```bash
+helm repo add groundx https://registry.groundx.ai/helm
+helm repo update
+```
+
+Once the repo is added, you can install the GroundX application by running the following command:
+
+```bash
+helm install groundx \
+  groundx/groundx \
+  -n eyelevel \
+  -f values.yaml
+```
+
+Replace `values.yaml` with the path to the `values.yaml` file you created in the previous [Configuration](#configuration) step.
 
 # Using GroundX On-Prem
 
@@ -356,7 +526,7 @@ You may need to request a quota increase for your account for the following reso
 Once the setup is complete, run:
 
 ```bash
-kubectl -n eyelevel get svc
+kubectl -n eyelevel get svc groundx
 ```
 
 The API endpoint will be the external IP associated with the GroundX load balancer.
@@ -400,23 +570,9 @@ The [API endpoint](#get-the-api-endpoint), in conjuction with the `admin.api_key
 
 All of the methods and operations described in the [GroundX documentation](https://documentation.groundx.ai/reference) are supported with your On-Prem instance of GroundX. You simply have to substitute `https://api.groundx.ai` with your [API endpoint](#get-the-api-endpoint).
 
-# Tearing Down
+# Legacy Terraform Deployment
 
-After all resources have been created, tear down can be done with the following commands.
+As of November 4, 2025, we have migrated to a pure helm release deployment. The previous hybrid terraform-helm approach is no longer supported.
 
-To tear down the GroundX On-Prem deployment, run the following commands in order:
-
-```bash
-bin/operator app -c
-bin/operator services -c
-bin/operator init -c
-```
-
-If you used our Terraform scripts to set up an Amazon EKS cluster, run the following commands in order:
-
-```bash
-bin/environment eks -c
-bin/environment aws-vpc -c
-```
-
-It is vital to run these commands in order, and it is recommended to run them one at a time manually. We have observed inconsistency and race conditions when these are run automatically.
+## Accessing Legacy Scripts
+If you would like to access the legacy terraform scripts, they can be pulled from [legacy-terraform-deployment](https://github.com/eyelevelai/groundx-on-prem/releases/tag/legacy-terraform-deployment).

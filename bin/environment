@@ -5,7 +5,7 @@ CONCURRENCY=1
 BIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$BIN_DIR/shared/util"
 
-ENV_BASE="$BIN_DIR/../environment"
+ENV_BASE="$BIN_DIR/../terraform"
 
 must_have aws
 must_have terraform
@@ -89,10 +89,6 @@ fi
 
 if [[ -n "$ENV" ]]; then
   if [[ " ${valid_envs[@]} " =~ " $ENV " ]]; then
-    if [[ "$CLEAR" -eq 1 ]]; then
-      "$BIN_DIR/operator" "-c"
-    fi
-
     if [[ " ${recursive_types[@]} " =~ " $ENV " ]]; then
       if [[ "$ENV" == "aws" ]]; then
         recurse_ordered $do "$ENV_BASE" "$ENV" "${valid_aws[@]}"

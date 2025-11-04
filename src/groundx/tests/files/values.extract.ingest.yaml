@@ -1,0 +1,127 @@
+licenseKey: "00000000-0000-0000-0000-000000000000"
+
+mode: ingest
+
+admin:
+  apiKey: "00000000-0000-0000-0000-000000000000"
+  email: "support@mycorp.net"
+  password: "password"
+  username: "00000000-0000-0000-0000-000000000000"
+
+cluster:
+  pvClass: eyelevel-pv
+  type: eks
+
+  preProcessors:
+    - processorId: 13
+      type: extract
+
+cache:
+  metrics:
+    enabled: false
+
+  existing:
+    addr: X.X.X.use2.cache.amazonaws.com
+    isCluster: true
+    port: 6379
+    ssl: true
+
+db:
+  username: eyelevel
+  password: password
+
+  # used to initialize DB
+  # creates service user, db, and tables
+  privilegedUsername: root
+  privilegedPassword: password
+
+  existing:
+    ro: X.X.us-east-2.rds.amazonaws.com
+    rw: X.X.us-east-2.rds.amazonaws.com
+    port: 3306
+
+file:
+  bucketName: eyelevel
+
+  username: awsKey
+  password: awsSecret
+
+  existing:
+    url: https://X.s3.us-west-2.amazonaws.com
+    region: us-west-2
+    serviceType: s3
+
+stream:
+  enabled: false
+
+  key: awsKey
+  secret: awsSecret
+
+  topics:
+    preProcess:
+      region: us-east-2
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/X/file-pre-process
+    process:
+      key: otherAwsKey
+      region: us-east-2
+      secret: otherAwsSecret
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/X/file-process
+    summary:
+      region: us-east-2
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/X/file-summary
+    update:
+      region: us-east-2
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/X/file-update
+    upload:
+      region: us-east-2
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/X/file-upload
+
+extract:
+  enabled: true
+
+  agent:
+    enabled: true
+
+    existingSecret: true
+    secretName: extract-agent-secret
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+
+  api:
+    enabled: true
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+  download:
+    enabled: true
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+  save:
+    enabled: true
+
+    existingSecret: true
+    secretName: extract-save-secret
+
+# gcpCredentials: JSON
+# or
+# --set-file extract.save.gcpCredentials=/path/to/gcp.json
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi

@@ -1,0 +1,37 @@
+{{- $ic := include "groundx.ranker.api.create" . -}}
+{{- $ec := include "groundx.ranker.inference.create" . -}}
+
+{{- if or (eq $ic "true") (eq $ec "true") }}
+{{- $svc := include "groundx.ranker.serviceName" . -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $svc }}-config-py-map
+  namespace: {{ include "groundx.ns" . }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
+data:
+  config.py: |
+    env = dict(
+        deviceType={{ include "groundx.ranker.inference.deviceType" . | quote }},
+        metricsBroker={{ printf "%s://%s:%v/0" (include "groundx.metrics.cache.scheme" .) (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) | quote }},
+        searchBroker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
+        searchLog={{ include "groundx.ranker.serviceName" . | quote }},
+        searchResultBroker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
+        service={{ include "groundx.ranker.serviceName" . | quote }},
+        validAPIKeys=[
+        {{- $apiKey := include "groundx.admin.apiKey" . -}}
+        {{- if ne $apiKey "" }}
+          {{ $apiKey | quote }},
+        {{- end }}
+        {{- $admin := include "groundx.admin.username" . -}}
+        {{- if ne $admin "" }}
+          {{ $admin | quote }},
+        {{- end }}
+          {{- $extras := (get .Values "cluster") | default (dict) -}}{{- $list := (get $extras "validApiKeys") | default (list) -}}{{- range $list }}
+          {{ . | quote }},{{- end }}
+        ],
+        workers={{ include "groundx.ranker.inference.workers" . }},
+    )
+{{- end }}

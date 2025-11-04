@@ -1,0 +1,97 @@
+suite: "golang renders as expected"
+chart:
+  appVersion: 0.1.0
+  version: 0.1.0
+
+tests:
+  - it: "default: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "empty: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.empty.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "aws: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/values.aws.services.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "openshift: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/values.openshift.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "minikube: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/values.minikube.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "existing: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/values.existing.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "metadata: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.metadata.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "disabled: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.disabled.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "extract: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/values.extract.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "extract.ingest: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.extract.ingest.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "extract.oai: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/values.extract.oai.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "cloud: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.cloud.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "phoenix: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.phoenix.yaml
+    asserts:
+      - matchSnapshot: {}

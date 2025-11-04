@@ -1,0 +1,425 @@
+busybox:
+  image: test.image:v1
+  imagePullPolicy: Always
+
+serviceAccount:
+  name: existing-service-account
+
+cache:
+  affinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app
+              operator: In
+              values:
+                - myapp
+        topologyKey: "kubernetes.io/hostname"
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8081"
+  containerPort: 8081
+  containerSecurityContext:
+    readOnlyRootFilesystem: true
+  image: test.image:v1
+  imagePullPolicy: Never
+  labels:
+    app.kubernetes.io/name: myapp
+    app.kubernetes.io/component: backend
+  loadBalancer:
+    ipType: LoadBalancer
+    isInternal: true
+    port: 6377
+    ssl: true
+    timeout: 30
+  mountPath: /ok/here
+  node: ""
+  nodeSelector:
+    disktype: ssd
+    kubernetes.io/os: linux
+  port: 8082
+  securityContext:
+    fsGroup: 2000
+  serviceName: myapp
+
+  metrics:
+    affinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - myapp
+          topologyKey: "kubernetes.io/hostname"
+    annotations:
+      prometheus.io/port: "8081"
+    containerPort: 8081
+    containerSecurityContext:
+      readOnlyRootFilesystem: true
+    image: test.image:v1
+    imagePullPolicy: Never
+    labels:
+      app.kubernetes.io/name: myapp
+    loadBalancer:
+      ipType: Route
+      isInternal: true
+      port: 6377
+      ssl: true
+      timeout: 30
+    mountPath: /ok/here
+    node: ""
+    port: 8082
+    securityContext:
+      fsGroup: 2000
+    serviceName: myapp
+    tolerations:
+      - effect: "NoSchedule"
+        key: "workload-type"
+        operator: "Equal"
+        value: "batch"
+
+file:
+  username: minio
+  password: minio123
+
+summary:
+  defaultKitId: 1
+  serviceName: myapp
+
+  api:
+    affinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - myapp
+          topologyKey: "kubernetes.io/hostname"
+    annotations:
+      prometheus.io/port: "8081"
+    containerPort: 8081
+    containerSecurityContext:
+      readOnlyRootFilesystem: true
+    image: test.image:v1
+    imagePullPolicy: Never
+    labels:
+      app.kubernetes.io/name: myapp
+    loadBalancer:
+      ipType: LoadBalancer
+      isInternal: true
+      port: 6377
+      ssl: true
+      timeout: 30
+    node: ""
+    nodeSelector:
+      disktype: ssd
+    securityContext:
+      fsGroup: 2000
+    serviceAccount:
+      name: other-service-account
+    threads: 2
+    timeout: 5
+    workers: 2
+  inference:
+    affinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - myapp
+          topologyKey: "kubernetes.io/hostname"
+    annotations:
+      prometheus.io/port: "8081"
+    containerPort: 8081
+    containerSecurityContext:
+      readOnlyRootFilesystem: true
+    deviceType: cpu
+    deviceUtilize: 0.37
+    image: test.image:v1
+    imagePullPolicy: Never
+    labels:
+      app.kubernetes.io/name: myapp
+    model:
+      dataType: bfloat8
+      maxInputTokens: 50000
+      maxOutputTokens: 2000
+      maxRequests: 2
+      name: google/gemma-3-8b-it
+      swapSpace: 10
+    node: ""
+    pvc:
+      access: ReadOnce
+      class: test-pv
+      name: test-pvc
+    queue: my-queue
+    replicas:
+      desired: 1
+    runtimeClassName: abc
+    securityContext:
+      fsGroup: 2000
+    serviceAccount:
+      name: other-service-account
+    threads: 2
+    workers: 2
+
+groundx:
+  affinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app
+              operator: In
+              values:
+                - myapp
+        topologyKey: "kubernetes.io/hostname"
+  annotations:
+    prometheus.io/port: "8081"
+  containerPort: 8081
+  containerSecurityContext:
+    readOnlyRootFilesystem: true
+  image: test.image:v1
+  imagePullPolicy: Never
+  labels:
+    app.kubernetes.io/name: myapp
+  loadBalancer:
+    ipType: LoadBalancer
+    isInternal: false
+    port: 6377
+    ssl: true
+    timeout: 30
+  node: test-label-1
+  nodeSelector:
+    disktype: ssd
+  securityContext:
+    fsGroup: 2000
+  serviceAccount:
+    name: other-service-account
+  serviceName: myapp
+  tolerations:
+    - effect: "NoSchedule"
+      key: "workload-type"
+      operator: "Equal"
+      value: "batch"
+
+layout:
+  serviceName: myapp
+
+  api:
+    containerPort: 8081
+    node: test-label-1
+    threads: 3
+    timeout: 10
+    workers: 3
+    serviceAccount:
+      name: other-service-account
+
+  correct:
+    queue: my-queue
+    threads: 2
+    workers: 4
+    serviceAccount:
+      name: other-service-account
+
+  inference:
+    affinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - myapp
+          topologyKey: "kubernetes.io/hostname"
+    annotations:
+      prometheus.io/port: "8081"
+    containerPort: 8081
+    containerSecurityContext:
+      readOnlyRootFilesystem: true
+    deviceType: cpu
+    image: test.image:v1
+    imagePullPolicy: Never
+    labels:
+      app.kubernetes.io/name: myapp
+    node: test-label-1
+    nodeSelector:
+      disktype: ssd
+    queue: my-queue
+    securityContext:
+      fsGroup: 2000
+    serviceAccount:
+      name: other-service-account
+    threads: 2
+    workers: 2
+
+  map:
+    affinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - myapp
+          topologyKey: "kubernetes.io/hostname"
+    annotations:
+      prometheus.io/port: "8081"
+    containerPort: 8081
+    containerSecurityContext:
+      readOnlyRootFilesystem: true
+    image: test.image:v1
+    imagePullPolicy: Never
+    labels:
+      app.kubernetes.io/name: myapp
+    node: ""
+    queue: my-queue
+    securityContext:
+      fsGroup: 2000
+    serviceAccount:
+      name: other-service-account
+    threads: 2
+    workers: 2
+
+  ocr:
+    node: ""
+    nodeSelector:
+      disktype: ssd
+    project: test-project
+    queue: my-queue
+    threads: 2
+    type: google
+    workers: 2
+    serviceAccount:
+      name: other-service-account
+
+  process:
+    batchSize: 3
+    node: ""
+    queue: my-queue
+    threads: 2
+    tolerations:
+      - effect: "NoSchedule"
+        key: "workload-type"
+        operator: "Equal"
+        value: "batch"
+    workers: 2
+    serviceAccount:
+      name: other-service-account
+
+  save:
+    node: test-label-1
+    queue: my-queue
+    threads: 2
+    workers: 2
+    serviceAccount:
+      name: other-service-account
+
+layoutWebhook:
+  node: test-label-1
+  serviceAccount:
+    name: other-service-account
+  tolerations:
+    - effect: "NoSchedule"
+      key: "workload-type"
+      operator: "Equal"
+      value: "batch"
+
+preProcess:
+  node: test-label-1
+  nodeSelector:
+    disktype: ssd
+  queueSize: 2
+  serviceAccount:
+    name: other-service-account
+
+process:
+  node: test-label-1
+  queueSize: 2
+  serviceAccount:
+    name: other-service-account
+
+queue:
+  node: ""
+  queueSize: 2
+  serviceAccount:
+    name: other-service-account
+
+ranker:
+  serviceName: myapp
+
+  api:
+    affinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - myapp
+          topologyKey: "kubernetes.io/hostname"
+    annotations:
+      prometheus.io/port: "8081"
+    containerPort: 8081
+    containerSecurityContext:
+      readOnlyRootFilesystem: true
+    image: test.image:v1
+    imagePullPolicy: Never
+    labels:
+      app.kubernetes.io/name: myapp
+    loadBalancer:
+      ipType: LoadBalancer
+      isInternal: true
+      port: 6377
+      ssl: true
+      timeout: 30
+    node: ""
+    securityContext:
+      fsGroup: 2000
+    serviceAccount:
+      name: other-service-account
+    threads: 2
+    timeout: 30
+    tolerations:
+      - effect: "NoSchedule"
+        key: "workload-type"
+        operator: "Equal"
+        value: "batch"
+    workers: 4
+
+  inference:
+    deviceType: cpu
+    node: test-label-1
+    pvc:
+      capacity: 1Gi
+    queue: my-queue
+    serviceAccount:
+      name: other-service-account
+    threads: 2
+    tolerations:
+      - effect: "NoSchedule"
+        key: "workload-type"
+        operator: "Equal"
+        value: "batch"
+    workers: 4
+
+summaryClient:
+  node: ""
+  queueSize: 5
+  serviceAccount:
+    name: other-service-account
+  tolerations:
+    - effect: "NoSchedule"
+      key: "workload-type"
+      operator: "Equal"
+      value: "batch"
+
+upload:
+  node: ""
+  nodeSelector:
+    disktype: ssd
+  queueSize: 2
+  serviceAccount:
+    name: other-service-account
