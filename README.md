@@ -575,4 +575,4 @@ All of the methods and operations described in the [GroundX documentation](https
 As of November 4, 2025, we have migrated to a pure helm release deployment. The previous hybrid terraform-helm approach is no longer supported.
 
 ## Accessing Legacy Scripts
-If you would like to access the legacy terraform scripts, they can be pulled from [legacy-terraform-deployment](releases/tag/legacy-terraform-deployment).
+If you would like to access the legacy terraform scripts, they can be pulled from [legacy-terraform-deployment](https://github.com/eyelevelai/groundx-on-prem/releases/tag/legacy-terraform-deployment).
