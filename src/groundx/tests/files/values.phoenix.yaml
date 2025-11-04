@@ -19,11 +19,23 @@ cluster:
     gpuSummary: eyelevel-gpu
   validApiKeys:
     - 00000000-0000-0000-0000-000000000002
+  imagePullSecrets:
+    - ecr-public-pull
 
 db:
+  username: eyelevel
+  password: password
+
+  privilegedUsername: root
+  privilegedPassword: password
+
   existing:
     ro: db-ro.existing.com
     rw: db-rw.existing.com
+
+file:
+  username: minio
+  password: minio123
 
 groundx:
   serviceName: groundx-service
@@ -122,6 +134,7 @@ upload:
 extract:
   enabled: true
   callbackApiKey: 00000000-0000-0000-0000-000000000001
+  callbackUrl: https://api.groundx.ai/api
 
   file:
     bucketName: test
