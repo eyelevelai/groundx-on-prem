@@ -225,6 +225,8 @@ The current configuration for this service assumes an NVIDIA GPU with 16 GB of G
 
 If your machine has different resources than this, you will need to modify `layout.inference` in your `values.yaml` using the per pod requirements described above to optimize for your node resources.
 
+Note: in many cloud Kubernetes services, such as EKS, you must use a node image that supports GPUs (e.g. AL2023_x86_64_NVIDIA).
+
 ###### eyelevel-gpu-ranker
 
 Pods in this node group have specific requirements on GPU, CPU, RAM, and disk drive space.
@@ -235,6 +237,8 @@ The current configuration for this service assumes an NVIDIA GPU with 16 GB of G
 
 If your machine has different resources than this, you will need to modify `ranker.inference` in your `values.yaml` using the per pod requirements described above to optimize for your node resources.
 
+Note: in many cloud Kubernetes services, such as EKS, you must use a node image that supports GPUs (e.g. AL2023_x86_64_NVIDIA).
+
 ###### eyelevel-gpu-summary
 
 Pods in this node group have specific requirements on GPU, CPU, RAM, and disk drive space.
@@ -244,6 +248,8 @@ The resource requirements for these pods are described detail in more detail in 
 The current configuration for this service assumes an NVIDIA GPU with 48 GB of GPU memory, 4 CPU cores, and at least 30 GB RAM. It deploys 1 pod on this node (called `summary.inference.replicas.desired` in `values.yaml`). It does not claim the GPU via the `nvidia.com/gpu` resource provided by the [NVIDIA GPU operator](https://github.com/NVIDIA/gpu-operator) but uses 24 GB of GPU memory per worker.
 
 If your machine has different resources than this, you will need to modify `summary.inference` in your `values.yaml` using the per pod requirements described above to optimize for your node resources.
+
+Note: in many cloud Kubernetes services, such as EKS, you must use a node image that supports GPUs (e.g. AL2023_x86_64_NVIDIA).
 
 ### Configure Node Groups
 
