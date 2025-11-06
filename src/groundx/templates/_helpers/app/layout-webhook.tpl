@@ -33,7 +33,7 @@ true
 
 {{- define "groundx.layoutWebhook.imagePullPolicy" -}}
 {{- $in := .Values.layoutWebhook | default dict -}}
-{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
 {{- define "groundx.layoutWebhook.isRoute" -}}

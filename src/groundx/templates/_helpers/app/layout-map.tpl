@@ -32,7 +32,7 @@ true
 {{- define "groundx.layout.map.imagePullPolicy" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "map" dict $b -}}
-{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
 {{- define "groundx.layout.map.queue" -}}

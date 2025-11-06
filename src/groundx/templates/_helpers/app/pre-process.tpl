@@ -38,7 +38,7 @@ true
 
 {{- define "groundx.preProcess.imagePullPolicy" -}}
 {{- $in := .Values.preProcess | default dict -}}
-{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
 {{- define "groundx.preProcess.queueSize" -}}

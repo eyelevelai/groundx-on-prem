@@ -77,13 +77,13 @@ false
 
 {{- define "groundx.cache.imagePullPolicy" -}}
 {{- $in := .Values.cache | default dict -}}
-{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
 {{- define "groundx.metrics.cache.imagePullPolicy" -}}
 {{- $b := .Values.cache | default dict -}}
 {{- $in := (dig "metrics" nil $b) | default dict -}}
-{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
 {{- define "groundx.cache.isRoute" -}}

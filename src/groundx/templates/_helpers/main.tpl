@@ -32,7 +32,7 @@
 
 {{- define "groundx.busybox.pull" -}}
 {{- $in := .Values.busybox | default dict -}}
-{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
 {{- define "groundx.clusterType" -}}
@@ -58,9 +58,9 @@
 {{- dig "hasMig" false $b -}}
 {{- end }}
 
-{{- define "groundx.imagePull" -}}
+{{- define "groundx.imagePullPolicy" -}}
 {{- $b := .Values.cluster | default dict -}}
-{{- dig "imagePull" "IfNotPresent" $b -}}
+{{- dig "imagePullPolicy" "IfNotPresent" $b -}}
 {{- end }}
 
 {{- define "groundx.imagePullSecrets" -}}
