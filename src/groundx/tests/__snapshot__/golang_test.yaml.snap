@@ -3470,7 +3470,7 @@
           targetPort: 8080
       selector:
         app: groundx
-      type: LoadBalancer
+      type: ClusterIP
   3: |
     apiVersion: apps/v1
     kind: Deployment
@@ -4710,7 +4710,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b8eb34a20db0be4fb1489ce5f1fe108b68bc2d7c20829c0d04547c0a46f12919
+            config-hash: 7347c15a690b4ad0177a590425c794fa5607a8ba7ee556e2ede611a4cf417e04
           labels:
             app: groundx
         spec:
@@ -4810,7 +4810,7 @@
           targetPort: 8080
       selector:
         app: groundx
-      type: LoadBalancer
+      type: ClusterIP
   3: |
     apiVersion: apps/v1
     kind: Deployment
@@ -4831,7 +4831,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b8eb34a20db0be4fb1489ce5f1fe108b68bc2d7c20829c0d04547c0a46f12919
+            config-hash: 7347c15a690b4ad0177a590425c794fa5607a8ba7ee556e2ede611a4cf417e04
           labels:
             app: layout-webhook
         spec:
@@ -4938,7 +4938,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b8eb34a20db0be4fb1489ce5f1fe108b68bc2d7c20829c0d04547c0a46f12919
+            config-hash: 7347c15a690b4ad0177a590425c794fa5607a8ba7ee556e2ede611a4cf417e04
           labels:
             app: pre-process
         spec:
@@ -5029,7 +5029,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b8eb34a20db0be4fb1489ce5f1fe108b68bc2d7c20829c0d04547c0a46f12919
+            config-hash: 7347c15a690b4ad0177a590425c794fa5607a8ba7ee556e2ede611a4cf417e04
           labels:
             app: process
         spec:
@@ -5120,7 +5120,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b8eb34a20db0be4fb1489ce5f1fe108b68bc2d7c20829c0d04547c0a46f12919
+            config-hash: 7347c15a690b4ad0177a590425c794fa5607a8ba7ee556e2ede611a4cf417e04
           labels:
             app: queue
         spec:
@@ -5211,7 +5211,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b8eb34a20db0be4fb1489ce5f1fe108b68bc2d7c20829c0d04547c0a46f12919
+            config-hash: 7347c15a690b4ad0177a590425c794fa5607a8ba7ee556e2ede611a4cf417e04
           labels:
             app: summary-client
         spec:
@@ -5302,7 +5302,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b8eb34a20db0be4fb1489ce5f1fe108b68bc2d7c20829c0d04547c0a46f12919
+            config-hash: 7347c15a690b4ad0177a590425c794fa5607a8ba7ee556e2ede611a4cf417e04
           labels:
             app: upload
         spec:
@@ -5394,7 +5394,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ef7a3b268c8969f89acb99aea11d4b87024019b45c1598c624239e662f3c2932
+            config-hash: 9335d463a58d03e6b7eddfa63de46b075948ecfc120fcd968e58c816d9990b13
             prometheus.io/port: "8081"
           labels:
             app: myapp
@@ -5492,15 +5492,13 @@
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "30"
       labels:
         app: myapp
       name: myapp
       namespace: eyelevel
     spec:
       ports:
-        - port: 6377
+        - port: 80
           protocol: TCP
           targetPort: 8081
       selector:
@@ -5526,7 +5524,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ef7a3b268c8969f89acb99aea11d4b87024019b45c1598c624239e662f3c2932
+            config-hash: 9335d463a58d03e6b7eddfa63de46b075948ecfc120fcd968e58c816d9990b13
           labels:
             app: layout-webhook
         spec:
@@ -5571,7 +5569,7 @@
             - command:
                 - sh
                 - -c
-                - until wget --spider -q https://myapp.eyelevel.svc.cluster.local:6377/health; do echo waiting for groundx; sleep 2; done
+                - until wget --spider -q http://myapp.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
               image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-groundx
@@ -5631,7 +5629,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ef7a3b268c8969f89acb99aea11d4b87024019b45c1598c624239e662f3c2932
+            config-hash: 9335d463a58d03e6b7eddfa63de46b075948ecfc120fcd968e58c816d9990b13
           labels:
             app: pre-process
         spec:
@@ -5676,7 +5674,7 @@
             - command:
                 - sh
                 - -c
-                - until wget --spider -q https://myapp.eyelevel.svc.cluster.local:6377/health; do echo waiting for groundx; sleep 2; done
+                - until wget --spider -q http://myapp.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
               image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-groundx
@@ -5719,7 +5717,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ef7a3b268c8969f89acb99aea11d4b87024019b45c1598c624239e662f3c2932
+            config-hash: 9335d463a58d03e6b7eddfa63de46b075948ecfc120fcd968e58c816d9990b13
           labels:
             app: process
         spec:
@@ -5764,7 +5762,7 @@
             - command:
                 - sh
                 - -c
-                - until wget --spider -q https://myapp.eyelevel.svc.cluster.local:6377/health; do echo waiting for groundx; sleep 2; done
+                - until wget --spider -q http://myapp.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
               image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-groundx
@@ -5807,7 +5805,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ef7a3b268c8969f89acb99aea11d4b87024019b45c1598c624239e662f3c2932
+            config-hash: 9335d463a58d03e6b7eddfa63de46b075948ecfc120fcd968e58c816d9990b13
           labels:
             app: queue
         spec:
@@ -5852,7 +5850,7 @@
             - command:
                 - sh
                 - -c
-                - until wget --spider -q https://myapp.eyelevel.svc.cluster.local:6377/health; do echo waiting for groundx; sleep 2; done
+                - until wget --spider -q http://myapp.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
               image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-groundx
@@ -5889,7 +5887,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ef7a3b268c8969f89acb99aea11d4b87024019b45c1598c624239e662f3c2932
+            config-hash: 9335d463a58d03e6b7eddfa63de46b075948ecfc120fcd968e58c816d9990b13
           labels:
             app: summary-client
         spec:
@@ -5934,7 +5932,7 @@
             - command:
                 - sh
                 - -c
-                - until wget --spider -q https://myapp.eyelevel.svc.cluster.local:6377/health; do echo waiting for groundx; sleep 2; done
+                - until wget --spider -q http://myapp.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
               image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-groundx
@@ -5976,7 +5974,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ef7a3b268c8969f89acb99aea11d4b87024019b45c1598c624239e662f3c2932
+            config-hash: 9335d463a58d03e6b7eddfa63de46b075948ecfc120fcd968e58c816d9990b13
           labels:
             app: upload
         spec:
@@ -6021,7 +6019,7 @@
             - command:
                 - sh
                 - -c
-                - until wget --spider -q https://myapp.eyelevel.svc.cluster.local:6377/health; do echo waiting for groundx; sleep 2; done
+                - until wget --spider -q http://myapp.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
               image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-groundx

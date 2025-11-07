@@ -62,7 +62,7 @@ true
 {{- define "groundx.summary.inference.imagePullPolicy" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
-{{ (dig "imagePullPolicy" (include "groundx.imagePull" .) $in) }}
+{{ (dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in) }}
 {{- end }}
 
 {{- define "groundx.summary.inference.model.maxInputTokens" -}}

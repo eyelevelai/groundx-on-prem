@@ -580,14 +580,10 @@
         "image": { "type": "string" },
         "imagePullPolicy": { "type": "string" },
         "labels": { "type": "object" },
-        "loadBalancer": {
+        "ingress": {
           "type": "object",
           "properties": {
-            "ipType": { "type": "string" },
-            "isInternal": { "type": "boolean" },
-            "port": { "type": "integer" },
-            "ssl": { "type": "boolean" },
-            "timeout": { "type": "integer" }
+            "enabled": { "type": "boolean" }
           },
           "additionalProperties": false
         },
@@ -614,6 +610,7 @@
           "additionalProperties": false
         },
         "serviceName": { "type": "string" },
+        "serviceType": { "type": "string" },
         "tolerations": { "type": "array" }
       },
       "required": ["enabled"],

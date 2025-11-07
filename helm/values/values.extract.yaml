@@ -21,11 +21,6 @@ cluster:
 serviceAccount:
   name: existing-service-account
 
-# uncomment to make the groundx API only available internally
-# groundx:
-  # loadBalancer:
-    # isInternal: true
-
 cache:
   metrics:
     enabled: false
@@ -48,6 +43,11 @@ file:
   existing:
     url: https://X.s3.us-west-2.amazonaws.com
     serviceType: s3
+
+groundx:
+  ingress:
+    enabled: false
+  serviceType: ClusterIP
 
 stream:
   enabled: false

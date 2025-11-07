@@ -9,6 +9,17 @@
 {{ dig "serviceName" "groundx" $in }}
 {{- end }}
 
+{{- define "groundx.groundx.serviceType" -}}
+{{- $in := .Values.groundx | default dict -}}
+{{- $ing := dig "ingress" dict $in -}}
+{{- $inge := dig "enabled" true $ing -}}
+{{- if eq $inge true -}}
+{{ dig "serviceType" "LoadBalancer" $in }}
+{{- else -}}
+{{ dig "serviceType" "ClusterIP" $in }}
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.groundx.create" -}}
 {{- $in := .Values.groundx | default dict -}}
 {{- if hasKey $in "enabled" -}}
@@ -38,10 +49,11 @@ true
 
 {{- define "groundx.groundx.isRoute" -}}
 {{- $in := .Values.groundx | default dict -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
+{{- $ing := dig "ingress" dict $in -}}
+{{- $inge := dig "enabled" true $ing -}}
+{{- $ty := (dig "serviceType" (include "groundx.groundx.serviceType" .) $in) | trim | lower -}}
 {{- $os := include "groundx.isOpenshift" . -}}
-{{- $ty := (dig "type" "LoadBalancer" $lb) | trim | lower -}}
-{{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
+{{- if or (eq $ty "route") (and (eq $os "true") (eq $inge true)) -}}
 true
 {{- else -}}
 false
@@ -49,13 +61,7 @@ false
 {{- end }}
 
 {{- define "groundx.groundx.port" -}}
-{{- $in := .Values.groundx | default dict -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "port" 80 $lb }}
-{{- else -}}
 80
-{{- end -}}
 {{- end }}
 
 {{- define "groundx.groundx.replicas" -}}
@@ -90,13 +96,7 @@ false
 {{- end }}
 
 {{- define "groundx.groundx.ssl" -}}
-{{- $in := .Values.groundx | default dict -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "ssl" "false" $lb  }}
-{{- else -}}
 false
-{{- end -}}
 {{- end }}
 
 {{- define "groundx.groundx.type" -}}
@@ -106,28 +106,18 @@ false
 
 {{- define "groundx.groundx.loadBalancer" -}}
 {{- $in := .Values.groundx | default dict -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
+{{- $ty := include "groundx.groundx.serviceType" . -}}
+{{- $ing := dig "ingress" dict $in -}}
+{{- $inge := dig "enabled" true $ing -}}
 {{- dict
-    "isInternal" (dig "isInternal" "false" $lb)
+    "isInternal" (printf "%v" (eq $inge false))
     "isRoute"    (include "groundx.groundx.isRoute" .)
     "port"       (include "groundx.groundx.port" .)
     "ssl"        (include "groundx.groundx.ssl" .)
     "targetPort" (include "groundx.groundx.containerPort" .)
-    "timeout"    (dig "timeout" "" $lb)
-    "type"       (dig "type" "LoadBalancer" $lb)
-  | toYaml -}}
-{{- else -}}
-{{- dict
-    "isInternal" "false"
-    "isRoute"    (include "groundx.groundx.isRoute" .)
-    "port"       (include "groundx.groundx.port" .)
-    "ssl"        "false"
-    "targetPort" (include "groundx.groundx.containerPort" .)
     "timeout"    ""
-    "type"       "LoadBalancer"
+    "type"       ($ty)
   | toYaml -}}
-{{- end -}}
 {{- end }}
 
 {{- define "groundx.groundx.settings" -}}

@@ -38,7 +38,7 @@ true
 {{- define "groundx.layout.ocr.imagePullPolicy" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "ocr" dict $b -}}
-{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
 {{- define "groundx.layout.ocr.project" -}}

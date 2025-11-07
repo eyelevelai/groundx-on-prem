@@ -143,7 +143,7 @@ true
 {{- $ic := include "groundx.file.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
 {{- $ex := dig "existing" dict $in -}}
-{{ dig "serviceType" "minio" $ex }}
+{{ dig "serviceType" (dig "serviceType" "minio" $in) $ex }}
 {{- else -}}
 {{ dig "serviceType" "minio" $in }}
 {{- end -}}

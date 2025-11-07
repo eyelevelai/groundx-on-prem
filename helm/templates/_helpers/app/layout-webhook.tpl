@@ -33,13 +33,13 @@ true
 
 {{- define "groundx.layoutWebhook.imagePullPolicy" -}}
 {{- $in := .Values.layoutWebhook | default dict -}}
-{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
 {{- define "groundx.layoutWebhook.isRoute" -}}
 {{- $lb := (include "groundx.layoutWebhook.loadBalancer" . | fromYaml) -}}
 {{- $os := include "groundx.isOpenshift" . -}}
-{{- $ty := (dig "type" "ClusterIP" $lb) | trim | lower -}}
+{{- $ty := (dig "ipType" "ClusterIP" $lb) | trim | lower -}}
 {{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
 true
 {{- else -}}
@@ -107,7 +107,7 @@ false
     "ssl"        (include "groundx.layoutWebhook.ssl" .)
     "targetPort" (include "groundx.layoutWebhook.containerPort" .)
     "timeout"    (dig "timeout" "" $lb)
-    "type"       (dig "type" "ClusterIP" $lb)
+    "type"       (dig "ipType" "ClusterIP" $lb)
   | toYaml -}}
 {{- end -}}
 {{- dict

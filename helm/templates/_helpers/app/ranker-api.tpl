@@ -41,7 +41,7 @@ true
 {{- define "groundx.ranker.api.imagePullPolicy" -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
 {{- define "groundx.ranker.api.isRoute" -}}

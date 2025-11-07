@@ -38,7 +38,7 @@ true
 
 {{- define "groundx.summaryClient.imagePullPolicy" -}}
 {{- $in := .Values.summaryClient | default dict -}}
-{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
 {{- define "groundx.summaryClient.queueSize" -}}
