@@ -66,7 +66,7 @@ GROUNDX_AGENT_API_KEY
 {{- define "groundx.extract.agent.imagePullPolicy" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
-{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
 {{- define "groundx.extract.agent.modelId" -}}

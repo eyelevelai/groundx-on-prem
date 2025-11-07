@@ -185,12 +185,6 @@ groundx:
   imagePullPolicy: Never
   labels:
     app.kubernetes.io/name: myapp
-  loadBalancer:
-    ipType: LoadBalancer
-    isInternal: false
-    port: 6377
-    ssl: true
-    timeout: 30
   node: test-label-1
   nodeSelector:
     disktype: ssd
@@ -198,6 +192,7 @@ groundx:
     fsGroup: 2000
   serviceAccount:
     name: other-service-account
+  serviceType: LoadBalancer
   serviceName: myapp
   tolerations:
     - effect: "NoSchedule"

@@ -43,7 +43,7 @@ true
 {{- define "groundx.summary.api.imagePullPolicy" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{ (dig "imagePullPolicy" (include "groundx.imagePull" .) $in) }}
+{{ (dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in) }}
 {{- end }}
 
 {{- define "groundx.summary.api.isRoute" -}}

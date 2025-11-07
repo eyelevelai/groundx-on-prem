@@ -41,7 +41,7 @@ true
 {{- define "groundx.ranker.inference.imagePullPolicy" -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "inference" dict $b -}}
-{{ dig "imagePullPolicy" (include "groundx.imagePull" .) $in }}
+{{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
 {{- define "groundx.ranker.inference.pvc" -}}
