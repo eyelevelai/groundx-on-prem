@@ -40,6 +40,7 @@ data:
 
     container_settings = ContainerSettings(
         broker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
+        broker_type={{ include "groundx.cache.type" . | quote }},
         cache_dir={{ include "groundx.extract.cacheDirectory" . | quote }},
         callback_api_key={{ include "groundx.extract.callbackApiKey" . | quote }},
         {{- if ne $did "" }}

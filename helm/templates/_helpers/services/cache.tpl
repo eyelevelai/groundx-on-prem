@@ -31,6 +31,12 @@ false
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.cache.type" -}}
+{{- $in := .Values.cache | default dict -}}
+{{- $ex := (dig "existing" nil $in) | default dict -}}
+{{ dig "type" "redis" $ex }}
+{{- end }}
+
 {{- define "groundx.cache.serviceName" -}}
 {{- $in := .Values.cache | default dict -}}
 {{ dig "serviceName" "cache" $in }}
