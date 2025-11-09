@@ -34,3 +34,19 @@
 {{- end -}}
 {{- $svcs | toYaml -}}
 {{- end }}
+
+{{- define "groundx.celery.options" -}}
+{{- $ty := include "groundx.cache.type" . -}}
+{{- if eq $ty "valkey" -}}
+--without-gossip --without-mingle --without-heartbeat
+{{- else -}}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.celery.env" -}}
+{{- $ty := include "groundx.cache.type" . -}}
+{{- if eq $ty "valkey" -}}
+,CELERY_WORKER_ENABLE_REMOTE_CONTROL="false",CELERY_WORKER_SEND_TASK_EVENTS="false",CELERY_TASK_SEND_SENT_EVENT="false"
+{{- else -}}
+{{- end -}}
+{{- end }}
