@@ -38,7 +38,7 @@
 {{- define "groundx.celery.options" -}}
 {{- $ty := include "groundx.cache.type" . -}}
 {{- if eq $ty "valkey" -}}
---without-gossip --without-mingle --without-heartbeat
+ --without-gossip --without-mingle --without-heartbeat
 {{- else -}}
 {{- end -}}
 {{- end }}

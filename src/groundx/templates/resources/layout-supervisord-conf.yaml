@@ -26,13 +26,13 @@ data:
 
     {{- range $i, $_ := until $workers }}
     [program:celery_worker_{{ add $i 1 }}]
-    command=celery -A document.celery_process.app worker -n %(ENV_POD_NAME)s-w{{ add $i 1 }} --loglevel={{ include "groundx.logLevel" $ | upper }} --queues={{ join "," $queue }} --concurrency={{ $threads }} {{include "groundx.celery.options" $}}
+    command=celery -A document.celery_process.app worker -n %(ENV_POD_NAME)s-w{{ add $i 1 }} --loglevel={{ include "groundx.logLevel" $ | upper }} --queues={{ join "," $queue }} --concurrency={{ $threads }}{{ include "groundx.celery.options" $ }}
     environment=
       {{- if contains "inference" $name }}
       CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w{{ add $i 1 }}",
       {{- end }}
       LOCAL="0",
-      PYTHONUNBUFFERED="1"{{include "groundx.celery.env" $}}
+      PYTHONUNBUFFERED="1"{{ include "groundx.celery.env" $ }}
     autostart=true
     autorestart=true
     stdout_logfile=/dev/stdout
