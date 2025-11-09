@@ -436,7 +436,7 @@ If you'd like to install OpenSearch to your cluster, use the following commands 
 helm repo add opensearch https://opensearch-project.github.io/helm-charts/
 helm repo update
 
-helm install opensearch opensearch/opensearch -n eyelevel -f helm/values/values.search.yaml --version 2.23.1
+helm install opensearch opensearch/opensearch -n eyelevel -f helm/values/values.search.yaml
 ```
 
 ### Kafka

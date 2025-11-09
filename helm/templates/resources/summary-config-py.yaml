@@ -16,6 +16,7 @@ data:
     env = dict(
         deviceType={{ include "groundx.summary.inference.deviceType" . | quote }},
         deviceUtilize={{ include "groundx.summary.inference.deviceUtilize" . }},
+        brokerType={{ include "groundx.cache.type" . | quote }},
         metricsBroker={{ printf "%s://%s:%v/0" (include "groundx.metrics.cache.scheme" .) (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) | quote }},
         service={{ include "groundx.summary.serviceName" . | quote }},
         summaryBroker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
