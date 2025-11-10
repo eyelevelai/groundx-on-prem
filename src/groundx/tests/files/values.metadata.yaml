@@ -26,12 +26,6 @@ cache:
   labels:
     app.kubernetes.io/name: myapp
     app.kubernetes.io/component: backend
-  loadBalancer:
-    ipType: LoadBalancer
-    isInternal: true
-    port: 6377
-    ssl: true
-    timeout: 30
   mountPath: /ok/here
   node: ""
   nodeSelector:
@@ -61,12 +55,6 @@ cache:
     imagePullPolicy: Never
     labels:
       app.kubernetes.io/name: myapp
-    loadBalancer:
-      ipType: Route
-      isInternal: true
-      port: 6377
-      ssl: true
-      timeout: 30
     mountPath: /ok/here
     node: ""
     port: 8082
@@ -106,12 +94,13 @@ summary:
     imagePullPolicy: Never
     labels:
       app.kubernetes.io/name: myapp
-    loadBalancer:
-      ipType: LoadBalancer
-      isInternal: true
-      port: 6377
-      ssl: true
-      timeout: 30
+    ingress:
+      enabled: true
+
+      annotations:
+        alb.ingress.kubernetes.io/scheme: internet-facing
+        alb.ingress.kubernetes.io/success-codes: "200"
+        alb.ingress.kubernetes.io/target-type: ip
     node: ""
     nodeSelector:
       disktype: ssd
@@ -192,7 +181,7 @@ groundx:
     fsGroup: 2000
   serviceAccount:
     name: other-service-account
-  serviceType: LoadBalancer
+  serviceType: NodePort
   serviceName: myapp
   tolerations:
     - effect: "NoSchedule"
@@ -364,12 +353,13 @@ ranker:
     imagePullPolicy: Never
     labels:
       app.kubernetes.io/name: myapp
-    loadBalancer:
-      ipType: LoadBalancer
-      isInternal: true
-      port: 6377
-      ssl: true
-      timeout: 30
+    ingress:
+      enabled: true
+
+      annotations:
+        alb.ingress.kubernetes.io/scheme: internet-facing
+        alb.ingress.kubernetes.io/success-codes: "200"
+        alb.ingress.kubernetes.io/target-type: ip
     node: ""
     securityContext:
       fsGroup: 2000

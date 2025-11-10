@@ -123,7 +123,7 @@
           targetPort: 8080
       selector:
         app: groundx
-      type: LoadBalancer
+      type: ClusterIP
   3: |
     apiVersion: apps/v1
     kind: Deployment
@@ -689,7 +689,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 72073149db9605eb99feae5ae9e37b68e3eca084de5495cfc8fc438e86babc30
+            config-hash: eb98702d5a01d48759a132db1b59ebf88b7883d4b48936753f1da336f1245d5e
           labels:
             app: groundx
         spec:
@@ -799,7 +799,7 @@
           targetPort: 8080
       selector:
         app: groundx
-      type: LoadBalancer
+      type: ClusterIP
   3: |
     apiVersion: apps/v1
     kind: Deployment
@@ -820,7 +820,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 72073149db9605eb99feae5ae9e37b68e3eca084de5495cfc8fc438e86babc30
+            config-hash: eb98702d5a01d48759a132db1b59ebf88b7883d4b48936753f1da336f1245d5e
           labels:
             app: layout-webhook
         spec:
@@ -923,7 +923,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 72073149db9605eb99feae5ae9e37b68e3eca084de5495cfc8fc438e86babc30
+            config-hash: eb98702d5a01d48759a132db1b59ebf88b7883d4b48936753f1da336f1245d5e
           labels:
             app: pre-process
         spec:
@@ -1010,7 +1010,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 72073149db9605eb99feae5ae9e37b68e3eca084de5495cfc8fc438e86babc30
+            config-hash: eb98702d5a01d48759a132db1b59ebf88b7883d4b48936753f1da336f1245d5e
           labels:
             app: process
         spec:
@@ -1097,7 +1097,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 72073149db9605eb99feae5ae9e37b68e3eca084de5495cfc8fc438e86babc30
+            config-hash: eb98702d5a01d48759a132db1b59ebf88b7883d4b48936753f1da336f1245d5e
           labels:
             app: queue
         spec:
@@ -1184,7 +1184,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 72073149db9605eb99feae5ae9e37b68e3eca084de5495cfc8fc438e86babc30
+            config-hash: eb98702d5a01d48759a132db1b59ebf88b7883d4b48936753f1da336f1245d5e
           labels:
             app: summary-client
         spec:
@@ -1271,7 +1271,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 72073149db9605eb99feae5ae9e37b68e3eca084de5495cfc8fc438e86babc30
+            config-hash: eb98702d5a01d48759a132db1b59ebf88b7883d4b48936753f1da336f1245d5e
           labels:
             app: upload
         spec:
@@ -1469,7 +1469,7 @@
           targetPort: 8080
       selector:
         app: groundx
-      type: LoadBalancer
+      type: ClusterIP
   3: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2140,7 +2140,7 @@
           targetPort: 8080
       selector:
         app: groundx
-      type: LoadBalancer
+      type: ClusterIP
   3: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2810,7 +2810,7 @@
           targetPort: 8080
       selector:
         app: groundx
-      type: LoadBalancer
+      type: ClusterIP
   3: |
     apiVersion: apps/v1
     kind: Deployment
@@ -4150,7 +4150,7 @@
           targetPort: 8080
       selector:
         app: groundx
-      type: LoadBalancer
+      type: ClusterIP
   3: |
     apiVersion: apps/v1
     kind: Deployment
@@ -5394,7 +5394,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9335d463a58d03e6b7eddfa63de46b075948ecfc120fcd968e58c816d9990b13
+            config-hash: 37b367abecc63aec7537ae4e7a3fb5ae5f90f4254a03e66098e44815348a5a50
             prometheus.io/port: "8081"
           labels:
             app: myapp
@@ -5442,7 +5442,7 @@
             - command:
                 - sh
                 - -c
-                - until nc -z myapp.eyelevel.svc.cluster.local 6377; do echo waiting for cache; sleep 2; done
+                - until nc -z myapp.eyelevel.svc.cluster.local 8082; do echo waiting for cache; sleep 2; done
               image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-cache
@@ -5503,7 +5503,7 @@
           targetPort: 8081
       selector:
         app: myapp
-      type: LoadBalancer
+      type: NodePort
   3: |
     apiVersion: apps/v1
     kind: Deployment
@@ -5524,7 +5524,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9335d463a58d03e6b7eddfa63de46b075948ecfc120fcd968e58c816d9990b13
+            config-hash: 37b367abecc63aec7537ae4e7a3fb5ae5f90f4254a03e66098e44815348a5a50
           labels:
             app: layout-webhook
         spec:
@@ -5629,7 +5629,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9335d463a58d03e6b7eddfa63de46b075948ecfc120fcd968e58c816d9990b13
+            config-hash: 37b367abecc63aec7537ae4e7a3fb5ae5f90f4254a03e66098e44815348a5a50
           labels:
             app: pre-process
         spec:
@@ -5717,7 +5717,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9335d463a58d03e6b7eddfa63de46b075948ecfc120fcd968e58c816d9990b13
+            config-hash: 37b367abecc63aec7537ae4e7a3fb5ae5f90f4254a03e66098e44815348a5a50
           labels:
             app: process
         spec:
@@ -5805,7 +5805,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9335d463a58d03e6b7eddfa63de46b075948ecfc120fcd968e58c816d9990b13
+            config-hash: 37b367abecc63aec7537ae4e7a3fb5ae5f90f4254a03e66098e44815348a5a50
           labels:
             app: queue
         spec:
@@ -5887,7 +5887,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9335d463a58d03e6b7eddfa63de46b075948ecfc120fcd968e58c816d9990b13
+            config-hash: 37b367abecc63aec7537ae4e7a3fb5ae5f90f4254a03e66098e44815348a5a50
           labels:
             app: summary-client
         spec:
@@ -5974,7 +5974,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9335d463a58d03e6b7eddfa63de46b075948ecfc120fcd968e58c816d9990b13
+            config-hash: 37b367abecc63aec7537ae4e7a3fb5ae5f90f4254a03e66098e44815348a5a50
           labels:
             app: upload
         spec:
@@ -6169,7 +6169,7 @@
           targetPort: 8080
       selector:
         app: groundx
-      type: LoadBalancer
+      type: ClusterIP
   3: |
     apiVersion: apps/v1
     kind: Deployment
@@ -6819,23 +6819,6 @@
                 name: config-yaml-map
               name: config-volume
   2: |
-    apiVersion: route.openshift.io/v1
-    kind: Route
-    metadata:
-      labels:
-        app: groundx
-      name: groundx
-      namespace: eyelevel
-    spec:
-      port:
-        targetPort: 8080
-      tls:
-        insecureEdgeTerminationPolicy: Redirect
-        termination: edge
-      to:
-        kind: Service
-        name: groundx
-  3: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -6851,7 +6834,7 @@
       selector:
         app: groundx
       type: ClusterIP
-  4: |
+  3: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -6932,7 +6915,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  5: |
+  4: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -6948,7 +6931,7 @@
       selector:
         app: layout-webhook
       type: ClusterIP
-  6: |
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -7029,7 +7012,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  7: |
+  6: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -7110,7 +7093,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  8: |
+  7: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -7191,7 +7174,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  9: |
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -7272,7 +7255,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  10: |
+  9: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -7466,23 +7449,6 @@
                 name: config-yaml-map
               name: config-volume
   2: |
-    apiVersion: route.openshift.io/v1
-    kind: Route
-    metadata:
-      labels:
-        app: groundx-service
-      name: groundx-service
-      namespace: eyelevel
-    spec:
-      port:
-        targetPort: 8080
-      tls:
-        insecureEdgeTerminationPolicy: Redirect
-        termination: edge
-      to:
-        kind: Service
-        name: groundx-service
-  3: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -7498,7 +7464,7 @@
       selector:
         app: groundx-service
       type: ClusterIP
-  4: |
+  3: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -7581,7 +7547,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  5: |
+  4: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -7597,7 +7563,7 @@
       selector:
         app: layout-webhook
       type: ClusterIP
-  6: |
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -7680,7 +7646,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  7: |
+  6: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -7763,7 +7729,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  8: |
+  7: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -7846,7 +7812,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  9: |
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -7929,7 +7895,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  10: |
+  9: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:

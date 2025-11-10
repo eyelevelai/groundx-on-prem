@@ -41,26 +41,8 @@ true
 {{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
-{{- define "groundx.layout.api.isRoute" -}}
-{{- $lb := (include "groundx.layout.api.loadBalancer" . | fromYaml) -}}
-{{- $os := include "groundx.isOpenshift" . -}}
-{{- $ty := (dig "ipType" "ClusterIP" $lb) | trim | lower -}}
-{{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
-true
-{{- else -}}
-false
-{{- end -}}
-{{- end }}
-
 {{- define "groundx.layout.api.port" -}}
-{{- $b := .Values.layout | default dict -}}
-{{- $in := dig "api" dict $b -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "port" 80 $lb }}
-{{- else -}}
 80
-{{- end -}}
 {{- end }}
 
 {{- define "groundx.layout.api.replicas" -}}
@@ -80,6 +62,12 @@ false
 {{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
 {{- end }}
 
+{{- define "groundx.layout.api.serviceType" -}}
+{{- $b := .Values.layout | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{ dig "serviceType" "ClusterIP" $in }}
+{{- end }}
+
 {{- define "groundx.layout.api.serviceUrl" -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- $name := include "groundx.layout.serviceName" . -}}
@@ -96,14 +84,7 @@ false
 {{- end }}
 
 {{- define "groundx.layout.api.ssl" -}}
-{{- $b := .Values.layout | default dict -}}
-{{- $in := dig "api" dict $b -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "ssl" "false" $lb  }}
-{{- else -}}
 false
-{{- end -}}
 {{- end }}
 
 {{- define "groundx.layout.api.threads" -}}
@@ -124,34 +105,31 @@ false
 {{ dig "workers" 2 $in }}
 {{- end }}
 
-{{- define "groundx.layout.api.loadBalancer" -}}
+{{- define "groundx.layout.api.ingress" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{- $name := dig "name" "" $lb -}}
-{{- $lbDict := dict
-    "isInternal" (dig "isInternal" "false" $lb)
-    "port"       (include "groundx.layout.api.port" .)
-    "ssl"        (dig "ssl" "false" $lb)
-    "targetPort" (include "groundx.layout.api.containerPort" .)
-    "timeout"    (dig "timeout" "" $lb)
-    "type"       (dig "ipType" "ClusterIP" $lb)
--}}
-{{- if ne $name "" -}}
-  {{- $_ := set $lbDict "name" $name -}}
+{{- $ing := dig "ingress" dict $in -}}
+{{- $en := dig "enabled" "false" $ing | toString -}}
+{{- if eq $en "true" -}}
+{{- dict
+      "data"    ($ing)
+      "enabled" true
+      "name"    (include "groundx.layout.serviceName" .)
+  | toYaml -}}
+{{- else -}}
+{{- dict | toYaml -}}
 {{- end -}}
-{{- $lbDict | toYaml -}}
-{{- else }}
+{{- end }}
+
+{{- define "groundx.layout.api.interface" -}}
 {{- dict
     "isInternal" "true"
     "port"       (include "groundx.layout.api.port" .)
     "ssl"        "false"
     "targetPort" (include "groundx.layout.api.containerPort" .)
     "timeout"    ""
-    "type"       "ClusterIP"
+    "type"       (include "groundx.layout.api.serviceType" .)
   | toYaml -}}
-{{- end -}}
 {{- end }}
 
 {{- define "groundx.layout.api.settings" -}}
@@ -161,17 +139,16 @@ false
 {{- $rep := (include "groundx.layout.api.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.layout.api.serviceAccountName" . -}}
 {{- $cfg := dict
-  "cfg"          (printf "%s-config-py-map" $svc)
-  "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
-  "image"        (include "groundx.layout.api.image" .)
-  "isRoute"      (include "groundx.layout.api.isRoute" .)
-  "loadBalancer" (include "groundx.layout.api.loadBalancer" .)
-  "mapPrefix"    ("layout")
-  "name"         (include "groundx.layout.api.serviceName" .)
-  "node"         (include "groundx.layout.api.node" .)
-  "port"         (include "groundx.layout.api.containerPort" .)
-  "pull"         (include "groundx.layout.api.imagePullPolicy" .)
-  "replicas"     ($rep)
+  "cfg"       (printf "%s-config-py-map" $svc)
+  "gunicorn"  (printf "%s-gunicorn-conf-py-map" $svc)
+  "image"     (include "groundx.layout.api.image" .)
+  "interface" (include "groundx.layout.api.interface" .)
+  "mapPrefix" ("layout")
+  "name"      (include "groundx.layout.api.serviceName" .)
+  "node"      (include "groundx.layout.api.node" .)
+  "port"      (include "groundx.layout.api.containerPort" .)
+  "pull"      (include "groundx.layout.api.imagePullPolicy" .)
+  "replicas"  ($rep)
 -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}

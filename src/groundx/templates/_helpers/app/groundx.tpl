@@ -9,17 +9,6 @@
 {{ dig "serviceName" "groundx" $in }}
 {{- end }}
 
-{{- define "groundx.groundx.serviceType" -}}
-{{- $in := .Values.groundx | default dict -}}
-{{- $ing := dig "ingress" dict $in -}}
-{{- $inge := dig "enabled" true $ing -}}
-{{- if eq $inge true -}}
-{{ dig "serviceType" "LoadBalancer" $in }}
-{{- else -}}
-{{ dig "serviceType" "ClusterIP" $in }}
-{{- end -}}
-{{- end }}
-
 {{- define "groundx.groundx.create" -}}
 {{- $in := .Values.groundx | default dict -}}
 {{- if hasKey $in "enabled" -}}
@@ -47,19 +36,6 @@ true
 {{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
-{{- define "groundx.groundx.isRoute" -}}
-{{- $in := .Values.groundx | default dict -}}
-{{- $ing := dig "ingress" dict $in -}}
-{{- $inge := dig "enabled" true $ing -}}
-{{- $ty := (dig "serviceType" (include "groundx.groundx.serviceType" .) $in) | trim | lower -}}
-{{- $os := include "groundx.isOpenshift" . -}}
-{{- if or (eq $ty "route") (and (eq $os "true") (eq $inge true)) -}}
-true
-{{- else -}}
-false
-{{- end -}}
-{{- end }}
-
 {{- define "groundx.groundx.port" -}}
 80
 {{- end }}
@@ -79,15 +55,19 @@ false
 {{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
 {{- end }}
 
+{{- define "groundx.groundx.serviceType" -}}
+{{- $in := .Values.groundx | default dict -}}
+{{ dig "serviceType" "ClusterIP" $in }}
+{{- end }}
+
 {{- define "groundx.groundx.serviceUrl" -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- $name := include "groundx.groundx.serviceName" . -}}
 {{- $port := include "groundx.groundx.port" . -}}
-{{- $ir := include "groundx.groundx.isRoute" . -}}
 {{- $ssl := include "groundx.groundx.ssl" . -}}
 {{- $sslStr := printf "%v" $ssl -}}
 {{- $scheme := "http" -}}
-{{- if and (eq $sslStr "true") (ne $ir "true") -}}{{- $scheme = "https" -}}{{- end -}}
+{{- if eq $sslStr "true" -}}{{- $scheme = "https" -}}{{- end -}}
 {{- if or (and (eq $sslStr "true") (eq $port "443")) (eq $port "80") -}}
 {{ printf "%s://%s.%s.svc.cluster.local" $scheme $name $ns }}
 {{- else -}}
@@ -104,19 +84,29 @@ false
 {{ (dig "type" "all" $in) }}
 {{- end }}
 
-{{- define "groundx.groundx.loadBalancer" -}}
+{{- define "groundx.groundx.ingress" -}}
 {{- $in := .Values.groundx | default dict -}}
-{{- $ty := include "groundx.groundx.serviceType" . -}}
 {{- $ing := dig "ingress" dict $in -}}
-{{- $inge := dig "enabled" true $ing -}}
+{{- $en := dig "enabled" true $ing -}}
+{{- if eq $en true -}}
 {{- dict
-    "isInternal" (printf "%v" (eq $inge false))
-    "isRoute"    (include "groundx.groundx.isRoute" .)
+      "data"    ($ing)
+      "enabled" true
+      "name"    (include "groundx.groundx.serviceName" .)
+  | toYaml -}}
+{{- else -}}
+{{- dict | toYaml -}}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.groundx.interface" -}}
+{{- dict
+    "isInternal" true
     "port"       (include "groundx.groundx.port" .)
     "ssl"        (include "groundx.groundx.ssl" .)
     "targetPort" (include "groundx.groundx.containerPort" .)
     "timeout"    ""
-    "type"       ($ty)
+    "type"       (include "groundx.groundx.serviceType" .)
   | toYaml -}}
 {{- end }}
 
@@ -147,8 +137,7 @@ false
 {{- $cfg := dict
   "dependencies" $dpnd
   "image"        (include "groundx.groundx.image" .)
-  "isRoute"      (include "groundx.groundx.isRoute" .)
-  "loadBalancer" (include "groundx.groundx.loadBalancer" . | trim)
+  "interface"    (include "groundx.groundx.interface" . | trim)
   "name"         (include "groundx.groundx.serviceName" .)
   "node"         (include "groundx.groundx.node" .)
   "port"         (include "groundx.groundx.containerPort" .)

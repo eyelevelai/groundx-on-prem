@@ -39,7 +39,6 @@ file:
 
 groundx:
   serviceName: groundx-service
-  serviceType: Route
 
   replicas:
     desired: 1
@@ -100,12 +99,13 @@ ranker:
 
 summary:
   api:
-    loadBalancer:
-      ipType: LoadBalancer
-      isInternal: false
-      port: 80
-      ssl: true
-      timeout: 30
+    ingress:
+      enabled: true
+
+      annotations:
+        alb.ingress.kubernetes.io/scheme: internet-facing
+        alb.ingress.kubernetes.io/success-codes: "200"
+        alb.ingress.kubernetes.io/target-type: ip
 
     replicas:
       desired: 7
@@ -163,12 +163,13 @@ extract:
 
     node: eyelevel-cpu
 
-    loadBalancer:
-      ipType: LoadBalancer
-      isInternal: false
-      port: 80
-      ssl: true
-      timeout: 30
+    ingress:
+      enabled: true
+
+      annotations:
+        alb.ingress.kubernetes.io/scheme: internet-facing
+        alb.ingress.kubernetes.io/success-codes: "200"
+        alb.ingress.kubernetes.io/target-type: ip
 
     resources:
       requests:

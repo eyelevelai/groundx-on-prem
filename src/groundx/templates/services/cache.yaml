@@ -4,8 +4,7 @@
 {{- $svc := include "groundx.cache.serviceName" . -}}
 
 {{- $cport := include "groundx.cache.containerPort" . -}}
-{{- $ir := include "groundx.cache.isRoute" . -}}
-{{- $lb := include "groundx.cache.loadBalancer" . -}}
+{{- $int := include "groundx.cache.interface" . -}}
 {{- $mountName := printf "%s-persistent-storage" $svc -}}
 {{- $node := include "groundx.cache.node" . -}}
 {{- $rp := include "groundx.cache.replicas" . | fromYaml -}}
@@ -76,12 +75,7 @@ spec:
       volumes:
         - name: {{ $mountName | quote }}
           emptyDir: {}
-{{- if $lb }}
-{{- if eq $ir "true" }}
-{{ include "groundx.renderRoute" (dict "name" $svc "lb" $lb "root" $) }}
-{{- else }}
-{{ include "groundx.renderLoadBalancer" (dict "name" $svc "lb" $lb "root" $) }}
-{{- end }}
-{{- end }}
+
+{{ include "groundx.renderInterface" (dict "name" $svc "lb" $int "root" $) }}
 
 {{- end }}

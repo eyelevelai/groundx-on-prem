@@ -16,7 +16,6 @@
 {{- $image := get $svcData "image" -}}
 {{- $ips := include "groundx.imagePullSecrets" $ | fromYaml -}}
 {{- $ic := get $svcData "celery" | default "false" -}}
-{{- $lb := get $svcData "loadBalancer" -}}
 {{- $lbls := get $svcData "labels" -}}
 {{- $mapPrefix := get $svcData "mapPrefix" -}}
 {{- $mpr := get $svcData "modelParts" -}}
@@ -34,6 +33,7 @@
 {{- $sct := get $svcData "securityContext" -}}
 {{- $supe := get $svcData "supervisord" -}}
 {{- $tl := get $svcData "tolerations" -}}
+{{- $ud := get $svcData "updateStrategy" -}}
 {{- $wd := get $svcData "workingDir" -}}
 
 {{- $desired := get $rp "desired" -}}
@@ -48,6 +48,10 @@ metadata:
 {{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
 spec:
   replicas: {{ $desired }}
+{{- if and $ud (ne $ud "") }}
+  strategy:
+    type: {{ $ud }}
+{{- end }}
   selector:
     matchLabels:
       app: {{ $svc }}

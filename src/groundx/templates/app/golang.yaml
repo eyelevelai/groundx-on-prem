@@ -11,9 +11,8 @@
 {{- $image := get $svcData "image" -}}
 {{- $ips := include "groundx.imagePullSecrets" $ | fromYaml -}}
 {{- $io := include "groundx.ingestOnly" $ -}}
-{{- $ir := get $svcData "isRoute" -}}
 {{- $lbls := get $svcData "labels" -}}
-{{- $lb := get $svcData "loadBalancer" -}}
+{{- $int := get $svcData "interface" -}}
 {{- $svc := get $svcData "name" -}}
 {{- $node := get $svcData "node" -}}
 {{- $nsl := get $svcData "nodeSelector" -}}
@@ -145,11 +144,9 @@ spec:
         - name: config-volume
           configMap:
             name: config-yaml-map
-{{- if $lb }}
-{{- if eq $ir "true" }}
-{{ include "groundx.renderRoute" (dict "name" $svc "lb" $lb "root" $) }}
-{{- end }}
-{{ include "groundx.renderLoadBalancer" (dict "name" $svc "lb" $lb "root" $) }}
+
+{{- if $int }}
+{{ include "groundx.renderInterface" (dict "name" $svc "lb" $int "root" $) }}
 {{- end }}
 
 {{ end }}

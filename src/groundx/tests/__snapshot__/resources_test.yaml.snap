@@ -964,7 +964,7 @@
           extract:
             client:
               apiKey: 00000000-0000-0000-0000-000000000000
-              baseURL: https://extract-api.eyelevel.svc.cluster.local
+              baseURL: http://extract-api.eyelevel.svc.cluster.local
               callbackURL: http://layout-webhook.eyelevel.svc.cluster.local
           eyelevelSearch:
             apiKey: 00000000-0000-0000-0000-000000000000
@@ -7130,13 +7130,13 @@
               baseURL: http://extract-api.eyelevel.svc.cluster.local
               callbackURL: http://layout-webhook.eyelevel.svc.cluster.local
           eyelevelSearch:
-            baseURL: https://myapp-api.eyelevel.svc.cluster.local:6377
+            baseURL: http://myapp-api.eyelevel.svc.cluster.local
           layout:
             client:
               baseURL: http://myapp-api.eyelevel.svc.cluster.local
               callbackURL: http://layout-webhook.eyelevel.svc.cluster.local
           openai:
-            baseURL: https://myapp-api.eyelevel.svc.cluster.local:6377
+            baseURL: http://myapp-api.eyelevel.svc.cluster.local
             defaultKitId: 1
           summaryType: summary
           searchIndexes:
@@ -7212,9 +7212,9 @@
               target: file-upload
               threshold: 120
           session:
-            addr: myapp-myapp.eyelevel.svc.cluster.local:6377
+            addr: myapp-myapp.eyelevel.svc.cluster.local:8082
             notCluster: true
-            ssl: true
+            ssl: false
           summaryRequest:
             tokensPerMinute: 625
           task:
@@ -7308,9 +7308,9 @@
         rec:
           mysql: *mysql
           session:
-            addr: myapp.eyelevel.svc.cluster.local:6377
+            addr: myapp.eyelevel.svc.cluster.local:8082
             notCluster: true
-            ssl: true
+            ssl: false
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
@@ -7356,10 +7356,10 @@
             deviceType="cpu",
             env="prod",
             includeLS=False,
-            layoutBroker="rediss://myapp.eyelevel.svc.cluster.local:6377/0",
+            layoutBroker="redis://myapp.eyelevel.svc.cluster.local:8082/0",
             layoutLogger="myapp",
-            layoutResultBroker="rediss://myapp.eyelevel.svc.cluster.local:6377/0",
-            metricsBroker="rediss://myapp-myapp.eyelevel.svc.cluster.local:6377/0",
+            layoutResultBroker="redis://myapp.eyelevel.svc.cluster.local:8082/0",
+            metricsBroker="redis://myapp-myapp.eyelevel.svc.cluster.local:8082/0",
             minBatchSize=3,
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
@@ -7743,10 +7743,10 @@
         env = dict(
             deviceType="cpu",
             brokerType="redis",
-            metricsBroker="rediss://myapp-myapp.eyelevel.svc.cluster.local:6377/0",
-            searchBroker="rediss://myapp.eyelevel.svc.cluster.local:6377/0",
+            metricsBroker="redis://myapp-myapp.eyelevel.svc.cluster.local:8082/0",
+            searchBroker="redis://myapp.eyelevel.svc.cluster.local:8082/0",
             searchLog="myapp",
-            searchResultBroker="rediss://myapp.eyelevel.svc.cluster.local:6377/0",
+            searchResultBroker="redis://myapp.eyelevel.svc.cluster.local:8082/0",
             service="myapp",
             validAPIKeys=[
             ],
@@ -7865,11 +7865,11 @@
             deviceType="cpu",
             deviceUtilize=0.37,
             brokerType="redis",
-            metricsBroker="rediss://myapp-myapp.eyelevel.svc.cluster.local:6377/0",
+            metricsBroker="redis://myapp-myapp.eyelevel.svc.cluster.local:8082/0",
             service="myapp",
-            summaryBroker="rediss://myapp.eyelevel.svc.cluster.local:6377/0",
+            summaryBroker="redis://myapp.eyelevel.svc.cluster.local:8082/0",
             summaryLog="myapp",
-            summaryResultBroker="rediss://myapp.eyelevel.svc.cluster.local:6377/0",
+            summaryResultBroker="redis://myapp.eyelevel.svc.cluster.local:8082/0",
             validAPIKeys=[
             ],
             workers=2,
