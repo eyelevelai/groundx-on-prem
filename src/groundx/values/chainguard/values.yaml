@@ -1,0 +1,95 @@
+db:
+  existing:
+    ro: my.mysql.server
+    rw: my.mysql.server
+    port: 3306
+
+summary:
+  existing:
+    serviceType: hosted
+    url: https://production-west.openai.azure.com/openai/deployments/MY-GPT-5-MINI-DEPLOYMENT
+
+#### below do not need modification ####
+
+mode: ingest
+
+busybox:
+  image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:chainguard
+
+cluster:
+  pvClass: eyelevel-pv
+  type: aks
+
+  nodeLabels:
+    cpuMemory: eyelevel-cpu
+    cpuOnly: eyelevel-cpu
+    gpuLayout: eyelevel-gpu-layout
+
+  imagePullSecrets:
+    - chainguard-pull-secret
+
+cache:
+  metrics:
+    enabled: false
+
+  image: cgr.dev/eyelevel.ai/redis-fips:v8.2.3
+
+engines:
+  default:
+    engineId: gpt-5-mini
+    reasoningEffort: low
+    vision: true
+
+golang:
+  username: nonroot
+
+groundx:
+  image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:chainguard
+
+  ingress:
+    enabled: true
+
+    annotations:
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/success-codes: "200"
+      alb.ingress.kubernetes.io/target-type: ip
+
+layout:
+  api:
+    image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:chainguard
+
+  correct:
+    image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:chainguard
+
+  inference:
+    image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:chainguard
+
+  map:
+    image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:chainguard
+
+  ocr:
+    image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:chainguard
+
+  process:
+    image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:chainguard
+
+  save:
+    image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:chainguard
+
+layoutWebhook:
+  image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:chainguard
+
+preProcess:
+  image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:chainguard
+
+process:
+  image: public.ecr.aws/c9r4x6y5/eyelevel/process:chainguard
+
+queue:
+  image: public.ecr.aws/c9r4x6y5/eyelevel/queue:chainguard
+
+summaryClient:
+  image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:chainguard
+
+upload:
+  image: public.ecr.aws/c9r4x6y5/eyelevel/upload:chainguard

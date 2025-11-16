@@ -1,0 +1,30 @@
+# this yaml changes the minio tenant image to a chainguard image
+
+tenant:
+  certificate:
+    requestAutoCert: false
+  configSecret:
+    accessKey: minio
+    secretKey: minio123
+  name: minio-tenant
+  nodeSelector:
+    node: eyelevel-cpu
+  pools:
+    - name: minio-tenant-pool-0
+      nodeSelector:
+        node: eyelevel-cpu
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+      servers: 1
+      size: 20Gi
+      volumesPerServer: 1
+
+  image:
+    repository: cgr.dev/eyelevel.ai/minio-fips
+    tag: v0.20251015.172955
+    pullPolicy: IfNotPresent
+
+  imagePullSecret:
+    name: chainguard-pull-secret
