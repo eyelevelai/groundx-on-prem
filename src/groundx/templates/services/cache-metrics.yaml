@@ -5,6 +5,7 @@
 {{- $s := include "groundx.cache.serviceName" . -}}
 {{- $ms := include "groundx.metrics.cache.serviceName" . -}}
 {{- $svc := printf "%s-%s" $s $ms -}}
+{{- $username := include "groundx.container.username" . -}}
 
 {{- $cport := include "groundx.metrics.cache.containerPort" . -}}
 {{- $int := include "groundx.metrics.cache.interface" . -}}
@@ -60,7 +61,7 @@ spec:
       affinity:
 {{ toYaml $aff | nindent 8 }}
 {{- end }}
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" $username "cfg" "spec") }}
 {{- include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
 {{- include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
       containers:
@@ -70,7 +71,7 @@ spec:
           ports:
             - containerPort: {{ $cport }}
               protocol: TCP
-{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" $username "cfg" "container") }}
 {{ include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
           volumeMounts:
             - name: {{ $mountName | quote }}

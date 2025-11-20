@@ -100,8 +100,9 @@ false
 {{- end }}
 
 {{- define "groundx.groundx.interface" -}}
+{{- $in := .Values.groundx | default dict -}}
 {{- dict
-    "isInternal" true
+    "isInternal" (dig "isInternal" true $in)
     "port"       (include "groundx.groundx.port" .)
     "ssl"        (include "groundx.groundx.ssl" .)
     "targetPort" (include "groundx.groundx.containerPort" .)

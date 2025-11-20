@@ -216,6 +216,7 @@
           "type": "object",
           "properties": {
             "ro": { "type": "string" },
+            "rootCerts": { "type": "string" },
             "rw": { "type": "string" },
             "port": { "type": "integer" }
           },
@@ -227,6 +228,7 @@
         "maxIdle": { "type": "integer" },
         "maxOpen": { "type": "integer" },
         "password": { "type": "string" },
+        "rootCerts": { "type": "string" },
         "serviceName": { "type": "string" },
         "username": { "type": "string" }
       },
@@ -548,13 +550,6 @@
       "required": ["api", "inference"],
       "additionalProperties": false
     },
-    "golang": {
-      "type": "object",
-      "properties": {
-        "username": { "type": "string" }
-      },
-      "additionalProperties": false
-    },
     "groundx": {
       "type": "object",
       "properties": {
@@ -580,6 +575,7 @@
             "tls": { "type": "array" }
           }
         },
+        "isInternal": { "type": "boolean" },
         "node": { "type": "string" },
         "nodeSelector": { "type": "object" },
         "replicas": {
