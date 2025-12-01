@@ -17,19 +17,84 @@ locals {
     }
   })
 
+  cpu_memory_desired_size = coalesce(
+    var.node_replicas.cpu_memory.desired_size,
+    var.nodes.node_groups.cpu_memory_nodes.desired_size
+  )
+  cpu_memory_max_size = coalesce(
+    var.node_replicas.cpu_memory.max_size,
+    var.nodes.node_groups.cpu_memory_nodes.max_size
+  )
+  cpu_memory_min_size = coalesce(
+    var.node_replicas.cpu_memory.min_size,
+    var.nodes.node_groups.cpu_memory_nodes.min_size
+  )
+
+  cpu_only_desired_size = coalesce(
+    var.node_replicas.cpu_only.desired_size,
+    var.nodes.node_groups.cpu_only_nodes.desired_size
+  )
+  cpu_only_max_size = coalesce(
+    var.node_replicas.cpu_only.max_size,
+    var.nodes.node_groups.cpu_only_nodes.max_size
+  )
+  cpu_only_min_size = coalesce(
+    var.node_replicas.cpu_only.min_size,
+    var.nodes.node_groups.cpu_only_nodes.min_size
+  )
+
+  gpu_layout_desired_size = coalesce(
+    var.node_replicas.gpu_layout.desired_size,
+    var.nodes.node_groups.layout_nodes.desired_size
+  )
+  gpu_layout_max_size = coalesce(
+    var.node_replicas.gpu_layout.max_size,
+    var.nodes.node_groups.layout_nodes.max_size
+  )
+  gpu_layout_min_size = coalesce(
+    var.node_replicas.gpu_layout.min_size,
+    var.nodes.node_groups.layout_nodes.min_size
+  )
+
+  gpu_ranker_desired_size = coalesce(
+    var.node_replicas.gpu_ranker.desired_size,
+    var.nodes.node_groups.ranker_nodes.desired_size
+  )
+  gpu_ranker_max_size = coalesce(
+    var.node_replicas.gpu_ranker.max_size,
+    var.nodes.node_groups.ranker_nodes.max_size
+  )
+  gpu_ranker_min_size = coalesce(
+    var.node_replicas.gpu_ranker.min_size,
+    var.nodes.node_groups.ranker_nodes.min_size
+  )
+
+  gpu_summary_desired_size = coalesce(
+    var.node_replicas.gpu_summary.desired_size,
+    var.nodes.node_groups.summary_nodes.desired_size
+  )
+  gpu_summary_max_size = coalesce(
+    var.node_replicas.gpu_summary.max_size,
+    var.nodes.node_groups.summary_nodes.max_size
+  )
+  gpu_summary_min_size = coalesce(
+    var.node_replicas.gpu_summary.min_size,
+    var.nodes.node_groups.summary_nodes.min_size
+  )
+
   node_groups = merge(
     {
       cpu_memory_nodes                                      = {
-        name                                                = var.cluster.nodes.cpu_memory
+        name                                                = local.cpu_memory_label
 
         ami_type                                            = var.nodes.node_groups.cpu_memory_nodes.ami_type
         instance_types                                      = var.nodes.node_groups.cpu_memory_nodes.instance_types
         key_name                                            = var.environment.ssh_key_name
         vpc_security_group_ids                              = var.environment.security_groups
 
-        desired_size                                        = var.nodes.node_groups.cpu_memory_nodes.desired_size
-        max_size                                            = var.nodes.node_groups.cpu_memory_nodes.max_size
-        min_size                                            = var.nodes.node_groups.cpu_memory_nodes.min_size
+        desired_size                                        = local.cpu_memory_desired_size
+        max_size                                            = local.cpu_memory_max_size
+        min_size                                            = local.cpu_memory_min_size
 
         ebs_optimized                                       = true
         block_device_mappings                               = {
@@ -49,28 +114,28 @@ locals {
         }
 
         labels                                              = {
-          "node"                                            = var.cluster.nodes.cpu_memory
+          "node"                                            = local.cpu_memory_label
         }
 
         tags                                                = {
           Environment                                       = var.environment.stage
-          Name                                              = var.cluster.nodes.cpu_memory
+          Name                                              = local.cpu_memory_label
           Terraform                                         = "true"
           "k8s.io/cluster-autoscaler/enabled"               = "true"
           "k8s.io/cluster-autoscaler/${local.cluster_name}" = "owned"
         }
       },
       cpu_only_nodes                                        = {
-        name                                                = var.cluster.nodes.cpu_only
+        name                                                = local.cpu_only_label
 
         ami_type                                            = var.nodes.node_groups.cpu_only_nodes.ami_type
         instance_types                                      = var.nodes.node_groups.cpu_only_nodes.instance_types
         key_name                                            = var.environment.ssh_key_name
         vpc_security_group_ids                              = var.environment.security_groups
 
-        desired_size                                        = var.nodes.node_groups.cpu_only_nodes.desired_size
-        max_size                                            = var.nodes.node_groups.cpu_only_nodes.max_size
-        min_size                                            = var.nodes.node_groups.cpu_only_nodes.min_size
+        desired_size                                        = local.cpu_only_desired_size
+        max_size                                            = local.cpu_only_max_size
+        min_size                                            = local.cpu_only_min_size
 
         ebs_optimized                                       = true
         block_device_mappings                               = {
@@ -90,28 +155,28 @@ locals {
         }
 
         labels                                              = {
-          "node"                                            = var.cluster.nodes.cpu_only
+          "node"                                            = local.cpu_only_label
         }
 
         tags                                                = {
           Environment                                       = var.environment.stage
-          Name                                              = var.cluster.nodes.cpu_only
+          Name                                              = local.cpu_only_label
           Terraform                                         = "true"
           "k8s.io/cluster-autoscaler/enabled"               = "true"
           "k8s.io/cluster-autoscaler/${local.cluster_name}" = "owned"
         }
       },
       gpu_layout_nodes                                      = {
-        name                                                = var.cluster.nodes.gpu_layout
+        name                                                = local.gpu_layout_label
 
         ami_type                                            = var.nodes.node_groups.layout_nodes.ami_type
         instance_types                                      = var.nodes.node_groups.layout_nodes.instance_types
         key_name                                            = var.environment.ssh_key_name
         vpc_security_group_ids                              = var.environment.security_groups
 
-        desired_size                                        = var.nodes.node_groups.layout_nodes.desired_size
-        max_size                                            = var.nodes.node_groups.layout_nodes.max_size
-        min_size                                            = var.nodes.node_groups.layout_nodes.min_size
+        desired_size                                        = local.gpu_layout_desired_size
+        max_size                                            = local.gpu_layout_max_size
+        min_size                                            = local.gpu_layout_min_size
 
         ebs_optimized                                       = true
         block_device_mappings                               = {
@@ -131,28 +196,28 @@ locals {
         }
 
         labels                                              = {
-          "node"                                            = var.cluster.nodes.gpu_layout
+          "node"                                            = local.gpu_layout_label
         }
 
         tags                                                = {
           Environment                                       = var.environment.stage
-          Name                                              = var.cluster.nodes.gpu_layout
+          Name                                              = local.gpu_layout_label
           Terraform                                         = "true"
           "k8s.io/cluster-autoscaler/enabled"               = "true"
           "k8s.io/cluster-autoscaler/${local.cluster_name}" = "owned"
         }
       },
       gpu_summary_nodes                                     = {
-        name                                                = var.cluster.nodes.gpu_summary
+        name                                                = local.gpu_summary_label
 
         ami_type                                            = var.nodes.node_groups.summary_nodes.ami_type
         instance_types                                      = var.nodes.node_groups.summary_nodes.instance_types
         key_name                                            = var.environment.ssh_key_name
         vpc_security_group_ids                              = var.environment.security_groups
 
-        desired_size                                        = var.nodes.node_groups.summary_nodes.desired_size
-        max_size                                            = var.nodes.node_groups.summary_nodes.max_size
-        min_size                                            = var.nodes.node_groups.summary_nodes.min_size
+        desired_size                                        = local.gpu_summary_desired_size
+        max_size                                            = local.gpu_summary_max_size
+        min_size                                            = local.gpu_summary_min_size
 
         ebs_optimized                                       = true
         block_device_mappings                               = {
@@ -172,12 +237,12 @@ locals {
         }
 
         labels                                              = {
-          "node"                                            = var.cluster.nodes.gpu_summary
+          "node"                                            = local.gpu_summary_label
         }
 
         tags                                                = {
           Environment                                       = var.environment.stage
-          Name                                              = var.cluster.nodes.gpu_summary
+          Name                                              = local.gpu_summary_label
           Terraform                                         = "true"
           "k8s.io/cluster-autoscaler/enabled"               = "true"
           "k8s.io/cluster-autoscaler/${local.cluster_name}" = "owned"
@@ -186,16 +251,16 @@ locals {
     },
     var.cluster.search ? {
       gpu_ranker_nodes                                      = {
-        name                                                = var.cluster.nodes.gpu_ranker
+        name                                                = local.gpu_ranker_label
 
         ami_type                                            = var.nodes.node_groups.ranker_nodes.ami_type
         instance_types                                      = var.nodes.node_groups.ranker_nodes.instance_types
         key_name                                            = var.environment.ssh_key_name
         vpc_security_group_ids                              = var.environment.security_groups
 
-        desired_size                                        = var.nodes.node_groups.ranker_nodes.desired_size
-        max_size                                            = var.nodes.node_groups.ranker_nodes.max_size
-        min_size                                            = var.nodes.node_groups.ranker_nodes.min_size
+        desired_size                                        = local.gpu_ranker_desired_size
+        max_size                                            = local.gpu_ranker_max_size
+        min_size                                            = local.gpu_ranker_min_size
 
         ebs_optimized                                       = true
         block_device_mappings                               = {
@@ -215,12 +280,12 @@ locals {
         }
 
         labels                                              = {
-          "node"                                            = var.cluster.nodes.gpu_ranker
+          "node"                                            = local.gpu_ranker_label
         }
 
         tags                                                = {
           Environment                                       = var.environment.stage
-          Name                                              = var.cluster.nodes.gpu_ranker
+          Name                                              = local.gpu_ranker_label
           Terraform                                         = "true"
           "k8s.io/cluster-autoscaler/enabled"               = "true"
           "k8s.io/cluster-autoscaler/${local.cluster_name}" = "owned"

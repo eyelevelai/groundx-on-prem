@@ -29,7 +29,7 @@ VPC=true
 KC=true
 KCT="eks"
 REGION="us-east-2"
-SEARCH=true
+SEARCH=${SEARCH:-true}
 
 choose_cluster_existing=$(prompt_menu "What type of Kubernetes cluster do you have?" "aws_clusters[@]")
 choose_cluster_new=$(prompt_menu "What type of Kubernetes cluster do you want to set up?" "aws_clusters[@]")
@@ -215,6 +215,7 @@ EOF
 
 if ! $SEARCH; then
     cat <<EOF >> "$ENV_DIR/env.tfvars"
+
 cluster = {
   autoscale        = false
   environment      = "aws"
@@ -245,6 +246,34 @@ cluster = {
     }
   }
   type             = "eks"
+}
+
+node_replicas = {
+  cpu_memory = {
+    desired_size = null
+    min_size     = null
+    max_size     = null
+  }
+  cpu_only = {
+    desired_size = 3
+    min_size     = 3
+    max_size     = null
+  }
+  gpu_layout = {
+    desired_size = null
+    min_size     = null
+    max_size     = null
+  }
+  gpu_ranker = {
+    desired_size = 0
+    min_size     = 0
+    max_size     = 0
+  }
+  gpu_summary = {
+    desired_size = null
+    min_size     = null
+    max_size     = null
+  }
 }
 EOF
 fi

@@ -63,6 +63,65 @@ variable "autoscaler_internal" {
   }
 }
 
+variable "node_replicas" {
+  description = "Optional overrides for node group sizes (desired, min, max). If set, these take precedence over nodes.node_groups.*."
+  type = object({
+    cpu_memory = object({
+      desired_size = number
+      min_size     = number
+      max_size     = number
+    })
+    cpu_only = object({
+      desired_size = number
+      min_size     = number
+      max_size     = number
+    })
+    gpu_layout = object({
+      desired_size = number
+      min_size     = number
+      max_size     = number
+    })
+    gpu_ranker = object({
+      desired_size = number
+      min_size     = number
+      max_size     = number
+    })
+    gpu_summary = object({
+      desired_size = number
+      min_size     = number
+      max_size     = number
+    })
+  })
+  default = {
+    cpu_memory = {
+      desired_size = null
+      min_size     = null
+      max_size     = null
+    }
+    cpu_only = {
+      desired_size = null
+      min_size     = null
+      max_size     = null
+    }
+    gpu_layout = {
+      desired_size = null
+      min_size     = null
+      max_size     = null
+    }
+    gpu_ranker = {
+      desired_size = null
+      min_size     = null
+      max_size     = null
+    }
+    gpu_summary = {
+      desired_size = null
+      min_size     = null
+      max_size     = null
+    }
+  }
+}
+
+
 variable "nodes" {
   description                   = "EKS compute resource information"
   type                          = object({
