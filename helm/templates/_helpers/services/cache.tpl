@@ -92,28 +92,6 @@ false
 {{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
-{{- define "groundx.cache.isRoute" -}}
-{{- $lb := (include "groundx.cache.loadBalancer" . | fromYaml) -}}
-{{- $os := include "groundx.isOpenshift" . -}}
-{{- $ty := (dig "type" "ClusterIP" $lb) | trim | lower -}}
-{{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
-true
-{{- else -}}
-false
-{{- end -}}
-{{- end }}
-
-{{- define "groundx.metrics.cache.isRoute" -}}
-{{- $lb := (include "groundx.metrics.cache.loadBalancer" . | fromYaml) -}}
-{{- $os := include "groundx.isOpenshift" . -}}
-{{- $ty := (dig "type" "ClusterIP" $lb) | trim | lower -}}
-{{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
-true
-{{- else -}}
-false
-{{- end -}}
-{{- end }}
-
 {{- define "groundx.cache.mountPath" -}}
 {{- $in := .Values.cache | default dict -}}
 {{ dig "mountPath" "/mnt/redis" $in }}
@@ -176,9 +154,7 @@ false
 {{- if not (empty (dig "addr" "" $ex)) -}}
 {{ dig "port" 6379 $ex }}
 {{- else -}}
-{{- $port := dig "port" 6379 $in -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ coalesce (dig "port" "" $lb) $port }}
+{{ dig "port" 6379 $in }}
 {{- end -}}
 {{- end }}
 
@@ -197,8 +173,7 @@ redis
 {{- if not (empty (dig "addr" "" $ex)) -}}
 {{ dig "ssl" "false" $ex }}
 {{- else -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "ssl" "false" $lb }}
+false
 {{- end -}}
 {{- end }}
 
@@ -246,9 +221,7 @@ redis
 {{- if not (empty (dig "addr" "" $ex)) -}}
 {{ dig "port" 6379 $ex }}
 {{- else -}}
-{{- $port := dig "port" 6379 $m -}}
-{{- $lb := dig "loadBalancer" dict $m -}}
-{{ coalesce (dig "port" "" $lb) $port }}
+{{ dig "port" 6379 $m }}
 {{- end -}}
 {{- else -}}
 {{ include "groundx.cache.port" . }}
@@ -270,8 +243,7 @@ redis
 {{- if not (empty (dig "addr" "" $ex)) -}}
 {{ dig "ssl" "false" $ex }}
 {{- else -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "ssl" "false" $lb }}
+false
 {{- end -}}
 {{- end }}
 
@@ -285,19 +257,8 @@ redis
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
-{{- define "groundx.cache.loadBalancer" -}}
+{{- define "groundx.cache.interface" -}}
 {{- $in := .Values.cache | default dict -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{- dict
-    "isInternal" (dig "isInternal" "false" $lb)
-    "port"       (include "groundx.cache.port" .)
-    "ssl"        (dig "ssl" "false" $lb)
-    "targetPort" (include "groundx.cache.containerPort" .)
-    "timeout"    (dig "timeout" "" $lb)
-    "type"       (dig "type" "ClusterIP" $lb)
-  | toYaml -}}
-{{- else -}}
 {{- dict
     "isInternal" "true"
     "port"       (include "groundx.cache.port" .)
@@ -306,23 +267,11 @@ redis
     "timeout"    ""
     "type"       "ClusterIP"
   | toYaml -}}
-{{- end -}}
 {{- end }}
 
-{{- define "groundx.metrics.cache.loadBalancer" -}}
+{{- define "groundx.metrics.cache.interface" -}}
 {{- $b := .Values.cache | default dict -}}
 {{- $in := (dig "metrics" nil $b) | default dict -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{- dict
-    "isInternal" (dig "isInternal" "false" $lb)
-    "port"       (include "groundx.metrics.cache.port" .)
-    "ssl"        (dig "ssl" "false" $lb)
-    "targetPort" (include "groundx.metrics.cache.containerPort" .)
-    "timeout"    (dig "timeout" "" $lb)
-    "type"       (dig "type" "ClusterIP" $lb)
-  | toYaml -}}
-{{- else -}}
 {{- dict
     "isInternal" "true"
     "port"       (include "groundx.metrics.cache.port" .)
@@ -331,5 +280,4 @@ redis
     "timeout"    ""
     "type"       "ClusterIP"
   | toYaml -}}
-{{- end -}}
 {{- end }}

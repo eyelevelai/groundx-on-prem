@@ -46,24 +46,8 @@ true
 {{ (dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in) }}
 {{- end }}
 
-{{- define "groundx.summary.api.isRoute" -}}
-{{- $b := .Values.summary | default dict -}}
-{{- $in := dig "api" dict $b -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{- $os := include "groundx.isOpenshift" . -}}
-{{- $ty := (dig "ipType" "ClusterIP" $lb) | trim | lower -}}
-{{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
-true
-{{- else -}}
-false
-{{- end -}}
-{{- end }}
-
 {{- define "groundx.summary.api.port" -}}
-{{- $b := .Values.summary | default dict -}}
-{{- $in := dig "api" dict $b -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "port" 80 $lb }}
+80
 {{- end }}
 
 {{- define "groundx.summary.api.replicas" -}}
@@ -83,15 +67,20 @@ false
 {{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
 {{- end }}
 
+{{- define "groundx.summary.api.serviceType" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{ dig "serviceType" "ClusterIP" $in }}
+{{- end }}
+
 {{- define "groundx.summary.api.serviceUrl" -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- $name := include "groundx.summary.serviceName" . -}}
 {{- $port := include "groundx.summary.api.port" . -}}
-{{- $ir := include "groundx.groundx.isRoute" . -}}
 {{- $ssl := include "groundx.summary.api.ssl" . -}}
 {{- $sslStr := printf "%v" $ssl -}}
 {{- $scheme := "http" -}}
-{{- if and (eq $sslStr "true") (ne $ir "true") -}}{{- $scheme = "https" -}}{{- end -}}
+{{- if eq $sslStr "true" -}}{{- $scheme = "https" -}}{{- end -}}
 {{- if or (and (eq $sslStr "true") (eq $port "443")) (eq $port "80") -}}
 {{ printf "%s://%s-api.%s.svc.cluster.local" $scheme $name $ns }}
 {{- else -}}
@@ -100,10 +89,7 @@ false
 {{- end }}
 
 {{- define "groundx.summary.api.ssl" -}}
-{{- $b := .Values.summary | default dict -}}
-{{- $in := dig "api" dict $b -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "ssl" "false" $lb  }}
+false
 {{- end }}
 
 {{- define "groundx.summary.api.threads" -}}
@@ -124,31 +110,31 @@ false
 {{ dig "workers" 1 $in }}
 {{- end }}
 
-{{- define "groundx.summary.api.loadBalancer" -}}
+{{- define "groundx.summary.api.ingress" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
+{{- $ing := dig "ingress" dict $in -}}
+{{- $en := dig "enabled" "false" $ing | toString -}}
+{{- if eq $en "true" -}}
 {{- dict
-    "isInternal" (dig "isInternal" "false" $lb)
-    "isRoute"    (include "groundx.extract.api.isRoute" .)
-    "port"       (include "groundx.summary.api.port" .)
-    "ssl"        (dig "ssl" "false" $lb)
-    "targetPort" (include "groundx.summary.api.containerPort" .)
-    "timeout"    (dig "timeout" "" $lb)
-    "type"       (dig "ipType" "ClusterIP" $lb)
+      "data"    ($ing)
+      "enabled" true
+      "name"    (include "groundx.summary.serviceName" .)
   | toYaml -}}
 {{- else -}}
+{{- dict | toYaml -}}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.summary.api.interface" -}}
 {{- dict
     "isInternal" "true"
-    "isRoute"    (include "groundx.extract.api.isRoute" .)
     "port"       (include "groundx.summary.api.port" .)
     "ssl"        "false"
     "targetPort" (include "groundx.summary.api.containerPort" .)
     "timeout"    ""
-    "type"       "ClusterIP"
+    "type"       (include "groundx.summary.api.serviceType" .)
   | toYaml -}}
-{{- end -}}
 {{- end }}
 
 {{- define "groundx.summary.api.settings" -}}
@@ -158,17 +144,16 @@ false
 {{- $rep := (include "groundx.summary.api.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.summary.api.serviceAccountName" . -}}
 {{- $cfg := dict
-  "cfg"          (printf "%s-config-py-map" $svc)
-  "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
-  "image"        (include "groundx.summary.api.image" .)
-  "isRoute"      (include "groundx.summary.api.isRoute" .)
-  "loadBalancer" (include "groundx.summary.api.loadBalancer" .)
-  "mapPrefix"    ("summary")
-  "name"         (include "groundx.summary.api.serviceName" .)
-  "node"         (include "groundx.summary.api.node" .)
-  "port"         (include "groundx.summary.api.containerPort" .)
-  "pull"         (include "groundx.summary.api.imagePullPolicy" .)
-  "replicas"     ($rep)
+  "cfg"       (printf "%s-config-py-map" $svc)
+  "gunicorn"  (printf "%s-gunicorn-conf-py-map" $svc)
+  "image"     (include "groundx.summary.api.image" .)
+  "interface" (include "groundx.summary.api.interface" .)
+  "mapPrefix" ("summary")
+  "name"      (include "groundx.summary.api.serviceName" .)
+  "node"      (include "groundx.summary.api.node" .)
+  "port"      (include "groundx.summary.api.containerPort" .)
+  "pull"      (include "groundx.summary.api.imagePullPolicy" .)
+  "replicas"  ($rep)
 -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}

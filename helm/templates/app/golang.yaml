@@ -1,4 +1,5 @@
 {{- $svcs := (include "groundx.golang.services" . | fromYaml) -}}
+{{- $username := include "groundx.container.username" . -}}
 
 {{- range $idx, $entry := $svcs }}
 {{- $svcKey := printf "groundx.%s.settings" $entry -}}
@@ -11,9 +12,8 @@
 {{- $image := get $svcData "image" -}}
 {{- $ips := include "groundx.imagePullSecrets" $ | fromYaml -}}
 {{- $io := include "groundx.ingestOnly" $ -}}
-{{- $ir := get $svcData "isRoute" -}}
 {{- $lbls := get $svcData "labels" -}}
-{{- $lb := get $svcData "loadBalancer" -}}
+{{- $int := get $svcData "interface" -}}
 {{- $svc := get $svcData "name" -}}
 {{- $node := get $svcData "node" -}}
 {{- $nsl := get $svcData "nodeSelector" -}}
@@ -67,7 +67,7 @@ spec:
       affinity:
 {{ toYaml $aff | nindent 8 }}
 {{- end }}
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" $username "cfg" "spec") }}
 {{ include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
 {{ include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
 {{- if not (empty $dpnd) }}
@@ -123,7 +123,7 @@ spec:
           ports:
             - containerPort: {{ $cport }}
               protocol: TCP
-{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" $username "cfg" "container") }}
           livenessProbe:
             httpGet:
               path: /health
@@ -139,17 +139,15 @@ spec:
 {{ include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
           volumeMounts:
             - name: config-volume
-              mountPath: /home/{{ include "groundx.golang.username" $ }}/.cashbot/config.yaml
+              mountPath: /home/{{ include "groundx.golang.home" $ }}/.cashbot/config.yaml
               subPath: config.yaml
       volumes:
         - name: config-volume
           configMap:
             name: config-yaml-map
-{{- if $lb }}
-{{- if eq $ir "true" }}
-{{ include "groundx.renderRoute" (dict "name" $svc "lb" $lb "root" $) }}
-{{- end }}
-{{ include "groundx.renderLoadBalancer" (dict "name" $svc "lb" $lb "root" $) }}
+
+{{- if $int }}
+{{ include "groundx.renderInterface" (dict "name" $svc "lb" $int "root" $) }}
 {{- end }}
 
 {{ end }}

@@ -46,28 +46,8 @@ false
 {{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
-{{- define "groundx.extract.api.isRoute" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $in := dig "api" dict $b -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{- $os := include "groundx.isOpenshift" . -}}
-{{- $ty := (dig "ipType" "ClusterIP" $lb) | trim | lower -}}
-{{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
-true
-{{- else -}}
-false
-{{- end -}}
-{{- end }}
-
 {{- define "groundx.extract.api.port" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $in := dig "api" dict $b -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "port" 80 $lb }}
-{{- else -}}
 80
-{{- end -}}
 {{- end }}
 
 {{- define "groundx.extract.api.replicas" -}}
@@ -87,15 +67,20 @@ false
 {{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
 {{- end }}
 
+{{- define "groundx.extract.api.serviceType" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{ dig "serviceType" "ClusterIP" $in }}
+{{- end }}
+
 {{- define "groundx.extract.api.serviceUrl" -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- $name := include "groundx.extract.serviceName" . -}}
 {{- $port := include "groundx.extract.api.port" . -}}
-{{- $ir := include "groundx.groundx.isRoute" . -}}
 {{- $ssl := include "groundx.extract.api.ssl" . -}}
 {{- $sslStr := printf "%v" $ssl -}}
 {{- $scheme := "http" -}}
-{{- if and (eq $sslStr "true") (ne $ir "true") -}}{{- $scheme = "https" -}}{{- end -}}
+{{- if eq $sslStr "true" -}}{{- $scheme = "https" -}}{{- end -}}
 {{- if or (and (eq $sslStr "true") (eq $port "443")) (eq $port "80") -}}
 {{ printf "%s://%s-api.%s.svc.cluster.local" $scheme $name $ns }}
 {{- else -}}
@@ -104,14 +89,7 @@ false
 {{- end }}
 
 {{- define "groundx.extract.api.ssl" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $in := dig "api" dict $b -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "ssl" "false" $lb  }}
-{{- else -}}
 false
-{{- end -}}
 {{- end }}
 
 {{- define "groundx.extract.api.threads" -}}
@@ -132,31 +110,31 @@ false
 {{ dig "workers" 2 $in }}
 {{- end }}
 
-{{- define "groundx.extract.api.loadBalancer" -}}
+{{- define "groundx.extract.api.ingress" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
+{{- $ing := dig "ingress" dict $in -}}
+{{- $en := dig "enabled" "false" $ing | toString -}}
+{{- if eq $en "true" -}}
 {{- dict
-    "isInternal" (dig "isInternal" "false" $lb)
-    "isRoute"    (include "groundx.extract.api.isRoute" .)
-    "port"       (include "groundx.extract.api.port" .)
-    "ssl"        (dig "ssl" "false" $lb)
-    "targetPort" (include "groundx.extract.api.containerPort" .)
-    "timeout"    (dig "timeout" "" $lb)
-    "type"       (dig "ipType" "ClusterIP" $lb)
+      "data"    ($ing)
+      "enabled" true
+      "name"    (include "groundx.extract.serviceName" .)
   | toYaml -}}
-{{- else }}
+{{- else -}}
+{{- dict | toYaml -}}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.extract.api.interface" -}}
 {{- dict
     "isInternal" "true"
-    "isRoute"    (include "groundx.extract.api.isRoute" .)
     "port"       (include "groundx.extract.api.port" .)
     "ssl"        "false"
     "targetPort" (include "groundx.extract.api.containerPort" .)
     "timeout"    ""
-    "type"       "ClusterIP"
+    "type"       (include "groundx.extract.api.serviceType" .)
   | toYaml -}}
-{{- end -}}
 {{- end }}
 
 {{- define "groundx.extract.api.settings" -}}
@@ -181,8 +159,7 @@ false
   "filePort"     (include "groundx.extract.file.port" .)
   "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
   "image"        (include "groundx.extract.api.image" .)
-  "isRoute"      (include "groundx.extract.api.isRoute" .)
-  "loadBalancer" (include "groundx.extract.api.loadBalancer" .)
+  "interface"    (include "groundx.extract.api.interface" .)
   "mapPrefix"    ("extract")
   "name"         (include "groundx.extract.api.serviceName" .)
   "node"         (include "groundx.extract.api.node" .)

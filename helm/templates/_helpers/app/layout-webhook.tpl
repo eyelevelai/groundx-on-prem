@@ -36,25 +36,8 @@ true
 {{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
-{{- define "groundx.layoutWebhook.isRoute" -}}
-{{- $lb := (include "groundx.layoutWebhook.loadBalancer" . | fromYaml) -}}
-{{- $os := include "groundx.isOpenshift" . -}}
-{{- $ty := (dig "ipType" "ClusterIP" $lb) | trim | lower -}}
-{{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
-true
-{{- else -}}
-false
-{{- end -}}
-{{- end }}
-
 {{- define "groundx.layoutWebhook.port" -}}
-{{- $in := .Values.layoutWebhook | default dict -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "port" 80 $lb }}
-{{- else -}}
 80
-{{- end -}}
 {{- end }}
 
 {{- define "groundx.layoutWebhook.replicas" -}}
@@ -70,6 +53,12 @@ false
 {{- $in := .Values.layoutWebhook | default dict -}}
 {{- $ex := dig "serviceAccount" dict $in -}}
 {{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
+{{- end }}
+
+{{- define "groundx.layoutWebhook.serviceType" -}}
+{{- $b := .Values.layoutWebhook | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{ dig "serviceType" "ClusterIP" $in }}
 {{- end }}
 
 {{- define "groundx.layoutWebhook.serviceUrl" -}}
@@ -88,35 +77,32 @@ false
 {{- end }}
 
 {{- define "groundx.layoutWebhook.ssl" -}}
-{{- $in := .Values.layoutWebhook | default dict -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "ssl" "false" $lb  }}
-{{- else -}}
 false
+{{- end }}
+
+{{- define "groundx.layoutWebhook.ingress" -}}
+{{- $in := .Values.layoutWebhook | default dict -}}
+{{- $ing := dig "ingress" dict $in -}}
+{{- $en := dig "enabled" "false" $ing | toString -}}
+{{- if eq $en "true" -}}
+{{- dict
+      "data"    ($ing)
+      "enabled" true
+      "name"    (include "groundx.layoutWebhook.serviceName" .)
+  | toYaml -}}
+{{- else -}}
+{{- dict | toYaml -}}
 {{- end -}}
 {{- end }}
 
-{{- define "groundx.layoutWebhook.loadBalancer" -}}
-{{- $in := .Values.layoutWebhook | default dict -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{- dict
-    "isInternal" (dig "isInternal" "false" $lb)
-    "port"       (include "groundx.layoutWebhook.port" .)
-    "ssl"        (include "groundx.layoutWebhook.ssl" .)
-    "targetPort" (include "groundx.layoutWebhook.containerPort" .)
-    "timeout"    (dig "timeout" "" $lb)
-    "type"       (dig "ipType" "ClusterIP" $lb)
-  | toYaml -}}
-{{- end -}}
+{{- define "groundx.layoutWebhook.interface" -}}
 {{- dict
     "isInternal" "true"
     "port"       (include "groundx.layoutWebhook.port" .)
     "ssl"        "false"
     "targetPort" (include "groundx.layoutWebhook.containerPort" .)
     "timeout"    ""
-    "type"       "ClusterIP"
+    "type"       (include "groundx.layoutWebhook.serviceType" .)
   | toYaml -}}
 {{- end }}
 
@@ -129,8 +115,7 @@ false
     "groundx" "groundx"
   )
   "image"        (include "groundx.layoutWebhook.image" .)
-  "isRoute"      (include "groundx.layoutWebhook.isRoute" .)
-  "loadBalancer" (include "groundx.layoutWebhook.loadBalancer" . | trim)
+  "interface"    (include "groundx.layoutWebhook.interface" . | trim)
   "name"         (include "groundx.layoutWebhook.serviceName" .)
   "node"         (include "groundx.layoutWebhook.node" .)
   "port"         (include "groundx.layoutWebhook.containerPort" .)

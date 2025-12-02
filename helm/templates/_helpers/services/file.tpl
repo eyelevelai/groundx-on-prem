@@ -46,13 +46,7 @@ true
 {{- if eq $ic "true" -}}
 {{ include "groundx.file.ssl" . }}
 {{- else -}}
-{{- $in := .Values.file | default dict -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{- if hasKey $lb "ssl" }}
-{{ $lb.ssl }}
-{{- else -}}
-{{ dig "ssl" "false" $in }}
-{{- end -}}
+false
 {{- end -}}
 {{- end }}
 
@@ -140,18 +134,22 @@ true
 
 {{- define "groundx.file.serviceType" -}}
 {{- $in := .Values.file | default dict -}}
+{{ dig "serviceType" "ClusterIP" $in }}
+{{- end }}
+
+{{- define "groundx.file.storageType" -}}
+{{- $in := .Values.file | default dict -}}
 {{- $ic := include "groundx.file.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
 {{- $ex := dig "existing" dict $in -}}
 {{ dig "serviceType" (dig "serviceType" "minio" $in) $ex }}
 {{- else -}}
-{{ dig "serviceType" "minio" $in }}
+minio
 {{- end -}}
 {{- end }}
 
 {{- define "groundx.file.ssl" -}}
 {{- $in := .Values.file | default dict -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
 {{- $ic := include "groundx.file.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
 {{- $ex := dig "existing" dict $in -}}
@@ -166,8 +164,6 @@ true
 {{- else -}}
 false
 {{- end -}}
-{{- else if hasKey $lb "ssl" -}}
-{{ dig "ssl" "" $lb }}
 {{- else -}}
 false
 {{- end -}}
@@ -183,23 +179,10 @@ false
 {{ dig "username" "" $in }}
 {{- end }}
 
-{{- define "groundx.file.loadBalancer" -}}
+{{- define "groundx.file.ingress" -}}
 {{- $in := .Values.file | default dict -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{- $name := dig "name" "" $lb -}}
-{{- if hasKey $lb "port" }}
-{{- $lbDict := dict
-    "isInternal" (dig "isInternal" "false" $lb)
-    "port"       (dig "port" "" $lb)
-    "ssl"        (dig "ssl" "" $lb)
-    "targetPort" (include "groundx.file.port" .)
-    "timeout"    (dig "timeout" "" $lb)
--}}
-{{- if ne $name "" -}}
-  {{- $_ := set $lbDict "name" $name -}}
-{{- end -}}
-{{- $lbDict | toYaml -}}
-{{- end -}}
+{{- $ing := dig "ingress" dict $in -}}
+{{- dig "ingress" dict $in | toYaml -}}
 {{- end }}
 
 {{- define "groundx.file.settings" -}}
@@ -221,7 +204,7 @@ false
     "bucketScheme" $bucketScheme
     "bucketSSL"    $bucketSSL
     "dependency"   (include "groundx.file.serviceDependency" .)
-    "serviceType"  (include "groundx.file.serviceType" .)
+    "storageType"  (include "groundx.file.storageType" .)
     "username"     (include "groundx.file.username" .)
     "password"     (include "groundx.file.password" .)
     "port"         (include "groundx.file.port" .)
