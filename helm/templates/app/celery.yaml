@@ -10,6 +10,7 @@
 {{- $anns := get $svcData "annotations" -}}
 {{- $cel := get $svcData "celery" -}}
 {{- $csct := get $svcData "containerSecurityContext" -}}
+{{- $dpnd := get $svcData "dependencies" | default dict -}}
 {{- $fileDomain := get $svcData "fileDomain" | default (include "groundx.file.serviceDependency" $) -}}
 {{- $filePort := get $svcData "filePort" | default (include "groundx.file.port" $) -}}
 {{- $image := get $svcData "image" -}}
@@ -90,6 +91,14 @@ spec:
           image: {{ include "groundx.busybox.image" $ }}
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
           command: ['sh', '-c', "until nc -z {{ printf "%s %v" $fileDomain $filePort }}; do echo waiting for file storage; sleep 2; done"]
+{{- if not (empty $dpnd) }}
+{{- if hasKey $dpnd "extract" }}
+        - name: wait-for-extract
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until wget --spider -q {{ include "groundx.extract.api.serviceUrl" $ }}/health; do echo waiting for extract; sleep 2; done"]
+{{- end }}
+{{- end }}
       containers:
         - name: {{ $name | quote }}
           image: {{ $image | quote }}
