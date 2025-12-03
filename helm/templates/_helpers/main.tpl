@@ -35,6 +35,14 @@
 {{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
+{{- define "groundx.container.username" -}}
+{{- if eq .Values.imageType "chainguard" -}}
+65532
+{{- else -}}
+1001
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.clusterType" -}}
 {{- $b := .Values.cluster | default dict -}}
 {{- (dig "type" "eks" $b) | lower -}}

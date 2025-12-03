@@ -1,0 +1,14 @@
+# this yaml changes the minio operator image to a chainguard image
+
+operator:
+  nodeSelector:
+    node: eyelevel-cpu
+  replicaCount: 1
+
+  image:
+    repository: cgr.dev/eyelevel.ai/minio-operator-fips
+    tag: v7.1.1
+    pullPolicy: IfNotPresent
+
+  imagePullSecrets:
+    - name: chainguard-pull-secret

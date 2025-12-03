@@ -1,4 +1,5 @@
 {{- $svcs := (include "groundx.api.services" . | fromYaml) -}}
+{{- $username := include "groundx.container.username" . -}}
 
 {{- range $idx, $entry := $svcs }}
 {{- $svcKey := printf "groundx.%s.settings" $entry -}}
@@ -12,9 +13,8 @@
 {{- $dpnd := get $svcData "dependencies" | default dict -}}
 {{- $guni := get $svcData "gunicorn" -}}
 {{- $image := get $svcData "image" -}}
+{{- $int := get $svcData "interface" -}}
 {{- $ips := include "groundx.imagePullSecrets" $ | fromYaml -}}
-{{- $ir := get $svcData "isRoute" -}}
-{{- $lb := get $svcData "loadBalancer" -}}
 {{- $lbls := get $svcData "labels" -}}
 {{- $mapPrefix := get $svcData "mapPrefix" -}}
 {{- $node := get $svcData "node" -}}
@@ -76,7 +76,7 @@ spec:
       affinity:
 {{ toYaml $aff | nindent 8 }}
 {{- end }}
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" $username "cfg" "spec") }}
 {{- include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
 {{- include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
       initContainers:
@@ -115,7 +115,7 @@ spec:
             - -c
             - |
               export PYTHONPATH=/app:$PYTHONPATH && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
-{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" $username "cfg" "container") }}
           livenessProbe:
             httpGet:
               path: /health
@@ -144,9 +144,7 @@ spec:
         - name: gunicorn-conf-volume
           configMap:
             name: {{ $guni }}
-{{- if eq $ir "true" }}
-{{ include "groundx.renderRoute" (dict "name" $svc "lb" $lb "root" $) }}
-{{- end }}
-{{ include "groundx.renderLoadBalancer" (dict "name" $svc "lb" $lb "root" $) }}
+
+{{ include "groundx.renderInterface" (dict "name" $svc "lb" $int "root" $) }}
 
 {{ end }}

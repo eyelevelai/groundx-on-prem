@@ -7,7 +7,7 @@
 {{- $fs := (include "groundx.file.settings" . | fromYaml) -}}
 {{- $bucketSuffix := printf "%s/" (get $fs "bucketName") -}}
 {{- $baseDomain := get $fs "baseDomain" -}}
-{{- $st := include "groundx.file.serviceType" . -}}
+{{- $st := include "groundx.file.storageType" . -}}
 {{- if eq $st "s3" }}
 {{- $bucketSuffix = "" -}}
 {{- end }}

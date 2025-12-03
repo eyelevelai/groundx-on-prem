@@ -1,5 +1,6 @@
 {{- $svcs := (include "groundx.inference.services" . | fromYaml) -}}
 {{- $csym := include "groundx.createSymlink" . -}}
+{{- $username := include "groundx.container.username" . -}}
 
 {{- range $idx, $entry := $svcs }}
 {{- $svcKey := printf "groundx.%s.settings" $entry -}}
@@ -16,7 +17,6 @@
 {{- $image := get $svcData "image" -}}
 {{- $ips := include "groundx.imagePullSecrets" $ | fromYaml -}}
 {{- $ic := get $svcData "celery" | default "false" -}}
-{{- $lb := get $svcData "loadBalancer" -}}
 {{- $lbls := get $svcData "labels" -}}
 {{- $mapPrefix := get $svcData "mapPrefix" -}}
 {{- $mpr := get $svcData "modelParts" -}}
@@ -34,6 +34,7 @@
 {{- $sct := get $svcData "securityContext" -}}
 {{- $supe := get $svcData "supervisord" -}}
 {{- $tl := get $svcData "tolerations" -}}
+{{- $ud := get $svcData "updateStrategy" -}}
 {{- $wd := get $svcData "workingDir" -}}
 
 {{- $desired := get $rp "desired" -}}
@@ -48,6 +49,10 @@ metadata:
 {{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
 spec:
   replicas: {{ $desired }}
+{{- if and $ud (ne $ud "") }}
+  strategy:
+    type: {{ $ud }}
+{{- end }}
   selector:
     matchLabels:
       app: {{ $svc }}
@@ -85,7 +90,7 @@ spec:
       affinity:
 {{ toYaml $aff | nindent 8 }}
 {{- end }}
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" $username "cfg" "spec") }}
 {{- include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
 {{- include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
       initContainers:
@@ -171,7 +176,7 @@ spec:
               fi
 
               echo "Model load done."
-{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" $username "cfg" "container") }}
           volumeMounts:
             - name: model-volume
               mountPath: {{ $wd }}/hf_models_cache
@@ -198,7 +203,7 @@ spec:
             - -c
             - |
               export PYTHONPATH={{ $wd }}:$PYTHONPATH && {{ $eopts }} supervisord -c {{ $wd }}/supervisord.conf
-{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" $username "cfg" "container") }}
 {{- if ne $ic "false" }}
           livenessProbe:
             exec:

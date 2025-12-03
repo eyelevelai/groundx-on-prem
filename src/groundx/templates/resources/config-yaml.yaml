@@ -21,14 +21,17 @@ data:
       ro_addr: {{ include "groundx.db.ro" . }}
       rw_addr: {{ include "groundx.db.rw" . }}
       {{- if ne (include "groundx.db.username" .) "" }}
-      user: {{ include "groundx.db.username" . }}
+      user: {{ include "groundx.db.username" . | quote }}
       {{- end }}
       {{- if ne (include "groundx.db.password" .) "" }}
-      password: {{ include "groundx.db.password" . }}
+      password: {{ include "groundx.db.password" . | quote }}
       {{- end }}
       database: {{ include "groundx.db.dbName" . }}
       maxIdle: {{ include "groundx.db.maxIdle" . }}
       maxOpen: {{ include "groundx.db.maxOpen" . }}
+      {{- if ne (include "groundx.db.rootCerts" .) "" }}
+      rootCerts: | {{ include "groundx.db.rootCerts" . | nindent 8 }}
+      {{- end }}
 
 
     {{- if or (ne (include "groundx.admin.apiKey" .) "") (ne (include "groundx.admin.email" .) "") (ne (include "groundx.admin.password" .) "") (ne (include "groundx.admin.username" .) "") (ne (include "groundx.licenseKey" .) "") }}
@@ -38,13 +41,13 @@ data:
       apiKey: {{ include "groundx.admin.apiKey" . }}
       {{- end }}
       {{- if ne (include "groundx.admin.email" .) "" }}
-      email: {{ include "groundx.admin.email" . }}
+      email: {{ include "groundx.admin.email" . | quote }}
       {{- end }}
       {{- if ne (include "groundx.licenseKey" .) "" }}
       licenseKey: {{ include "groundx.licenseKey" . }}
       {{- end }}
       {{- if ne (include "groundx.admin.password" .) "" }}
-      password: {{ include "groundx.admin.password" . }}
+      password: {{ include "groundx.admin.password" . | quote }}
       {{- end }}
       {{- if ne (include "groundx.admin.username" .) "" }}
       username: {{ include "groundx.admin.username" . }}
@@ -60,8 +63,8 @@ data:
           {{- range (include "groundx.languages" . | fromYamlArray) }}
             - {{ . }}
           {{- end }}
-          username: {{ include "groundx.search.username" . }}
-          password: {{ include "groundx.search.password" . }}
+          username: {{ include "groundx.search.username" . | quote }}
+          password: {{ include "groundx.search.password" . | quote }}
       extract:
         client:
           {{- if ne (include "groundx.admin.username" .) "" }}
@@ -146,16 +149,16 @@ data:
       {{- if or (ne (include "groundx.db.privilegedUsername" .) "") (ne (include "groundx.db.privilegedPassword" .) "") }}
       mysql:
         {{- if ne (include "groundx.db.privilegedUsername" .) "" }}
-        user: {{ include "groundx.db.privilegedUsername" . }}
+        user: {{ include "groundx.db.privilegedUsername" . | quote }}
         {{- end }}
         {{- if ne (include "groundx.db.privilegedPassword" .) "" }}
-        password: {{ include "groundx.db.privilegedPassword" . }}
+        password: {{ include "groundx.db.privilegedPassword" . | quote }}
         {{- end }}
       {{- end }}
       search:
-        password: {{ include "groundx.search.privilegedPassword" . }}
+        password: {{ include "groundx.search.privilegedPassword" . | quote }}
         searchModel: all_access
-        username: {{ include "groundx.search.privilegedUsername" . }}
+        username: {{ include "groundx.search.privilegedUsername" . | quote }}
 
     integrationTests:
       search:
@@ -333,15 +336,15 @@ data:
       bucket: {{ get $fs "bucketName" }}
       bucketUrl: {{ printf "%s://%s" (get $fs "bucketScheme") (get $fs "bucketDomain") }}
       {{- if and (hasKey $fs "username") (ne (get $fs "username") "") }}
-      id: {{ get $fs "username" }}
+      id: {{ get $fs "username" | quote }}
       {{- end }}
       {{- if and (hasKey $fs "region") (ne (get $fs "region") "") }}
       region: {{ get $fs "region" }}
       {{- end }}
       {{- if and (hasKey $fs "password") (ne (get $fs "password") "") }}
-      secret: {{ get $fs "password" }}
+      secret: {{ get $fs "password" | quote }}
       {{- end }}
-      service: {{ get $fs "serviceType" }}
+      service: {{ get $fs "storageType" }}
       ssl: {{ get $fs "ssl" }}
       {{- if and (hasKey $fs "token") (ne (get $fs "token") "") }}
       token: {{ get $fs "token" }}

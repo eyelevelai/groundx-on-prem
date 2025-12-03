@@ -1,8 +1,6 @@
-{{- define "groundx.golang.username" -}}
+{{- define "groundx.golang.home" -}}
 {{- $in := .Values.golang | default dict -}}
-{{- if hasKey $in "username" -}}
-{{ (dig "username" "golang" $in) }}
-{{- else if eq .Values.imageType "chainguard" -}}
+{{- if eq .Values.imageType "chainguard" -}}
 nonroot
 {{- else -}}
 golang

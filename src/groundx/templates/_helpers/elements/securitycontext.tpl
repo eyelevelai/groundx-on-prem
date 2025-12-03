@@ -3,7 +3,7 @@
 {{- $indent := .indent | default 0 -}}
 {{- $root := .root -}}
 {{- $ct := include "groundx.clusterType" $root -}}
-{{- $user := .user -}}
+{{- $user := .user | int | default 1001 -}}
 {{- $prefix := .prefix | default "securityContext" -}}
 {{- $cfg := .cfg | default "full" -}}
 {{- if lt (len $ctx) 1 }}

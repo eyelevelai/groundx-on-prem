@@ -44,22 +44,8 @@ true
 {{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
-{{- define "groundx.ranker.api.isRoute" -}}
-{{- $lb := (include "groundx.ranker.api.loadBalancer" . | fromYaml) -}}
-{{- $os := include "groundx.isOpenshift" . -}}
-{{- $ty := (dig "ipType" "ClusterIP" $lb) | trim | lower -}}
-{{- if or (eq $ty "route") (and (eq $ty "loadbalancer") (eq $os "true")) -}}
-true
-{{- else -}}
-false
-{{- end -}}
-{{- end }}
-
 {{- define "groundx.ranker.api.port" -}}
-{{- $b := .Values.ranker | default dict -}}
-{{- $in := dig "api" dict $b -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "port" 80 $lb }}
+80
 {{- end }}
 
 {{- define "groundx.ranker.api.replicas" -}}
@@ -79,6 +65,12 @@ false
 {{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
 {{- end }}
 
+{{- define "groundx.ranker.api.serviceType" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{ dig "serviceType" "ClusterIP" $in }}
+{{- end }}
+
 {{- define "groundx.ranker.api.serviceUrl" -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- $name := include "groundx.ranker.serviceName" . -}}
@@ -95,10 +87,7 @@ false
 {{- end }}
 
 {{- define "groundx.ranker.api.ssl" -}}
-{{- $b := .Values.ranker | default dict -}}
-{{- $in := dig "api" dict $b -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
-{{ dig "ssl" "false" $lb  }}
+false
 {{- end }}
 
 {{- define "groundx.ranker.api.threads" -}}
@@ -119,29 +108,31 @@ false
 {{ dig "workers" 1 $in }}
 {{- end }}
 
-{{- define "groundx.ranker.api.loadBalancer" -}}
+{{- define "groundx.ranker.api.ingress" -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{- if hasKey $in "loadBalancer" -}}
-{{- $lb := dig "loadBalancer" dict $in -}}
+{{- $ing := dig "ingress" dict $in -}}
+{{- $en := dig "enabled" "false" $ing | toString -}}
+{{- if eq $en "true" -}}
 {{- dict
-    "isInternal" (dig "isInternal" "false" $lb)
-    "port"       (include "groundx.ranker.api.port" .)
-    "ssl"        (dig "ssl" "false" $lb)
-    "targetPort" (include "groundx.ranker.api.containerPort" .)
-    "timeout"    (dig "timeout" "" $lb)
-    "type"       (dig "ipType" "ClusterIP" $lb)
+      "data"    ($ing)
+      "enabled" true
+      "name"    (include "groundx.ranker.serviceName" .)
   | toYaml -}}
 {{- else -}}
+{{- dict | toYaml -}}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.ranker.api.interface" -}}
 {{- dict
     "isInternal" "true"
     "port"       (include "groundx.ranker.api.port" .)
     "ssl"        "false"
     "targetPort" (include "groundx.ranker.api.containerPort" .)
     "timeout"    ""
-    "type"       "ClusterIP"
+    "type"       (include "groundx.ranker.api.serviceType" .)
   | toYaml -}}
-{{- end -}}
 {{- end }}
 
 {{- define "groundx.ranker.api.settings" -}}
@@ -154,8 +145,7 @@ false
   "cfg"          (printf "%s-config-py-map" $svc)
   "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
   "image"        (include "groundx.ranker.api.image" .)
-  "isRoute"      (include "groundx.ranker.api.isRoute" .)
-  "loadBalancer" (include "groundx.ranker.api.loadBalancer" .)
+  "interface"    (include "groundx.ranker.api.interface" .)
   "mapPrefix"    ("ranker")
   "name"         (include "groundx.ranker.api.serviceName" .)
   "node"         (include "groundx.ranker.api.node" .)

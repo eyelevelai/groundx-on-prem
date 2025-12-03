@@ -1,3 +1,4 @@
+{{- $ity := .Values.imageType -}}
 {{- $sups := (include "groundx.layout.supervisor" . | fromYaml) -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- $svc := include "groundx.layout.serviceName" . -}}
@@ -32,6 +33,9 @@ data:
       CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w{{ add $i 1 }}",
       {{- end }}
       LOCAL="0",
+      {{- if eq $ity "chainguard" }}
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python,
+      {{- end }}
       PYTHONUNBUFFERED="1"{{ include "groundx.celery.env" $ }}
     autostart=true
     autorestart=true

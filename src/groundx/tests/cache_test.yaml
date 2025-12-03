@@ -33,7 +33,7 @@ tests:
       - ../templates/services/cache.yaml
       - ../templates/services/cache-metrics.yaml
     values:
-      - ../values/values.openshift.yaml
+      - ../values/openshift/values.yaml
     asserts:
       - matchSnapshot: {}
   - it: "minikube: cache"
@@ -41,7 +41,7 @@ tests:
       - ../templates/services/cache.yaml
       - ../templates/services/cache-metrics.yaml
     values:
-      - ../values/values.minikube.yaml
+      - ../values/minikube/values.yaml
     asserts:
       - matchSnapshot: {}
   - it: "existing: cache"
@@ -73,7 +73,7 @@ tests:
       - ../templates/services/cache.yaml
       - ../templates/services/cache-metrics.yaml
     values:
-      - ../values/values.extract.yaml
+      - ../values/extract/values.yaml
     asserts:
       - matchSnapshot: {}
   - it: "extract.ingest: cache"
@@ -89,7 +89,7 @@ tests:
       - ../templates/services/cache.yaml
       - ../templates/services/cache-metrics.yaml
     values:
-      - ../values/values.extract.oai.yaml
+      - ../values/extract/values.oai.yaml
     asserts:
       - matchSnapshot: {}
   - it: "cloud: cache"

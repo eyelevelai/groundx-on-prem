@@ -20,7 +20,6 @@
         "password": { "type": "string" },
         "username": { "type": "string" }
       },
-      "required": ["apiKey", "email", "password", "username"],
       "additionalProperties": false
     },
     "cluster": {
@@ -74,7 +73,7 @@
           "items": { "type": "string" }
         }
       },
-      "required": ["pvClass", "type"],
+      "required": ["type"],
       "additionalProperties": false
     },
     "serviceAccount": {
@@ -140,17 +139,6 @@
         "image": { "type": "string" },
         "imagePullPolicy": { "type": "string" },
         "labels": { "type": "object" },
-        "loadBalancer": {
-          "type": "object",
-          "properties": {
-            "ipType": { "type": "string" },
-            "isInternal": { "type": "boolean" },
-            "port": { "type": "integer" },
-            "ssl": { "type": "boolean" },
-            "timeout": { "type": "integer" }
-          },
-          "additionalProperties": false
-        },
         "mountPath": { "type": "string" },
         "node": { "type": "string" },
         "nodeSelector": { "type": "object" },
@@ -191,17 +179,6 @@
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
             "labels": { "type": "object" },
-            "loadBalancer": {
-              "type": "object",
-              "properties": {
-                "ipType": { "type": "string" },
-                "isInternal": { "type": "boolean" },
-                "port": { "type": "integer" },
-                "ssl": { "type": "boolean" },
-                "timeout": { "type": "integer" }
-              },
-              "additionalProperties": false
-            },
             "mountPath": { "type": "string" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
@@ -239,6 +216,7 @@
           "type": "object",
           "properties": {
             "ro": { "type": "string" },
+            "rootCerts": { "type": "string" },
             "rw": { "type": "string" },
             "port": { "type": "integer" }
           },
@@ -250,6 +228,7 @@
         "maxIdle": { "type": "integer" },
         "maxOpen": { "type": "integer" },
         "password": { "type": "string" },
+        "rootCerts": { "type": "string" },
         "serviceName": { "type": "string" },
         "username": { "type": "string" }
       },
@@ -274,16 +253,19 @@
           },
           "additionalProperties": false
         },
-        "loadBalancer": {
+        "ingress": {
           "type": "object",
           "properties": {
-            "ipType": { "type": "string" },
-            "isInternal": { "type": "boolean" },
-            "port": { "type": "integer" },
-            "ssl": { "type": "boolean" },
-            "timeout": { "type": "integer" }
-          },
-          "additionalProperties": false
+            "annotations": { "type": "object" },
+            "apiVersion": { "type": "string" },
+            "enabled": { "type": "boolean" },
+            "hostName": { "type": "string" },
+            "ingressClassName": { "type": "string" },
+            "labels": { "type": "object" },
+            "path": { "type": "string" },
+            "paths": { "type": "array" },
+            "tls": { "type": "array" }
+          }
         },
         "password": { "type": "string" },
         "port": { "type": "integer" },
@@ -440,18 +422,21 @@
             "enabled": { "type": "boolean" },
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
-            "labels": { "type": "object" },
-            "loadBalancer": {
+            "ingress": {
               "type": "object",
               "properties": {
-                "ipType": { "type": "string" },
-                "isInternal": { "type": "boolean" },
-                "port": { "type": "integer" },
-                "ssl": { "type": "boolean" },
-                "timeout": { "type": "integer" }
-              },
-              "additionalProperties": false
+                "annotations": { "type": "object" },
+                "apiVersion": { "type": "string" },
+                "enabled": { "type": "boolean" },
+                "hostName": { "type": "string" },
+                "ingressClassName": { "type": "string" },
+                "labels": { "type": "object" },
+                "path": { "type": "string" },
+                "paths": { "type": "array" },
+                "tls": { "type": "array" }
+              }
             },
+            "labels": { "type": "object" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
             "replicas": {
@@ -474,6 +459,7 @@
                 "required": ["name"],
               "additionalProperties": false
             },
+            "serviceType": { "type": "string" },
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
             "tolerations": { "type": "array" },
@@ -553,6 +539,7 @@
             },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "updateStrategy": { "type": "string" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -561,13 +548,6 @@
         "serviceName": { "type": "string" }
       },
       "required": ["api", "inference"],
-      "additionalProperties": false
-    },
-    "golang": {
-      "type": "object",
-      "properties": {
-        "username": { "type": "string" }
-      },
       "additionalProperties": false
     },
     "groundx": {
@@ -584,10 +564,18 @@
         "ingress": {
           "type": "object",
           "properties": {
-            "enabled": { "type": "boolean" }
-          },
-          "additionalProperties": false
+            "annotations": { "type": "object" },
+            "apiVersion": { "type": "string" },
+            "enabled": { "type": "boolean" },
+            "hostName": { "type": "string" },
+            "ingressClassName": { "type": "string" },
+            "labels": { "type": "object" },
+            "path": { "type": "string" },
+            "paths": { "type": "array" },
+            "tls": { "type": "array" }
+          }
         },
+        "isInternal": { "type": "boolean" },
         "node": { "type": "string" },
         "nodeSelector": { "type": "object" },
         "replicas": {
@@ -630,18 +618,21 @@
             "enabled": { "type": "boolean" },
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
-            "labels": { "type": "object" },
-            "loadBalancer": {
+            "ingress": {
               "type": "object",
               "properties": {
-                "ipType": { "type": "string" },
-                "isInternal": { "type": "boolean" },
-                "port": { "type": "integer" },
-                "ssl": { "type": "boolean" },
-                "timeout": { "type": "integer" }
-              },
-              "additionalProperties": false
+                "annotations": { "type": "object" },
+                "apiVersion": { "type": "string" },
+                "enabled": { "type": "boolean" },
+                "hostName": { "type": "string" },
+                "ingressClassName": { "type": "string" },
+                "labels": { "type": "object" },
+                "path": { "type": "string" },
+                "paths": { "type": "array" },
+                "tls": { "type": "array" }
+              }
             },
+            "labels": { "type": "object" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
             "replicas": {
@@ -664,6 +655,7 @@
                 "required": ["name"],
               "additionalProperties": false
             },
+            "serviceType": { "type": "string" },
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
             "tolerations": { "type": "array" },
@@ -750,6 +742,7 @@
             },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "updateStrategy": { "type": "string" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -939,18 +932,21 @@
         "enabled": { "type": "boolean" },
         "image": { "type": "string" },
         "imagePullPolicy": { "type": "string" },
-        "labels": { "type": "object" },
-        "loadBalancer": {
+        "ingress": {
           "type": "object",
           "properties": {
-            "ipType": { "type": "string" },
-            "isInternal": { "type": "boolean" },
-            "port": { "type": "integer" },
-            "ssl": { "type": "boolean" },
-            "timeout": { "type": "integer" }
-          },
-          "additionalProperties": false
+            "annotations": { "type": "object" },
+            "apiVersion": { "type": "string" },
+            "enabled": { "type": "boolean" },
+            "hostName": { "type": "string" },
+            "ingressClassName": { "type": "string" },
+            "labels": { "type": "object" },
+            "path": { "type": "string" },
+            "paths": { "type": "array" },
+            "tls": { "type": "array" }
+          }
         },
+        "labels": { "type": "object" },
         "node": { "type": "string" },
         "nodeSelector": { "type": "object" },
         "replicas": {
@@ -974,6 +970,7 @@
           "additionalProperties": false
         },
         "serviceName": { "type": "string" },
+        "serviceType": { "type": "string" },
         "tolerations": { "type": "array" }
       },
       "required": ["enabled"],
@@ -1120,18 +1117,21 @@
             "enabled": { "type": "boolean" },
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
-            "labels": { "type": "object" },
-            "loadBalancer": {
+            "ingress": {
               "type": "object",
               "properties": {
-                "ipType": { "type": "string" },
-                "isInternal": { "type": "boolean" },
-                "port": { "type": "integer" },
-                "ssl": { "type": "boolean" },
-                "timeout": { "type": "integer" }
-              },
-              "additionalProperties": false
+                "annotations": { "type": "object" },
+                "apiVersion": { "type": "string" },
+                "enabled": { "type": "boolean" },
+                "hostName": { "type": "string" },
+                "ingressClassName": { "type": "string" },
+                "labels": { "type": "object" },
+                "path": { "type": "string" },
+                "paths": { "type": "array" },
+                "tls": { "type": "array" }
+              }
             },
+            "labels": { "type": "object" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
             "replicas": {
@@ -1154,6 +1154,7 @@
                 "required": ["name"],
               "additionalProperties": false
             },
+            "serviceType": { "type": "string" },
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
             "tolerations": { "type": "array" },
@@ -1209,6 +1210,7 @@
             },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "updateStrategy": { "type": "string" },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -1366,18 +1368,21 @@
             "enabled": { "type": "boolean" },
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
-            "labels": { "type": "object" },
-            "loadBalancer": {
+            "ingress": {
               "type": "object",
               "properties": {
-                "ipType": { "type": "string" },
-                "isInternal": { "type": "boolean" },
-                "port": { "type": "integer" },
-                "ssl": { "type": "boolean" },
-                "timeout": { "type": "integer" }
-              },
-              "additionalProperties": false
+                "annotations": { "type": "object" },
+                "apiVersion": { "type": "string" },
+                "enabled": { "type": "boolean" },
+                "hostName": { "type": "string" },
+                "ingressClassName": { "type": "string" },
+                "labels": { "type": "object" },
+                "path": { "type": "string" },
+                "paths": { "type": "array" },
+                "tls": { "type": "array" }
+              }
             },
+            "labels": { "type": "object" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
             "replicas": {
@@ -1400,6 +1405,7 @@
                 "required": ["name"],
               "additionalProperties": false
             },
+            "serviceType": { "type": "string" },
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
             "tolerations": { "type": "array" },

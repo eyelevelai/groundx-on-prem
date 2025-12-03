@@ -88,6 +88,12 @@ true
 {{ dig "threads" 1 $in }}
 {{- end }}
 
+{{- define "groundx.ranker.inference.updateStrategy" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{ dig "updateStrategy" "" $in }}
+{{- end }}
+
 {{- define "groundx.ranker.inference.workers" -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "inference" dict $b -}}
@@ -101,20 +107,21 @@ true
 {{- $rep := (include "groundx.ranker.inference.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.ranker.inference.serviceAccountName" . -}}
 {{- $cfg := dict
-  "baseName"     ($svc)
-  "celery"       ("ranker.celery.appSearch")
-  "cfg"          (printf "%s-config-py-map" $svc)
-  "image"        (include "groundx.ranker.inference.image" .)
-  "mapPrefix"    ("ranker")
-  "modelParts"   ("00 01 02")
-  "modelVersion" ("model")
-  "name"         (include "groundx.ranker.inference.serviceName" .)
-  "node"         (include "groundx.ranker.inference.node" .)
-  "pull"         (include "groundx.ranker.inference.imagePullPolicy" .)
-  "pvc"          (include "groundx.ranker.inference.pvc" . | fromYaml)
-  "replicas"     ($rep)
-  "supervisord"  (printf "%s-inference-supervisord-conf-map" $svc)
-  "workingDir"   ("/workspace")
+  "baseName"       ($svc)
+  "celery"         ("ranker.celery.appSearch")
+  "cfg"            (printf "%s-config-py-map" $svc)
+  "image"          (include "groundx.ranker.inference.image" .)
+  "mapPrefix"      ("ranker")
+  "modelParts"     ("00 01 02")
+  "modelVersion"   ("model")
+  "name"           (include "groundx.ranker.inference.serviceName" .)
+  "node"           (include "groundx.ranker.inference.node" .)
+  "pull"           (include "groundx.ranker.inference.imagePullPolicy" .)
+  "pvc"            (include "groundx.ranker.inference.pvc" . | fromYaml)
+  "replicas"       ($rep)
+  "supervisord"    (printf "%s-inference-supervisord-conf-map" $svc)
+  "updateStrategy" (include "groundx.ranker.inference.updateStrategy" .)
+  "workingDir"     ("/workspace")
 -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}

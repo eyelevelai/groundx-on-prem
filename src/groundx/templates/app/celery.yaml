@@ -1,5 +1,6 @@
 {{- $svcs := (include "groundx.celery.process.services" . | fromYaml) -}}
 {{- $hasOCR := include "groundx.layout.hasOCRCredentials" . -}}
+{{- $username := include "groundx.container.username" . -}}
 
 {{- range $idx, $entry := $svcs }}
 {{- $svcKey := printf "groundx.%s.settings" $entry -}}
@@ -9,6 +10,7 @@
 {{- $anns := get $svcData "annotations" -}}
 {{- $cel := get $svcData "celery" -}}
 {{- $csct := get $svcData "containerSecurityContext" -}}
+{{- $dpnd := get $svcData "dependencies" | default dict -}}
 {{- $fileDomain := get $svcData "fileDomain" | default (include "groundx.file.serviceDependency" $) -}}
 {{- $filePort := get $svcData "filePort" | default (include "groundx.file.port" $) -}}
 {{- $image := get $svcData "image" -}}
@@ -77,7 +79,7 @@ spec:
       affinity:
 {{ toYaml $aff | nindent 8 }}
 {{- end }}
-{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" 1001 "cfg" "spec") }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" $username "cfg" "spec") }}
 {{- include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
 {{- include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
       initContainers:
@@ -89,6 +91,14 @@ spec:
           image: {{ include "groundx.busybox.image" $ }}
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
           command: ['sh', '-c', "until nc -z {{ printf "%s %v" $fileDomain $filePort }}; do echo waiting for file storage; sleep 2; done"]
+{{- if not (empty $dpnd) }}
+{{- if hasKey $dpnd "extract" }}
+        - name: wait-for-extract
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until wget --spider -q {{ include "groundx.extract.api.serviceUrl" $ }}/health; do echo waiting for extract; sleep 2; done"]
+{{- end }}
+{{- end }}
       containers:
         - name: {{ $name | quote }}
           image: {{ $image | quote }}
@@ -111,7 +121,7 @@ spec:
             - -c
             - |
               export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
-{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" 1001 "cfg" "container") }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" $username "cfg" "container") }}
           livenessProbe:
             exec:
               command:

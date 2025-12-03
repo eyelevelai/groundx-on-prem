@@ -29,14 +29,14 @@ tests:
     templates:
       - ../templates/app/celery.yaml
     values:
-      - ../values/values.openshift.yaml
+      - ../values/openshift/values.yaml
     asserts:
       - matchSnapshot: {}
   - it: "minikube: celery"
     templates:
       - ../templates/app/celery.yaml
     values:
-      - ../values/values.minikube.yaml
+      - ../values/minikube/values.yaml
     asserts:
       - matchSnapshot: {}
   - it: "existing: celery"
@@ -64,7 +64,7 @@ tests:
     templates:
       - ../templates/app/celery.yaml
     values:
-      - ../values/values.extract.yaml
+      - ../values/extract/values.yaml
     asserts:
       - matchSnapshot: {}
   - it: "extract.ingest: celery"
@@ -78,7 +78,7 @@ tests:
     templates:
       - ../templates/app/celery.yaml
     values:
-      - ../values/values.extract.oai.yaml
+      - ../values/extract/values.oai.yaml
     asserts:
       - matchSnapshot: {}
   - it: "cloud: celery"

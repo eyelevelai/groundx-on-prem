@@ -53,7 +53,7 @@ true
 {{- end }}
 
 {{- define "groundx.db.port" -}}
-{{- $in := .Values.file | default dict -}}
+{{- $in := .Values.db | default dict -}}
 {{- $ex := dig "existing" dict $in -}}
 {{- $ic := include "groundx.db.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
@@ -83,6 +83,17 @@ true
 {{- $name := include "groundx.db.serviceName" . -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- printf "%s-cluster-haproxy-replicas.%s.svc.cluster.local" $name $ns -}}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.db.rootCerts" -}}
+{{- $in := .Values.db | default dict -}}
+{{- $ex := dig "existing" dict $in -}}
+{{- $ic := include "groundx.db.existing" . | trim | lower -}}
+{{- if eq $ic "true" -}}
+{{ dig "rootCerts" "" $ex }}
+{{- else -}}
+{{ dig "rootCerts" "" $in }}
 {{- end -}}
 {{- end }}
 

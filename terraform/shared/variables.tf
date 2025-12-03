@@ -84,6 +84,24 @@ variable "cluster" {
   }
 }
 
+variable "node_labels" {
+  description   = "Optional overrides for node labels. If set, these take precedence over cluster.nodes.*."
+  type          = object({
+    cpu_memory  = string
+    cpu_only    = string
+    gpu_layout  = string
+    gpu_ranker  = string
+    gpu_summary = string
+  })
+  default       = {
+    cpu_memory  = null
+    cpu_only    = null
+    gpu_layout  = null
+    gpu_ranker  = null
+    gpu_summary = null
+  }
+}
+
 variable "deployment_type" {
   type     = object({
     min_pv = number

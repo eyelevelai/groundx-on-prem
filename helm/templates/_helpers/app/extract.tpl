@@ -140,10 +140,10 @@ false
 {{ dig "region" (include "groundx.file.region" .) $efs }}
 {{- end }}
 
-{{- define "groundx.extract.file.serviceType" -}}
+{{- define "groundx.extract.file.storageType" -}}
 {{- $in := .Values.extract | default dict -}}
 {{- $efs := dig "file" dict $in -}}
-{{ dig "serviceType" (include "groundx.file.serviceType" .) $efs }}
+{{ dig "serviceType" (include "groundx.file.storageType" .) $efs }}
 {{- end }}
 
 {{- define "groundx.extract.file.ssl" -}}
@@ -191,7 +191,7 @@ false
     "port"         (include "groundx.extract.file.port" .)
     "region"       (include "groundx.extract.file.region" .)
     "scheme"       $bucketScheme
-    "serviceType"  (include "groundx.extract.file.serviceType" .)
+    "serviceType"  (include "groundx.extract.file.storageType" .)
     "username"     (include "groundx.extract.file.username" .)
   | toYaml -}}
 {{- else -}}

@@ -1,4 +1,4 @@
-{{- define "groundx.renderLoadBalancer" -}}
+{{- define "groundx.renderInterface" -}}
 {{- $lb := .lb | fromYaml -}}
 {{- $name := .name -}}
 {{- $root := .root -}}

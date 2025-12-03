@@ -161,6 +161,12 @@ true
 {{ dig "threads" 1 $in }}
 {{- end }}
 
+{{- define "groundx.summary.inference.updateStrategy" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{ dig "updateStrategy" "" $in }}
+{{- end }}
+
 {{- define "groundx.summary.inference.workers" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
@@ -175,20 +181,21 @@ true
 {{- $rt := include "groundx.summary.inference.runtimeClassName" . -}}
 {{- $san := include "groundx.summary.inference.serviceAccountName" . -}}
 {{- $cfg := dict
-  "baseName"     ($svc)
-  "cfg"          (printf "%s-config-py-map" $svc)
-  "image"        (include "groundx.summary.inference.image" .)
-  "mapPrefix"    ("summary")
-  "modelParts"   ("00 01 02 03 04")
-  "modelVersion" ("g34b")
-  "name"         (include "groundx.summary.inference.serviceName" .)
-  "node"         (include "groundx.summary.inference.node" .)
-  "port"         (include "groundx.summary.inference.containerPort" .)
-  "pull"         (include "groundx.summary.inference.imagePullPolicy" .)
-  "pvc"          (include "groundx.summary.inference.pvc" . | fromYaml)
-  "replicas"     ($rep)
-  "supervisord"  (printf "%s-inference-supervisord-conf-map" $svc)
-  "workingDir"   ("/workspace")
+  "baseName"       ($svc)
+  "cfg"            (printf "%s-config-py-map" $svc)
+  "image"          (include "groundx.summary.inference.image" .)
+  "mapPrefix"      ("summary")
+  "modelParts"     ("00 01 02 03 04")
+  "modelVersion"   ("g34b")
+  "name"           (include "groundx.summary.inference.serviceName" .)
+  "node"           (include "groundx.summary.inference.node" .)
+  "port"           (include "groundx.summary.inference.containerPort" .)
+  "pull"           (include "groundx.summary.inference.imagePullPolicy" .)
+  "pvc"            (include "groundx.summary.inference.pvc" . | fromYaml)
+  "replicas"       ($rep)
+  "supervisord"    (printf "%s-inference-supervisord-conf-map" $svc)
+  "updateStrategy" (include "groundx.summary.inference.updateStrategy" .)
+  "workingDir"     ("/workspace")
 -}}
 {{- if ne $rt "" -}}
   {{- $_ := set $cfg "runtimeClassName" $rt -}}

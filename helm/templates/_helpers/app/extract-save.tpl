@@ -140,6 +140,9 @@ GCP_CREDENTIALS
 {{- end -}}
 {{- $cfg := dict
   "celery"     ("celery_agents")
+  "dependencies" (dict
+    "extract" "extract"
+  )
   "fileDomain" (include "groundx.extract.file.serviceDependency" .)
   "filePort"   (include "groundx.extract.file.port" .)
   "image"      (include "groundx.extract.save.image" .)

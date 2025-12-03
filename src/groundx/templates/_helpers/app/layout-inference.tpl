@@ -76,6 +76,12 @@ true
 {{ dig "threads" 6 $in }}
 {{- end }}
 
+{{- define "groundx.layout.inference.updateStrategy" -}}
+{{- $b := .Values.layout | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{ dig "updateStrategy" "" $in }}
+{{- end }}
+
 {{- define "groundx.layout.inference.workers" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "inference" dict $b -}}
@@ -89,22 +95,23 @@ true
 {{- $rep := (include "groundx.layout.inference.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.layout.inference.serviceAccountName" . -}}
 {{- $cfg := dict
-  "baseName"    ($svc)
-  "cfg"         (printf "%s-config-py-map" $svc)
-  "execOpts"    ("python /app/init-layout.py &&")
-  "fileSync"    ("true")
-  "image"       (include "groundx.layout.inference.image" .)
-  "mapPrefix"   ("layout")
-  "name"        (include "groundx.layout.inference.serviceName" .)
-  "node"        (include "groundx.layout.inference.node" .)
-  "port"        (include "groundx.layout.inference.containerPort" .)
-  "pull"        (include "groundx.layout.inference.imagePullPolicy" .)
-  "queue"       (include "groundx.layout.inference.queue" .)
-  "replicas"    ($rep)
-  "supervisord" (printf "%s-inference-supervisord-conf-map" $svc)
-  "threads"     (include "groundx.layout.inference.threads" .)
-  "workers"     (include "groundx.layout.inference.workers" .)
-  "workingDir"  ("/app")
+  "baseName"       ($svc)
+  "cfg"            (printf "%s-config-py-map" $svc)
+  "execOpts"       ("python /app/init-layout.py &&")
+  "fileSync"       ("true")
+  "image"          (include "groundx.layout.inference.image" .)
+  "mapPrefix"      ("layout")
+  "name"           (include "groundx.layout.inference.serviceName" .)
+  "node"           (include "groundx.layout.inference.node" .)
+  "port"           (include "groundx.layout.inference.containerPort" .)
+  "pull"           (include "groundx.layout.inference.imagePullPolicy" .)
+  "queue"          (include "groundx.layout.inference.queue" .)
+  "replicas"       ($rep)
+  "supervisord"    (printf "%s-inference-supervisord-conf-map" $svc)
+  "threads"        (include "groundx.layout.inference.threads" .)
+  "updateStrategy" (include "groundx.layout.inference.updateStrategy" .)
+  "workers"        (include "groundx.layout.inference.workers" .)
+  "workingDir"     ("/app")
 -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}

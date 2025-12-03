@@ -93,7 +93,7 @@ tests:
       - ../templates/resources/summary-gunicorn-conf-py.yaml
       - ../templates/resources/summary-supervisord-conf.yaml
     values:
-      - ../values/values.openshift.yaml
+      - ../values/openshift/values.yaml
     asserts:
       - matchSnapshot: {}
   - it: "minikube: resources"
@@ -116,7 +116,7 @@ tests:
       - ../templates/resources/summary-gunicorn-conf-py.yaml
       - ../templates/resources/summary-supervisord-conf.yaml
     values:
-      - ../values/values.minikube.yaml
+      - ../values/minikube/values.yaml
     asserts:
       - matchSnapshot: {}
   - it: "existing: resources"
@@ -208,7 +208,7 @@ tests:
       - ../templates/resources/summary-gunicorn-conf-py.yaml
       - ../templates/resources/summary-supervisord-conf.yaml
     values:
-      - ../values/values.extract.yaml
+      - ../values/extract/values.yaml
     asserts:
       - matchSnapshot: {}
   - it: "extract.ingest: resources"
@@ -254,7 +254,7 @@ tests:
       - ../templates/resources/summary-gunicorn-conf-py.yaml
       - ../templates/resources/summary-supervisord-conf.yaml
     values:
-      - ../values/values.extract.oai.yaml
+      - ../values/extract/values.oai.yaml
     asserts:
       - matchSnapshot: {}
   - it: "cloud: resources"
