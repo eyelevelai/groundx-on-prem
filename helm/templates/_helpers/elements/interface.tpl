@@ -8,7 +8,8 @@
 {{- end -}}
 {{- $ir := dig "isRoute" "false" $lb -}}
 {{- $ty := dig "type" "ClusterIP" $lb -}}
-{{- if eq $ir "true" -}}
+{{- $cty := dig "type" "ClusterIP" $lb -}}
+{{- if or (eq $ir "true") (eq $ty "Route") -}}
 {{- $ty = "ClusterIP" -}}
 {{- end -}}
 {{- $hasInternal := and (eq $ii "true") (eq (dig "type" "" $lb) "LoadBalancer") -}}
@@ -40,4 +41,23 @@ spec:
       targetPort: {{ dig "targetPort" 8080 $lb }}
   type: {{ $ty }}
 
+{{- if eq $cty "Route" }}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ include "groundx.ns" $root | quote }}
+  labels:
+    app: {{ $name | quote }}
+spec:
+  to:
+    kind: Service
+    name: {{ $name | quote }}
+  port:
+    targetPort: {{ (dig "targetPort" 8080 $lb) }}
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+{{- end }}
 {{- end }}
