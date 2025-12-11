@@ -127,8 +127,10 @@ false
 {{- end }}
 
 {{- define "groundx.summary.api.interface" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "api" dict $b -}}
 {{- dict
-    "isInternal" "true"
+    "isInternal" (dig "isInternal" true $in)
     "port"       (include "groundx.summary.api.port" .)
     "ssl"        "false"
     "targetPort" (include "groundx.summary.api.containerPort" .)

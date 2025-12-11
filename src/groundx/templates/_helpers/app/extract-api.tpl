@@ -127,8 +127,10 @@ false
 {{- end }}
 
 {{- define "groundx.extract.api.interface" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "api" dict $b -}}
 {{- dict
-    "isInternal" "true"
+    "isInternal" (dig "isInternal" true $in)
     "port"       (include "groundx.extract.api.port" .)
     "ssl"        "false"
     "targetPort" (include "groundx.extract.api.containerPort" .)
@@ -140,6 +142,7 @@ false
 {{- define "groundx.extract.api.settings" -}}
 {{- $svc := include "groundx.extract.serviceName" . -}}
 {{- $b := .Values.extract | default dict -}}
+{{- $ur := dig "callbackUrl" "" $b -}}
 {{- $in := dig "api" dict $b -}}
 {{- $rep := (include "groundx.extract.api.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.extract.api.serviceAccountName" . -}}
@@ -152,9 +155,6 @@ false
 {{- end -}}
 {{- $cfg := dict
   "cfg"          (printf "%s-config-py-map" $svc)
-  "dependencies" (dict
-    "callback" (include "groundx.extract.callbackUrl" .)
-  )
   "fileDomain"   (include "groundx.extract.file.serviceDependency" .)
   "filePort"     (include "groundx.extract.file.port" .)
   "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
@@ -168,6 +168,10 @@ false
   "replicas"     ($rep)
   "secrets"      ($data)
 -}}
+{{- $dpnd := dict -}}
+{{- if eq $ur "" -}}
+  {{- $_ := set $dpnd "callback" (include "groundx.extract.callbackUrl" .) -}}
+{{- end -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}
 {{- end -}}

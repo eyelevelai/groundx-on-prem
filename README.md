@@ -341,12 +341,12 @@ helm install nvidia-gpu-operator \
   -n nvidia-gpu-operator \
   --create-namespace \
   --atomic \
-  -f helm/values/values.nvidia.yaml
+  -f helm/values/nvidia/values.yaml
 ```
 
 #### Installing in Microsoft Azure
 
-If you're installing the NVIDIA GPU operator into Microsoft Azure, be sure to set the `runtimeClass` to `nvidia-container-runtime`. We have included an example yaml that shows how to do this at `helm/values/values.nvidia.aks.yaml`.
+If you're installing the NVIDIA GPU operator into Microsoft Azure, be sure to set the `runtimeClass` to `nvidia-container-runtime`. We have included an example yaml that shows how to do this at `helm/values/nvidia/values.aks.yaml`.
 
 If you'd like to install the NVIDIA GPU Operator with this AKS-specific yaml, use the following commands below:
 
@@ -355,7 +355,7 @@ helm install nvidia-gpu-operator nvidia/gpu-operator \
   -n nvidia-gpu-operator \
   --create-namespace \
   --atomic \
-  -f helm/values/values.nvidia.aks.yaml
+  -f helm/values/nvidia/values.aks.yaml
 ```
 
 ## Installing Services
@@ -387,11 +387,11 @@ helm repo update
 helm install db-operator \
   percona/pxc-operator \
   -n eyelevel \
-  -f helm/values/values.db.operator.yaml
+  -f helm/values/percona/values.operator.yaml
 helm install db-cluster \
   percona/pxc-db \
   -n eyelevel \
-  -f helm/values/values.db.cluster.yaml
+  -f helm/values/percona/values.cluster.yaml
 ```
 
 ### MinIO
@@ -415,11 +415,11 @@ helm repo update
 helm install minio-operator \
   minio-operator/operator \
   -n eyelevel \
-  -f helm/values/values.file.operator.yaml
+  -f helm/values/minio/values.operator.yaml
 helm install minio-cluster \
   minio-operator/tenant \
   -n eyelevel \
-  -f helm/values/values.file.tenant.yaml
+  -f helm/values/minio/values.tenant.yaml
 ```
 
 ### OpenSearch
@@ -436,7 +436,7 @@ If you'd like to install OpenSearch to your cluster, use the following commands 
 helm repo add opensearch https://opensearch-project.github.io/helm-charts/
 helm repo update
 
-helm install opensearch opensearch/opensearch -n eyelevel -f helm/values/values.search.yaml
+helm install opensearch opensearch/opensearch -n eyelevel -f helm/values/opensearch/values.yaml
 ```
 
 ### Kafka
@@ -457,7 +457,7 @@ If you'd like to install Kafka to your cluster, use the following commands below
 helm install stream-operator \
   oci://quay.io/strimzi-helm/strimzi-kafka-operator \
   -n eyelevel \
-  -f helm/values/values.stream.yaml
+  -f helm/values/strimzi/values.yaml
 ```
 
 Once the operator is ready, run the following command:
