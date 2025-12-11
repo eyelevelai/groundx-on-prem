@@ -4044,13 +4044,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-cache
-            - command:
-                - sh
-                - -c
-                - until wget --spider -q https://api.groundx.ai/api/health; do echo waiting for callback; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: Always
-              name: wait-for-callback
           nodeSelector:
             node: eyelevel-cpu
           securityContext:

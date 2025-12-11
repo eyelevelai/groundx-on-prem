@@ -171,6 +171,7 @@ false
 {{- $dpnd := dict -}}
 {{- if eq $ur "" -}}
   {{- $_ := set $dpnd "callback" (include "groundx.extract.callbackUrl" .) -}}
+  {{- $_ := set $cfg "dependencies" $dpnd -}}
 {{- end -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}
