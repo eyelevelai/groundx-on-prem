@@ -9,7 +9,7 @@ metadata:
 spec:
   kafka:
     version: {{ .Values.cluster.version }}
-    metadataVersion: {{ .Values.cluster.metaVersion }}
+    metadataVersion: {{ .Values.cluster.metaVersion | quote }}
     replicas: {{ .Values.cluster.replicas }}
     listeners:
       - name: kafka
