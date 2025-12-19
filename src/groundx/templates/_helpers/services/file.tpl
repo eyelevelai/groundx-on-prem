@@ -63,7 +63,7 @@ false
 {{ include "groundx.file.serviceHost" . }}
 {{- end -}}
 {{- else if and (hasKey $in "customDomain") (not (empty $in.customDomain)) }}
-{{ $in.customDomain }}
+{{- $in.customDomain -}}
 {{- else -}}
 {{ include "groundx.file.serviceHost" . }}
 {{- end -}}
