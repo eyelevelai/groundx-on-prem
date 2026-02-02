@@ -30,6 +30,8 @@ metadata:
 {{- end }}
 {{- if $hasInternal }}
     service.beta.kubernetes.io/aws-load-balancer-internal: {{ (dig "isInternal" "true" $lb) | quote }}
+{{- else }}
+    service.beta.kubernetes.io/aws-load-balancer-internal: {{ (dig "isInternal" "true" $lb) | quote }}
 {{- end }}
 {{- end }}
 spec:

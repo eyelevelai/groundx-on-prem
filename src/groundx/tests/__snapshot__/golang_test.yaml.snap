@@ -19,7 +19,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0fe2fe7a29bfbdf11bd18f700e0d321795b38ae52de54dad28d6bf143c9f11
+            config-hash: ab9676c70533aff008d46d33c5f3ca722adcb6ed47d76d99681b9dae45786626
           labels:
             app: groundx
         spec:
@@ -144,7 +144,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0fe2fe7a29bfbdf11bd18f700e0d321795b38ae52de54dad28d6bf143c9f11
+            config-hash: ab9676c70533aff008d46d33c5f3ca722adcb6ed47d76d99681b9dae45786626
           labels:
             app: layout-webhook
         spec:
@@ -233,6 +233,113 @@
     kind: Deployment
     metadata:
       labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: ab9676c70533aff008d46d33c5f3ca722adcb6ed47d76d99681b9dae45786626
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.us-east-2.rds.amazonaws.com 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+  6: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: metrics
+      type: ClusterIP
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
         app: pre-process
         appVersion: 0.1.0
         chart: groundx-0.1.0
@@ -248,7 +355,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0fe2fe7a29bfbdf11bd18f700e0d321795b38ae52de54dad28d6bf143c9f11
+            config-hash: ab9676c70533aff008d46d33c5f3ca722adcb6ed47d76d99681b9dae45786626
           labels:
             app: pre-process
         spec:
@@ -316,7 +423,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  6: |
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -336,7 +443,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0fe2fe7a29bfbdf11bd18f700e0d321795b38ae52de54dad28d6bf143c9f11
+            config-hash: ab9676c70533aff008d46d33c5f3ca722adcb6ed47d76d99681b9dae45786626
           labels:
             app: process
         spec:
@@ -404,7 +511,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  7: |
+  9: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -424,7 +531,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0fe2fe7a29bfbdf11bd18f700e0d321795b38ae52de54dad28d6bf143c9f11
+            config-hash: ab9676c70533aff008d46d33c5f3ca722adcb6ed47d76d99681b9dae45786626
           labels:
             app: queue
         spec:
@@ -492,7 +599,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  8: |
+  10: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -512,7 +619,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0fe2fe7a29bfbdf11bd18f700e0d321795b38ae52de54dad28d6bf143c9f11
+            config-hash: ab9676c70533aff008d46d33c5f3ca722adcb6ed47d76d99681b9dae45786626
           labels:
             app: summary-client
         spec:
@@ -580,7 +687,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  9: |
+  11: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -600,7 +707,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0fe2fe7a29bfbdf11bd18f700e0d321795b38ae52de54dad28d6bf143c9f11
+            config-hash: ab9676c70533aff008d46d33c5f3ca722adcb6ed47d76d99681b9dae45786626
           labels:
             app: upload
         spec:
@@ -689,7 +796,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 76b3e969cbfbbccfab96b581ecf2bb05d94c515b2bdb9f4080a73c9ddc836eb9
+            config-hash: b119d7507273dc8273e90d7d0420d740612ee1720dd8c53b0c9c86e41bd221aa
           labels:
             app: groundx
         spec:
@@ -820,7 +927,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 76b3e969cbfbbccfab96b581ecf2bb05d94c515b2bdb9f4080a73c9ddc836eb9
+            config-hash: b119d7507273dc8273e90d7d0420d740612ee1720dd8c53b0c9c86e41bd221aa
           labels:
             app: layout-webhook
         spec:
@@ -908,6 +1015,112 @@
     kind: Deployment
     metadata:
       labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: b119d7507273dc8273e90d7d0420d740612ee1720dd8c53b0c9c86e41bd221aa
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+  6: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: metrics
+      type: ClusterIP
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
         app: pre-process
         appVersion: 0.1.0
         chart: groundx-0.1.0
@@ -923,7 +1136,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 76b3e969cbfbbccfab96b581ecf2bb05d94c515b2bdb9f4080a73c9ddc836eb9
+            config-hash: b119d7507273dc8273e90d7d0420d740612ee1720dd8c53b0c9c86e41bd221aa
           labels:
             app: pre-process
         spec:
@@ -990,7 +1203,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  6: |
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1010,7 +1223,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 76b3e969cbfbbccfab96b581ecf2bb05d94c515b2bdb9f4080a73c9ddc836eb9
+            config-hash: b119d7507273dc8273e90d7d0420d740612ee1720dd8c53b0c9c86e41bd221aa
           labels:
             app: process
         spec:
@@ -1077,7 +1290,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  7: |
+  9: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1097,7 +1310,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 76b3e969cbfbbccfab96b581ecf2bb05d94c515b2bdb9f4080a73c9ddc836eb9
+            config-hash: b119d7507273dc8273e90d7d0420d740612ee1720dd8c53b0c9c86e41bd221aa
           labels:
             app: queue
         spec:
@@ -1164,7 +1377,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  8: |
+  10: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1184,7 +1397,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 76b3e969cbfbbccfab96b581ecf2bb05d94c515b2bdb9f4080a73c9ddc836eb9
+            config-hash: b119d7507273dc8273e90d7d0420d740612ee1720dd8c53b0c9c86e41bd221aa
           labels:
             app: summary-client
         spec:
@@ -1251,7 +1464,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  9: |
+  11: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1271,7 +1484,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 76b3e969cbfbbccfab96b581ecf2bb05d94c515b2bdb9f4080a73c9ddc836eb9
+            config-hash: b119d7507273dc8273e90d7d0420d740612ee1720dd8c53b0c9c86e41bd221aa
           labels:
             app: upload
         spec:
@@ -1359,7 +1572,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 23471d93710e47d3957ae90721f03cb43abf81f9ac5d89c4265e1dfa7eac177f
           labels:
             app: groundx
         spec:
@@ -1490,7 +1703,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 23471d93710e47d3957ae90721f03cb43abf81f9ac5d89c4265e1dfa7eac177f
           labels:
             app: layout-webhook
         spec:
@@ -1578,6 +1791,112 @@
     kind: Deployment
     metadata:
       labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: 23471d93710e47d3957ae90721f03cb43abf81f9ac5d89c4265e1dfa7eac177f
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+  6: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: metrics
+      type: ClusterIP
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
         app: pre-process
         appVersion: 0.1.0
         chart: groundx-0.1.0
@@ -1593,7 +1912,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 23471d93710e47d3957ae90721f03cb43abf81f9ac5d89c4265e1dfa7eac177f
           labels:
             app: pre-process
         spec:
@@ -1660,7 +1979,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  6: |
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1680,7 +1999,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 23471d93710e47d3957ae90721f03cb43abf81f9ac5d89c4265e1dfa7eac177f
           labels:
             app: process
         spec:
@@ -1747,7 +2066,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  7: |
+  9: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1767,7 +2086,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 23471d93710e47d3957ae90721f03cb43abf81f9ac5d89c4265e1dfa7eac177f
           labels:
             app: queue
         spec:
@@ -1834,7 +2153,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  8: |
+  10: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1854,7 +2173,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 23471d93710e47d3957ae90721f03cb43abf81f9ac5d89c4265e1dfa7eac177f
           labels:
             app: summary-client
         spec:
@@ -1921,7 +2240,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  9: |
+  11: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1941,7 +2260,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 23471d93710e47d3957ae90721f03cb43abf81f9ac5d89c4265e1dfa7eac177f
           labels:
             app: upload
         spec:
@@ -2030,7 +2349,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 23471d93710e47d3957ae90721f03cb43abf81f9ac5d89c4265e1dfa7eac177f
           labels:
             app: groundx
         spec:
@@ -2161,7 +2480,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 23471d93710e47d3957ae90721f03cb43abf81f9ac5d89c4265e1dfa7eac177f
           labels:
             app: layout-webhook
         spec:
@@ -2249,6 +2568,112 @@
     kind: Deployment
     metadata:
       labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: 23471d93710e47d3957ae90721f03cb43abf81f9ac5d89c4265e1dfa7eac177f
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+  6: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: metrics
+      type: ClusterIP
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
         app: pre-process
         appVersion: 0.1.0
         chart: groundx-0.1.0
@@ -2264,7 +2689,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 23471d93710e47d3957ae90721f03cb43abf81f9ac5d89c4265e1dfa7eac177f
           labels:
             app: pre-process
         spec:
@@ -2331,7 +2756,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  6: |
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2351,7 +2776,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 23471d93710e47d3957ae90721f03cb43abf81f9ac5d89c4265e1dfa7eac177f
           labels:
             app: process
         spec:
@@ -2418,7 +2843,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  7: |
+  9: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2438,7 +2863,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 23471d93710e47d3957ae90721f03cb43abf81f9ac5d89c4265e1dfa7eac177f
           labels:
             app: queue
         spec:
@@ -2505,7 +2930,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  8: |
+  10: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2525,7 +2950,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 23471d93710e47d3957ae90721f03cb43abf81f9ac5d89c4265e1dfa7eac177f
           labels:
             app: summary-client
         spec:
@@ -2592,7 +3017,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  9: |
+  11: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2612,7 +3037,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 23471d93710e47d3957ae90721f03cb43abf81f9ac5d89c4265e1dfa7eac177f
           labels:
             app: upload
         spec:
@@ -2700,7 +3125,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e5a418bcbd96aeada9e7d182b3c936e391c56b2a1794d8af0f2993ea179e5b3a
+            config-hash: 521a2cb3ca3c2a3c92c5392d9176de3c37ac22806f580b0ee7df442099c71380
           labels:
             app: groundx
         spec:
@@ -2831,7 +3256,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e5a418bcbd96aeada9e7d182b3c936e391c56b2a1794d8af0f2993ea179e5b3a
+            config-hash: 521a2cb3ca3c2a3c92c5392d9176de3c37ac22806f580b0ee7df442099c71380
           labels:
             app: layout-webhook
         spec:
@@ -2919,6 +3344,112 @@
     kind: Deployment
     metadata:
       labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: 521a2cb3ca3c2a3c92c5392d9176de3c37ac22806f580b0ee7df442099c71380
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.existing.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-ro.existing.com 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+  6: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: metrics
+      type: ClusterIP
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
         app: pre-process
         appVersion: 0.1.0
         chart: groundx-0.1.0
@@ -2934,7 +3465,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e5a418bcbd96aeada9e7d182b3c936e391c56b2a1794d8af0f2993ea179e5b3a
+            config-hash: 521a2cb3ca3c2a3c92c5392d9176de3c37ac22806f580b0ee7df442099c71380
           labels:
             app: pre-process
         spec:
@@ -3001,7 +3532,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  6: |
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3021,7 +3552,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e5a418bcbd96aeada9e7d182b3c936e391c56b2a1794d8af0f2993ea179e5b3a
+            config-hash: 521a2cb3ca3c2a3c92c5392d9176de3c37ac22806f580b0ee7df442099c71380
           labels:
             app: process
         spec:
@@ -3088,7 +3619,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  7: |
+  9: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3108,7 +3639,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e5a418bcbd96aeada9e7d182b3c936e391c56b2a1794d8af0f2993ea179e5b3a
+            config-hash: 521a2cb3ca3c2a3c92c5392d9176de3c37ac22806f580b0ee7df442099c71380
           labels:
             app: queue
         spec:
@@ -3175,7 +3706,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  8: |
+  10: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3195,7 +3726,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e5a418bcbd96aeada9e7d182b3c936e391c56b2a1794d8af0f2993ea179e5b3a
+            config-hash: 521a2cb3ca3c2a3c92c5392d9176de3c37ac22806f580b0ee7df442099c71380
           labels:
             app: summary-client
         spec:
@@ -3262,7 +3793,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  9: |
+  11: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3282,7 +3813,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e5a418bcbd96aeada9e7d182b3c936e391c56b2a1794d8af0f2993ea179e5b3a
+            config-hash: 521a2cb3ca3c2a3c92c5392d9176de3c37ac22806f580b0ee7df442099c71380
           labels:
             app: upload
         spec:
@@ -3370,7 +3901,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b5576b2b2cc78b1f106593cecd4e05b9b638daaf6f9eb1b48fe6e23d0e9d3f86
+            config-hash: b83dbe3858146680d78c183374cb4bf1a0c6e183d3d650054b2771cd95d7fc16
           labels:
             app: groundx
         spec:
@@ -3491,7 +4022,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b5576b2b2cc78b1f106593cecd4e05b9b638daaf6f9eb1b48fe6e23d0e9d3f86
+            config-hash: b83dbe3858146680d78c183374cb4bf1a0c6e183d3d650054b2771cd95d7fc16
           labels:
             app: layout-webhook
         spec:
@@ -3583,6 +4114,116 @@
     kind: Deployment
     metadata:
       labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: b83dbe3858146680d78c183374cb4bf1a0c6e183d3d650054b2771cd95d7fc16
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - envFrom:
+                - secretRef:
+                    name: eyelevel-secret-credentials
+              image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.us-east-2.rds.amazonaws.com 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+  6: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: metrics
+      type: ClusterIP
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
         app: pre-process
         appVersion: 0.1.0
         chart: groundx-0.1.0
@@ -3598,7 +4239,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b5576b2b2cc78b1f106593cecd4e05b9b638daaf6f9eb1b48fe6e23d0e9d3f86
+            config-hash: b83dbe3858146680d78c183374cb4bf1a0c6e183d3d650054b2771cd95d7fc16
           labels:
             app: pre-process
         spec:
@@ -3669,7 +4310,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  6: |
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3689,7 +4330,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b5576b2b2cc78b1f106593cecd4e05b9b638daaf6f9eb1b48fe6e23d0e9d3f86
+            config-hash: b83dbe3858146680d78c183374cb4bf1a0c6e183d3d650054b2771cd95d7fc16
           labels:
             app: process
         spec:
@@ -3760,7 +4401,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  7: |
+  9: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3780,7 +4421,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b5576b2b2cc78b1f106593cecd4e05b9b638daaf6f9eb1b48fe6e23d0e9d3f86
+            config-hash: b83dbe3858146680d78c183374cb4bf1a0c6e183d3d650054b2771cd95d7fc16
           labels:
             app: queue
         spec:
@@ -3851,7 +4492,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  8: |
+  10: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3871,7 +4512,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b5576b2b2cc78b1f106593cecd4e05b9b638daaf6f9eb1b48fe6e23d0e9d3f86
+            config-hash: b83dbe3858146680d78c183374cb4bf1a0c6e183d3d650054b2771cd95d7fc16
           labels:
             app: summary-client
         spec:
@@ -3942,7 +4583,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  9: |
+  11: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3962,7 +4603,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b5576b2b2cc78b1f106593cecd4e05b9b638daaf6f9eb1b48fe6e23d0e9d3f86
+            config-hash: b83dbe3858146680d78c183374cb4bf1a0c6e183d3d650054b2771cd95d7fc16
           labels:
             app: upload
         spec:
@@ -4054,7 +4695,7 @@
       template:
         metadata:
           annotations:
-            config-hash: a4341dd56115350d340491034ab1dc7b2476708b512cdc8f7e7fca96427cc5e9
+            config-hash: 32ef87da484c8b07ee9c6e14a7a34a893ff2f9b5d3159659275aa861e4293cdf
           labels:
             app: groundx
         spec:
@@ -4171,7 +4812,7 @@
       template:
         metadata:
           annotations:
-            config-hash: a4341dd56115350d340491034ab1dc7b2476708b512cdc8f7e7fca96427cc5e9
+            config-hash: 32ef87da484c8b07ee9c6e14a7a34a893ff2f9b5d3159659275aa861e4293cdf
           labels:
             app: layout-webhook
         spec:
@@ -4259,6 +4900,112 @@
     kind: Deployment
     metadata:
       labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: 32ef87da484c8b07ee9c6e14a7a34a893ff2f9b5d3159659275aa861e4293cdf
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.us-east-2.rds.amazonaws.com 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+  6: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: metrics
+      type: ClusterIP
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
         app: pre-process
         appVersion: 0.1.0
         chart: groundx-0.1.0
@@ -4274,7 +5021,7 @@
       template:
         metadata:
           annotations:
-            config-hash: a4341dd56115350d340491034ab1dc7b2476708b512cdc8f7e7fca96427cc5e9
+            config-hash: 32ef87da484c8b07ee9c6e14a7a34a893ff2f9b5d3159659275aa861e4293cdf
           labels:
             app: pre-process
         spec:
@@ -4341,7 +5088,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  6: |
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4361,7 +5108,7 @@
       template:
         metadata:
           annotations:
-            config-hash: a4341dd56115350d340491034ab1dc7b2476708b512cdc8f7e7fca96427cc5e9
+            config-hash: 32ef87da484c8b07ee9c6e14a7a34a893ff2f9b5d3159659275aa861e4293cdf
           labels:
             app: process
         spec:
@@ -4428,7 +5175,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  7: |
+  9: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4448,7 +5195,7 @@
       template:
         metadata:
           annotations:
-            config-hash: a4341dd56115350d340491034ab1dc7b2476708b512cdc8f7e7fca96427cc5e9
+            config-hash: 32ef87da484c8b07ee9c6e14a7a34a893ff2f9b5d3159659275aa861e4293cdf
           labels:
             app: queue
         spec:
@@ -4515,7 +5262,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  8: |
+  10: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4535,7 +5282,7 @@
       template:
         metadata:
           annotations:
-            config-hash: a4341dd56115350d340491034ab1dc7b2476708b512cdc8f7e7fca96427cc5e9
+            config-hash: 32ef87da484c8b07ee9c6e14a7a34a893ff2f9b5d3159659275aa861e4293cdf
           labels:
             app: summary-client
         spec:
@@ -4602,7 +5349,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  9: |
+  11: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4622,7 +5369,7 @@
       template:
         metadata:
           annotations:
-            config-hash: a4341dd56115350d340491034ab1dc7b2476708b512cdc8f7e7fca96427cc5e9
+            config-hash: 32ef87da484c8b07ee9c6e14a7a34a893ff2f9b5d3159659275aa861e4293cdf
           labels:
             app: upload
         spec:
@@ -4710,7 +5457,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 326e2b70bf129ea353bd2558d7d1b083ff772d957d262a8b2f3f0419b5f2b7d1
+            config-hash: 50f8102d6e3c8313ae2584a0ffeaaf0a7f22942142791935f2dd987049a2da06
           labels:
             app: groundx
         spec:
@@ -4831,7 +5578,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 326e2b70bf129ea353bd2558d7d1b083ff772d957d262a8b2f3f0419b5f2b7d1
+            config-hash: 50f8102d6e3c8313ae2584a0ffeaaf0a7f22942142791935f2dd987049a2da06
           labels:
             app: layout-webhook
         spec:
@@ -4923,6 +5670,116 @@
     kind: Deployment
     metadata:
       labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: 50f8102d6e3c8313ae2584a0ffeaaf0a7f22942142791935f2dd987049a2da06
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - envFrom:
+                - secretRef:
+                    name: eyelevel-secret-credentials
+              image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.us-east-2.rds.amazonaws.com 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+  6: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: metrics
+      type: ClusterIP
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
         app: pre-process
         appVersion: 0.1.0
         chart: groundx-0.1.0
@@ -4938,7 +5795,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 326e2b70bf129ea353bd2558d7d1b083ff772d957d262a8b2f3f0419b5f2b7d1
+            config-hash: 50f8102d6e3c8313ae2584a0ffeaaf0a7f22942142791935f2dd987049a2da06
           labels:
             app: pre-process
         spec:
@@ -5009,7 +5866,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  6: |
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -5029,7 +5886,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 326e2b70bf129ea353bd2558d7d1b083ff772d957d262a8b2f3f0419b5f2b7d1
+            config-hash: 50f8102d6e3c8313ae2584a0ffeaaf0a7f22942142791935f2dd987049a2da06
           labels:
             app: process
         spec:
@@ -5100,7 +5957,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  7: |
+  9: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -5120,7 +5977,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 326e2b70bf129ea353bd2558d7d1b083ff772d957d262a8b2f3f0419b5f2b7d1
+            config-hash: 50f8102d6e3c8313ae2584a0ffeaaf0a7f22942142791935f2dd987049a2da06
           labels:
             app: queue
         spec:
@@ -5191,7 +6048,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  8: |
+  10: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -5211,7 +6068,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 326e2b70bf129ea353bd2558d7d1b083ff772d957d262a8b2f3f0419b5f2b7d1
+            config-hash: 50f8102d6e3c8313ae2584a0ffeaaf0a7f22942142791935f2dd987049a2da06
           labels:
             app: summary-client
         spec:
@@ -5282,7 +6139,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  9: |
+  11: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -5302,7 +6159,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 326e2b70bf129ea353bd2558d7d1b083ff772d957d262a8b2f3f0419b5f2b7d1
+            config-hash: 50f8102d6e3c8313ae2584a0ffeaaf0a7f22942142791935f2dd987049a2da06
           labels:
             app: upload
         spec:
@@ -5394,7 +6251,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9c2731ae40d72dfe4a4af609165ec30579d15327787ea3abd6404ea916c966b5
+            config-hash: df9be19db1250c4466abd26b97fde8834ba1e62670fc6948c61cda4d41a81a59
             prometheus.io/port: "8081"
           labels:
             app: myapp
@@ -5524,7 +6381,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9c2731ae40d72dfe4a4af609165ec30579d15327787ea3abd6404ea916c966b5
+            config-hash: df9be19db1250c4466abd26b97fde8834ba1e62670fc6948c61cda4d41a81a59
           labels:
             app: layout-webhook
         spec:
@@ -5614,6 +6471,113 @@
     kind: Deployment
     metadata:
       labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: df9be19db1250c4466abd26b97fde8834ba1e62670fc6948c61cda4d41a81a59
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z myapp.eyelevel.svc.cluster.local 8082; do echo waiting for cache; sleep 2; done
+              image: test.image:v1
+              imagePullPolicy: Always
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: test.image:v1
+              imagePullPolicy: Always
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+  6: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: metrics
+      type: ClusterIP
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
         app: pre-process
         appVersion: 0.1.0
         chart: groundx-0.1.0
@@ -5629,7 +6593,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9c2731ae40d72dfe4a4af609165ec30579d15327787ea3abd6404ea916c966b5
+            config-hash: df9be19db1250c4466abd26b97fde8834ba1e62670fc6948c61cda4d41a81a59
           labels:
             app: pre-process
         spec:
@@ -5697,7 +6661,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  6: |
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -5717,7 +6681,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9c2731ae40d72dfe4a4af609165ec30579d15327787ea3abd6404ea916c966b5
+            config-hash: df9be19db1250c4466abd26b97fde8834ba1e62670fc6948c61cda4d41a81a59
           labels:
             app: process
         spec:
@@ -5785,7 +6749,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  7: |
+  9: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -5805,7 +6769,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9c2731ae40d72dfe4a4af609165ec30579d15327787ea3abd6404ea916c966b5
+            config-hash: df9be19db1250c4466abd26b97fde8834ba1e62670fc6948c61cda4d41a81a59
           labels:
             app: queue
         spec:
@@ -5867,7 +6831,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  8: |
+  10: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -5887,7 +6851,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9c2731ae40d72dfe4a4af609165ec30579d15327787ea3abd6404ea916c966b5
+            config-hash: df9be19db1250c4466abd26b97fde8834ba1e62670fc6948c61cda4d41a81a59
           labels:
             app: summary-client
         spec:
@@ -5954,7 +6918,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  9: |
+  11: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -5974,7 +6938,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9c2731ae40d72dfe4a4af609165ec30579d15327787ea3abd6404ea916c966b5
+            config-hash: df9be19db1250c4466abd26b97fde8834ba1e62670fc6948c61cda4d41a81a59
           labels:
             app: upload
         spec:
@@ -6059,7 +7023,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: a3fa451eefaf0ee72d9e4cc2d2ff98cf4aa4b0e61ef06d61bf2c131ccadc3821
           labels:
             app: groundx
         spec:
@@ -6190,7 +7154,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: a3fa451eefaf0ee72d9e4cc2d2ff98cf4aa4b0e61ef06d61bf2c131ccadc3821
           labels:
             app: layout-webhook
         spec:
@@ -6278,6 +7242,112 @@
     kind: Deployment
     metadata:
       labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: a3fa451eefaf0ee72d9e4cc2d2ff98cf4aa4b0e61ef06d61bf2c131ccadc3821
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+  6: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: metrics
+      type: ClusterIP
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
         app: pre-process
         appVersion: 0.1.0
         chart: groundx-0.1.0
@@ -6293,7 +7363,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: a3fa451eefaf0ee72d9e4cc2d2ff98cf4aa4b0e61ef06d61bf2c131ccadc3821
           labels:
             app: pre-process
         spec:
@@ -6360,7 +7430,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  6: |
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -6380,7 +7450,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: a3fa451eefaf0ee72d9e4cc2d2ff98cf4aa4b0e61ef06d61bf2c131ccadc3821
           labels:
             app: process
         spec:
@@ -6447,7 +7517,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  7: |
+  9: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -6467,7 +7537,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: a3fa451eefaf0ee72d9e4cc2d2ff98cf4aa4b0e61ef06d61bf2c131ccadc3821
           labels:
             app: queue
         spec:
@@ -6534,7 +7604,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  8: |
+  10: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -6554,7 +7624,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: a3fa451eefaf0ee72d9e4cc2d2ff98cf4aa4b0e61ef06d61bf2c131ccadc3821
           labels:
             app: summary-client
         spec:
@@ -6621,7 +7691,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  9: |
+  11: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -6641,7 +7711,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: a3fa451eefaf0ee72d9e4cc2d2ff98cf4aa4b0e61ef06d61bf2c131ccadc3821
           labels:
             app: upload
         spec:
@@ -6729,7 +7799,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: a3fa451eefaf0ee72d9e4cc2d2ff98cf4aa4b0e61ef06d61bf2c131ccadc3821
           labels:
             app: groundx
         spec:
@@ -6854,7 +7924,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: a3fa451eefaf0ee72d9e4cc2d2ff98cf4aa4b0e61ef06d61bf2c131ccadc3821
           labels:
             app: layout-webhook
         spec:
@@ -6936,6 +8006,106 @@
     kind: Deployment
     metadata:
       labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: a3fa451eefaf0ee72d9e4cc2d2ff98cf4aa4b0e61ef06d61bf2c131ccadc3821
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+  6: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: metrics
+      type: ClusterIP
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
         app: pre-process
         appVersion: 0.1.0
         chart: groundx-0.1.0
@@ -6951,7 +8121,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: a3fa451eefaf0ee72d9e4cc2d2ff98cf4aa4b0e61ef06d61bf2c131ccadc3821
           labels:
             app: pre-process
         spec:
@@ -7012,7 +8182,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  6: |
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -7032,7 +8202,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: a3fa451eefaf0ee72d9e4cc2d2ff98cf4aa4b0e61ef06d61bf2c131ccadc3821
           labels:
             app: process
         spec:
@@ -7093,7 +8263,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  7: |
+  9: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -7113,7 +8283,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: a3fa451eefaf0ee72d9e4cc2d2ff98cf4aa4b0e61ef06d61bf2c131ccadc3821
           labels:
             app: queue
         spec:
@@ -7174,7 +8344,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  8: |
+  10: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -7194,7 +8364,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: a3fa451eefaf0ee72d9e4cc2d2ff98cf4aa4b0e61ef06d61bf2c131ccadc3821
           labels:
             app: summary-client
         spec:
@@ -7255,7 +8425,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  9: |
+  11: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -7275,7 +8445,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: a3fa451eefaf0ee72d9e4cc2d2ff98cf4aa4b0e61ef06d61bf2c131ccadc3821
           labels:
             app: upload
         spec:
@@ -7357,7 +8527,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9699e70b4812c4c2bbf63a6ab40c65c2aa6d07801bbb8deda8bd88a50778555e
+            config-hash: 27ff45f248dcdc78372b7be47b57e6e88a2f7cade1434e0eb94d304b2a0fde82
           labels:
             app: groundx-service
         spec:
@@ -7484,7 +8654,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9699e70b4812c4c2bbf63a6ab40c65c2aa6d07801bbb8deda8bd88a50778555e
+            config-hash: 27ff45f248dcdc78372b7be47b57e6e88a2f7cade1434e0eb94d304b2a0fde82
           labels:
             app: layout-webhook
         spec:
@@ -7568,6 +8738,108 @@
     kind: Deployment
     metadata:
       labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: 27ff45f248dcdc78372b7be47b57e6e88a2f7cade1434e0eb94d304b2a0fde82
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: Always
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          imagePullSecrets:
+            - name: ecr-public-pull
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: Always
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-ro.existing.com 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: Always
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-gpu
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-gpu
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+  6: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: metrics
+      type: ClusterIP
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
         app: pre-process
         appVersion: 0.1.0
         chart: groundx-0.1.0
@@ -7583,7 +8855,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9699e70b4812c4c2bbf63a6ab40c65c2aa6d07801bbb8deda8bd88a50778555e
+            config-hash: 27ff45f248dcdc78372b7be47b57e6e88a2f7cade1434e0eb94d304b2a0fde82
           labels:
             app: pre-process
         spec:
@@ -7646,7 +8918,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  6: |
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -7666,7 +8938,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9699e70b4812c4c2bbf63a6ab40c65c2aa6d07801bbb8deda8bd88a50778555e
+            config-hash: 27ff45f248dcdc78372b7be47b57e6e88a2f7cade1434e0eb94d304b2a0fde82
           labels:
             app: process
         spec:
@@ -7729,7 +9001,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  7: |
+  9: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -7749,7 +9021,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9699e70b4812c4c2bbf63a6ab40c65c2aa6d07801bbb8deda8bd88a50778555e
+            config-hash: 27ff45f248dcdc78372b7be47b57e6e88a2f7cade1434e0eb94d304b2a0fde82
           labels:
             app: queue
         spec:
@@ -7812,7 +9084,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  8: |
+  10: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -7832,7 +9104,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9699e70b4812c4c2bbf63a6ab40c65c2aa6d07801bbb8deda8bd88a50778555e
+            config-hash: 27ff45f248dcdc78372b7be47b57e6e88a2f7cade1434e0eb94d304b2a0fde82
           labels:
             app: summary-client
         spec:
@@ -7895,7 +9167,7 @@
             - configMap:
                 name: config-yaml-map
               name: config-volume
-  9: |
+  11: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -7915,7 +9187,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9699e70b4812c4c2bbf63a6ab40c65c2aa6d07801bbb8deda8bd88a50778555e
+            config-hash: 27ff45f248dcdc78372b7be47b57e6e88a2f7cade1434e0eb94d304b2a0fde82
           labels:
             app: upload
         spec:

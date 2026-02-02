@@ -171,15 +171,16 @@ data:
     metrics:
       active: true
       api:
+        - name: {{ include "groundx.extract.api.serviceName" . }}
         - name: {{ include "groundx.groundx.serviceName" . }}
-        - name: {{ include "groundx.layout.serviceName" . }}-api
+        - name: {{ include "groundx.layout.api.serviceName" . }}
         - name: {{ include "groundx.layoutWebhook.serviceName" . }}
       document:
         tokensPerMinute: {{ include "groundx.throughput.tpm.document" . }}
       inference:
         - name: {{ include "groundx.layout.serviceName" . }}-inference
           tokensPerMinute: {{ include "groundx.throughput.services.layout.inference" . }}
-        - name: {{ include "groundx.summary.serviceName" . }}-api
+        - name: {{ include "groundx.summary.api.serviceName" . }}
           tokensPerMinute: {{ include "groundx.throughput.services.summary.api" . }}
         - name: {{ include "groundx.summary.serviceName" . }}-inference
           tokensPerMinute: {{ include "groundx.throughput.services.summary.inference" . }}
@@ -217,6 +218,15 @@ data:
       summaryRequest:
         tokensPerMinute: {{ include "groundx.throughput.tpm.summaryRequest" . }}
       task:
+        - name: {{ include "groundx.extract.agent.serviceName" . }}
+          target: {{ include "groundx.extract.agent.queue" . }}
+          threshold: {{ include "groundx.throughput.services.extract.agent" . }}
+        - name: {{ include "groundx.extract.download.serviceName" . }}
+          target: {{ include "groundx.extract.download.queue" . }}
+          threshold: {{ include "groundx.throughput.services.extract.download" . }}
+        - name: {{ include "groundx.extract.save.serviceName" . }}
+          target: {{ include "groundx.extract.save.queue" . }}
+          threshold: {{ include "groundx.throughput.services.extract.save" . }}
         - name: {{ include "groundx.layout.correct.serviceName" . }}
           target: {{ include "groundx.layout.correct.queue" . }}
           threshold: {{ include "groundx.throughput.services.layout.correct" . }}

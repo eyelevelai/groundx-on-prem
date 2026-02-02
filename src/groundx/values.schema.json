@@ -980,8 +980,38 @@
     "metrics": {
       "type": "object",
       "properties": {
-        "port": { "type": "integer" },
-        "serviceName": { "type": "string" }
+        "affinity": { "type": "object" },
+        "annotations": { "type": "object" },
+        "containerPort": { "type": "integer" },
+        "containerSecurityContext": { "type": "object" },
+        "enabled": { "type": "boolean" },
+        "image": { "type": "string" },
+        "imagePullPolicy": { "type": "string" },
+        "labels": { "type": "object" },
+        "node": { "type": "string" },
+        "nodeSelector": { "type": "object" },
+        "replicas": {
+          "type": "object",
+          "properties": {
+            "desired": { "type": "integer" },
+            "max": { "type": "integer" },
+            "min": { "type": "integer" }
+          },
+          "required": ["desired"],
+          "additionalProperties": false
+        },
+        "resources": { "type": "object" },
+        "securityContext": { "type": "object" },
+        "serviceAccount": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" }
+          },
+            "required": ["name"],
+          "additionalProperties": false
+        },
+        "serviceName": { "type": "string" },
+        "tolerations": { "type": "array" }
       },
       "additionalProperties": false
     },

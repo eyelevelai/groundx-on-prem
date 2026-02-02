@@ -72,11 +72,11 @@ GROUNDX_AGENT_API_KEY
 {{- define "groundx.extract.agent.modelId" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
-{{- $dflt := "" -}}
+{{- $dflt := lower (dig "modelId" "" $in) | trim -}}
 {{- $ic := include "groundx.summary.create" . -}}
 {{- $st := include "groundx.extract.agent.serviceType" . -}}
 {{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") -}}
-{{- if and (eq $ic "true") (not $svcAllowed) -}}
+{{- if and (eq $ic "true") (not $svcAllowed) (eq $dflt "") -}}
 {{- $dflt = (include "groundx.summary.inference.model.name" .) -}}
 {{- end -}}
 {{ dig "modelId" $dflt $in }}

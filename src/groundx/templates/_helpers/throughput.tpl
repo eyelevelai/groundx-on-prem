@@ -16,6 +16,27 @@
 {{ dig "summaryRequest" 625 $in }}
 {{- end }}
 
+{{- define "groundx.throughput.services.extract.agent" -}}
+{{- $b := .Values.throughput | default dict -}}
+{{- $in := (dig "services" nil $b) | default dict -}}
+{{- $svc := (dig "extract" nil $in) | default dict -}}
+{{ dig "agent" 500 $svc }}
+{{- end }}
+
+{{- define "groundx.throughput.services.extract.download" -}}
+{{- $b := .Values.throughput | default dict -}}
+{{- $in := (dig "services" nil $b) | default dict -}}
+{{- $svc := (dig "extract" nil $in) | default dict -}}
+{{ dig "download" 500 $svc }}
+{{- end }}
+
+{{- define "groundx.throughput.services.extract.save" -}}
+{{- $b := .Values.throughput | default dict -}}
+{{- $in := (dig "services" nil $b) | default dict -}}
+{{- $svc := (dig "extract" nil $in) | default dict -}}
+{{ dig "save" 500 $svc }}
+{{- end }}
+
 {{- define "groundx.throughput.services.layout.correct" -}}
 {{- $b := .Values.throughput | default dict -}}
 {{- $in := (dig "services" nil $b) | default dict -}}
