@@ -243,11 +243,12 @@ data:
           target: {{ include "groundx.layout.save.queue" . }}
           threshold: {{ include "groundx.throughput.services.layout.save" . }}
 
-    {{- if .Values.metrics }}
+    {{- if eq (include "groundx.metrics.create" . | trim) "true" }}
+
     metricsServer:
-      baseURL: http://{{ .Values.metrics.serviceName }}.{{ include "groundx.ns" . }}.svc.cluster.local
-      port: {{ .Values.metrics.port }}
-      serviceName: {{ .Values.metrics.serviceName }}
+      baseURL: {{ include "groundx.metrics.serviceUrl" . }}
+      port: {{ include "groundx.metrics.port" . }}
+      serviceName: {{ include "groundx.metrics.serviceName" . }}
       sslCACert: /etc/ssl/tls/ca.crt
       sslCert: /etc/ssl/tls/tls.crt
       sslKey: /etc/ssl/tls/tls.key

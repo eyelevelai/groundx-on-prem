@@ -37,7 +37,7 @@ true
 {{- end }}
 
 {{- define "groundx.metrics.port" -}}
-80
+8080
 {{- end }}
 
 {{- define "groundx.metrics.replicas" -}}
