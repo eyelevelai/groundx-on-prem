@@ -33,9 +33,6 @@ golang
 {{- if eq (include "groundx.layoutWebhook.create" . | trim) "true" -}}
 {{- $svcs  = set $svcs "layoutWebhook" "layoutWebhook" -}}
 {{- end -}}
-{{- if eq (include "groundx.metrics.create" . | trim) "true" -}}
-{{- $svcs  = set $svcs "metrics" "metrics" -}}
-{{- end -}}
 {{- if eq (include "groundx.preProcess.create" . | trim) "true" -}}
 {{- $svcs  = set $svcs "preProcess" "preProcess" -}}
 {{- end -}}

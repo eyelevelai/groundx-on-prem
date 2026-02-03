@@ -1,0 +1,1908 @@
+'aws: golang':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: 0b3078ffdd3aac06940c8fd8edef8c0a35902e923d3e427222604bd3494b1a82
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - env:
+                - name: TLS_CERT_FILE
+                  value: /etc/ssl/tls/tls.crt
+                - name: TLS_KEY_FILE
+                  value: /etc/ssl/tls/tls.key
+                - name: TLS_CA_FILE
+                  value: /etc/ssl/tls/ca.crt
+                - name: LISTEN_PORT
+                  value: "8443"
+              image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8443
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+                - mountPath: /etc/ssl/tls
+                  name: tls-volume
+                  readOnly: true
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.us-east-2.rds.amazonaws.com 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+            - name: tls-volume
+              secret:
+                secretName: metrics-tls
+  2: |
+    apiVersion: v1
+    data: null
+    kind: Secret
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-tls
+      namespace: eyelevel
+    type: kubernetes.io/tls
+  3: |
+    apiVersion: apiregistration.k8s.io/v1
+    kind: APIService
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: v1beta1.external.metrics.k8s.io
+    spec:
+      group: external.metrics.k8s.io
+      groupPriorityMinimum: 100
+      insecureSkipTLSVerify: true
+      service:
+        name: metrics
+        namespace: eyelevel
+        port: 443
+      version: v1beta1
+      versionPriority: 100
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 443
+          protocol: TCP
+          targetPort: 8443
+      selector:
+        app: metrics
+      type: ClusterIP
+'cloud: golang':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: 2850934ed668b3c9811cd307f62cc97eaa6c6d80bb1d7783687589058db5791d
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - env:
+                - name: TLS_CERT_FILE
+                  value: /etc/ssl/tls/tls.crt
+                - name: TLS_KEY_FILE
+                  value: /etc/ssl/tls/tls.key
+                - name: TLS_CA_FILE
+                  value: /etc/ssl/tls/ca.crt
+                - name: LISTEN_PORT
+                  value: "8443"
+              image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8443
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+                - mountPath: /etc/ssl/tls
+                  name: tls-volume
+                  readOnly: true
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+            - name: tls-volume
+              secret:
+                secretName: metrics-tls
+  2: |
+    apiVersion: v1
+    data: null
+    kind: Secret
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-tls
+      namespace: eyelevel
+    type: kubernetes.io/tls
+  3: |
+    apiVersion: apiregistration.k8s.io/v1
+    kind: APIService
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: v1beta1.external.metrics.k8s.io
+    spec:
+      group: external.metrics.k8s.io
+      groupPriorityMinimum: 100
+      insecureSkipTLSVerify: true
+      service:
+        name: metrics
+        namespace: eyelevel
+        port: 443
+      version: v1beta1
+      versionPriority: 100
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 443
+          protocol: TCP
+          targetPort: 8443
+      selector:
+        app: metrics
+      type: ClusterIP
+'default: golang':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: a6deb05ecc223991e8238b1d634a6a0fe8f003eb2c03cc4d68d7ce59ed565746
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - env:
+                - name: TLS_CERT_FILE
+                  value: /etc/ssl/tls/tls.crt
+                - name: TLS_KEY_FILE
+                  value: /etc/ssl/tls/tls.key
+                - name: TLS_CA_FILE
+                  value: /etc/ssl/tls/ca.crt
+                - name: LISTEN_PORT
+                  value: "8443"
+              image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8443
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+                - mountPath: /etc/ssl/tls
+                  name: tls-volume
+                  readOnly: true
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+            - name: tls-volume
+              secret:
+                secretName: metrics-tls
+  2: |
+    apiVersion: v1
+    data: null
+    kind: Secret
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-tls
+      namespace: eyelevel
+    type: kubernetes.io/tls
+  3: |
+    apiVersion: apiregistration.k8s.io/v1
+    kind: APIService
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: v1beta1.external.metrics.k8s.io
+    spec:
+      group: external.metrics.k8s.io
+      groupPriorityMinimum: 100
+      insecureSkipTLSVerify: true
+      service:
+        name: metrics
+        namespace: eyelevel
+        port: 443
+      version: v1beta1
+      versionPriority: 100
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 443
+          protocol: TCP
+          targetPort: 8443
+      selector:
+        app: metrics
+      type: ClusterIP
+'empty: golang':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: a6deb05ecc223991e8238b1d634a6a0fe8f003eb2c03cc4d68d7ce59ed565746
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - env:
+                - name: TLS_CERT_FILE
+                  value: /etc/ssl/tls/tls.crt
+                - name: TLS_KEY_FILE
+                  value: /etc/ssl/tls/tls.key
+                - name: TLS_CA_FILE
+                  value: /etc/ssl/tls/ca.crt
+                - name: LISTEN_PORT
+                  value: "8443"
+              image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8443
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+                - mountPath: /etc/ssl/tls
+                  name: tls-volume
+                  readOnly: true
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+            - name: tls-volume
+              secret:
+                secretName: metrics-tls
+  2: |
+    apiVersion: v1
+    data: null
+    kind: Secret
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-tls
+      namespace: eyelevel
+    type: kubernetes.io/tls
+  3: |
+    apiVersion: apiregistration.k8s.io/v1
+    kind: APIService
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: v1beta1.external.metrics.k8s.io
+    spec:
+      group: external.metrics.k8s.io
+      groupPriorityMinimum: 100
+      insecureSkipTLSVerify: true
+      service:
+        name: metrics
+        namespace: eyelevel
+        port: 443
+      version: v1beta1
+      versionPriority: 100
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 443
+          protocol: TCP
+          targetPort: 8443
+      selector:
+        app: metrics
+      type: ClusterIP
+'existing: golang':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: aeb8ac0fd3e87f5db054ffe502d08dcc4816cc75349d2dfa6c646982d5c2ab4e
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - env:
+                - name: TLS_CERT_FILE
+                  value: /etc/ssl/tls/tls.crt
+                - name: TLS_KEY_FILE
+                  value: /etc/ssl/tls/tls.key
+                - name: TLS_CA_FILE
+                  value: /etc/ssl/tls/ca.crt
+                - name: LISTEN_PORT
+                  value: "8443"
+              image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8443
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+                - mountPath: /etc/ssl/tls
+                  name: tls-volume
+                  readOnly: true
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.existing.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-ro.existing.com 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+            - name: tls-volume
+              secret:
+                secretName: metrics-tls
+  2: |
+    apiVersion: v1
+    data: null
+    kind: Secret
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-tls
+      namespace: eyelevel
+    type: kubernetes.io/tls
+  3: |
+    apiVersion: apiregistration.k8s.io/v1
+    kind: APIService
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: v1beta1.external.metrics.k8s.io
+    spec:
+      group: external.metrics.k8s.io
+      groupPriorityMinimum: 100
+      insecureSkipTLSVerify: true
+      service:
+        name: metrics
+        namespace: eyelevel
+        port: 443
+      version: v1beta1
+      versionPriority: 100
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 443
+          protocol: TCP
+          targetPort: 8443
+      selector:
+        app: metrics
+      type: ClusterIP
+'extract.ingest: golang':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: 73a45a265941a42079363ea35cb516dd5d9aac8908f96712896b4ace861d0e7c
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - env:
+                - name: TLS_CERT_FILE
+                  value: /etc/ssl/tls/tls.crt
+                - name: TLS_KEY_FILE
+                  value: /etc/ssl/tls/tls.key
+                - name: TLS_CA_FILE
+                  value: /etc/ssl/tls/ca.crt
+                - name: LISTEN_PORT
+                  value: "8443"
+              image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8443
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+                - mountPath: /etc/ssl/tls
+                  name: tls-volume
+                  readOnly: true
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.us-east-2.rds.amazonaws.com 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+            - name: tls-volume
+              secret:
+                secretName: metrics-tls
+  2: |
+    apiVersion: v1
+    data: null
+    kind: Secret
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-tls
+      namespace: eyelevel
+    type: kubernetes.io/tls
+  3: |
+    apiVersion: apiregistration.k8s.io/v1
+    kind: APIService
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: v1beta1.external.metrics.k8s.io
+    spec:
+      group: external.metrics.k8s.io
+      groupPriorityMinimum: 100
+      insecureSkipTLSVerify: true
+      service:
+        name: metrics
+        namespace: eyelevel
+        port: 443
+      version: v1beta1
+      versionPriority: 100
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 443
+          protocol: TCP
+          targetPort: 8443
+      selector:
+        app: metrics
+      type: ClusterIP
+'extract.oai: golang':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: 52eea5ad0a4751f454cf753e5206848da62bab3a84df13990bd6bba907287c21
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - env:
+                - name: TLS_CERT_FILE
+                  value: /etc/ssl/tls/tls.crt
+                - name: TLS_KEY_FILE
+                  value: /etc/ssl/tls/tls.key
+                - name: TLS_CA_FILE
+                  value: /etc/ssl/tls/ca.crt
+                - name: LISTEN_PORT
+                  value: "8443"
+              envFrom:
+                - secretRef:
+                    name: eyelevel-secret-credentials
+              image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8443
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+                - mountPath: /etc/ssl/tls
+                  name: tls-volume
+                  readOnly: true
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.us-east-2.rds.amazonaws.com 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+            - name: tls-volume
+              secret:
+                secretName: metrics-tls
+  2: |
+    apiVersion: v1
+    data: null
+    kind: Secret
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-tls
+      namespace: eyelevel
+    type: kubernetes.io/tls
+  3: |
+    apiVersion: apiregistration.k8s.io/v1
+    kind: APIService
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: v1beta1.external.metrics.k8s.io
+    spec:
+      group: external.metrics.k8s.io
+      groupPriorityMinimum: 100
+      insecureSkipTLSVerify: true
+      service:
+        name: metrics
+        namespace: eyelevel
+        port: 443
+      version: v1beta1
+      versionPriority: 100
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 443
+          protocol: TCP
+          targetPort: 8443
+      selector:
+        app: metrics
+      type: ClusterIP
+'extract: golang':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: 0fb59fe6ce67632668da3d701fe506738a01bc6eebf5717185caaf68f5082df4
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - env:
+                - name: TLS_CERT_FILE
+                  value: /etc/ssl/tls/tls.crt
+                - name: TLS_KEY_FILE
+                  value: /etc/ssl/tls/tls.key
+                - name: TLS_CA_FILE
+                  value: /etc/ssl/tls/ca.crt
+                - name: LISTEN_PORT
+                  value: "8443"
+              envFrom:
+                - secretRef:
+                    name: eyelevel-secret-credentials
+              image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8443
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+                - mountPath: /etc/ssl/tls
+                  name: tls-volume
+                  readOnly: true
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.us-east-2.rds.amazonaws.com 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+            - name: tls-volume
+              secret:
+                secretName: metrics-tls
+  2: |
+    apiVersion: v1
+    data: null
+    kind: Secret
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-tls
+      namespace: eyelevel
+    type: kubernetes.io/tls
+  3: |
+    apiVersion: apiregistration.k8s.io/v1
+    kind: APIService
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: v1beta1.external.metrics.k8s.io
+    spec:
+      group: external.metrics.k8s.io
+      groupPriorityMinimum: 100
+      insecureSkipTLSVerify: true
+      service:
+        name: metrics
+        namespace: eyelevel
+        port: 443
+      version: v1beta1
+      versionPriority: 100
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 443
+          protocol: TCP
+          targetPort: 8443
+      selector:
+        app: metrics
+      type: ClusterIP
+'metadata: golang':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: 6f62a87cb80ee9e892d72cba77874cfc230eb3f7251f098ee84815c745a55846
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - env:
+                - name: TLS_CERT_FILE
+                  value: /etc/ssl/tls/tls.crt
+                - name: TLS_KEY_FILE
+                  value: /etc/ssl/tls/tls.key
+                - name: TLS_CA_FILE
+                  value: /etc/ssl/tls/ca.crt
+                - name: LISTEN_PORT
+                  value: "8443"
+              image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8443
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+                - mountPath: /etc/ssl/tls
+                  name: tls-volume
+                  readOnly: true
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z myapp.eyelevel.svc.cluster.local 8082; do echo waiting for cache; sleep 2; done
+              image: test.image:v1
+              imagePullPolicy: Always
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: test.image:v1
+              imagePullPolicy: Always
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+            - name: tls-volume
+              secret:
+                secretName: metrics-tls
+  2: |
+    apiVersion: v1
+    data: null
+    kind: Secret
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-tls
+      namespace: eyelevel
+    type: kubernetes.io/tls
+  3: |
+    apiVersion: apiregistration.k8s.io/v1
+    kind: APIService
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: v1beta1.external.metrics.k8s.io
+    spec:
+      group: external.metrics.k8s.io
+      groupPriorityMinimum: 100
+      insecureSkipTLSVerify: true
+      service:
+        name: metrics
+        namespace: eyelevel
+        port: 443
+      version: v1beta1
+      versionPriority: 100
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 443
+          protocol: TCP
+          targetPort: 8443
+      selector:
+        app: metrics
+      type: ClusterIP
+'minikube: golang':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: 145ad059f9ab6f81e6dcf5ab89bc25b68de01784bc3b87dbdcc0089149ab34ef
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - env:
+                - name: TLS_CERT_FILE
+                  value: /etc/ssl/tls/tls.crt
+                - name: TLS_KEY_FILE
+                  value: /etc/ssl/tls/tls.key
+                - name: TLS_CA_FILE
+                  value: /etc/ssl/tls/ca.crt
+                - name: LISTEN_PORT
+                  value: "8443"
+              image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8443
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+                - mountPath: /etc/ssl/tls
+                  name: tls-volume
+                  readOnly: true
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+            - name: tls-volume
+              secret:
+                secretName: metrics-tls
+  2: |
+    apiVersion: v1
+    data: null
+    kind: Secret
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-tls
+      namespace: eyelevel
+    type: kubernetes.io/tls
+  3: |
+    apiVersion: apiregistration.k8s.io/v1
+    kind: APIService
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: v1beta1.external.metrics.k8s.io
+    spec:
+      group: external.metrics.k8s.io
+      groupPriorityMinimum: 100
+      insecureSkipTLSVerify: true
+      service:
+        name: metrics
+        namespace: eyelevel
+        port: 443
+      version: v1beta1
+      versionPriority: 100
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 443
+          protocol: TCP
+          targetPort: 8443
+      selector:
+        app: metrics
+      type: ClusterIP
+'openshift: golang':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: 145ad059f9ab6f81e6dcf5ab89bc25b68de01784bc3b87dbdcc0089149ab34ef
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - env:
+                - name: TLS_CERT_FILE
+                  value: /etc/ssl/tls/tls.crt
+                - name: TLS_KEY_FILE
+                  value: /etc/ssl/tls/tls.key
+                - name: TLS_CA_FILE
+                  value: /etc/ssl/tls/ca.crt
+                - name: LISTEN_PORT
+                  value: "8443"
+              image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8443
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+                - mountPath: /etc/ssl/tls
+                  name: tls-volume
+                  readOnly: true
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-cpu-only
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+            - name: tls-volume
+              secret:
+                secretName: metrics-tls
+  2: |
+    apiVersion: v1
+    data: null
+    kind: Secret
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-tls
+      namespace: eyelevel
+    type: kubernetes.io/tls
+  3: |
+    apiVersion: apiregistration.k8s.io/v1
+    kind: APIService
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: v1beta1.external.metrics.k8s.io
+    spec:
+      group: external.metrics.k8s.io
+      groupPriorityMinimum: 100
+      insecureSkipTLSVerify: true
+      service:
+        name: metrics
+        namespace: eyelevel
+        port: 443
+      version: v1beta1
+      versionPriority: 100
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 443
+          protocol: TCP
+          targetPort: 8443
+      selector:
+        app: metrics
+      type: ClusterIP
+'phoenix: golang':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: d8166d81a0df16886f96b04db3105702b2530d727392839ec05ec1e7823c7e4c
+          labels:
+            app: metrics
+        spec:
+          containers:
+            - env:
+                - name: TLS_CERT_FILE
+                  value: /etc/ssl/tls/tls.crt
+                - name: TLS_KEY_FILE
+                  value: /etc/ssl/tls/tls.key
+                - name: TLS_CA_FILE
+                  value: /etc/ssl/tls/ca.crt
+                - name: LISTEN_PORT
+                  value: "8443"
+              image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: Always
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8443
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+                - mountPath: /etc/ssl/tls
+                  name: tls-volume
+                  readOnly: true
+          imagePullSecrets:
+            - name: ecr-public-pull
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: Always
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-ro.existing.com 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: Always
+              name: wait-for-database
+          nodeSelector:
+            node: eyelevel-gpu
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-gpu
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+            - name: tls-volume
+              secret:
+                secretName: metrics-tls
+  2: |
+    apiVersion: v1
+    data: null
+    kind: Secret
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-tls
+      namespace: eyelevel
+    type: kubernetes.io/tls
+  3: |
+    apiVersion: apiregistration.k8s.io/v1
+    kind: APIService
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: v1beta1.external.metrics.k8s.io
+    spec:
+      group: external.metrics.k8s.io
+      groupPriorityMinimum: 100
+      insecureSkipTLSVerify: true
+      service:
+        name: metrics
+        namespace: eyelevel
+        port: 443
+      version: v1beta1
+      versionPriority: 100
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 443
+          protocol: TCP
+          targetPort: 8443
+      selector:
+        app: metrics
+      type: ClusterIP

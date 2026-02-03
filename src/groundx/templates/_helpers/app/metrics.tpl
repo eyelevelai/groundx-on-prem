@@ -23,6 +23,10 @@ true
 {{ dig "containerPort" 8080 $in }}
 {{- end }}
 
+{{- define "groundx.metrics.containerSSLPort" -}}
+8443
+{{- end }}
+
 {{- define "groundx.metrics.image" -}}
 {{- $in := .Values.metrics | default dict -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
@@ -37,7 +41,7 @@ true
 {{- end }}
 
 {{- define "groundx.metrics.port" -}}
-8080
+443
 {{- end }}
 
 {{- define "groundx.metrics.replicas" -}}
@@ -60,12 +64,21 @@ true
 {{ dig "serviceType" "ClusterIP" $in }}
 {{- end }}
 
+{{- define "groundx.metrics.useExisting" -}}
+{{- $in := .Values.metrics | default dict -}}
+{{- if hasKey $in "useExisting" -}}
+  {{- if (dig "useExisting" false $in) -}}true{{- else -}}false{{- end -}}
+{{- else -}}
+false
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.metrics.interface" -}}
 {{- dict
     "isInternal" "true"
     "port"       (include "groundx.metrics.port" .)
-    "ssl"        "false"
-    "targetPort" (include "groundx.metrics.containerPort" .)
+    "ssl"        "true"
+    "targetPort" (include "groundx.metrics.containerSSLPort" .)
     "timeout"    ""
     "type"       (include "groundx.metrics.serviceType" .)
   | toYaml -}}
@@ -74,12 +87,7 @@ true
 {{- define "groundx.metrics.serviceUrl" -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- $name := include "groundx.metrics.serviceName" . -}}
-{{- $port := include "groundx.metrics.containerPort" . -}}
-{{- if eq $port "80" -}}
-{{ printf "http://%s.%s.svc.cluster.local" $name $ns }}
-{{- else -}}
-{{ printf "http://%s.%s.svc.cluster.local:%v" $name $ns $port }}
-{{- end -}}
+{{ printf "https://%s.%s.svc.cluster.local" $name $ns }}
 {{- end }}
 
 {{- define "groundx.metrics.settings" -}}
@@ -94,14 +102,15 @@ true
 {{- $san := include "groundx.metrics.serviceAccountName" . -}}
 
 {{- $cfg := dict
-  "dependencies" $dpnd
-  "image"        (include "groundx.metrics.image" .)
-  "interface"    (include "groundx.metrics.interface" . | trim)
-  "name"         (include "groundx.metrics.serviceName" .)
-  "node"         (include "groundx.metrics.node" .)
-  "port"         (include "groundx.metrics.containerPort" .)
-  "pull"         (include "groundx.metrics.imagePullPolicy" .)
-  "replicas"     ($rep)
+  "containerPort" (include "groundx.metrics.containerSSLPort" .)
+  "dependencies"  $dpnd
+  "image"         (include "groundx.metrics.image" .)
+  "interface"     (include "groundx.metrics.interface" . | trim)
+  "name"          (include "groundx.metrics.serviceName" .)
+  "node"          (include "groundx.metrics.node" .)
+  "port"          (include "groundx.metrics.port" .)
+  "pull"          (include "groundx.metrics.imagePullPolicy" .)
+  "replicas"      ($rep)
 -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}

@@ -247,12 +247,12 @@ data:
 
     metricsServer:
       baseURL: {{ include "groundx.metrics.serviceUrl" . }}
-      port: {{ include "groundx.metrics.port" . }}
+      port: {{ include "groundx.metrics.containerPort" . }}
       serviceName: {{ include "groundx.metrics.serviceName" . }}
       sslCACert: /etc/ssl/tls/ca.crt
       sslCert: /etc/ssl/tls/tls.crt
       sslKey: /etc/ssl/tls/tls.key
-      sslPort: 8443
+      sslPort: {{ include "groundx.metrics.containerSSLPort" . }}
     {{- end }}
 
     owner:
