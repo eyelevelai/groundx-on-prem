@@ -1,16 +1,21 @@
 {{- define "groundx.inference.services" -}}
+
 {{- $svcs := dict -}}
-{{- $il := include "groundx.layout.inference.create" . -}}
-{{- if eq $il "true" -}}
-{{- $_ := set $svcs "layout.inference" "layout.inference" -}}
-{{- end -}}
-{{- $ir := include "groundx.ranker.inference.create" . -}}
-{{- if eq $ir "true" -}}
-{{- $_ := set $svcs "ranker.inference" "ranker.inference" -}}
-{{- end -}}
-{{- $is := include "groundx.summary.inference.create" . -}}
-{{- if eq $is "true" -}}
-{{- $_ := set $svcs "summary.inference" "summary.inference" -}}
-{{- end -}}
+
+{{- $services := list
+  "layout.inference"
+  "ranker.inference"
+  "summary.inference"
+-}}
+
+{{- range $svc := $services }}
+  {{- $tpl := printf "groundx.%s.create" $svc -}}
+  {{- $il := include $tpl $ -}}
+  {{- if eq $il "true" -}}
+    {{- $_ := set $svcs $svc $svc -}}
+  {{- end -}}
+{{- end }}
+
 {{- $svcs | toYaml -}}
+
 {{- end }}

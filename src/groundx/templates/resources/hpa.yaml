@@ -1,0 +1,74 @@
+{{- $sups := (include "groundx.hpa" . | fromYaml | default dict) -}}
+{{- $ns := include "groundx.ns" . -}}
+{{- range $n, $entry := $sups }}
+{{- $svcKey := printf "groundx.%s.hpa" $entry -}}
+{{- $svcData := include $svcKey $ | fromYaml -}}
+
+{{- if gt (len $svcData) 0 }}
+
+{{- $anns := dig "annotations" dict $svcData -}}
+{{- $downCooldown := dig "downCooldown" "" $svcData -}}
+{{- $lbls := dig "labels" dict $svcData -}}
+{{- $metric := dig "metric" "" $svcData -}}
+{{- $target := dig "name" "" $svcData -}}
+{{- $name := printf "%s-hpa" $target -}}
+{{- $replicas := dig "replicas" dict $svcData -}}
+{{- $upCooldown := dig "upCooldown" "" $svcData -}}
+
+{{- $max := dig "max" "1" $replicas -}}
+{{- $min := dig "min" "1" $replicas -}}
+{{- $threshold := dig "threshold" "0.8" $replicas -}}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $name }}
+  namespace: {{ $ns }}
+  labels:
+    app: {{ $name }}
+{{- include "groundx.renderDefaultLabels" (dict "indent" 4 "root" $) }}
+{{- if gt (len $lbls) 0 }}
+{{- toYaml $lbls | nindent 4 }}
+{{- end }}
+{{- if gt (len $anns) 0 }}
+  annotations:
+{{- toYaml $anns | nindent 4 }}
+{{- end }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ $target }}
+  minReplicas: {{ $min }}
+  maxReplicas: {{ $max }}
+  metrics:
+    - type: External
+      external:
+        metric:
+          name: {{ $metric }}
+        target:
+          type: Value
+          value: {{ $threshold }}
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: {{ $upCooldown }}
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: {{ $upCooldown }}
+        - type: Pods
+          value: 4
+          periodSeconds: {{ $upCooldown }}
+    scaleDown:
+      stabilizationWindowSeconds: {{ $downCooldown }}
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: {{ $downCooldown }}
+        - type: Pods
+          value: 2
+          periodSeconds: {{ $downCooldown }}
+
+{{ end }}
+
+{{ end }}

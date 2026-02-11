@@ -26,6 +26,7 @@
       "type": "object",
       "properties": {
         "hasMig": { "type": "boolean" },
+        "hpa": { "type": "boolean" },
         "imagePullPolicy": { "type": "string" },
         "imagePullSecrets": {
           "type": "array",
@@ -1364,11 +1365,14 @@
             "replicas": {
               "type": "object",
               "properties": {
+                "cooldown": { "type": "integer" },
                 "desired": { "type": "integer" },
+                "hpa": { "type": "boolean" },
                 "max": { "type": "integer" },
-                "min": { "type": "integer" }
+                "min": { "type": "integer" },
+                "threshold": { "type": "number" },
+                "throughput": { "type": "number" }
               },
-              "required": ["desired"],
               "additionalProperties": false
             },
             "resources": { "type": "object" },
@@ -1421,11 +1425,14 @@
             "replicas": {
               "type": "object",
               "properties": {
+                "cooldown": { "type": "integer" },
                 "desired": { "type": "integer" },
+                "hpa": { "type": "boolean" },
                 "max": { "type": "integer" },
-                "min": { "type": "integer" }
+                "min": { "type": "integer" },
+                "threshold": { "type": "number" },
+                "throughput": { "type": "number" }
               },
-              "required": ["desired"],
               "additionalProperties": false
             },
             "resources": { "type": "object" },
@@ -1467,11 +1474,14 @@
             "replicas": {
               "type": "object",
               "properties": {
+                "cooldown": { "type": "integer" },
                 "desired": { "type": "integer" },
+                "hpa": { "type": "boolean" },
                 "max": { "type": "integer" },
-                "min": { "type": "integer" }
+                "min": { "type": "integer" },
+                "threshold": { "type": "number" },
+                "throughput": { "type": "number" }
               },
-              "required": ["desired"],
               "additionalProperties": false
             },
             "resources": { "type": "object" },
@@ -1524,11 +1534,14 @@
             "replicas": {
               "type": "object",
               "properties": {
+                "cooldown": { "type": "integer" },
                 "desired": { "type": "integer" },
+                "hpa": { "type": "boolean" },
                 "max": { "type": "integer" },
-                "min": { "type": "integer" }
+                "min": { "type": "integer" },
+                "threshold": { "type": "number" },
+                "throughput": { "type": "number" }
               },
-              "required": ["desired"],
               "additionalProperties": false
             },
             "resources": { "type": "object" },

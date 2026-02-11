@@ -183,6 +183,14 @@ layoutWebhook:
       cpu: 100m
       memory: 128Mi
 
+metrics:
+  enabled: true
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
 preProcess:
   enabled: true
 
@@ -241,3 +249,48 @@ upload:
     requests:
       cpu: 100m
       memory: 128Mi
+
+extract:
+  agent:
+    resources:
+      limits:
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+
+    threads: 2
+    workers: 1
+
+  api:
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 512Mi
+
+  download:
+    resources:
+      limits:
+        cpu: 1
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 512Mi
+
+    threads: 2
+    workers: 1
+
+  save:
+    resources:
+      limits:
+        cpu: 1
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 512Mi
+
+    threads: 2
+    workers: 1

@@ -54,6 +54,36 @@ GROUNDX_AGENT_API_KEY
 {{ dig "existingSecret" false $in }}
 {{- end }}
 
+{{- define "groundx.extract.agent.throughput" -}}
+{{- $rep := (include "groundx.extract.agent.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.extract.agent.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "throughput" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.extract.agent.hpa" -}}
+{{- $ic := include "groundx.extract.agent.create" . -}}
+{{- $rep := (include "groundx.extract.agent.replicas" . | fromYaml) -}}
+{{- $enabled := false -}}
+{{- if eq $ic "true" -}}
+{{- $enabled = dig "hpa" false $rep -}}
+{{- end -}}
+{{- $name := (include "groundx.extract.agent.serviceName" .) -}}
+{{- $cld := dig "cooldown" 60 $rep -}}
+{{- $cfg := dict
+  "downCooldown" (mul $cld 2)
+  "enabled"      $enabled
+  "metric"       (printf "%s:task" $name)
+  "name"         $name
+  "replicas"     $rep
+  "upCooldown"   $cld
+-}}
+{{- $cfg | toYaml -}}
+{{- end }}
+
 {{- define "groundx.extract.agent.image" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
@@ -92,9 +122,35 @@ GROUNDX_AGENT_API_KEY
 {{- $b := .Values.extract | default dict -}}
 {{- $c := dig "agent" dict $b -}}
 {{- $in := dig "replicas" dict $c -}}
+{{- $chp := include "groundx.cluster.hpa" . -}}
 {{- if not $in }}
-  {{- $in = dict "desired" 4 "max" 4 "min" 4 -}}
+  {{- $in = dict -}}
 {{- end }}
+{{- if not (hasKey $in "cooldown") -}}
+  {{- $_ := set $in "cooldown" (include "groundx.hpa.cooldown" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "hpa") -}}
+  {{- $_ := set $in "hpa" $chp -}}
+{{- end -}}
+{{- if not (hasKey $in "threshold") -}}
+  {{- $_ := set $in "threshold" 0.8 -}}
+{{- end -}}
+{{- if not (hasKey $in "throughput") -}}
+  {{- $_ := set $in "throughput" 10 -}}
+{{- end -}}
+{{- if not (hasKey $in "min") -}}
+  {{- if hasKey $in "desired" -}}
+    {{- $_ := set $in "min" (dig "desired" 1 $in) -}}
+  {{- else -}}
+    {{- $_ := set $in "min" 1 -}}
+  {{- end -}}
+{{- end -}}
+{{- if not (hasKey $in "desired") -}}
+  {{- $_ := set $in "desired" 1 -}}
+{{- end -}}
+{{- if not (hasKey $in "max") -}}
+  {{- $_ := set $in "max" 32 -}}
+{{- end -}}
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 

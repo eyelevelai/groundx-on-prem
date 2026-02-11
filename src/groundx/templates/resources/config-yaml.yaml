@@ -7,6 +7,22 @@
 {{- $sq := (include "groundx.stream.topic.summary" . | fromYaml) -}}
 {{- $uq := (include "groundx.stream.topic.update" . | fromYaml) -}}
 {{- $lq := (include "groundx.stream.topic.upload" . | fromYaml) -}}
+{{- $eac := include "groundx.extract.agent.throughput" . | trim -}}
+{{- $epc := include "groundx.extract.api.throughput" . | trim -}}
+{{- $edc := include "groundx.extract.download.throughput" . | trim -}}
+{{- $esc := include "groundx.extract.save.throughput" . | trim -}}
+{{- $gxc := eq (include "groundx.groundx.create" . | trim) "true" -}}
+{{- $lac := eq (include "groundx.layout.api.create" . | trim) "true" -}}
+{{- $lcc := eq (include "groundx.layout.correct.create" . | trim) "true" -}}
+{{- $lic := eq (include "groundx.layout.inference.create" . | trim) "true" -}}
+{{- $lmc := eq (include "groundx.layout.map.create" . | trim) "true" -}}
+{{- $loc := eq (include "groundx.layout.ocr.create" . | trim) "true" -}}
+{{- $lpc := eq (include "groundx.layout.process.create" . | trim) "true" -}}
+{{- $lsc := eq (include "groundx.layout.save.create" . | trim) "true" -}}
+{{- $lwc := eq (include "groundx.layoutWebhook.create" . | trim) "true" -}}
+{{- $sac := eq (include "groundx.summary.api.create" . | trim) "true" -}}
+{{- $sic := eq (include "groundx.summary.inference.create" . | trim) "true" -}}
+{{- $scc := eq (include "groundx.summaryClient.create" . | trim) "true" -}}
 {{- if gt (len $svcs) 0 }}
 apiVersion: v1
 kind: ConfigMap
@@ -170,22 +186,42 @@ data:
 
     metrics:
       active: true
+      {{- if or $eac $gxc $lac $lwc }}
       api:
+        {{- if ne $epc "0" }}
         - name: {{ include "groundx.extract.api.serviceName" . }}
+        {{- end }}
+        {{- if $gxc }}
         - name: {{ include "groundx.groundx.serviceName" . }}
+        {{- end }}
+        {{- if $lac }}
         - name: {{ include "groundx.layout.api.serviceName" . }}
+        {{- end }}
+        {{- if $lwc }}
         - name: {{ include "groundx.layoutWebhook.serviceName" . }}
+        {{- end }}
+      {{- end }}
       document:
         tokensPerMinute: {{ include "groundx.throughput.tpm.document" . }}
+      {{- if or $lic $sac $sic $scc }}
       inference:
+        {{- if $lic }}
         - name: {{ include "groundx.layout.serviceName" . }}-inference
           tokensPerMinute: {{ include "groundx.throughput.services.layout.inference" . }}
+        {{- end }}
+        {{- if $sac }}
         - name: {{ include "groundx.summary.api.serviceName" . }}
           tokensPerMinute: {{ include "groundx.throughput.services.summary.api" . }}
+        {{- end }}
+        {{- if $sic }}
         - name: {{ include "groundx.summary.serviceName" . }}-inference
           tokensPerMinute: {{ include "groundx.throughput.services.summary.inference" . }}
+        {{- end }}
+        {{- if $scc }}
         - name: {{ include "groundx.summaryClient.serviceName" . }}
           tokensPerMinute: {{ include "groundx.throughput.services.summaryClient.api" . }}
+        {{- end }}
+      {{- end }}
       page:
         tokensPerMinute: {{ include "groundx.throughput.tpm.page" . }}
       {{- if eq (include "groundx.stream.hasKafka" .) "true" }}
@@ -217,31 +253,49 @@ data:
         ssl: {{ include "groundx.metrics.cache.ssl" . }}
       summaryRequest:
         tokensPerMinute: {{ include "groundx.throughput.tpm.summaryRequest" . }}
+      {{- if or (ne $eac "0") (ne $edc "0") (ne $esc "0") $lcc $lmc $loc $lpc $lsc }}
       task:
+        {{- if ne $eac "0" }}
         - name: {{ include "groundx.extract.agent.serviceName" . }}
           target: {{ include "groundx.extract.agent.queue" . }}
-          threshold: {{ include "groundx.throughput.services.extract.agent" . }}
+          threshold: {{ $eac }}
+        {{- end }}
+        {{- if ne $edc "0" }}
         - name: {{ include "groundx.extract.download.serviceName" . }}
           target: {{ include "groundx.extract.download.queue" . }}
-          threshold: {{ include "groundx.throughput.services.extract.download" . }}
+          threshold: {{ $edc }}
+        {{- end }}
+        {{- if ne $esc "0" }}
         - name: {{ include "groundx.extract.save.serviceName" . }}
           target: {{ include "groundx.extract.save.queue" . }}
-          threshold: {{ include "groundx.throughput.services.extract.save" . }}
+          threshold: {{ $esc }}
+        {{- end }}
+        {{- if $lcc }}
         - name: {{ include "groundx.layout.correct.serviceName" . }}
           target: {{ include "groundx.layout.correct.queue" . }}
-          threshold: {{ include "groundx.throughput.services.layout.correct" . }}
+          threshold: {{ include "groundx.layout.correct.throughput" . }}
+        {{- end }}
+        {{- if $lmc }}
         - name: {{ include "groundx.layout.map.serviceName" . }}
           target: {{ include "groundx.layout.map.queue" . }}
-          threshold: {{ include "groundx.throughput.services.layout.map" . }}
+          threshold: {{ include "groundx.layout.map.throughput" . }}
+        {{- end }}
+        {{- if $loc }}
         - name: {{ include "groundx.layout.ocr.serviceName" . }}
           target: {{ include "groundx.layout.ocr.queue" . }}
-          threshold: {{ include "groundx.throughput.services.layout.ocr" . }}
+          threshold: {{ include "groundx.layout.ocr.throughput" . }}
+        {{- end }}
+        {{- if $lpc }}
         - name: {{ include "groundx.layout.process.serviceName" . }}
           target: {{ include "groundx.layout.process.queue" . }}
-          threshold: {{ include "groundx.throughput.services.layout.process" . }}
+          threshold: {{ include "groundx.layout.process.throughput" . }}
+        {{- end }}
+        {{- if $lsc }}
         - name: {{ include "groundx.layout.save.serviceName" . }}
           target: {{ include "groundx.layout.save.queue" . }}
-          threshold: {{ include "groundx.throughput.services.layout.save" . }}
+          threshold: {{ include "groundx.layout.save.throughput" . }}
+        {{- end }}
+      {{- end }}
 
     {{- if eq (include "groundx.metrics.create" . | trim) "true" }}
 
