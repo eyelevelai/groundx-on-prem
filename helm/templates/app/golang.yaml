@@ -76,7 +76,7 @@ spec:
         - name: wait-for-groundx
           image: {{ include "groundx.busybox.image" $ }}
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
-          command: ['sh', '-c', "until wget --spider -q {{ include "groundx.groundx.serviceUrl" $ }}/health; do echo waiting for groundx; sleep 2; done"]
+          command: ['sh', '-c', "until wget -T 5 -qO- {{ include "groundx.groundx.serviceUrl" $ }}/health; do echo waiting for groundx; sleep 2; done"]
 {{- end }}
 {{- if hasKey $dpnd "cache" }}
         - name: wait-for-cache
