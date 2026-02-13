@@ -462,7 +462,7 @@
             - command:
                 - sh
                 - -c
-                - until wget -T 5 --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for callback; sleep 2; done
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for callback; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-callback
@@ -1943,7 +1943,7 @@
             - command:
                 - sh
                 - -c
-                - until wget -T 5 --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for callback; sleep 2; done
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for callback; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-callback
@@ -2322,7 +2322,7 @@
             - command:
                 - sh
                 - -c
-                - until wget -T 5 --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for callback; sleep 2; done
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for callback; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-callback
@@ -2584,7 +2584,7 @@
             - command:
                 - sh
                 - -c
-                - until wget -T 5 --spider -q http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for callback; sleep 2; done
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for callback; sleep 2; done
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-callback

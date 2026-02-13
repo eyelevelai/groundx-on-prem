@@ -96,7 +96,7 @@ spec:
         - name: wait-for-extract
           image: {{ include "groundx.busybox.image" $ }}
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
-          command: ['sh', '-c', "until wget -T 5 --spider -q {{ include "groundx.extract.api.serviceUrl" $ }}/health; do echo waiting for extract; sleep 2; done"]
+          command: ['sh', '-c', "until wget -T 5 -qO- {{ include "groundx.extract.api.serviceUrl" $ }}/health; do echo waiting for extract; sleep 2; done"]
 {{- end }}
 {{- end }}
       containers:
