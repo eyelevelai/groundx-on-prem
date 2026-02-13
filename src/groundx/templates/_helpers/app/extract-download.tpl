@@ -40,6 +40,31 @@ false
 {{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
+{{/* fraction of threshold */}}
+{{- define "groundx.extract.download.target.default" -}}
+0.8
+{{- end }}
+
+{{/* queue message backlog */}}
+{{- define "groundx.extract.download.threshold.default" -}}
+10
+{{- end }}
+
+{{/* tokens per minute per worker per thread */}}
+{{- define "groundx.extract.download.throughput.default" -}}
+30000
+{{- end }}
+
+{{- define "groundx.extract.download.threshold" -}}
+{{- $rep := (include "groundx.extract.download.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.extract.download.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "threshold" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.extract.download.throughput" -}}
 {{- $rep := (include "groundx.extract.download.replicas" . | fromYaml) -}}
 {{- $ic := include "groundx.extract.download.create" . -}}
@@ -90,11 +115,17 @@ false
 {{- if not (hasKey $in "hpa") -}}
   {{- $_ := set $in "hpa" $chp -}}
 {{- end -}}
+{{- if not (hasKey $in "target") -}}
+  {{- $_ := set $in "target" (include "groundx.extract.download.target.default" .) -}}
+{{- end -}}
 {{- if not (hasKey $in "threshold") -}}
-  {{- $_ := set $in "threshold" 0.8 -}}
+  {{- $_ := set $in "threshold" (include "groundx.extract.download.threshold.default" .) -}}
 {{- end -}}
 {{- if not (hasKey $in "throughput") -}}
-  {{- $_ := set $in "throughput" 10 -}}
+  {{- $threads := (include "groundx.extract.download.threads" . | int) -}}
+  {{- $workers := (include "groundx.extract.download.workers" . | int) -}}
+  {{- $dflt := (include "groundx.extract.download.throughput.default" . | int) -}}
+  {{- $_ := set $in "throughput" (mul $dflt $threads $workers) -}}
 {{- end -}}
 {{- if not (hasKey $in "min") -}}
   {{- if hasKey $in "desired" -}}
@@ -122,7 +153,7 @@ false
 {{- define "groundx.extract.download.threads" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "download" dict $b -}}
-{{ dig "threads" 1 $in }}
+{{ dig "threads" 2 $in }}
 {{- end }}
 
 {{- define "groundx.extract.download.workers" -}}

@@ -41,6 +41,31 @@ true
 {{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
+{{/* fraction of threshold */}}
+{{- define "groundx.layout.ocr.target.default" -}}
+0.8
+{{- end }}
+
+{{/* queue message backlog */}}
+{{- define "groundx.layout.ocr.threshold.default" -}}
+10
+{{- end }}
+
+{{/* tokens per minute per worker per thread */}}
+{{- define "groundx.layout.ocr.throughput.default" -}}
+20000
+{{- end }}
+
+{{- define "groundx.layout.ocr.threshold" -}}
+{{- $rep := (include "groundx.layout.ocr.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.layout.ocr.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "threshold" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.layout.ocr.throughput" -}}
 {{- $rep := (include "groundx.layout.ocr.replicas" . | fromYaml) -}}
 {{- $ic := include "groundx.layout.ocr.create" . -}}
@@ -98,10 +123,13 @@ true
   {{- $_ := set $in "hpa" $chp -}}
 {{- end -}}
 {{- if not (hasKey $in "threshold") -}}
-  {{- $_ := set $in "threshold" 0.8 -}}
+  {{- $_ := set $in "threshold" (include "groundx.layout.ocr.threshold.default" .) -}}
 {{- end -}}
 {{- if not (hasKey $in "throughput") -}}
-  {{- $_ := set $in "throughput" 10 -}}
+  {{- $threads := (include "groundx.layout.ocr.threads" . | int) -}}
+  {{- $workers := (include "groundx.layout.ocr.workers" . | int) -}}
+  {{- $dflt := (include "groundx.layout.ocr.throughput.default" . | int) -}}
+  {{- $_ := set $in "throughput" (mul $dflt $threads $workers) -}}
 {{- end -}}
 {{- if not (hasKey $in "min") -}}
   {{- if hasKey $in "desired" -}}

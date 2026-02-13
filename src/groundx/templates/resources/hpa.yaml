@@ -10,22 +10,22 @@
 {{- $downCooldown := dig "downCooldown" "" $svcData -}}
 {{- $lbls := dig "labels" dict $svcData -}}
 {{- $metric := dig "metric" "" $svcData -}}
-{{- $target := dig "name" "" $svcData -}}
-{{- $name := printf "%s-hpa" $target -}}
+{{- $podName := dig "name" "" $svcData -}}
+{{- $hpaName := printf "%s-hpa" $podName -}}
 {{- $replicas := dig "replicas" dict $svcData -}}
 {{- $upCooldown := dig "upCooldown" "" $svcData -}}
 
 {{- $max := dig "max" "1" $replicas -}}
 {{- $min := dig "min" "1" $replicas -}}
-{{- $threshold := dig "threshold" "0.8" $replicas -}}
+{{- $target := dig "target" "0.8" $replicas -}}
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ $name }}
+  name: {{ $hpaName }}
   namespace: {{ $ns }}
   labels:
-    app: {{ $name }}
+    app: {{ $hpaName }}
 {{- include "groundx.renderDefaultLabels" (dict "indent" 4 "root" $) }}
 {{- if gt (len $lbls) 0 }}
 {{- toYaml $lbls | nindent 4 }}
@@ -38,7 +38,7 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ $target }}
+    name: {{ $podName }}
   minReplicas: {{ $min }}
   maxReplicas: {{ $max }}
   metrics:
@@ -48,7 +48,7 @@ spec:
           name: {{ $metric }}
         target:
           type: Value
-          value: {{ $threshold }}
+          value: {{ $target }}
   behavior:
     scaleUp:
       stabilizationWindowSeconds: {{ $upCooldown }}

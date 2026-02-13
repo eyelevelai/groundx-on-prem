@@ -35,6 +35,31 @@ true
 {{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
+{{/* fraction of threshold */}}
+{{- define "groundx.layout.map.target.default" -}}
+0.8
+{{- end }}
+
+{{/* queue message backlog */}}
+{{- define "groundx.layout.map.threshold.default" -}}
+10
+{{- end }}
+
+{{/* tokens per minute per worker per thread */}}
+{{- define "groundx.layout.map.throughput.default" -}}
+30000
+{{- end }}
+
+{{- define "groundx.layout.map.threshold" -}}
+{{- $rep := (include "groundx.layout.map.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.layout.map.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "threshold" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.layout.map.throughput" -}}
 {{- $rep := (include "groundx.layout.map.replicas" . | fromYaml) -}}
 {{- $ic := include "groundx.layout.map.create" . -}}
@@ -86,10 +111,13 @@ true
   {{- $_ := set $in "hpa" $chp -}}
 {{- end -}}
 {{- if not (hasKey $in "threshold") -}}
-  {{- $_ := set $in "threshold" 0.8 -}}
+  {{- $_ := set $in "threshold" (include "groundx.layout.map.threshold.default" .) -}}
 {{- end -}}
 {{- if not (hasKey $in "throughput") -}}
-  {{- $_ := set $in "throughput" 10 -}}
+  {{- $threads := (include "groundx.layout.map.threads" . | int) -}}
+  {{- $workers := (include "groundx.layout.map.workers" . | int) -}}
+  {{- $dflt := (include "groundx.layout.map.throughput.default" . | int) -}}
+  {{- $_ := set $in "throughput" (mul $dflt $threads $workers) -}}
 {{- end -}}
 {{- if not (hasKey $in "min") -}}
   {{- if hasKey $in "desired" -}}

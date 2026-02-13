@@ -54,6 +54,31 @@ GROUNDX_AGENT_API_KEY
 {{ dig "existingSecret" false $in }}
 {{- end }}
 
+{{/* fraction of threshold */}}
+{{- define "groundx.extract.agent.target.default" -}}
+0.8
+{{- end }}
+
+{{/* queue message backlog */}}
+{{- define "groundx.extract.agent.threshold.default" -}}
+10
+{{- end }}
+
+{{/* tokens per minute per worker per thread */}}
+{{- define "groundx.extract.agent.throughput.default" -}}
+3000
+{{- end }}
+
+{{- define "groundx.extract.agent.threshold" -}}
+{{- $rep := (include "groundx.extract.agent.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.extract.agent.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "threshold" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.extract.agent.throughput" -}}
 {{- $rep := (include "groundx.extract.agent.replicas" . | fromYaml) -}}
 {{- $ic := include "groundx.extract.agent.create" . -}}
@@ -132,11 +157,17 @@ GROUNDX_AGENT_API_KEY
 {{- if not (hasKey $in "hpa") -}}
   {{- $_ := set $in "hpa" $chp -}}
 {{- end -}}
+{{- if not (hasKey $in "target") -}}
+  {{- $_ := set $in "target" (include "groundx.extract.agent.target.default" .) -}}
+{{- end -}}
 {{- if not (hasKey $in "threshold") -}}
-  {{- $_ := set $in "threshold" 0.8 -}}
+  {{- $_ := set $in "threshold" (include "groundx.extract.agent.threshold.default" .) -}}
 {{- end -}}
 {{- if not (hasKey $in "throughput") -}}
-  {{- $_ := set $in "throughput" 10 -}}
+  {{- $threads := (include "groundx.extract.agent.threads" . | int) -}}
+  {{- $workers := (include "groundx.extract.agent.workers" . | int) -}}
+  {{- $dflt := (include "groundx.extract.agent.throughput.default" . | int) -}}
+  {{- $_ := set $in "throughput" (mul $dflt $threads $workers) -}}
 {{- end -}}
 {{- if not (hasKey $in "min") -}}
   {{- if hasKey $in "desired" -}}
@@ -177,7 +208,7 @@ GROUNDX_AGENT_API_KEY
 {{- define "groundx.extract.agent.threads" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
-{{ dig "threads" 1 $in }}
+{{ dig "threads" 2 $in }}
 {{- end }}
 
 {{- define "groundx.extract.agent.workers" -}}

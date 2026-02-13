@@ -36,6 +36,31 @@ true
 {{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
+{{/* fraction of threshold */}}
+{{- define "groundx.groundx.target.default" -}}
+3
+{{- end }}
+
+{{/* queue message backlog */}}
+{{- define "groundx.groundx.threshold.default" -}}
+1
+{{- end }}
+
+{{/* tokens per minute per worker per thread */}}
+{{- define "groundx.groundx.throughput.default" -}}
+30000
+{{- end }}
+
+{{- define "groundx.groundx.threshold" -}}
+{{- $rep := (include "groundx.groundx.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.groundx.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "threshold" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.groundx.throughput" -}}
 {{- $rep := (include "groundx.groundx.replicas" . | fromYaml) -}}
 {{- $ic := include "groundx.groundx.create" . -}}
@@ -83,11 +108,14 @@ true
 {{- if not (hasKey $in "hpa") -}}
   {{- $_ := set $in "hpa" $chp -}}
 {{- end -}}
+{{- if not (hasKey $in "target") -}}
+  {{- $_ := set $in "target" (include "groundx.groundx.target.default" .) -}}
+{{- end -}}
 {{- if not (hasKey $in "threshold") -}}
-  {{- $_ := set $in "threshold" 3 -}}
+  {{- $_ := set $in "threshold" (include "groundx.groundx.threshold.default" .) -}}
 {{- end -}}
 {{- if not (hasKey $in "throughput") -}}
-  {{- $_ := set $in "throughput" 9600 -}}
+  {{- $_ := set $in "throughput" (include "groundx.groundx.throughput.default" .) -}}
 {{- end -}}
 {{- if not (hasKey $in "min") -}}
   {{- if hasKey $in "desired" -}}

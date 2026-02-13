@@ -10,20 +10,20 @@
   "groundx"
   "layout.api"
   "layout.correct"
+  "layout.inference"
   "layout.map"
   "layout.ocr"
   "layout.process"
   "layout.save"
   "layoutWebhook"
+  "summary.api"
+  "summary.inference"
+  "summaryClient"
 -}}
 {{- $na := list
-  "layout.inference"
   "preProcess"
   "process"
   "queue"
-  "summaryClient"
-  "summary.api"
-  "summary.inference"
   "upload"
 -}}
 

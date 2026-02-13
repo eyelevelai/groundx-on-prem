@@ -31,6 +31,31 @@ false
 {{ dig "containerPort" 8080 $in }}
 {{- end }}
 
+{{/* fraction of threshold */}}
+{{- define "groundx.extract.api.target.default" -}}
+3
+{{- end }}
+
+{{/* average response time in seconds */}}
+{{- define "groundx.extract.api.threshold.default" -}}
+1
+{{- end }}
+
+{{/* tokens per minute per worker per thread */}}
+{{- define "groundx.extract.api.throughput.default" -}}
+30000
+{{- end }}
+
+{{- define "groundx.extract.api.threshold" -}}
+{{- $rep := (include "groundx.extract.api.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.extract.api.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "threshold" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.extract.api.throughput" -}}
 {{- $rep := (include "groundx.extract.api.replicas" . | fromYaml) -}}
 {{- $ic := include "groundx.extract.api.create" . -}}
@@ -94,11 +119,17 @@ false
 {{- if not (hasKey $in "hpa") -}}
   {{- $_ := set $in "hpa" $chp -}}
 {{- end -}}
+{{- if not (hasKey $in "target") -}}
+  {{- $_ := set $in "target" (include "groundx.extract.api.target.default" .) -}}
+{{- end -}}
 {{- if not (hasKey $in "threshold") -}}
-  {{- $_ := set $in "threshold" 3 -}}
+  {{- $_ := set $in "threshold" (include "groundx.extract.api.threshold.default" .) -}}
 {{- end -}}
 {{- if not (hasKey $in "throughput") -}}
-  {{- $_ := set $in "throughput" 9600 -}}
+  {{- $threads := (include "groundx.extract.api.threads" . | int) -}}
+  {{- $workers := (include "groundx.extract.api.workers" . | int) -}}
+  {{- $dflt := (include "groundx.extract.api.throughput.default" . | int) -}}
+  {{- $_ := set $in "throughput" (mul $dflt $threads $workers) -}}
 {{- end -}}
 {{- if not (hasKey $in "min") -}}
   {{- if hasKey $in "desired" -}}
@@ -151,7 +182,7 @@ false
 {{- define "groundx.extract.api.threads" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{ dig "threads" 1 $in }}
+{{ dig "threads" 2 $in }}
 {{- end }}
 
 {{- define "groundx.extract.api.timeout" -}}
@@ -163,7 +194,7 @@ false
 {{- define "groundx.extract.api.workers" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{ dig "workers" 1 $in }}
+{{ dig "workers" 2 $in }}
 {{- end }}
 
 {{- define "groundx.extract.api.ingress" -}}

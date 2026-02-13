@@ -48,6 +48,31 @@ GCP_CREDENTIALS
 {{ coalesce $json "" }}
 {{- end }}
 
+{{/* fraction of threshold */}}
+{{- define "groundx.extract.save.target.default" -}}
+0.8
+{{- end }}
+
+{{/* queue message backlog */}}
+{{- define "groundx.extract.save.threshold.default" -}}
+10
+{{- end }}
+
+{{/* tokens per minute per worker per thread */}}
+{{- define "groundx.extract.save.throughput.default" -}}
+20000
+{{- end }}
+
+{{- define "groundx.extract.save.threshold" -}}
+{{- $rep := (include "groundx.extract.save.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.extract.save.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "threshold" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.extract.save.throughput" -}}
 {{- $rep := (include "groundx.extract.save.replicas" . | fromYaml) -}}
 {{- $ic := include "groundx.extract.save.create" . -}}
@@ -126,11 +151,17 @@ GCP_CREDENTIALS
 {{- if not (hasKey $in "hpa") -}}
   {{- $_ := set $in "hpa" $chp -}}
 {{- end -}}
+{{- if not (hasKey $in "target") -}}
+  {{- $_ := set $in "target" (include "groundx.extract.save.target.default" .) -}}
+{{- end -}}
 {{- if not (hasKey $in "threshold") -}}
-  {{- $_ := set $in "threshold" 0.8 -}}
+  {{- $_ := set $in "threshold" (include "groundx.extract.save.threshold.default" .) -}}
 {{- end -}}
 {{- if not (hasKey $in "throughput") -}}
-  {{- $_ := set $in "throughput" 10 -}}
+  {{- $threads := (include "groundx.extract.save.threads" . | int) -}}
+  {{- $workers := (include "groundx.extract.save.workers" . | int) -}}
+  {{- $dflt := (include "groundx.extract.save.throughput.default" . | int) -}}
+  {{- $_ := set $in "throughput" (mul $dflt $threads $workers) -}}
 {{- end -}}
 {{- if not (hasKey $in "min") -}}
   {{- if hasKey $in "desired" -}}
@@ -173,7 +204,7 @@ GCP_CREDENTIALS
 {{- define "groundx.extract.save.threads" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "save" dict $b -}}
-{{ dig "threads" 1 $in }}
+{{ dig "threads" 2 $in }}
 {{- end }}
 
 {{- define "groundx.extract.save.workers" -}}

@@ -36,6 +36,31 @@ true
 {{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
+{{/* fraction of threshold */}}
+{{- define "groundx.layoutWebhook.target.default" -}}
+3
+{{- end }}
+
+{{/* average response time in seconds */}}
+{{- define "groundx.layoutWebhook.threshold.default" -}}
+1
+{{- end }}
+
+{{/* tokens per minute */}}
+{{- define "groundx.layoutWebhook.throughput.default" -}}
+60000
+{{- end }}
+
+{{- define "groundx.layoutWebhook.threshold" -}}
+{{- $rep := (include "groundx.layoutWebhook.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.layoutWebhook.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "threshold" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.layoutWebhook.throughput" -}}
 {{- $rep := (include "groundx.layoutWebhook.replicas" . | fromYaml) -}}
 {{- $ic := include "groundx.layoutWebhook.create" . -}}
@@ -83,11 +108,14 @@ true
 {{- if not (hasKey $in "hpa") -}}
   {{- $_ := set $in "hpa" $chp -}}
 {{- end -}}
+{{- if not (hasKey $in "target") -}}
+  {{- $_ := set $in "target" (include "groundx.layoutWebhook.target.default" .) -}}
+{{- end -}}
 {{- if not (hasKey $in "threshold") -}}
-  {{- $_ := set $in "threshold" 3 -}}
+  {{- $_ := set $in "threshold" (include "groundx.layoutWebhook.threshold.default" .) -}}
 {{- end -}}
 {{- if not (hasKey $in "throughput") -}}
-  {{- $_ := set $in "throughput" 9600 -}}
+  {{- $_ := set $in "throughput" (include "groundx.layoutWebhook.throughput.default" .) -}}
 {{- end -}}
 {{- if not (hasKey $in "min") -}}
   {{- if hasKey $in "desired" -}}
