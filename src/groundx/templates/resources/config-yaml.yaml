@@ -26,6 +26,12 @@
 {{- $sac := include "groundx.summary.api.threshold" . | trim -}}
 {{- $sic := include "groundx.summary.inference.threshold" . | trim -}}
 {{- $scc := include "groundx.summaryClient.threshold" . | trim -}}
+{{- $sce := include "groundx.summary.create" . -}}
+
+{{- $ppc := include "groundx.preProcess.threshold" . | trim -}}
+{{- $prc := include "groundx.process.threshold" . | trim -}}
+{{- $qpc := include "groundx.queue.threshold" . | trim -}}
+{{- $upc := include "groundx.upload.threshold" . | trim -}}
 {{- if gt (len $svcs) 0 }}
 apiVersion: v1
 kind: ConfigMap
@@ -206,7 +212,7 @@ data:
       {{- end }}
       document:
         tokensPerMinute: {{ include "groundx.throughput.tpm.document" . }}
-      {{- if or (ne $lic "0") (ne $sac "0") (ne $sic "0") (ne $scc "0") }}
+      {{- if or (ne $lic "0") (ne $sac "0") (ne $sic "0") (and (eq $sce "true") (ne $scc "0")) }}
       inference:
         {{- if ne $lic "0" }}
         - name: {{ include "groundx.layout.serviceName" . }}-inference
@@ -220,34 +226,39 @@ data:
         - name: {{ include "groundx.summary.serviceName" . }}-inference
           tokensPerMinute: {{ $sic }}
         {{- end }}
-        {{- if ne $scc "0" }}
+        {{- if and (eq $sce "true") (ne $scc "0") }}
         - name: {{ include "groundx.summaryClient.serviceName" . }}
           tokensPerMinute: {{ $scc }}
         {{- end }}
       {{- end }}
       page:
         tokensPerMinute: {{ include "groundx.throughput.tpm.page" . }}
-      {{- if eq (include "groundx.stream.hasKafka" .) "true" }}
+      {{- if or (ne $ppc "0") (ne $prc "0") (ne $qpc "0") (ne $upc "0") (and (ne $sce "true") (ne $scc "0")) }}
       queue:
-        {{- if eq (dig "type" "kafka" $ppq) "kafka" }}
+        {{- if ne $ppc "0" }}
         - name: {{ include "groundx.preProcess.serviceName" . }}
           target: {{ dig "topic" "" $ppq }}
-          threshold: {{ include "groundx.throughput.services.preProcess.queue" . }}
+          threshold: {{ $ppc }}
         {{- end }}
-        {{- if eq (dig "type" "kafka" $pq) "kafka" }}
+        {{- if ne $prc "0" }}
         - name: {{ include "groundx.process.serviceName" . }}
           target: {{ dig "topic" "" $pq }}
-          threshold: {{ include "groundx.throughput.services.process.queue" . }}
+          threshold: {{ $prc }}
         {{- end }}
-        {{- if eq (dig "type" "kafka" $uq) "kafka" }}
+        {{- if ne $qpc "0" }}
         - name: {{ include "groundx.queue.serviceName" . }}
           target: {{ dig "topic" "" $uq }}
-          threshold: {{ include "groundx.throughput.services.queue.queue" . }}
+          threshold: {{ $qpc }}
         {{- end }}
-        {{- if eq (dig "type" "kafka" $lq) "kafka" }}
+        {{- if ne $upc "0" }}
         - name: {{ include "groundx.upload.serviceName" . }}
           target: {{ dig "topic" "" $lq }}
-          threshold: {{ include "groundx.throughput.services.upload.queue" . }}
+          threshold: {{ $upc }}
+        {{- end }}
+        {{- if and (ne $sce "true") (ne $scc "0") }}
+        - name: {{ include "groundx.summaryClient.serviceName" . }}
+          target: {{ dig "topic" "" $sq }}
+          threshold: {{ $scc }}
         {{- end }}
       {{- end }}
       session:

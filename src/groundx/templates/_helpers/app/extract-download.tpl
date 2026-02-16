@@ -90,6 +90,7 @@ false
   "metric"       (printf "%s:task" $name)
   "name"         $name
   "replicas"     $rep
+  "throughput"   (include "groundx.extract.download.throughput" .)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}
@@ -165,6 +166,11 @@ false
 {{- define "groundx.extract.download.settings" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "download" dict $b -}}
+
+{{- $dpnd := dict
+  "extract" "extract"
+-}}
+
 {{- $rep := (include "groundx.extract.download.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.extract.download.serviceAccountName" . -}}
 {{- $data := dict
@@ -175,23 +181,21 @@ false
 {{- $_ := set $data (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .) -}}
 {{- end -}}
 {{- $cfg := dict
-  "celery"     ("celery_agents")
-  "dependencies" (dict
-    "extract" "extract"
-  )
-  "fileDomain" (include "groundx.extract.file.serviceDependency" .)
-  "filePort"   (include "groundx.extract.file.port" .)
-  "image"      (include "groundx.extract.download.image" .)
-  "mapPrefix"  ("extract")
-  "name"       (include "groundx.extract.download.serviceName" .)
-  "node"       (include "groundx.extract.download.node" .)
-  "pull"       (include "groundx.extract.download.imagePullPolicy" .)
-  "queue"      (include "groundx.extract.download.queue" .)
-  "replicas"   ($rep)
-  "secrets"    ($data)
-  "service"    (include "groundx.extract.serviceName" .)
-  "threads"    (include "groundx.extract.download.threads" .)
-  "workers"    (include "groundx.extract.download.workers" .)
+  "celery"       ("celery_agents")
+  "dependencies" $dpnd
+  "fileDomain"   (include "groundx.extract.file.serviceDependency" .)
+  "filePort"     (include "groundx.extract.file.port" .)
+  "image"        (include "groundx.extract.download.image" .)
+  "mapPrefix"    ("extract")
+  "name"         (include "groundx.extract.download.serviceName" .)
+  "node"         (include "groundx.extract.download.node" .)
+  "pull"         (include "groundx.extract.download.imagePullPolicy" .)
+  "queue"        (include "groundx.extract.download.queue" .)
+  "replicas"     ($rep)
+  "secrets"      ($data)
+  "service"      (include "groundx.extract.serviceName" .)
+  "threads"      (include "groundx.extract.download.threads" .)
+  "workers"      (include "groundx.extract.download.workers" .)
 -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}

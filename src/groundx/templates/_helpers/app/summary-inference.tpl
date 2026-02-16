@@ -115,6 +115,7 @@ true
   "metric"       (printf "%s:inference" $name)
   "name"         $name
   "replicas"     $rep
+  "throughput"   (include "groundx.summary.inference.throughput" .)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}

@@ -13,6 +13,7 @@
 {{- $podName := dig "name" "" $svcData -}}
 {{- $hpaName := printf "%s-hpa" $podName -}}
 {{- $replicas := dig "replicas" dict $svcData -}}
+{{- $throughput := dig "throughput" "0" $svcData -}}
 {{- $upCooldown := dig "upCooldown" "" $svcData -}}
 
 {{- $max := dig "max" "1" $replicas -}}
@@ -42,6 +43,15 @@ spec:
   minReplicas: {{ $min }}
   maxReplicas: {{ $max }}
   metrics:
+    {{- if ne $throughput "0" }}
+    - type: External
+      external:
+        metric:
+          name: throughput
+        target:
+          type: Value
+          value: {{ $throughput }}  
+    {{- end }}
     - type: External
       external:
         metric:

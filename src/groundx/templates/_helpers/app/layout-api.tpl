@@ -91,6 +91,7 @@ true
   "metric"       (printf "%s:api" $name)
   "name"         $name
   "replicas"     $rep
+  "throughput"   (include "groundx.layout.api.throughput" .)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}
@@ -223,19 +224,23 @@ false
 {{- $svc := include "groundx.layout.serviceName" . -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "api" dict $b -}}
+
+{{- $dpnd := dict -}}
+
 {{- $rep := (include "groundx.layout.api.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.layout.api.serviceAccountName" . -}}
 {{- $cfg := dict
-  "cfg"       (printf "%s-config-py-map" $svc)
-  "gunicorn"  (printf "%s-gunicorn-conf-py-map" $svc)
-  "image"     (include "groundx.layout.api.image" .)
-  "interface" (include "groundx.layout.api.interface" .)
-  "mapPrefix" ("layout")
-  "name"      (include "groundx.layout.api.serviceName" .)
-  "node"      (include "groundx.layout.api.node" .)
-  "port"      (include "groundx.layout.api.containerPort" .)
-  "pull"      (include "groundx.layout.api.imagePullPolicy" .)
-  "replicas"  ($rep)
+  "cfg"          (printf "%s-config-py-map" $svc)
+  "dependencies" $dpnd
+  "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
+  "image"        (include "groundx.layout.api.image" .)
+  "interface"    (include "groundx.layout.api.interface" .)
+  "mapPrefix"    ("layout")
+  "name"         (include "groundx.layout.api.serviceName" .)
+  "node"         (include "groundx.layout.api.node" .)
+  "port"         (include "groundx.layout.api.containerPort" .)
+  "pull"         (include "groundx.layout.api.imagePullPolicy" .)
+  "replicas"     ($rep)
 -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}

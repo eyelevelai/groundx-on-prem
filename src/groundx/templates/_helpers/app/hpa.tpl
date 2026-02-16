@@ -16,14 +16,12 @@
   "layout.process"
   "layout.save"
   "layoutWebhook"
-  "summary.api"
-  "summary.inference"
-  "summaryClient"
--}}
-{{- $na := list
   "preProcess"
   "process"
   "queue"
+  "summary.api"
+  "summary.inference"
+  "summaryClient"
   "upload"
 -}}
 
@@ -41,5 +39,5 @@
 {{- end }}
 
 {{- define "groundx.hpa.cooldown" -}}
-60
+75
 {{- end }}

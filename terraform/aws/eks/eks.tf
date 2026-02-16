@@ -114,7 +114,7 @@ locals {
         }
 
         labels                                              = {
-          "node"                                            = local.cpu_memory_label
+          "eyelevel_node"                                   = local.cpu_memory_label
         }
 
         tags                                                = {
@@ -155,7 +155,7 @@ locals {
         }
 
         labels                                              = {
-          "node"                                            = local.cpu_only_label
+          "eyelevel_node"                                   = local.cpu_only_label
         }
 
         tags                                                = {
@@ -196,7 +196,7 @@ locals {
         }
 
         labels                                              = {
-          "node"                                            = local.gpu_layout_label
+          "eyelevel_node"                                   = local.gpu_layout_label
         }
 
         tags                                                = {
@@ -237,7 +237,7 @@ locals {
         }
 
         labels                                              = {
-          "node"                                            = local.gpu_summary_label
+          "eyelevel_node"                                   = local.gpu_summary_label
         }
 
         tags                                                = {
@@ -280,7 +280,7 @@ locals {
         }
 
         labels                                              = {
-          "node"                                            = local.gpu_ranker_label
+          "eyelevel_node"                                   = local.gpu_ranker_label
         }
 
         tags                                                = {

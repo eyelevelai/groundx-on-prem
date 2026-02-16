@@ -98,6 +98,7 @@ GCP_CREDENTIALS
   "metric"       (printf "%s:task" $name)
   "name"         $name
   "replicas"     $rep
+  "throughput"   (include "groundx.extract.save.throughput" .)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}
@@ -216,6 +217,11 @@ GCP_CREDENTIALS
 {{- define "groundx.extract.save.settings" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "save" dict $b -}}
+
+{{- $dpnd := dict
+  "extract" "extract"
+-}}
+
 {{- $rep := (include "groundx.extract.save.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.extract.save.serviceAccountName" . -}}
 {{- $data := dict
@@ -226,23 +232,21 @@ GCP_CREDENTIALS
 {{- $_ := set $data (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .) -}}
 {{- end -}}
 {{- $cfg := dict
-  "celery"     ("celery_agents")
-  "dependencies" (dict
-    "extract" "extract"
-  )
-  "fileDomain" (include "groundx.extract.file.serviceDependency" .)
-  "filePort"   (include "groundx.extract.file.port" .)
-  "image"      (include "groundx.extract.save.image" .)
-  "mapPrefix"  ("extract")
-  "name"       (include "groundx.extract.save.serviceName" .)
-  "node"       (include "groundx.extract.save.node" .)
-  "pull"       (include "groundx.extract.save.imagePullPolicy" .)
-  "queue"      (include "groundx.extract.save.queue" .)
-  "replicas"   ($rep)
-  "secrets"    ($data)
-  "service"    (include "groundx.extract.serviceName" .)
-  "threads"    (include "groundx.extract.save.threads" .)
-  "workers"    (include "groundx.extract.save.workers" .)
+  "celery"       ("celery_agents")
+  "dependencies" $dpnd
+  "fileDomain"   (include "groundx.extract.file.serviceDependency" .)
+  "filePort"     (include "groundx.extract.file.port" .)
+  "image"        (include "groundx.extract.save.image" .)
+  "mapPrefix"    ("extract")
+  "name"         (include "groundx.extract.save.serviceName" .)
+  "node"         (include "groundx.extract.save.node" .)
+  "pull"         (include "groundx.extract.save.imagePullPolicy" .)
+  "queue"        (include "groundx.extract.save.queue" .)
+  "replicas"     ($rep)
+  "secrets"      ($data)
+  "service"      (include "groundx.extract.serviceName" .)
+  "threads"      (include "groundx.extract.save.threads" .)
+  "workers"      (include "groundx.extract.save.workers" .)
 -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}

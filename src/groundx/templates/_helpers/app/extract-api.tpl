@@ -81,6 +81,7 @@ false
   "metric"       (printf "%s:api" $name)
   "name"         $name
   "replicas"     $rep
+  "throughput"   (include "groundx.extract.api.throughput" .)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}
@@ -231,6 +232,9 @@ false
 {{- $b := .Values.extract | default dict -}}
 {{- $ur := dig "callbackUrl" "" $b -}}
 {{- $in := dig "api" dict $b -}}
+
+{{- $dpnd := dict -}}
+
 {{- $rep := (include "groundx.extract.api.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.extract.api.serviceAccountName" . -}}
 {{- $data := dict
@@ -242,6 +246,7 @@ false
 {{- end -}}
 {{- $cfg := dict
   "cfg"          (printf "%s-config-py-map" $svc)
+  "dependencies" $dpnd
   "fileDomain"   (include "groundx.extract.file.serviceDependency" .)
   "filePort"     (include "groundx.extract.file.port" .)
   "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)

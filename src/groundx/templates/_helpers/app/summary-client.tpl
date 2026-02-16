@@ -46,13 +46,14 @@ true
 0.8
 {{- end }}
 
-{{/* tokens per minute per worker per thread */}}
 {{- define "groundx.summaryClient.threshold.default" -}}
 {{- $sc := include "groundx.summary.create" . -}}
 {{- if eq $sc "true" -}}
+{{/* tokens per minute per worker per thread */}}
 9600
 {{- else -}}
-20000
+{{/* queue message backlog */}}
+10
 {{- end -}}
 {{- end }}
 
@@ -93,14 +94,20 @@ true
 {{- if eq $ic "true" -}}
 {{- $enabled = dig "hpa" false $rep -}}
 {{- end -}}
+{{- $sc := include "groundx.summary.create" . -}}
+{{- $qty := "queue" -}}
+{{- if eq $sc "true" -}}
+{{- $qty = "inference" -}}
+{{- end -}}
 {{- $name := (include "groundx.summaryClient.serviceName" .) -}}
 {{- $cld := dig "cooldown" 60 $rep -}}
 {{- $cfg := dict
   "downCooldown" (mul $cld 2)
   "enabled"      $enabled
-  "metric"       (printf "%s:inference" $name)
+  "metric"       (printf "%s:%s" $name $qty)
   "name"         $name
   "replicas"     $rep
+  "throughput"   (include "groundx.summaryClient.throughput" .)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}

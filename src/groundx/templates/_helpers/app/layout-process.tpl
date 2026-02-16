@@ -91,6 +91,7 @@ true
   "metric"       (printf "%s:task" $name)
   "name"         $name
   "replicas"     $rep
+  "throughput"   (include "groundx.layout.process.throughput" .)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}
@@ -166,20 +167,24 @@ true
 {{- define "groundx.layout.process.settings" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "process" dict $b -}}
+
+{{- $dpnd := dict -}}
+
 {{- $rep := (include "groundx.layout.process.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.layout.process.serviceAccountName" . -}}
 {{- $cfg := dict
-  "celery"    ("document.celery_process")
-  "image"     (include "groundx.layout.process.image" .)
-  "mapPrefix" ("layout")
-  "name"      (include "groundx.layout.process.serviceName" .)
-  "node"      (include "groundx.layout.process.node" .)
-  "pull"      (include "groundx.layout.process.imagePullPolicy" .)
-  "queue"     (include "groundx.layout.process.queue" .)
-  "replicas"  ($rep)
-  "service"   (include "groundx.layout.serviceName" .)
-  "threads"   (include "groundx.layout.process.threads" .)
-  "workers"   (include "groundx.layout.process.workers" .)
+  "celery"       ("document.celery_process")
+  "dependencies" $dpnd
+  "image"        (include "groundx.layout.process.image" .)
+  "mapPrefix"    ("layout")
+  "name"         (include "groundx.layout.process.serviceName" .)
+  "node"         (include "groundx.layout.process.node" .)
+  "pull"         (include "groundx.layout.process.imagePullPolicy" .)
+  "queue"        (include "groundx.layout.process.queue" .)
+  "replicas"     ($rep)
+  "service"      (include "groundx.layout.serviceName" .)
+  "threads"      (include "groundx.layout.process.threads" .)
+  "workers"      (include "groundx.layout.process.workers" .)
 -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}

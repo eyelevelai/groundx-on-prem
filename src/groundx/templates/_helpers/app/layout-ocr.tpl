@@ -91,6 +91,7 @@ true
   "metric"       (printf "%s:task" $name)
   "name"         $name
   "replicas"     $rep
+  "throughput"   (include "groundx.layout.ocr.throughput" .)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}
@@ -175,20 +176,24 @@ true
 {{- define "groundx.layout.ocr.settings" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "ocr" dict $b -}}
+
+{{- $dpnd := dict -}}
+
 {{- $rep := (include "groundx.layout.ocr.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.layout.ocr.serviceAccountName" . -}}
 {{- $cfg := dict
-  "celery"    ("document.celery_process")
-  "image"     (include "groundx.layout.ocr.image" .)
-  "mapPrefix" ("layout")
-  "name"      (include "groundx.layout.ocr.serviceName" .)
-  "node"      (include "groundx.layout.ocr.node" .)
-  "pull"      (include "groundx.layout.ocr.imagePullPolicy" .)
-  "queue"     (include "groundx.layout.ocr.queue" .)
-  "replicas"  ($rep)
-  "service"   (include "groundx.layout.serviceName" .)
-  "threads"   (include "groundx.layout.ocr.threads" .)
-  "workers"   (include "groundx.layout.ocr.workers" .)
+  "celery"       ("document.celery_process")
+  "dependencies" $dpnd
+  "image"        (include "groundx.layout.ocr.image" .)
+  "mapPrefix"    ("layout")
+  "name"         (include "groundx.layout.ocr.serviceName" .)
+  "node"         (include "groundx.layout.ocr.node" .)
+  "pull"         (include "groundx.layout.ocr.imagePullPolicy" .)
+  "queue"        (include "groundx.layout.ocr.queue" .)
+  "replicas"     ($rep)
+  "service"      (include "groundx.layout.serviceName" .)
+  "threads"      (include "groundx.layout.ocr.threads" .)
+  "workers"      (include "groundx.layout.ocr.workers" .)
 -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}

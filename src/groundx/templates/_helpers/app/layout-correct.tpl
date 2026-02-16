@@ -85,6 +85,7 @@ true
   "metric"       (printf "%s:task" $name)
   "name"         $name
   "replicas"     $rep
+  "throughput"   (include "groundx.layout.correct.throughput" .)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}
@@ -160,20 +161,24 @@ true
 {{- define "groundx.layout.correct.settings" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "correct" dict $b -}}
+
+{{- $dpnd := dict -}}
+
 {{- $rep := (include "groundx.layout.correct.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.layout.correct.serviceAccountName" . -}}
 {{- $cfg := dict
-  "celery"    ("document.celery_process")
-  "image"     (include "groundx.layout.correct.image" .)
-  "mapPrefix" ("layout")
-  "name"      (include "groundx.layout.correct.serviceName" .)
-  "node"      (include "groundx.layout.correct.node" .)
-  "pull"      (include "groundx.layout.correct.imagePullPolicy" .)
-  "queue"     (include "groundx.layout.correct.queue" .)
-  "replicas"  ($rep)
-  "service"   (include "groundx.layout.serviceName" .)
-  "threads"   (include "groundx.layout.correct.threads" .)
-  "workers"   (include "groundx.layout.correct.workers" .)
+  "celery"       ("document.celery_process")
+  "dependencies" $dpnd
+  "image"        (include "groundx.layout.correct.image" .)
+  "mapPrefix"    ("layout")
+  "name"         (include "groundx.layout.correct.serviceName" .)
+  "node"         (include "groundx.layout.correct.node" .)
+  "pull"         (include "groundx.layout.correct.imagePullPolicy" .)
+  "queue"        (include "groundx.layout.correct.queue" .)
+  "replicas"     ($rep)
+  "service"      (include "groundx.layout.serviceName" .)
+  "threads"      (include "groundx.layout.correct.threads" .)
+  "workers"      (include "groundx.layout.correct.workers" .)
 -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}

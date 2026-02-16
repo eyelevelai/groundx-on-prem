@@ -41,6 +41,62 @@ true
 {{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
+{{/* fraction of threshold */}}
+{{- define "groundx.queue.target.default" -}}
+0.8
+{{- end }}
+
+{{/* queue message backlog */}}
+{{- define "groundx.queue.threshold.default" -}}
+10
+{{- end }}
+
+{{/* tokens per minute per worker per thread */}}
+{{- define "groundx.queue.throughput.default" -}}
+30000
+{{- end }}
+
+{{- define "groundx.queue.threshold" -}}
+{{- $rep := (include "groundx.queue.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.queue.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "threshold" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.queue.throughput" -}}
+{{- $rep := (include "groundx.queue.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.queue.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "throughput" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.queue.hpa" -}}
+{{- $ic := include "groundx.queue.create" . -}}
+{{- $rep := (include "groundx.queue.replicas" . | fromYaml) -}}
+{{- $enabled := false -}}
+{{- if eq $ic "true" -}}
+{{- $enabled = dig "hpa" false $rep -}}
+{{- end -}}
+{{- $name := (include "groundx.queue.serviceName" .) -}}
+{{- $cld := dig "cooldown" 60 $rep -}}
+{{- $cfg := dict
+  "downCooldown" (mul $cld 2)
+  "enabled"      $enabled
+  "metric"       (printf "%s:queue" $name)
+  "name"         $name
+  "replicas"     $rep
+  "throughput"   (include "groundx.queue.throughput" .)
+  "upCooldown"   $cld
+-}}
+{{- $cfg | toYaml -}}
+{{- end }}
+
 {{- define "groundx.queue.queueSize" -}}
 {{- $in := .Values.queue | default dict -}}
 {{ dig "queueSize" 4 $in }}
@@ -49,9 +105,38 @@ true
 {{- define "groundx.queue.replicas" -}}
 {{- $b := .Values.queue | default dict -}}
 {{- $in := dig "replicas" dict $b -}}
+{{- $chp := include "groundx.cluster.hpa" . -}}
 {{- if not $in }}
-  {{- $in = dict "desired" 1 "max" 1 "min" 1 -}}
+  {{- $in = dict -}}
 {{- end }}
+{{- if not (hasKey $in "cooldown") -}}
+  {{- $_ := set $in "cooldown" (include "groundx.hpa.cooldown" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "hpa") -}}
+  {{- $_ := set $in "hpa" $chp -}}
+{{- end -}}
+{{- if not (hasKey $in "target") -}}
+  {{- $_ := set $in "target" (include "groundx.queue.target.default" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "threshold") -}}
+  {{- $_ := set $in "threshold" (include "groundx.queue.threshold.default" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "throughput") -}}
+  {{- $_ := set $in "throughput" (include "groundx.queue.throughput.default" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "min") -}}
+  {{- if hasKey $in "desired" -}}
+    {{- $_ := set $in "min" (dig "desired" 1 $in) -}}
+  {{- else -}}
+    {{- $_ := set $in "min" 1 -}}
+  {{- end -}}
+{{- end -}}
+{{- if not (hasKey $in "desired") -}}
+  {{- $_ := set $in "desired" 1 -}}
+{{- end -}}
+{{- if not (hasKey $in "max") -}}
+  {{- $_ := set $in "max" 32 -}}
+{{- end -}}
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 

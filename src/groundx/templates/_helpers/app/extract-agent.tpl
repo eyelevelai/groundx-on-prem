@@ -104,6 +104,7 @@ GROUNDX_AGENT_API_KEY
   "metric"       (printf "%s:task" $name)
   "name"         $name
   "replicas"     $rep
+  "throughput"   (include "groundx.extract.agent.throughput" .)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}
@@ -237,6 +238,11 @@ GROUNDX_AGENT_API_KEY
 {{- define "groundx.extract.agent.settings" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
+
+{{- $dpnd := dict
+  "extract" "extract"
+-}}
+
 {{- $rep := (include "groundx.extract.agent.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.extract.agent.serviceAccountName" . -}}
 {{- $data := dict
@@ -247,23 +253,21 @@ GROUNDX_AGENT_API_KEY
 {{- $_ := set $data (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .) -}}
 {{- end -}}
 {{- $cfg := dict
-  "celery"     ("celery_agents")
-  "dependencies" (dict
-    "extract" "extract"
-  )
-  "fileDomain" (include "groundx.extract.file.serviceDependency" .)
-  "filePort"   (include "groundx.extract.file.port" .)
-  "image"      (include "groundx.extract.agent.image" .)
-  "mapPrefix"  ("extract")
-  "name"       (include "groundx.extract.agent.serviceName" .)
-  "node"       (include "groundx.extract.agent.node" .)
-  "pull"       (include "groundx.extract.agent.imagePullPolicy" .)
-  "queue"      (include "groundx.extract.agent.queue" .)
-  "replicas"   ($rep)
-  "secrets"    ($data)
-  "service"    (include "groundx.extract.serviceName" .)
-  "threads"    (include "groundx.extract.agent.threads" .)
-  "workers"    (include "groundx.extract.agent.workers" .)
+  "celery"       ("celery_agents")
+  "dependencies" $dpnd
+  "fileDomain"   (include "groundx.extract.file.serviceDependency" .)
+  "filePort"     (include "groundx.extract.file.port" .)
+  "image"        (include "groundx.extract.agent.image" .)
+  "mapPrefix"    ("extract")
+  "name"         (include "groundx.extract.agent.serviceName" .)
+  "node"         (include "groundx.extract.agent.node" .)
+  "pull"         (include "groundx.extract.agent.imagePullPolicy" .)
+  "queue"        (include "groundx.extract.agent.queue" .)
+  "replicas"     ($rep)
+  "secrets"      ($data)
+  "service"      (include "groundx.extract.serviceName" .)
+  "threads"      (include "groundx.extract.agent.threads" .)
+  "workers"      (include "groundx.extract.agent.workers" .)
 -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}

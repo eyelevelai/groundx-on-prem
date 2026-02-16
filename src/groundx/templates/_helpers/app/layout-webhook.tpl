@@ -86,6 +86,7 @@ true
   "metric"       (printf "%s:api" $name)
   "name"         $name
   "replicas"     $rep
+  "throughput"   (include "groundx.layoutWebhook.throughput" .)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}

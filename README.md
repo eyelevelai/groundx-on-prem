@@ -128,9 +128,9 @@ By default, the GroundX On-Prem pods deploy to nodes using node selector labels 
 
 ```yaml
 nodeSelector:
-  node: "eyelevel-cpu-only"
+  eyelevel_node: "eyelevel-cpu-only"
 tolerations:
-  - key: "node"
+  - key: "eyelevel_node"
     value: "eyelevel-cpu-only"
     effect: "NoSchedule"
 ```
@@ -265,7 +265,7 @@ eyelevel-gpu-summary
 
 Multiple node labels can be applied to the same node group, so long as resources are available as described in the [total recommended resource](#total-recommended-resources) and [node group resources](#node-group-resources) sections.
 
-However, **all** node labels must exist on **at least 1 node group** within your cluster. The label should be applied with a string key named `node` and an enumerated string value from the list above.
+However, **all** node labels must exist on **at least 1 node group** within your cluster. The label should be applied with a string key named `eyelevel_node` and an enumerated string value from the list above.
 
 #### Applying Custom Node Groups
 
