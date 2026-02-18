@@ -42,7 +42,7 @@ false
 
 {{/* fraction of threshold */}}
 {{- define "groundx.extract.download.target.default" -}}
-0.8
+1
 {{- end }}
 
 {{/* queue message backlog */}}
@@ -90,7 +90,7 @@ false
   "metric"       (printf "%s:task" $name)
   "name"         $name
   "replicas"     $rep
-  "throughput"   (include "groundx.extract.download.throughput" .)
+  "throughput"   (printf "%s:throughput" $name)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}

@@ -39,12 +39,64 @@
 {{- $existing := lookup "v1" "Secret" $ns $tlsSecretName -}}
 {{- $useExisting := eq (include "groundx.metrics.useExisting" . | trim) "true" -}}
 
+{{- $sanFinal := $san -}}
+{{- if or (not $sanFinal) (eq (printf "%v" $sanFinal) "") -}}
+{{- $sanFinal = $metricsName -}}
+{{- end -}}
+
+{{- $saExists := (lookup "v1" "ServiceAccount" $ns $sanFinal) -}}
+{{- $shouldCreateSA := or (not $saExists) (empty $saExists) -}}
+
+{{- if $shouldCreateSA }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $sanFinal | quote }}
+  namespace: {{ $ns | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $metricsName "indent" 4 "root" $) }}
+{{- end }}
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ printf "%s-reader" $metricsName | quote }}
+  namespace: {{ $ns | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $metricsName "indent" 4 "root" $) }}
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ printf "%s-reader" $metricsName | quote }}
+  namespace: {{ $ns | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $metricsName "indent" 4 "root" $) }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $sanFinal | quote }}
+    namespace: {{ $ns | quote }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ printf "%s-reader" $metricsName | quote }}
+
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ $svc }}
-  namespace: {{ include "groundx.ns" . | quote }}
+  namespace: {{ $ns | quote }}
   labels:
 {{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
 spec:
@@ -65,8 +117,8 @@ spec:
 {{ toYaml $anns | nindent 8 }}
 {{- end }}
     spec:
-{{- if $san }}
-      serviceAccountName: {{ $san }}
+{{- if $sanFinal }}
+      serviceAccountName: {{ $sanFinal }}
 {{- end }}
 {{- if gt (len $ips) 0 }}
       imagePullSecrets:
@@ -105,6 +157,10 @@ spec:
 {{- end }}
 {{- end }}
           env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
             - name: TLS_CERT_FILE
               value: /etc/ssl/tls/tls.crt
             - name: TLS_KEY_FILE

@@ -50,7 +50,7 @@ GCP_CREDENTIALS
 
 {{/* fraction of threshold */}}
 {{- define "groundx.extract.save.target.default" -}}
-0.8
+1
 {{- end }}
 
 {{/* queue message backlog */}}
@@ -98,7 +98,7 @@ GCP_CREDENTIALS
   "metric"       (printf "%s:task" $name)
   "name"         $name
   "replicas"     $rep
-  "throughput"   (include "groundx.extract.save.throughput" .)
+  "throughput"   (printf "%s:throughput" $name)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}

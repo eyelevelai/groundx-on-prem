@@ -95,7 +95,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 6,
         "x": 0,
         "y": 0
@@ -124,7 +124,7 @@
           "refId": "A"
         }
       ],
-      "title": "API Pods - Latency",
+      "title": "API Pod - Latency (ms)",
       "type": "timeseries"
     },
     {
@@ -189,7 +189,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 6,
         "x": 6,
         "y": 0
@@ -218,7 +218,7 @@
           "refId": "A"
         }
       ],
-      "title": "Queue - Backlog",
+      "title": "Queue Pod - Backlog",
       "type": "timeseries"
     },
     {
@@ -283,7 +283,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 6,
         "x": 12,
         "y": 0
@@ -312,7 +312,7 @@
           "refId": "A"
         }
       ],
-      "title": "Celery Task - Backlog",
+      "title": "Celery Pod - Backlog",
       "type": "timeseries"
     },
     {
@@ -377,7 +377,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 6,
         "x": 18,
         "y": 0
@@ -406,7 +406,7 @@
           "refId": "A"
         }
       ],
-      "title": "Inference Pods - Throughput",
+      "title": "Inference Pod - Throughput",
       "type": "timeseries"
     },
     {
@@ -471,10 +471,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 18,
+        "h": 7,
+        "w": 6,
         "x": 0,
-        "y": 8
+        "y": 7
       },
       "id": 25,
       "options": {
@@ -494,13 +494,295 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "count by (label_app) (\n  kube_pod_labels{namespace=\"eyelevel\", label_app!=\"\"}\n)",
+          "expr": "count by (label_app) (\n  kube_pod_labels{namespace=\"eyelevel\", label_app!=\"\"}\n    and on(label_app)\n  label_replace(\n    groundx_external_metric{type=\"api\"},\n    \"label_app\", \"$1\",\n    \"name\", \"(.*)\"\n  )\n)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Pod Replicas",
+      "title": "API Pod - Replicas",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 6,
+        "y": 7
+      },
+      "id": 26,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.3",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "count by (label_app) (\n  kube_pod_labels{namespace=\"eyelevel\", label_app!=\"\"}\n    and on(label_app)\n  label_replace(\n    groundx_external_metric{type=\"queue\"},\n    \"label_app\", \"$1\",\n    \"name\", \"(.*)\"\n  )\n)",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Queue Pod - Replicas",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 12,
+        "y": 7
+      },
+      "id": 27,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.3",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "count by (label_app) (\n  kube_pod_labels{namespace=\"eyelevel\", label_app!=\"\"}\n    and on(label_app)\n  label_replace(\n    groundx_external_metric{type=\"task\"},\n    \"label_app\", \"$1\",\n    \"name\", \"(.*)\"\n  )\n)",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Celery Pod - Replicas",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 18,
+        "y": 7
+      },
+      "id": 28,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.3",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "count by (label_app) (\n  kube_pod_labels{namespace=\"eyelevel\", label_app!=\"\"}\n    and on(label_app)\n  label_replace(\n    groundx_external_metric{type=\"inference\"},\n    \"label_app\", \"$1\",\n    \"name\", \"(.*)\"\n  )\n)",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Inference Pod - Replicas",
       "type": "timeseries"
     },
     {
@@ -566,10 +848,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 18,
-        "y": 8
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 14
       },
       "id": 23,
       "options": {
@@ -661,9 +943,9 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 12,
-        "x": 0,
-        "y": 16
+        "w": 8,
+        "x": 8,
+        "y": 14
       },
       "id": 24,
       "options": {
@@ -719,9 +1001,9 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 6,
-        "x": 12,
-        "y": 16
+        "w": 4,
+        "x": 16,
+        "y": 14
       },
       "id": 1,
       "interval": "1m",
@@ -754,7 +1036,7 @@
           "refId": "A"
         }
       ],
-      "title": "CPU Utilisation (from requests)",
+      "title": "CPU (requests)",
       "type": "stat"
     },
     {
@@ -784,9 +1066,9 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 6,
-        "x": 18,
-        "y": 16
+        "w": 4,
+        "x": 20,
+        "y": 14
       },
       "id": 3,
       "interval": "1m",
@@ -814,12 +1096,13 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
+          "editorMode": "code",
           "expr": "sum(max by (cluster, namespace, pod, container)(container_memory_working_set_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\",container!=\"\", image!=\"\"})) / sum(kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", resource=\"memory\"})",
           "instant": true,
           "refId": "A"
         }
       ],
-      "title": "Memory Utilisation (from requests)",
+      "title": "Memory (requests)",
       "type": "stat"
     },
     {
@@ -849,9 +1132,9 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 6,
-        "x": 12,
-        "y": 19
+        "w": 4,
+        "x": 16,
+        "y": 17
       },
       "id": 2,
       "interval": "1m",
@@ -884,7 +1167,7 @@
           "refId": "A"
         }
       ],
-      "title": "CPU Utilisation (from limits)",
+      "title": "CPU (limits)",
       "type": "stat"
     },
     {
@@ -914,9 +1197,9 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 6,
-        "x": 18,
-        "y": 19
+        "w": 4,
+        "x": 20,
+        "y": 17
       },
       "id": 4,
       "interval": "1m",
@@ -949,7 +1232,7 @@
           "refId": "A"
         }
       ],
-      "title": "Memory Utilisation (from limits)",
+      "title": "Memory (limits)",
       "type": "stat"
     },
     {
@@ -1065,10 +1348,10 @@
         ]
       },
       "gridPos": {
-        "h": 7,
-        "w": 24,
+        "h": 12,
+        "w": 12,
         "x": 0,
-        "y": 22
+        "y": 20
       },
       "id": 5,
       "interval": "1m",
@@ -1079,8 +1362,10 @@
             "lastNotNull"
           ],
           "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
+          "placement": "bottom",
+          "showLegend": true,
+          "sortBy": "Name",
+          "sortDesc": false
         },
         "tooltip": {
           "hideZeros": false,
@@ -1235,10 +1520,10 @@
         ]
       },
       "gridPos": {
-        "h": 7,
-        "w": 24,
-        "x": 0,
-        "y": 29
+        "h": 12,
+        "w": 12,
+        "x": 12,
+        "y": 20
       },
       "id": 7,
       "interval": "1m",
@@ -1249,7 +1534,7 @@
             "lastNotNull"
           ],
           "displayMode": "table",
-          "placement": "right",
+          "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
@@ -1359,7 +1644,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 36
+        "y": 32
       },
       "id": 6,
       "options": {
@@ -1534,7 +1819,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 43
+        "y": 39
       },
       "id": 8,
       "options": {
@@ -1762,14 +2047,14 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 50
+        "y": 46
       },
       "id": 9,
       "options": {
         "cellHeight": "sm",
         "showHeader": true
       },
-      "pluginVersion": "12.3.1",
+      "pluginVersion": "12.3.3",
       "targets": [
         {
           "datasource": {
@@ -1948,7 +2233,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 57
+        "y": 53
       },
       "id": 10,
       "interval": "1m",
@@ -1968,7 +2253,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.1",
+      "pluginVersion": "12.3.3",
       "targets": [
         {
           "datasource": {
@@ -2049,7 +2334,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 57
+        "y": 53
       },
       "id": 11,
       "interval": "1m",
@@ -2069,7 +2354,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.1",
+      "pluginVersion": "12.3.3",
       "targets": [
         {
           "datasource": {
@@ -2150,7 +2435,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 64
+        "y": 60
       },
       "id": 12,
       "interval": "1m",
@@ -2170,7 +2455,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.1",
+      "pluginVersion": "12.3.3",
       "targets": [
         {
           "datasource": {
@@ -2251,7 +2536,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 64
+        "y": 60
       },
       "id": 13,
       "interval": "1m",
@@ -2271,7 +2556,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.1",
+      "pluginVersion": "12.3.3",
       "targets": [
         {
           "datasource": {
@@ -2352,7 +2637,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 71
+        "y": 67
       },
       "id": 14,
       "interval": "1m",
@@ -2372,7 +2657,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.1",
+      "pluginVersion": "12.3.3",
       "targets": [
         {
           "datasource": {
@@ -2453,7 +2738,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 71
+        "y": 67
       },
       "id": 15,
       "interval": "1m",
@@ -2473,7 +2758,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.1",
+      "pluginVersion": "12.3.3",
       "targets": [
         {
           "datasource": {
@@ -2554,7 +2839,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 78
+        "y": 74
       },
       "id": 16,
       "interval": "1m",
@@ -2574,7 +2859,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.1",
+      "pluginVersion": "12.3.3",
       "targets": [
         {
           "datasource": {
@@ -2655,7 +2940,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 78
+        "y": 74
       },
       "id": 17,
       "interval": "1m",
@@ -2675,7 +2960,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.1",
+      "pluginVersion": "12.3.3",
       "targets": [
         {
           "datasource": {
@@ -2696,7 +2981,32 @@
         "uid": "-- Mixed --"
       },
       "fieldConfig": {
-        "defaults": {},
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
         "overrides": [
           {
             "matcher": {
@@ -2745,11 +3055,14 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 85
+        "y": 81
       },
       "id": 18,
-      "options": {},
-      "pluginVersion": "v11.4.0",
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "pluginVersion": "12.3.3",
       "targets": [
         {
           "datasource": {
@@ -2922,8 +3235,8 @@
       },
       {
         "current": {
-          "text": "api",
-          "value": "api"
+          "text": "",
+          "value": ""
         },
         "definition": "label_values(groundx_external_metric,type)",
         "description": "Type of custom metric assigned to a pod",
@@ -2941,8 +3254,8 @@
       },
       {
         "current": {
-          "text": "extract-agent",
-          "value": "extract-agent"
+          "text": "",
+          "value": ""
         },
         "definition": "label_values(groundx_external_metric,name)",
         "description": "",
@@ -2980,12 +3293,12 @@
     ]
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-15m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "utc",
-  "title": "GroundX - Extract",
+  "title": "GroundX Metrics Monitoring",
   "uid": "85a562078cdf77779eaa1add43ccec1f",
-  "version": 3
+  "version": 7
 }

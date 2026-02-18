@@ -4,10 +4,16 @@
 {{ dig "document" 12500 $in }}
 {{- end }}
 
+{{- define "groundx.throughput.tpm.extractRequest" -}}
+{{- $b := .Values.throughput | default dict -}}
+{{- $in := (dig "tpm" nil $b) | default dict -}}
+{{ dig "extractRequest" 6000 $in }}
+{{- end }}
+
 {{- define "groundx.throughput.tpm.page" -}}
 {{- $b := .Values.throughput | default dict -}}
 {{- $in := (dig "tpm" nil $b) | default dict -}}
-{{ dig "page" 500 $in }}
+{{ dig "page" 1000 $in }}
 {{- end }}
 
 {{- define "groundx.throughput.tpm.summaryRequest" -}}

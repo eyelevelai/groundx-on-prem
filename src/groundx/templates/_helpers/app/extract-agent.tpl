@@ -56,7 +56,7 @@ GROUNDX_AGENT_API_KEY
 
 {{/* fraction of threshold */}}
 {{- define "groundx.extract.agent.target.default" -}}
-0.8
+1
 {{- end }}
 
 {{/* queue message backlog */}}
@@ -104,7 +104,7 @@ GROUNDX_AGENT_API_KEY
   "metric"       (printf "%s:task" $name)
   "name"         $name
   "replicas"     $rep
-  "throughput"   (include "groundx.extract.agent.throughput" .)
+  "throughput"   (printf "%s:throughput" $name)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}

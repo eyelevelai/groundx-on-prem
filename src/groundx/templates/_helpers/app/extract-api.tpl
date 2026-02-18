@@ -33,12 +33,12 @@ false
 
 {{/* fraction of threshold */}}
 {{- define "groundx.extract.api.target.default" -}}
-3
+1
 {{- end }}
 
-{{/* average response time in seconds */}}
+{{/* average latency per minute */}}
 {{- define "groundx.extract.api.threshold.default" -}}
-1
+4000
 {{- end }}
 
 {{/* tokens per minute per worker per thread */}}
@@ -81,7 +81,7 @@ false
   "metric"       (printf "%s:api" $name)
   "name"         $name
   "replicas"     $rep
-  "throughput"   (include "groundx.extract.api.throughput" .)
+  "throughput"   (printf "%s:throughput" $name)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}

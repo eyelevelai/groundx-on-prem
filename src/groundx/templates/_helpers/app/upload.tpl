@@ -39,7 +39,7 @@ true
 
 {{/* fraction of threshold */}}
 {{- define "groundx.upload.target.default" -}}
-0.8
+1
 {{- end }}
 
 {{/* queue message backlog */}}
@@ -87,7 +87,7 @@ true
   "metric"       (printf "%s:queue" $name)
   "name"         $name
   "replicas"     $rep
-  "throughput"   (include "groundx.upload.throughput" .)
+  "throughput"   (printf "%s:throughput" $name)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}

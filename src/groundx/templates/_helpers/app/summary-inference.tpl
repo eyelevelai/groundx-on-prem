@@ -67,7 +67,7 @@ true
 
 {{/* fraction of threshold */}}
 {{- define "groundx.summary.inference.target.default" -}}
-0.8
+1
 {{- end }}
 
 {{/* tokens per minute per worker per thread */}}
@@ -115,7 +115,7 @@ true
   "metric"       (printf "%s:inference" $name)
   "name"         $name
   "replicas"     $rep
-  "throughput"   (include "groundx.summary.inference.throughput" .)
+  "throughput"   (printf "%s:throughput" $name)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}

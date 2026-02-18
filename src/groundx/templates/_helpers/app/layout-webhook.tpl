@@ -38,12 +38,12 @@ true
 
 {{/* fraction of threshold */}}
 {{- define "groundx.layoutWebhook.target.default" -}}
-3
+1
 {{- end }}
 
-{{/* average response time in seconds */}}
+{{/* average latency per minute */}}
 {{- define "groundx.layoutWebhook.threshold.default" -}}
-1
+4000
 {{- end }}
 
 {{/* tokens per minute */}}
@@ -86,7 +86,7 @@ true
   "metric"       (printf "%s:api" $name)
   "name"         $name
   "replicas"     $rep
-  "throughput"   (include "groundx.layoutWebhook.throughput" .)
+  "throughput"   (printf "%s:throughput" $name)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}

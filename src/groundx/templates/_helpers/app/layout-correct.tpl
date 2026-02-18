@@ -37,7 +37,7 @@ true
 
 {{/* fraction of threshold */}}
 {{- define "groundx.layout.correct.target.default" -}}
-0.8
+1
 {{- end }}
 
 {{/* queue message backlog */}}
@@ -85,7 +85,7 @@ true
   "metric"       (printf "%s:task" $name)
   "name"         $name
   "replicas"     $rep
-  "throughput"   (include "groundx.layout.correct.throughput" .)
+  "throughput"   (printf "%s:throughput" $name)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}

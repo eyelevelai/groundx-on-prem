@@ -43,7 +43,7 @@ true
 
 {{/* fraction of threshold */}}
 {{- define "groundx.summaryClient.target.default" -}}
-0.8
+1
 {{- end }}
 
 {{- define "groundx.summaryClient.threshold.default" -}}
@@ -107,7 +107,7 @@ true
   "metric"       (printf "%s:%s" $name $qty)
   "name"         $name
   "replicas"     $rep
-  "throughput"   (include "groundx.summaryClient.throughput" .)
+  "throughput"   (printf "%s:throughput" $name)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}

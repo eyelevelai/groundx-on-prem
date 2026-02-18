@@ -38,12 +38,12 @@ true
 
 {{/* fraction of threshold */}}
 {{- define "groundx.groundx.target.default" -}}
-3
+1
 {{- end }}
 
-{{/* queue message backlog */}}
+{{/* average latency per minute */}}
 {{- define "groundx.groundx.threshold.default" -}}
-1
+4000
 {{- end }}
 
 {{/* tokens per minute per worker per thread */}}
@@ -86,7 +86,7 @@ true
   "metric"       (printf "%s:api" $name)
   "name"         $name
   "replicas"     $rep
-  "throughput"   (include "groundx.groundx.throughput" .)
+  "throughput"   (printf "%s:throughput" $name)
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}

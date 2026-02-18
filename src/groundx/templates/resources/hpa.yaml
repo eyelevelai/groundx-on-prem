@@ -18,7 +18,7 @@
 
 {{- $max := dig "max" "1" $replicas -}}
 {{- $min := dig "min" "1" $replicas -}}
-{{- $target := dig "target" "0.8" $replicas -}}
+{{- $target := dig "target" "1" $replicas -}}
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
@@ -47,10 +47,10 @@ spec:
     - type: External
       external:
         metric:
-          name: throughput
+          name: {{ $throughput }}
         target:
           type: Value
-          value: {{ $throughput }}  
+          value: {{ $target }}  
     {{- end }}
     - type: External
       external:
