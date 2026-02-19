@@ -60,7 +60,7 @@ GCP_CREDENTIALS
 
 {{/* tokens per minute per worker per thread */}}
 {{- define "groundx.extract.save.throughput.default" -}}
-20000
+50000
 {{- end }}
 
 {{- define "groundx.extract.save.threshold" -}}
@@ -175,7 +175,7 @@ GCP_CREDENTIALS
   {{- $_ := set $in "desired" 1 -}}
 {{- end -}}
 {{- if not (hasKey $in "max") -}}
-  {{- $_ := set $in "max" 32 -}}
+  {{- $_ := set $in "max" 24 -}}
 {{- end -}}
 {{- toYaml $in | nindent 0 }}
 {{- end }}

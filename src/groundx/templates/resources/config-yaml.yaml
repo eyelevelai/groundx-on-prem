@@ -34,14 +34,18 @@
 {{- $upc := include "groundx.upload.threshold" . | trim -}}
 
 {{- $eat := include "groundx.extract.agent.throughput" . | trim -}}
+{{- $ept := include "groundx.extract.api.throughput" . | trim -}}
 {{- $edt := include "groundx.extract.download.throughput" . | trim -}}
 {{- $est := include "groundx.extract.save.throughput" . | trim -}}
+{{- $gxt := include "groundx.groundx.throughput" . | trim -}}
+{{- $lat := include "groundx.layout.api.throughput" . | trim -}}
 {{- $lct := include "groundx.layout.correct.throughput" . | trim -}}
 {{- $lit := include "groundx.layout.inference.throughput" . | trim -}}
 {{- $lmt := include "groundx.layout.map.throughput" . | trim -}}
 {{- $lot := include "groundx.layout.ocr.throughput" . | trim -}}
 {{- $lpt := include "groundx.layout.process.throughput" . | trim -}}
 {{- $lst := include "groundx.layout.save.throughput" . | trim -}}
+{{- $lwt := include "groundx.layoutWebhook.throughput" . | trim -}}
 {{- $ppt := include "groundx.preProcess.throughput" . | trim -}}
 {{- $prt := include "groundx.process.throughput" . | trim -}}
 {{- $qpt := include "groundx.queue.throughput" . | trim -}}
@@ -261,27 +265,27 @@ data:
       queue:
         {{- if ne $ppc "0" }}
         - name: {{ include "groundx.preProcess.serviceName" . }}
-          target: {{ dig "topic" "" $ppq }}
+          target: {{ include "groundx.preProcess.serviceName" . }}
           threshold: {{ $ppc }}
         {{- end }}
         {{- if ne $prc "0" }}
         - name: {{ include "groundx.process.serviceName" . }}
-          target: {{ dig "topic" "" $pq }}
+          target: {{ include "groundx.process.serviceName" . }}
           threshold: {{ $prc }}
         {{- end }}
         {{- if ne $qpc "0" }}
         - name: {{ include "groundx.queue.serviceName" . }}
-          target: {{ dig "topic" "" $uq }}
+          target: {{ include "groundx.queue.serviceName" . }}
           threshold: {{ $qpc }}
         {{- end }}
         {{- if ne $upc "0" }}
         - name: {{ include "groundx.upload.serviceName" . }}
-          target: {{ dig "topic" "" $lq }}
+          target: {{ include "groundx.upload.serviceName" . }}
           threshold: {{ $upc }}
         {{- end }}
         {{- if and (ne $sce "true") (ne $scc "0") }}
         - name: {{ include "groundx.summaryClient.serviceName" . }}
-          target: {{ dig "topic" "" $sq }}
+          target: {{ include "groundx.summaryClient.serviceName" . }}
           threshold: {{ $scc }}
         {{- end }}
       {{- end }}
@@ -334,15 +338,15 @@ data:
           threshold: {{ $lsc }}
         {{- end }}
       {{- end }}
-      {{- if or (ne $eat "0") (ne $epc "0") (ne $edt "0") (ne $est "0") (ne $gxc "0") (ne $lac "0") (ne $lct "0") (ne $lit "0") (ne $lmt "0") (ne $lot "0") (ne $lpt "0") (ne $lst "0") (ne $lwc "0") (ne $ppt "0") (ne $prt "0") (ne $qpt "0") (ne $sat "0") (ne $sit "0") (ne $sct "0") (ne $upt "0") }}
+      {{- if or (ne $eat "0") (ne $ept "0") (ne $edt "0") (ne $est "0") (ne $gxt "0") (ne $lat "0") (ne $lct "0") (ne $lit "0") (ne $lmt "0") (ne $lot "0") (ne $lpt "0") (ne $lst "0") (ne $lwt "0") (ne $ppt "0") (ne $prt "0") (ne $qpt "0") (ne $sat "0") (ne $sit "0") (ne $sct "0") (ne $upt "0") }}
       throughput:
         {{- if ne $eat "0" }}
         - name: {{ include "groundx.extract.agent.serviceName" . }}
           tokensPerMinute: {{ $eat }}
         {{- end }}
-        {{- if ne $epc "0" }}
+        {{- if ne $ept "0" }}
         - name: {{ include "groundx.extract.api.serviceName" . }}
-          tokensPerMinute: {{ $epc }}
+          tokensPerMinute: {{ $ept }}
         {{- end }}
         {{- if ne $edt "0" }}
         - name: {{ include "groundx.extract.download.serviceName" . }}
@@ -352,13 +356,13 @@ data:
         - name: {{ include "groundx.extract.save.serviceName" . }}
           tokensPerMinute: {{ $est }}
         {{- end }}
-        {{- if ne $gxc "0" }}
+        {{- if ne $gxt "0" }}
         - name: {{ include "groundx.groundx.serviceName" . }}
-          tokensPerMinute: {{ $gxc }}
+          tokensPerMinute: {{ $gxt }}
         {{- end }}
-        {{- if ne $lac "0" }}
+        {{- if ne $lat "0" }}
         - name: {{ include "groundx.layout.api.serviceName" . }}
-          tokensPerMinute: {{ $lac }}
+          tokensPerMinute: {{ $lat }}
         {{- end }}
         {{- if ne $lct "0" }}
         - name: {{ include "groundx.layout.correct.serviceName" . }}
@@ -384,9 +388,9 @@ data:
         - name: {{ include "groundx.layout.save.serviceName" . }}
           tokensPerMinute: {{ $lst }}
         {{- end }}
-        {{- if ne $lwc "0" }}
+        {{- if ne $lwt "0" }}
         - name: {{ include "groundx.layoutWebhook.serviceName" . }}
-          tokensPerMinute: {{ $lwc }}
+          tokensPerMinute: {{ $lwt }}
         {{- end }}
         {{- if ne $ppt "0" }}
         - name: {{ include "groundx.preProcess.serviceName" . }}

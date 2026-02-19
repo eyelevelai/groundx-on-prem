@@ -66,7 +66,7 @@ GROUNDX_AGENT_API_KEY
 
 {{/* tokens per minute per worker per thread */}}
 {{- define "groundx.extract.agent.throughput.default" -}}
-3000
+9000
 {{- end }}
 
 {{- define "groundx.extract.agent.threshold" -}}
@@ -181,7 +181,7 @@ GROUNDX_AGENT_API_KEY
   {{- $_ := set $in "desired" 1 -}}
 {{- end -}}
 {{- if not (hasKey $in "max") -}}
-  {{- $_ := set $in "max" 32 -}}
+  {{- $_ := set $in "max" 96 -}}
 {{- end -}}
 {{- toYaml $in | nindent 0 }}
 {{- end }}

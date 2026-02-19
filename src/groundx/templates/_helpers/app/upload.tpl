@@ -49,7 +49,7 @@ true
 
 {{/* tokens per minute per worker per thread */}}
 {{- define "groundx.upload.throughput.default" -}}
-20000
+100000
 {{- end }}
 
 {{- define "groundx.upload.threshold" -}}
@@ -131,7 +131,7 @@ true
   {{- $_ := set $in "desired" 1 -}}
 {{- end -}}
 {{- if not (hasKey $in "max") -}}
-  {{- $_ := set $in "max" 32 -}}
+  {{- $_ := set $in "max" 24 -}}
 {{- end -}}
 {{- toYaml $in | nindent 0 }}
 {{- end }}

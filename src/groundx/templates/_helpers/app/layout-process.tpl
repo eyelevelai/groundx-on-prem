@@ -53,7 +53,7 @@ true
 
 {{/* tokens per minute per worker per thread */}}
 {{- define "groundx.layout.process.throughput.default" -}}
-20000
+100000
 {{- end }}
 
 {{- define "groundx.layout.process.threshold" -}}
@@ -140,7 +140,7 @@ true
   {{- $_ := set $in "desired" 1 -}}
 {{- end -}}
 {{- if not (hasKey $in "max") -}}
-  {{- $_ := set $in "max" 32 -}}
+  {{- $_ := set $in "max" 16 -}}
 {{- end -}}
 {{- toYaml $in | nindent 0 }}
 {{- end }}

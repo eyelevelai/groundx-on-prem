@@ -52,7 +52,7 @@ false
 
 {{/* tokens per minute per worker per thread */}}
 {{- define "groundx.extract.download.throughput.default" -}}
-30000
+90000
 {{- end }}
 
 {{- define "groundx.extract.download.threshold" -}}
@@ -139,7 +139,7 @@ false
   {{- $_ := set $in "desired" 1 -}}
 {{- end -}}
 {{- if not (hasKey $in "max") -}}
-  {{- $_ := set $in "max" 32 -}}
+  {{- $_ := set $in "max" 24 -}}
 {{- end -}}
 {{- toYaml $in | nindent 0 }}
 {{- end }}

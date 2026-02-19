@@ -53,7 +53,7 @@ true
 
 {{/* tokens per minute per worker per thread */}}
 {{- define "groundx.layout.api.throughput.default" -}}
-30000
+90000
 {{- end }}
 
 {{- define "groundx.layout.api.threshold" -}}
@@ -138,7 +138,7 @@ true
   {{- $_ := set $in "desired" 1 -}}
 {{- end -}}
 {{- if not (hasKey $in "max") -}}
-  {{- $_ := set $in "max" 32 -}}
+  {{- $_ := set $in "max" 16 -}}
 {{- end -}}
 {{- toYaml $in | nindent 0 }}
 {{- end }}
@@ -178,7 +178,7 @@ false
 {{- define "groundx.layout.api.threads" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{ dig "threads" 2 $in }}
+{{ dig "threads" 1 $in }}
 {{- end }}
 
 {{- define "groundx.layout.api.timeout" -}}

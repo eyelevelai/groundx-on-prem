@@ -38,6 +38,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "description": "The pressure applied to pods by the average response latency of the API pods over the last minute ",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -49,6 +50,8 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMax": 1,
+            "axisSoftMin": 0,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -90,7 +93,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "percentunit"
         },
         "overrides": []
       },
@@ -124,7 +128,7 @@
           "refId": "A"
         }
       ],
-      "title": "API Pod - Latency (ms)",
+      "title": "API Pod - Latency Pressure",
       "type": "timeseries"
     },
     {
@@ -132,6 +136,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "description": "The pressure applied to pods by the current queue backlog",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -143,6 +148,8 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMax": 1,
+            "axisSoftMin": 0,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -184,7 +191,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "percentunit"
         },
         "overrides": []
       },
@@ -218,7 +226,7 @@
           "refId": "A"
         }
       ],
-      "title": "Queue Pod - Backlog",
+      "title": "Queue Pod - Backlog Pressure",
       "type": "timeseries"
     },
     {
@@ -226,6 +234,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "description": "The pressure applied to pods by the current celery backlog",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -237,6 +246,8 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMax": 1,
+            "axisSoftMin": 0,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -278,7 +289,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "percentunit"
         },
         "overrides": []
       },
@@ -312,7 +324,7 @@
           "refId": "A"
         }
       ],
-      "title": "Celery Pod - Backlog",
+      "title": "Celery Pod - Backlog Pressure",
       "type": "timeseries"
     },
     {
@@ -320,6 +332,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "description": "The pressure applied to pods by the ACTUAL tokens per minute being processed through the inference pods",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -331,6 +344,8 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMax": 1,
+            "axisSoftMin": 0,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -372,7 +387,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "percentunit"
         },
         "overrides": []
       },
@@ -406,7 +422,7 @@
           "refId": "A"
         }
       ],
-      "title": "Inference Pod - Throughput",
+      "title": "Inference Pod - Throughput Pressure",
       "type": "timeseries"
     },
     {
@@ -425,6 +441,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMin": 0,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -453,6 +470,7 @@
               "mode": "off"
             }
           },
+          "decimals": 0,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -519,6 +537,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMin": 0,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -547,6 +566,7 @@
               "mode": "off"
             }
           },
+          "decimals": 0,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -613,6 +633,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMin": 0,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -641,6 +662,7 @@
               "mode": "off"
             }
           },
+          "decimals": 0,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -707,6 +729,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMin": 0,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -735,6 +758,7 @@
               "mode": "off"
             }
           },
+          "decimals": 0,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -790,7 +814,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "The current tokens per minute being processed through GroundX",
+      "description": "The pressure applied to pods by the ESTIMATED tokens per minute being processed through GroundX",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -802,6 +826,105 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMax": 1,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 14
+      },
+      "id": 23,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.3",
+      "targets": [
+        {
+          "editorMode": "builder",
+          "expr": "groundx_external_metric{type=\"throughput\"}",
+          "legendFormat": "{{name}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Pod Throughput Pressure",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "The current ESTIMATED tokens per minute being processed through GroundX",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -848,12 +971,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 0,
+        "h": 8,
+        "w": 6,
+        "x": 6,
         "y": 14
       },
-      "id": 23,
+      "id": 29,
       "options": {
         "legend": {
           "calcs": [],
@@ -877,7 +1000,7 @@
           "refId": "A"
         }
       ],
-      "title": "System Throughput",
+      "title": "System Throughput - (tokens / min)",
       "type": "timeseries"
     },
     {
@@ -924,6 +1047,7 @@
               "mode": "off"
             }
           },
+          "decimals": 0,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -942,9 +1066,9 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 8,
+        "h": 8,
+        "w": 6,
+        "x": 12,
         "y": 14
       },
       "id": 24,
@@ -1000,9 +1124,9 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
-        "w": 4,
-        "x": 16,
+        "h": 4,
+        "w": 3,
+        "x": 18,
         "y": 14
       },
       "id": 1,
@@ -1065,9 +1189,9 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
-        "w": 4,
-        "x": 20,
+        "h": 4,
+        "w": 3,
+        "x": 21,
         "y": 14
       },
       "id": 3,
@@ -1131,10 +1255,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
-        "w": 4,
-        "x": 16,
-        "y": 17
+        "h": 4,
+        "w": 3,
+        "x": 18,
+        "y": 18
       },
       "id": 2,
       "interval": "1m",
@@ -1196,10 +1320,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
-        "w": 4,
-        "x": 20,
-        "y": 17
+        "h": 4,
+        "w": 3,
+        "x": 21,
+        "y": 18
       },
       "id": 4,
       "interval": "1m",
@@ -1351,7 +1475,7 @@
         "h": 12,
         "w": 12,
         "x": 0,
-        "y": 20
+        "y": 22
       },
       "id": 5,
       "interval": "1m",
@@ -1523,7 +1647,7 @@
         "h": 12,
         "w": 12,
         "x": 12,
-        "y": 20
+        "y": 22
       },
       "id": 7,
       "interval": "1m",
@@ -1644,7 +1768,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 32
+        "y": 34
       },
       "id": 6,
       "options": {
@@ -1819,7 +1943,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 39
+        "y": 41
       },
       "id": 8,
       "options": {
@@ -2047,7 +2171,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 46
+        "y": 48
       },
       "id": 9,
       "options": {
@@ -2233,7 +2357,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 53
+        "y": 55
       },
       "id": 10,
       "interval": "1m",
@@ -2334,7 +2458,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 53
+        "y": 55
       },
       "id": 11,
       "interval": "1m",
@@ -2435,7 +2559,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 60
+        "y": 62
       },
       "id": 12,
       "interval": "1m",
@@ -2536,7 +2660,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 60
+        "y": 62
       },
       "id": 13,
       "interval": "1m",
@@ -2637,7 +2761,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 67
+        "y": 69
       },
       "id": 14,
       "interval": "1m",
@@ -2738,7 +2862,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 67
+        "y": 69
       },
       "id": 15,
       "interval": "1m",
@@ -2839,7 +2963,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 74
+        "y": 76
       },
       "id": 16,
       "interval": "1m",
@@ -2940,7 +3064,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 74
+        "y": 76
       },
       "id": 17,
       "interval": "1m",
@@ -3055,7 +3179,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 81
+        "y": 83
       },
       "id": 18,
       "options": {
@@ -3235,8 +3359,8 @@
       },
       {
         "current": {
-          "text": "",
-          "value": ""
+          "text": "api",
+          "value": "api"
         },
         "definition": "label_values(groundx_external_metric,type)",
         "description": "Type of custom metric assigned to a pod",
@@ -3254,8 +3378,8 @@
       },
       {
         "current": {
-          "text": "",
-          "value": ""
+          "text": "extract-agent",
+          "value": "extract-agent"
         },
         "definition": "label_values(groundx_external_metric,name)",
         "description": "",
@@ -3300,5 +3424,5 @@
   "timezone": "utc",
   "title": "GroundX Metrics Monitoring",
   "uid": "85a562078cdf77779eaa1add43ccec1f",
-  "version": 7
+  "version": 6
 }
