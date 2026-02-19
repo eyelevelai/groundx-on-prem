@@ -114,7 +114,7 @@ locals {
         }
 
         labels                                              = {
-          "node"                                            = local.cpu_memory_label
+          "eyelevel_node"                                   = local.cpu_memory_label
         }
 
         tags                                                = {
@@ -155,7 +155,7 @@ locals {
         }
 
         labels                                              = {
-          "node"                                            = local.cpu_only_label
+          "eyelevel_node"                                   = local.cpu_only_label
         }
 
         tags                                                = {
@@ -196,7 +196,7 @@ locals {
         }
 
         labels                                              = {
-          "node"                                            = local.gpu_layout_label
+          "eyelevel_node"                                   = local.gpu_layout_label
         }
 
         tags                                                = {
@@ -237,7 +237,7 @@ locals {
         }
 
         labels                                              = {
-          "node"                                            = local.gpu_summary_label
+          "eyelevel_node"                                   = local.gpu_summary_label
         }
 
         tags                                                = {
@@ -280,7 +280,7 @@ locals {
         }
 
         labels                                              = {
-          "node"                                            = local.gpu_ranker_label
+          "eyelevel_node"                                   = local.gpu_ranker_label
         }
 
         tags                                                = {
@@ -315,9 +315,19 @@ module "eyelevel_eks" {
 
   eks_managed_node_group_defaults          = {
     iam_role_name                          = "${local.cluster_name}-node-role"
+    iam_role_additional_policies           = {
+      CloudWatchAgentServerPolicy          = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+    }
   }
 
   eks_managed_node_groups                  = local.node_groups
+
+  cluster_addons = {
+    amazon-cloudwatch-observability = {
+      resolve_conflicts_on_create = "OVERWRITE"
+      resolve_conflicts_on_update = "OVERWRITE"
+    }
+  }
 }
 
 resource "null_resource" "wait_for_eks" {

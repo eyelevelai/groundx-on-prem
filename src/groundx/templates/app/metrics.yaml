@@ -1,0 +1,256 @@
+
+{{- $cc := include "groundx.metrics.create" . -}}
+{{- if ne $cc "false" -}}
+
+{{- $username := include "groundx.container.username" . -}}
+
+{{- $svcData := include "groundx.metrics.settings" . | fromYaml -}}
+
+{{- $aff := get $svcData "affinity" -}}
+{{- $anns := get $svcData "annotations" -}}
+{{- $csct := get $svcData "containerSecurityContext" -}}
+{{- $dpnd := get $svcData "dependencies" | default dict -}}
+{{- $image := get $svcData "image" -}}
+{{- $ips := include "groundx.imagePullSecrets" . | fromYaml -}}
+{{- $io := include "groundx.ingestOnly" . -}}
+{{- $lbls := get $svcData "labels" -}}
+{{- $int := get $svcData "interface" -}}
+{{- $svc := get $svcData "name" -}}
+{{- $node := get $svcData "node" -}}
+{{- $nsl := get $svcData "nodeSelector" -}}
+{{- $cport := get $svcData "containerPort" -}}
+{{- $port := get $svcData "port" -}}
+{{- $pull := get $svcData "pull" -}}
+{{- $rp := get $svcData "replicas" -}}
+{{- $rs := get $svcData "resources" -}}
+{{- $san := get $svcData "serviceAccountName" -}}
+{{- $scr := include "groundx.secrets" . | fromYaml | default dict -}}
+{{- $sct := get $svcData "securityContext" -}}
+{{- $tl := get $svcData "tolerations" -}}
+
+{{- $desired := get $rp "desired" -}}
+{{- $metricsName := include "groundx.metrics.serviceName" . -}}
+{{- $isMetrics := eq $svc $metricsName -}}
+{{- $tlsSecretName := printf "%s-tls" $metricsName -}}
+{{- $ns := include "groundx.ns" . -}}
+{{- $dns1 := printf "%s.%s.svc" $metricsName $ns -}}
+{{- $dns2 := printf "%s.%s.svc.cluster.local" $metricsName $ns -}}
+{{- $caName := printf "%s-%s-ca" $metricsName $ns -}}
+{{- $existing := lookup "v1" "Secret" $ns $tlsSecretName -}}
+{{- $useExisting := eq (include "groundx.metrics.useExisting" . | trim) "true" -}}
+
+{{- $sanFinal := $san -}}
+{{- if or (not $sanFinal) (eq (printf "%v" $sanFinal) "") -}}
+{{- $sanFinal = $metricsName -}}
+{{- end -}}
+
+{{- $saExists := (lookup "v1" "ServiceAccount" $ns $sanFinal) -}}
+{{- $shouldCreateSA := or (not $saExists) (empty $saExists) -}}
+{{- $skipSA := eq (include "groundx.metrics.serviceMonitor" . | trim) "false" -}}
+{{- if $skipSA -}}
+{{- $shouldCreateSA = false -}}
+{{- end -}}
+
+{{- if $shouldCreateSA }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $sanFinal | quote }}
+  namespace: {{ $ns | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $metricsName "indent" 4 "root" $) }}
+{{- end }}
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ printf "%s-reader" $metricsName | quote }}
+  namespace: {{ $ns | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $metricsName "indent" 4 "root" $) }}
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ printf "%s-reader" $metricsName | quote }}
+  namespace: {{ $ns | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $metricsName "indent" 4 "root" $) }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $sanFinal | quote }}
+    namespace: {{ $ns | quote }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ printf "%s-reader" $metricsName | quote }}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $svc }}
+  namespace: {{ $ns | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
+spec:
+  replicas: {{ $desired }}
+  selector:
+    matchLabels:
+      app: {{ $svc }}
+  template:
+    metadata:
+      labels:
+        app: {{ $svc }}
+{{- if gt (len $lbls) 0 }}
+{{ toYaml $lbls | nindent 8 }}
+{{- end }}
+      annotations:
+        config-hash: {{ include (print $.Template.BasePath "/resources/config-yaml.yaml") . | sha256sum }}
+{{- if gt (len $anns) 0 }}
+{{ toYaml $anns | nindent 8 }}
+{{- end }}
+    spec:
+{{- if $sanFinal }}
+      serviceAccountName: {{ $sanFinal }}
+{{- end }}
+{{- if gt (len $ips) 0 }}
+      imagePullSecrets:
+{{- range $j, $inm := $ips }}
+        - name: {{ $inm }}
+{{- end }}
+{{- end }}
+{{- include "groundx.renderAffinity" (dict "ctx" $aff "node" $node "indent" 6 "root" $) }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" . "user" $username "cfg" "spec") }}
+{{ include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
+{{ include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
+{{- if not (empty $dpnd) }}
+      initContainers:
+{{- if hasKey $dpnd "cache" }}
+        - name: wait-for-cache
+          image: {{ include "groundx.busybox.image" . }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" . | quote }}
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.cache.addr" $) (include "groundx.cache.port" $) }}; do echo waiting for cache; sleep 2; done"]
+{{- end }}
+{{- if hasKey $dpnd "db" }}
+        - name: wait-for-database
+          image: {{ include "groundx.busybox.image" . }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" . | quote }}
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.db.ro" $) (include "groundx.db.port" $) }}; do echo waiting for database; sleep 2; done"]
+{{- end }}
+{{- end }}
+      containers:
+        - name: {{ $svc | quote }}
+          image: {{ $image | quote }}
+          imagePullPolicy: {{ $pull | quote }}
+{{- if gt (len $scr) 0 }}
+          envFrom:
+{{- range $kk, $vv := $scr }}
+            - secretRef:
+                name: {{ $vv }}
+{{- end }}
+{{- end }}
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: TLS_CERT_FILE
+              value: /etc/ssl/tls/tls.crt
+            - name: TLS_KEY_FILE
+              value: /etc/ssl/tls/tls.key
+            - name: TLS_CA_FILE
+              value: /etc/ssl/tls/ca.crt
+            - name: LISTEN_PORT
+              value: {{ $cport | quote }}
+          ports:
+            - containerPort: {{ $cport }}
+              protocol: TCP
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" . "user" $username "cfg" "container") }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ $cport }}
+              scheme: HTTPS
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ $cport }}
+              scheme: HTTPS
+            initialDelaySeconds: 10
+            periodSeconds: 30
+{{ include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /home/{{ include "groundx.golang.home" . }}/.cashbot/config.yaml
+              subPath: config.yaml
+            - name: tls-volume
+              mountPath: /etc/ssl/tls
+              readOnly: true
+      volumes:
+        - name: config-volume
+          configMap:
+            name: config-yaml-map
+        - name: tls-volume
+          secret:
+            secretName: {{ $tlsSecretName }}
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $tlsSecretName | quote }}
+  namespace: {{ $ns | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $metricsName "indent" 4 "root" $) }}
+type: kubernetes.io/tls
+data:
+{{ if or $existing $useExisting }}
+{{ if $existing }}
+  tls.crt: {{ index $existing.data "tls.crt" }}
+  tls.key: {{ index $existing.data "tls.key" }}
+  ca.crt: {{ index $existing.data "ca.crt" }}
+{{ end }}
+{{ else }}
+  {{ $ca := genCA $caName 3650 }}
+  {{ $cert := genSignedCert $dns1 nil (list $dns1 $dns2) 3650 $ca }}
+  tls.crt: {{ b64enc $cert.Cert }}
+  tls.key: {{ b64enc $cert.Key }}
+  ca.crt: {{ b64enc $ca.Cert }}
+{{ end }}
+
+---
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1beta1.external.metrics.k8s.io
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $metricsName "indent" 4 "root" $) }}
+spec:
+  group: external.metrics.k8s.io
+  version: v1beta1
+  insecureSkipTLSVerify: true
+  groupPriorityMinimum: 100
+  versionPriority: 100
+  service:
+    name: {{ $svc | quote }}
+    namespace: {{ $ns | quote }}
+    port: {{ $port }}
+
+{{- if $int }}
+{{ include "groundx.renderInterface" (dict "name" $svc "lb" $int "root" $) }}
+{{- end }}
+
+{{- end }}

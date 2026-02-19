@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: groundx-metrics
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - eyelevel
+  selector:
+    matchLabels:
+      app: metrics
+  endpoints:
+    - targetPort: 8443
+      path: /metrics
+      scheme: https
+      tlsConfig:
+        insecureSkipVerify: true

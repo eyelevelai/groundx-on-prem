@@ -19,10 +19,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0fe2fe7a29bfbdf11bd18f700e0d321795b38ae52de54dad28d6bf143c9f11
+            config-hash: 004dc61b429cb7e3d745f30e013680d86238bc7181adb46ec48b754a0bb09202
           labels:
             app: groundx
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
@@ -89,8 +103,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-database
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -103,6 +115,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -144,10 +159,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0fe2fe7a29bfbdf11bd18f700e0d321795b38ae52de54dad28d6bf143c9f11
+            config-hash: 004dc61b429cb7e3d745f30e013680d86238bc7181adb46ec48b754a0bb09202
           labels:
             app: layout-webhook
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
@@ -193,8 +222,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -207,6 +234,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -248,10 +278,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0fe2fe7a29bfbdf11bd18f700e0d321795b38ae52de54dad28d6bf143c9f11
+            config-hash: 004dc61b429cb7e3d745f30e013680d86238bc7181adb46ec48b754a0bb09202
           labels:
             app: pre-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
@@ -297,8 +341,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -311,6 +353,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -336,10 +381,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0fe2fe7a29bfbdf11bd18f700e0d321795b38ae52de54dad28d6bf143c9f11
+            config-hash: 004dc61b429cb7e3d745f30e013680d86238bc7181adb46ec48b754a0bb09202
           labels:
             app: process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
@@ -385,8 +444,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -399,6 +456,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -424,10 +484,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0fe2fe7a29bfbdf11bd18f700e0d321795b38ae52de54dad28d6bf143c9f11
+            config-hash: 004dc61b429cb7e3d745f30e013680d86238bc7181adb46ec48b754a0bb09202
           labels:
             app: queue
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
@@ -473,8 +547,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -487,6 +559,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -512,10 +587,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0fe2fe7a29bfbdf11bd18f700e0d321795b38ae52de54dad28d6bf143c9f11
+            config-hash: 004dc61b429cb7e3d745f30e013680d86238bc7181adb46ec48b754a0bb09202
           labels:
             app: summary-client
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
@@ -561,8 +650,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -575,6 +662,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -600,10 +690,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0fe2fe7a29bfbdf11bd18f700e0d321795b38ae52de54dad28d6bf143c9f11
+            config-hash: 004dc61b429cb7e3d745f30e013680d86238bc7181adb46ec48b754a0bb09202
           labels:
             app: upload
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
@@ -649,8 +753,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -663,6 +765,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -689,10 +794,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 76b3e969cbfbbccfab96b581ecf2bb05d94c515b2bdb9f4080a73c9ddc836eb9
+            config-hash: 88a27bb025505ae797222f36c26b278cfb69df67bd561bdb641b5535a2b638cd
           labels:
             app: groundx
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
@@ -766,8 +885,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-stream
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -779,6 +896,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -820,10 +940,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 76b3e969cbfbbccfab96b581ecf2bb05d94c515b2bdb9f4080a73c9ddc836eb9
+            config-hash: 88a27bb025505ae797222f36c26b278cfb69df67bd561bdb641b5535a2b638cd
           labels:
             app: layout-webhook
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
@@ -869,8 +1003,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -882,6 +1014,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -923,10 +1058,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 76b3e969cbfbbccfab96b581ecf2bb05d94c515b2bdb9f4080a73c9ddc836eb9
+            config-hash: 88a27bb025505ae797222f36c26b278cfb69df67bd561bdb641b5535a2b638cd
           labels:
             app: pre-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
@@ -972,8 +1121,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -985,6 +1132,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -1010,10 +1160,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 76b3e969cbfbbccfab96b581ecf2bb05d94c515b2bdb9f4080a73c9ddc836eb9
+            config-hash: 88a27bb025505ae797222f36c26b278cfb69df67bd561bdb641b5535a2b638cd
           labels:
             app: process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
@@ -1059,8 +1223,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1072,6 +1234,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -1097,10 +1262,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 76b3e969cbfbbccfab96b581ecf2bb05d94c515b2bdb9f4080a73c9ddc836eb9
+            config-hash: 88a27bb025505ae797222f36c26b278cfb69df67bd561bdb641b5535a2b638cd
           labels:
             app: queue
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
@@ -1146,8 +1325,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1159,6 +1336,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -1184,10 +1364,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 76b3e969cbfbbccfab96b581ecf2bb05d94c515b2bdb9f4080a73c9ddc836eb9
+            config-hash: 88a27bb025505ae797222f36c26b278cfb69df67bd561bdb641b5535a2b638cd
           labels:
             app: summary-client
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
@@ -1233,8 +1427,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1246,6 +1438,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -1271,10 +1466,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 76b3e969cbfbbccfab96b581ecf2bb05d94c515b2bdb9f4080a73c9ddc836eb9
+            config-hash: 88a27bb025505ae797222f36c26b278cfb69df67bd561bdb641b5535a2b638cd
           labels:
             app: upload
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
@@ -1320,8 +1529,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1333,6 +1540,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -1359,10 +1569,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 27589d71e4170c576eba5b255c6923f89d9f519bcec9a4956cc5519dbe024599
           labels:
             app: groundx
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
@@ -1436,8 +1660,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-stream
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1449,6 +1671,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -1490,10 +1715,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 27589d71e4170c576eba5b255c6923f89d9f519bcec9a4956cc5519dbe024599
           labels:
             app: layout-webhook
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
@@ -1539,8 +1778,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1552,6 +1789,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -1593,10 +1833,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 27589d71e4170c576eba5b255c6923f89d9f519bcec9a4956cc5519dbe024599
           labels:
             app: pre-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
@@ -1642,8 +1896,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1655,6 +1907,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -1680,10 +1935,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 27589d71e4170c576eba5b255c6923f89d9f519bcec9a4956cc5519dbe024599
           labels:
             app: process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
@@ -1729,8 +1998,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1742,6 +2009,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -1767,10 +2037,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 27589d71e4170c576eba5b255c6923f89d9f519bcec9a4956cc5519dbe024599
           labels:
             app: queue
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
@@ -1816,8 +2100,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1829,6 +2111,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -1854,10 +2139,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 27589d71e4170c576eba5b255c6923f89d9f519bcec9a4956cc5519dbe024599
           labels:
             app: summary-client
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
@@ -1903,8 +2202,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1916,6 +2213,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -1941,10 +2241,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 27589d71e4170c576eba5b255c6923f89d9f519bcec9a4956cc5519dbe024599
           labels:
             app: upload
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
@@ -1990,8 +2304,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2003,6 +2315,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -2030,10 +2345,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 27589d71e4170c576eba5b255c6923f89d9f519bcec9a4956cc5519dbe024599
           labels:
             app: groundx
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
@@ -2107,8 +2436,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-stream
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2120,6 +2447,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -2161,10 +2491,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 27589d71e4170c576eba5b255c6923f89d9f519bcec9a4956cc5519dbe024599
           labels:
             app: layout-webhook
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
@@ -2210,8 +2554,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2223,6 +2565,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -2264,10 +2609,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 27589d71e4170c576eba5b255c6923f89d9f519bcec9a4956cc5519dbe024599
           labels:
             app: pre-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
@@ -2313,8 +2672,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2326,6 +2683,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -2351,10 +2711,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 27589d71e4170c576eba5b255c6923f89d9f519bcec9a4956cc5519dbe024599
           labels:
             app: process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
@@ -2400,8 +2774,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2413,6 +2785,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -2438,10 +2813,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 27589d71e4170c576eba5b255c6923f89d9f519bcec9a4956cc5519dbe024599
           labels:
             app: queue
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
@@ -2487,8 +2876,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2500,6 +2887,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -2525,10 +2915,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 27589d71e4170c576eba5b255c6923f89d9f519bcec9a4956cc5519dbe024599
           labels:
             app: summary-client
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
@@ -2574,8 +2978,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2587,6 +2989,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -2612,10 +3017,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a9a46dc79188e34dcb8eccccb2aa455e152124cb7bca470a9efcbb21b496930
+            config-hash: 27589d71e4170c576eba5b255c6923f89d9f519bcec9a4956cc5519dbe024599
           labels:
             app: upload
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
@@ -2661,8 +3080,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2674,6 +3091,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -2700,10 +3120,24 @@
       template:
         metadata:
           annotations:
-            config-hash: e5a418bcbd96aeada9e7d182b3c936e391c56b2a1794d8af0f2993ea179e5b3a
+            config-hash: 91d62ffc91bfd04998b3eea607ab4fc4cafda4ffad88cf511eefc5b0fd0fb4df
           labels:
             app: groundx
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
@@ -2777,8 +3211,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-stream
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2790,6 +3222,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -2831,10 +3266,24 @@
       template:
         metadata:
           annotations:
-            config-hash: e5a418bcbd96aeada9e7d182b3c936e391c56b2a1794d8af0f2993ea179e5b3a
+            config-hash: 91d62ffc91bfd04998b3eea607ab4fc4cafda4ffad88cf511eefc5b0fd0fb4df
           labels:
             app: layout-webhook
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
@@ -2880,8 +3329,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2893,6 +3340,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -2934,10 +3384,24 @@
       template:
         metadata:
           annotations:
-            config-hash: e5a418bcbd96aeada9e7d182b3c936e391c56b2a1794d8af0f2993ea179e5b3a
+            config-hash: 91d62ffc91bfd04998b3eea607ab4fc4cafda4ffad88cf511eefc5b0fd0fb4df
           labels:
             app: pre-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
@@ -2983,8 +3447,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2996,6 +3458,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -3021,10 +3486,24 @@
       template:
         metadata:
           annotations:
-            config-hash: e5a418bcbd96aeada9e7d182b3c936e391c56b2a1794d8af0f2993ea179e5b3a
+            config-hash: 91d62ffc91bfd04998b3eea607ab4fc4cafda4ffad88cf511eefc5b0fd0fb4df
           labels:
             app: process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
@@ -3070,8 +3549,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3083,6 +3560,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -3108,10 +3588,24 @@
       template:
         metadata:
           annotations:
-            config-hash: e5a418bcbd96aeada9e7d182b3c936e391c56b2a1794d8af0f2993ea179e5b3a
+            config-hash: 91d62ffc91bfd04998b3eea607ab4fc4cafda4ffad88cf511eefc5b0fd0fb4df
           labels:
             app: queue
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
@@ -3157,8 +3651,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3170,6 +3662,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -3195,10 +3690,24 @@
       template:
         metadata:
           annotations:
-            config-hash: e5a418bcbd96aeada9e7d182b3c936e391c56b2a1794d8af0f2993ea179e5b3a
+            config-hash: 91d62ffc91bfd04998b3eea607ab4fc4cafda4ffad88cf511eefc5b0fd0fb4df
           labels:
             app: summary-client
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
@@ -3244,8 +3753,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3257,6 +3764,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -3282,10 +3792,24 @@
       template:
         metadata:
           annotations:
-            config-hash: e5a418bcbd96aeada9e7d182b3c936e391c56b2a1794d8af0f2993ea179e5b3a
+            config-hash: 91d62ffc91bfd04998b3eea607ab4fc4cafda4ffad88cf511eefc5b0fd0fb4df
           labels:
             app: upload
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
@@ -3331,8 +3855,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3344,6 +3866,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -3370,10 +3895,24 @@
       template:
         metadata:
           annotations:
-            config-hash: b5576b2b2cc78b1f106593cecd4e05b9b638daaf6f9eb1b48fe6e23d0e9d3f86
+            config-hash: 9c255fd41ac77782db555cb7c7a284546f26d52bba97729932f58b9eb7c6a905
           labels:
             app: groundx
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - envFrom:
                 - secretRef:
@@ -3436,8 +3975,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-database
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3450,6 +3987,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -3491,10 +4031,24 @@
       template:
         metadata:
           annotations:
-            config-hash: b5576b2b2cc78b1f106593cecd4e05b9b638daaf6f9eb1b48fe6e23d0e9d3f86
+            config-hash: 9c255fd41ac77782db555cb7c7a284546f26d52bba97729932f58b9eb7c6a905
           labels:
             app: layout-webhook
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - envFrom:
                 - secretRef:
@@ -3543,8 +4097,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3557,6 +4109,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -3598,10 +4153,24 @@
       template:
         metadata:
           annotations:
-            config-hash: b5576b2b2cc78b1f106593cecd4e05b9b638daaf6f9eb1b48fe6e23d0e9d3f86
+            config-hash: 9c255fd41ac77782db555cb7c7a284546f26d52bba97729932f58b9eb7c6a905
           labels:
             app: pre-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - envFrom:
                 - secretRef:
@@ -3650,8 +4219,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3664,6 +4231,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -3689,10 +4259,24 @@
       template:
         metadata:
           annotations:
-            config-hash: b5576b2b2cc78b1f106593cecd4e05b9b638daaf6f9eb1b48fe6e23d0e9d3f86
+            config-hash: 9c255fd41ac77782db555cb7c7a284546f26d52bba97729932f58b9eb7c6a905
           labels:
             app: process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - envFrom:
                 - secretRef:
@@ -3741,8 +4325,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3755,6 +4337,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -3780,10 +4365,24 @@
       template:
         metadata:
           annotations:
-            config-hash: b5576b2b2cc78b1f106593cecd4e05b9b638daaf6f9eb1b48fe6e23d0e9d3f86
+            config-hash: 9c255fd41ac77782db555cb7c7a284546f26d52bba97729932f58b9eb7c6a905
           labels:
             app: queue
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - envFrom:
                 - secretRef:
@@ -3832,8 +4431,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3846,6 +4443,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -3871,10 +4471,24 @@
       template:
         metadata:
           annotations:
-            config-hash: b5576b2b2cc78b1f106593cecd4e05b9b638daaf6f9eb1b48fe6e23d0e9d3f86
+            config-hash: 9c255fd41ac77782db555cb7c7a284546f26d52bba97729932f58b9eb7c6a905
           labels:
             app: summary-client
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - envFrom:
                 - secretRef:
@@ -3923,8 +4537,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3937,6 +4549,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -3962,10 +4577,24 @@
       template:
         metadata:
           annotations:
-            config-hash: b5576b2b2cc78b1f106593cecd4e05b9b638daaf6f9eb1b48fe6e23d0e9d3f86
+            config-hash: 9c255fd41ac77782db555cb7c7a284546f26d52bba97729932f58b9eb7c6a905
           labels:
             app: upload
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - envFrom:
                 - secretRef:
@@ -4014,8 +4643,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4028,6 +4655,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -4054,10 +4684,24 @@
       template:
         metadata:
           annotations:
-            config-hash: a4341dd56115350d340491034ab1dc7b2476708b512cdc8f7e7fca96427cc5e9
+            config-hash: 962dda76b43333bbe79d61a256c79f12da836eab63adced010b508607c434802
           labels:
             app: groundx
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
@@ -4117,8 +4761,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-database
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4130,6 +4772,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -4171,10 +4816,24 @@
       template:
         metadata:
           annotations:
-            config-hash: a4341dd56115350d340491034ab1dc7b2476708b512cdc8f7e7fca96427cc5e9
+            config-hash: 962dda76b43333bbe79d61a256c79f12da836eab63adced010b508607c434802
           labels:
             app: layout-webhook
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
@@ -4220,8 +4879,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4233,6 +4890,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -4274,10 +4934,24 @@
       template:
         metadata:
           annotations:
-            config-hash: a4341dd56115350d340491034ab1dc7b2476708b512cdc8f7e7fca96427cc5e9
+            config-hash: 962dda76b43333bbe79d61a256c79f12da836eab63adced010b508607c434802
           labels:
             app: pre-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
@@ -4323,8 +4997,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4336,6 +5008,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -4361,10 +5036,24 @@
       template:
         metadata:
           annotations:
-            config-hash: a4341dd56115350d340491034ab1dc7b2476708b512cdc8f7e7fca96427cc5e9
+            config-hash: 962dda76b43333bbe79d61a256c79f12da836eab63adced010b508607c434802
           labels:
             app: process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
@@ -4410,8 +5099,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4423,6 +5110,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -4448,10 +5138,24 @@
       template:
         metadata:
           annotations:
-            config-hash: a4341dd56115350d340491034ab1dc7b2476708b512cdc8f7e7fca96427cc5e9
+            config-hash: 962dda76b43333bbe79d61a256c79f12da836eab63adced010b508607c434802
           labels:
             app: queue
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
@@ -4497,8 +5201,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4510,6 +5212,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -4535,10 +5240,24 @@
       template:
         metadata:
           annotations:
-            config-hash: a4341dd56115350d340491034ab1dc7b2476708b512cdc8f7e7fca96427cc5e9
+            config-hash: 962dda76b43333bbe79d61a256c79f12da836eab63adced010b508607c434802
           labels:
             app: summary-client
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
@@ -4584,8 +5303,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4597,6 +5314,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -4622,10 +5342,24 @@
       template:
         metadata:
           annotations:
-            config-hash: a4341dd56115350d340491034ab1dc7b2476708b512cdc8f7e7fca96427cc5e9
+            config-hash: 962dda76b43333bbe79d61a256c79f12da836eab63adced010b508607c434802
           labels:
             app: upload
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
@@ -4671,8 +5405,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4684,6 +5416,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -4710,10 +5445,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 326e2b70bf129ea353bd2558d7d1b083ff772d957d262a8b2f3f0419b5f2b7d1
+            config-hash: c2d32eb5cfa12cbf83c51eccf4bfdf99eb9ef6e92eb091f9be6a40c037a19009
           labels:
             app: groundx
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - envFrom:
                 - secretRef:
@@ -4776,8 +5525,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-database
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4790,6 +5537,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -4831,10 +5581,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 326e2b70bf129ea353bd2558d7d1b083ff772d957d262a8b2f3f0419b5f2b7d1
+            config-hash: c2d32eb5cfa12cbf83c51eccf4bfdf99eb9ef6e92eb091f9be6a40c037a19009
           labels:
             app: layout-webhook
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - envFrom:
                 - secretRef:
@@ -4883,8 +5647,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4897,6 +5659,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -4938,10 +5703,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 326e2b70bf129ea353bd2558d7d1b083ff772d957d262a8b2f3f0419b5f2b7d1
+            config-hash: c2d32eb5cfa12cbf83c51eccf4bfdf99eb9ef6e92eb091f9be6a40c037a19009
           labels:
             app: pre-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - envFrom:
                 - secretRef:
@@ -4990,8 +5769,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -5004,6 +5781,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -5029,10 +5809,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 326e2b70bf129ea353bd2558d7d1b083ff772d957d262a8b2f3f0419b5f2b7d1
+            config-hash: c2d32eb5cfa12cbf83c51eccf4bfdf99eb9ef6e92eb091f9be6a40c037a19009
           labels:
             app: process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - envFrom:
                 - secretRef:
@@ -5081,8 +5875,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -5095,6 +5887,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -5120,10 +5915,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 326e2b70bf129ea353bd2558d7d1b083ff772d957d262a8b2f3f0419b5f2b7d1
+            config-hash: c2d32eb5cfa12cbf83c51eccf4bfdf99eb9ef6e92eb091f9be6a40c037a19009
           labels:
             app: queue
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - envFrom:
                 - secretRef:
@@ -5172,8 +5981,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -5186,6 +5993,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -5211,10 +6021,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 326e2b70bf129ea353bd2558d7d1b083ff772d957d262a8b2f3f0419b5f2b7d1
+            config-hash: c2d32eb5cfa12cbf83c51eccf4bfdf99eb9ef6e92eb091f9be6a40c037a19009
           labels:
             app: summary-client
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - envFrom:
                 - secretRef:
@@ -5263,8 +6087,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -5277,6 +6099,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -5302,10 +6127,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 326e2b70bf129ea353bd2558d7d1b083ff772d957d262a8b2f3f0419b5f2b7d1
+            config-hash: c2d32eb5cfa12cbf83c51eccf4bfdf99eb9ef6e92eb091f9be6a40c037a19009
           labels:
             app: upload
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - envFrom:
                 - secretRef:
@@ -5354,8 +6193,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -5368,6 +6205,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -5394,7 +6234,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9c2731ae40d72dfe4a4af609165ec30579d15327787ea3abd6404ea916c966b5
+            config-hash: b422284f793e30138eade729ef91f6c5dc76eb20ccc5c61fb2e7c0bbbd49cf88
             prometheus.io/port: "8081"
           labels:
             app: myapp
@@ -5524,10 +6364,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 9c2731ae40d72dfe4a4af609165ec30579d15327787ea3abd6404ea916c966b5
+            config-hash: b422284f793e30138eade729ef91f6c5dc76eb20ccc5c61fb2e7c0bbbd49cf88
           labels:
             app: layout-webhook
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - test-label-1
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - test-label-1
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
@@ -5573,8 +6427,6 @@
               image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-groundx
-          nodeSelector:
-            node: test-label-1
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -5629,10 +6481,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 9c2731ae40d72dfe4a4af609165ec30579d15327787ea3abd6404ea916c966b5
+            config-hash: b422284f793e30138eade729ef91f6c5dc76eb20ccc5c61fb2e7c0bbbd49cf88
           labels:
             app: pre-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - test-label-1
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - test-label-1
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
@@ -5693,6 +6559,9 @@
             - effect: NoSchedule
               key: node
               value: test-label-1
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: test-label-1
           volumes:
             - configMap:
                 name: config-yaml-map
@@ -5717,10 +6586,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 9c2731ae40d72dfe4a4af609165ec30579d15327787ea3abd6404ea916c966b5
+            config-hash: b422284f793e30138eade729ef91f6c5dc76eb20ccc5c61fb2e7c0bbbd49cf88
           labels:
             app: process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - test-label-1
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - test-label-1
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
@@ -5766,8 +6649,6 @@
               image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-groundx
-          nodeSelector:
-            node: test-label-1
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -5780,6 +6661,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: test-label-1
+            - effect: NoSchedule
+              key: eyelevel_node
               value: test-label-1
           volumes:
             - configMap:
@@ -5805,7 +6689,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9c2731ae40d72dfe4a4af609165ec30579d15327787ea3abd6404ea916c966b5
+            config-hash: b422284f793e30138eade729ef91f6c5dc76eb20ccc5c61fb2e7c0bbbd49cf88
           labels:
             app: queue
         spec:
@@ -5887,7 +6771,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9c2731ae40d72dfe4a4af609165ec30579d15327787ea3abd6404ea916c966b5
+            config-hash: b422284f793e30138eade729ef91f6c5dc76eb20ccc5c61fb2e7c0bbbd49cf88
           labels:
             app: summary-client
         spec:
@@ -5974,7 +6858,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9c2731ae40d72dfe4a4af609165ec30579d15327787ea3abd6404ea916c966b5
+            config-hash: b422284f793e30138eade729ef91f6c5dc76eb20ccc5c61fb2e7c0bbbd49cf88
           labels:
             app: upload
         spec:
@@ -6059,10 +6943,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: e909dc66c717cddf241270b1a0f0b98921e42e2ff0caabb9257c45a645362b4d
           labels:
             app: groundx
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
@@ -6136,8 +7034,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-stream
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -6149,6 +7045,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -6190,10 +7089,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: e909dc66c717cddf241270b1a0f0b98921e42e2ff0caabb9257c45a645362b4d
           labels:
             app: layout-webhook
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
@@ -6239,8 +7152,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -6252,6 +7163,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -6293,10 +7207,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: e909dc66c717cddf241270b1a0f0b98921e42e2ff0caabb9257c45a645362b4d
           labels:
             app: pre-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
@@ -6342,8 +7270,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -6355,6 +7281,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -6380,10 +7309,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: e909dc66c717cddf241270b1a0f0b98921e42e2ff0caabb9257c45a645362b4d
           labels:
             app: process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
@@ -6429,8 +7372,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -6442,6 +7383,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -6467,10 +7411,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: e909dc66c717cddf241270b1a0f0b98921e42e2ff0caabb9257c45a645362b4d
           labels:
             app: queue
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
@@ -6516,8 +7474,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -6529,6 +7485,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -6554,10 +7513,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: e909dc66c717cddf241270b1a0f0b98921e42e2ff0caabb9257c45a645362b4d
           labels:
             app: summary-client
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
@@ -6603,8 +7576,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -6616,6 +7587,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -6641,10 +7615,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: e909dc66c717cddf241270b1a0f0b98921e42e2ff0caabb9257c45a645362b4d
           labels:
             app: upload
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
@@ -6690,8 +7678,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -6703,6 +7689,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -6729,10 +7718,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: e909dc66c717cddf241270b1a0f0b98921e42e2ff0caabb9257c45a645362b4d
           labels:
             app: groundx
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
@@ -6804,8 +7807,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-stream
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -6813,6 +7814,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -6854,10 +7858,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: e909dc66c717cddf241270b1a0f0b98921e42e2ff0caabb9257c45a645362b4d
           labels:
             app: layout-webhook
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
@@ -6901,8 +7919,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -6910,6 +7926,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -6951,10 +7970,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: e909dc66c717cddf241270b1a0f0b98921e42e2ff0caabb9257c45a645362b4d
           labels:
             app: pre-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
@@ -6998,8 +8031,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7007,6 +8038,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -7032,10 +8066,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: e909dc66c717cddf241270b1a0f0b98921e42e2ff0caabb9257c45a645362b4d
           labels:
             app: process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
@@ -7079,8 +8127,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7088,6 +8134,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -7113,10 +8162,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: e909dc66c717cddf241270b1a0f0b98921e42e2ff0caabb9257c45a645362b4d
           labels:
             app: queue
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
@@ -7160,8 +8223,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7169,6 +8230,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -7194,10 +8258,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: e909dc66c717cddf241270b1a0f0b98921e42e2ff0caabb9257c45a645362b4d
           labels:
             app: summary-client
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
@@ -7241,8 +8319,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7250,6 +8326,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -7275,10 +8354,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 813c337194bfdc103b378a40f84eae80c2672824c26233d7f270adc0a35d10c2
+            config-hash: e909dc66c717cddf241270b1a0f0b98921e42e2ff0caabb9257c45a645362b4d
           labels:
             app: upload
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
@@ -7322,8 +8415,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7331,6 +8422,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -7357,10 +8451,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 9699e70b4812c4c2bbf63a6ab40c65c2aa6d07801bbb8deda8bd88a50778555e
+            config-hash: 23def90e60fd7d79a7b0ff28359d971801b6de72f677f0d68b3355fbc787da13
           labels:
             app: groundx-service
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: Always
@@ -7434,8 +8542,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-stream
-          nodeSelector:
-            node: eyelevel-gpu
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7443,6 +8549,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-gpu
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-gpu
           volumes:
             - configMap:
@@ -7484,10 +8593,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 9699e70b4812c4c2bbf63a6ab40c65c2aa6d07801bbb8deda8bd88a50778555e
+            config-hash: 23def90e60fd7d79a7b0ff28359d971801b6de72f677f0d68b3355fbc787da13
           labels:
             app: layout-webhook
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: Always
@@ -7533,8 +8656,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-gpu
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7542,6 +8663,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-gpu
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-gpu
           volumes:
             - configMap:
@@ -7583,10 +8707,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 9699e70b4812c4c2bbf63a6ab40c65c2aa6d07801bbb8deda8bd88a50778555e
+            config-hash: 23def90e60fd7d79a7b0ff28359d971801b6de72f677f0d68b3355fbc787da13
           labels:
             app: pre-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: Always
@@ -7632,8 +8770,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-gpu
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7641,6 +8777,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-gpu
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-gpu
           volumes:
             - configMap:
@@ -7666,10 +8805,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 9699e70b4812c4c2bbf63a6ab40c65c2aa6d07801bbb8deda8bd88a50778555e
+            config-hash: 23def90e60fd7d79a7b0ff28359d971801b6de72f677f0d68b3355fbc787da13
           labels:
             app: process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: Always
@@ -7715,8 +8868,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-gpu
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7724,6 +8875,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-gpu
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-gpu
           volumes:
             - configMap:
@@ -7749,10 +8903,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 9699e70b4812c4c2bbf63a6ab40c65c2aa6d07801bbb8deda8bd88a50778555e
+            config-hash: 23def90e60fd7d79a7b0ff28359d971801b6de72f677f0d68b3355fbc787da13
           labels:
             app: queue
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: Always
@@ -7798,8 +8966,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-gpu
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7807,6 +8973,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-gpu
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-gpu
           volumes:
             - configMap:
@@ -7832,10 +9001,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 9699e70b4812c4c2bbf63a6ab40c65c2aa6d07801bbb8deda8bd88a50778555e
+            config-hash: 23def90e60fd7d79a7b0ff28359d971801b6de72f677f0d68b3355fbc787da13
           labels:
             app: summary-client
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: Always
@@ -7881,8 +9064,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-gpu
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7890,6 +9071,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-gpu
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-gpu
           volumes:
             - configMap:
@@ -7915,10 +9099,24 @@
       template:
         metadata:
           annotations:
-            config-hash: 9699e70b4812c4c2bbf63a6ab40c65c2aa6d07801bbb8deda8bd88a50778555e
+            config-hash: 23def90e60fd7d79a7b0ff28359d971801b6de72f677f0d68b3355fbc787da13
           labels:
             app: upload
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: Always
@@ -7964,8 +9162,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-groundx
-          nodeSelector:
-            node: eyelevel-gpu
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7973,6 +9169,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-gpu
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-gpu
           volumes:
             - configMap:

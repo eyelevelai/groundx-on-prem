@@ -24,6 +24,20 @@
           labels:
             app: layout-correct
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -91,8 +105,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -105,6 +117,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -138,6 +153,20 @@
           labels:
             app: layout-map
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -205,8 +234,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -219,6 +246,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -252,6 +282,20 @@
           labels:
             app: layout-ocr
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -319,8 +363,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -333,6 +375,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -366,6 +411,20 @@
           labels:
             app: layout-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -433,8 +492,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -447,6 +504,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -480,6 +540,20 @@
           labels:
             app: layout-save
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -547,8 +621,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -561,6 +633,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -583,7 +658,7 @@
       name: extract-agent
       namespace: eyelevel
     spec:
-      replicas: 4
+      replicas: 1
       selector:
         matchLabels:
           app: extract-agent
@@ -591,10 +666,24 @@
         metadata:
           annotations:
             config-hash: 330fc39b12ddba09303c6f5f10210ab18dc2a90bbe9a5a867bcdaad4428deaad
-            supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
+            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
           labels:
             app: extract-agent
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -631,6 +720,8 @@
                 initialDelaySeconds: 10
                 periodSeconds: 30
               resources:
+                limits:
+                  memory: 1Gi
                 requests:
                   cpu: 100m
                   memory: 512Mi
@@ -674,8 +765,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-extract
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -687,6 +776,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -716,10 +808,24 @@
         metadata:
           annotations:
             config-hash: 330fc39b12ddba09303c6f5f10210ab18dc2a90bbe9a5a867bcdaad4428deaad
-            supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
+            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
           labels:
             app: extract-download
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -756,6 +862,9 @@
                 initialDelaySeconds: 10
                 periodSeconds: 30
               resources:
+                limits:
+                  cpu: 1
+                  memory: 1Gi
                 requests:
                   cpu: 100m
                   memory: 256Mi
@@ -799,8 +908,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-extract
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -812,6 +919,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -841,10 +951,24 @@
         metadata:
           annotations:
             config-hash: 330fc39b12ddba09303c6f5f10210ab18dc2a90bbe9a5a867bcdaad4428deaad
-            supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
+            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
           labels:
             app: extract-save
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -881,6 +1005,9 @@
                 initialDelaySeconds: 10
                 periodSeconds: 30
               resources:
+                limits:
+                  cpu: 1
+                  memory: 1Gi
                 requests:
                   cpu: 100m
                   memory: 512Mi
@@ -924,8 +1051,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-extract
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -937,6 +1062,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -970,6 +1098,20 @@
           labels:
             app: layout-correct
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -1037,8 +1179,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1050,6 +1190,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -1083,6 +1226,20 @@
           labels:
             app: layout-map
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -1150,8 +1307,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1163,6 +1318,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -1196,6 +1354,20 @@
           labels:
             app: layout-ocr
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -1263,8 +1435,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1276,6 +1446,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -1309,6 +1482,20 @@
           labels:
             app: layout-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -1376,8 +1563,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1389,6 +1574,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -1422,6 +1610,20 @@
           labels:
             app: layout-save
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -1489,8 +1691,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1502,6 +1702,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -1536,6 +1739,20 @@
           labels:
             app: layout-correct
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -1603,8 +1820,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1616,6 +1831,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -1649,6 +1867,20 @@
           labels:
             app: layout-map
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -1716,8 +1948,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1729,6 +1959,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -1762,6 +1995,20 @@
           labels:
             app: layout-ocr
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -1829,8 +2076,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1842,6 +2087,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -1875,6 +2123,20 @@
           labels:
             app: layout-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -1942,8 +2204,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1955,6 +2215,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -1988,6 +2251,20 @@
           labels:
             app: layout-save
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -2055,8 +2332,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2068,6 +2343,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -2103,6 +2381,20 @@
           labels:
             app: layout-correct
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -2170,8 +2462,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2183,6 +2473,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -2216,6 +2509,20 @@
           labels:
             app: layout-map
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -2283,8 +2590,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2296,6 +2601,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -2329,6 +2637,20 @@
           labels:
             app: layout-ocr
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -2396,8 +2718,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2409,6 +2729,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -2442,6 +2765,20 @@
           labels:
             app: layout-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -2509,8 +2846,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2522,6 +2857,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -2555,6 +2893,20 @@
           labels:
             app: layout-save
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -2622,8 +2974,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2635,6 +2985,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -2669,6 +3022,20 @@
           labels:
             app: layout-correct
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -2736,8 +3103,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2749,6 +3114,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -2782,6 +3150,20 @@
           labels:
             app: layout-map
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -2849,8 +3231,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2862,6 +3242,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -2895,6 +3278,20 @@
           labels:
             app: layout-ocr
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -2962,8 +3359,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2975,6 +3370,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -3008,6 +3406,20 @@
           labels:
             app: layout-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -3075,8 +3487,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3088,6 +3498,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -3121,6 +3534,20 @@
           labels:
             app: layout-save
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -3188,8 +3615,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3201,6 +3626,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -3223,7 +3651,7 @@
       name: extract-agent
       namespace: eyelevel
     spec:
-      replicas: 4
+      replicas: 1
       selector:
         matchLabels:
           app: extract-agent
@@ -3231,10 +3659,24 @@
         metadata:
           annotations:
             config-hash: cbb6f926136bb8397c0704c042af58ac68e06e6da392dba3a594dec4f8c8d892
-            supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
+            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
           labels:
             app: extract-agent
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -3271,6 +3713,8 @@
                 initialDelaySeconds: 10
                 periodSeconds: 30
               resources:
+                limits:
+                  memory: 1Gi
                 requests:
                   cpu: 100m
                   memory: 512Mi
@@ -3314,8 +3758,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-extract
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3328,6 +3770,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -3357,10 +3802,24 @@
         metadata:
           annotations:
             config-hash: cbb6f926136bb8397c0704c042af58ac68e06e6da392dba3a594dec4f8c8d892
-            supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
+            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
           labels:
             app: extract-download
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -3397,6 +3856,9 @@
                 initialDelaySeconds: 10
                 periodSeconds: 30
               resources:
+                limits:
+                  cpu: 1
+                  memory: 1Gi
                 requests:
                   cpu: 100m
                   memory: 256Mi
@@ -3440,8 +3902,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-extract
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3454,6 +3914,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -3483,10 +3946,24 @@
         metadata:
           annotations:
             config-hash: cbb6f926136bb8397c0704c042af58ac68e06e6da392dba3a594dec4f8c8d892
-            supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
+            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
           labels:
             app: extract-save
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -3523,6 +4000,9 @@
                 initialDelaySeconds: 10
                 periodSeconds: 30
               resources:
+                limits:
+                  cpu: 1
+                  memory: 1Gi
                 requests:
                   cpu: 1
                   memory: 2Gi
@@ -3566,8 +4046,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-extract
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3580,6 +4058,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -3613,6 +4094,20 @@
           labels:
             app: layout-correct
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -3683,8 +4178,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3697,6 +4190,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -3730,6 +4226,20 @@
           labels:
             app: layout-map
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -3800,8 +4310,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3814,6 +4322,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -3847,6 +4358,20 @@
           labels:
             app: layout-ocr
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -3917,8 +4442,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3931,6 +4454,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -3964,6 +4490,20 @@
           labels:
             app: layout-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -4034,8 +4574,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4048,6 +4586,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -4081,6 +4622,20 @@
           labels:
             app: layout-save
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -4151,8 +4706,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4165,6 +4718,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -4187,7 +4743,7 @@
       name: extract-agent
       namespace: eyelevel
     spec:
-      replicas: 4
+      replicas: 1
       selector:
         matchLabels:
           app: extract-agent
@@ -4195,10 +4751,24 @@
         metadata:
           annotations:
             config-hash: 480b3937590baedaca7671065676268ebd26413dcf203c4183e6203c6a3481e8
-            supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
+            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
           labels:
             app: extract-agent
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -4235,6 +4805,8 @@
                 initialDelaySeconds: 10
                 periodSeconds: 30
               resources:
+                limits:
+                  memory: 1Gi
                 requests:
                   cpu: 100m
                   memory: 512Mi
@@ -4278,8 +4850,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-extract
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4291,6 +4861,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -4320,10 +4893,24 @@
         metadata:
           annotations:
             config-hash: 480b3937590baedaca7671065676268ebd26413dcf203c4183e6203c6a3481e8
-            supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
+            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
           labels:
             app: extract-download
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -4360,6 +4947,9 @@
                 initialDelaySeconds: 10
                 periodSeconds: 30
               resources:
+                limits:
+                  cpu: 1
+                  memory: 1Gi
                 requests:
                   cpu: 100m
                   memory: 256Mi
@@ -4403,8 +4993,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-extract
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4416,6 +5004,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -4445,10 +5036,24 @@
         metadata:
           annotations:
             config-hash: 480b3937590baedaca7671065676268ebd26413dcf203c4183e6203c6a3481e8
-            supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
+            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
           labels:
             app: extract-save
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -4485,6 +5090,9 @@
                 initialDelaySeconds: 10
                 periodSeconds: 30
               resources:
+                limits:
+                  cpu: 1
+                  memory: 1Gi
                 requests:
                   cpu: 100m
                   memory: 512Mi
@@ -4528,8 +5136,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-extract
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4541,6 +5147,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -4574,6 +5183,20 @@
           labels:
             app: layout-correct
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -4641,8 +5264,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4654,6 +5275,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -4687,6 +5311,20 @@
           labels:
             app: layout-map
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -4754,8 +5392,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4767,6 +5403,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -4800,6 +5439,20 @@
           labels:
             app: layout-ocr
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -4867,8 +5520,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4880,6 +5531,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -4913,6 +5567,20 @@
           labels:
             app: layout-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -4980,8 +5648,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4993,6 +5659,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -5026,6 +5695,20 @@
           labels:
             app: layout-save
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -5093,8 +5776,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -5106,6 +5787,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -5128,7 +5812,7 @@
       name: extract-agent
       namespace: eyelevel
     spec:
-      replicas: 4
+      replicas: 1
       selector:
         matchLabels:
           app: extract-agent
@@ -5136,10 +5820,24 @@
         metadata:
           annotations:
             config-hash: a6f3a4adb20942c9ae339702dd091e2219a93695fdac7a77f97d2387f711cc6f
-            supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
+            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
           labels:
             app: extract-agent
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -5176,6 +5874,8 @@
                 initialDelaySeconds: 10
                 periodSeconds: 30
               resources:
+                limits:
+                  memory: 1Gi
                 requests:
                   cpu: 100m
                   memory: 512Mi
@@ -5219,8 +5919,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-extract
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -5233,6 +5931,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -5262,10 +5963,24 @@
         metadata:
           annotations:
             config-hash: a6f3a4adb20942c9ae339702dd091e2219a93695fdac7a77f97d2387f711cc6f
-            supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
+            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
           labels:
             app: extract-download
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -5302,6 +6017,9 @@
                 initialDelaySeconds: 10
                 periodSeconds: 30
               resources:
+                limits:
+                  cpu: 1
+                  memory: 1Gi
                 requests:
                   cpu: 100m
                   memory: 256Mi
@@ -5345,8 +6063,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-extract
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -5359,6 +6075,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -5388,10 +6107,24 @@
         metadata:
           annotations:
             config-hash: a6f3a4adb20942c9ae339702dd091e2219a93695fdac7a77f97d2387f711cc6f
-            supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
+            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
           labels:
             app: extract-save
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -5428,6 +6161,9 @@
                 initialDelaySeconds: 10
                 periodSeconds: 30
               resources:
+                limits:
+                  cpu: 1
+                  memory: 1Gi
                 requests:
                   cpu: 1
                   memory: 2Gi
@@ -5471,8 +6207,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-extract
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -5485,6 +6219,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -5518,6 +6255,20 @@
           labels:
             app: layout-correct
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -5588,8 +6339,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -5602,6 +6351,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -5635,6 +6387,20 @@
           labels:
             app: layout-map
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -5705,8 +6471,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -5719,6 +6483,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -5752,6 +6519,20 @@
           labels:
             app: layout-ocr
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -5822,8 +6603,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -5836,6 +6615,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -5869,6 +6651,20 @@
           labels:
             app: layout-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -5939,8 +6735,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -5953,6 +6747,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -5986,6 +6783,20 @@
           labels:
             app: layout-save
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -6056,8 +6867,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -6070,6 +6879,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -6104,6 +6916,20 @@
           labels:
             app: myapp-correct
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -6171,8 +6997,6 @@
               image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -6185,6 +7009,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -6546,6 +7373,20 @@
           labels:
             app: myapp-save
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - test-label-1
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - test-label-1
           containers:
             - command:
                 - /bin/sh
@@ -6613,8 +7454,6 @@
               image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-file-storage
-          nodeSelector:
-            node: test-label-1
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -6627,6 +7466,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: test-label-1
+            - effect: NoSchedule
+              key: eyelevel_node
               value: test-label-1
           volumes:
             - configMap:
@@ -6661,6 +7503,20 @@
           labels:
             app: layout-correct
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -6728,8 +7584,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -6741,6 +7595,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -6774,6 +7631,20 @@
           labels:
             app: layout-map
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -6841,8 +7712,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -6854,6 +7723,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -6887,6 +7759,20 @@
           labels:
             app: layout-ocr
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -6954,8 +7840,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -6967,6 +7851,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -7000,6 +7887,20 @@
           labels:
             app: layout-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -7067,8 +7968,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -7080,6 +7979,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -7113,6 +8015,20 @@
           labels:
             app: layout-save
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -7180,8 +8096,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -7193,6 +8107,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -7227,6 +8144,20 @@
           labels:
             app: layout-correct
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -7292,8 +8223,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7301,6 +8230,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -7334,6 +8266,20 @@
           labels:
             app: layout-map
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - command:
                 - /bin/sh
@@ -7399,8 +8345,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7408,6 +8352,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -7441,6 +8388,20 @@
           labels:
             app: layout-ocr
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -7506,8 +8467,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7515,6 +8474,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -7548,6 +8510,20 @@
           labels:
             app: layout-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -7613,8 +8589,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7622,6 +8596,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -7655,6 +8632,20 @@
           labels:
             app: layout-save
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
           containers:
             - command:
                 - /bin/sh
@@ -7720,8 +8711,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-cpu-memory
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7729,6 +8718,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
             - configMap:
@@ -7751,7 +8743,7 @@
       name: extract-agent
       namespace: eyelevel
     spec:
-      replicas: 4
+      replicas: 1
       selector:
         matchLabels:
           app: extract-agent
@@ -7759,10 +8751,24 @@
         metadata:
           annotations:
             config-hash: e82d82164b0c860e2a66d97220272037cfd488e78386da32f5ea32b618066f47
-            supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
+            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
           labels:
             app: extract-agent
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu
           containers:
             - command:
                 - /bin/sh
@@ -7799,6 +8805,8 @@
                 initialDelaySeconds: 10
                 periodSeconds: 30
               resources:
+                limits:
+                  memory: 1Gi
                 requests:
                   cpu: 100m
                   memory: 512Mi
@@ -7842,8 +8850,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-extract
-          nodeSelector:
-            node: eyelevel-cpu
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7851,6 +8857,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu
           volumes:
             - configMap:
@@ -7880,10 +8889,24 @@
         metadata:
           annotations:
             config-hash: e82d82164b0c860e2a66d97220272037cfd488e78386da32f5ea32b618066f47
-            supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
+            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
           labels:
             app: extract-download
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu
           containers:
             - command:
                 - /bin/sh
@@ -7920,6 +8943,9 @@
                 initialDelaySeconds: 10
                 periodSeconds: 30
               resources:
+                limits:
+                  cpu: 1
+                  memory: 1Gi
                 requests:
                   cpu: 100m
                   memory: 256Mi
@@ -7963,8 +8989,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-extract
-          nodeSelector:
-            node: eyelevel-cpu
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7972,6 +8996,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu
           volumes:
             - configMap:
@@ -8001,10 +9028,24 @@
         metadata:
           annotations:
             config-hash: e82d82164b0c860e2a66d97220272037cfd488e78386da32f5ea32b618066f47
-            supervisord-hash: 5b5e9887f0bdeba4bba8f32d5b8a61c0091a0282203b031ae21e1fd5f2025f3c
+            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
           labels:
             app: extract-save
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
           containers:
             - command:
                 - /bin/sh
@@ -8041,6 +9082,9 @@
                 initialDelaySeconds: 10
                 periodSeconds: 30
               resources:
+                limits:
+                  cpu: 1
+                  memory: 1Gi
                 requests:
                   cpu: 1
                   memory: 2Gi
@@ -8084,8 +9128,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-extract
-          nodeSelector:
-            node: eyelevel-gpu
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -8093,6 +9135,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-gpu
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-gpu
           volumes:
             - configMap:
@@ -8126,6 +9171,20 @@
           labels:
             app: layout-correct
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
           containers:
             - command:
                 - /bin/sh
@@ -8193,8 +9252,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-gpu
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -8202,6 +9259,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-gpu
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-gpu
           volumes:
             - configMap:
@@ -8235,6 +9295,20 @@
           labels:
             app: layout-map
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
           containers:
             - command:
                 - /bin/sh
@@ -8302,8 +9376,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-gpu
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -8311,6 +9383,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-gpu
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-gpu
           volumes:
             - configMap:
@@ -8344,6 +9419,20 @@
           labels:
             app: layout-ocr
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
           containers:
             - command:
                 - /bin/sh
@@ -8411,8 +9500,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-gpu
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -8420,6 +9507,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-gpu
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-gpu
           volumes:
             - configMap:
@@ -8453,6 +9543,20 @@
           labels:
             app: layout-process
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
           containers:
             - command:
                 - /bin/sh
@@ -8520,8 +9624,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-gpu
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -8529,6 +9631,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-gpu
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-gpu
           volumes:
             - configMap:
@@ -8562,6 +9667,20 @@
           labels:
             app: layout-save
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
           containers:
             - command:
                 - /bin/sh
@@ -8629,8 +9748,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-file-storage
-          nodeSelector:
-            node: eyelevel-gpu
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -8638,6 +9755,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-gpu
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-gpu
           volumes:
             - configMap:

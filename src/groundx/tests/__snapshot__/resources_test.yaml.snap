@@ -115,21 +115,40 @@
           active: true
           api:
             - name: groundx
+              threshold: 4000
             - name: layout-api
+              threshold: 4000
             - name: layout-webhook
+              threshold: 4000
           document:
             tokensPerMinute: 12500
+          extractRequest:
+            tokensPerMinute: 6000
           inference:
             - name: layout-inference
-              tokensPerMinute: 120000
+              tokensPerMinute: 360000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
-              tokensPerMinute: 3200
+              tokensPerMinute: 1600
             - name: summary-client
               tokensPerMinute: 9600
+          namespace: eyelevel
           page:
-            tokensPerMinute: 500
+            tokensPerMinute: 1000
+          queue:
+            - name: pre-process
+              target: pre-process
+              threshold: 10
+            - name: process
+              target: process
+              threshold: 10
+            - name: queue
+              target: queue
+              threshold: 10
+            - name: upload
+              target: upload
+              threshold: 10
           session:
             addr: X.X.X.use2.cache.amazonaws.com:6379
             notCluster: false
@@ -139,19 +158,52 @@
           task:
             - name: layout-correct
               target: correct_queue
-              threshold: 500
+              threshold: 10
             - name: layout-map
               target: map_queue
-              threshold: 500
+              threshold: 10
             - name: layout-ocr
               target: ocr_queue
-              threshold: 500
+              threshold: 10
             - name: layout-process
               target: process_queue
-              threshold: 500
+              threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 500
+              threshold: 10
+          throughput:
+            - name: groundx
+              tokensPerMinute: 150000
+            - name: layout-api
+              tokensPerMinute: 180000
+            - name: layout-correct
+              tokensPerMinute: 100000
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: layout-map
+              tokensPerMinute: 100000
+            - name: layout-ocr
+              tokensPerMinute: 100000
+            - name: layout-process
+              tokensPerMinute: 100000
+            - name: layout-save
+              tokensPerMinute: 150000
+            - name: layout-webhook
+              tokensPerMinute: 150000
+            - name: pre-process
+              tokensPerMinute: 100000
+            - name: process
+              tokensPerMinute: 150000
+            - name: queue
+              tokensPerMinute: 100000
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 1600
+            - name: summary-client
+              tokensPerMinute: 9600
+            - name: upload
+              tokensPerMinute: 100000
 
         owner:
           baseURL: http://groundx.eyelevel.svc.cluster.local/api/v1
@@ -307,7 +359,7 @@
 
         loglevel = "info"
         workers = 2
-        threads = 2
+        threads = 1
         timeout = 120
         timeout_keep_alive = 15
 
@@ -1020,35 +1072,43 @@
         metrics:
           active: true
           api:
+            - name: extract-api
+              threshold: 4000
             - name: groundx
+              threshold: 4000
             - name: layout-api
+              threshold: 4000
             - name: layout-webhook
+              threshold: 4000
           document:
             tokensPerMinute: 12500
+          extractRequest:
+            tokensPerMinute: 6000
           inference:
             - name: layout-inference
-              tokensPerMinute: 120000
+              tokensPerMinute: 360000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
-              tokensPerMinute: 3200
+              tokensPerMinute: 1600
             - name: summary-client
               tokensPerMinute: 9600
+          namespace: eyelevel
           page:
-            tokensPerMinute: 500
+            tokensPerMinute: 1000
           queue:
             - name: pre-process
-              target: file-pre-process
-              threshold: 6
+              target: pre-process
+              threshold: 10
             - name: process
-              target: file-process
-              threshold: 9
+              target: process
+              threshold: 10
             - name: queue
-              target: file-update
-              threshold: 9
+              target: queue
+              threshold: 10
             - name: upload
-              target: file-upload
-              threshold: 120
+              target: upload
+              threshold: 10
           session:
             addr: cache-metrics.eyelevel.svc.cluster.local:6379
             notCluster: true
@@ -1056,21 +1116,71 @@
           summaryRequest:
             tokensPerMinute: 625
           task:
+            - name: extract-agent
+              target: agent_queue
+              threshold: 10
+            - name: extract-download
+              target: download_queue
+              threshold: 10
+            - name: extract-save
+              target: save_agents_queue
+              threshold: 10
             - name: layout-correct
               target: correct_queue
-              threshold: 500
+              threshold: 10
             - name: layout-map
               target: map_queue
-              threshold: 500
+              threshold: 10
             - name: layout-ocr
               target: ocr_queue
-              threshold: 500
+              threshold: 10
             - name: layout-process
               target: process_queue
-              threshold: 500
+              threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 500
+              threshold: 10
+          throughput:
+            - name: extract-agent
+              tokensPerMinute: 18000
+            - name: extract-api
+              tokensPerMinute: 200000
+            - name: extract-download
+              tokensPerMinute: 180000
+            - name: extract-save
+              tokensPerMinute: 100000
+            - name: groundx
+              tokensPerMinute: 150000
+            - name: layout-api
+              tokensPerMinute: 180000
+            - name: layout-correct
+              tokensPerMinute: 100000
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: layout-map
+              tokensPerMinute: 100000
+            - name: layout-ocr
+              tokensPerMinute: 100000
+            - name: layout-process
+              tokensPerMinute: 100000
+            - name: layout-save
+              tokensPerMinute: 150000
+            - name: layout-webhook
+              tokensPerMinute: 150000
+            - name: pre-process
+              tokensPerMinute: 100000
+            - name: process
+              tokensPerMinute: 150000
+            - name: queue
+              tokensPerMinute: 100000
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 1600
+            - name: summary-client
+              tokensPerMinute: 9600
+            - name: upload
+              tokensPerMinute: 100000
 
         owner:
           baseURL: http://groundx.eyelevel.svc.cluster.local/api/v1
@@ -1272,7 +1382,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=agent_queue
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -1301,7 +1411,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=download_queue
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -1330,7 +1440,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=save_agents_queue,celery
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=save_agents_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -1409,7 +1519,7 @@
 
         loglevel = "info"
         workers = 2
-        threads = 2
+        threads = 1
         timeout = 120
         timeout_keep_alive = 15
 
@@ -2140,34 +2250,40 @@
           active: true
           api:
             - name: groundx
+              threshold: 4000
             - name: layout-api
+              threshold: 4000
             - name: layout-webhook
+              threshold: 4000
           document:
             tokensPerMinute: 12500
+          extractRequest:
+            tokensPerMinute: 6000
           inference:
             - name: layout-inference
-              tokensPerMinute: 120000
+              tokensPerMinute: 360000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
-              tokensPerMinute: 3200
+              tokensPerMinute: 1600
             - name: summary-client
               tokensPerMinute: 9600
+          namespace: eyelevel
           page:
-            tokensPerMinute: 500
+            tokensPerMinute: 1000
           queue:
             - name: pre-process
-              target: file-pre-process
-              threshold: 6
+              target: pre-process
+              threshold: 10
             - name: process
-              target: file-process
-              threshold: 9
+              target: process
+              threshold: 10
             - name: queue
-              target: file-update
-              threshold: 9
+              target: queue
+              threshold: 10
             - name: upload
-              target: file-upload
-              threshold: 120
+              target: upload
+              threshold: 10
           session:
             addr: cache-metrics.eyelevel.svc.cluster.local:6379
             notCluster: true
@@ -2177,19 +2293,52 @@
           task:
             - name: layout-correct
               target: correct_queue
-              threshold: 500
+              threshold: 10
             - name: layout-map
               target: map_queue
-              threshold: 500
+              threshold: 10
             - name: layout-ocr
               target: ocr_queue
-              threshold: 500
+              threshold: 10
             - name: layout-process
               target: process_queue
-              threshold: 500
+              threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 500
+              threshold: 10
+          throughput:
+            - name: groundx
+              tokensPerMinute: 150000
+            - name: layout-api
+              tokensPerMinute: 180000
+            - name: layout-correct
+              tokensPerMinute: 100000
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: layout-map
+              tokensPerMinute: 100000
+            - name: layout-ocr
+              tokensPerMinute: 100000
+            - name: layout-process
+              tokensPerMinute: 100000
+            - name: layout-save
+              tokensPerMinute: 150000
+            - name: layout-webhook
+              tokensPerMinute: 150000
+            - name: pre-process
+              tokensPerMinute: 100000
+            - name: process
+              tokensPerMinute: 150000
+            - name: queue
+              tokensPerMinute: 100000
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 1600
+            - name: summary-client
+              tokensPerMinute: 9600
+            - name: upload
+              tokensPerMinute: 100000
 
         owner:
           baseURL: http://groundx.eyelevel.svc.cluster.local/api/v1
@@ -2354,7 +2503,7 @@
 
         loglevel = "info"
         workers = 2
-        threads = 2
+        threads = 1
         timeout = 120
         timeout_keep_alive = 15
 
@@ -3054,34 +3203,40 @@
           active: true
           api:
             - name: groundx
+              threshold: 4000
             - name: layout-api
+              threshold: 4000
             - name: layout-webhook
+              threshold: 4000
           document:
             tokensPerMinute: 12500
+          extractRequest:
+            tokensPerMinute: 6000
           inference:
             - name: layout-inference
-              tokensPerMinute: 120000
+              tokensPerMinute: 360000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
-              tokensPerMinute: 3200
+              tokensPerMinute: 1600
             - name: summary-client
               tokensPerMinute: 9600
+          namespace: eyelevel
           page:
-            tokensPerMinute: 500
+            tokensPerMinute: 1000
           queue:
             - name: pre-process
-              target: file-pre-process
-              threshold: 6
+              target: pre-process
+              threshold: 10
             - name: process
-              target: file-process
-              threshold: 9
+              target: process
+              threshold: 10
             - name: queue
-              target: file-update
-              threshold: 9
+              target: queue
+              threshold: 10
             - name: upload
-              target: file-upload
-              threshold: 120
+              target: upload
+              threshold: 10
           session:
             addr: cache-metrics.eyelevel.svc.cluster.local:6379
             notCluster: true
@@ -3091,19 +3246,52 @@
           task:
             - name: layout-correct
               target: correct_queue
-              threshold: 500
+              threshold: 10
             - name: layout-map
               target: map_queue
-              threshold: 500
+              threshold: 10
             - name: layout-ocr
               target: ocr_queue
-              threshold: 500
+              threshold: 10
             - name: layout-process
               target: process_queue
-              threshold: 500
+              threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 500
+              threshold: 10
+          throughput:
+            - name: groundx
+              tokensPerMinute: 150000
+            - name: layout-api
+              tokensPerMinute: 180000
+            - name: layout-correct
+              tokensPerMinute: 100000
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: layout-map
+              tokensPerMinute: 100000
+            - name: layout-ocr
+              tokensPerMinute: 100000
+            - name: layout-process
+              tokensPerMinute: 100000
+            - name: layout-save
+              tokensPerMinute: 150000
+            - name: layout-webhook
+              tokensPerMinute: 150000
+            - name: pre-process
+              tokensPerMinute: 100000
+            - name: process
+              tokensPerMinute: 150000
+            - name: queue
+              tokensPerMinute: 100000
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 1600
+            - name: summary-client
+              tokensPerMinute: 9600
+            - name: upload
+              tokensPerMinute: 100000
 
         owner:
           baseURL: http://groundx.eyelevel.svc.cluster.local/api/v1
@@ -3268,7 +3456,7 @@
 
         loglevel = "info"
         workers = 2
-        threads = 2
+        threads = 1
         timeout = 120
         timeout_keep_alive = 15
 
@@ -3980,31 +4168,37 @@
           active: true
           api:
             - name: groundx
+              threshold: 4000
             - name: layout-api
+              threshold: 4000
             - name: layout-webhook
+              threshold: 4000
           document:
             tokensPerMinute: 12500
+          extractRequest:
+            tokensPerMinute: 6000
           inference:
             - name: layout-inference
-              tokensPerMinute: 120000
-            - name: summary-api
-              tokensPerMinute: 9600
-            - name: summary-inference
-              tokensPerMinute: 3200
-            - name: summary-client
-              tokensPerMinute: 9600
+              tokensPerMinute: 360000
+          namespace: eyelevel
           page:
-            tokensPerMinute: 500
+            tokensPerMinute: 1000
           queue:
             - name: pre-process
-              target: my-pre-process
-              threshold: 6
+              target: pre-process
+              threshold: 10
             - name: process
-              target: my-process
-              threshold: 9
+              target: process
+              threshold: 10
+            - name: queue
+              target: queue
+              threshold: 10
             - name: upload
-              target: my-upload
-              threshold: 120
+              target: upload
+              threshold: 10
+            - name: summary-client
+              target: summary-client
+              threshold: 10
           session:
             addr: metrics-cache.existing.com:6379
             notCluster: true
@@ -4014,19 +4208,48 @@
           task:
             - name: layout-correct
               target: correct_queue
-              threshold: 500
+              threshold: 10
             - name: layout-map
               target: map_queue
-              threshold: 500
+              threshold: 10
             - name: layout-ocr
               target: ocr_queue
-              threshold: 500
+              threshold: 10
             - name: layout-process
               target: process_queue
-              threshold: 500
+              threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 500
+              threshold: 10
+          throughput:
+            - name: groundx
+              tokensPerMinute: 150000
+            - name: layout-api
+              tokensPerMinute: 180000
+            - name: layout-correct
+              tokensPerMinute: 100000
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: layout-map
+              tokensPerMinute: 100000
+            - name: layout-ocr
+              tokensPerMinute: 100000
+            - name: layout-process
+              tokensPerMinute: 100000
+            - name: layout-save
+              tokensPerMinute: 150000
+            - name: layout-webhook
+              tokensPerMinute: 150000
+            - name: pre-process
+              tokensPerMinute: 100000
+            - name: process
+              tokensPerMinute: 150000
+            - name: queue
+              tokensPerMinute: 100000
+            - name: summary-client
+              tokensPerMinute: 54000
+            - name: upload
+              tokensPerMinute: 100000
 
         owner:
           baseURL: http://groundx.eyelevel.svc.cluster.local/api/v1
@@ -4197,7 +4420,7 @@
 
         loglevel = "info"
         workers = 2
-        threads = 2
+        threads = 1
         timeout = 120
         timeout_keep_alive = 15
 
@@ -4790,22 +5013,43 @@
         metrics:
           active: true
           api:
+            - name: extract-api
+              threshold: 4000
             - name: groundx
+              threshold: 4000
             - name: layout-api
+              threshold: 4000
             - name: layout-webhook
+              threshold: 4000
           document:
             tokensPerMinute: 12500
+          extractRequest:
+            tokensPerMinute: 6000
           inference:
             - name: layout-inference
-              tokensPerMinute: 120000
+              tokensPerMinute: 360000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
-              tokensPerMinute: 3200
+              tokensPerMinute: 1600
             - name: summary-client
               tokensPerMinute: 9600
+          namespace: eyelevel
           page:
-            tokensPerMinute: 500
+            tokensPerMinute: 1000
+          queue:
+            - name: pre-process
+              target: pre-process
+              threshold: 10
+            - name: process
+              target: process
+              threshold: 10
+            - name: queue
+              target: queue
+              threshold: 10
+            - name: upload
+              target: upload
+              threshold: 10
           session:
             addr: X.X.X.use2.cache.amazonaws.com:6379
             notCluster: false
@@ -4813,21 +5057,71 @@
           summaryRequest:
             tokensPerMinute: 625
           task:
+            - name: extract-agent
+              target: agent_queue
+              threshold: 10
+            - name: extract-download
+              target: download_queue
+              threshold: 10
+            - name: extract-save
+              target: save_agents_queue
+              threshold: 10
             - name: layout-correct
               target: correct_queue
-              threshold: 500
+              threshold: 10
             - name: layout-map
               target: map_queue
-              threshold: 500
+              threshold: 10
             - name: layout-ocr
               target: ocr_queue
-              threshold: 500
+              threshold: 10
             - name: layout-process
               target: process_queue
-              threshold: 500
+              threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 500
+              threshold: 10
+          throughput:
+            - name: extract-agent
+              tokensPerMinute: 18000
+            - name: extract-api
+              tokensPerMinute: 200000
+            - name: extract-download
+              tokensPerMinute: 180000
+            - name: extract-save
+              tokensPerMinute: 100000
+            - name: groundx
+              tokensPerMinute: 150000
+            - name: layout-api
+              tokensPerMinute: 180000
+            - name: layout-correct
+              tokensPerMinute: 100000
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: layout-map
+              tokensPerMinute: 100000
+            - name: layout-ocr
+              tokensPerMinute: 100000
+            - name: layout-process
+              tokensPerMinute: 100000
+            - name: layout-save
+              tokensPerMinute: 150000
+            - name: layout-webhook
+              tokensPerMinute: 150000
+            - name: pre-process
+              tokensPerMinute: 100000
+            - name: process
+              tokensPerMinute: 150000
+            - name: queue
+              tokensPerMinute: 100000
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 1600
+            - name: summary-client
+              tokensPerMinute: 9600
+            - name: upload
+              tokensPerMinute: 100000
 
         owner:
           baseURL: http://groundx.eyelevel.svc.cluster.local/api/v1
@@ -5016,7 +5310,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=agent_queue
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -5045,7 +5339,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=download_queue
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -5074,7 +5368,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=save_agents_queue,celery
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=save_agents_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -5151,7 +5445,7 @@
 
         loglevel = "info"
         workers = 2
-        threads = 2
+        threads = 1
         timeout = 120
         timeout_keep_alive = 15
 
@@ -5628,22 +5922,43 @@
         metrics:
           active: true
           api:
+            - name: extract-api
+              threshold: 4000
             - name: groundx
+              threshold: 4000
             - name: layout-api
+              threshold: 4000
             - name: layout-webhook
+              threshold: 4000
           document:
             tokensPerMinute: 12500
+          extractRequest:
+            tokensPerMinute: 6000
           inference:
             - name: layout-inference
-              tokensPerMinute: 120000
+              tokensPerMinute: 360000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
-              tokensPerMinute: 3200
+              tokensPerMinute: 1600
             - name: summary-client
               tokensPerMinute: 9600
+          namespace: eyelevel
           page:
-            tokensPerMinute: 500
+            tokensPerMinute: 1000
+          queue:
+            - name: pre-process
+              target: pre-process
+              threshold: 10
+            - name: process
+              target: process
+              threshold: 10
+            - name: queue
+              target: queue
+              threshold: 10
+            - name: upload
+              target: upload
+              threshold: 10
           session:
             addr: X.X.X.use2.cache.amazonaws.com:6379
             notCluster: false
@@ -5651,21 +5966,71 @@
           summaryRequest:
             tokensPerMinute: 625
           task:
+            - name: extract-agent
+              target: agent_queue
+              threshold: 10
+            - name: extract-download
+              target: download_queue
+              threshold: 10
+            - name: extract-save
+              target: save_agents_queue
+              threshold: 10
             - name: layout-correct
               target: correct_queue
-              threshold: 500
+              threshold: 10
             - name: layout-map
               target: map_queue
-              threshold: 500
+              threshold: 10
             - name: layout-ocr
               target: ocr_queue
-              threshold: 500
+              threshold: 10
             - name: layout-process
               target: process_queue
-              threshold: 500
+              threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 500
+              threshold: 10
+          throughput:
+            - name: extract-agent
+              tokensPerMinute: 18000
+            - name: extract-api
+              tokensPerMinute: 200000
+            - name: extract-download
+              tokensPerMinute: 180000
+            - name: extract-save
+              tokensPerMinute: 100000
+            - name: groundx
+              tokensPerMinute: 150000
+            - name: layout-api
+              tokensPerMinute: 180000
+            - name: layout-correct
+              tokensPerMinute: 100000
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: layout-map
+              tokensPerMinute: 100000
+            - name: layout-ocr
+              tokensPerMinute: 100000
+            - name: layout-process
+              tokensPerMinute: 100000
+            - name: layout-save
+              tokensPerMinute: 150000
+            - name: layout-webhook
+              tokensPerMinute: 150000
+            - name: pre-process
+              tokensPerMinute: 100000
+            - name: process
+              tokensPerMinute: 150000
+            - name: queue
+              tokensPerMinute: 100000
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 1600
+            - name: summary-client
+              tokensPerMinute: 9600
+            - name: upload
+              tokensPerMinute: 100000
 
         owner:
           baseURL: http://groundx.eyelevel.svc.cluster.local/api/v1
@@ -5879,7 +6244,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=agent_queue
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -5908,7 +6273,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=download_queue
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -5937,7 +6302,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=save_agents_queue,celery
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=save_agents_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -6016,7 +6381,7 @@
 
         loglevel = "info"
         workers = 2
-        threads = 2
+        threads = 1
         timeout = 120
         timeout_keep_alive = 15
 
@@ -6462,22 +6827,40 @@
         metrics:
           active: true
           api:
+            - name: extract-api
+              threshold: 4000
             - name: groundx
+              threshold: 4000
             - name: layout-api
+              threshold: 4000
             - name: layout-webhook
+              threshold: 4000
           document:
             tokensPerMinute: 12500
+          extractRequest:
+            tokensPerMinute: 6000
           inference:
             - name: layout-inference
-              tokensPerMinute: 120000
-            - name: summary-api
-              tokensPerMinute: 9600
-            - name: summary-inference
-              tokensPerMinute: 3200
-            - name: summary-client
-              tokensPerMinute: 9600
+              tokensPerMinute: 360000
+          namespace: eyelevel
           page:
-            tokensPerMinute: 500
+            tokensPerMinute: 1000
+          queue:
+            - name: pre-process
+              target: pre-process
+              threshold: 10
+            - name: process
+              target: process
+              threshold: 10
+            - name: queue
+              target: queue
+              threshold: 10
+            - name: upload
+              target: upload
+              threshold: 10
+            - name: summary-client
+              target: summary-client
+              threshold: 10
           session:
             addr: X.X.X.use2.cache.amazonaws.com:6379
             notCluster: false
@@ -6485,21 +6868,67 @@
           summaryRequest:
             tokensPerMinute: 625
           task:
+            - name: extract-agent
+              target: agent_queue
+              threshold: 10
+            - name: extract-download
+              target: download_queue
+              threshold: 10
+            - name: extract-save
+              target: save_agents_queue
+              threshold: 10
             - name: layout-correct
               target: correct_queue
-              threshold: 500
+              threshold: 10
             - name: layout-map
               target: map_queue
-              threshold: 500
+              threshold: 10
             - name: layout-ocr
               target: ocr_queue
-              threshold: 500
+              threshold: 10
             - name: layout-process
               target: process_queue
-              threshold: 500
+              threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 500
+              threshold: 10
+          throughput:
+            - name: extract-agent
+              tokensPerMinute: 18000
+            - name: extract-api
+              tokensPerMinute: 200000
+            - name: extract-download
+              tokensPerMinute: 180000
+            - name: extract-save
+              tokensPerMinute: 100000
+            - name: groundx
+              tokensPerMinute: 150000
+            - name: layout-api
+              tokensPerMinute: 180000
+            - name: layout-correct
+              tokensPerMinute: 100000
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: layout-map
+              tokensPerMinute: 100000
+            - name: layout-ocr
+              tokensPerMinute: 100000
+            - name: layout-process
+              tokensPerMinute: 100000
+            - name: layout-save
+              tokensPerMinute: 150000
+            - name: layout-webhook
+              tokensPerMinute: 150000
+            - name: pre-process
+              tokensPerMinute: 100000
+            - name: process
+              tokensPerMinute: 150000
+            - name: queue
+              tokensPerMinute: 100000
+            - name: summary-client
+              tokensPerMinute: 54000
+            - name: upload
+              tokensPerMinute: 100000
 
         owner:
           baseURL: http://groundx.eyelevel.svc.cluster.local/api/v1
@@ -6686,7 +7115,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=agent_queue
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -6715,7 +7144,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=download_queue
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -6744,7 +7173,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=save_agents_queue,celery
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=save_agents_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -6821,7 +7250,7 @@
 
         loglevel = "info"
         workers = 2
-        threads = 2
+        threads = 1
         timeout = 120
         timeout_keep_alive = 15
 
@@ -7176,34 +7605,40 @@
           active: true
           api:
             - name: myapp
+              threshold: 4000
             - name: myapp-api
+              threshold: 4000
             - name: layout-webhook
+              threshold: 4000
           document:
             tokensPerMinute: 12500
+          extractRequest:
+            tokensPerMinute: 6000
           inference:
             - name: myapp-inference
-              tokensPerMinute: 120000
+              tokensPerMinute: 240000
             - name: myapp-api
               tokensPerMinute: 9600
             - name: myapp-inference
-              tokensPerMinute: 3200
+              tokensPerMinute: 6400
             - name: summary-client
               tokensPerMinute: 9600
+          namespace: eyelevel
           page:
-            tokensPerMinute: 500
+            tokensPerMinute: 1000
           queue:
             - name: pre-process
-              target: file-pre-process
-              threshold: 6
+              target: pre-process
+              threshold: 10
             - name: process
-              target: file-process
-              threshold: 9
+              target: process
+              threshold: 10
             - name: queue
-              target: file-update
-              threshold: 9
+              target: queue
+              threshold: 10
             - name: upload
-              target: file-upload
-              threshold: 120
+              target: upload
+              threshold: 10
           session:
             addr: myapp-myapp.eyelevel.svc.cluster.local:8082
             notCluster: true
@@ -7213,19 +7648,52 @@
           task:
             - name: myapp-correct
               target: my-queue
-              threshold: 500
+              threshold: 10
             - name: myapp-map
               target: my-queue
-              threshold: 500
+              threshold: 10
             - name: myapp-ocr
               target: my-queue
-              threshold: 500
+              threshold: 10
             - name: myapp-process
               target: my-queue
-              threshold: 500
+              threshold: 10
             - name: myapp-save
               target: my-queue
-              threshold: 500
+              threshold: 10
+          throughput:
+            - name: myapp
+              tokensPerMinute: 150000
+            - name: myapp-api
+              tokensPerMinute: 810000
+            - name: myapp-correct
+              tokensPerMinute: 800000
+            - name: myapp-inference
+              tokensPerMinute: 240000
+            - name: myapp-map
+              tokensPerMinute: 400000
+            - name: myapp-ocr
+              tokensPerMinute: 400000
+            - name: myapp-process
+              tokensPerMinute: 400000
+            - name: myapp-save
+              tokensPerMinute: 600000
+            - name: layout-webhook
+              tokensPerMinute: 150000
+            - name: pre-process
+              tokensPerMinute: 100000
+            - name: process
+              tokensPerMinute: 150000
+            - name: queue
+              tokensPerMinute: 100000
+            - name: myapp-api
+              tokensPerMinute: 9600
+            - name: myapp-inference
+              tokensPerMinute: 6400
+            - name: summary-client
+              tokensPerMinute: 9600
+            - name: upload
+              tokensPerMinute: 100000
 
         owner:
           baseURL: http://myapp.eyelevel.svc.cluster.local/api/v1
@@ -8082,34 +8550,40 @@
           active: true
           api:
             - name: groundx
+              threshold: 4000
             - name: layout-api
+              threshold: 4000
             - name: layout-webhook
+              threshold: 4000
           document:
             tokensPerMinute: 12500
+          extractRequest:
+            tokensPerMinute: 6000
           inference:
             - name: layout-inference
-              tokensPerMinute: 120000
+              tokensPerMinute: 360000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
-              tokensPerMinute: 3200
+              tokensPerMinute: 1600
             - name: summary-client
               tokensPerMinute: 9600
+          namespace: eyelevel
           page:
-            tokensPerMinute: 500
+            tokensPerMinute: 1000
           queue:
             - name: pre-process
-              target: file-pre-process
-              threshold: 6
+              target: pre-process
+              threshold: 10
             - name: process
-              target: file-process
-              threshold: 9
+              target: process
+              threshold: 10
             - name: queue
-              target: file-update
-              threshold: 9
+              target: queue
+              threshold: 10
             - name: upload
-              target: file-upload
-              threshold: 120
+              target: upload
+              threshold: 10
           session:
             addr: cache-metrics.eyelevel.svc.cluster.local:6379
             notCluster: true
@@ -8119,19 +8593,52 @@
           task:
             - name: layout-correct
               target: correct_queue
-              threshold: 500
+              threshold: 10
             - name: layout-map
               target: map_queue
-              threshold: 500
+              threshold: 10
             - name: layout-ocr
               target: ocr_queue
-              threshold: 500
+              threshold: 10
             - name: layout-process
               target: process_queue
-              threshold: 500
+              threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 500
+              threshold: 10
+          throughput:
+            - name: groundx
+              tokensPerMinute: 150000
+            - name: layout-api
+              tokensPerMinute: 180000
+            - name: layout-correct
+              tokensPerMinute: 100000
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: layout-map
+              tokensPerMinute: 100000
+            - name: layout-ocr
+              tokensPerMinute: 100000
+            - name: layout-process
+              tokensPerMinute: 100000
+            - name: layout-save
+              tokensPerMinute: 150000
+            - name: layout-webhook
+              tokensPerMinute: 150000
+            - name: pre-process
+              tokensPerMinute: 100000
+            - name: process
+              tokensPerMinute: 150000
+            - name: queue
+              tokensPerMinute: 100000
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 1600
+            - name: summary-client
+              tokensPerMinute: 9600
+            - name: upload
+              tokensPerMinute: 100000
 
         owner:
           baseURL: http://groundx.eyelevel.svc.cluster.local/api/v1
@@ -8299,7 +8806,7 @@
 
         loglevel = "info"
         workers = 2
-        threads = 2
+        threads = 1
         timeout = 120
         timeout_keep_alive = 15
 
@@ -8984,34 +9491,40 @@
           active: true
           api:
             - name: groundx
+              threshold: 4000
             - name: layout-api
+              threshold: 4000
             - name: layout-webhook
+              threshold: 4000
           document:
             tokensPerMinute: 12500
+          extractRequest:
+            tokensPerMinute: 6000
           inference:
             - name: layout-inference
-              tokensPerMinute: 120000
+              tokensPerMinute: 360000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
-              tokensPerMinute: 3200
+              tokensPerMinute: 1600
             - name: summary-client
               tokensPerMinute: 9600
+          namespace: eyelevel
           page:
-            tokensPerMinute: 500
+            tokensPerMinute: 1000
           queue:
             - name: pre-process
-              target: file-pre-process
-              threshold: 6
+              target: pre-process
+              threshold: 10
             - name: process
-              target: file-process
-              threshold: 9
+              target: process
+              threshold: 10
             - name: queue
-              target: file-update
-              threshold: 9
+              target: queue
+              threshold: 10
             - name: upload
-              target: file-upload
-              threshold: 120
+              target: upload
+              threshold: 10
           session:
             addr: cache-metrics.eyelevel.svc.cluster.local:6379
             notCluster: true
@@ -9021,19 +9534,52 @@
           task:
             - name: layout-correct
               target: correct_queue
-              threshold: 500
+              threshold: 10
             - name: layout-map
               target: map_queue
-              threshold: 500
+              threshold: 10
             - name: layout-ocr
               target: ocr_queue
-              threshold: 500
+              threshold: 10
             - name: layout-process
               target: process_queue
-              threshold: 500
+              threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 500
+              threshold: 10
+          throughput:
+            - name: groundx
+              tokensPerMinute: 150000
+            - name: layout-api
+              tokensPerMinute: 180000
+            - name: layout-correct
+              tokensPerMinute: 100000
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: layout-map
+              tokensPerMinute: 100000
+            - name: layout-ocr
+              tokensPerMinute: 100000
+            - name: layout-process
+              tokensPerMinute: 100000
+            - name: layout-save
+              tokensPerMinute: 150000
+            - name: layout-webhook
+              tokensPerMinute: 150000
+            - name: pre-process
+              tokensPerMinute: 100000
+            - name: process
+              tokensPerMinute: 150000
+            - name: queue
+              tokensPerMinute: 100000
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 1600
+            - name: summary-client
+              tokensPerMinute: 9600
+            - name: upload
+              tokensPerMinute: 100000
 
         owner:
           baseURL: http://groundx.eyelevel.svc.cluster.local/api/v1
@@ -9201,7 +9747,7 @@
 
         loglevel = "info"
         workers = 2
-        threads = 2
+        threads = 1
         timeout = 120
         timeout_keep_alive = 15
 
@@ -9890,35 +10436,43 @@
         metrics:
           active: true
           api:
+            - name: extract-api
+              threshold: 4000
             - name: groundx-service
+              threshold: 4000
             - name: layout-api
+              threshold: 4000
             - name: layout-webhook
+              threshold: 4000
           document:
             tokensPerMinute: 12500
+          extractRequest:
+            tokensPerMinute: 6000
           inference:
             - name: layout-inference
-              tokensPerMinute: 120000
+              tokensPerMinute: 360000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
-              tokensPerMinute: 3200
+              tokensPerMinute: 1600
             - name: summary-client
               tokensPerMinute: 9600
+          namespace: eyelevel
           page:
-            tokensPerMinute: 500
+            tokensPerMinute: 1000
           queue:
             - name: pre-process
-              target: file-pre-process
-              threshold: 6
+              target: pre-process
+              threshold: 10
             - name: process
-              target: file-process
-              threshold: 9
+              target: process
+              threshold: 10
             - name: queue
-              target: file-update
-              threshold: 9
+              target: queue
+              threshold: 10
             - name: upload
-              target: file-upload
-              threshold: 120
+              target: upload
+              threshold: 10
           session:
             addr: cache-metrics.eyelevel.svc.cluster.local:6379
             notCluster: true
@@ -9926,21 +10480,71 @@
           summaryRequest:
             tokensPerMinute: 625
           task:
+            - name: extract-agent
+              target: agent_queue
+              threshold: 10
+            - name: extract-download
+              target: download_queue
+              threshold: 10
+            - name: extract-save
+              target: save_agents_queue
+              threshold: 10
             - name: layout-correct
               target: correct_queue
-              threshold: 500
+              threshold: 10
             - name: layout-map
               target: map_queue
-              threshold: 500
+              threshold: 10
             - name: layout-ocr
               target: ocr_queue
-              threshold: 500
+              threshold: 10
             - name: layout-process
               target: process_queue
-              threshold: 500
+              threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 500
+              threshold: 10
+          throughput:
+            - name: extract-agent
+              tokensPerMinute: 18000
+            - name: extract-api
+              tokensPerMinute: 200000
+            - name: extract-download
+              tokensPerMinute: 180000
+            - name: extract-save
+              tokensPerMinute: 100000
+            - name: groundx-service
+              tokensPerMinute: 150000
+            - name: layout-api
+              tokensPerMinute: 180000
+            - name: layout-correct
+              tokensPerMinute: 100000
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: layout-map
+              tokensPerMinute: 100000
+            - name: layout-ocr
+              tokensPerMinute: 100000
+            - name: layout-process
+              tokensPerMinute: 100000
+            - name: layout-save
+              tokensPerMinute: 150000
+            - name: layout-webhook
+              tokensPerMinute: 150000
+            - name: pre-process
+              tokensPerMinute: 100000
+            - name: process
+              tokensPerMinute: 150000
+            - name: queue
+              tokensPerMinute: 100000
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 1600
+            - name: summary-client
+              tokensPerMinute: 9600
+            - name: upload
+              tokensPerMinute: 100000
 
         owner:
           baseURL: http://groundx-service.eyelevel.svc.cluster.local/api/v1
@@ -10142,7 +10746,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=agent_queue
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -10171,7 +10775,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=download_queue
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -10200,7 +10804,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=save_agents_queue,celery
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=save_agents_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -10280,7 +10884,7 @@
 
         loglevel = "info"
         workers = 2
-        threads = 2
+        threads = 1
         timeout = 120
         timeout_keep_alive = 15
 

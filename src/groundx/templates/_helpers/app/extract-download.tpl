@@ -40,6 +40,62 @@ false
 {{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
+{{/* fraction of threshold */}}
+{{- define "groundx.extract.download.target.default" -}}
+1
+{{- end }}
+
+{{/* queue message backlog */}}
+{{- define "groundx.extract.download.threshold.default" -}}
+10
+{{- end }}
+
+{{/* tokens per minute per worker per thread */}}
+{{- define "groundx.extract.download.throughput.default" -}}
+90000
+{{- end }}
+
+{{- define "groundx.extract.download.threshold" -}}
+{{- $rep := (include "groundx.extract.download.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.extract.download.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "threshold" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.extract.download.throughput" -}}
+{{- $rep := (include "groundx.extract.download.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.extract.download.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "throughput" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.extract.download.hpa" -}}
+{{- $ic := include "groundx.extract.download.create" . -}}
+{{- $rep := (include "groundx.extract.download.replicas" . | fromYaml) -}}
+{{- $enabled := false -}}
+{{- if eq $ic "true" -}}
+{{- $enabled = dig "hpa" false $rep -}}
+{{- end -}}
+{{- $name := (include "groundx.extract.download.serviceName" .) -}}
+{{- $cld := dig "cooldown" 60 $rep -}}
+{{- $cfg := dict
+  "downCooldown" (mul $cld 2)
+  "enabled"      $enabled
+  "metric"       (printf "%s:task" $name)
+  "name"         $name
+  "replicas"     $rep
+  "throughput"   (printf "%s:throughput" $name)
+  "upCooldown"   $cld
+-}}
+{{- $cfg | toYaml -}}
+{{- end }}
+
 {{- define "groundx.extract.download.queue" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "download" dict $b -}}
@@ -50,9 +106,41 @@ false
 {{- $b := .Values.extract | default dict -}}
 {{- $c := dig "download" dict $b -}}
 {{- $in := dig "replicas" dict $c -}}
+{{- $chp := include "groundx.cluster.hpa" . -}}
 {{- if not $in }}
-  {{- $in = dict "desired" 1 "max" 1 "min" 1 -}}
+  {{- $in = dict -}}
 {{- end }}
+{{- if not (hasKey $in "cooldown") -}}
+  {{- $_ := set $in "cooldown" (include "groundx.hpa.cooldown" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "hpa") -}}
+  {{- $_ := set $in "hpa" $chp -}}
+{{- end -}}
+{{- if not (hasKey $in "target") -}}
+  {{- $_ := set $in "target" (include "groundx.extract.download.target.default" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "threshold") -}}
+  {{- $_ := set $in "threshold" (include "groundx.extract.download.threshold.default" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "throughput") -}}
+  {{- $threads := (include "groundx.extract.download.threads" . | int) -}}
+  {{- $workers := (include "groundx.extract.download.workers" . | int) -}}
+  {{- $dflt := (include "groundx.extract.download.throughput.default" . | int) -}}
+  {{- $_ := set $in "throughput" (mul $dflt $threads $workers) -}}
+{{- end -}}
+{{- if not (hasKey $in "min") -}}
+  {{- if hasKey $in "desired" -}}
+    {{- $_ := set $in "min" (dig "desired" 1 $in) -}}
+  {{- else -}}
+    {{- $_ := set $in "min" 1 -}}
+  {{- end -}}
+{{- end -}}
+{{- if not (hasKey $in "desired") -}}
+  {{- $_ := set $in "desired" 1 -}}
+{{- end -}}
+{{- if not (hasKey $in "max") -}}
+  {{- $_ := set $in "max" 24 -}}
+{{- end -}}
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
@@ -66,7 +154,7 @@ false
 {{- define "groundx.extract.download.threads" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "download" dict $b -}}
-{{ dig "threads" 1 $in }}
+{{ dig "threads" 2 $in }}
 {{- end }}
 
 {{- define "groundx.extract.download.workers" -}}
@@ -78,6 +166,11 @@ false
 {{- define "groundx.extract.download.settings" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "download" dict $b -}}
+
+{{- $dpnd := dict
+  "extract" "extract"
+-}}
+
 {{- $rep := (include "groundx.extract.download.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.extract.download.serviceAccountName" . -}}
 {{- $data := dict
@@ -88,23 +181,21 @@ false
 {{- $_ := set $data (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .) -}}
 {{- end -}}
 {{- $cfg := dict
-  "celery"     ("celery_agents")
-  "dependencies" (dict
-    "extract" "extract"
-  )
-  "fileDomain" (include "groundx.extract.file.serviceDependency" .)
-  "filePort"   (include "groundx.extract.file.port" .)
-  "image"      (include "groundx.extract.download.image" .)
-  "mapPrefix"  ("extract")
-  "name"       (include "groundx.extract.download.serviceName" .)
-  "node"       (include "groundx.extract.download.node" .)
-  "pull"       (include "groundx.extract.download.imagePullPolicy" .)
-  "queue"      (include "groundx.extract.download.queue" .)
-  "replicas"   ($rep)
-  "secrets"    ($data)
-  "service"    (include "groundx.extract.serviceName" .)
-  "threads"    (include "groundx.extract.download.threads" .)
-  "workers"    (include "groundx.extract.download.workers" .)
+  "celery"       ("celery_agents")
+  "dependencies" $dpnd
+  "fileDomain"   (include "groundx.extract.file.serviceDependency" .)
+  "filePort"     (include "groundx.extract.file.port" .)
+  "image"        (include "groundx.extract.download.image" .)
+  "mapPrefix"    ("extract")
+  "name"         (include "groundx.extract.download.serviceName" .)
+  "node"         (include "groundx.extract.download.node" .)
+  "pull"         (include "groundx.extract.download.imagePullPolicy" .)
+  "queue"        (include "groundx.extract.download.queue" .)
+  "replicas"     ($rep)
+  "secrets"      ($data)
+  "service"      (include "groundx.extract.serviceName" .)
+  "threads"      (include "groundx.extract.download.threads" .)
+  "workers"      (include "groundx.extract.download.workers" .)
 -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}

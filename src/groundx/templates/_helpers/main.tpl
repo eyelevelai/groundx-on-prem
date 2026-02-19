@@ -43,6 +43,11 @@
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.cluster.hpa" -}}
+{{- $b := .Values.cluster | default dict -}}
+{{- dig "hpa" false $b -}}
+{{- end }}
+
 {{- define "groundx.clusterType" -}}
 {{- $b := .Values.cluster | default dict -}}
 {{- (dig "type" "eks" $b) | lower -}}

@@ -75,10 +75,7 @@ spec:
         - name: {{ $inm }}
 {{- end }}
 {{- end }}
-{{- if gt (len $aff) 0 }}
-      affinity:
-{{ toYaml $aff | nindent 8 }}
-{{- end }}
+{{- include "groundx.renderAffinity" (dict "ctx" $aff "node" $node "indent" 6 "root" $) }}
 {{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" $username "cfg" "spec") }}
 {{- include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
 {{- include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
@@ -92,6 +89,12 @@ spec:
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
           command: ['sh', '-c', "until nc -z {{ printf "%s %v" $fileDomain $filePort }}; do echo waiting for file storage; sleep 2; done"]
 {{- if not (empty $dpnd) }}
+{{- if hasKey $dpnd "metrics" }}
+        - name: wait-for-metrics
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until wget -T 5 -qO- {{ include "groundx.metrics.serviceUrl" $ }}/health; do echo waiting for metrics; sleep 2; done"]
+{{- end }}
 {{- if hasKey $dpnd "extract" }}
         - name: wait-for-extract
           image: {{ include "groundx.busybox.image" $ }}

@@ -37,6 +37,62 @@ true
 {{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
+{{/* fraction of threshold */}}
+{{- define "groundx.upload.target.default" -}}
+1
+{{- end }}
+
+{{/* queue message backlog */}}
+{{- define "groundx.upload.threshold.default" -}}
+10
+{{- end }}
+
+{{/* tokens per minute per worker per thread */}}
+{{- define "groundx.upload.throughput.default" -}}
+100000
+{{- end }}
+
+{{- define "groundx.upload.threshold" -}}
+{{- $rep := (include "groundx.upload.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.upload.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "threshold" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.upload.throughput" -}}
+{{- $rep := (include "groundx.upload.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.upload.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "throughput" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.upload.hpa" -}}
+{{- $ic := include "groundx.upload.create" . -}}
+{{- $rep := (include "groundx.upload.replicas" . | fromYaml) -}}
+{{- $enabled := false -}}
+{{- if eq $ic "true" -}}
+{{- $enabled = dig "hpa" false $rep -}}
+{{- end -}}
+{{- $name := (include "groundx.upload.serviceName" .) -}}
+{{- $cld := dig "cooldown" 60 $rep -}}
+{{- $cfg := dict
+  "downCooldown" (mul $cld 2)
+  "enabled"      $enabled
+  "metric"       (printf "%s:queue" $name)
+  "name"         $name
+  "replicas"     $rep
+  "throughput"   (printf "%s:throughput" $name)
+  "upCooldown"   $cld
+-}}
+{{- $cfg | toYaml -}}
+{{- end }}
+
 {{- define "groundx.upload.queueSize" -}}
 {{- $in := .Values.upload | default dict -}}
 {{ dig "queueSize" 4 $in }}
@@ -45,9 +101,38 @@ true
 {{- define "groundx.upload.replicas" -}}
 {{- $b := .Values.upload | default dict -}}
 {{- $in := dig "replicas" dict $b -}}
+{{- $chp := include "groundx.cluster.hpa" . -}}
 {{- if not $in }}
-  {{- $in = dict "desired" 1 "max" 1 "min" 1 -}}
+  {{- $in = dict -}}
 {{- end }}
+{{- if not (hasKey $in "cooldown") -}}
+  {{- $_ := set $in "cooldown" (include "groundx.hpa.cooldown" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "hpa") -}}
+  {{- $_ := set $in "hpa" $chp -}}
+{{- end -}}
+{{- if not (hasKey $in "target") -}}
+  {{- $_ := set $in "target" (include "groundx.upload.target.default" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "threshold") -}}
+  {{- $_ := set $in "threshold" (include "groundx.upload.threshold.default" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "throughput") -}}
+  {{- $_ := set $in "throughput" (include "groundx.upload.throughput.default" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "min") -}}
+  {{- if hasKey $in "desired" -}}
+    {{- $_ := set $in "min" (dig "desired" 1 $in) -}}
+  {{- else -}}
+    {{- $_ := set $in "min" 1 -}}
+  {{- end -}}
+{{- end -}}
+{{- if not (hasKey $in "desired") -}}
+  {{- $_ := set $in "desired" 1 -}}
+{{- end -}}
+{{- if not (hasKey $in "max") -}}
+  {{- $_ := set $in "max" 24 -}}
+{{- end -}}
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 

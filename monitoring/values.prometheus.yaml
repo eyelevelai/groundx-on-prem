@@ -1,0 +1,34 @@
+kube-state-metrics:
+  nodeSelector:
+    eyelevel_node: eyelevel-cpu-only
+
+  metricLabelsAllowlist:
+    - nodes=[
+        node,
+        eyelevel_node,
+      ]
+    - pods=[
+        app,
+      ]
+
+prometheus:
+  prometheusSpec:
+    nodeSelector:
+      eyelevel_node: eyelevel-cpu-only
+
+grafana:
+  nodeSelector:
+    eyelevel_node: eyelevel-cpu-only
+
+alertmanager:
+  alertmanagerSpec:
+    nodeSelector:
+      eyelevel_node: eyelevel-cpu-only
+
+prometheusOperator:
+  nodeSelector:
+    eyelevel_node: eyelevel-cpu-only
+
+prometheus-node-exporter:
+  nodeSelector:
+    eyelevel_node: eyelevel-cpu-only

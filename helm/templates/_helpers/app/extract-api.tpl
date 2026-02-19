@@ -31,6 +31,62 @@ false
 {{ dig "containerPort" 8080 $in }}
 {{- end }}
 
+{{/* fraction of threshold */}}
+{{- define "groundx.extract.api.target.default" -}}
+1
+{{- end }}
+
+{{/* average latency per minute */}}
+{{- define "groundx.extract.api.threshold.default" -}}
+4000
+{{- end }}
+
+{{/* tokens per minute per worker per thread */}}
+{{- define "groundx.extract.api.throughput.default" -}}
+50000
+{{- end }}
+
+{{- define "groundx.extract.api.threshold" -}}
+{{- $rep := (include "groundx.extract.api.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.extract.api.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "threshold" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.extract.api.throughput" -}}
+{{- $rep := (include "groundx.extract.api.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.extract.api.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "throughput" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.extract.api.hpa" -}}
+{{- $ic := include "groundx.extract.api.create" . -}}
+{{- $rep := (include "groundx.extract.api.replicas" . | fromYaml) -}}
+{{- $enabled := false -}}
+{{- if eq $ic "true" -}}
+{{- $enabled = dig "hpa" false $rep -}}
+{{- end -}}
+{{- $name := (include "groundx.extract.api.serviceName" .) -}}
+{{- $cld := dig "cooldown" 60 $rep -}}
+{{- $cfg := dict
+  "downCooldown" (mul $cld 2)
+  "enabled"      $enabled
+  "metric"       (printf "%s:api" $name)
+  "name"         $name
+  "replicas"     $rep
+  "throughput"   (printf "%s:throughput" $name)
+  "upCooldown"   $cld
+-}}
+{{- $cfg | toYaml -}}
+{{- end }}
+
 {{- define "groundx.extract.api.image" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "api" dict $b -}}
@@ -54,9 +110,41 @@ false
 {{- $b := .Values.extract | default dict -}}
 {{- $c := dig "api" dict $b -}}
 {{- $in := dig "replicas" dict $c -}}
+{{- $chp := include "groundx.cluster.hpa" . -}}
 {{- if not $in }}
-  {{- $in = dict "desired" 1 "max" 1 "min" 1 -}}
+  {{- $in = dict -}}
 {{- end }}
+{{- if not (hasKey $in "cooldown") -}}
+  {{- $_ := set $in "cooldown" (include "groundx.hpa.cooldown" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "hpa") -}}
+  {{- $_ := set $in "hpa" $chp -}}
+{{- end -}}
+{{- if not (hasKey $in "target") -}}
+  {{- $_ := set $in "target" (include "groundx.extract.api.target.default" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "threshold") -}}
+  {{- $_ := set $in "threshold" (include "groundx.extract.api.threshold.default" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "throughput") -}}
+  {{- $threads := (include "groundx.extract.api.threads" . | int) -}}
+  {{- $workers := (include "groundx.extract.api.workers" . | int) -}}
+  {{- $dflt := (include "groundx.extract.api.throughput.default" . | int) -}}
+  {{- $_ := set $in "throughput" (mul $dflt $threads $workers) -}}
+{{- end -}}
+{{- if not (hasKey $in "min") -}}
+  {{- if hasKey $in "desired" -}}
+    {{- $_ := set $in "min" (dig "desired" 1 $in) -}}
+  {{- else -}}
+    {{- $_ := set $in "min" 1 -}}
+  {{- end -}}
+{{- end -}}
+{{- if not (hasKey $in "desired") -}}
+  {{- $_ := set $in "desired" 1 -}}
+{{- end -}}
+{{- if not (hasKey $in "max") -}}
+  {{- $_ := set $in "max" 16 -}}
+{{- end -}}
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
@@ -144,6 +232,9 @@ false
 {{- $b := .Values.extract | default dict -}}
 {{- $ur := dig "callbackUrl" "" $b -}}
 {{- $in := dig "api" dict $b -}}
+
+{{- $dpnd := dict -}}
+
 {{- $rep := (include "groundx.extract.api.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.extract.api.serviceAccountName" . -}}
 {{- $data := dict
@@ -155,6 +246,7 @@ false
 {{- end -}}
 {{- $cfg := dict
   "cfg"          (printf "%s-config-py-map" $svc)
+  "dependencies" $dpnd
   "fileDomain"   (include "groundx.extract.file.serviceDependency" .)
   "filePort"     (include "groundx.extract.file.port" .)
   "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)

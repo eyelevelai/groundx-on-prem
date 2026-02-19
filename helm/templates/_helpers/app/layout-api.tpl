@@ -41,6 +41,62 @@ true
 {{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
+{{/* fraction of threshold */}}
+{{- define "groundx.layout.api.target.default" -}}
+1
+{{- end }}
+
+{{/* average latency per minute */}}
+{{- define "groundx.layout.api.threshold.default" -}}
+4000
+{{- end }}
+
+{{/* tokens per minute per worker per thread */}}
+{{- define "groundx.layout.api.throughput.default" -}}
+90000
+{{- end }}
+
+{{- define "groundx.layout.api.threshold" -}}
+{{- $rep := (include "groundx.layout.api.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.layout.api.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "threshold" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.layout.api.throughput" -}}
+{{- $rep := (include "groundx.layout.api.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.layout.api.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "throughput" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.layout.api.hpa" -}}
+{{- $ic := include "groundx.layout.api.create" . -}}
+{{- $rep := (include "groundx.layout.api.replicas" . | fromYaml) -}}
+{{- $enabled := false -}}
+{{- if eq $ic "true" -}}
+{{- $enabled = dig "hpa" false $rep -}}
+{{- end -}}
+{{- $name := (include "groundx.layout.api.serviceName" .) -}}
+{{- $cld := dig "cooldown" 60 $rep -}}
+{{- $cfg := dict
+  "downCooldown" (mul $cld 2)
+  "enabled"      $enabled
+  "metric"       (printf "%s:api" $name)
+  "name"         $name
+  "replicas"     $rep
+  "throughput"   (printf "%s:throughput" $name)
+  "upCooldown"   $cld
+-}}
+{{- $cfg | toYaml -}}
+{{- end }}
+
 {{- define "groundx.layout.api.port" -}}
 80
 {{- end }}
@@ -49,9 +105,41 @@ true
 {{- $b := .Values.layout | default dict -}}
 {{- $c := dig "api" dict $b -}}
 {{- $in := dig "replicas" dict $c -}}
+{{- $chp := include "groundx.cluster.hpa" . -}}
 {{- if not $in }}
-  {{- $in = dict "desired" 1 "max" 1 "min" 1 -}}
+  {{- $in = dict -}}
 {{- end }}
+{{- if not (hasKey $in "cooldown") -}}
+  {{- $_ := set $in "cooldown" (include "groundx.hpa.cooldown" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "hpa") -}}
+  {{- $_ := set $in "hpa" $chp -}}
+{{- end -}}
+{{- if not (hasKey $in "target") -}}
+  {{- $_ := set $in "target" (include "groundx.layout.api.target.default" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "threshold") -}}
+  {{- $_ := set $in "threshold" (include "groundx.layout.api.threshold.default" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "throughput") -}}
+  {{- $threads := (include "groundx.layout.api.threads" . | int) -}}
+  {{- $workers := (include "groundx.layout.api.workers" . | int) -}}
+  {{- $dflt := (include "groundx.layout.api.throughput.default" . | int) -}}
+  {{- $_ := set $in "throughput" (mul $dflt $threads $workers) -}}
+{{- end -}}
+{{- if not (hasKey $in "min") -}}
+  {{- if hasKey $in "desired" -}}
+    {{- $_ := set $in "min" (dig "desired" 1 $in) -}}
+  {{- else -}}
+    {{- $_ := set $in "min" 1 -}}
+  {{- end -}}
+{{- end -}}
+{{- if not (hasKey $in "desired") -}}
+  {{- $_ := set $in "desired" 1 -}}
+{{- end -}}
+{{- if not (hasKey $in "max") -}}
+  {{- $_ := set $in "max" 16 -}}
+{{- end -}}
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
@@ -90,7 +178,7 @@ false
 {{- define "groundx.layout.api.threads" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "api" dict $b -}}
-{{ dig "threads" 2 $in }}
+{{ dig "threads" 1 $in }}
 {{- end }}
 
 {{- define "groundx.layout.api.timeout" -}}
@@ -136,19 +224,23 @@ false
 {{- $svc := include "groundx.layout.serviceName" . -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "api" dict $b -}}
+
+{{- $dpnd := dict -}}
+
 {{- $rep := (include "groundx.layout.api.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.layout.api.serviceAccountName" . -}}
 {{- $cfg := dict
-  "cfg"       (printf "%s-config-py-map" $svc)
-  "gunicorn"  (printf "%s-gunicorn-conf-py-map" $svc)
-  "image"     (include "groundx.layout.api.image" .)
-  "interface" (include "groundx.layout.api.interface" .)
-  "mapPrefix" ("layout")
-  "name"      (include "groundx.layout.api.serviceName" .)
-  "node"      (include "groundx.layout.api.node" .)
-  "port"      (include "groundx.layout.api.containerPort" .)
-  "pull"      (include "groundx.layout.api.imagePullPolicy" .)
-  "replicas"  ($rep)
+  "cfg"          (printf "%s-config-py-map" $svc)
+  "dependencies" $dpnd
+  "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
+  "image"        (include "groundx.layout.api.image" .)
+  "interface"    (include "groundx.layout.api.interface" .)
+  "mapPrefix"    ("layout")
+  "name"         (include "groundx.layout.api.serviceName" .)
+  "node"         (include "groundx.layout.api.node" .)
+  "port"         (include "groundx.layout.api.containerPort" .)
+  "pull"         (include "groundx.layout.api.imagePullPolicy" .)
+  "replicas"     ($rep)
 -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}

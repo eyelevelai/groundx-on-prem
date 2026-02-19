@@ -1,6 +1,8 @@
 cluster:
   pvClass: eyelevel-pv
 
+  hpa: false
+
   # "", "eks", "aks", "gke", "openshift", etc.
   type: eks
 
@@ -66,6 +68,17 @@ file:
     # optional
     # port: 9000
 
+metrics:
+  enabled: false
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+  serviceMonitor:
+    enabled: false
+
 search:
   enabled: true
 
@@ -90,6 +103,11 @@ summary:
   api:
     enabled: true
 
+    replicas:
+      desired: 1
+      max: 32
+      min: 1
+
     resources:
       requests:
         cpu: 100m
@@ -97,9 +115,13 @@ summary:
   inference:
     enabled: true
 
+    # specifies the amount of GPU memory to use, from 0 - 1.0
     deviceUtilize: 0.48
+
     replicas:
       desired: 2
+      max: 32
+      min: 1
 
     resources:
       requests:
@@ -108,13 +130,18 @@ summary:
 
   # must be an OpenAI chat compatible endpoint
   # /chat/completions
-  existing: {}
+#  existing:
 #    apiKey: my-oai-key
 #    serviceType: openai
 #    url: https://api.openai.com/v1
 
 groundx:
   enabled: true
+
+  replicas:
+      desired: 1
+      max: 24
+      min: 1
 
   resources:
     requests:
@@ -125,12 +152,22 @@ layout:
   api:
     enabled: true
 
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
+
     resources:
       requests:
         cpu: 100m
         memory: 256Mi
   correct:
     enabled: true
+
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
 
     resources:
       requests:
@@ -139,8 +176,14 @@ layout:
   inference:
     enabled: true
 
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
+
     resources:
       limits:
+        memory: 12Gi
         nvidia.com/gpu: 1
       requests:
         cpu: 500m
@@ -149,12 +192,22 @@ layout:
   map:
     enabled: true
 
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
+
     resources:
       requests:
         cpu: 100m
         memory: 256Mi
   ocr:
     enabled: true
+
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
 
     resources:
       requests:
@@ -163,12 +216,22 @@ layout:
   process:
     enabled: true
 
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
+
     resources:
       requests:
         cpu: 100m
         memory: 1Gi
   save:
     enabled: true
+
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
 
     resources:
       requests:
@@ -178,6 +241,11 @@ layout:
 layoutWebhook:
   enabled: true
 
+  replicas:
+    desired: 1
+    max: 16
+    min: 1
+
   resources:
     requests:
       cpu: 100m
@@ -185,6 +253,11 @@ layoutWebhook:
 
 preProcess:
   enabled: true
+
+  replicas:
+    desired: 1
+    max: 24
+    min: 1
 
   resources:
     requests:
@@ -194,6 +267,11 @@ preProcess:
 process:
   enabled: true
 
+  replicas:
+    desired: 1
+    max: 16
+    min: 1
+
   resources:
     requests:
       cpu: 200m
@@ -201,6 +279,11 @@ process:
 
 queue:
   enabled: true
+
+  replicas:
+    desired: 1
+    max: 16
+    min: 1
 
   resources:
     requests:
@@ -229,6 +312,11 @@ ranker:
 summaryClient:
   enabled: true
 
+  replicas:
+    desired: 1
+    max: 32
+    min: 1
+
   resources:
     requests:
       cpu: 100m
@@ -237,7 +325,83 @@ summaryClient:
 upload:
   enabled: true
 
+  replicas:
+    desired: 1
+    max: 24
+    min: 1
+
   resources:
     requests:
       cpu: 100m
       memory: 128Mi
+
+extract:
+  enabled: false
+
+  agent:
+    enabled: false
+
+    replicas:
+      desired: 1
+      max: 96
+      min: 1
+
+    resources:
+      limits:
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+
+  api:
+    enabled: false
+
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
+
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 512Mi
+
+  download:
+    enabled: false
+
+    replicas:
+      desired: 1
+      max: 24
+      min: 1
+
+    resources:
+      limits:
+        cpu: 1
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 512Mi
+
+  save:
+    enabled: false
+
+    replicas:
+      desired: 1
+      max: 24
+      min: 1
+
+    resources:
+      limits:
+        cpu: 1
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 512Mi
+
+throughput:
+  tpm:
+    document: 12500
+    page: 1000
