@@ -10,5 +10,8 @@
 {{ printf "%*s" (add $indent 2) "" }}- key: "node"
 {{ printf "%*s" (add $indent 4) "" }}value: {{ $node | quote }}
 {{ printf "%*s" (add $indent 4) "" }}effect: "NoSchedule"
+{{ printf "%*s" (add $indent 2) "" }}- key: "eyelevel_node"
+{{ printf "%*s" (add $indent 4) "" }}value: {{ $node | quote }}
+{{ printf "%*s" (add $indent 4) "" }}effect: "NoSchedule"
 {{- end }}
 {{- end }}

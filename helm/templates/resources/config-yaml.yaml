@@ -7,6 +7,52 @@
 {{- $sq := (include "groundx.stream.topic.summary" . | fromYaml) -}}
 {{- $uq := (include "groundx.stream.topic.update" . | fromYaml) -}}
 {{- $lq := (include "groundx.stream.topic.upload" . | fromYaml) -}}
+
+{{- $eac := include "groundx.extract.agent.threshold" . | trim -}}
+{{- $edc := include "groundx.extract.download.threshold" . | trim -}}
+{{- $esc := include "groundx.extract.save.threshold" . | trim -}}
+{{- $lcc := include "groundx.layout.correct.threshold" . | trim -}}
+{{- $lmc := include "groundx.layout.map.threshold" . | trim -}}
+{{- $loc := include "groundx.layout.ocr.threshold" . | trim -}}
+{{- $lpc := include "groundx.layout.process.threshold" . | trim -}}
+{{- $lsc := include "groundx.layout.save.threshold" . | trim -}}
+
+{{- $epc := include "groundx.extract.api.threshold" . | trim -}}
+{{- $gxc := include "groundx.groundx.threshold" . | trim -}}
+{{- $lac := include "groundx.layout.api.threshold" . | trim -}}
+{{- $lwc := include "groundx.layoutWebhook.threshold" . | trim -}}
+
+{{- $lic := include "groundx.layout.inference.threshold" . | trim -}}
+{{- $sac := include "groundx.summary.api.threshold" . | trim -}}
+{{- $sic := include "groundx.summary.inference.threshold" . | trim -}}
+{{- $scc := include "groundx.summaryClient.threshold" . | trim -}}
+{{- $sce := include "groundx.summary.create" . -}}
+
+{{- $ppc := include "groundx.preProcess.threshold" . | trim -}}
+{{- $prc := include "groundx.process.threshold" . | trim -}}
+{{- $qpc := include "groundx.queue.threshold" . | trim -}}
+{{- $upc := include "groundx.upload.threshold" . | trim -}}
+
+{{- $eat := include "groundx.extract.agent.throughput" . | trim -}}
+{{- $ept := include "groundx.extract.api.throughput" . | trim -}}
+{{- $edt := include "groundx.extract.download.throughput" . | trim -}}
+{{- $est := include "groundx.extract.save.throughput" . | trim -}}
+{{- $gxt := include "groundx.groundx.throughput" . | trim -}}
+{{- $lat := include "groundx.layout.api.throughput" . | trim -}}
+{{- $lct := include "groundx.layout.correct.throughput" . | trim -}}
+{{- $lit := include "groundx.layout.inference.throughput" . | trim -}}
+{{- $lmt := include "groundx.layout.map.throughput" . | trim -}}
+{{- $lot := include "groundx.layout.ocr.throughput" . | trim -}}
+{{- $lpt := include "groundx.layout.process.throughput" . | trim -}}
+{{- $lst := include "groundx.layout.save.throughput" . | trim -}}
+{{- $lwt := include "groundx.layoutWebhook.throughput" . | trim -}}
+{{- $ppt := include "groundx.preProcess.throughput" . | trim -}}
+{{- $prt := include "groundx.process.throughput" . | trim -}}
+{{- $qpt := include "groundx.queue.throughput" . | trim -}}
+{{- $sat := include "groundx.summary.api.throughput" . | trim -}}
+{{- $sit := include "groundx.summary.inference.throughput" . | trim -}}
+{{- $sct := include "groundx.summaryClient.throughput" . | trim -}}
+{{- $upt := include "groundx.upload.throughput" . | trim -}}
 {{- if gt (len $svcs) 0 }}
 apiVersion: v1
 kind: ConfigMap
@@ -170,44 +216,77 @@ data:
 
     metrics:
       active: true
+      {{- if or (ne $epc "0") (ne $gxc "0") (ne $lac "0") (ne $lwc "0") }}
       api:
+        {{- if ne $epc "0" }}
+        - name: {{ include "groundx.extract.api.serviceName" . }}
+          threshold: {{ $epc }}
+        {{- end }}
+        {{- if ne $gxc "0" }}
         - name: {{ include "groundx.groundx.serviceName" . }}
-        - name: {{ include "groundx.layout.serviceName" . }}-api
+          threshold: {{ $gxc }}
+        {{- end }}
+        {{- if ne $lac "0" }}
+        - name: {{ include "groundx.layout.api.serviceName" . }}
+          threshold: {{ $lac }}
+        {{- end }}
+        {{- if ne $lwc "0" }}
         - name: {{ include "groundx.layoutWebhook.serviceName" . }}
+          threshold: {{ $lwc }}
+        {{- end }}
+      {{- end }}
       document:
         tokensPerMinute: {{ include "groundx.throughput.tpm.document" . }}
+      extractRequest:
+        tokensPerMinute: {{ include "groundx.throughput.tpm.extractRequest" . }}
+      {{- if or (ne $lic "0") (ne $sac "0") (ne $sic "0") (and (eq $sce "true") (ne $scc "0")) }}
       inference:
+        {{- if ne $lic "0" }}
         - name: {{ include "groundx.layout.serviceName" . }}-inference
-          tokensPerMinute: {{ include "groundx.throughput.services.layout.inference" . }}
-        - name: {{ include "groundx.summary.serviceName" . }}-api
-          tokensPerMinute: {{ include "groundx.throughput.services.summary.api" . }}
+          tokensPerMinute: {{ $lic }}
+        {{- end }}
+        {{- if ne $sac "0" }}
+        - name: {{ include "groundx.summary.api.serviceName" . }}
+          tokensPerMinute: {{ $sac }}
+        {{- end }}
+        {{- if ne $sic "0" }}
         - name: {{ include "groundx.summary.serviceName" . }}-inference
-          tokensPerMinute: {{ include "groundx.throughput.services.summary.inference" . }}
+          tokensPerMinute: {{ $sic }}
+        {{- end }}
+        {{- if and (eq $sce "true") (ne $scc "0") }}
         - name: {{ include "groundx.summaryClient.serviceName" . }}
-          tokensPerMinute: {{ include "groundx.throughput.services.summaryClient.api" . }}
+          tokensPerMinute: {{ $scc }}
+        {{- end }}
+      {{- end }}
+      namespace: {{ include "groundx.ns" . }}
       page:
         tokensPerMinute: {{ include "groundx.throughput.tpm.page" . }}
-      {{- if eq (include "groundx.stream.hasKafka" .) "true" }}
+      {{- if or (ne $ppc "0") (ne $prc "0") (ne $qpc "0") (ne $upc "0") (and (ne $sce "true") (ne $scc "0")) }}
       queue:
-        {{- if eq (dig "type" "kafka" $ppq) "kafka" }}
+        {{- if ne $ppc "0" }}
         - name: {{ include "groundx.preProcess.serviceName" . }}
-          target: {{ dig "topic" "" $ppq }}
-          threshold: {{ include "groundx.throughput.services.preProcess.queue" . }}
+          target: {{ include "groundx.preProcess.serviceName" . }}
+          threshold: {{ $ppc }}
         {{- end }}
-        {{- if eq (dig "type" "kafka" $pq) "kafka" }}
+        {{- if ne $prc "0" }}
         - name: {{ include "groundx.process.serviceName" . }}
-          target: {{ dig "topic" "" $pq }}
-          threshold: {{ include "groundx.throughput.services.process.queue" . }}
+          target: {{ include "groundx.process.serviceName" . }}
+          threshold: {{ $prc }}
         {{- end }}
-        {{- if eq (dig "type" "kafka" $uq) "kafka" }}
+        {{- if ne $qpc "0" }}
         - name: {{ include "groundx.queue.serviceName" . }}
-          target: {{ dig "topic" "" $uq }}
-          threshold: {{ include "groundx.throughput.services.queue.queue" . }}
+          target: {{ include "groundx.queue.serviceName" . }}
+          threshold: {{ $qpc }}
         {{- end }}
-        {{- if eq (dig "type" "kafka" $lq) "kafka" }}
+        {{- if ne $upc "0" }}
         - name: {{ include "groundx.upload.serviceName" . }}
-          target: {{ dig "topic" "" $lq }}
-          threshold: {{ include "groundx.throughput.services.upload.queue" . }}
+          target: {{ include "groundx.upload.serviceName" . }}
+          threshold: {{ $upc }}
+        {{- end }}
+        {{- if and (ne $sce "true") (ne $scc "0") }}
+        - name: {{ include "groundx.summaryClient.serviceName" . }}
+          target: {{ include "groundx.summaryClient.serviceName" . }}
+          threshold: {{ $scc }}
         {{- end }}
       {{- end }}
       session:
@@ -216,32 +295,143 @@ data:
         ssl: {{ include "groundx.metrics.cache.ssl" . }}
       summaryRequest:
         tokensPerMinute: {{ include "groundx.throughput.tpm.summaryRequest" . }}
+      {{- if or (ne $eac "0") (ne $edc "0") (ne $esc "0") (ne $lcc "0") (ne $lmc "0") (ne $loc "0") (ne $lpc "0") (ne $lsc "0") }}
       task:
+        {{- if ne $eac "0" }}
+        - name: {{ include "groundx.extract.agent.serviceName" . }}
+          target: {{ include "groundx.extract.agent.queue" . }}
+          threshold: {{ $eac }}
+        {{- end }}
+        {{- if ne $edc "0" }}
+        - name: {{ include "groundx.extract.download.serviceName" . }}
+          target: {{ include "groundx.extract.download.queue" . }}
+          threshold: {{ $edc }}
+        {{- end }}
+        {{- if ne $esc "0" }}
+        - name: {{ include "groundx.extract.save.serviceName" . }}
+          target: {{ include "groundx.extract.save.queue" . }}
+          threshold: {{ $esc }}
+        {{- end }}
+        {{- if ne $lcc "0" }}
         - name: {{ include "groundx.layout.correct.serviceName" . }}
           target: {{ include "groundx.layout.correct.queue" . }}
-          threshold: {{ include "groundx.throughput.services.layout.correct" . }}
+          threshold: {{ $lcc }}
+        {{- end }}
+        {{- if ne $lmc "0" }}
         - name: {{ include "groundx.layout.map.serviceName" . }}
           target: {{ include "groundx.layout.map.queue" . }}
-          threshold: {{ include "groundx.throughput.services.layout.map" . }}
+          threshold: {{ $lmc }}
+        {{- end }}
+        {{- if ne $loc "0" }}
         - name: {{ include "groundx.layout.ocr.serviceName" . }}
           target: {{ include "groundx.layout.ocr.queue" . }}
-          threshold: {{ include "groundx.throughput.services.layout.ocr" . }}
+          threshold: {{ $loc }}
+        {{- end }}
+        {{- if ne $lpc "0" }}
         - name: {{ include "groundx.layout.process.serviceName" . }}
           target: {{ include "groundx.layout.process.queue" . }}
-          threshold: {{ include "groundx.throughput.services.layout.process" . }}
+          threshold: {{ $lpc }}
+        {{- end }}
+        {{- if ne $lsc "0" }}
         - name: {{ include "groundx.layout.save.serviceName" . }}
           target: {{ include "groundx.layout.save.queue" . }}
-          threshold: {{ include "groundx.throughput.services.layout.save" . }}
+          threshold: {{ $lsc }}
+        {{- end }}
+      {{- end }}
+      {{- if or (ne $eat "0") (ne $ept "0") (ne $edt "0") (ne $est "0") (ne $gxt "0") (ne $lat "0") (ne $lct "0") (ne $lit "0") (ne $lmt "0") (ne $lot "0") (ne $lpt "0") (ne $lst "0") (ne $lwt "0") (ne $ppt "0") (ne $prt "0") (ne $qpt "0") (ne $sat "0") (ne $sit "0") (ne $sct "0") (ne $upt "0") }}
+      throughput:
+        {{- if ne $eat "0" }}
+        - name: {{ include "groundx.extract.agent.serviceName" . }}
+          tokensPerMinute: {{ $eat }}
+        {{- end }}
+        {{- if ne $ept "0" }}
+        - name: {{ include "groundx.extract.api.serviceName" . }}
+          tokensPerMinute: {{ $ept }}
+        {{- end }}
+        {{- if ne $edt "0" }}
+        - name: {{ include "groundx.extract.download.serviceName" . }}
+          tokensPerMinute: {{ $edt }}
+        {{- end }}
+        {{- if ne $est "0" }}
+        - name: {{ include "groundx.extract.save.serviceName" . }}
+          tokensPerMinute: {{ $est }}
+        {{- end }}
+        {{- if ne $gxt "0" }}
+        - name: {{ include "groundx.groundx.serviceName" . }}
+          tokensPerMinute: {{ $gxt }}
+        {{- end }}
+        {{- if ne $lat "0" }}
+        - name: {{ include "groundx.layout.api.serviceName" . }}
+          tokensPerMinute: {{ $lat }}
+        {{- end }}
+        {{- if ne $lct "0" }}
+        - name: {{ include "groundx.layout.correct.serviceName" . }}
+          tokensPerMinute: {{ $lct }}
+        {{- end }}
+        {{- if ne $lit "0" }}
+        - name: {{ include "groundx.layout.inference.serviceName" . }}
+          tokensPerMinute: {{ $lit }}
+        {{- end }}
+        {{- if ne $lmt "0" }}
+        - name: {{ include "groundx.layout.map.serviceName" . }}
+          tokensPerMinute: {{ $lmt }}
+        {{- end }}
+        {{- if ne $lot "0" }}
+        - name: {{ include "groundx.layout.ocr.serviceName" . }}
+          tokensPerMinute: {{ $lot }}
+        {{- end }}
+        {{- if ne $lpt "0" }}
+        - name: {{ include "groundx.layout.process.serviceName" . }}
+          tokensPerMinute: {{ $lpt }}
+        {{- end }}
+        {{- if ne $lst "0" }}
+        - name: {{ include "groundx.layout.save.serviceName" . }}
+          tokensPerMinute: {{ $lst }}
+        {{- end }}
+        {{- if ne $lwt "0" }}
+        - name: {{ include "groundx.layoutWebhook.serviceName" . }}
+          tokensPerMinute: {{ $lwt }}
+        {{- end }}
+        {{- if ne $ppt "0" }}
+        - name: {{ include "groundx.preProcess.serviceName" . }}
+          tokensPerMinute: {{ $ppt }}
+        {{- end }}
+        {{- if ne $prt "0" }}
+        - name: {{ include "groundx.process.serviceName" . }}
+          tokensPerMinute: {{ $prt }}
+        {{- end }}
+        {{- if ne $qpt "0" }}
+        - name: {{ include "groundx.queue.serviceName" . }}
+          tokensPerMinute: {{ $qpt }}
+        {{- end }}
+        {{- if ne $sat "0" }}
+        - name: {{ include "groundx.summary.api.serviceName" . }}
+          tokensPerMinute: {{ $sat }}
+        {{- end }}
+        {{- if ne $sit "0" }}
+        - name: {{ include "groundx.summary.inference.serviceName" . }}
+          tokensPerMinute: {{ $sit }}
+        {{- end }}
+        {{- if ne $sct "0" }}
+        - name: {{ include "groundx.summaryClient.serviceName" . }}
+          tokensPerMinute: {{ $sct }}
+        {{- end }}
+        {{- if ne $upt "0" }}
+        - name: {{ include "groundx.upload.serviceName" . }}
+          tokensPerMinute: {{ $upt }}
+        {{- end }}
+      {{- end }}
 
-    {{- if .Values.metrics }}
+    {{- if eq (include "groundx.metrics.create" . | trim) "true" }}
+
     metricsServer:
-      baseURL: http://{{ .Values.metrics.serviceName }}.{{ include "groundx.ns" . }}.svc.cluster.local
-      port: {{ .Values.metrics.port }}
-      serviceName: {{ .Values.metrics.serviceName }}
+      baseURL: {{ include "groundx.metrics.serviceUrl" . }}
+      port: {{ include "groundx.metrics.containerPort" . }}
+      serviceName: {{ include "groundx.metrics.serviceName" . }}
       sslCACert: /etc/ssl/tls/ca.crt
       sslCert: /etc/ssl/tls/tls.crt
       sslKey: /etc/ssl/tls/tls.key
-      sslPort: 8443
+      sslPort: {{ include "groundx.metrics.containerSSLPort" . }}
     {{- end }}
 
     owner:

@@ -41,6 +41,62 @@ true
 {{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
+{{/* fraction of threshold */}}
+{{- define "groundx.layout.process.target.default" -}}
+1
+{{- end }}
+
+{{/* queue message backlog */}}
+{{- define "groundx.layout.process.threshold.default" -}}
+10
+{{- end }}
+
+{{/* tokens per minute per worker per thread */}}
+{{- define "groundx.layout.process.throughput.default" -}}
+100000
+{{- end }}
+
+{{- define "groundx.layout.process.threshold" -}}
+{{- $rep := (include "groundx.layout.process.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.layout.process.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "threshold" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.layout.process.throughput" -}}
+{{- $rep := (include "groundx.layout.process.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.layout.process.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "throughput" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.layout.process.hpa" -}}
+{{- $ic := include "groundx.layout.process.create" . -}}
+{{- $rep := (include "groundx.layout.process.replicas" . | fromYaml) -}}
+{{- $enabled := false -}}
+{{- if eq $ic "true" -}}
+{{- $enabled = dig "hpa" false $rep -}}
+{{- end -}}
+{{- $name := (include "groundx.layout.process.serviceName" .) -}}
+{{- $cld := dig "cooldown" 60 $rep -}}
+{{- $cfg := dict
+  "downCooldown" (mul $cld 2)
+  "enabled"      $enabled
+  "metric"       (printf "%s:task" $name)
+  "name"         $name
+  "replicas"     $rep
+  "throughput"   (printf "%s:throughput" $name)
+  "upCooldown"   $cld
+-}}
+{{- $cfg | toYaml -}}
+{{- end }}
+
 {{- define "groundx.layout.process.queue" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "process" dict $b -}}
@@ -51,9 +107,41 @@ true
 {{- $b := .Values.layout | default dict -}}
 {{- $c := dig "process" dict $b -}}
 {{- $in := dig "replicas" dict $c -}}
+{{- $chp := include "groundx.cluster.hpa" . -}}
 {{- if not $in }}
-  {{- $in = dict "desired" 1 "max" 1 "min" 1 -}}
+  {{- $in = dict -}}
 {{- end }}
+{{- if not (hasKey $in "cooldown") -}}
+  {{- $_ := set $in "cooldown" (include "groundx.hpa.cooldown" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "hpa") -}}
+  {{- $_ := set $in "hpa" $chp -}}
+{{- end -}}
+{{- if not (hasKey $in "target") -}}
+  {{- $_ := set $in "target" (include "groundx.layout.process.target.default" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "threshold") -}}
+  {{- $_ := set $in "threshold" (include "groundx.layout.process.threshold.default" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "throughput") -}}
+  {{- $threads := (include "groundx.layout.process.threads" . | int) -}}
+  {{- $workers := (include "groundx.layout.process.workers" . | int) -}}
+  {{- $dflt := (include "groundx.layout.process.throughput.default" . | int) -}}
+  {{- $_ := set $in "throughput" (mul $dflt $threads $workers) -}}
+{{- end -}}
+{{- if not (hasKey $in "min") -}}
+  {{- if hasKey $in "desired" -}}
+    {{- $_ := set $in "min" (dig "desired" 1 $in) -}}
+  {{- else -}}
+    {{- $_ := set $in "min" 1 -}}
+  {{- end -}}
+{{- end -}}
+{{- if not (hasKey $in "desired") -}}
+  {{- $_ := set $in "desired" 1 -}}
+{{- end -}}
+{{- if not (hasKey $in "max") -}}
+  {{- $_ := set $in "max" 16 -}}
+{{- end -}}
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
@@ -79,20 +167,24 @@ true
 {{- define "groundx.layout.process.settings" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "process" dict $b -}}
+
+{{- $dpnd := dict -}}
+
 {{- $rep := (include "groundx.layout.process.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.layout.process.serviceAccountName" . -}}
 {{- $cfg := dict
-  "celery"    ("document.celery_process")
-  "image"     (include "groundx.layout.process.image" .)
-  "mapPrefix" ("layout")
-  "name"      (include "groundx.layout.process.serviceName" .)
-  "node"      (include "groundx.layout.process.node" .)
-  "pull"      (include "groundx.layout.process.imagePullPolicy" .)
-  "queue"     (include "groundx.layout.process.queue" .)
-  "replicas"  ($rep)
-  "service"   (include "groundx.layout.serviceName" .)
-  "threads"   (include "groundx.layout.process.threads" .)
-  "workers"   (include "groundx.layout.process.workers" .)
+  "celery"       ("document.celery_process")
+  "dependencies" $dpnd
+  "image"        (include "groundx.layout.process.image" .)
+  "mapPrefix"    ("layout")
+  "name"         (include "groundx.layout.process.serviceName" .)
+  "node"         (include "groundx.layout.process.node" .)
+  "pull"         (include "groundx.layout.process.imagePullPolicy" .)
+  "queue"        (include "groundx.layout.process.queue" .)
+  "replicas"     ($rep)
+  "service"      (include "groundx.layout.serviceName" .)
+  "threads"      (include "groundx.layout.process.threads" .)
+  "workers"      (include "groundx.layout.process.workers" .)
 -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}

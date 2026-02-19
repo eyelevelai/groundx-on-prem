@@ -54,6 +54,62 @@ GROUNDX_AGENT_API_KEY
 {{ dig "existingSecret" false $in }}
 {{- end }}
 
+{{/* fraction of threshold */}}
+{{- define "groundx.extract.agent.target.default" -}}
+1
+{{- end }}
+
+{{/* queue message backlog */}}
+{{- define "groundx.extract.agent.threshold.default" -}}
+10
+{{- end }}
+
+{{/* tokens per minute per worker per thread */}}
+{{- define "groundx.extract.agent.throughput.default" -}}
+9000
+{{- end }}
+
+{{- define "groundx.extract.agent.threshold" -}}
+{{- $rep := (include "groundx.extract.agent.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.extract.agent.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "threshold" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.extract.agent.throughput" -}}
+{{- $rep := (include "groundx.extract.agent.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.extract.agent.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "throughput" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.extract.agent.hpa" -}}
+{{- $ic := include "groundx.extract.agent.create" . -}}
+{{- $rep := (include "groundx.extract.agent.replicas" . | fromYaml) -}}
+{{- $enabled := false -}}
+{{- if eq $ic "true" -}}
+{{- $enabled = dig "hpa" false $rep -}}
+{{- end -}}
+{{- $name := (include "groundx.extract.agent.serviceName" .) -}}
+{{- $cld := dig "cooldown" 60 $rep -}}
+{{- $cfg := dict
+  "downCooldown" (mul $cld 2)
+  "enabled"      $enabled
+  "metric"       (printf "%s:task" $name)
+  "name"         $name
+  "replicas"     $rep
+  "throughput"   (printf "%s:throughput" $name)
+  "upCooldown"   $cld
+-}}
+{{- $cfg | toYaml -}}
+{{- end }}
+
 {{- define "groundx.extract.agent.image" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
@@ -72,11 +128,11 @@ GROUNDX_AGENT_API_KEY
 {{- define "groundx.extract.agent.modelId" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
-{{- $dflt := "" -}}
+{{- $dflt := lower (dig "modelId" "" $in) | trim -}}
 {{- $ic := include "groundx.summary.create" . -}}
 {{- $st := include "groundx.extract.agent.serviceType" . -}}
 {{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") -}}
-{{- if and (eq $ic "true") (not $svcAllowed) -}}
+{{- if and (eq $ic "true") (not $svcAllowed) (eq $dflt "") -}}
 {{- $dflt = (include "groundx.summary.inference.model.name" .) -}}
 {{- end -}}
 {{ dig "modelId" $dflt $in }}
@@ -92,9 +148,41 @@ GROUNDX_AGENT_API_KEY
 {{- $b := .Values.extract | default dict -}}
 {{- $c := dig "agent" dict $b -}}
 {{- $in := dig "replicas" dict $c -}}
+{{- $chp := include "groundx.cluster.hpa" . -}}
 {{- if not $in }}
-  {{- $in = dict "desired" 4 "max" 4 "min" 4 -}}
+  {{- $in = dict -}}
 {{- end }}
+{{- if not (hasKey $in "cooldown") -}}
+  {{- $_ := set $in "cooldown" (include "groundx.hpa.cooldown" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "hpa") -}}
+  {{- $_ := set $in "hpa" $chp -}}
+{{- end -}}
+{{- if not (hasKey $in "target") -}}
+  {{- $_ := set $in "target" (include "groundx.extract.agent.target.default" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "threshold") -}}
+  {{- $_ := set $in "threshold" (include "groundx.extract.agent.threshold.default" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "throughput") -}}
+  {{- $threads := (include "groundx.extract.agent.threads" . | int) -}}
+  {{- $workers := (include "groundx.extract.agent.workers" . | int) -}}
+  {{- $dflt := (include "groundx.extract.agent.throughput.default" . | int) -}}
+  {{- $_ := set $in "throughput" (mul $dflt $threads $workers) -}}
+{{- end -}}
+{{- if not (hasKey $in "min") -}}
+  {{- if hasKey $in "desired" -}}
+    {{- $_ := set $in "min" (dig "desired" 1 $in) -}}
+  {{- else -}}
+    {{- $_ := set $in "min" 1 -}}
+  {{- end -}}
+{{- end -}}
+{{- if not (hasKey $in "desired") -}}
+  {{- $_ := set $in "desired" 1 -}}
+{{- end -}}
+{{- if not (hasKey $in "max") -}}
+  {{- $_ := set $in "max" 96 -}}
+{{- end -}}
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 
@@ -121,7 +209,7 @@ GROUNDX_AGENT_API_KEY
 {{- define "groundx.extract.agent.threads" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
-{{ dig "threads" 1 $in }}
+{{ dig "threads" 2 $in }}
 {{- end }}
 
 {{- define "groundx.extract.agent.workers" -}}
@@ -150,6 +238,11 @@ GROUNDX_AGENT_API_KEY
 {{- define "groundx.extract.agent.settings" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
+
+{{- $dpnd := dict
+  "extract" "extract"
+-}}
+
 {{- $rep := (include "groundx.extract.agent.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.extract.agent.serviceAccountName" . -}}
 {{- $data := dict
@@ -160,23 +253,21 @@ GROUNDX_AGENT_API_KEY
 {{- $_ := set $data (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .) -}}
 {{- end -}}
 {{- $cfg := dict
-  "celery"     ("celery_agents")
-  "dependencies" (dict
-    "extract" "extract"
-  )
-  "fileDomain" (include "groundx.extract.file.serviceDependency" .)
-  "filePort"   (include "groundx.extract.file.port" .)
-  "image"      (include "groundx.extract.agent.image" .)
-  "mapPrefix"  ("extract")
-  "name"       (include "groundx.extract.agent.serviceName" .)
-  "node"       (include "groundx.extract.agent.node" .)
-  "pull"       (include "groundx.extract.agent.imagePullPolicy" .)
-  "queue"      (include "groundx.extract.agent.queue" .)
-  "replicas"   ($rep)
-  "secrets"    ($data)
-  "service"    (include "groundx.extract.serviceName" .)
-  "threads"    (include "groundx.extract.agent.threads" .)
-  "workers"    (include "groundx.extract.agent.workers" .)
+  "celery"       ("celery_agents")
+  "dependencies" $dpnd
+  "fileDomain"   (include "groundx.extract.file.serviceDependency" .)
+  "filePort"     (include "groundx.extract.file.port" .)
+  "image"        (include "groundx.extract.agent.image" .)
+  "mapPrefix"    ("extract")
+  "name"         (include "groundx.extract.agent.serviceName" .)
+  "node"         (include "groundx.extract.agent.node" .)
+  "pull"         (include "groundx.extract.agent.imagePullPolicy" .)
+  "queue"        (include "groundx.extract.agent.queue" .)
+  "replicas"     ($rep)
+  "secrets"      ($data)
+  "service"      (include "groundx.extract.serviceName" .)
+  "threads"      (include "groundx.extract.agent.threads" .)
+  "workers"      (include "groundx.extract.agent.workers" .)
 -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}

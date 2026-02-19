@@ -200,18 +200,23 @@ false
 {{- end }}
 
 {{- define "groundx.extract.services" -}}
+
 {{- $svcs := dict -}}
-{{- $ic := include "groundx.extract.agent.create" . -}}
-{{- if eq $ic "true" -}}
-{{- $_ := set $svcs "extract.agent" "extract.agent" -}}
-{{- end -}}
-{{- $im := include "groundx.extract.download.create" . -}}
-{{- if eq $im "true" -}}
-{{- $_ := set $svcs "extract.download" "extract.download" -}}
-{{- end -}}
-{{- $is := include "groundx.extract.save.create" . -}}
-{{- if eq $is "true" -}}
-{{- $_ := set $svcs "extract.save" "extract.save" -}}
-{{- end -}}
+
+{{- $services := list
+  "extract.agent"
+  "extract.download"
+  "extract.save"
+-}}
+
+{{- range $svc := $services }}
+  {{- $tpl := printf "groundx.%s.create" $svc -}}
+  {{- $il := include $tpl $ -}}
+  {{- if eq $il "true" -}}
+    {{- $_ := set $svcs $svc $svc -}}
+  {{- end -}}
+{{- end }}
+
 {{- $svcs | toYaml -}}
+
 {{- end }}

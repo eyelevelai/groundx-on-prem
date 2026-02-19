@@ -26,6 +26,7 @@
       "type": "object",
       "properties": {
         "hasMig": { "type": "boolean" },
+        "hpa": { "type": "boolean" },
         "imagePullPolicy": { "type": "string" },
         "imagePullSecrets": {
           "type": "array",
@@ -980,8 +981,46 @@
     "metrics": {
       "type": "object",
       "properties": {
-        "port": { "type": "integer" },
-        "serviceName": { "type": "string" }
+        "affinity": { "type": "object" },
+        "annotations": { "type": "object" },
+        "containerPort": { "type": "integer" },
+        "containerSecurityContext": { "type": "object" },
+        "enabled": { "type": "boolean" },
+        "image": { "type": "string" },
+        "imagePullPolicy": { "type": "string" },
+        "labels": { "type": "object" },
+        "node": { "type": "string" },
+        "nodeSelector": { "type": "object" },
+        "replicas": {
+          "type": "object",
+          "properties": {
+            "desired": { "type": "integer" },
+            "max": { "type": "integer" },
+            "min": { "type": "integer" }
+          },
+          "required": ["desired"],
+          "additionalProperties": false
+        },
+        "resources": { "type": "object" },
+        "securityContext": { "type": "object" },
+        "serviceAccount": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" }
+          },
+            "required": ["name"],
+          "additionalProperties": false
+        },
+        "serviceMonitor": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "serviceName": { "type": "string" },
+        "tolerations": { "type": "array" },
+        "useExisting": { "type": "boolean" }
       },
       "additionalProperties": false
     },
@@ -1333,11 +1372,14 @@
             "replicas": {
               "type": "object",
               "properties": {
+                "cooldown": { "type": "integer" },
                 "desired": { "type": "integer" },
+                "hpa": { "type": "boolean" },
                 "max": { "type": "integer" },
-                "min": { "type": "integer" }
+                "min": { "type": "integer" },
+                "threshold": { "type": "number" },
+                "throughput": { "type": "number" }
               },
-              "required": ["desired"],
               "additionalProperties": false
             },
             "resources": { "type": "object" },
@@ -1390,11 +1432,14 @@
             "replicas": {
               "type": "object",
               "properties": {
+                "cooldown": { "type": "integer" },
                 "desired": { "type": "integer" },
+                "hpa": { "type": "boolean" },
                 "max": { "type": "integer" },
-                "min": { "type": "integer" }
+                "min": { "type": "integer" },
+                "threshold": { "type": "number" },
+                "throughput": { "type": "number" }
               },
-              "required": ["desired"],
               "additionalProperties": false
             },
             "resources": { "type": "object" },
@@ -1436,11 +1481,14 @@
             "replicas": {
               "type": "object",
               "properties": {
+                "cooldown": { "type": "integer" },
                 "desired": { "type": "integer" },
+                "hpa": { "type": "boolean" },
                 "max": { "type": "integer" },
-                "min": { "type": "integer" }
+                "min": { "type": "integer" },
+                "threshold": { "type": "number" },
+                "throughput": { "type": "number" }
               },
-              "required": ["desired"],
               "additionalProperties": false
             },
             "resources": { "type": "object" },
@@ -1493,11 +1541,14 @@
             "replicas": {
               "type": "object",
               "properties": {
+                "cooldown": { "type": "integer" },
                 "desired": { "type": "integer" },
+                "hpa": { "type": "boolean" },
                 "max": { "type": "integer" },
-                "min": { "type": "integer" }
+                "min": { "type": "integer" },
+                "threshold": { "type": "number" },
+                "throughput": { "type": "number" }
               },
-              "required": ["desired"],
               "additionalProperties": false
             },
             "resources": { "type": "object" },
@@ -1546,10 +1597,10 @@
           "type": "object",
           "properties": {
             "document": { "type": "integer" },
+            "extractRequest": { "type": "integer" },
             "page": { "type": "integer" },
             "summaryRequest": { "type": "integer" }
           },
-          "required": ["document", "page", "summaryRequest"],
           "additionalProperties": false
         },
         "services": {
@@ -1565,7 +1616,6 @@
                 "process": { "type": "integer" },
                 "save": { "type": "integer" }
               },
-              "required": ["correct", "inference", "map", "ocr", "process", "save"],
               "additionalProperties": false
             },
             "preProcess": {
@@ -1573,7 +1623,6 @@
               "properties": {
                 "queue": { "type": "integer" }
               },
-              "required": ["queue"],
               "additionalProperties": false
             },
             "process": {
@@ -1581,7 +1630,6 @@
               "properties": {
                 "queue": { "type": "integer" }
               },
-              "required": ["queue"],
               "additionalProperties": false
             },
             "queue": {
@@ -1589,7 +1637,6 @@
               "properties": {
                 "queue": { "type": "integer" }
               },
-              "required": ["queue"],
               "additionalProperties": false
             },
             "ranker": {
@@ -1597,7 +1644,6 @@
               "properties": {
                 "inference": { "type": "integer" }
               },
-              "required": ["inference"],
               "additionalProperties": false
             },
             "summary": {
@@ -1606,7 +1652,6 @@
                 "api": { "type": "integer" },
                 "inference": { "type": "integer" }
               },
-              "required": ["api", "inference"],
               "additionalProperties": false
             },
             "summaryClient": {
@@ -1614,7 +1659,6 @@
               "properties": {
                 "api": { "type": "integer" }
               },
-              "required": ["api"],
               "additionalProperties": false
             },
             "upload": {
@@ -1622,17 +1666,12 @@
               "properties": {
                 "queue": { "type": "integer" }
               },
-              "required": ["queue"],
               "additionalProperties": false
             }
           },
-          "required": [
-            "layout", "preProcess", "process", "queue", "ranker", "summary", "summaryClient", "upload"
-          ],
           "additionalProperties": false
         }
       },
-      "required": ["tpm", "services"],
       "additionalProperties": false
     }
   },
