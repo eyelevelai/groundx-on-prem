@@ -1,5 +1,66 @@
 'aws: golang':
   1: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: existing-service-account
+      namespace: eyelevel
+  2: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    rules:
+      - apiGroups:
+          - apps
+        resources:
+          - deployments
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+  3: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: metrics-reader
+    subjects:
+      - kind: ServiceAccount
+        name: existing-service-account
+        namespace: eyelevel
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -19,12 +80,30 @@
       template:
         metadata:
           annotations:
-            config-hash: 0b3078ffdd3aac06940c8fd8edef8c0a35902e923d3e427222604bd3494b1a82
+            config-hash: 740eaecf709b71eb781431c6935ab4bf40e1849ed8c30b75ab4dc77c2359d2bd
           labels:
             app: metrics
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - env:
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
                 - name: TLS_CERT_FILE
                   value: /etc/ssl/tls/tls.crt
                 - name: TLS_KEY_FILE
@@ -53,6 +132,10 @@
                   scheme: HTTPS
                 initialDelaySeconds: 10
                 periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -85,8 +168,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-database
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -100,6 +181,9 @@
             - effect: NoSchedule
               key: node
               value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
           volumes:
             - configMap:
                 name: config-yaml-map
@@ -107,7 +191,7 @@
             - name: tls-volume
               secret:
                 secretName: metrics-tls
-  2: |
+  5: |
     apiVersion: v1
     data: null
     kind: Secret
@@ -121,7 +205,7 @@
       name: metrics-tls
       namespace: eyelevel
     type: kubernetes.io/tls
-  3: |
+  6: |
     apiVersion: apiregistration.k8s.io/v1
     kind: APIService
     metadata:
@@ -142,7 +226,7 @@
         port: 443
       version: v1beta1
       versionPriority: 100
-  4: |
+  7: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -160,6 +244,67 @@
       type: ClusterIP
 'cloud: golang':
   1: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+  2: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    rules:
+      - apiGroups:
+          - apps
+        resources:
+          - deployments
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+  3: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: metrics-reader
+    subjects:
+      - kind: ServiceAccount
+        name: metrics
+        namespace: eyelevel
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -179,12 +324,30 @@
       template:
         metadata:
           annotations:
-            config-hash: 2850934ed668b3c9811cd307f62cc97eaa6c6d80bb1d7783687589058db5791d
+            config-hash: e073a652eee0ec27036adc4c8e3bacab210373c46108516ffcf746f9ece32528
           labels:
             app: metrics
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - env:
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
                 - name: TLS_CERT_FILE
                   value: /etc/ssl/tls/tls.crt
                 - name: TLS_KEY_FILE
@@ -213,6 +376,10 @@
                   scheme: HTTPS
                 initialDelaySeconds: 10
                 periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -245,8 +412,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-database
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -255,9 +420,13 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: metrics
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -266,7 +435,7 @@
             - name: tls-volume
               secret:
                 secretName: metrics-tls
-  2: |
+  5: |
     apiVersion: v1
     data: null
     kind: Secret
@@ -280,7 +449,7 @@
       name: metrics-tls
       namespace: eyelevel
     type: kubernetes.io/tls
-  3: |
+  6: |
     apiVersion: apiregistration.k8s.io/v1
     kind: APIService
     metadata:
@@ -301,7 +470,7 @@
         port: 443
       version: v1beta1
       versionPriority: 100
-  4: |
+  7: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -319,6 +488,67 @@
       type: ClusterIP
 'default: golang':
   1: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+  2: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    rules:
+      - apiGroups:
+          - apps
+        resources:
+          - deployments
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+  3: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: metrics-reader
+    subjects:
+      - kind: ServiceAccount
+        name: metrics
+        namespace: eyelevel
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -338,12 +568,30 @@
       template:
         metadata:
           annotations:
-            config-hash: a6deb05ecc223991e8238b1d634a6a0fe8f003eb2c03cc4d68d7ce59ed565746
+            config-hash: af15a59eb31ee7e729e323b4da83cd84031bb4d1d01127a0bf0c4cd831bf20c5
           labels:
             app: metrics
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - env:
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
                 - name: TLS_CERT_FILE
                   value: /etc/ssl/tls/tls.crt
                 - name: TLS_KEY_FILE
@@ -372,6 +620,10 @@
                   scheme: HTTPS
                 initialDelaySeconds: 10
                 periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -404,8 +656,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-database
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -414,9 +664,13 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: metrics
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -425,7 +679,7 @@
             - name: tls-volume
               secret:
                 secretName: metrics-tls
-  2: |
+  5: |
     apiVersion: v1
     data: null
     kind: Secret
@@ -439,7 +693,7 @@
       name: metrics-tls
       namespace: eyelevel
     type: kubernetes.io/tls
-  3: |
+  6: |
     apiVersion: apiregistration.k8s.io/v1
     kind: APIService
     metadata:
@@ -460,7 +714,251 @@
         port: 443
       version: v1beta1
       versionPriority: 100
+  7: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: metrics
+      name: metrics
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 443
+          protocol: TCP
+          targetPort: 8443
+      selector:
+        app: metrics
+      type: ClusterIP
+'disabled: golang':
+  1: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+  2: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    rules:
+      - apiGroups:
+          - apps
+        resources:
+          - deployments
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+  3: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: metrics-reader
+    subjects:
+      - kind: ServiceAccount
+        name: metrics
+        namespace: eyelevel
   4: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics
+      template:
+        metadata:
+          annotations:
+            config-hash: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
+          labels:
+            app: metrics
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - env:
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: TLS_CERT_FILE
+                  value: /etc/ssl/tls/tls.crt
+                - name: TLS_KEY_FILE
+                  value: /etc/ssl/tls/tls.key
+                - name: TLS_CA_FILE
+                  value: /etc/ssl/tls/ca.crt
+                - name: LISTEN_PORT
+                  value: "8443"
+              image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: metrics
+              ports:
+                - containerPort: 8443
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8443
+                  scheme: HTTPS
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+                - mountPath: /etc/ssl/tls
+                  name: tls-volume
+                  readOnly: true
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: metrics
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: config-yaml-map
+              name: config-volume
+            - name: tls-volume
+              secret:
+                secretName: metrics-tls
+  5: |
+    apiVersion: v1
+    data: null
+    kind: Secret
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-tls
+      namespace: eyelevel
+    type: kubernetes.io/tls
+  6: |
+    apiVersion: apiregistration.k8s.io/v1
+    kind: APIService
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: v1beta1.external.metrics.k8s.io
+    spec:
+      group: external.metrics.k8s.io
+      groupPriorityMinimum: 100
+      insecureSkipTLSVerify: true
+      service:
+        name: metrics
+        namespace: eyelevel
+        port: 443
+      version: v1beta1
+      versionPriority: 100
+  7: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -478,6 +976,67 @@
       type: ClusterIP
 'empty: golang':
   1: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+  2: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    rules:
+      - apiGroups:
+          - apps
+        resources:
+          - deployments
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+  3: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: metrics-reader
+    subjects:
+      - kind: ServiceAccount
+        name: metrics
+        namespace: eyelevel
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -497,12 +1056,30 @@
       template:
         metadata:
           annotations:
-            config-hash: a6deb05ecc223991e8238b1d634a6a0fe8f003eb2c03cc4d68d7ce59ed565746
+            config-hash: af15a59eb31ee7e729e323b4da83cd84031bb4d1d01127a0bf0c4cd831bf20c5
           labels:
             app: metrics
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - env:
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
                 - name: TLS_CERT_FILE
                   value: /etc/ssl/tls/tls.crt
                 - name: TLS_KEY_FILE
@@ -531,6 +1108,10 @@
                   scheme: HTTPS
                 initialDelaySeconds: 10
                 periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -563,8 +1144,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-database
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -573,9 +1152,13 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: metrics
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -584,7 +1167,7 @@
             - name: tls-volume
               secret:
                 secretName: metrics-tls
-  2: |
+  5: |
     apiVersion: v1
     data: null
     kind: Secret
@@ -598,7 +1181,7 @@
       name: metrics-tls
       namespace: eyelevel
     type: kubernetes.io/tls
-  3: |
+  6: |
     apiVersion: apiregistration.k8s.io/v1
     kind: APIService
     metadata:
@@ -619,7 +1202,7 @@
         port: 443
       version: v1beta1
       versionPriority: 100
-  4: |
+  7: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -637,6 +1220,67 @@
       type: ClusterIP
 'existing: golang':
   1: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+  2: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    rules:
+      - apiGroups:
+          - apps
+        resources:
+          - deployments
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+  3: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: metrics-reader
+    subjects:
+      - kind: ServiceAccount
+        name: metrics
+        namespace: eyelevel
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -656,12 +1300,30 @@
       template:
         metadata:
           annotations:
-            config-hash: aeb8ac0fd3e87f5db054ffe502d08dcc4816cc75349d2dfa6c646982d5c2ab4e
+            config-hash: f93fe12c9fb323efd058c262e3177101440fcdc12fb327e651530520648a80bc
           labels:
             app: metrics
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - env:
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
                 - name: TLS_CERT_FILE
                   value: /etc/ssl/tls/tls.crt
                 - name: TLS_KEY_FILE
@@ -690,6 +1352,10 @@
                   scheme: HTTPS
                 initialDelaySeconds: 10
                 periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -722,8 +1388,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-database
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -732,9 +1396,13 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: metrics
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -743,7 +1411,7 @@
             - name: tls-volume
               secret:
                 secretName: metrics-tls
-  2: |
+  5: |
     apiVersion: v1
     data: null
     kind: Secret
@@ -757,7 +1425,7 @@
       name: metrics-tls
       namespace: eyelevel
     type: kubernetes.io/tls
-  3: |
+  6: |
     apiVersion: apiregistration.k8s.io/v1
     kind: APIService
     metadata:
@@ -778,7 +1446,7 @@
         port: 443
       version: v1beta1
       versionPriority: 100
-  4: |
+  7: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -796,6 +1464,67 @@
       type: ClusterIP
 'extract.ingest: golang':
   1: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+  2: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    rules:
+      - apiGroups:
+          - apps
+        resources:
+          - deployments
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+  3: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: metrics-reader
+    subjects:
+      - kind: ServiceAccount
+        name: metrics
+        namespace: eyelevel
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -815,12 +1544,30 @@
       template:
         metadata:
           annotations:
-            config-hash: 73a45a265941a42079363ea35cb516dd5d9aac8908f96712896b4ace861d0e7c
+            config-hash: c9fdf1c07e09583295fe05fac2d96d80162fcd4b4aa7eddb72fc7d2853b91618
           labels:
             app: metrics
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - env:
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
                 - name: TLS_CERT_FILE
                   value: /etc/ssl/tls/tls.crt
                 - name: TLS_KEY_FILE
@@ -849,6 +1596,10 @@
                   scheme: HTTPS
                 initialDelaySeconds: 10
                 periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -881,8 +1632,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-database
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -891,9 +1640,13 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: metrics
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -902,7 +1655,7 @@
             - name: tls-volume
               secret:
                 secretName: metrics-tls
-  2: |
+  5: |
     apiVersion: v1
     data: null
     kind: Secret
@@ -916,7 +1669,7 @@
       name: metrics-tls
       namespace: eyelevel
     type: kubernetes.io/tls
-  3: |
+  6: |
     apiVersion: apiregistration.k8s.io/v1
     kind: APIService
     metadata:
@@ -937,7 +1690,7 @@
         port: 443
       version: v1beta1
       versionPriority: 100
-  4: |
+  7: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -955,6 +1708,67 @@
       type: ClusterIP
 'extract.oai: golang':
   1: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: existing-service-account
+      namespace: eyelevel
+  2: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    rules:
+      - apiGroups:
+          - apps
+        resources:
+          - deployments
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+  3: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: metrics-reader
+    subjects:
+      - kind: ServiceAccount
+        name: existing-service-account
+        namespace: eyelevel
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -974,12 +1788,30 @@
       template:
         metadata:
           annotations:
-            config-hash: 52eea5ad0a4751f454cf753e5206848da62bab3a84df13990bd6bba907287c21
+            config-hash: 09d4f19b1120ffb83178b933a05243cdbc96f15e9b1b9542e30a1eceefc99afe
           labels:
             app: metrics
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - env:
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
                 - name: TLS_CERT_FILE
                   value: /etc/ssl/tls/tls.crt
                 - name: TLS_KEY_FILE
@@ -1011,6 +1843,10 @@
                   scheme: HTTPS
                 initialDelaySeconds: 10
                 periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -1043,8 +1879,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-database
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1058,6 +1892,9 @@
             - effect: NoSchedule
               key: node
               value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
           volumes:
             - configMap:
                 name: config-yaml-map
@@ -1065,7 +1902,7 @@
             - name: tls-volume
               secret:
                 secretName: metrics-tls
-  2: |
+  5: |
     apiVersion: v1
     data: null
     kind: Secret
@@ -1079,7 +1916,7 @@
       name: metrics-tls
       namespace: eyelevel
     type: kubernetes.io/tls
-  3: |
+  6: |
     apiVersion: apiregistration.k8s.io/v1
     kind: APIService
     metadata:
@@ -1100,7 +1937,7 @@
         port: 443
       version: v1beta1
       versionPriority: 100
-  4: |
+  7: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -1118,6 +1955,67 @@
       type: ClusterIP
 'extract: golang':
   1: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: existing-service-account
+      namespace: eyelevel
+  2: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    rules:
+      - apiGroups:
+          - apps
+        resources:
+          - deployments
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+  3: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: metrics-reader
+    subjects:
+      - kind: ServiceAccount
+        name: existing-service-account
+        namespace: eyelevel
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1137,12 +2035,30 @@
       template:
         metadata:
           annotations:
-            config-hash: 0fb59fe6ce67632668da3d701fe506738a01bc6eebf5717185caaf68f5082df4
+            config-hash: 7ee1ebcc516ace10caeb6ab752bd4ff517ebe830d17218e51446407e0ceef28b
           labels:
             app: metrics
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - env:
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
                 - name: TLS_CERT_FILE
                   value: /etc/ssl/tls/tls.crt
                 - name: TLS_KEY_FILE
@@ -1174,6 +2090,10 @@
                   scheme: HTTPS
                 initialDelaySeconds: 10
                 periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -1206,8 +2126,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-database
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1221,6 +2139,9 @@
             - effect: NoSchedule
               key: node
               value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
           volumes:
             - configMap:
                 name: config-yaml-map
@@ -1228,7 +2149,7 @@
             - name: tls-volume
               secret:
                 secretName: metrics-tls
-  2: |
+  5: |
     apiVersion: v1
     data: null
     kind: Secret
@@ -1242,7 +2163,7 @@
       name: metrics-tls
       namespace: eyelevel
     type: kubernetes.io/tls
-  3: |
+  6: |
     apiVersion: apiregistration.k8s.io/v1
     kind: APIService
     metadata:
@@ -1263,7 +2184,7 @@
         port: 443
       version: v1beta1
       versionPriority: 100
-  4: |
+  7: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -1281,6 +2202,67 @@
       type: ClusterIP
 'metadata: golang':
   1: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: existing-service-account
+      namespace: eyelevel
+  2: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    rules:
+      - apiGroups:
+          - apps
+        resources:
+          - deployments
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+  3: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: metrics-reader
+    subjects:
+      - kind: ServiceAccount
+        name: existing-service-account
+        namespace: eyelevel
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1300,12 +2282,30 @@
       template:
         metadata:
           annotations:
-            config-hash: 6f62a87cb80ee9e892d72cba77874cfc230eb3f7251f098ee84815c745a55846
+            config-hash: 954ed0151c053d79ff684c5c0ef985ae4a9b17439849a9705cbfd42901c47870
           labels:
             app: metrics
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - env:
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
                 - name: TLS_CERT_FILE
                   value: /etc/ssl/tls/tls.crt
                 - name: TLS_KEY_FILE
@@ -1334,6 +2334,10 @@
                   scheme: HTTPS
                 initialDelaySeconds: 10
                 periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -1366,8 +2370,6 @@
               image: test.image:v1
               imagePullPolicy: Always
               name: wait-for-database
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1381,6 +2383,9 @@
             - effect: NoSchedule
               key: node
               value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
           volumes:
             - configMap:
                 name: config-yaml-map
@@ -1388,7 +2393,7 @@
             - name: tls-volume
               secret:
                 secretName: metrics-tls
-  2: |
+  5: |
     apiVersion: v1
     data: null
     kind: Secret
@@ -1402,7 +2407,7 @@
       name: metrics-tls
       namespace: eyelevel
     type: kubernetes.io/tls
-  3: |
+  6: |
     apiVersion: apiregistration.k8s.io/v1
     kind: APIService
     metadata:
@@ -1423,7 +2428,7 @@
         port: 443
       version: v1beta1
       versionPriority: 100
-  4: |
+  7: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -1441,6 +2446,67 @@
       type: ClusterIP
 'minikube: golang':
   1: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+  2: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    rules:
+      - apiGroups:
+          - apps
+        resources:
+          - deployments
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+  3: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: metrics-reader
+    subjects:
+      - kind: ServiceAccount
+        name: metrics
+        namespace: eyelevel
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1460,12 +2526,30 @@
       template:
         metadata:
           annotations:
-            config-hash: 145ad059f9ab6f81e6dcf5ab89bc25b68de01784bc3b87dbdcc0089149ab34ef
+            config-hash: f44e1ff60b32dc55af0142422b4df49dac9ef7ffe99fdcf7c01c20c3a469212d
           labels:
             app: metrics
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - env:
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
                 - name: TLS_CERT_FILE
                   value: /etc/ssl/tls/tls.crt
                 - name: TLS_KEY_FILE
@@ -1494,6 +2578,10 @@
                   scheme: HTTPS
                 initialDelaySeconds: 10
                 periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -1526,8 +2614,6 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-database
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1536,9 +2622,13 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: metrics
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -1547,7 +2637,7 @@
             - name: tls-volume
               secret:
                 secretName: metrics-tls
-  2: |
+  5: |
     apiVersion: v1
     data: null
     kind: Secret
@@ -1561,7 +2651,7 @@
       name: metrics-tls
       namespace: eyelevel
     type: kubernetes.io/tls
-  3: |
+  6: |
     apiVersion: apiregistration.k8s.io/v1
     kind: APIService
     metadata:
@@ -1582,7 +2672,7 @@
         port: 443
       version: v1beta1
       versionPriority: 100
-  4: |
+  7: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -1600,6 +2690,67 @@
       type: ClusterIP
 'openshift: golang':
   1: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+  2: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    rules:
+      - apiGroups:
+          - apps
+        resources:
+          - deployments
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+  3: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: metrics-reader
+    subjects:
+      - kind: ServiceAccount
+        name: metrics
+        namespace: eyelevel
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1619,12 +2770,30 @@
       template:
         metadata:
           annotations:
-            config-hash: 145ad059f9ab6f81e6dcf5ab89bc25b68de01784bc3b87dbdcc0089149ab34ef
+            config-hash: f44e1ff60b32dc55af0142422b4df49dac9ef7ffe99fdcf7c01c20c3a469212d
           labels:
             app: metrics
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - env:
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
                 - name: TLS_CERT_FILE
                   value: /etc/ssl/tls/tls.crt
                 - name: TLS_KEY_FILE
@@ -1653,6 +2822,10 @@
                   scheme: HTTPS
                 initialDelaySeconds: 10
                 periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -1683,15 +2856,17 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-database
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: metrics
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - configMap:
@@ -1700,7 +2875,7 @@
             - name: tls-volume
               secret:
                 secretName: metrics-tls
-  2: |
+  5: |
     apiVersion: v1
     data: null
     kind: Secret
@@ -1714,7 +2889,7 @@
       name: metrics-tls
       namespace: eyelevel
     type: kubernetes.io/tls
-  3: |
+  6: |
     apiVersion: apiregistration.k8s.io/v1
     kind: APIService
     metadata:
@@ -1735,7 +2910,7 @@
         port: 443
       version: v1beta1
       versionPriority: 100
-  4: |
+  7: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -1753,6 +2928,67 @@
       type: ClusterIP
 'phoenix: golang':
   1: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics
+      namespace: eyelevel
+  2: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    rules:
+      - apiGroups:
+          - apps
+        resources:
+          - deployments
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+  3: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app: metrics
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: metrics-reader
+      namespace: eyelevel
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: metrics-reader
+    subjects:
+      - kind: ServiceAccount
+        name: metrics
+        namespace: eyelevel
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1772,12 +3008,30 @@
       template:
         metadata:
           annotations:
-            config-hash: d8166d81a0df16886f96b04db3105702b2530d727392839ec05ec1e7823c7e4c
+            config-hash: d765ba649f35f9bc5b9b445cd6c4ce74f53ecdec85159e28ba24a8c7849fc23b
           labels:
             app: metrics
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
           containers:
             - env:
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
                 - name: TLS_CERT_FILE
                   value: /etc/ssl/tls/tls.crt
                 - name: TLS_KEY_FILE
@@ -1806,6 +3060,10 @@
                   scheme: HTTPS
                 initialDelaySeconds: 10
                 periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -1838,15 +3096,17 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-database
-          nodeSelector:
-            node: eyelevel-gpu
           securityContext:
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: metrics
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-gpu
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-gpu
           volumes:
             - configMap:
@@ -1855,7 +3115,7 @@
             - name: tls-volume
               secret:
                 secretName: metrics-tls
-  2: |
+  5: |
     apiVersion: v1
     data: null
     kind: Secret
@@ -1869,7 +3129,7 @@
       name: metrics-tls
       namespace: eyelevel
     type: kubernetes.io/tls
-  3: |
+  6: |
     apiVersion: apiregistration.k8s.io/v1
     kind: APIService
     metadata:
@@ -1890,7 +3150,7 @@
         port: 443
       version: v1beta1
       versionPriority: 100
-  4: |
+  7: |
     apiVersion: v1
     kind: Service
     metadata:

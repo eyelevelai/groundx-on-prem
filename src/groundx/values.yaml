@@ -10,7 +10,7 @@ cache:
   enabled: true
 
   metrics:
-    enabled: false
+    enabled: true
     existing: {}
 
     resources:
@@ -130,7 +130,7 @@ summary:
 
   # must be an OpenAI chat compatible endpoint
   # /chat/completions
-  existing: {}
+#  existing:
 #    apiKey: my-oai-key
 #    serviceType: openai
 #    url: https://api.openai.com/v1
@@ -336,7 +336,11 @@ upload:
       memory: 128Mi
 
 extract:
+  enabled: false
+
   agent:
+    enabled: false
+
     replicas:
       desired: 1
       max: 96
@@ -350,6 +354,8 @@ extract:
         memory: 512Mi
 
   api:
+    enabled: false
+
     replicas:
       desired: 1
       max: 16
@@ -364,6 +370,8 @@ extract:
         memory: 512Mi
 
   download:
+    enabled: false
+
     replicas:
       desired: 1
       max: 24
@@ -378,6 +386,8 @@ extract:
         memory: 512Mi
 
   save:
+    enabled: false
+
     replicas:
       desired: 1
       max: 24

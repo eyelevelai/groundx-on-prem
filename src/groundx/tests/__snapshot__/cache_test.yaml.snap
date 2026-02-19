@@ -23,6 +23,20 @@
           labels:
             app: cache-metrics
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
               imagePullPolicy: IfNotPresent
@@ -47,8 +61,6 @@
               volumeMounts:
                 - mountPath: /mnt/redis
                   name: cache-metrics-persistent-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -60,6 +72,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - emptyDir: {}
@@ -103,6 +118,20 @@
           labels:
             app: cache
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
               imagePullPolicy: IfNotPresent
@@ -127,8 +156,6 @@
               volumeMounts:
                 - mountPath: /mnt/redis
                   name: cache-persistent-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -140,6 +167,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - emptyDir: {}
@@ -184,6 +214,20 @@
           labels:
             app: cache-metrics
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
               imagePullPolicy: IfNotPresent
@@ -208,8 +252,6 @@
               volumeMounts:
                 - mountPath: /mnt/redis
                   name: cache-metrics-persistent-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -221,6 +263,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - emptyDir: {}
@@ -264,6 +309,20 @@
           labels:
             app: cache
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
               imagePullPolicy: IfNotPresent
@@ -288,8 +347,6 @@
               volumeMounts:
                 - mountPath: /mnt/redis
                   name: cache-persistent-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -301,6 +358,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - emptyDir: {}
@@ -346,6 +406,20 @@
           labels:
             app: cache-metrics
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
               imagePullPolicy: IfNotPresent
@@ -370,8 +444,6 @@
               volumeMounts:
                 - mountPath: /mnt/redis
                   name: cache-metrics-persistent-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -383,6 +455,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - emptyDir: {}
@@ -426,6 +501,20 @@
           labels:
             app: cache
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
               imagePullPolicy: IfNotPresent
@@ -450,8 +539,6 @@
               volumeMounts:
                 - mountPath: /mnt/redis
                   name: cache-persistent-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -463,6 +550,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - emptyDir: {}
@@ -668,6 +758,20 @@
           labels:
             app: cache-metrics
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
               imagePullPolicy: IfNotPresent
@@ -692,8 +796,6 @@
               volumeMounts:
                 - mountPath: /mnt/redis
                   name: cache-metrics-persistent-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -705,6 +807,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - emptyDir: {}
@@ -748,6 +853,20 @@
           labels:
             app: cache
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
               imagePullPolicy: IfNotPresent
@@ -772,8 +891,6 @@
               volumeMounts:
                 - mountPath: /mnt/redis
                   name: cache-persistent-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -785,6 +902,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - emptyDir: {}
@@ -829,6 +949,20 @@
           labels:
             app: cache-metrics
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
               imagePullPolicy: IfNotPresent
@@ -851,8 +985,6 @@
               volumeMounts:
                 - mountPath: /mnt/redis
                   name: cache-metrics-persistent-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -860,6 +992,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - emptyDir: {}
@@ -903,6 +1038,20 @@
           labels:
             app: cache
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
               imagePullPolicy: IfNotPresent
@@ -925,8 +1074,6 @@
               volumeMounts:
                 - mountPath: /mnt/redis
                   name: cache-persistent-storage
-          nodeSelector:
-            node: eyelevel-cpu-only
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -934,6 +1081,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
             - emptyDir: {}
@@ -978,6 +1128,20 @@
           labels:
             app: cache-metrics
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
               imagePullPolicy: Always
@@ -1002,8 +1166,6 @@
                   name: cache-metrics-persistent-storage
           imagePullSecrets:
             - name: ecr-public-pull
-          nodeSelector:
-            node: eyelevel-gpu
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -1011,6 +1173,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-gpu
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-gpu
           volumes:
             - emptyDir: {}
@@ -1054,6 +1219,20 @@
           labels:
             app: cache
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-gpu
           containers:
             - image: public.ecr.aws/c9r4x6y5/eyelevel/redis:1.0.0
               imagePullPolicy: Always
@@ -1078,8 +1257,6 @@
                   name: cache-persistent-storage
           imagePullSecrets:
             - name: ecr-public-pull
-          nodeSelector:
-            node: eyelevel-gpu
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -1087,6 +1264,9 @@
           tolerations:
             - effect: NoSchedule
               key: node
+              value: eyelevel-gpu
+            - effect: NoSchedule
+              key: eyelevel_node
               value: eyelevel-gpu
           volumes:
             - emptyDir: {}
