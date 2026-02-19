@@ -47,6 +47,14 @@
     - [Deploying a Dedicated Kafka Cluster](#deploying-a-dedicated-kafka-cluster)
 - [Installing the GroundX Application](#installing-the-groundx-application)
 
+**[Autoscaling & Monitoring](#autoscaling--monitoring)**
+- [Enabling Autoscaling (HPA)](#enabling-autoscaling-hpa)
+  - [Per-Pod HPA Control](#per-pod-hpa-control)
+- [How Autoscaling Works](#how-autoscaling-works)
+- [Enabling the Custom Metrics Server](#enabling-the-custom-metrics-server)
+- [Prometheus Integration (Optional)](#prometheus-integration-optional)
+- [Using Simulated LLM Responses (Optional)](#using-simulated-llm-responses-optional)
+
 **[Using GroundX On-Prem](#using-groundx-on-prem)**
 - [Get the API Endpoint](#get-the-api-endpoint)
 - [Use the SDKs](#use-the-sdks)
@@ -524,6 +532,111 @@ helm install groundx \
 ```
 
 Replace `values.yaml` with the path to the `values.yaml` file you created in the previous [Configuration](#configuration) step.
+
+# Autoscaling & Monitoring
+
+GroundX includes built-in **Horizontal Pod Autoscaling (HPA)** and an optional **custom metrics server**.
+
+Autoscaling is workload-aware: pods scale on **pipeline throughput** plus one additional metric (latency/backlog/throughput) depending on pod type.
+
+## Enabling Autoscaling (HPA)
+
+HPA can be globally enabled for all supported pods:
+
+```yaml
+cluster:
+  hpa: true
+```
+
+If `cluster.hpa` is `false`, pods run with fixed replica counts.
+
+### Per-Pod HPA Control
+
+You can enable or disable HPA per pod:
+
+```yaml
+groundx:
+  replicas:
+    hpa: true
+```
+
+If HPA is **disabled** for a pod:
+
+```yaml
+POD.replicas.desired
+```
+
+controls the replica count.
+
+If HPA is **enabled** for a pod:
+
+```yaml
+POD.replicas.min
+POD.replicas.max
+```
+
+control the scaling bounds.
+
+## How Autoscaling Works
+
+Every autoscaled pod scales on **two metrics**:
+
+1. **Pipeline throughput (all pods)**
+   - The system estimates total pipeline throughput for files moving through GroundX.
+   - Each pod defines the throughput a single replica can support.
+   - Replicas increase until total pod capacity meets the estimated pipeline throughput.
+
+2. **Pod-specific metric (by pod type)**
+   - **api**: response latency (default target **4s**)
+   - **queue**: message backlog (default target **10**)
+   - **task**: Celery task backlog (default target **10**)
+   - **inference**: model request throughput (scales when requests exceed per-replica capacity)
+
+## Enabling the Custom Metrics Server
+
+The custom metrics server exposes:
+- Pipeline throughput
+- API latency
+- Queue backlog
+- Task backlog
+- Inference request throughput
+
+Enable it with:
+
+```yaml
+metrics:
+  enabled: true
+```
+
+## Prometheus Integration (Optional)
+
+If using Prometheus Operator, enable the ServiceMonitor:
+
+```yaml
+metrics:
+  serviceMonitor:
+    enabled: true
+```
+
+This allows Prometheus to automatically scrape the GroundX metrics endpoints.
+
+For detailed monitoring setup, see the dedicated [Monitoring README](monitoring/README.md).
+
+## Using Simulated LLM Responses (Optional)
+
+To run the system without calling OpenAI or self-hosted LLMs (useful for load testing or autoscaling validation), configure:
+
+```yaml
+engines:
+  default:
+    engineId: test-model
+
+extract:
+  agent:
+    modelId: test-model
+```
+
+When set, pods use simulated LLM responses instead of external model providers.
 
 # Using GroundX On-Prem
 

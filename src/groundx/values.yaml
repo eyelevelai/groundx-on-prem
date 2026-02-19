@@ -1,6 +1,8 @@
 cluster:
   pvClass: eyelevel-pv
 
+  hpa: false
+
   # "", "eks", "aks", "gke", "openshift", etc.
   type: eks
 
@@ -8,7 +10,7 @@ cache:
   enabled: true
 
   metrics:
-    enabled: true
+    enabled: false
     existing: {}
 
     resources:
@@ -66,6 +68,17 @@ file:
     # optional
     # port: 9000
 
+metrics:
+  enabled: false
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+  serviceMonitor:
+    enabled: false
+
 search:
   enabled: true
 
@@ -90,6 +103,11 @@ summary:
   api:
     enabled: true
 
+    replicas:
+      desired: 1
+      max: 32
+      min: 1
+
     resources:
       requests:
         cpu: 100m
@@ -97,9 +115,13 @@ summary:
   inference:
     enabled: true
 
+    # specifies the amount of GPU memory to use, from 0 - 1.0
     deviceUtilize: 0.48
+
     replicas:
       desired: 2
+      max: 32
+      min: 1
 
     resources:
       requests:
@@ -116,6 +138,11 @@ summary:
 groundx:
   enabled: true
 
+  replicas:
+      desired: 1
+      max: 24
+      min: 1
+
   resources:
     requests:
       cpu: 100m
@@ -125,6 +152,11 @@ layout:
   api:
     enabled: true
 
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
+
     resources:
       requests:
         cpu: 100m
@@ -132,12 +164,22 @@ layout:
   correct:
     enabled: true
 
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
+
     resources:
       requests:
         cpu: 1
         memory: 1Gi
   inference:
     enabled: true
+
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
 
     resources:
       limits:
@@ -150,12 +192,22 @@ layout:
   map:
     enabled: true
 
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
+
     resources:
       requests:
         cpu: 100m
         memory: 256Mi
   ocr:
     enabled: true
+
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
 
     resources:
       requests:
@@ -164,12 +216,22 @@ layout:
   process:
     enabled: true
 
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
+
     resources:
       requests:
         cpu: 100m
         memory: 1Gi
   save:
     enabled: true
+
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
 
     resources:
       requests:
@@ -179,21 +241,23 @@ layout:
 layoutWebhook:
   enabled: true
 
+  replicas:
+    desired: 1
+    max: 16
+    min: 1
+
   resources:
     requests:
       cpu: 100m
       memory: 128Mi
 
-metrics:
-  enabled: true
-
-  resources:
-    requests:
-      cpu: 50m
-      memory: 64Mi
-
 preProcess:
   enabled: true
+
+  replicas:
+    desired: 1
+    max: 24
+    min: 1
 
   resources:
     requests:
@@ -203,6 +267,11 @@ preProcess:
 process:
   enabled: true
 
+  replicas:
+    desired: 1
+    max: 16
+    min: 1
+
   resources:
     requests:
       cpu: 200m
@@ -210,6 +279,11 @@ process:
 
 queue:
   enabled: true
+
+  replicas:
+    desired: 1
+    max: 16
+    min: 1
 
   resources:
     requests:
@@ -238,6 +312,11 @@ ranker:
 summaryClient:
   enabled: true
 
+  replicas:
+    desired: 1
+    max: 32
+    min: 1
+
   resources:
     requests:
       cpu: 100m
@@ -246,6 +325,11 @@ summaryClient:
 upload:
   enabled: true
 
+  replicas:
+    desired: 1
+    max: 24
+    min: 1
+
   resources:
     requests:
       cpu: 100m
@@ -253,6 +337,11 @@ upload:
 
 extract:
   agent:
+    replicas:
+      desired: 1
+      max: 96
+      min: 1
+
     resources:
       limits:
         memory: 1Gi
@@ -261,6 +350,11 @@ extract:
         memory: 512Mi
 
   api:
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
+
     resources:
       limits:
         cpu: 500m
@@ -270,6 +364,11 @@ extract:
         memory: 512Mi
 
   download:
+    replicas:
+      desired: 1
+      max: 24
+      min: 1
+
     resources:
       limits:
         cpu: 1
@@ -279,6 +378,11 @@ extract:
         memory: 512Mi
 
   save:
+    replicas:
+      desired: 1
+      max: 24
+      min: 1
+
     resources:
       limits:
         cpu: 1
@@ -286,3 +390,8 @@ extract:
       requests:
         cpu: 200m
         memory: 512Mi
+
+throughput:
+  tpm:
+    document: 12500
+    page: 1000

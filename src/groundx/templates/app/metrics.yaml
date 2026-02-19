@@ -46,6 +46,10 @@
 
 {{- $saExists := (lookup "v1" "ServiceAccount" $ns $sanFinal) -}}
 {{- $shouldCreateSA := or (not $saExists) (empty $saExists) -}}
+{{- $skipSA := eq (include "groundx.metrics.serviceMonitor" . | trim) "false" -}}
+{{- if $skipSA -}}
+{{- $shouldCreateSA = false -}}
+{{- end -}}
 
 {{- if $shouldCreateSA }}
 ---

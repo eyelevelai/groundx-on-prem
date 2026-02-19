@@ -59,6 +59,12 @@ true
 {{ dig "name" (include "groundx.serviceAccountName" .) $ex }}
 {{- end }}
 
+{{- define "groundx.metrics.serviceMonitor" -}}
+{{- $b := .Values.metrics | default dict -}}
+{{- $in := dig "serviceMonitor" dict $b -}}
+{{ dig "enabled" true $in }}
+{{- end }}
+
 {{- define "groundx.metrics.serviceType" -}}
 {{- $in := .Values.metrics | default dict -}}
 {{ dig "serviceType" "ClusterIP" $in }}

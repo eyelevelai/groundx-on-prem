@@ -2,7 +2,7 @@
 
 This folder contains the Kubernetes resources required to expose, scrape, and visualize GroundX metrics using Prometheus (`kube-prometheus-stack`) and Grafana.
 
-At a high level, this setup:
+At a high level, with this setup:
 
 1. GroundX exposes a `/metrics` endpoint
 2. Prometheus discovers and scrapes that endpoint
@@ -44,7 +44,7 @@ helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
   -n monitoring \
   -f monitoring/values.prometheus.yaml
 
-# Apply ServiceMonitor so Prometheus scrapes GroundX metrics
+# Apply ServiceMonitor so Prometheus will scrape GroundX metrics
 kubectl -n monitoring apply -f monitoring/custom-metrics.yaml
 ```
 
@@ -64,7 +64,9 @@ Helm values overrides for `kube-prometheus-stack`.
 
 This file configures `kube-state-metrics` to export specific Kubernetes labels into Prometheus metrics.
 
-By default, `kube-state-metrics` does **not** expose all object labels. If labels are not allowlisted, they will not appear in metrics such as `kube_node_labels`.
+By default, `kube-state-metrics` does **not** expose all object labels. If labels are not `allowlisted`, they will not appear in metrics such as `kube_node_labels`.
+
+It also specifies that Prometheus and Grafana use the `eyelevel-cpu-only` node only.
 
 #### What It Configures
 
@@ -72,6 +74,7 @@ By default, `kube-state-metrics` does **not** expose all object labels. If label
 kube-state-metrics:
   nodeSelector:
     eyelevel_node: eyelevel-cpu-only
+
   metricLabelsAllowlist:
     - nodes=[
         eyelevel_node,
@@ -81,14 +84,14 @@ kube-state-metrics:
       ]
 ```
 
-This enables:
+This exposes the following labels to Prometheus and Grafana:
 
-- `eyelevel_node` on Kubernetes **nodes**
-- `app` on Kubernetes **pods**
+- `eyelevel_node` on Kubernetes **nodes** via `kube_node_labels`
+- `app` on Kubernetes **pods** via `kube_pod_labels`
 
-This enables grouping and filtering in PromQL and Grafana dashboards.
+You will be able to use these labels to group and filter in PromQL and Grafana dashboards.
 
-The node selectors `eyelevel-cpu-only` restrict the Prometheus and Grafana pods to the `eyelevel-cpu-only` nodes.
+The node selector `eyelevel-cpu-only` restricts the Prometheus and Grafana pods to the `eyelevel-cpu-only` nodes.
 
 ---
 
@@ -98,10 +101,10 @@ Defines a `ServiceMonitor` used by the Prometheus Operator.
 
 This resource tells Prometheus:
 
-- Which namespace to look in
-- Which Service labels to match
-- Which port and path to scrape
-- Whether to use HTTP or HTTPS
+- which namespace to look in
+- which Service labels to match
+- which port and path to scrape
+- whether to use HTTP or HTTPS
 
 Without this file, Prometheus will not discover or scrape the GroundX metrics service.
 
@@ -134,8 +137,9 @@ This dashboard includes panels for:
 - Queue backlog
 - Celery task backlog
 - Inference throughput
-- System throughput
+- Pod throughput pressure
 - Pod replica counts
+- System throughput
 - Node counts (grouped by `eyelevel_node`)
 - CPU and memory usage
 - Per-pod resource breakdown
@@ -153,7 +157,7 @@ This dashboard includes panels for:
 The dashboard assumes:
 
 - `groundx_external_metric` exists
-- Required labels are allowlisted via `values.prometheus.yaml`
+- Required labels are `allowlisted` via `values.prometheus.yaml`
 - Default `kube-prometheus-stack` metrics are available
 
 If panels show no data:
