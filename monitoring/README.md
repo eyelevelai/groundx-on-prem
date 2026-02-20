@@ -22,7 +22,7 @@ At a high level, with this setup:
 
 This setup assumes:
 - `kube-prometheus-stack` is installed in the `monitoring` namespace
-- GroundX `values.yaml` has `metrics.enabled: true` (default is `true`)
+- GroundX `values.yaml` has `metrics.enabled: true` (default is `false`)
 
 Note on autoscaling:
 
