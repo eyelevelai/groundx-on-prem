@@ -45,7 +45,7 @@ helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
   -f monitoring/values.prometheus.yaml
 
 # Apply ServiceMonitor so Prometheus will scrape GroundX metrics
-kubectl -n monitoring apply -f monitoring/custom-metrics.yaml
+kubectl -n monitoring apply -f monitoring/service-monitor.yaml
 ```
 
 Once installed:
