@@ -497,10 +497,12 @@
               "type": "object",
               "properties": {
                 "dataType": { "type": "string" },
+                "kwargs": { "type": "object" },
                 "maxInputTokens": { "type": "integer" },
                 "maxRequests": { "type": "integer" },
                 "maxOutputTokens": { "type": "integer" },
                 "name": { "type": "string" },
+                "reasoningEffort": { "type": "string" },
                 "swapSpace": { "type": "integer" }
               },
               "additionalProperties": false
@@ -1365,6 +1367,14 @@
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
             "labels": { "type": "object" },
+            "model": {
+              "type": "object",
+              "properties": {
+                "kwargs": { "type": "object" },
+                "reasoningEffort": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
             "modelId": { "type": "string" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
@@ -1374,6 +1384,7 @@
               "properties": {
                 "cooldown": { "type": "integer" },
                 "desired": { "type": "integer" },
+                "gracePeriod": { "type": "integer" },
                 "hpa": { "type": "boolean" },
                 "max": { "type": "integer" },
                 "min": { "type": "integer" },
@@ -1434,6 +1445,7 @@
               "properties": {
                 "cooldown": { "type": "integer" },
                 "desired": { "type": "integer" },
+                "gracePeriod": { "type": "integer" },
                 "hpa": { "type": "boolean" },
                 "max": { "type": "integer" },
                 "min": { "type": "integer" },
@@ -1483,6 +1495,7 @@
               "properties": {
                 "cooldown": { "type": "integer" },
                 "desired": { "type": "integer" },
+                "gracePeriod": { "type": "integer" },
                 "hpa": { "type": "boolean" },
                 "max": { "type": "integer" },
                 "min": { "type": "integer" },
@@ -1543,6 +1556,7 @@
               "properties": {
                 "cooldown": { "type": "integer" },
                 "desired": { "type": "integer" },
+                "gracePeriod": { "type": "integer" },
                 "hpa": { "type": "boolean" },
                 "max": { "type": "integer" },
                 "min": { "type": "integer" },

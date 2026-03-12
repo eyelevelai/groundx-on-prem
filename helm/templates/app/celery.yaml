@@ -66,6 +66,9 @@ spec:
 {{ toYaml $anns | nindent 8 }}
 {{- end }}
     spec:
+{{- if and $rp (hasKey $rp "gracePeriod") }}
+      terminationGracePeriodSeconds: {{ get $rp "gracePeriod" }}
+{{- end }}
 {{- if $san }}
       serviceAccountName: {{ $san }}
 {{- end }}

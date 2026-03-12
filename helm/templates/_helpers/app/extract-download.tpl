@@ -197,6 +197,9 @@ false
   "threads"      (include "groundx.extract.download.threads" .)
   "workers"      (include "groundx.extract.download.workers" .)
 -}}
+{{- if hasKey $rep "gracePeriod" -}}
+  {{- $_ := set $cfg "gracePeriod" (dig "gracePeriod" nil $rep) -}}
+{{- end -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}
 {{- end -}}

@@ -248,6 +248,9 @@ GCP_CREDENTIALS
   "threads"      (include "groundx.extract.save.threads" .)
   "workers"      (include "groundx.extract.save.workers" .)
 -}}
+{{- if hasKey $rep "gracePeriod" -}}
+  {{- $_ := set $cfg "gracePeriod" (dig "gracePeriod" nil $rep) -}}
+{{- end -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}
 {{- end -}}

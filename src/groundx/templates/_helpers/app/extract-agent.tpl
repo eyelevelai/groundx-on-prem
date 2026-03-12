@@ -99,7 +99,7 @@ GROUNDX_AGENT_API_KEY
 {{- $name := (include "groundx.extract.agent.serviceName" .) -}}
 {{- $cld := dig "cooldown" 60 $rep -}}
 {{- $cfg := dict
-  "downCooldown" (mul $cld 2)
+  "downCooldown" (mul $cld 10)
   "enabled"      $enabled
   "metric"       (printf "%s:task" $name)
   "name"         $name
@@ -136,6 +136,42 @@ GROUNDX_AGENT_API_KEY
 {{- $dflt = (include "groundx.summary.inference.model.name" .) -}}
 {{- end -}}
 {{ dig "modelId" $dflt $in }}
+{{- end }}
+
+{{- define "groundx.extract.agent.kwargs" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $a := dig "agent" dict $b -}}
+{{- $in := dig "model" dict $a -}}
+{{- $has := hasKey $in "kwargs" -}}
+{{- $val := dig "kwargs" dict $in -}}
+{{- $ic := include "groundx.summary.create" . -}}
+{{- $st := include "groundx.extract.agent.serviceType" . -}}
+{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") -}}
+{{- if $has -}}
+  {{- toYaml $val -}}
+{{- else if and (eq $ic "true") (not $svcAllowed) -}}
+  {{- include "groundx.summary.inference.model.kwargs" . -}}
+{{- else -}}
+  {{- toYaml dict -}}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.extract.agent.reasoningEffort" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $a := dig "agent" dict $b -}}
+{{- $in := dig "model" dict $a -}}
+{{- $has := hasKey $in "reasoningEffort" -}}
+{{- $val := dig "reasoningEffort" nil $in -}}
+{{- $ic := include "groundx.summary.create" . -}}
+{{- $st := include "groundx.extract.agent.serviceType" . -}}
+{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") -}}
+{{- if $has -}}
+  {{- $val -}}
+{{- else if and (eq $ic "true") (not $svcAllowed) -}}
+  {{- include "groundx.summary.inference.model.reasoningEffort" . -}}
+{{- else -}}
+  {{- "" -}}
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.queue" -}}
@@ -269,6 +305,9 @@ GROUNDX_AGENT_API_KEY
   "threads"      (include "groundx.extract.agent.threads" .)
   "workers"      (include "groundx.extract.agent.workers" .)
 -}}
+{{- if hasKey $rep "gracePeriod" -}}
+  {{- $_ := set $cfg "gracePeriod" (dig "gracePeriod" nil $rep) -}}
+{{- end -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}
 {{- end -}}

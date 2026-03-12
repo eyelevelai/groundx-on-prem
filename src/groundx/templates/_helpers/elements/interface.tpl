@@ -12,7 +12,8 @@
 {{- if or (eq $ir "true") (eq $ty "Route") -}}
 {{- $ty = "ClusterIP" -}}
 {{- end -}}
-{{- $hasInternal := and (eq $ii "true") (eq (dig "type" "" $lb) "LoadBalancer") -}}
+{{- $isLoadBalancer := eq (dig "type" "" $lb) "LoadBalancer" -}}
+{{- $hasInternal := eq $ii "true" -}}
 {{- $hasTO := and (hasKey $lb "timeout") (not (empty (dig "timeout" "" $lb))) -}}
 
 ---
@@ -23,15 +24,14 @@ metadata:
   namespace: {{ include "groundx.ns" $root | quote }}
   labels:
     app: {{ $name | quote }}
-{{- if or $hasInternal $hasTO }}
+{{- if or $isLoadBalancer $hasTO }}
   annotations:
 {{- if $hasTO }}
     service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: {{ (dig "timeout" "" $lb) | quote }}
 {{- end }}
-{{- if $hasInternal }}
-    service.beta.kubernetes.io/aws-load-balancer-internal: {{ (dig "isInternal" "true" $lb) | quote }}
-{{- else }}
-    service.beta.kubernetes.io/aws-load-balancer-internal: {{ (dig "isInternal" "true" $lb) | quote }}
+{{- if $isLoadBalancer }}
+    service.beta.kubernetes.io/aws-load-balancer-scheme: {{ ternary "internal" "internet-facing" $hasInternal | quote }}
+    service.beta.kubernetes.io/aws-load-balancer-internal: {{ $ii | quote }}
 {{- end }}
 {{- end }}
 spec:
