@@ -198,12 +198,23 @@ false
 
 {{- define "groundx.groundx.settings" -}}
 {{- $in := .Values.groundx | default dict -}}
+{{- $fin := .Values.file | default dict -}}
 
 {{- $dpnd := dict
   "cache"  "cache"
-  "file"   "file"
-  "db"     "db"
 -}}
+
+{{- $dcd := include "groundx.db.create" . -}}
+{{- $ded := include "groundx.db.existing" . -}}
+{{- if or (eq $dcd "true") (eq $ded "true") -}}
+{{- $_ := set $dpnd "db" "db" -}}
+{{- end -}}
+
+{{- $fcd := include "groundx.file.create" . -}}
+{{- $fed := include "groundx.file.existing" . -}}
+{{- if or (eq $fcd "true") (eq $fed "true") -}}
+{{- $_ := set $dpnd "file" "file" -}}
+{{- end -}}
 
 {{- $cs := include "groundx.search.create" . -}}
 {{- $es := include "groundx.search.existing" . -}}

@@ -260,6 +260,9 @@ false
   "replicas"     ($rep)
   "secrets"      ($data)
 -}}
+{{- if hasKey $rep "gracePeriod" -}}
+  {{- $_ := set $cfg "gracePeriod" (dig "gracePeriod" nil $rep) -}}
+{{- end -}}
 {{- $dpnd := dict -}}
 {{- if eq $ur "" -}}
   {{- $_ := set $dpnd "callback" (include "groundx.extract.callbackUrl" .) -}}

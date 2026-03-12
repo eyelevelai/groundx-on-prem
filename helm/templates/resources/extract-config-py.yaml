@@ -7,8 +7,10 @@
 {{- $st := include "groundx.extract.file.storageType" . -}}
 {{- $bu := include "groundx.extract.agent.baseUrl" . -}}
 {{- $mid := include "groundx.extract.agent.modelId" . -}}
+{{- $re := include "groundx.extract.agent.reasoningEffort" . -}}
 {{- $did := include "groundx.extract.save.driveId" . -}}
 {{- $tid := include "groundx.extract.save.templateId" . -}}
+{{- $kw := include "groundx.extract.agent.kwargs" . | fromYaml -}}
 {{- if eq $st "s3" }}
 {{- $bucketSuffix = "" -}}
 {{- end }}
@@ -35,6 +37,27 @@ data:
         {{- end }}
         {{- if ne $mid "" }}
         model_id={{ $mid | quote }},
+        {{- end }}
+        {{- if and (ne $re "") (ne (printf "%v" $re) "<nil>") }}
+        reasoning_effort={{ $re | quote }},
+        {{- else if eq (printf "%v" $re) "<nil>" }}
+        reasoning_effort=None,
+        {{- end }}
+        {{- if gt (len $kw) 0 }}
+        kwargs={
+        {{- range $k, $v := $kw }}
+        {{- if and (ne $k "api_base") (ne $k "model_id") (ne $k "reasoning_effort") }}
+          {{ $k | quote }}:
+          {{- $kind := kindOf $v -}}
+          {{- if eq $kind "bool" }} {{ if $v }}True{{ else }}False{{ end }}
+          {{- else if or (eq $kind "int") (eq $kind "int64") (eq $kind "float64") }} {{ $v }}
+          {{- else if eq $kind "invalid" }} None
+          {{- else if eq $kind "string" }} {{ $v | quote }}
+          {{- else }} {{ $v | toJson | quote }}
+          {{- end }},
+        {{- end }}
+        {{- end }}
+        },
         {{- end }}
     )
 
