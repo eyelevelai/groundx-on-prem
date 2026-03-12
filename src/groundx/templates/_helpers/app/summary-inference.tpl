@@ -121,6 +121,10 @@ true
 {{- $cfg | toYaml -}}
 {{- end }}
 
+{{- define "groundx.summary.inference.model.kwargs" -}}
+{{- toYaml dict -}}
+{{- end }}
+
 {{- define "groundx.summary.inference.model.maxInputTokens" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "inference" dict $b -}}
@@ -147,6 +151,13 @@ true
 {{- $in := dig "inference" dict $b -}}
 {{- $md := dig "model" dict $in -}}
 {{ (dig "name" "google/gemma-3-4b-it" $md) }}
+{{- end }}
+
+{{- define "groundx.summary.inference.model.reasoningEffort" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{- $md := dig "model" dict $in -}}
+{{ (dig "reasoningEffort" "" $md) }}
 {{- end }}
 
 {{- define "groundx.summary.inference.model.swapSpace" -}}
