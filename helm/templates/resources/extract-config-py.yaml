@@ -44,7 +44,7 @@ data:
         reasoning_effort=None,
         {{- end }}
         {{- if gt (len $kw) 0 }}
-        kwargs={
+        model_kwargs={
         {{- range $k, $v := $kw }}
         {{- if and (ne $k "api_base") (ne $k "model_id") (ne $k "reasoning_effort") }}
           {{ $k | quote }}:
