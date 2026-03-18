@@ -166,7 +166,7 @@ GROUNDX_AGENT_API_KEY
 {{- $st := include "groundx.extract.agent.serviceType" . -}}
 {{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") -}}
 {{- if $has -}}
-  {{- $val -}}
+  {{- toJson $val -}}
 {{- else if and (eq $ic "true") (not $svcAllowed) -}}
   {{- include "groundx.summary.inference.model.reasoningEffort" . -}}
 {{- else -}}

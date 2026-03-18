@@ -38,10 +38,10 @@ data:
         {{- if ne $mid "" }}
         model_id={{ $mid | quote }},
         {{- end }}
-        {{- if and (ne $re "") (ne (printf "%v" $re) "<nil>") }}
-        reasoning_effort={{ $re | quote }},
-        {{- else if eq (printf "%v" $re) "<nil>" }}
+        {{- if eq $re "null" }}
         reasoning_effort=None,
+        {{- else if ne $re "" }}
+        reasoning_effort={{ $re }},
         {{- end }}
         {{- if gt (len $kw) 0 }}
         model_kwargs={
