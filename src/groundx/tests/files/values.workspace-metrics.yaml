@@ -1,0 +1,22 @@
+cluster:
+  hpa: true
+
+metrics:
+  enabled: true
+
+workspace:
+  enabled: true
+  token: test-runner-token
+  provision:
+    queue: custom_provision_queue
+  workspace:
+    queue: custom_workspace_queue
+  command:
+    queue: custom_command_queue
+    replicas:
+      desired: 2
+      throughput: 1250
+  publish:
+    queue: custom_publish_queue
+  cleanup:
+    queue: custom_cleanup_queue

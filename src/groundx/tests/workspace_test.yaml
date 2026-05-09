@@ -1,0 +1,102 @@
+suite: "workspace renders as expected"
+chart:
+  appVersion: 0.1.0
+  version: 0.1.0
+
+tests:
+  - it: "disabled: workspace"
+    templates:
+      - ../templates/app/api.yaml
+      - ../templates/app/celery.yaml
+      - ../templates/resources/workspace-config-py.yaml
+      - ../templates/resources/workspace-gunicorn-conf-py.yaml
+      - ../templates/resources/workspace-supervisord-conf.yaml
+      - ../templates/resources/secret.yaml
+    values:
+      - ./files/values.disabled.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "enabled: workspace"
+    templates:
+      - ../templates/app/api.yaml
+      - ../templates/app/celery.yaml
+      - ../templates/app/golang.yaml
+      - ../templates/resources/workspace-config-py.yaml
+      - ../templates/resources/workspace-gunicorn-conf-py.yaml
+      - ../templates/resources/workspace-supervisord-conf.yaml
+      - ../templates/resources/secret.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.workspace.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "disabled: workspace metrics config"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/hpa.yaml
+    values:
+      - ./files/values.disabled.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "enabled: workspace metrics config"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/hpa.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.workspace-metrics.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "enabled: workspace api ingress"
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.workspace-ingress.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "enabled: workspace github publish config"
+    templates:
+      - ../templates/app/api.yaml
+      - ../templates/app/celery.yaml
+      - ../templates/resources/workspace-config-py.yaml
+      - ../templates/resources/secret.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.workspace-github.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "enabled: workspace github pem fallback secret"
+    templates:
+      - ../templates/app/api.yaml
+      - ../templates/app/celery.yaml
+      - ../templates/app/golang.yaml
+      - ../templates/resources/secret.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.workspace-github-pem.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "enabled without auth: workspace fails fast"
+    templates:
+      - ../templates/resources/workspace-supervisord-conf.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      workspace.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "workspace requires workspace.token or workspace.existingSecret when enabled"
+  - it: "workspace-enabled: workspace minimal"
+    templates:
+      - ../templates/app/api.yaml
+      - ../templates/app/celery.yaml
+      - ../templates/resources/workspace-config-py.yaml
+      - ../templates/resources/workspace-gunicorn-conf-py.yaml
+      - ../templates/resources/workspace-supervisord-conf.yaml
+      - ../templates/resources/secret.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.workspace.enabled.yaml
+    asserts:
+      - matchSnapshot: {}
