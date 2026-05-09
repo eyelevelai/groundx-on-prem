@@ -95,3 +95,11 @@ tests:
       - ./files/values.phoenix.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "workspace-enabled: celery"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.workspace.enabled.yaml
+    asserts:
+      - matchSnapshot: {}

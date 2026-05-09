@@ -277,6 +277,7 @@ GROUNDX_AGENT_API_KEY
 
 {{- $dpnd := dict
   "extract" "extract"
+  "file"    "file"
 -}}
 
 {{- $rep := (include "groundx.extract.agent.replicas" . | fromYaml) -}}

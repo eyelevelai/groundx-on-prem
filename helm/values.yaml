@@ -335,6 +335,61 @@ upload:
       cpu: 100m
       memory: 128Mi
 
+workspace:
+  enabled: false
+
+  # Required when enabled unless existingSecret provides WORKSPACE_RUNNER_TOKEN.
+  token: ""
+  existingSecret: ""
+  publishDryRun: true
+
+  github:
+    appId: ""
+    installationId: ""
+    privateKeyPem: ""
+    privateKeySecret:
+      name: ""
+      key: private-key.pem
+
+  persistence:
+    existingClaim: ""
+
+  api:
+    enabled: true
+    replicas:
+      desired: 1
+      max: 8
+      min: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+  provision:
+    enabled: true
+    replicas:
+      desired: 1
+
+  workspace:
+    enabled: true
+    replicas:
+      desired: 1
+
+  command:
+    enabled: true
+    replicas:
+      desired: 1
+
+  publish:
+    enabled: true
+    replicas:
+      desired: 1
+
+  cleanup:
+    enabled: true
+    replicas:
+      desired: 1
+
 extract:
   enabled: false
 

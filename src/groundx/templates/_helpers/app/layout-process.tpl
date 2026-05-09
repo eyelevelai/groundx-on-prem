@@ -168,7 +168,9 @@ true
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "process" dict $b -}}
 
-{{- $dpnd := dict -}}
+{{- $dpnd := dict
+  "file" "file"
+-}}
 
 {{- $rep := (include "groundx.layout.process.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.layout.process.serviceAccountName" . -}}

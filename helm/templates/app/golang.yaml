@@ -10,6 +10,7 @@
 {{- $csct := get $svcData "containerSecurityContext" -}}
 {{- $dpnd := get $svcData "dependencies" | default dict -}}
 {{- $image := get $svcData "image" -}}
+{{- $env := get $svcData "env" | default list -}}
 {{- $ips := include "groundx.imagePullSecrets" $ | fromYaml -}}
 {{- $io := include "groundx.ingestOnly" $ -}}
 {{- $lbls := get $svcData "labels" -}}
@@ -22,7 +23,13 @@
 {{- $rp := get $svcData "replicas" -}}
 {{- $rs := get $svcData "resources" -}}
 {{- $san := get $svcData "serviceAccountName" -}}
-{{- $scr := include "groundx.secrets" $ | fromYaml | default dict -}}
+{{- $scr := get $svcData "secrets" | default dict -}}
+{{- $globalSecrets := include "groundx.secrets" $ | fromYaml | default dict -}}
+{{- if gt (len $globalSecrets) 0 }}
+  {{- range $k, $v := $globalSecrets }}
+    {{- $_ := set $scr $k $v -}}
+  {{- end }}
+{{- end }}
 {{- $sct := get $svcData "securityContext" -}}
 {{- $tl := get $svcData "tolerations" -}}
 
@@ -116,6 +123,10 @@ spec:
         - name: {{ $svc | quote }}
           image: {{ $image | quote }}
           imagePullPolicy: {{ $pull | quote }}
+{{- if gt (len $env) 0 }}
+          env:
+{{ toYaml $env | nindent 12 }}
+{{- end }}
 {{- if gt (len $scr) 0 }}
           envFrom:
 {{- range $kk, $vv := $scr }}

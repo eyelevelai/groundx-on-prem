@@ -1343,6 +1343,164 @@
       "required": ["enabled"],
       "additionalProperties": false
     },
+    "workspace": {
+      "type": "object",
+      "properties": {
+        "allowedCommands": { "type": "string" },
+        "api": {
+          "type": "object",
+          "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
+            "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
+            "enabled": { "type": "boolean" },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
+            "ingress": {
+              "type": "object",
+              "properties": {
+                "annotations": { "type": "object" },
+                "apiVersion": { "type": "string" },
+                "enabled": { "type": "boolean" },
+                "hostName": { "type": "string" },
+                "ingressClassName": { "type": "string" },
+                "labels": { "type": "object" },
+                "path": { "type": "string" },
+                "paths": { "type": "array" },
+                "tls": { "type": "array" }
+              }
+            },
+            "isInternal": { "type": "boolean" },
+            "labels": { "type": "object" },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "cooldown": { "type": "integer" },
+                "desired": { "type": "integer" },
+                "gracePeriod": { "type": "integer" },
+                "hpa": { "type": "boolean" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" },
+                "target": { "type": "integer" },
+                "threshold": { "type": "integer" },
+                "throughput": { "type": "integer" }
+              },
+              "additionalProperties": false
+            },
+            "resources": { "type": "object" },
+            "securityContext": { "type": "object" },
+            "serviceAccount": {
+              "type": "object",
+              "properties": { "name": { "type": "string" } },
+              "required": ["name"],
+              "additionalProperties": false
+            },
+            "serviceType": { "type": "string" },
+            "threads": { "type": "integer" },
+            "timeout": { "type": "integer" },
+            "timeoutKeepAlive": { "type": "integer" },
+            "tolerations": { "type": "array" },
+            "workers": { "type": "integer" }
+          },
+          "additionalProperties": false
+        },
+        "celeryBrokerUrl": { "type": "string" },
+        "celeryGlobalKeyprefix": { "type": "string" },
+        "celeryResultBackend": { "type": "string" },
+        "celerySoftTimeLimitSeconds": { "type": "integer" },
+        "celeryTaskAlwaysEager": { "type": "boolean" },
+        "cleanup": { "$ref": "#/properties/workspace/properties/provision" },
+        "command": { "$ref": "#/properties/workspace/properties/provision" },
+        "commandTimeoutSeconds": { "type": "integer" },
+        "enabled": { "type": "boolean" },
+        "existingSecret": { "type": "string" },
+        "github": {
+          "type": "object",
+          "properties": {
+            "apiBaseUrl": { "type": "string" },
+            "appId": { "type": "string" },
+            "installationId": { "type": "string" },
+            "privateKeyPem": { "type": "string" },
+            "privateKeySecret": {
+              "type": "object",
+              "properties": {
+                "key": { "type": "string" },
+                "name": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "secretName": { "type": "string" },
+            "tokenTtlSeconds": { "type": "integer" }
+          },
+          "additionalProperties": false
+        },
+        "image": { "type": "string" },
+        "imagePullPolicy": { "type": "string" },
+        "mysqlConnectTimeoutSeconds": { "type": "integer" },
+        "node": { "type": "string" },
+        "persistence": {
+          "type": "object",
+          "properties": {
+            "existingClaim": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "provision": {
+          "type": "object",
+          "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
+            "containerSecurityContext": { "type": "object" },
+            "enabled": { "type": "boolean" },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
+            "labels": { "type": "object" },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
+            "queue": { "type": "string" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "cooldown": { "type": "integer" },
+                "desired": { "type": "integer" },
+                "gracePeriod": { "type": "integer" },
+                "hpa": { "type": "boolean" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" },
+                "target": { "type": "integer" },
+                "threshold": { "type": "integer" },
+                "throughput": { "type": "integer" }
+              },
+              "additionalProperties": false
+            },
+            "resources": { "type": "object" },
+            "securityContext": { "type": "object" },
+            "serviceAccount": {
+              "type": "object",
+              "properties": { "name": { "type": "string" } },
+              "required": ["name"],
+              "additionalProperties": false
+            },
+            "threads": { "type": "integer" },
+            "tolerations": { "type": "array" },
+            "workers": { "type": "integer" }
+          },
+          "additionalProperties": false
+        },
+        "publish": { "$ref": "#/properties/workspace/properties/provision" },
+        "publishDryRun": { "type": "boolean" },
+        "secretName": { "type": "string" },
+        "serviceName": { "type": "string" },
+        "token": { "type": "string" },
+        "workspace": { "$ref": "#/properties/workspace/properties/provision" },
+        "workspaceRoot": { "type": "string" }
+      },
+      "required": ["enabled"],
+      "additionalProperties": false
+    },
     "dashboard": {
       "type": "object",
       "properties": {

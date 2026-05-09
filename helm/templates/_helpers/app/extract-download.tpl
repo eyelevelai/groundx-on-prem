@@ -169,6 +169,7 @@ false
 
 {{- $dpnd := dict
   "extract" "extract"
+  "file"    "file"
 -}}
 
 {{- $rep := (include "groundx.extract.download.replicas" . | fromYaml) -}}

@@ -162,7 +162,9 @@ true
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "save" dict $b -}}
 
-{{- $dpnd := dict -}}
+{{- $dpnd := dict
+  "file" "file"
+-}}
 
 {{- $rep := (include "groundx.layout.save.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.layout.save.serviceAccountName" . -}}

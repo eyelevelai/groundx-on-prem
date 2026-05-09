@@ -15,6 +15,7 @@
   "layoutWebhook"
   "ranker.api"
   "summary.api"
+  "workspace.api"
 -}}
 
 {{- range $svc := $services }}

@@ -21,6 +21,7 @@
 {{- $gxc := include "groundx.groundx.threshold" . | trim -}}
 {{- $lac := include "groundx.layout.api.threshold" . | trim -}}
 {{- $lwc := include "groundx.layoutWebhook.threshold" . | trim -}}
+{{- $wrac := include "groundx.workspace.api.threshold" . | trim -}}
 
 {{- $lic := include "groundx.layout.inference.threshold" . | trim -}}
 {{- $sac := include "groundx.summary.api.threshold" . | trim -}}
@@ -32,6 +33,11 @@
 {{- $prc := include "groundx.process.threshold" . | trim -}}
 {{- $qpc := include "groundx.queue.threshold" . | trim -}}
 {{- $upc := include "groundx.upload.threshold" . | trim -}}
+{{- $wrcuc := include "groundx.workspace.cleanup.threshold" . | trim -}}
+{{- $wrcc := include "groundx.workspace.command.threshold" . | trim -}}
+{{- $wrpc := include "groundx.workspace.provision.threshold" . | trim -}}
+{{- $wrpubc := include "groundx.workspace.publish.threshold" . | trim -}}
+{{- $wrwc := include "groundx.workspace.workspace.threshold" . | trim -}}
 
 {{- $eat := include "groundx.extract.agent.throughput" . | trim -}}
 {{- $ept := include "groundx.extract.api.throughput" . | trim -}}
@@ -53,6 +59,12 @@
 {{- $sit := include "groundx.summary.inference.throughput" . | trim -}}
 {{- $sct := include "groundx.summaryClient.throughput" . | trim -}}
 {{- $upt := include "groundx.upload.throughput" . | trim -}}
+{{- $wrat := include "groundx.workspace.api.throughput" . | trim -}}
+{{- $wrcut := include "groundx.workspace.cleanup.throughput" . | trim -}}
+{{- $wrct := include "groundx.workspace.command.throughput" . | trim -}}
+{{- $wrpt := include "groundx.workspace.provision.throughput" . | trim -}}
+{{- $wrpubt := include "groundx.workspace.publish.throughput" . | trim -}}
+{{- $wrwt := include "groundx.workspace.workspace.throughput" . | trim -}}
 {{- if gt (len $svcs) 0 }}
 apiVersion: v1
 kind: ConfigMap
@@ -187,6 +199,14 @@ data:
       port: {{ include "groundx.groundx.containerPort" . }}
       serviceName: {{ include "groundx.groundx.serviceName" . }}
 
+    {{- if eq (include "groundx.workspace.create" .) "true" }}
+    workspace:
+      baseURL: {{ include "groundx.workspace.api.serviceUrl" . }}
+      {{- if ne (include "groundx.workspace.token" .) "" }}
+      token: {{ include "groundx.workspace.token" . | quote }}
+      {{- end }}
+    {{- end }}
+
     init:
       ingestOnly: {{ include "groundx.ingestOnly" . }}
       {{- if or (ne (include "groundx.db.privilegedUsername" .) "") (ne (include "groundx.db.privilegedPassword" .) "") }}
@@ -216,7 +236,7 @@ data:
 
     metrics:
       active: true
-      {{- if or (ne $epc "0") (ne $gxc "0") (ne $lac "0") (ne $lwc "0") }}
+      {{- if or (ne $epc "0") (ne $gxc "0") (ne $lac "0") (ne $lwc "0") (ne $wrac "0") }}
       api:
         {{- if ne $epc "0" }}
         - name: {{ include "groundx.extract.api.serviceName" . }}
@@ -233,6 +253,10 @@ data:
         {{- if ne $lwc "0" }}
         - name: {{ include "groundx.layoutWebhook.serviceName" . }}
           threshold: {{ $lwc }}
+        {{- end }}
+        {{- if ne $wrac "0" }}
+        - name: {{ include "groundx.workspace.api.serviceName" . }}
+          threshold: {{ $wrac }}
         {{- end }}
       {{- end }}
       document:
@@ -295,7 +319,7 @@ data:
         ssl: {{ include "groundx.metrics.cache.ssl" . }}
       summaryRequest:
         tokensPerMinute: {{ include "groundx.throughput.tpm.summaryRequest" . }}
-      {{- if or (ne $eac "0") (ne $edc "0") (ne $esc "0") (ne $lcc "0") (ne $lmc "0") (ne $loc "0") (ne $lpc "0") (ne $lsc "0") }}
+      {{- if or (ne $eac "0") (ne $edc "0") (ne $esc "0") (ne $lcc "0") (ne $lmc "0") (ne $loc "0") (ne $lpc "0") (ne $lsc "0") (ne $wrcuc "0") (ne $wrcc "0") (ne $wrpc "0") (ne $wrpubc "0") (ne $wrwc "0") }}
       task:
         {{- if ne $eac "0" }}
         - name: {{ include "groundx.extract.agent.serviceName" . }}
@@ -337,8 +361,33 @@ data:
           target: {{ include "groundx.layout.save.queue" . }}
           threshold: {{ $lsc }}
         {{- end }}
+        {{- if ne $wrcuc "0" }}
+        - name: {{ include "groundx.workspace.cleanup.metricName" . }}
+          target: {{ include "groundx.workspace.cleanup.queue" . }}
+          threshold: {{ $wrcuc }}
+        {{- end }}
+        {{- if ne $wrcc "0" }}
+        - name: {{ include "groundx.workspace.command.metricName" . }}
+          target: {{ include "groundx.workspace.command.queue" . }}
+          threshold: {{ $wrcc }}
+        {{- end }}
+        {{- if ne $wrpc "0" }}
+        - name: {{ include "groundx.workspace.provision.metricName" . }}
+          target: {{ include "groundx.workspace.provision.queue" . }}
+          threshold: {{ $wrpc }}
+        {{- end }}
+        {{- if ne $wrpubc "0" }}
+        - name: {{ include "groundx.workspace.publish.metricName" . }}
+          target: {{ include "groundx.workspace.publish.queue" . }}
+          threshold: {{ $wrpubc }}
+        {{- end }}
+        {{- if ne $wrwc "0" }}
+        - name: {{ include "groundx.workspace.workspace.metricName" . }}
+          target: {{ include "groundx.workspace.workspace.queue" . }}
+          threshold: {{ $wrwc }}
+        {{- end }}
       {{- end }}
-      {{- if or (ne $eat "0") (ne $ept "0") (ne $edt "0") (ne $est "0") (ne $gxt "0") (ne $lat "0") (ne $lct "0") (ne $lit "0") (ne $lmt "0") (ne $lot "0") (ne $lpt "0") (ne $lst "0") (ne $lwt "0") (ne $ppt "0") (ne $prt "0") (ne $qpt "0") (ne $sat "0") (ne $sit "0") (ne $sct "0") (ne $upt "0") }}
+      {{- if or (ne $eat "0") (ne $ept "0") (ne $edt "0") (ne $est "0") (ne $gxt "0") (ne $lat "0") (ne $lct "0") (ne $lit "0") (ne $lmt "0") (ne $lot "0") (ne $lpt "0") (ne $lst "0") (ne $lwt "0") (ne $ppt "0") (ne $prt "0") (ne $qpt "0") (ne $sat "0") (ne $sit "0") (ne $sct "0") (ne $upt "0") (ne $wrat "0") (ne $wrcut "0") (ne $wrct "0") (ne $wrpt "0") (ne $wrpubt "0") (ne $wrwt "0") }}
       throughput:
         {{- if ne $eat "0" }}
         - name: {{ include "groundx.extract.agent.serviceName" . }}
@@ -419,6 +468,30 @@ data:
         {{- if ne $upt "0" }}
         - name: {{ include "groundx.upload.serviceName" . }}
           tokensPerMinute: {{ $upt }}
+        {{- end }}
+        {{- if ne $wrat "0" }}
+        - name: {{ include "groundx.workspace.api.serviceName" . }}
+          tokensPerMinute: {{ $wrat }}
+        {{- end }}
+        {{- if ne $wrcut "0" }}
+        - name: {{ include "groundx.workspace.cleanup.metricName" . }}
+          tokensPerMinute: {{ $wrcut }}
+        {{- end }}
+        {{- if ne $wrct "0" }}
+        - name: {{ include "groundx.workspace.command.metricName" . }}
+          tokensPerMinute: {{ $wrct }}
+        {{- end }}
+        {{- if ne $wrpt "0" }}
+        - name: {{ include "groundx.workspace.provision.metricName" . }}
+          tokensPerMinute: {{ $wrpt }}
+        {{- end }}
+        {{- if ne $wrpubt "0" }}
+        - name: {{ include "groundx.workspace.publish.metricName" . }}
+          tokensPerMinute: {{ $wrpubt }}
+        {{- end }}
+        {{- if ne $wrwt "0" }}
+        - name: {{ include "groundx.workspace.workspace.metricName" . }}
+          tokensPerMinute: {{ $wrwt }}
         {{- end }}
       {{- end }}
 

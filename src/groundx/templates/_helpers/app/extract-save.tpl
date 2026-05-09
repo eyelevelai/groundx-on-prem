@@ -220,6 +220,7 @@ GCP_CREDENTIALS
 
 {{- $dpnd := dict
   "extract" "extract"
+  "file"    "file"
 -}}
 
 {{- $rep := (include "groundx.extract.save.replicas" . | fromYaml) -}}

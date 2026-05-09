@@ -34,6 +34,8 @@
 {{- $sct := get $svcData "securityContext" -}}
 {{- $svc := get $svcData "service" -}}
 {{- $tl := get $svcData "tolerations" -}}
+{{- $vm := get $svcData "volumeMounts" | default list -}}
+{{- $vol := get $svcData "volumes" | default list -}}
 
 {{- $desired := get $rp "desired" -}}
 ---
@@ -87,10 +89,12 @@ spec:
           image: {{ include "groundx.busybox.image" $ }}
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
           command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.cache.addr" $) (include "groundx.cache.port" $) }}; do echo waiting for cache; sleep 2; done"]
+{{- if hasKey $dpnd "file" }}
         - name: wait-for-file-storage
           image: {{ include "groundx.busybox.image" $ }}
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
           command: ['sh', '-c', "until nc -z {{ printf "%s %v" $fileDomain $filePort }}; do echo waiting for file storage; sleep 2; done"]
+{{- end }}
 {{- if not (empty $dpnd) }}
 {{- if hasKey $dpnd "metrics" }}
         - name: wait-for-metrics
@@ -103,6 +107,12 @@ spec:
           image: {{ include "groundx.busybox.image" $ }}
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
           command: ['sh', '-c', "until wget -T 5 -qO- {{ include "groundx.extract.api.serviceUrl" $ }}/health; do echo waiting for extract; sleep 2; done"]
+{{- end }}
+{{- if hasKey $dpnd "db" }}
+        - name: wait-for-database
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.db.rw" $) (include "groundx.db.port" $) }}; do echo waiting for database; sleep 2; done"]
 {{- end }}
 {{- end }}
       containers:
@@ -157,6 +167,9 @@ spec:
             - name: supervisord-volume
               mountPath: /app/supervisord.conf
               subPath: supervisord.conf
+{{- if gt (len $vm) 0 }}
+{{ toYaml $vm | nindent 12 }}
+{{- end }}
       volumes:
         - name: config-volume
           configMap:
@@ -169,5 +182,8 @@ spec:
         - name: supervisord-volume
           configMap:
             name: {{ $name }}-supervisord-conf-map
+{{- if gt (len $vol) 0 }}
+{{ toYaml $vol | nindent 8 }}
+{{- end }}
 
 {{ end }}

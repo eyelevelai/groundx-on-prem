@@ -230,6 +230,11 @@ false
 
 {{- $rep := (include "groundx.groundx.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.groundx.serviceAccountName" . -}}
+{{- $secrets := dict -}}
+{{- $wrc := include "groundx.workspace.create" . -}}
+{{- if and (eq $wrc "true") (or (ne (include "groundx.workspace.existingSecret" .) "") (ne (include "groundx.workspace.token" .) "")) -}}
+{{- $_ := set $secrets (include "groundx.workspace.secretName" .) (include "groundx.workspace.secretName" .) -}}
+{{- end -}}
 
 {{- $cfg := dict
   "dependencies" $dpnd
@@ -241,6 +246,12 @@ false
   "pull"         (include "groundx.groundx.imagePullPolicy" .)
   "replicas"     ($rep)
 -}}
+{{- if gt (len $secrets) 0 -}}
+  {{- $_ := set $cfg "secrets" $secrets -}}
+{{- end -}}
+{{- if eq $wrc "true" -}}
+  {{- $_ := set $cfg "env" (list (dict "name" "WORKSPACE_RUNNER_BASE_URL" "value" (include "groundx.workspace.api.serviceUrl" .))) -}}
+{{- end -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}
 {{- end -}}

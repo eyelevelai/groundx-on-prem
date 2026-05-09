@@ -378,6 +378,57 @@ If you wish to use an existing redis cache, you must configure the `cache.existi
 
 If you'd like to install redis to your cluster, instances will be automatically created during the application installation for you so long as `cache.existing` is an empty dictionary and `cache.enabled` is `true`.
 
+### Workspace
+
+The `workspace` service family is optional and disabled by default. Enable it when the Partner API should provision managed coding workspaces for GroundX Studio Harness generated projects. The runner is internal-only: agents call the Partner API, the Partner API calls the runner, and the runner owns temporary workspaces, Git operations, command execution, and publish operations.
+
+Set `workspace.enabled: true` and provide either `workspace.token` or `workspace.existingSecret`. When `workspace.token` is provided, the chart renders it into the generated GroundX `config.yaml` as `workspace.token`, renders it into the runner `config.py` as `runner_token`, and creates a `workspace-secret` containing `WORKSPACE_RUNNER_TOKEN` as the environment fallback. When `workspace.existingSecret` is provided, that secret must contain `WORKSPACE_RUNNER_TOKEN`; both the Partner API and workspace runner fall back to that environment value because the config files intentionally render the token empty. The internal runner URL is derived into GroundX `config.yaml` as `workspace.baseURL`, not stored as a secret.
+
+The runner follows the standard Python microservice deployment pattern. The API uses the shared Gunicorn deployment template and the workers use the shared supervisord Celery deployment template. Workspace-specific ConfigMaps provide `/app/config.py`, `/app/gunicorn_conf.py`, and one supervisord config per queue: provision, workspace, command, publish, and cleanup. API knobs such as `threads`, `workers`, `timeout`, `timeoutKeepAlive`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under `workspace.api`, matching the other Python API services. Worker knobs such as `queue`, `threads`, `workers`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under each worker section: `provision`, `workspace`, `command`, `publish`, and `cleanup`.
+
+Workspace metadata and operation state are stored in MySQL. Temporary clones default to an `emptyDir`; set `workspace.persistence.existingClaim` to use a PVC. The runner waits on Redis/Valkey and MySQL but does not wait on file storage because workspace artifacts are not part of the GroundX document file store. Runtime config rendered into `/app/config.py` uses chart helpers for MySQL, Redis/Valkey, command, and workspace defaults, with `workspace.publishDryRun` exposed as the normal safety toggle.
+
+Publish is dry-run by default. To enable real branch push and pull request creation, set `workspace.publishDryRun: false` and configure the GitHub App owned by the runner service:
+
+```yaml
+workspace:
+  enabled: true
+  token: "<internal-runner-token>"
+  publishDryRun: false
+  github:
+    appId: "<github-app-id>"
+    installationId: "<github-app-installation-id>"
+    privateKeySecret:
+      name: workspace-github-app
+      key: private-key.pem
+```
+
+`privateKeySecret` is the production path: the chart mounts that existing secret only into workspace API and worker pods at `/var/run/secrets/workspace/github/private-key.pem`. For local or lower-environment testing, `workspace.github.privateKeyPem` can populate `GITHUB_APP_PRIVATE_KEY_PEM` in a generated `workspace-github-secret` that is mounted only into workspace API and worker pods. GitHub credentials are not mounted into the Partner API service.
+
+Workspace autoscaling uses the same external metrics server as the rest of GroundX. Enable the metrics server and either global or per-component HPA settings so every rendered HPA metric has a matching `config.yaml` metric definition:
+
+```yaml
+metrics:
+  enabled: true
+
+cluster:
+  hpa: true
+
+workspace:
+  enabled: true
+  token: "<internal-runner-token>"
+  command:
+    queue: command_queue
+    replicas:
+      desired: 2
+      threshold: 10
+      throughput: 1250
+```
+
+The API emits `workspace-api:api` with a default threshold of `4000` and, by default, `workspace-api:throughput` with a default throughput of `50000`. The Partner API receives the runner URL from the workspace API helper, so the derived internal URL follows the same pattern as `extract-api`: `http://workspace-api.<namespace>.svc.cluster.local`. Worker HPAs emit `workspace-<worker>:task` and point the metrics server at the configured Celery queue for that worker; worker task thresholds default to `10`, worker targets default to `1`, and worker throughput defaults to `50000`. All of these values may be overridden per worker. Keep custom worker queue names in values rather than editing templates so the HPA and metrics-server config stay in sync.
+
+The Helm CI gate runs `.build/bin/verify-workspace-chart.py` to render both chart surfaces and prove the workspace API service, GroundX `workspace.baseURL`, Partner API `WORKSPACE_RUNNER_BASE_URL`, HPA, and metrics-server names all stay on the same `workspace-api` contract. After deploying to a cluster, run `.build/bin/smoke-workspace-runner.sh` with the target kube context selected to verify the API, workers, cluster DNS, health endpoint, and Partner API runner URL wiring.
+
 ### MySQL
 
 #### Using an Existing MySQL Cluster

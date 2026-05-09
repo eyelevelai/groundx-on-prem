@@ -24,8 +24,16 @@ jobs:
             - name: Install helm-unittest plugin
               run: helm plugin install https://github.com/helm-unittest/helm-unittest.git
 
+            - name: Run helm lint
+              run: |
+                  helm lint src/groundx
+                  helm lint helm
+
             - name: Run helm unittest (tap output to console)
-              run: helm unittest src/groundx
+              run: |
+                  helm unittest src/groundx
+                  python .build/bin/verify-helm-snapshots.py
+                  python .build/bin/verify-workspace-chart.py
 
             - name: Generate JUnit report
               run: |
