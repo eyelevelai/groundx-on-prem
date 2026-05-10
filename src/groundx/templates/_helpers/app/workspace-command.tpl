@@ -142,7 +142,7 @@ true
   {{- $_ := set $in "desired" 1 -}}
 {{- end -}}
 {{- if not (hasKey $in "max") -}}
-  {{- $_ := set $in "max" 8 -}}
+  {{- $_ := set $in "max" 96 -}}
 {{- end -}}
 {{- toYaml $in | nindent 0 }}
 {{- end }}
@@ -157,7 +157,7 @@ true
 {{- define "groundx.workspace.command.threads" -}}
 {{- $b := include "groundx.workspace.values" . | fromYaml -}}
 {{- $in := dig "command" dict $b -}}
-{{ dig "threads" 1 $in }}
+{{ dig "threads" 2 $in }}
 {{- end }}
 
 {{- define "groundx.workspace.command.workers" -}}

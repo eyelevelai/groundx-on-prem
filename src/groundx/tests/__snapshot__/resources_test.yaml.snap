@@ -11559,8 +11559,8 @@
         timeout = 120
         timeout_keep_alive = 15
         worker_class = "uvicorn.workers.UvicornWorker"
-        workers = 1
-        threads = 1
+        workers = 2
+        threads = 2
         bind = "0.0.0.0:8080"
         wsgi_app = "server:app"
     kind: ConfigMap
@@ -11581,7 +11581,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=provision_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=provision_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -11610,7 +11610,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=workspace_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=workspace_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -11639,7 +11639,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=command_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=command_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -11668,7 +11668,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=publish_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=publish_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -11697,7 +11697,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=cleanup_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=cleanup_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",

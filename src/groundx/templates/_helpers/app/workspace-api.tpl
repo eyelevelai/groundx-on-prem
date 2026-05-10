@@ -249,6 +249,9 @@ false
   "volumes" (include "groundx.workspace.volumes" . | fromYamlArray)
 -}}
 {{- if gt (len $data) 0 }}{{- $_ := set $cfg "secrets" $data -}}{{- end -}}
+{{- if hasKey $rep "gracePeriod" -}}
+  {{- $_ := set $cfg "gracePeriod" (dig "gracePeriod" nil $rep) -}}
+{{- end -}}
 {{- if and $san (ne $san "") }}{{- $_ := set $cfg "serviceAccountName" $san -}}{{- end -}}
 {{- range $k := list "affinity" "annotations" "containerSecurityContext" "labels" "nodeSelector" "resources" "securityContext" "tolerations" }}
 {{- if and (hasKey $in $k) (not (empty (get $in $k))) }}{{- $_ := set $cfg $k (get $in $k) -}}{{- end -}}

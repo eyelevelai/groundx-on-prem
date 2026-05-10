@@ -166,7 +166,7 @@
         metadata:
           annotations:
             config-hash: 83111cf330eb5607d8060f5b956a1470c2e8b3382134eaf0211575e717ab65fe
-            supervisord-hash: a3dfe15f84dab9d1f2f2fd93e1b2c222e9426d5f5a9b235090b4b3b4afb1ef97
+            supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-cleanup
         spec:
@@ -297,7 +297,7 @@
         metadata:
           annotations:
             config-hash: 83111cf330eb5607d8060f5b956a1470c2e8b3382134eaf0211575e717ab65fe
-            supervisord-hash: a3dfe15f84dab9d1f2f2fd93e1b2c222e9426d5f5a9b235090b4b3b4afb1ef97
+            supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-command
             workspace.groundx.ai/tier: worker
@@ -436,7 +436,7 @@
         metadata:
           annotations:
             config-hash: 83111cf330eb5607d8060f5b956a1470c2e8b3382134eaf0211575e717ab65fe
-            supervisord-hash: a3dfe15f84dab9d1f2f2fd93e1b2c222e9426d5f5a9b235090b4b3b4afb1ef97
+            supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-provision
         spec:
@@ -567,7 +567,7 @@
         metadata:
           annotations:
             config-hash: 83111cf330eb5607d8060f5b956a1470c2e8b3382134eaf0211575e717ab65fe
-            supervisord-hash: a3dfe15f84dab9d1f2f2fd93e1b2c222e9426d5f5a9b235090b4b3b4afb1ef97
+            supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-publish
         spec:
@@ -698,7 +698,7 @@
         metadata:
           annotations:
             config-hash: 83111cf330eb5607d8060f5b956a1470c2e8b3382134eaf0211575e717ab65fe
-            supervisord-hash: a3dfe15f84dab9d1f2f2fd93e1b2c222e9426d5f5a9b235090b4b3b4afb1ef97
+            supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-workspace
         spec:
@@ -897,7 +897,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=provision_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=provision_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -926,7 +926,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=workspace_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=workspace_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -997,7 +997,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=publish_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=publish_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -1026,7 +1026,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=cleanup_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=cleanup_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -1246,7 +1246,7 @@
         metadata:
           annotations:
             config-hash: b6c1ccfa18a163c888ecf68db0eb27d1d4fd7701c5e138a09db4c850676d1951
-            supervisord-hash: 5bbf1326bbbfaa0c50b14642d192124c4ba72f503a5b240aea91a541671279d4
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-cleanup
         spec:
@@ -1379,7 +1379,7 @@
         metadata:
           annotations:
             config-hash: b6c1ccfa18a163c888ecf68db0eb27d1d4fd7701c5e138a09db4c850676d1951
-            supervisord-hash: 5bbf1326bbbfaa0c50b14642d192124c4ba72f503a5b240aea91a541671279d4
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-command
         spec:
@@ -1512,7 +1512,7 @@
         metadata:
           annotations:
             config-hash: b6c1ccfa18a163c888ecf68db0eb27d1d4fd7701c5e138a09db4c850676d1951
-            supervisord-hash: 5bbf1326bbbfaa0c50b14642d192124c4ba72f503a5b240aea91a541671279d4
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-provision
         spec:
@@ -1645,7 +1645,7 @@
         metadata:
           annotations:
             config-hash: b6c1ccfa18a163c888ecf68db0eb27d1d4fd7701c5e138a09db4c850676d1951
-            supervisord-hash: 5bbf1326bbbfaa0c50b14642d192124c4ba72f503a5b240aea91a541671279d4
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-publish
         spec:
@@ -1778,7 +1778,7 @@
         metadata:
           annotations:
             config-hash: b6c1ccfa18a163c888ecf68db0eb27d1d4fd7701c5e138a09db4c850676d1951
-            supervisord-hash: 5bbf1326bbbfaa0c50b14642d192124c4ba72f503a5b240aea91a541671279d4
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-workspace
         spec:
@@ -2100,7 +2100,7 @@
         metadata:
           annotations:
             config-hash: 00e433c13a48e9610e3543ee63afce697a2694fb990f2ab8e1c9f8c151c63518
-            supervisord-hash: 5bbf1326bbbfaa0c50b14642d192124c4ba72f503a5b240aea91a541671279d4
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-cleanup
         spec:
@@ -2240,7 +2240,7 @@
         metadata:
           annotations:
             config-hash: 00e433c13a48e9610e3543ee63afce697a2694fb990f2ab8e1c9f8c151c63518
-            supervisord-hash: 5bbf1326bbbfaa0c50b14642d192124c4ba72f503a5b240aea91a541671279d4
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-command
         spec:
@@ -2380,7 +2380,7 @@
         metadata:
           annotations:
             config-hash: 00e433c13a48e9610e3543ee63afce697a2694fb990f2ab8e1c9f8c151c63518
-            supervisord-hash: 5bbf1326bbbfaa0c50b14642d192124c4ba72f503a5b240aea91a541671279d4
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-provision
         spec:
@@ -2520,7 +2520,7 @@
         metadata:
           annotations:
             config-hash: 00e433c13a48e9610e3543ee63afce697a2694fb990f2ab8e1c9f8c151c63518
-            supervisord-hash: 5bbf1326bbbfaa0c50b14642d192124c4ba72f503a5b240aea91a541671279d4
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-publish
         spec:
@@ -2660,7 +2660,7 @@
         metadata:
           annotations:
             config-hash: 00e433c13a48e9610e3543ee63afce697a2694fb990f2ab8e1c9f8c151c63518
-            supervisord-hash: 5bbf1326bbbfaa0c50b14642d192124c4ba72f503a5b240aea91a541671279d4
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-workspace
         spec:
@@ -2922,7 +2922,7 @@
               type: Pods
               value: 4
           stabilizationWindowSeconds: 75
-      maxReplicas: 8
+      maxReplicas: 96
       metrics:
         - external:
             metric:
@@ -2975,7 +2975,7 @@
               type: Pods
               value: 4
           stabilizationWindowSeconds: 75
-      maxReplicas: 8
+      maxReplicas: 96
       metrics:
         - external:
             metric:
@@ -3028,7 +3028,7 @@
               type: Pods
               value: 4
           stabilizationWindowSeconds: 75
-      maxReplicas: 8
+      maxReplicas: 96
       metrics:
         - external:
             metric:
@@ -3081,7 +3081,7 @@
               type: Pods
               value: 4
           stabilizationWindowSeconds: 75
-      maxReplicas: 8
+      maxReplicas: 96
       metrics:
         - external:
             metric:
@@ -3134,7 +3134,7 @@
               type: Pods
               value: 4
           stabilizationWindowSeconds: 75
-      maxReplicas: 8
+      maxReplicas: 96
       metrics:
         - external:
             metric:
@@ -3328,7 +3328,7 @@
         metadata:
           annotations:
             config-hash: b50aebe78a26d9ce749f929244fd4d3b4995c6085a3805c89e66449e1bac62e3
-            supervisord-hash: 5bbf1326bbbfaa0c50b14642d192124c4ba72f503a5b240aea91a541671279d4
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-cleanup
         spec:
@@ -3459,7 +3459,7 @@
         metadata:
           annotations:
             config-hash: b50aebe78a26d9ce749f929244fd4d3b4995c6085a3805c89e66449e1bac62e3
-            supervisord-hash: 5bbf1326bbbfaa0c50b14642d192124c4ba72f503a5b240aea91a541671279d4
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-command
         spec:
@@ -3590,7 +3590,7 @@
         metadata:
           annotations:
             config-hash: b50aebe78a26d9ce749f929244fd4d3b4995c6085a3805c89e66449e1bac62e3
-            supervisord-hash: 5bbf1326bbbfaa0c50b14642d192124c4ba72f503a5b240aea91a541671279d4
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-provision
         spec:
@@ -3721,7 +3721,7 @@
         metadata:
           annotations:
             config-hash: b50aebe78a26d9ce749f929244fd4d3b4995c6085a3805c89e66449e1bac62e3
-            supervisord-hash: 5bbf1326bbbfaa0c50b14642d192124c4ba72f503a5b240aea91a541671279d4
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-publish
         spec:
@@ -3852,7 +3852,7 @@
         metadata:
           annotations:
             config-hash: b50aebe78a26d9ce749f929244fd4d3b4995c6085a3805c89e66449e1bac62e3
-            supervisord-hash: 5bbf1326bbbfaa0c50b14642d192124c4ba72f503a5b240aea91a541671279d4
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-workspace
         spec:
@@ -4051,7 +4051,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=provision_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=provision_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -4080,7 +4080,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=workspace_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=workspace_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -4109,7 +4109,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=command_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=command_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -4138,7 +4138,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=publish_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=publish_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -4167,7 +4167,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=cleanup_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=cleanup_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -4187,3 +4187,5 @@
         version: 0.1.0
       name: workspace-cleanup-supervisord-conf-map
       namespace: eyelevel
+'disabled: workspace': {}
+'disabled: workspace metrics config': {}

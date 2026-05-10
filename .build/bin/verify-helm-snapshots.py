@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -42,6 +43,32 @@ def snapshot_labels(path: Path) -> set[str]:
     return set(re.findall(r"^'([^']+)':", path.read_text(encoding="utf-8"), flags=re.MULTILINE))
 
 
+def deleted_snapshot_labels() -> list[str]:
+    result = subprocess.run(
+        ["git", "diff", "--", str(SNAPSHOT_DIR.relative_to(ROOT))],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode not in (0, 1):
+        return [f"unable to inspect git diff: {result.stderr.strip()}"]
+
+    deleted: list[str] = []
+    current_file = ""
+    for line in result.stdout.splitlines():
+        file_match = re.match(r"^diff --git a/(.+?) b/", line)
+        if file_match:
+            current_file = file_match.group(1)
+            continue
+
+        label_match = re.match(r"^-('[^']+':\s+\{\})$", line)
+        if label_match:
+            deleted.append(f"{current_file}: {label_match.group(1)}")
+
+    return deleted
+
+
 def main() -> int:
     failures: list[str] = []
 
@@ -53,10 +80,20 @@ def main() -> int:
         if missing:
             failures.append(f"{test_file.relative_to(ROOT)} missing snapshot labels: {', '.join(missing)}")
 
+    deleted = deleted_snapshot_labels()
+    if deleted:
+        failures.append(
+            "snapshot label deletions found in git diff; helm-unittest may have silently removed empty renders: "
+            + ", ".join(deleted)
+        )
+
     if failures:
         print("Helm snapshot label verification failed.", file=sys.stderr)
         print("Every matchSnapshot test must have a snapshot label, even when it renders no documents.", file=sys.stderr)
-        print("Use explicit empty entries like 'disabled: api': {} for empty renders.", file=sys.stderr)
+        print(
+            "Use explicit empty entries like 'disabled: api': {} for empty renders, and do not leave deleted label lines in the diff.",
+            file=sys.stderr,
+        )
         for failure in failures:
             print(f"- {failure}", file=sys.stderr)
         return 1
