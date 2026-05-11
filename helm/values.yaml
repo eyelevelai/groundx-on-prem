@@ -1,5 +1,8 @@
 cluster:
   pvClass: eyelevel-pv
+  # Prefer ReadWriteMany when the deployment has shared filesystem storage
+  # available. Set to ReadWriteOnce for block/local storage classes.
+  pvAccessMode: ReadWriteMany
 
   hpa: false
 
@@ -362,8 +365,6 @@ workspace:
 
   pvc:
     name: workspace-data
-    class: eyelevel-pv
-    access: ReadWriteMany
     capacity: 20Gi
 
   api:

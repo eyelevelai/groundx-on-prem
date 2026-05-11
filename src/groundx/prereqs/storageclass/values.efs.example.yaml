@@ -1,0 +1,11 @@
+storageClassName: eyelevel-pv
+isDefaultClass: false
+
+provisioner: efs.csi.aws.com
+
+reclaimPolicy: Retain
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: fs-REPLACE_ME
+  directoryPerms: "700"
+  basePath: /eyelevel

@@ -2145,7 +2145,7 @@
       resources:
         requests:
           storage: 20Gi
-      storageClassName: eyelevel-pv
+      storageClassName: azure-files-rwx
   4: |
     apiVersion: apps/v1
     kind: Deployment
@@ -4347,11 +4347,11 @@
       namespace: eyelevel
     spec:
       accessModes:
-        - ReadWriteMany
+        - ReadWriteOnce
       resources:
         requests:
           storage: 20Gi
-      storageClassName: eyelevel-pv
+      storageClassName: local-path-rwo
   4: |
     apiVersion: apps/v1
     kind: Deployment

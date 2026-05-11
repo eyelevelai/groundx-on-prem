@@ -15,6 +15,7 @@ Runs the GroundX Helm production chart gate from one stable entrypoint:
   - helm unittest for src/groundx
   - snapshot label guard
   - workspace chart contract verifier
+  - storage chart and generated AWS values contract verifier
   - targeted render checks for both chart surfaces
   - git whitespace check
 
@@ -52,6 +53,9 @@ python .build/bin/verify-helm-snapshots.py
 
 echo "==> Verifying workspace chart contract"
 python .build/bin/verify-workspace-chart.py
+
+echo "==> Verifying storage contract"
+python .build/bin/verify-storage-contract.py
 
 echo "==> Rendering workspace chart fixtures"
 helm template workspace-contract src/groundx \

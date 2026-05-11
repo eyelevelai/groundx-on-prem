@@ -1,8 +1,9 @@
 storageClassName: eyelevel-pv
 isDefaultClass: true
 
-provisioner: ebs.csi.aws.com
+provisioner: filestore.csi.storage.gke.io
 
 reclaimPolicy: Delete
 parameters:
-  type: gp3
+  tier: standard
+  network: default

@@ -169,6 +169,11 @@ extraPreDefaults:
 {{- dig "pvClass" "eyelevel-pv" $b -}}
 {{- end }}
 
+{{- define "groundx.pvAccessMode" -}}
+{{- $b := .Values.cluster | default dict -}}
+{{- dig "pvAccessMode" "ReadWriteMany" $b -}}
+{{- end }}
+
 {{- define "groundx.secrets" -}}
 {{- $b := .Values.cluster | default dict -}}
 {{- $arr := dig "secrets" list $b -}}

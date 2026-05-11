@@ -97,10 +97,36 @@ false
 {{ dig "mountPath" "/mnt/redis" $in }}
 {{- end }}
 
+{{- define "groundx.cache.persistence.enabled" -}}
+{{- $in := .Values.cache | default dict -}}
+{{- $pvc := dig "persistence" dict $in -}}
+{{- if (dig "enabled" false $pvc) -}}true{{- else -}}false{{- end -}}
+{{- end }}
+
+{{- define "groundx.cache.persistence.capacity" -}}
+{{- $in := .Values.cache | default dict -}}
+{{- $pvc := dig "persistence" dict $in -}}
+{{ dig "capacity" "10Gi" $pvc }}
+{{- end }}
+
 {{- define "groundx.metrics.cache.mountPath" -}}
 {{- $b := .Values.cache | default dict -}}
 {{- $in := (dig "metrics" nil $b) | default dict -}}
 {{ dig "mountPath" "/mnt/redis" $in }}
+{{- end }}
+
+{{- define "groundx.metrics.cache.persistence.enabled" -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $in := (dig "metrics" nil $b) | default dict -}}
+{{- $pvc := dig "persistence" dict $in -}}
+{{- if (dig "enabled" false $pvc) -}}true{{- else -}}false{{- end -}}
+{{- end }}
+
+{{- define "groundx.metrics.cache.persistence.capacity" -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $in := (dig "metrics" nil $b) | default dict -}}
+{{- $pvc := dig "persistence" dict $in -}}
+{{ dig "capacity" "10Gi" $pvc }}
 {{- end }}
 
 {{- define "groundx.cache.replicas" -}}

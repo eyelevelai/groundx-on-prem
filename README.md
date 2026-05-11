@@ -386,7 +386,7 @@ Set `workspace.enabled: true` and provide either `workspace.token` or `workspace
 
 The runner follows the standard Python microservice deployment pattern. The API uses the shared Gunicorn deployment template and the workers use the shared supervisord Celery deployment template. Workspace-specific ConfigMaps provide `/app/config.py`, `/app/gunicorn_conf.py`, and one supervisord config per queue: provision, workspace, command, publish, and cleanup. API knobs such as `threads`, `workers`, `timeout`, `timeoutKeepAlive`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under `workspace.api`, matching the other Python API services. Worker knobs such as `queue`, `threads`, `workers`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under each worker section: `provision`, `workspace`, `command`, `publish`, and `cleanup`.
 
-Workspace metadata and operation state are stored in MySQL. Workspace clones are shared across the API and worker pods through the generated `workspace.pvc`, following the same PVC helper pattern as inference services. Keep `workspace.pvc.access` as `ReadWriteMany` for multi-pod dry-run deployments because writes happen in worker pods while reads may happen in the API pod. The runner waits on Redis/Valkey and MySQL but does not wait on file storage because workspace artifacts are not part of the GroundX document file store. Runtime config rendered into `/app/config.py` uses chart helpers for MySQL, Redis/Valkey, command, and workspace defaults, with `workspace.publishDryRun` exposed as the normal safety toggle.
+Workspace metadata and operation state are stored in MySQL. Workspace clones are shared across the API and worker pods through the generated `workspace.pvc`, following the same PVC helper pattern as inference services. The chart uses one app-wide persistent storage abstraction: `cluster.pvClass` sets the storage class and `cluster.pvAccessMode` sets the default access mode for workspace, summary inference, ranker inference, and layout inference PVCs. Prefer `ReadWriteMany` when the target cluster provides shared filesystem storage, because workspace writes happen in worker pods while reads may happen in the API pod. On EKS this usually means installing an EFS CSI storage class named `eyelevel-pv`; the example EFS storage class values live at `src/groundx/prereqs/storageclass/values.efs.example.yaml` and require the environment-specific `fileSystemId`. If a deployment only has block/local storage, set `cluster.pvAccessMode: ReadWriteOnce` and use the cluster-provided storage class, understanding that workspace pods must be constrained to a compatible scheduling shape. The runner waits on Redis/Valkey and MySQL but does not wait on file storage because workspace artifacts are not part of the GroundX document file store. Runtime config rendered into `/app/config.py` uses chart helpers for MySQL, Redis/Valkey, command, and workspace defaults, with `workspace.publishDryRun` exposed as the normal safety toggle.
 
 Publish is dry-run by default. To enable real branch push and pull request creation, set `workspace.publishDryRun: false` and configure the GitHub App owned by the runner service:
 
@@ -433,7 +433,7 @@ Run the local Helm production gate before changing chart helpers, values, schema
 .build/bin/validate-helm.sh
 ```
 
-The Helm CI gate uses the same script. It lints both chart surfaces, runs Helm unittest, verifies that snapshots did not silently drop empty renders, and runs `.build/bin/verify-workspace-chart.py` to render both chart surfaces and prove the workspace API service, GroundX `workspace.baseURL`, Partner API `WORKSPACE_RUNNER_BASE_URL`, HPA, and metrics-server names all stay on the same `workspace-api` contract. After deploying to a cluster, run `.build/bin/smoke-workspace-runner.sh` with the target kube context selected to verify the API, workers, cluster DNS, health endpoint, internal `/storage` status endpoint, and Partner API runner URL wiring.
+The Helm CI gate uses the same script. It lints both chart surfaces, runs Helm unittest, verifies that snapshots did not silently drop empty renders, runs `.build/bin/verify-workspace-chart.py` to prove the workspace API service and metrics contracts stay aligned, and runs `.build/bin/verify-storage-contract.py` to prove StorageClass defaults, provider examples, PVC access modes, mirrored chart files, and the `setup-eks` generated EFS/EBS values and printed Helm commands all render. After deploying to a cluster, run `.build/bin/smoke-workspace-runner.sh` with the target kube context selected to verify the API, workers, cluster DNS, health endpoint, internal `/storage` status endpoint, and Partner API runner URL wiring.
 
 ### MySQL
 
@@ -561,6 +561,7 @@ admin.username  # the admin account for your deployment
 admin.email
 admin.password
 cluster.pvClass # an existing storage class
+cluster.pvAccessMode # ReadWriteMany for shared filesystems, ReadWriteOnce for block/local storage
 cluster.type    # type of Kubernetes cluster
 ```
 
@@ -569,6 +570,36 @@ cluster.type    # type of Kubernetes cluster
 ```bash
 bin/uuid
 ```
+
+### Persistent Storage
+
+GroundX uses one app-wide persistent storage abstraction. Set `cluster.pvClass` to the Kubernetes storage class name and `cluster.pvAccessMode` to the access mode that class supports. Services that need PVCs, including workspace, summary inference, ranker inference, and layout inference, inherit those values unless their local `pvc` block explicitly overrides them.
+
+Prefer a shared filesystem class with `ReadWriteMany` when available:
+
+```yaml
+cluster:
+  pvClass: eyelevel-pv
+  pvAccessMode: ReadWriteMany
+```
+
+Use this mode for workspace runner deployments when possible because API and worker pods share `/tmp/workspaces`. Example storage class values are included for common shared filesystems:
+
+- EKS/EFS: `src/groundx/prereqs/storageclass/values.efs.example.yaml`
+- AKS/Azure Files: `src/groundx/prereqs/storageclass/values.azure-files.example.yaml`
+- GKE Filestore: `src/groundx/prereqs/storageclass/values.gke-filestore.example.yaml`
+
+When only block or local storage is available, use `ReadWriteOnce`:
+
+```yaml
+cluster:
+  pvClass: eyelevel-pv
+  pvAccessMode: ReadWriteOnce
+```
+
+An EKS/EBS example is available at `src/groundx/prereqs/storageclass/values.ebs.example.yaml`. With `ReadWriteOnce`, workspace runner pods must be scheduled in a compatible shape because the local checkout cache cannot be mounted freely across nodes.
+
+For AWS EKS, `terraform/aws/setup-eks` generates `src/groundx/prereqs/storageclass/values.aws.local.yaml` and `src/groundx/values.aws.local.yaml` from Terraform outputs. Use `STORAGE_DRIVER=efs` for the shared EFS path or `STORAGE_DRIVER=ebs` for EBS. The generated Helm commands printed by the script do not require manually editing the EFS filesystem ID.
 
 ### Helm Installation
 

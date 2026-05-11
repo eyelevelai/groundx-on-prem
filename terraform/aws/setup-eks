@@ -18,6 +18,7 @@ fi
 
 environments=("aws")
 aws_clusters=("eks")
+storage_options=("efs - EFS shared filesystem (recommended)" "ebs - EBS block volumes")
 
 check_env=false
 check_vpc=false
@@ -30,10 +31,12 @@ KC=true
 KCT="eks"
 REGION="us-east-2"
 SEARCH=${SEARCH:-true}
+STORAGE_DRIVER=${STORAGE_DRIVER:-}
 
 choose_cluster_existing=$(prompt_menu "What type of Kubernetes cluster do you have?" "aws_clusters[@]")
 choose_cluster_new=$(prompt_menu "What type of Kubernetes cluster do you want to set up?" "aws_clusters[@]")
 choose_environment=$(prompt_menu "What hosting environment do you want to deploy to?" "environments[@]")
+choose_storage=$(prompt_menu "What AWS persistent storage should this EKS install use?" "storage_options[@]")
 choose_kc=$(prompt_text "Do you want to set up a dedicated Kubernetes cluster for this deployment?")
 choose_vpc=$(prompt_text "Do you want to set up a dedicated VPC for this deployment?")
 confirm_choices=$(prompt_text "")
@@ -70,6 +73,16 @@ if [[ "$ENV" == "aws" ]]; then
     REGION=$(prompt_input "aws-region" "$enter_region" "empty[@]" "$msg") && ok
 fi
 
+if [[ -z "$STORAGE_DRIVER" ]]; then
+    selected_storage=$(prompt_input "menu" "$choose_storage" "storage_options[@]" "") && ok
+    STORAGE_DRIVER="${selected_storage%% *}"
+fi
+
+if [[ "$STORAGE_DRIVER" != "efs" && "$STORAGE_DRIVER" != "ebs" ]]; then
+    error "Invalid STORAGE_DRIVER [$STORAGE_DRIVER]. Use efs or ebs." && echo ""
+    exit 1
+fi
+
 echo "" && echo ""
 echo "Please confirm your deployment settings:" && echo ""
 echo -e   "deploying to:        $ENV"
@@ -87,6 +100,7 @@ else
     error "creating a cluster:  "
 fi
 echo -e   "cluster type:        $KCT"
+echo -e   "storage driver:      $STORAGE_DRIVER"
 
 
 result=$(prompt_input "yn" "$confirm_choices" "empty[@]" "") && ok
@@ -115,6 +129,10 @@ environment = {
   stage = "prod"
   subnets = $subnets
   vpc_id = "$vpc_id"
+}
+
+storage = {
+  driver = "$STORAGE_DRIVER"
 }
 EOF
 fi
@@ -211,6 +229,10 @@ environment = {
   subnets = $subnets
   vpc_id = "$vpc_id"
 }
+
+storage = {
+  driver = "$STORAGE_DRIVER"
+}
 EOF
 
 if ! $SEARCH; then
@@ -232,7 +254,7 @@ cluster = {
   prefix           = "eyelevel"
   pv               = {
     name           = "eyelevel-pv"
-    type           = "gp2"
+    type           = "$STORAGE_DRIVER"
   }
   search           = $SEARCH
   throughput       = {
@@ -328,5 +350,66 @@ fi
         exit 1
     fi
 
+    storage_driver=$(terraform -chdir="$ENV_DIR/eks" output -raw storage_driver 2>/dev/null)
+    storage_class_name=$(terraform -chdir="$ENV_DIR/eks" output -raw storage_class_name 2>/dev/null)
+    storage_access_mode=$(terraform -chdir="$ENV_DIR/eks" output -raw storage_access_mode 2>/dev/null)
+    efs_file_system_id=$(terraform -chdir="$ENV_DIR/eks" output -raw efs_file_system_id 2>/dev/null)
+
+    chart_dir="$ENV_DIR/../../src/groundx"
+    storage_values="$chart_dir/prereqs/storageclass/values.aws.local.yaml"
+    app_values="$chart_dir/values.aws.local.yaml"
+
+    if [[ "$storage_driver" == "efs" ]]; then
+        if [[ -z "$efs_file_system_id" ]]; then
+            error "EFS storage selected but efs_file_system_id Terraform output is empty." && echo ""
+            exit 1
+        fi
+        cat <<EOF > "$storage_values"
+storageClassName: ${storage_class_name:-eyelevel-pv}
+isDefaultClass: false
+
+provisioner: efs.csi.aws.com
+
+reclaimPolicy: Retain
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: $efs_file_system_id
+  directoryPerms: "700"
+  basePath: /eyelevel
+EOF
+    else
+        cat <<EOF > "$storage_values"
+storageClassName: ${storage_class_name:-eyelevel-pv}
+isDefaultClass: true
+
+provisioner: ebs.csi.aws.com
+
+reclaimPolicy: Delete
+parameters:
+  type: gp3
+EOF
+    fi
+
+    cat <<EOF > "$app_values"
+cluster:
+  pvClass: ${storage_class_name:-eyelevel-pv}
+  pvAccessMode: ${storage_access_mode:-ReadWriteMany}
+
+workspace:
+  enabled: true
+  existingSecret: eyelevel-secret-credentials
+  pvc:
+    name: workspace-data
+    capacity: 50Gi
+EOF
+
     ok && echo "" && ok "VPC and Cluster setup complete. You can now set up the EyeLevel operator" && echo "" && echo ""
+    echo "Generated Helm values:"
+    echo "  $storage_values"
+    echo "  $app_values"
+    echo ""
+    echo "Next Helm commands:"
+    echo "helm upgrade --install groundx-secret src/groundx/prereqs/secret -f values.extract.eks.secret.yaml"
+    echo "helm upgrade --install groundx-storageclass src/groundx/prereqs/storageclass -f src/groundx/prereqs/storageclass/values.aws.local.yaml"
+    echo "helm upgrade --install groundx src/groundx -f values.extract.eks.yaml -f src/groundx/values.aws.local.yaml"
 fi

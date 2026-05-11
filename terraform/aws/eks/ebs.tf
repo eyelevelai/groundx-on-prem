@@ -3,7 +3,7 @@ data "aws_iam_policy" "ebs_csi_policy" {
 }
 
 module "irsa_ebs_csi" {
-  count = local.should_create ? 1 : 0
+  count = local.should_create && var.storage.driver == "ebs" ? 1 : 0
 
   source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
   version = "5.39.0"
@@ -16,9 +16,9 @@ module "irsa_ebs_csi" {
 }
 
 resource "aws_eks_addon" "aws_ebs_csi_driver" {
-  count = local.should_create ? 1 : 0
+  count = local.should_create && var.storage.driver == "ebs" ? 1 : 0
 
-  depends_on               = [module.eyelevel_eks, module.irsa_ebs_csi]
+  depends_on = [module.eyelevel_eks, module.irsa_ebs_csi]
 
   cluster_name             = local.cluster_name
   addon_name               = "aws-ebs-csi-driver"

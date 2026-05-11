@@ -9,7 +9,8 @@ admin:
 cluster:
   imagePullPolicy: Always
 
-  pvClass: eyelevel-pv
+  pvClass: openshift-cephfs-rwx
+  pvAccessMode: ReadWriteMany
   type: openshift
   nodeLabels:
     cpuMemory: eyelevel-gpu

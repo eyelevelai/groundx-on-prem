@@ -50,7 +50,7 @@ true
 {{- $pvc := dig "pvc" dict $in -}}
 
 {{- $defaults := dict
-  "access"   "ReadWriteOnce"
+  "access"   (include "groundx.pvAccessMode" .)
   "capacity" "10Gi"
   "class"    (include "groundx.pvClass" .)
   "name"     (printf "%s-model" (include "groundx.ranker.serviceName" .))

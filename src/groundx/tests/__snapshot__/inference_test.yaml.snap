@@ -99,6 +99,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
               workingDir: /app
           initContainers:
             - command:
@@ -142,6 +144,65 @@
                   name: host-bin
                 - mountPath: /host-usr-bin
                   name: host-usr-bin
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  download_and_extract_model() {
+                    echo "Model downloading started..."
+
+                    touch /app/hf_models_cache/downloading
+
+                    echo "" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/layout/model/current/.tar.gz.part.$PART; \
+                      while [ $RETRIES -lt $MAX_RETRIES ]; do \
+                        echo "Download [attempt $RETRIES] layout.tar.gz.part.$PART"; \
+                        wget -q -O /app/hf_models_cache/layout.tar.gz.part.$PART $URL && { echo "Downloaded layout.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
+                        echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
+                      done; \
+                      [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm /app/hf_models_cache/downloading; exit 1; }; \
+                      echo "Unzipping layout.tar.gz.part.$PART..."; tar -xzf /app/hf_models_cache/layout.tar.gz.part.$PART -C /app/hf_models_cache/; echo "Unzipping layout.tar.gz.part.$PART complete...";'
+
+                    rm /app/hf_models_cache/layout.tar.*
+                    rm /app/hf_models_cache/downloading
+                    touch /app/hf_models_cache/complete.
+                  }
+                  if [ ! -f /app/hf_models_cache/complete. ]; then
+                    if [ ! -f /app/hf_models_cache/downloading ]; then
+                      download_and_extract_model
+                    else
+                      echo "Download in progress by another pod. Waiting..."
+                      while [ -f /app/hf_models_cache/downloading ] || [ ! -f /app/hf_models_cache/complete. ]; do
+                        sleep $((3 + RANDOM % 2))
+                      done
+
+                      if [ ! -f /app/hf_models_cache/complete. ]; then
+                        download_and_extract_model
+                      else
+                        echo "Model cache ready."
+                      fi
+                    fi
+                  else
+                    echo "Model cache already exists. Skipping download."
+                  fi
+
+                  echo "Model load done."
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: download-model
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -188,7 +249,25 @@
                 path: /usr/bin
                 type: Directory
               name: host-usr-bin
+            - name: model-volume
+              persistentVolumeClaim:
+                claimName: layout-model
   2: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: layout-inference
+      name: layout-model
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: eyelevel-pv
+  3: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -433,7 +512,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: ranker-model
-  3: |
+  4: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -443,12 +522,12 @@
       namespace: eyelevel
     spec:
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       resources:
         requests:
           storage: 10Gi
       storageClassName: eyelevel-pv
-  4: |
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -690,7 +769,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: summary-model
-  5: |
+  6: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -700,7 +779,7 @@
       namespace: eyelevel
     spec:
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       resources:
         requests:
           storage: 20Gi
@@ -806,6 +885,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
               workingDir: /app
           initContainers:
             - command:
@@ -849,6 +930,65 @@
                   name: host-bin
                 - mountPath: /host-usr-bin
                   name: host-usr-bin
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  download_and_extract_model() {
+                    echo "Model downloading started..."
+
+                    touch /app/hf_models_cache/downloading
+
+                    echo "" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/layout/model/current/.tar.gz.part.$PART; \
+                      while [ $RETRIES -lt $MAX_RETRIES ]; do \
+                        echo "Download [attempt $RETRIES] layout.tar.gz.part.$PART"; \
+                        wget -q -O /app/hf_models_cache/layout.tar.gz.part.$PART $URL && { echo "Downloaded layout.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
+                        echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
+                      done; \
+                      [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm /app/hf_models_cache/downloading; exit 1; }; \
+                      echo "Unzipping layout.tar.gz.part.$PART..."; tar -xzf /app/hf_models_cache/layout.tar.gz.part.$PART -C /app/hf_models_cache/; echo "Unzipping layout.tar.gz.part.$PART complete...";'
+
+                    rm /app/hf_models_cache/layout.tar.*
+                    rm /app/hf_models_cache/downloading
+                    touch /app/hf_models_cache/complete.
+                  }
+                  if [ ! -f /app/hf_models_cache/complete. ]; then
+                    if [ ! -f /app/hf_models_cache/downloading ]; then
+                      download_and_extract_model
+                    else
+                      echo "Download in progress by another pod. Waiting..."
+                      while [ -f /app/hf_models_cache/downloading ] || [ ! -f /app/hf_models_cache/complete. ]; do
+                        sleep $((3 + RANDOM % 2))
+                      done
+
+                      if [ ! -f /app/hf_models_cache/complete. ]; then
+                        download_and_extract_model
+                      else
+                        echo "Model cache ready."
+                      fi
+                    fi
+                  else
+                    echo "Model cache already exists. Skipping download."
+                  fi
+
+                  echo "Model load done."
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: download-model
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -894,7 +1034,25 @@
                 path: /usr/bin
                 type: Directory
               name: host-usr-bin
+            - name: model-volume
+              persistentVolumeClaim:
+                claimName: layout-model
   2: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: layout-inference
+      name: layout-model
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: gke-filestore-rwx
+  3: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1138,7 +1296,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: ranker-model
-  3: |
+  4: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -1148,12 +1306,12 @@
       namespace: eyelevel
     spec:
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       resources:
         requests:
           storage: 10Gi
-      storageClassName: eyelevel-pv
-  4: |
+      storageClassName: gke-filestore-rwx
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1394,7 +1552,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: summary-model
-  5: |
+  6: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -1404,11 +1562,11 @@
       namespace: eyelevel
     spec:
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       resources:
         requests:
           storage: 20Gi
-      storageClassName: eyelevel-pv
+      storageClassName: gke-filestore-rwx
 'default: inference':
   1: |
     apiVersion: apps/v1
@@ -1510,6 +1668,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
               workingDir: /app
           initContainers:
             - command:
@@ -1553,6 +1713,65 @@
                   name: host-bin
                 - mountPath: /host-usr-bin
                   name: host-usr-bin
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  download_and_extract_model() {
+                    echo "Model downloading started..."
+
+                    touch /app/hf_models_cache/downloading
+
+                    echo "" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/layout/model/current/.tar.gz.part.$PART; \
+                      while [ $RETRIES -lt $MAX_RETRIES ]; do \
+                        echo "Download [attempt $RETRIES] layout.tar.gz.part.$PART"; \
+                        wget -q -O /app/hf_models_cache/layout.tar.gz.part.$PART $URL && { echo "Downloaded layout.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
+                        echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
+                      done; \
+                      [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm /app/hf_models_cache/downloading; exit 1; }; \
+                      echo "Unzipping layout.tar.gz.part.$PART..."; tar -xzf /app/hf_models_cache/layout.tar.gz.part.$PART -C /app/hf_models_cache/; echo "Unzipping layout.tar.gz.part.$PART complete...";'
+
+                    rm /app/hf_models_cache/layout.tar.*
+                    rm /app/hf_models_cache/downloading
+                    touch /app/hf_models_cache/complete.
+                  }
+                  if [ ! -f /app/hf_models_cache/complete. ]; then
+                    if [ ! -f /app/hf_models_cache/downloading ]; then
+                      download_and_extract_model
+                    else
+                      echo "Download in progress by another pod. Waiting..."
+                      while [ -f /app/hf_models_cache/downloading ] || [ ! -f /app/hf_models_cache/complete. ]; do
+                        sleep $((3 + RANDOM % 2))
+                      done
+
+                      if [ ! -f /app/hf_models_cache/complete. ]; then
+                        download_and_extract_model
+                      else
+                        echo "Model cache ready."
+                      fi
+                    fi
+                  else
+                    echo "Model cache already exists. Skipping download."
+                  fi
+
+                  echo "Model load done."
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: download-model
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1598,7 +1817,25 @@
                 path: /usr/bin
                 type: Directory
               name: host-usr-bin
+            - name: model-volume
+              persistentVolumeClaim:
+                claimName: layout-model
   2: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: layout-inference
+      name: layout-model
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: eyelevel-pv
+  3: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1842,7 +2079,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: ranker-model
-  3: |
+  4: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -1852,12 +2089,12 @@
       namespace: eyelevel
     spec:
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       resources:
         requests:
           storage: 10Gi
       storageClassName: eyelevel-pv
-  4: |
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2098,7 +2335,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: summary-model
-  5: |
+  6: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -2108,7 +2345,7 @@
       namespace: eyelevel
     spec:
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       resources:
         requests:
           storage: 20Gi
@@ -2214,6 +2451,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
               workingDir: /app
           initContainers:
             - command:
@@ -2257,6 +2496,65 @@
                   name: host-bin
                 - mountPath: /host-usr-bin
                   name: host-usr-bin
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  download_and_extract_model() {
+                    echo "Model downloading started..."
+
+                    touch /app/hf_models_cache/downloading
+
+                    echo "" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/layout/model/current/.tar.gz.part.$PART; \
+                      while [ $RETRIES -lt $MAX_RETRIES ]; do \
+                        echo "Download [attempt $RETRIES] layout.tar.gz.part.$PART"; \
+                        wget -q -O /app/hf_models_cache/layout.tar.gz.part.$PART $URL && { echo "Downloaded layout.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
+                        echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
+                      done; \
+                      [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm /app/hf_models_cache/downloading; exit 1; }; \
+                      echo "Unzipping layout.tar.gz.part.$PART..."; tar -xzf /app/hf_models_cache/layout.tar.gz.part.$PART -C /app/hf_models_cache/; echo "Unzipping layout.tar.gz.part.$PART complete...";'
+
+                    rm /app/hf_models_cache/layout.tar.*
+                    rm /app/hf_models_cache/downloading
+                    touch /app/hf_models_cache/complete.
+                  }
+                  if [ ! -f /app/hf_models_cache/complete. ]; then
+                    if [ ! -f /app/hf_models_cache/downloading ]; then
+                      download_and_extract_model
+                    else
+                      echo "Download in progress by another pod. Waiting..."
+                      while [ -f /app/hf_models_cache/downloading ] || [ ! -f /app/hf_models_cache/complete. ]; do
+                        sleep $((3 + RANDOM % 2))
+                      done
+
+                      if [ ! -f /app/hf_models_cache/complete. ]; then
+                        download_and_extract_model
+                      else
+                        echo "Model cache ready."
+                      fi
+                    fi
+                  else
+                    echo "Model cache already exists. Skipping download."
+                  fi
+
+                  echo "Model load done."
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: download-model
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2302,7 +2600,25 @@
                 path: /usr/bin
                 type: Directory
               name: host-usr-bin
+            - name: model-volume
+              persistentVolumeClaim:
+                claimName: layout-model
   2: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: layout-inference
+      name: layout-model
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: eyelevel-pv
+  3: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2546,7 +2862,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: ranker-model
-  3: |
+  4: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -2556,12 +2872,12 @@
       namespace: eyelevel
     spec:
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       resources:
         requests:
           storage: 10Gi
       storageClassName: eyelevel-pv
-  4: |
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2802,7 +3118,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: summary-model
-  5: |
+  6: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -2812,7 +3128,7 @@
       namespace: eyelevel
     spec:
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       resources:
         requests:
           storage: 20Gi
@@ -2918,6 +3234,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
               workingDir: /app
           initContainers:
             - command:
@@ -2961,6 +3279,65 @@
                   name: host-bin
                 - mountPath: /host-usr-bin
                   name: host-usr-bin
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  download_and_extract_model() {
+                    echo "Model downloading started..."
+
+                    touch /app/hf_models_cache/downloading
+
+                    echo "" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/layout/model/current/.tar.gz.part.$PART; \
+                      while [ $RETRIES -lt $MAX_RETRIES ]; do \
+                        echo "Download [attempt $RETRIES] layout.tar.gz.part.$PART"; \
+                        wget -q -O /app/hf_models_cache/layout.tar.gz.part.$PART $URL && { echo "Downloaded layout.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
+                        echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
+                      done; \
+                      [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm /app/hf_models_cache/downloading; exit 1; }; \
+                      echo "Unzipping layout.tar.gz.part.$PART..."; tar -xzf /app/hf_models_cache/layout.tar.gz.part.$PART -C /app/hf_models_cache/; echo "Unzipping layout.tar.gz.part.$PART complete...";'
+
+                    rm /app/hf_models_cache/layout.tar.*
+                    rm /app/hf_models_cache/downloading
+                    touch /app/hf_models_cache/complete.
+                  }
+                  if [ ! -f /app/hf_models_cache/complete. ]; then
+                    if [ ! -f /app/hf_models_cache/downloading ]; then
+                      download_and_extract_model
+                    else
+                      echo "Download in progress by another pod. Waiting..."
+                      while [ -f /app/hf_models_cache/downloading ] || [ ! -f /app/hf_models_cache/complete. ]; do
+                        sleep $((3 + RANDOM % 2))
+                      done
+
+                      if [ ! -f /app/hf_models_cache/complete. ]; then
+                        download_and_extract_model
+                      else
+                        echo "Model cache ready."
+                      fi
+                    fi
+                  else
+                    echo "Model cache already exists. Skipping download."
+                  fi
+
+                  echo "Model load done."
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: download-model
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3006,7 +3383,25 @@
                 path: /usr/bin
                 type: Directory
               name: host-usr-bin
+            - name: model-volume
+              persistentVolumeClaim:
+                claimName: layout-model
   2: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: layout-inference
+      name: layout-model
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: eyelevel-pv
+  3: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3250,7 +3645,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: ranker-model
-  3: |
+  4: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -3260,7 +3655,7 @@
       namespace: eyelevel
     spec:
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       resources:
         requests:
           storage: 10Gi
@@ -3366,6 +3761,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
               workingDir: /app
           initContainers:
             - command:
@@ -3409,6 +3806,65 @@
                   name: host-bin
                 - mountPath: /host-usr-bin
                   name: host-usr-bin
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  download_and_extract_model() {
+                    echo "Model downloading started..."
+
+                    touch /app/hf_models_cache/downloading
+
+                    echo "" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/layout/model/current/.tar.gz.part.$PART; \
+                      while [ $RETRIES -lt $MAX_RETRIES ]; do \
+                        echo "Download [attempt $RETRIES] layout.tar.gz.part.$PART"; \
+                        wget -q -O /app/hf_models_cache/layout.tar.gz.part.$PART $URL && { echo "Downloaded layout.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
+                        echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
+                      done; \
+                      [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm /app/hf_models_cache/downloading; exit 1; }; \
+                      echo "Unzipping layout.tar.gz.part.$PART..."; tar -xzf /app/hf_models_cache/layout.tar.gz.part.$PART -C /app/hf_models_cache/; echo "Unzipping layout.tar.gz.part.$PART complete...";'
+
+                    rm /app/hf_models_cache/layout.tar.*
+                    rm /app/hf_models_cache/downloading
+                    touch /app/hf_models_cache/complete.
+                  }
+                  if [ ! -f /app/hf_models_cache/complete. ]; then
+                    if [ ! -f /app/hf_models_cache/downloading ]; then
+                      download_and_extract_model
+                    else
+                      echo "Download in progress by another pod. Waiting..."
+                      while [ -f /app/hf_models_cache/downloading ] || [ ! -f /app/hf_models_cache/complete. ]; do
+                        sleep $((3 + RANDOM % 2))
+                      done
+
+                      if [ ! -f /app/hf_models_cache/complete. ]; then
+                        download_and_extract_model
+                      else
+                        echo "Model cache ready."
+                      fi
+                    fi
+                  else
+                    echo "Model cache already exists. Skipping download."
+                  fi
+
+                  echo "Model load done."
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: download-model
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3454,7 +3910,25 @@
                 path: /usr/bin
                 type: Directory
               name: host-usr-bin
+            - name: model-volume
+              persistentVolumeClaim:
+                claimName: layout-model
   2: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: layout-inference
+      name: layout-model
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: ebs-gp3-rwo
+  3: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3695,7 +4169,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: summary-model
-  3: |
+  4: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -3709,7 +4183,7 @@
       resources:
         requests:
           storage: 20Gi
-      storageClassName: eyelevel-pv
+      storageClassName: ebs-gp3-rwo
 'extract.oai: inference':
   1: |
     apiVersion: apps/v1
@@ -3814,6 +4288,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
               workingDir: /app
           initContainers:
             - command:
@@ -3857,6 +4333,65 @@
                   name: host-bin
                 - mountPath: /host-usr-bin
                   name: host-usr-bin
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  download_and_extract_model() {
+                    echo "Model downloading started..."
+
+                    touch /app/hf_models_cache/downloading
+
+                    echo "" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/layout/model/current/.tar.gz.part.$PART; \
+                      while [ $RETRIES -lt $MAX_RETRIES ]; do \
+                        echo "Download [attempt $RETRIES] layout.tar.gz.part.$PART"; \
+                        wget -q -O /app/hf_models_cache/layout.tar.gz.part.$PART $URL && { echo "Downloaded layout.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
+                        echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
+                      done; \
+                      [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm /app/hf_models_cache/downloading; exit 1; }; \
+                      echo "Unzipping layout.tar.gz.part.$PART..."; tar -xzf /app/hf_models_cache/layout.tar.gz.part.$PART -C /app/hf_models_cache/; echo "Unzipping layout.tar.gz.part.$PART complete...";'
+
+                    rm /app/hf_models_cache/layout.tar.*
+                    rm /app/hf_models_cache/downloading
+                    touch /app/hf_models_cache/complete.
+                  }
+                  if [ ! -f /app/hf_models_cache/complete. ]; then
+                    if [ ! -f /app/hf_models_cache/downloading ]; then
+                      download_and_extract_model
+                    else
+                      echo "Download in progress by another pod. Waiting..."
+                      while [ -f /app/hf_models_cache/downloading ] || [ ! -f /app/hf_models_cache/complete. ]; do
+                        sleep $((3 + RANDOM % 2))
+                      done
+
+                      if [ ! -f /app/hf_models_cache/complete. ]; then
+                        download_and_extract_model
+                      else
+                        echo "Model cache ready."
+                      fi
+                    fi
+                  else
+                    echo "Model cache already exists. Skipping download."
+                  fi
+
+                  echo "Model load done."
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: download-model
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3903,6 +4438,24 @@
                 path: /usr/bin
                 type: Directory
               name: host-usr-bin
+            - name: model-volume
+              persistentVolumeClaim:
+                claimName: layout-model
+  2: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: layout-inference
+      name: layout-model
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: eyelevel-pv
 'extract: inference':
   1: |
     apiVersion: apps/v1
@@ -4007,6 +4560,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
               workingDir: /app
           initContainers:
             - command:
@@ -4050,6 +4605,65 @@
                   name: host-bin
                 - mountPath: /host-usr-bin
                   name: host-usr-bin
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  download_and_extract_model() {
+                    echo "Model downloading started..."
+
+                    touch /app/hf_models_cache/downloading
+
+                    echo "" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/layout/model/current/.tar.gz.part.$PART; \
+                      while [ $RETRIES -lt $MAX_RETRIES ]; do \
+                        echo "Download [attempt $RETRIES] layout.tar.gz.part.$PART"; \
+                        wget -q -O /app/hf_models_cache/layout.tar.gz.part.$PART $URL && { echo "Downloaded layout.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
+                        echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
+                      done; \
+                      [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm /app/hf_models_cache/downloading; exit 1; }; \
+                      echo "Unzipping layout.tar.gz.part.$PART..."; tar -xzf /app/hf_models_cache/layout.tar.gz.part.$PART -C /app/hf_models_cache/; echo "Unzipping layout.tar.gz.part.$PART complete...";'
+
+                    rm /app/hf_models_cache/layout.tar.*
+                    rm /app/hf_models_cache/downloading
+                    touch /app/hf_models_cache/complete.
+                  }
+                  if [ ! -f /app/hf_models_cache/complete. ]; then
+                    if [ ! -f /app/hf_models_cache/downloading ]; then
+                      download_and_extract_model
+                    else
+                      echo "Download in progress by another pod. Waiting..."
+                      while [ -f /app/hf_models_cache/downloading ] || [ ! -f /app/hf_models_cache/complete. ]; do
+                        sleep $((3 + RANDOM % 2))
+                      done
+
+                      if [ ! -f /app/hf_models_cache/complete. ]; then
+                        download_and_extract_model
+                      else
+                        echo "Model cache ready."
+                      fi
+                    fi
+                  else
+                    echo "Model cache already exists. Skipping download."
+                  fi
+
+                  echo "Model load done."
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: download-model
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4096,7 +4710,25 @@
                 path: /usr/bin
                 type: Directory
               name: host-usr-bin
+            - name: model-volume
+              persistentVolumeClaim:
+                claimName: layout-model
   2: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: layout-inference
+      name: layout-model
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: eyelevel-pv
+  3: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4341,7 +4973,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: summary-model
-  3: |
+  4: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -4351,7 +4983,7 @@
       namespace: eyelevel
     spec:
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       resources:
         requests:
           storage: 20Gi
@@ -4446,6 +5078,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
               workingDir: /app
           initContainers:
             - command:
@@ -4489,6 +5123,57 @@
                   name: host-bin
                 - mountPath: /host-usr-bin
                   name: host-usr-bin
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  download_and_extract_model() {
+                    echo "Model downloading started..."
+
+                    touch /app/hf_models_cache/downloading
+
+                    echo "" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/myapp/model/current/.tar.gz.part.$PART; \
+                      while [ $RETRIES -lt $MAX_RETRIES ]; do \
+                        echo "Download [attempt $RETRIES] myapp.tar.gz.part.$PART"; \
+                        wget -q -O /app/hf_models_cache/myapp.tar.gz.part.$PART $URL && { echo "Downloaded myapp.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
+                        echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
+                      done; \
+                      [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm /app/hf_models_cache/downloading; exit 1; }; \
+                      echo "Unzipping myapp.tar.gz.part.$PART..."; tar -xzf /app/hf_models_cache/myapp.tar.gz.part.$PART -C /app/hf_models_cache/; echo "Unzipping myapp.tar.gz.part.$PART complete...";'
+
+                    rm /app/hf_models_cache/myapp.tar.*
+                    rm /app/hf_models_cache/downloading
+                    touch /app/hf_models_cache/complete.
+                  }
+                  if [ ! -f /app/hf_models_cache/complete. ]; then
+                    if [ ! -f /app/hf_models_cache/downloading ]; then
+                      download_and_extract_model
+                    else
+                      echo "Download in progress by another pod. Waiting..."
+                      while [ -f /app/hf_models_cache/downloading ] || [ ! -f /app/hf_models_cache/complete. ]; do
+                        sleep $((3 + RANDOM % 2))
+                      done
+
+                      if [ ! -f /app/hf_models_cache/complete. ]; then
+                        download_and_extract_model
+                      else
+                        echo "Model cache ready."
+                      fi
+                    fi
+                  else
+                    echo "Model cache already exists. Skipping download."
+                  fi
+
+                  echo "Model load done."
+              image: test.image:v1
+              imagePullPolicy: Always
+              name: download-model
+              securityContext:
+                readOnlyRootFilesystem: true
+              volumeMounts:
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
           nodeSelector:
             disktype: ssd
           securityContext:
@@ -4531,7 +5216,25 @@
                 path: /usr/bin
                 type: Directory
               name: host-usr-bin
+            - name: model-volume
+              persistentVolumeClaim:
+                claimName: myapp-model
   2: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: myapp-inference
+      name: myapp-model
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: eyelevel-pv
+  3: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4774,7 +5477,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: myapp-model
-  3: |
+  4: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -4784,12 +5487,12 @@
       namespace: eyelevel
     spec:
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       resources:
         requests:
           storage: 1Gi
       storageClassName: eyelevel-pv
-  4: |
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -5000,7 +5703,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: test-pvc
-  5: |
+  6: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -5115,6 +5818,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
               workingDir: /app
           initContainers:
             - command:
@@ -5131,6 +5836,65 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  download_and_extract_model() {
+                    echo "Model downloading started..."
+
+                    touch /app/hf_models_cache/downloading
+
+                    echo "" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/layout/model/current/.tar.gz.part.$PART; \
+                      while [ $RETRIES -lt $MAX_RETRIES ]; do \
+                        echo "Download [attempt $RETRIES] layout.tar.gz.part.$PART"; \
+                        wget -q -O /app/hf_models_cache/layout.tar.gz.part.$PART $URL && { echo "Downloaded layout.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
+                        echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
+                      done; \
+                      [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm /app/hf_models_cache/downloading; exit 1; }; \
+                      echo "Unzipping layout.tar.gz.part.$PART..."; tar -xzf /app/hf_models_cache/layout.tar.gz.part.$PART -C /app/hf_models_cache/; echo "Unzipping layout.tar.gz.part.$PART complete...";'
+
+                    rm /app/hf_models_cache/layout.tar.*
+                    rm /app/hf_models_cache/downloading
+                    touch /app/hf_models_cache/complete.
+                  }
+                  if [ ! -f /app/hf_models_cache/complete. ]; then
+                    if [ ! -f /app/hf_models_cache/downloading ]; then
+                      download_and_extract_model
+                    else
+                      echo "Download in progress by another pod. Waiting..."
+                      while [ -f /app/hf_models_cache/downloading ] || [ ! -f /app/hf_models_cache/complete. ]; do
+                        sleep $((3 + RANDOM % 2))
+                      done
+
+                      if [ ! -f /app/hf_models_cache/complete. ]; then
+                        download_and_extract_model
+                      else
+                        echo "Model cache ready."
+                      fi
+                    fi
+                  else
+                    echo "Model cache already exists. Skipping download."
+                  fi
+
+                  echo "Model load done."
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: download-model
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -5156,7 +5920,25 @@
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
+            - name: model-volume
+              persistentVolumeClaim:
+                claimName: layout-model
   2: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: layout-inference
+      name: layout-model
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: eyelevel-pv
+  3: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -5352,7 +6134,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: ranker-model
-  3: |
+  4: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -5362,12 +6144,12 @@
       namespace: eyelevel
     spec:
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       resources:
         requests:
           storage: 10Gi
       storageClassName: eyelevel-pv
-  4: |
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -5560,7 +6342,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: summary-model
-  5: |
+  6: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -5570,7 +6352,7 @@
       namespace: eyelevel
     spec:
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       resources:
         requests:
           storage: 20Gi
@@ -5673,6 +6455,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
               workingDir: /app
           initContainers:
             - command:
@@ -5689,6 +6473,63 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: IfNotPresent
               name: wait-for-file-storage
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  download_and_extract_model() {
+                    echo "Model downloading started..."
+
+                    touch /app/hf_models_cache/downloading
+
+                    echo "" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/layout/model/current/.tar.gz.part.$PART; \
+                      while [ $RETRIES -lt $MAX_RETRIES ]; do \
+                        echo "Download [attempt $RETRIES] layout.tar.gz.part.$PART"; \
+                        wget -q -O /app/hf_models_cache/layout.tar.gz.part.$PART $URL && { echo "Downloaded layout.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
+                        echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
+                      done; \
+                      [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm /app/hf_models_cache/downloading; exit 1; }; \
+                      echo "Unzipping layout.tar.gz.part.$PART..."; tar -xzf /app/hf_models_cache/layout.tar.gz.part.$PART -C /app/hf_models_cache/; echo "Unzipping layout.tar.gz.part.$PART complete...";'
+
+                    rm /app/hf_models_cache/layout.tar.*
+                    rm /app/hf_models_cache/downloading
+                    touch /app/hf_models_cache/complete.
+                  }
+                  if [ ! -f /app/hf_models_cache/complete. ]; then
+                    if [ ! -f /app/hf_models_cache/downloading ]; then
+                      download_and_extract_model
+                    else
+                      echo "Download in progress by another pod. Waiting..."
+                      while [ -f /app/hf_models_cache/downloading ] || [ ! -f /app/hf_models_cache/complete. ]; do
+                        sleep $((3 + RANDOM % 2))
+                      done
+
+                      if [ ! -f /app/hf_models_cache/complete. ]; then
+                        download_and_extract_model
+                      else
+                        echo "Model cache ready."
+                      fi
+                    fi
+                  else
+                    echo "Model cache already exists. Skipping download."
+                  fi
+
+                  echo "Model load done."
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: download-model
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -5710,7 +6551,25 @@
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
+            - name: model-volume
+              persistentVolumeClaim:
+                claimName: layout-model
   2: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: layout-inference
+      name: layout-model
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: eyelevel-pv
+  3: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -5898,7 +6757,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: ranker-model
-  3: |
+  4: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -5908,12 +6767,12 @@
       namespace: eyelevel
     spec:
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       resources:
         requests:
           storage: 10Gi
       storageClassName: eyelevel-pv
-  4: |
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -6098,7 +6957,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: summary-model
-  5: |
+  6: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -6108,7 +6967,7 @@
       namespace: eyelevel
     spec:
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       resources:
         requests:
           storage: 20Gi
@@ -6211,6 +7070,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
               workingDir: /app
           imagePullSecrets:
             - name: ecr-public-pull
@@ -6229,6 +7090,63 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
               imagePullPolicy: Always
               name: wait-for-file-storage
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  download_and_extract_model() {
+                    echo "Model downloading started..."
+
+                    touch /app/hf_models_cache/downloading
+
+                    echo "" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/layout/model/current/.tar.gz.part.$PART; \
+                      while [ $RETRIES -lt $MAX_RETRIES ]; do \
+                        echo "Download [attempt $RETRIES] layout.tar.gz.part.$PART"; \
+                        wget -q -O /app/hf_models_cache/layout.tar.gz.part.$PART $URL && { echo "Downloaded layout.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
+                        echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
+                      done; \
+                      [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm /app/hf_models_cache/downloading; exit 1; }; \
+                      echo "Unzipping layout.tar.gz.part.$PART..."; tar -xzf /app/hf_models_cache/layout.tar.gz.part.$PART -C /app/hf_models_cache/; echo "Unzipping layout.tar.gz.part.$PART complete...";'
+
+                    rm /app/hf_models_cache/layout.tar.*
+                    rm /app/hf_models_cache/downloading
+                    touch /app/hf_models_cache/complete.
+                  }
+                  if [ ! -f /app/hf_models_cache/complete. ]; then
+                    if [ ! -f /app/hf_models_cache/downloading ]; then
+                      download_and_extract_model
+                    else
+                      echo "Download in progress by another pod. Waiting..."
+                      while [ -f /app/hf_models_cache/downloading ] || [ ! -f /app/hf_models_cache/complete. ]; do
+                        sleep $((3 + RANDOM % 2))
+                      done
+
+                      if [ ! -f /app/hf_models_cache/complete. ]; then
+                        download_and_extract_model
+                      else
+                        echo "Model cache ready."
+                      fi
+                    fi
+                  else
+                    echo "Model cache already exists. Skipping download."
+                  fi
+
+                  echo "Model load done."
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: Always
+              name: download-model
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -6250,7 +7168,25 @@
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
+            - name: model-volume
+              persistentVolumeClaim:
+                claimName: layout-model
   2: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: layout-inference
+      name: layout-model
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: openshift-cephfs-rwx
+  3: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -6440,7 +7376,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: ranker-model
-  3: |
+  4: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -6450,12 +7386,12 @@
       namespace: eyelevel
     spec:
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       resources:
         requests:
           storage: 10Gi
-      storageClassName: eyelevel-pv
-  4: |
+      storageClassName: openshift-cephfs-rwx
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -6645,7 +7581,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: summary-model
-  5: |
+  6: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -6655,10 +7591,10 @@
       namespace: eyelevel
     spec:
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       resources:
         requests:
           storage: 20Gi
-      storageClassName: eyelevel-pv
+      storageClassName: openshift-cephfs-rwx
 'disabled: inference': {}
 'workspace-enabled: inference': {}

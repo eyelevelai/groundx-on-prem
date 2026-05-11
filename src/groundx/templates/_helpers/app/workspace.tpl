@@ -258,7 +258,7 @@ workspace-data
 {{- $in := include "groundx.workspace.values" . | fromYaml -}}
 {{- $pvc := dig "pvc" dict $in -}}
 {{- $defaults := dict
-  "access" "ReadWriteMany"
+  "access" (include "groundx.pvAccessMode" .)
   "capacity" "20Gi"
   "class" (include "groundx.pvClass" .)
   "name" (printf "%s-data" (include "groundx.workspace.serviceName" .))
