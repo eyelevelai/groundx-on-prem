@@ -12,6 +12,11 @@ workspace:
   managedRepoVisibility: "private"
   mysqlConnectTimeoutSeconds: 20
   node: eyelevel-cpu-only
+  pvc:
+    access: ReadWriteMany
+    capacity: 25Gi
+    class: efs-sc
+    name: workspace-test-data
   workspaceMinFreeBytes: 1048576
   workspaceMinFreePercent: 5
   workspaceRoot: /mnt/workspaces

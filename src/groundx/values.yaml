@@ -342,8 +342,10 @@ workspace:
   token: ""
   existingSecret: ""
   publishDryRun: true
+  gitProvider: github
 
   github:
+    apiBaseUrl: https://api.github.com
     appId: ""
     installationId: ""
     privateKeyPem: ""
@@ -351,8 +353,18 @@ workspace:
       name: ""
       key: private-key.pem
 
-  persistence:
-    existingClaim: ""
+  gitlab:
+    apiBaseUrl: https://gitlab.com/api/v4
+    token: ""
+    tokenSecret:
+      name: ""
+      key: token
+
+  pvc:
+    name: workspace-data
+    class: eyelevel-pv
+    access: ReadWriteMany
+    capacity: 20Gi
 
   api:
     enabled: true

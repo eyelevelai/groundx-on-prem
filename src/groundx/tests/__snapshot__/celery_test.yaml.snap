@@ -9786,7 +9786,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0037a0f3a261f7a971fff54eb9c7680185751efc4d99cd2b8b0f1547f220f4a7
+            config-hash: d3ede29b5b4bd64ac2487eb6ca4e50781ebdc50971fd503c3e436fb0814be513
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-cleanup
@@ -9895,8 +9895,9 @@
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
   2: |
     apiVersion: apps/v1
     kind: Deployment
@@ -9917,7 +9918,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0037a0f3a261f7a971fff54eb9c7680185751efc4d99cd2b8b0f1547f220f4a7
+            config-hash: d3ede29b5b4bd64ac2487eb6ca4e50781ebdc50971fd503c3e436fb0814be513
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-command
@@ -10026,8 +10027,9 @@
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
   3: |
     apiVersion: apps/v1
     kind: Deployment
@@ -10048,7 +10050,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0037a0f3a261f7a971fff54eb9c7680185751efc4d99cd2b8b0f1547f220f4a7
+            config-hash: d3ede29b5b4bd64ac2487eb6ca4e50781ebdc50971fd503c3e436fb0814be513
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-provision
@@ -10157,8 +10159,9 @@
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
   4: |
     apiVersion: apps/v1
     kind: Deployment
@@ -10179,7 +10182,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0037a0f3a261f7a971fff54eb9c7680185751efc4d99cd2b8b0f1547f220f4a7
+            config-hash: d3ede29b5b4bd64ac2487eb6ca4e50781ebdc50971fd503c3e436fb0814be513
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-publish
@@ -10288,8 +10291,9 @@
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
   5: |
     apiVersion: apps/v1
     kind: Deployment
@@ -10310,7 +10314,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0037a0f3a261f7a971fff54eb9c7680185751efc4d99cd2b8b0f1547f220f4a7
+            config-hash: d3ede29b5b4bd64ac2487eb6ca4e50781ebdc50971fd503c3e436fb0814be513
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-workspace
@@ -10419,6 +10423,7 @@
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
 'disabled: celery': {}

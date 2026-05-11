@@ -19,7 +19,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 35b043ee5842b301942564e33d36d7c98d6df8aafd1384e01dd773e8ea5b8837
+            config-hash: 080672404770f3dfcbbbe0c2f8e03189082766e00c58f583fe2298989513f835
             gunicorn-conf-hash: 7b77a5ecbb71e70922f104c678cbaf4ce20a98b86db5735dab4924809990de45
             workspace.groundx.ai/component: api
           labels:
@@ -127,8 +127,9 @@
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-test-data
   2: |
     apiVersion: v1
     kind: Service
@@ -146,6 +147,21 @@
         app: workspace-api
       type: ClusterIP
   3: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-test-data
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 25Gi
+      storageClassName: efs-sc
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -165,7 +181,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 35b043ee5842b301942564e33d36d7c98d6df8aafd1384e01dd773e8ea5b8837
+            config-hash: 080672404770f3dfcbbbe0c2f8e03189082766e00c58f583fe2298989513f835
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-cleanup
@@ -274,9 +290,10 @@
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  4: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-test-data
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -296,7 +313,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 35b043ee5842b301942564e33d36d7c98d6df8aafd1384e01dd773e8ea5b8837
+            config-hash: 080672404770f3dfcbbbe0c2f8e03189082766e00c58f583fe2298989513f835
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-command
@@ -413,9 +430,10 @@
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  5: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-test-data
+  6: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -435,7 +453,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 35b043ee5842b301942564e33d36d7c98d6df8aafd1384e01dd773e8ea5b8837
+            config-hash: 080672404770f3dfcbbbe0c2f8e03189082766e00c58f583fe2298989513f835
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-provision
@@ -544,9 +562,10 @@
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  6: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-test-data
+  7: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -566,7 +585,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 35b043ee5842b301942564e33d36d7c98d6df8aafd1384e01dd773e8ea5b8837
+            config-hash: 080672404770f3dfcbbbe0c2f8e03189082766e00c58f583fe2298989513f835
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-publish
@@ -675,9 +694,10 @@
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  7: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-test-data
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -697,7 +717,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 35b043ee5842b301942564e33d36d7c98d6df8aafd1384e01dd773e8ea5b8837
+            config-hash: 080672404770f3dfcbbbe0c2f8e03189082766e00c58f583fe2298989513f835
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-workspace
@@ -806,9 +826,10 @@
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  8: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-test-data
+  9: |
     apiVersion: v1
     data:
       WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
@@ -822,7 +843,7 @@
       name: workspace-secret
       namespace: eyelevel
     type: Opaque
-  9: |
+  10: |
     apiVersion: v1
     data:
       config.py: |
@@ -839,12 +860,16 @@
             celery_task_always_eager=False,
             celery_task_soft_time_limit_seconds=600,
             command_timeout_seconds=180,
+            git_provider="github",
             github_api_base_url="https://api.github.com",
             github_app_id="",
             github_app_installation_id="",
             github_app_private_key_path="",
             github_app_private_key_pem="",
             github_token_ttl_seconds=3600,
+            gitlab_api_base_url="https://gitlab.com/api/v4",
+            gitlab_token="",
+            gitlab_token_path="",
             managed_repo_name_prefix="workspace-test",
             managed_repo_owner="GroundX-Studio",
             managed_repo_visibility="private",
@@ -870,7 +895,7 @@
         version: 0.1.0
       name: workspace-config-py-map
       namespace: eyelevel
-  10: |
+  11: |
     apiVersion: v1
     data:
       gunicorn_conf.py: |
@@ -893,7 +918,7 @@
         version: 0.1.0
       name: workspace-gunicorn-conf-py-map
       namespace: eyelevel
-  11: |
+  12: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -922,7 +947,7 @@
         version: 0.1.0
       name: workspace-provision-supervisord-conf-map
       namespace: eyelevel
-  12: |
+  13: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -951,7 +976,7 @@
         version: 0.1.0
       name: workspace-workspace-supervisord-conf-map
       namespace: eyelevel
-  13: |
+  14: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -993,7 +1018,7 @@
         version: 0.1.0
       name: workspace-command-supervisord-conf-map
       namespace: eyelevel
-  14: |
+  15: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -1022,7 +1047,7 @@
         version: 0.1.0
       name: workspace-publish-supervisord-conf-map
       namespace: eyelevel
-  15: |
+  16: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -1097,7 +1122,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9e1a839da7fc67f026d377952cbc04a7f7c64484b1e0488ee51f6e64721851af
+            config-hash: 6276c706f9d40868fa9b3704840e7e40b6d46316037b1ab7c0cde910f282efdf
             gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
           labels:
             app: workspace-api
@@ -1212,8 +1237,9 @@
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
   2: |
     apiVersion: v1
     kind: Service
@@ -1231,6 +1257,21 @@
         app: workspace-api
       type: ClusterIP
   3: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-data
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: eyelevel-pv
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1250,7 +1291,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9e1a839da7fc67f026d377952cbc04a7f7c64484b1e0488ee51f6e64721851af
+            config-hash: 6276c706f9d40868fa9b3704840e7e40b6d46316037b1ab7c0cde910f282efdf
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-cleanup
@@ -1361,9 +1402,10 @@
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  4: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1383,7 +1425,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9e1a839da7fc67f026d377952cbc04a7f7c64484b1e0488ee51f6e64721851af
+            config-hash: 6276c706f9d40868fa9b3704840e7e40b6d46316037b1ab7c0cde910f282efdf
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-command
@@ -1494,9 +1536,10 @@
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  5: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  6: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1516,7 +1559,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9e1a839da7fc67f026d377952cbc04a7f7c64484b1e0488ee51f6e64721851af
+            config-hash: 6276c706f9d40868fa9b3704840e7e40b6d46316037b1ab7c0cde910f282efdf
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-provision
@@ -1627,9 +1670,10 @@
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  6: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  7: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1649,7 +1693,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9e1a839da7fc67f026d377952cbc04a7f7c64484b1e0488ee51f6e64721851af
+            config-hash: 6276c706f9d40868fa9b3704840e7e40b6d46316037b1ab7c0cde910f282efdf
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-publish
@@ -1760,9 +1804,10 @@
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  7: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1782,7 +1827,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9e1a839da7fc67f026d377952cbc04a7f7c64484b1e0488ee51f6e64721851af
+            config-hash: 6276c706f9d40868fa9b3704840e7e40b6d46316037b1ab7c0cde910f282efdf
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-workspace
@@ -1893,9 +1938,10 @@
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  8: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  9: |
     apiVersion: v1
     data:
       WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
@@ -1909,7 +1955,7 @@
       name: workspace-secret
       namespace: eyelevel
     type: Opaque
-  9: |
+  10: |
     apiVersion: v1
     data:
       GITHUB_APP_PRIVATE_KEY_PEM: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCnRlc3QKLS0tLS1FTkQgUFJJVkFURSBLRVktLS0tLQo=
@@ -1944,7 +1990,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 262b12649a30b2b2b0f0233598c9b3edcf97f5ddea994be4e0399ee7f146b3dc
+            config-hash: 2f502d38752812bb4eafc79d2cb41d93dd73a897ab33daed3a76dfba60dcd068
             gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
           labels:
             app: workspace-api
@@ -2060,8 +2106,9 @@
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
             - name: workspace-github-private-key
               secret:
                 items:
@@ -2085,6 +2132,21 @@
         app: workspace-api
       type: ClusterIP
   3: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-data
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: eyelevel-pv
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2104,7 +2166,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 262b12649a30b2b2b0f0233598c9b3edcf97f5ddea994be4e0399ee7f146b3dc
+            config-hash: 2f502d38752812bb4eafc79d2cb41d93dd73a897ab33daed3a76dfba60dcd068
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-cleanup
@@ -2216,15 +2278,16 @@
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
             - name: workspace-github-private-key
               secret:
                 items:
                   - key: private-key.pem
                     path: private-key.pem
                 secretName: workspace-github-app
-  4: |
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2244,7 +2307,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 262b12649a30b2b2b0f0233598c9b3edcf97f5ddea994be4e0399ee7f146b3dc
+            config-hash: 2f502d38752812bb4eafc79d2cb41d93dd73a897ab33daed3a76dfba60dcd068
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-command
@@ -2356,15 +2419,16 @@
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
             - name: workspace-github-private-key
               secret:
                 items:
                   - key: private-key.pem
                     path: private-key.pem
                 secretName: workspace-github-app
-  5: |
+  6: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2384,7 +2448,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 262b12649a30b2b2b0f0233598c9b3edcf97f5ddea994be4e0399ee7f146b3dc
+            config-hash: 2f502d38752812bb4eafc79d2cb41d93dd73a897ab33daed3a76dfba60dcd068
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-provision
@@ -2496,15 +2560,16 @@
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
             - name: workspace-github-private-key
               secret:
                 items:
                   - key: private-key.pem
                     path: private-key.pem
                 secretName: workspace-github-app
-  6: |
+  7: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2524,7 +2589,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 262b12649a30b2b2b0f0233598c9b3edcf97f5ddea994be4e0399ee7f146b3dc
+            config-hash: 2f502d38752812bb4eafc79d2cb41d93dd73a897ab33daed3a76dfba60dcd068
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-publish
@@ -2636,15 +2701,16 @@
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
             - name: workspace-github-private-key
               secret:
                 items:
                   - key: private-key.pem
                     path: private-key.pem
                 secretName: workspace-github-app
-  7: |
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2664,7 +2730,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 262b12649a30b2b2b0f0233598c9b3edcf97f5ddea994be4e0399ee7f146b3dc
+            config-hash: 2f502d38752812bb4eafc79d2cb41d93dd73a897ab33daed3a76dfba60dcd068
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-workspace
@@ -2776,15 +2842,16 @@
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
             - name: workspace-github-private-key
               secret:
                 items:
                   - key: private-key.pem
                     path: private-key.pem
                 secretName: workspace-github-app
-  8: |
+  9: |
     apiVersion: v1
     data:
       WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
@@ -2798,7 +2865,7 @@
       name: workspace-secret
       namespace: eyelevel
     type: Opaque
-  9: |
+  10: |
     apiVersion: v1
     data:
       config.py: |
@@ -2815,12 +2882,964 @@
             celery_task_always_eager=False,
             celery_task_soft_time_limit_seconds=900,
             command_timeout_seconds=300,
+            git_provider="github",
             github_api_base_url="https://github.enterprise.example/api/v3",
             github_app_id="12345",
             github_app_installation_id="67890",
             github_app_private_key_path="/var/run/secrets/workspace/github/private-key.pem",
             github_app_private_key_pem="",
             github_token_ttl_seconds=1800,
+            gitlab_api_base_url="https://gitlab.com/api/v4",
+            gitlab_token="",
+            gitlab_token_path="",
+            managed_repo_name_prefix="workspace",
+            managed_repo_owner="",
+            managed_repo_visibility="private",
+            mysql_connect_timeout_seconds=10,
+            mysql_database="eyelevel",
+            mysql_host="db-cluster-haproxy.eyelevel.svc.cluster.local",
+            mysql_password="",
+            mysql_port=3306,
+            mysql_username="",
+            publish_dry_run=False,
+            runner_token="test-runner-token",
+            service="workspace",
+            workspace_min_free_bytes=0,
+            workspace_min_free_percent=0,
+            workspace_root=Path("/tmp/workspaces"),
+        )
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-config-py-map
+      namespace: eyelevel
+'enabled: workspace gitlab publish config':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-api
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-api
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-api
+      template:
+        metadata:
+          annotations:
+            config-hash: 1bc77e04c2d45f8fef095a11d4e21983bf88235a0b9c0a4e7fabba5ebaa4c98c
+            gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
+          labels:
+            app: workspace-api
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/bash
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 12
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              name: workspace-api
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/gunicorn_conf.py
+                  name: gunicorn-conf-volume
+                  subPath: gunicorn_conf.py
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+                - mountPath: /var/run/secrets/workspace/gitlab
+                  name: workspace-gitlab-token
+                  readOnly: true
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-gunicorn-conf-py-map
+              name: gunicorn-conf-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+            - name: workspace-gitlab-token
+              secret:
+                items:
+                  - key: token
+                    path: token
+                secretName: workspace-gitlab-token
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-api
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: workspace-api
+      type: ClusterIP
+  3: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-data
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: eyelevel-pv
+  4: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-cleanup
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-cleanup
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-cleanup
+      template:
+        metadata:
+          annotations:
+            config-hash: 1bc77e04c2d45f8fef095a11d4e21983bf88235a0b9c0a4e7fabba5ebaa4c98c
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-cleanup
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-cleanup
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+                - mountPath: /var/run/secrets/workspace/gitlab
+                  name: workspace-gitlab-token
+                  readOnly: true
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-cleanup-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+            - name: workspace-gitlab-token
+              secret:
+                items:
+                  - key: token
+                    path: token
+                secretName: workspace-gitlab-token
+  5: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-command
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-command
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-command
+      template:
+        metadata:
+          annotations:
+            config-hash: 1bc77e04c2d45f8fef095a11d4e21983bf88235a0b9c0a4e7fabba5ebaa4c98c
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-command
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-command
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+                - mountPath: /var/run/secrets/workspace/gitlab
+                  name: workspace-gitlab-token
+                  readOnly: true
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-command-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+            - name: workspace-gitlab-token
+              secret:
+                items:
+                  - key: token
+                    path: token
+                secretName: workspace-gitlab-token
+  6: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-provision
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-provision
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-provision
+      template:
+        metadata:
+          annotations:
+            config-hash: 1bc77e04c2d45f8fef095a11d4e21983bf88235a0b9c0a4e7fabba5ebaa4c98c
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-provision
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-provision
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+                - mountPath: /var/run/secrets/workspace/gitlab
+                  name: workspace-gitlab-token
+                  readOnly: true
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-provision-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+            - name: workspace-gitlab-token
+              secret:
+                items:
+                  - key: token
+                    path: token
+                secretName: workspace-gitlab-token
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-publish
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-publish
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-publish
+      template:
+        metadata:
+          annotations:
+            config-hash: 1bc77e04c2d45f8fef095a11d4e21983bf88235a0b9c0a4e7fabba5ebaa4c98c
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-publish
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-publish
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+                - mountPath: /var/run/secrets/workspace/gitlab
+                  name: workspace-gitlab-token
+                  readOnly: true
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-publish-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+            - name: workspace-gitlab-token
+              secret:
+                items:
+                  - key: token
+                    path: token
+                secretName: workspace-gitlab-token
+  8: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-workspace
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-workspace
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-workspace
+      template:
+        metadata:
+          annotations:
+            config-hash: 1bc77e04c2d45f8fef095a11d4e21983bf88235a0b9c0a4e7fabba5ebaa4c98c
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-workspace
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-workspace
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+                - mountPath: /var/run/secrets/workspace/gitlab
+                  name: workspace-gitlab-token
+                  readOnly: true
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-workspace-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+            - name: workspace-gitlab-token
+              secret:
+                items:
+                  - key: token
+                    path: token
+                secretName: workspace-gitlab-token
+  9: |
+    apiVersion: v1
+    data:
+      WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-secret
+      namespace: eyelevel
+    type: Opaque
+  10: |
+    apiVersion: v1
+    data:
+      config.py: |
+        from pathlib import Path
+
+        from settings import Settings
+
+
+        settings = Settings(
+            allowed_commands="go,npm,pytest,python,node,git",
+            celery_broker_url="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            celery_global_keyprefix="{workspace}",
+            celery_result_backend="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            celery_task_always_eager=False,
+            celery_task_soft_time_limit_seconds=900,
+            command_timeout_seconds=300,
+            git_provider="gitlab",
+            github_api_base_url="https://api.github.com",
+            github_app_id="",
+            github_app_installation_id="",
+            github_app_private_key_path="",
+            github_app_private_key_pem="",
+            github_token_ttl_seconds=3600,
+            gitlab_api_base_url="https://gitlab.example.com/api/v4",
+            gitlab_token="",
+            gitlab_token_path="/var/run/secrets/workspace/gitlab/token",
             managed_repo_name_prefix="workspace",
             managed_repo_owner="",
             managed_repo_visibility="private",
@@ -3186,7 +4205,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0037a0f3a261f7a971fff54eb9c7680185751efc4d99cd2b8b0f1547f220f4a7
+            config-hash: d3ede29b5b4bd64ac2487eb6ca4e50781ebdc50971fd503c3e436fb0814be513
             gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
           labels:
             app: workspace-api
@@ -3299,8 +4318,9 @@
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
   2: |
     apiVersion: v1
     kind: Service
@@ -3318,6 +4338,21 @@
         app: workspace-api
       type: ClusterIP
   3: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-data
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: eyelevel-pv
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3337,7 +4372,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0037a0f3a261f7a971fff54eb9c7680185751efc4d99cd2b8b0f1547f220f4a7
+            config-hash: d3ede29b5b4bd64ac2487eb6ca4e50781ebdc50971fd503c3e436fb0814be513
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-cleanup
@@ -3446,9 +4481,10 @@
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  4: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3468,7 +4504,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0037a0f3a261f7a971fff54eb9c7680185751efc4d99cd2b8b0f1547f220f4a7
+            config-hash: d3ede29b5b4bd64ac2487eb6ca4e50781ebdc50971fd503c3e436fb0814be513
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-command
@@ -3577,9 +4613,10 @@
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  5: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  6: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3599,7 +4636,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0037a0f3a261f7a971fff54eb9c7680185751efc4d99cd2b8b0f1547f220f4a7
+            config-hash: d3ede29b5b4bd64ac2487eb6ca4e50781ebdc50971fd503c3e436fb0814be513
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-provision
@@ -3708,9 +4745,10 @@
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  6: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  7: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3730,7 +4768,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0037a0f3a261f7a971fff54eb9c7680185751efc4d99cd2b8b0f1547f220f4a7
+            config-hash: d3ede29b5b4bd64ac2487eb6ca4e50781ebdc50971fd503c3e436fb0814be513
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-publish
@@ -3839,9 +4877,10 @@
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  7: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3861,7 +4900,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0037a0f3a261f7a971fff54eb9c7680185751efc4d99cd2b8b0f1547f220f4a7
+            config-hash: d3ede29b5b4bd64ac2487eb6ca4e50781ebdc50971fd503c3e436fb0814be513
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-workspace
@@ -3970,9 +5009,10 @@
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  8: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  9: |
     apiVersion: v1
     data:
       WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
@@ -3986,7 +5026,7 @@
       name: workspace-secret
       namespace: eyelevel
     type: Opaque
-  9: |
+  10: |
     apiVersion: v1
     data:
       config.py: |
@@ -4003,12 +5043,16 @@
             celery_task_always_eager=False,
             celery_task_soft_time_limit_seconds=900,
             command_timeout_seconds=300,
+            git_provider="github",
             github_api_base_url="https://api.github.com",
             github_app_id="",
             github_app_installation_id="",
             github_app_private_key_path="",
             github_app_private_key_pem="",
             github_token_ttl_seconds=3600,
+            gitlab_api_base_url="https://gitlab.com/api/v4",
+            gitlab_token="",
+            gitlab_token_path="",
             managed_repo_name_prefix="workspace",
             managed_repo_owner="",
             managed_repo_visibility="private",
@@ -4034,7 +5078,7 @@
         version: 0.1.0
       name: workspace-config-py-map
       namespace: eyelevel
-  10: |
+  11: |
     apiVersion: v1
     data:
       gunicorn_conf.py: |
@@ -4057,7 +5101,7 @@
         version: 0.1.0
       name: workspace-gunicorn-conf-py-map
       namespace: eyelevel
-  11: |
+  12: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -4086,7 +5130,7 @@
         version: 0.1.0
       name: workspace-provision-supervisord-conf-map
       namespace: eyelevel
-  12: |
+  13: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -4115,7 +5159,7 @@
         version: 0.1.0
       name: workspace-workspace-supervisord-conf-map
       namespace: eyelevel
-  13: |
+  14: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -4144,7 +5188,7 @@
         version: 0.1.0
       name: workspace-command-supervisord-conf-map
       namespace: eyelevel
-  14: |
+  15: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -4173,7 +5217,7 @@
         version: 0.1.0
       name: workspace-publish-supervisord-conf-map
       namespace: eyelevel
-  15: |
+  16: |
     apiVersion: v1
     data:
       supervisord.conf: |

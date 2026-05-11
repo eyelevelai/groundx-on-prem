@@ -1416,6 +1416,10 @@
         "commandTimeoutSeconds": { "type": "integer" },
         "enabled": { "type": "boolean" },
         "existingSecret": { "type": "string" },
+        "gitProvider": {
+          "type": "string",
+          "enum": ["github", "gitlab"]
+        },
         "github": {
           "type": "object",
           "properties": {
@@ -1436,6 +1440,23 @@
           },
           "additionalProperties": false
         },
+        "gitlab": {
+          "type": "object",
+          "properties": {
+            "apiBaseUrl": { "type": "string" },
+            "secretName": { "type": "string" },
+            "token": { "type": "string" },
+            "tokenSecret": {
+              "type": "object",
+              "properties": {
+                "key": { "type": "string" },
+                "name": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
         "image": { "type": "string" },
         "imagePullPolicy": { "type": "string" },
         "managedRepoNamePrefix": { "type": "string" },
@@ -1443,10 +1464,13 @@
         "managedRepoVisibility": { "type": "string" },
         "mysqlConnectTimeoutSeconds": { "type": "integer" },
         "node": { "type": "string" },
-        "persistence": {
+        "pvc": {
           "type": "object",
           "properties": {
-            "existingClaim": { "type": "string" }
+            "access": { "type": "string" },
+            "capacity": { "type": "string" },
+            "class": { "type": "string" },
+            "name": { "type": "string" }
           },
           "additionalProperties": false
         },

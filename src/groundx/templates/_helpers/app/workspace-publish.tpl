@@ -178,6 +178,9 @@ true
 {{- if ne (include "groundx.workspace.github.privateKeyPem" .) "" -}}
 {{- $_ := set $data (include "groundx.workspace.githubSecretName" .) (include "groundx.workspace.githubSecretName" .) -}}
 {{- end -}}
+{{- if ne (include "groundx.workspace.gitlab.token" .) "" -}}
+{{- $_ := set $data (include "groundx.workspace.gitlabSecretName" .) (include "groundx.workspace.gitlabSecretName" .) -}}
+{{- end -}}
 {{- $cfg := dict
   "celery"       ("celery_app")
   "dependencies" (dict "cache" "cache" "db" "db")

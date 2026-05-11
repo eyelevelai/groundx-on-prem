@@ -77,6 +77,17 @@ tests:
       - ./files/values.workspace-github-pem.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "enabled: workspace gitlab publish config"
+    templates:
+      - ../templates/app/api.yaml
+      - ../templates/app/celery.yaml
+      - ../templates/resources/workspace-config-py.yaml
+      - ../templates/resources/secret.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.workspace-gitlab.yaml
+    asserts:
+      - matchSnapshot: {}
   - it: "enabled without auth: workspace fails fast"
     templates:
       - ../templates/resources/workspace-supervisord-conf.yaml

@@ -19,6 +19,7 @@
 {{- $mapPrefix := get $svcData "mapPrefix" -}}
 {{- $node := get $svcData "node" -}}
 {{- $nsl := get $svcData "nodeSelector" -}}
+{{- $pvc := get $svcData "pvc" | default dict -}}
 {{- $rp := get $svcData "replicas" -}}
 {{- $rs := get $svcData "resources" -}}
 {{- $pull := get $svcData "pull" -}}
@@ -166,5 +167,9 @@ spec:
 {{- end }}
 
 {{ include "groundx.renderInterface" (dict "name" $svc "lb" $int "root" $) }}
+
+{{- if not (empty $pvc) }}
+{{ include "groundx.renderPVC" (dict "ctx" $pvc "app" $svc "root" $) }}
+{{- end }}
 
 {{ end }}

@@ -78,6 +78,11 @@ false
 {{ dig "github" dict $in | toYaml }}
 {{- end }}
 
+{{- define "groundx.workspace.gitProvider" -}}
+{{- $in := include "groundx.workspace.values" . | fromYaml -}}
+{{ dig "gitProvider" "github" $in }}
+{{- end }}
+
 {{- define "groundx.workspace.github.apiBaseUrl" -}}
 {{- $g := include "groundx.workspace.github" . | fromYaml -}}
 {{ dig "apiBaseUrl" "https://api.github.com" $g }}
@@ -123,6 +128,41 @@ false
 {{ dig "tokenTtlSeconds" 3600 $g }}
 {{- end }}
 
+{{- define "groundx.workspace.gitlab" -}}
+{{- $in := include "groundx.workspace.values" . | fromYaml -}}
+{{ dig "gitlab" dict $in | toYaml }}
+{{- end }}
+
+{{- define "groundx.workspace.gitlab.apiBaseUrl" -}}
+{{- $g := include "groundx.workspace.gitlab" . | fromYaml -}}
+{{ dig "apiBaseUrl" "https://gitlab.com/api/v4" $g }}
+{{- end }}
+
+{{- define "groundx.workspace.gitlab.token" -}}
+{{- $g := include "groundx.workspace.gitlab" . | fromYaml -}}
+{{ dig "token" "" $g }}
+{{- end }}
+
+{{- define "groundx.workspace.gitlab.tokenSecretName" -}}
+{{- $g := include "groundx.workspace.gitlab" . | fromYaml -}}
+{{- $s := dig "tokenSecret" dict $g -}}
+{{ dig "name" "" $s }}
+{{- end }}
+
+{{- define "groundx.workspace.gitlab.tokenSecretKey" -}}
+{{- $g := include "groundx.workspace.gitlab" . | fromYaml -}}
+{{- $s := dig "tokenSecret" dict $g -}}
+{{ dig "key" "token" $s }}
+{{- end }}
+
+{{- define "groundx.workspace.gitlab.tokenPath" -}}
+{{- if ne (include "groundx.workspace.gitlab.tokenSecretName" .) "" -}}
+/var/run/secrets/workspace/gitlab/token
+{{- else -}}
+{{- "" -}}
+{{- end }}
+{{- end }}
+
 {{- define "groundx.workspace.managedRepoNamePrefix" -}}
 {{- $in := include "groundx.workspace.values" . | fromYaml -}}
 {{ dig "managedRepoNamePrefix" "workspace" $in }}
@@ -163,6 +203,11 @@ false
 {{ coalesce (dig "secretName" "" $g) (printf "%s-github-secret" (include "groundx.workspace.serviceName" .)) }}
 {{- end }}
 
+{{- define "groundx.workspace.gitlabSecretName" -}}
+{{- $g := include "groundx.workspace.gitlab" . | fromYaml -}}
+{{ coalesce (dig "secretName" "" $g) (printf "%s-gitlab-secret" (include "groundx.workspace.serviceName" .)) }}
+{{- end }}
+
 {{- define "groundx.workspace.secrets" -}}
 {{- $token := include "groundx.workspace.token" . -}}
 {{- $cfg := dict "name" (include "groundx.workspace.secretName" .) -}}
@@ -177,6 +222,15 @@ false
 {{- $cfg := dict "name" (include "groundx.workspace.githubSecretName" .) -}}
 {{- if ne $privateKeyPem "" -}}
 {{- $_ := set $cfg "data" (dict "GITHUB_APP_PRIVATE_KEY_PEM" $privateKeyPem) -}}
+{{- end -}}
+{{- $cfg | toYaml -}}
+{{- end }}
+
+{{- define "groundx.workspace.gitlab.secrets" -}}
+{{- $token := include "groundx.workspace.gitlab.token" . -}}
+{{- $cfg := dict "name" (include "groundx.workspace.gitlabSecretName" .) -}}
+{{- if ne $token "" -}}
+{{- $_ := set $cfg "data" (dict "GITLAB_TOKEN" $token) -}}
 {{- end -}}
 {{- $cfg | toYaml -}}
 {{- end }}
@@ -200,18 +254,23 @@ false
 workspace-data
 {{- end }}
 
-{{- define "groundx.workspace.workspaceVolume" -}}
+{{- define "groundx.workspace.pvc" -}}
 {{- $in := include "groundx.workspace.values" . | fromYaml -}}
-{{- $p := dig "persistence" dict $in -}}
-{{- $claim := dig "existingClaim" "" $p -}}
-{{- if ne $claim "" -}}
+{{- $pvc := dig "pvc" dict $in -}}
+{{- $defaults := dict
+  "access" "ReadWriteMany"
+  "capacity" "20Gi"
+  "class" (include "groundx.pvClass" .)
+  "name" (printf "%s-data" (include "groundx.workspace.serviceName" .))
+-}}
+{{ mergeOverwrite $defaults $pvc | toYaml }}
+{{- end }}
+
+{{- define "groundx.workspace.workspaceVolume" -}}
+{{- $pvc := include "groundx.workspace.pvc" . | fromYaml -}}
 - name: {{ include "groundx.workspace.workspaceVolumeName" . }}
   persistentVolumeClaim:
-    claimName: {{ $claim }}
-{{- else -}}
-- name: {{ include "groundx.workspace.workspaceVolumeName" . }}
-  emptyDir: {}
-{{- end -}}
+    claimName: {{ get $pvc "name" }}
 {{- end }}
 
 {{- define "groundx.workspace.workspaceVolumeMount" -}}
@@ -243,14 +302,40 @@ workspace-github-private-key
 {{- end }}
 {{- end }}
 
+{{- define "groundx.workspace.gitlabTokenVolumeName" -}}
+workspace-gitlab-token
+{{- end }}
+
+{{- define "groundx.workspace.gitlabTokenVolume" -}}
+{{- $secretName := include "groundx.workspace.gitlab.tokenSecretName" . -}}
+{{- if ne $secretName "" -}}
+- name: {{ include "groundx.workspace.gitlabTokenVolumeName" . }}
+  secret:
+    secretName: {{ $secretName }}
+    items:
+      - key: {{ include "groundx.workspace.gitlab.tokenSecretKey" . }}
+        path: token
+{{- end }}
+{{- end }}
+
+{{- define "groundx.workspace.gitlabTokenVolumeMount" -}}
+{{- if ne (include "groundx.workspace.gitlab.tokenSecretName" .) "" -}}
+- name: {{ include "groundx.workspace.gitlabTokenVolumeName" . }}
+  mountPath: /var/run/secrets/workspace/gitlab
+  readOnly: true
+{{- end }}
+{{- end }}
+
 {{- define "groundx.workspace.volumeMounts" -}}
 {{ include "groundx.workspace.workspaceVolumeMount" . }}
 {{ include "groundx.workspace.githubPrivateKeyVolumeMount" . }}
+{{ include "groundx.workspace.gitlabTokenVolumeMount" . }}
 {{- end }}
 
 {{- define "groundx.workspace.volumes" -}}
 {{ include "groundx.workspace.workspaceVolume" . }}
 {{ include "groundx.workspace.githubPrivateKeyVolume" . }}
+{{ include "groundx.workspace.gitlabTokenVolume" . }}
 {{- end }}
 
 {{- define "groundx.workspace.services" -}}

@@ -386,7 +386,7 @@ Set `workspace.enabled: true` and provide either `workspace.token` or `workspace
 
 The runner follows the standard Python microservice deployment pattern. The API uses the shared Gunicorn deployment template and the workers use the shared supervisord Celery deployment template. Workspace-specific ConfigMaps provide `/app/config.py`, `/app/gunicorn_conf.py`, and one supervisord config per queue: provision, workspace, command, publish, and cleanup. API knobs such as `threads`, `workers`, `timeout`, `timeoutKeepAlive`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under `workspace.api`, matching the other Python API services. Worker knobs such as `queue`, `threads`, `workers`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under each worker section: `provision`, `workspace`, `command`, `publish`, and `cleanup`.
 
-Workspace metadata and operation state are stored in MySQL. Temporary clones default to an `emptyDir`; set `workspace.persistence.existingClaim` to use a PVC. The runner waits on Redis/Valkey and MySQL but does not wait on file storage because workspace artifacts are not part of the GroundX document file store. Runtime config rendered into `/app/config.py` uses chart helpers for MySQL, Redis/Valkey, command, and workspace defaults, with `workspace.publishDryRun` exposed as the normal safety toggle.
+Workspace metadata and operation state are stored in MySQL. Workspace clones are shared across the API and worker pods through the generated `workspace.pvc`, following the same PVC helper pattern as inference services. Keep `workspace.pvc.access` as `ReadWriteMany` for multi-pod dry-run deployments because writes happen in worker pods while reads may happen in the API pod. The runner waits on Redis/Valkey and MySQL but does not wait on file storage because workspace artifacts are not part of the GroundX document file store. Runtime config rendered into `/app/config.py` uses chart helpers for MySQL, Redis/Valkey, command, and workspace defaults, with `workspace.publishDryRun` exposed as the normal safety toggle.
 
 Publish is dry-run by default. To enable real branch push and pull request creation, set `workspace.publishDryRun: false` and configure the GitHub App owned by the runner service:
 
@@ -427,7 +427,13 @@ workspace:
 
 The API emits `workspace-api:api` with a default threshold of `4000` and, by default, `workspace-api:throughput` with a default throughput of `50000`. The Partner API receives the runner URL from the workspace API helper, so the derived internal URL follows the same pattern as `extract-api`: `http://workspace-api.<namespace>.svc.cluster.local`. Worker HPAs emit `workspace-<worker>:task` and point the metrics server at the configured Celery queue for that worker; worker task thresholds default to `10`, worker targets default to `1`, and worker throughput defaults to `50000`. All of these values may be overridden per worker. Keep custom worker queue names in values rather than editing templates so the HPA and metrics-server config stay in sync.
 
-The Helm CI gate runs `.build/bin/verify-workspace-chart.py` to render both chart surfaces and prove the workspace API service, GroundX `workspace.baseURL`, Partner API `WORKSPACE_RUNNER_BASE_URL`, HPA, and metrics-server names all stay on the same `workspace-api` contract. After deploying to a cluster, run `.build/bin/smoke-workspace-runner.sh` with the target kube context selected to verify the API, workers, cluster DNS, health endpoint, and Partner API runner URL wiring.
+Run the local Helm production gate before changing chart helpers, values, schemas, or snapshots:
+
+```bash
+.build/bin/validate-helm.sh
+```
+
+The Helm CI gate uses the same script. It lints both chart surfaces, runs Helm unittest, verifies that snapshots did not silently drop empty renders, and runs `.build/bin/verify-workspace-chart.py` to render both chart surfaces and prove the workspace API service, GroundX `workspace.baseURL`, Partner API `WORKSPACE_RUNNER_BASE_URL`, HPA, and metrics-server names all stay on the same `workspace-api` contract. After deploying to a cluster, run `.build/bin/smoke-workspace-runner.sh` with the target kube context selected to verify the API, workers, cluster DNS, health endpoint, internal `/storage` status endpoint, and Partner API runner URL wiring.
 
 ### MySQL
 

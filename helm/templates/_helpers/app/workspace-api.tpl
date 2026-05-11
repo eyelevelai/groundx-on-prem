@@ -231,6 +231,9 @@ false
 {{- if ne (include "groundx.workspace.github.privateKeyPem" .) "" -}}
 {{- $_ := set $data (include "groundx.workspace.githubSecretName" .) (include "groundx.workspace.githubSecretName" .) -}}
 {{- end -}}
+{{- if ne (include "groundx.workspace.gitlab.token" .) "" -}}
+{{- $_ := set $data (include "groundx.workspace.gitlabSecretName" .) (include "groundx.workspace.gitlabSecretName" .) -}}
+{{- end -}}
 {{- $svc := include "groundx.workspace.serviceName" . -}}
 {{- $apiSvc := include "groundx.workspace.api.serviceName" . -}}
 {{- $cfg := dict
@@ -244,6 +247,7 @@ false
   "node" (include "groundx.workspace.api.node" .)
   "port" (include "groundx.workspace.api.containerPort" .)
   "pull" (include "groundx.workspace.api.imagePullPolicy" .)
+  "pvc" (include "groundx.workspace.pvc" . | fromYaml)
   "replicas" $rep
   "volumeMounts" (include "groundx.workspace.volumeMounts" . | fromYamlArray)
   "volumes" (include "groundx.workspace.volumes" . | fromYamlArray)

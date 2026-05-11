@@ -48,6 +48,8 @@ def verify_chart(chart: Path) -> list[str]:
     require(rendered, r"managed_repo_name_prefix=\"workspace-test\"", "workspace config managed repo prefix")
     require(rendered, r"managed_repo_owner=\"GroundX-Studio\"", "workspace config managed repo owner")
     require(rendered, r"managed_repo_visibility=\"private\"", "workspace config managed repo visibility")
+    require(rendered, r"git_provider=\"github\"", "workspace config default git provider")
+    require(rendered, r"gitlab_api_base_url=\"https://gitlab\.com/api/v4\"", "workspace config default GitLab API base URL")
     require(rendered, r"workspace_min_free_bytes=1\.048576e\+06", "workspace config free byte guard")
     require(rendered, r"workspace_min_free_percent=5", "workspace config free percent guard")
     require(rendered, r"^  name:\s+workspace-api$", "workspace API Deployment or Service name")

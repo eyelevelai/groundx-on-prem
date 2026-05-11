@@ -4976,7 +4976,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0037a0f3a261f7a971fff54eb9c7680185751efc4d99cd2b8b0f1547f220f4a7
+            config-hash: d3ede29b5b4bd64ac2487eb6ca4e50781ebdc50971fd503c3e436fb0814be513
             gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
           labels:
             app: workspace-api
@@ -5089,8 +5089,9 @@
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
   2: |
     apiVersion: v1
     kind: Service
@@ -5107,4 +5108,19 @@
       selector:
         app: workspace-api
       type: ClusterIP
+  3: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-data
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: eyelevel-pv
 'disabled: api': {}
