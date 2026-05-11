@@ -1,0 +1,26 @@
+{{- $cc := include "groundx.stream.create" . -}}
+{{- if ne $cc "false" -}}
+
+{{- $name := include "groundx.stream.serviceName" . -}}
+{{- $svc := printf "%s-cluster" $name -}}
+{{- $topics := (include "groundx.stream.topics" . | fromYaml) -}}
+
+{{- range $topic, $partitions := $topics }}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{ $topic }}
+  namespace: {{ include "groundx.ns" $ | quote }}
+  labels:
+    strimzi.io/cluster: {{ $svc | quote }}
+spec:
+  partitions: {{ $partitions }}
+  replicas: {{ include "groundx.stream.replicas" $ }}
+  config:
+    retention.ms: 7200000
+    retention.bytes: {{ include "groundx.stream.retention" $ }}
+    segment.bytes: {{ include "groundx.stream.segment" $ }}
+{{- end -}}
+
+{{- end }}

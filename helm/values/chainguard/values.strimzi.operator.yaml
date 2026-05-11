@@ -1,0 +1,60 @@
+nodeSelector:
+  node: eyelevel-cpu
+replicas: 1
+
+image:
+  registry: cgr.dev
+  repository: eyelevel.ai
+  name: strimzi-kafka-operator
+  tag: v0.48.0
+  imagePullSecrets:
+    - name: chainguard-pull-secret
+
+kafka:
+  image:
+    registry: cgr.dev
+    repository: eyelevel.ai
+    name: strimzi-kafka
+    tagPrefix: v0.48.0
+kafkaConnect:
+  image:
+    registry: cgr.dev
+    repository: eyelevel.ai
+    name: strimzi-kafka
+    tagPrefix: v0.48.0
+topicOperator:
+  image:
+    registry: cgr.dev
+    repository: eyelevel.ai
+    name: strimzi-kafka-operator
+    tag: v0.48.0
+userOperator:
+  image:
+    registry: cgr.dev
+    repository: eyelevel.ai
+    name: strimzi-kafka-operator
+    tag: v0.48.0
+kafkaInit:
+  image:
+    registry: cgr.dev
+    repository: eyelevel.ai
+    name: strimzi-kafka-operator
+    tag: v0.48.0
+kafkaExporter:
+  image:
+    registry: cgr.dev
+    repository: eyelevel.ai
+    name: strimzi-kafka
+    tagPrefix: v0.48.0
+kafkaMirrorMaker2:
+  image:
+    registry: cgr.dev
+    repository: eyelevel.ai
+    name: strimzi-kafka
+    tagPrefix: v0.48.0
+cruiseControl:
+  image:
+    registry: cgr.dev
+    repository: eyelevel.ai
+    name: strimzi-kafka
+    tagPrefix: v0.48.0

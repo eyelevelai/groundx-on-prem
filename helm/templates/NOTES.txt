@@ -1,0 +1,15 @@
+{{- $ns := include "groundx.ns" . -}}
+=============
+
+Release: {{ .Release.Name }}
+Namespace: {{ $ns }}
+Internal TLS:
+{{- if and .Values.tls .Values.tls.existingSecret }}
+  Using secret: {{ .Values.tls.existingSecret }}
+
+  To inspect it:
+    kubectl -n {{ $ns }} get secret {{ .Values.tls.existingSecret }} -o yaml
+{{- else }}
+  No TLS Secret configured by this chart.
+{{ end }}
+=============

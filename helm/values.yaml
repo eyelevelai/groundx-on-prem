@@ -1,0 +1,462 @@
+cluster:
+  pvClass: eyelevel-pv
+
+  hpa: false
+
+  # "", "eks", "aks", "gke", "openshift", etc.
+  type: eks
+
+cache:
+  enabled: true
+
+  metrics:
+    enabled: true
+    existing: {}
+
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+
+  # set to use external cache
+  # will supercede all other settings except metrics
+  existing: {}
+    # addr: redis.mycorp.net
+    # isCluster: true
+    # port: 6379
+    # ssl: true
+
+db:
+  enabled: true
+
+  dbName: eyelevel
+
+  # set to use external MySQL DB
+  existing: {}
+#    ro: myro.mycorp.net
+#    rw: myrw.mycorp.net
+#    port: 3306
+
+file:
+  enabled: true
+
+  bucketName: eyelevel
+
+  # must set username/password explicitly
+  # or via AWS or MinIO env variables
+  # AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, etc...
+  # GROUNDX_ACCESS_KEY_ID, GROUNDX_SECRET_ACCESS_KEY, etc...
+
+  # username: minio
+  # password: minio123
+
+  # set to use existing minio file storage
+  existing: {}
+    # serviceType: minio OR s3
+    # url: https://minio.mycorp.net
+
+    # if s3, must set region explicitly
+    # AWS_REGION or GROUNDX_REGION
+
+    # region: us-west-2
+
+    # optional
+    # port: 9000
+
+metrics:
+  enabled: false
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+  serviceMonitor:
+    enabled: false
+
+search:
+  enabled: true
+
+  indexName: prod-1
+  username: eyelevel
+  password: R0otb_*t!kazs
+  privilegedUsername: admin
+  privilegedPassword: R0otb_*t!kazs
+
+  # set to use existing opensearch
+  existing: {}
+    # url: https://search.mycorp.net:9200
+
+stream:
+  enabled: true
+
+  existing: {}
+#    domain: kafka.mycorp.net
+#    port: 9092
+
+summary:
+  api:
+    enabled: true
+
+    replicas:
+      desired: 1
+      max: 32
+      min: 1
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+  inference:
+    enabled: true
+
+    # specifies the amount of GPU memory to use, from 0 - 1.0
+    deviceUtilize: 0.48
+
+    replicas:
+      desired: 2
+      max: 32
+      min: 1
+
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+
+  # must be an OpenAI chat compatible endpoint
+  # /chat/completions
+#  existing:
+#    apiKey: my-oai-key
+#    serviceType: openai
+#    url: https://api.openai.com/v1
+
+groundx:
+  enabled: true
+
+  replicas:
+      desired: 1
+      max: 24
+      min: 1
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+layout:
+  api:
+    enabled: true
+
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+  correct:
+    enabled: true
+
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
+
+    resources:
+      requests:
+        cpu: 1
+        memory: 1Gi
+  inference:
+    enabled: true
+
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
+
+    resources:
+      limits:
+        memory: 12Gi
+        nvidia.com/gpu: 1
+      requests:
+        cpu: 500m
+        memory: 2Gi
+        nvidia.com/gpu: 1
+  map:
+    enabled: true
+
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+  ocr:
+    enabled: true
+
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
+
+    resources:
+      requests:
+        cpu: 1
+        memory: 1Gi
+  process:
+    enabled: true
+
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 1Gi
+  save:
+    enabled: true
+
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
+
+    resources:
+      requests:
+        cpu: 200m
+        memory: 1Gi
+
+layoutWebhook:
+  enabled: true
+
+  replicas:
+    desired: 1
+    max: 16
+    min: 1
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+preProcess:
+  enabled: true
+
+  replicas:
+    desired: 1
+    max: 24
+    min: 1
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 1Gi
+
+process:
+  enabled: true
+
+  replicas:
+    desired: 1
+    max: 16
+    min: 1
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+queue:
+  enabled: true
+
+  replicas:
+    desired: 1
+    max: 16
+    min: 1
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+ranker:
+  api:
+    enabled: true
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  inference:
+    enabled: true
+
+    resources:
+      limits:
+        nvidia.com/gpu: 1
+      requests:
+        cpu: 1.5
+        memory: 1Gi
+        nvidia.com/gpu: 1
+
+summaryClient:
+  enabled: true
+
+  replicas:
+    desired: 1
+    max: 32
+    min: 1
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+
+upload:
+  enabled: true
+
+  replicas:
+    desired: 1
+    max: 24
+    min: 1
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+workspace:
+  enabled: false
+
+  # Required when enabled unless existingSecret provides WORKSPACE_RUNNER_TOKEN.
+  token: ""
+  existingSecret: ""
+  publishDryRun: true
+
+  github:
+    appId: ""
+    installationId: ""
+    privateKeyPem: ""
+    privateKeySecret:
+      name: ""
+      key: private-key.pem
+
+  persistence:
+    existingClaim: ""
+
+  api:
+    enabled: true
+    replicas:
+      desired: 1
+      max: 8
+      min: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+  provision:
+    enabled: true
+    replicas:
+      desired: 1
+
+  workspace:
+    enabled: true
+    replicas:
+      desired: 1
+
+  command:
+    enabled: true
+    replicas:
+      desired: 1
+
+  publish:
+    enabled: true
+    replicas:
+      desired: 1
+
+  cleanup:
+    enabled: true
+    replicas:
+      desired: 1
+
+extract:
+  enabled: false
+
+  agent:
+    enabled: false
+
+    replicas:
+      desired: 1
+      max: 96
+      min: 1
+
+    resources:
+      limits:
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+
+  api:
+    enabled: false
+
+    replicas:
+      desired: 1
+      max: 16
+      min: 1
+
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 512Mi
+
+  download:
+    enabled: false
+
+    replicas:
+      desired: 1
+      max: 24
+      min: 1
+
+    resources:
+      limits:
+        cpu: 1
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 512Mi
+
+  save:
+    enabled: false
+
+    replicas:
+      desired: 1
+      max: 24
+      min: 1
+
+    resources:
+      limits:
+        cpu: 1
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 512Mi
+
+throughput:
+  tpm:
+    document: 12500
+    page: 1000

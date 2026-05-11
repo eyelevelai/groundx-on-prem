@@ -1,0 +1,124 @@
+db:
+  username: eyelevel
+  password: password
+  privilegedUsername: root
+  privilegedPassword: password
+
+  existing:
+    ro: my.mysql.server
+    rw: my.mysql.server
+    port: 3306
+
+    # add rootCerts if using TLS
+    #rootCerts: |
+    #  -----BEGIN CERTIFICATE-----
+    #  -----END CERTIFICATE-----
+
+summary:
+  existing:
+    apiKey: LLM-SERVICE-API-KEY
+    serviceType: openai-base64
+    url: https://production-west.openai.azure.com/openai/deployments/MY-GPT-5-MINI-DEPLOYMENT
+
+engines:
+  default:
+    engineId: gpt-5-mini
+    reasoningEffort: low
+    vision: true
+
+
+#### below do not need modification ####
+
+licenseKey: 00000000-0000-0000-0000-000000000000
+
+admin:
+  apiKey: 00000000-0000-0000-0000-000000000000
+  email: support@mycorp.net
+  password: password
+  username: 00000000-0000-0000-0000-000000000000
+
+imageType: chainguard
+
+mode: ingest
+
+busybox:
+  image: cgr.dev/eyelevel.ai/busybox-fips:latest
+
+cluster:
+  pvClass: eyelevel-pv
+  type: aks
+
+  nodeLabels:
+    cpuMemory: eyelevel-cpu
+    cpuOnly: eyelevel-cpu
+    gpuLayout: eyelevel-gpu-layout
+    gpuRanker: eyelevel-gpu-ranker
+    gpuSummary: eyelevel-gpu-summary
+
+  imagePullSecrets:
+    - chainguard-pull-secret
+
+cache:
+  metrics:
+    enabled: false
+
+  image: cgr.dev/eyelevel.ai/redis-fips:v8.2.3
+
+file:
+  username: minio
+  password: minio123
+
+groundx:
+  image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:chainguard
+
+  # isInternal: false
+  # serviceType: LoadBalancer
+
+  ingress:
+  #  enabled: false
+    enabled: true
+
+    annotations:
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/success-codes: "200"
+      alb.ingress.kubernetes.io/target-type: ip
+
+layout:
+  api:
+    image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:chainguard
+
+  correct:
+    image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:chainguard
+
+  inference:
+    image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:chainguard
+
+  map:
+    image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:chainguard
+
+  ocr:
+    image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:chainguard
+
+  process:
+    image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:chainguard
+
+  save:
+    image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:chainguard
+
+layoutWebhook:
+  image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:chainguard
+
+preProcess:
+  image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:chainguard
+
+process:
+  image: public.ecr.aws/c9r4x6y5/eyelevel/process:chainguard
+
+queue:
+  image: public.ecr.aws/c9r4x6y5/eyelevel/queue:chainguard
+
+summaryClient:
+  image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:chainguard
+
+upload:
+  image: public.ecr.aws/c9r4x6y5/eyelevel/upload:chainguard

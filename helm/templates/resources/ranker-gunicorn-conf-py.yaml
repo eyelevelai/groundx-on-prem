@@ -1,0 +1,30 @@
+{{- $ic := include "groundx.ranker.api.create" . -}}
+
+{{- if eq $ic "true" }}
+{{- $svc := include "groundx.ranker.serviceName" . -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $svc }}-gunicorn-conf-py-map
+  namespace: {{ include "groundx.ns" . }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
+data:
+  gunicorn_conf.py: |
+    infolog = "-"
+    accesslog = "-"
+    errorlog = "-"
+
+    loglevel = {{ include "groundx.logLevel" . | quote }}
+    workers = {{ include "groundx.ranker.api.workers" . }}
+    threads = {{ include "groundx.ranker.api.threads" . }}
+    timeout = {{ include "groundx.ranker.api.timeout" . }}
+    timeout_keep_alive = 15
+
+    worker_class = "uvicorn.workers.UvicornWorker"
+
+    bind = "0.0.0.0:{{ include "groundx.ranker.api.containerPort" . }}"
+
+    wsgi_app = "ranker_server:app"
+{{- end }}

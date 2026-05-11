@@ -1,0 +1,49 @@
+{{- $ic := include "groundx.workspace.create" . -}}
+{{- if eq $ic "true" }}
+{{- $svc := include "groundx.workspace.serviceName" . -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $svc }}-config-py-map
+  namespace: {{ include "groundx.ns" . }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
+data:
+  config.py: |
+    from pathlib import Path
+
+    from settings import Settings
+
+
+    settings = Settings(
+        allowed_commands={{ include "groundx.workspace.allowedCommands" . | quote }},
+        celery_broker_url={{ include "groundx.workspace.celeryBrokerUrl" . | quote }},
+        celery_global_keyprefix={{ include "groundx.workspace.celeryGlobalKeyprefix" . | quote }},
+        celery_result_backend={{ include "groundx.workspace.celeryResultBackend" . | quote }},
+        celery_task_always_eager={{ if eq (printf "%v" (include "groundx.workspace.celeryTaskAlwaysEager" .)) "true" }}True{{ else }}False{{ end }},
+        celery_task_soft_time_limit_seconds={{ include "groundx.workspace.celerySoftTimeLimitSeconds" . }},
+        command_timeout_seconds={{ include "groundx.workspace.commandTimeoutSeconds" . }},
+        github_api_base_url={{ include "groundx.workspace.github.apiBaseUrl" . | quote }},
+        github_app_id={{ include "groundx.workspace.github.appId" . | quote }},
+        github_app_installation_id={{ include "groundx.workspace.github.installationId" . | quote }},
+        github_app_private_key_path={{ include "groundx.workspace.github.privateKeyPath" . | quote }},
+        github_app_private_key_pem="",
+        github_token_ttl_seconds={{ include "groundx.workspace.github.tokenTtlSeconds" . }},
+        managed_repo_name_prefix={{ include "groundx.workspace.managedRepoNamePrefix" . | quote }},
+        managed_repo_owner={{ include "groundx.workspace.managedRepoOwner" . | quote }},
+        managed_repo_visibility={{ include "groundx.workspace.managedRepoVisibility" . | quote }},
+        mysql_connect_timeout_seconds={{ include "groundx.workspace.mysqlConnectTimeoutSeconds" . }},
+        mysql_database={{ include "groundx.db.dbName" . | quote }},
+        mysql_host={{ include "groundx.db.rw" . | quote }},
+        mysql_password={{ include "groundx.db.password" . | quote }},
+        mysql_port={{ include "groundx.db.port" . }},
+        mysql_username={{ include "groundx.db.username" . | quote }},
+        publish_dry_run={{ if eq (printf "%v" (include "groundx.workspace.publishDryRun" .)) "true" }}True{{ else }}False{{ end }},
+        runner_token={{ include "groundx.workspace.token" . | quote }},
+        service={{ $svc | quote }},
+        workspace_min_free_bytes={{ include "groundx.workspace.workspaceMinFreeBytes" . }},
+        workspace_min_free_percent={{ include "groundx.workspace.workspaceMinFreePercent" . }},
+        workspace_root=Path({{ include "groundx.workspace.workspaceRoot" . | quote }}),
+    )
+{{- end }}
