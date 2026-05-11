@@ -10,12 +10,17 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-VALUES = ROOT / "values.extract.eks.yaml"
+VALUES = (
+    ROOT / "src" / "groundx" / "tests" / "files" / "values.workspace.yaml",
+    ROOT / "src" / "groundx" / "tests" / "files" / "values.workspace-metrics.yaml",
+)
 CHARTS = (ROOT / "src" / "groundx", ROOT / "helm")
 
 
 def render_chart(chart: Path) -> str:
-    command = ["helm", "template", "workspace-contract", str(chart), "-f", str(VALUES)]
+    command = ["helm", "template", "workspace-contract", str(chart)]
+    for values in VALUES:
+        command.extend(("-f", str(values)))
     result = subprocess.run(command, cwd=ROOT, check=False, capture_output=True, text=True)
     if result.returncode != 0:
         raise RuntimeError(f"{' '.join(command)} failed:\n{result.stderr}")
@@ -40,11 +45,11 @@ def verify_chart(chart: Path) -> list[str]:
 
     require(rendered, rf"baseURL:\s+{re.escape(base_url)}", "GroundX config workspace.baseURL")
     require(rendered, rf"name:\s+WORKSPACE_RUNNER_BASE_URL\n\s+value:\s+{re.escape(base_url)}", "Partner API runner env")
-    require(rendered, r"managed_repo_name_prefix=\"workspace\"", "workspace config managed repo prefix")
-    require(rendered, r"managed_repo_owner=", "workspace config managed repo owner")
+    require(rendered, r"managed_repo_name_prefix=\"workspace-test\"", "workspace config managed repo prefix")
+    require(rendered, r"managed_repo_owner=\"GroundX-Studio\"", "workspace config managed repo owner")
     require(rendered, r"managed_repo_visibility=\"private\"", "workspace config managed repo visibility")
-    require(rendered, r"workspace_min_free_bytes=0", "workspace config free byte guard")
-    require(rendered, r"workspace_min_free_percent=0", "workspace config free percent guard")
+    require(rendered, r"workspace_min_free_bytes=1\.048576e\+06", "workspace config free byte guard")
+    require(rendered, r"workspace_min_free_percent=5", "workspace config free percent guard")
     require(rendered, r"^  name:\s+workspace-api$", "workspace API Deployment or Service name")
     require(rendered, r"^  name:\s+workspace-api-hpa$", "workspace API HPA name")
     require(rendered, r"name:\s+workspace-api:api", "workspace API external metric")
