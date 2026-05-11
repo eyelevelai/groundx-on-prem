@@ -19,7 +19,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 83111cf330eb5607d8060f5b956a1470c2e8b3382134eaf0211575e717ab65fe
+            config-hash: 35b043ee5842b301942564e33d36d7c98d6df8aafd1384e01dd773e8ea5b8837
             gunicorn-conf-hash: 7b77a5ecbb71e70922f104c678cbaf4ce20a98b86db5735dab4924809990de45
             workspace.groundx.ai/component: api
           labels:
@@ -165,7 +165,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 83111cf330eb5607d8060f5b956a1470c2e8b3382134eaf0211575e717ab65fe
+            config-hash: 35b043ee5842b301942564e33d36d7c98d6df8aafd1384e01dd773e8ea5b8837
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-cleanup
@@ -296,7 +296,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 83111cf330eb5607d8060f5b956a1470c2e8b3382134eaf0211575e717ab65fe
+            config-hash: 35b043ee5842b301942564e33d36d7c98d6df8aafd1384e01dd773e8ea5b8837
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-command
@@ -435,7 +435,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 83111cf330eb5607d8060f5b956a1470c2e8b3382134eaf0211575e717ab65fe
+            config-hash: 35b043ee5842b301942564e33d36d7c98d6df8aafd1384e01dd773e8ea5b8837
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-provision
@@ -566,7 +566,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 83111cf330eb5607d8060f5b956a1470c2e8b3382134eaf0211575e717ab65fe
+            config-hash: 35b043ee5842b301942564e33d36d7c98d6df8aafd1384e01dd773e8ea5b8837
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-publish
@@ -697,7 +697,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 83111cf330eb5607d8060f5b956a1470c2e8b3382134eaf0211575e717ab65fe
+            config-hash: 35b043ee5842b301942564e33d36d7c98d6df8aafd1384e01dd773e8ea5b8837
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-workspace
@@ -845,6 +845,9 @@
             github_app_private_key_path="",
             github_app_private_key_pem="",
             github_token_ttl_seconds=3600,
+            managed_repo_name_prefix="workspace-test",
+            managed_repo_owner="GroundX-Studio",
+            managed_repo_visibility="private",
             mysql_connect_timeout_seconds=20,
             mysql_database="eyelevel",
             mysql_host="db-cluster-haproxy.eyelevel.svc.cluster.local",
@@ -854,6 +857,8 @@
             publish_dry_run=True,
             runner_token="test-runner-token",
             service="workspace",
+            workspace_min_free_bytes=1.048576e+06,
+            workspace_min_free_percent=5,
             workspace_root=Path("/mnt/workspaces"),
         )
     kind: ConfigMap
@@ -1092,7 +1097,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b6c1ccfa18a163c888ecf68db0eb27d1d4fd7701c5e138a09db4c850676d1951
+            config-hash: 9e1a839da7fc67f026d377952cbc04a7f7c64484b1e0488ee51f6e64721851af
             gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
           labels:
             app: workspace-api
@@ -1245,7 +1250,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b6c1ccfa18a163c888ecf68db0eb27d1d4fd7701c5e138a09db4c850676d1951
+            config-hash: 9e1a839da7fc67f026d377952cbc04a7f7c64484b1e0488ee51f6e64721851af
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-cleanup
@@ -1378,7 +1383,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b6c1ccfa18a163c888ecf68db0eb27d1d4fd7701c5e138a09db4c850676d1951
+            config-hash: 9e1a839da7fc67f026d377952cbc04a7f7c64484b1e0488ee51f6e64721851af
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-command
@@ -1511,7 +1516,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b6c1ccfa18a163c888ecf68db0eb27d1d4fd7701c5e138a09db4c850676d1951
+            config-hash: 9e1a839da7fc67f026d377952cbc04a7f7c64484b1e0488ee51f6e64721851af
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-provision
@@ -1644,7 +1649,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b6c1ccfa18a163c888ecf68db0eb27d1d4fd7701c5e138a09db4c850676d1951
+            config-hash: 9e1a839da7fc67f026d377952cbc04a7f7c64484b1e0488ee51f6e64721851af
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-publish
@@ -1777,7 +1782,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b6c1ccfa18a163c888ecf68db0eb27d1d4fd7701c5e138a09db4c850676d1951
+            config-hash: 9e1a839da7fc67f026d377952cbc04a7f7c64484b1e0488ee51f6e64721851af
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-workspace
@@ -1939,7 +1944,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 00e433c13a48e9610e3543ee63afce697a2694fb990f2ab8e1c9f8c151c63518
+            config-hash: 262b12649a30b2b2b0f0233598c9b3edcf97f5ddea994be4e0399ee7f146b3dc
             gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
           labels:
             app: workspace-api
@@ -2099,7 +2104,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 00e433c13a48e9610e3543ee63afce697a2694fb990f2ab8e1c9f8c151c63518
+            config-hash: 262b12649a30b2b2b0f0233598c9b3edcf97f5ddea994be4e0399ee7f146b3dc
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-cleanup
@@ -2239,7 +2244,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 00e433c13a48e9610e3543ee63afce697a2694fb990f2ab8e1c9f8c151c63518
+            config-hash: 262b12649a30b2b2b0f0233598c9b3edcf97f5ddea994be4e0399ee7f146b3dc
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-command
@@ -2379,7 +2384,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 00e433c13a48e9610e3543ee63afce697a2694fb990f2ab8e1c9f8c151c63518
+            config-hash: 262b12649a30b2b2b0f0233598c9b3edcf97f5ddea994be4e0399ee7f146b3dc
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-provision
@@ -2519,7 +2524,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 00e433c13a48e9610e3543ee63afce697a2694fb990f2ab8e1c9f8c151c63518
+            config-hash: 262b12649a30b2b2b0f0233598c9b3edcf97f5ddea994be4e0399ee7f146b3dc
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-publish
@@ -2659,7 +2664,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 00e433c13a48e9610e3543ee63afce697a2694fb990f2ab8e1c9f8c151c63518
+            config-hash: 262b12649a30b2b2b0f0233598c9b3edcf97f5ddea994be4e0399ee7f146b3dc
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-workspace
@@ -2816,6 +2821,9 @@
             github_app_private_key_path="/var/run/secrets/workspace/github/private-key.pem",
             github_app_private_key_pem="",
             github_token_ttl_seconds=1800,
+            managed_repo_name_prefix="workspace",
+            managed_repo_owner="",
+            managed_repo_visibility="private",
             mysql_connect_timeout_seconds=10,
             mysql_database="eyelevel",
             mysql_host="db-cluster-haproxy.eyelevel.svc.cluster.local",
@@ -2825,6 +2833,8 @@
             publish_dry_run=False,
             runner_token="test-runner-token",
             service="workspace",
+            workspace_min_free_bytes=0,
+            workspace_min_free_percent=0,
             workspace_root=Path("/tmp/workspaces"),
         )
     kind: ConfigMap
@@ -3176,7 +3186,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b50aebe78a26d9ce749f929244fd4d3b4995c6085a3805c89e66449e1bac62e3
+            config-hash: 0037a0f3a261f7a971fff54eb9c7680185751efc4d99cd2b8b0f1547f220f4a7
             gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
           labels:
             app: workspace-api
@@ -3327,7 +3337,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b50aebe78a26d9ce749f929244fd4d3b4995c6085a3805c89e66449e1bac62e3
+            config-hash: 0037a0f3a261f7a971fff54eb9c7680185751efc4d99cd2b8b0f1547f220f4a7
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-cleanup
@@ -3458,7 +3468,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b50aebe78a26d9ce749f929244fd4d3b4995c6085a3805c89e66449e1bac62e3
+            config-hash: 0037a0f3a261f7a971fff54eb9c7680185751efc4d99cd2b8b0f1547f220f4a7
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-command
@@ -3589,7 +3599,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b50aebe78a26d9ce749f929244fd4d3b4995c6085a3805c89e66449e1bac62e3
+            config-hash: 0037a0f3a261f7a971fff54eb9c7680185751efc4d99cd2b8b0f1547f220f4a7
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-provision
@@ -3720,7 +3730,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b50aebe78a26d9ce749f929244fd4d3b4995c6085a3805c89e66449e1bac62e3
+            config-hash: 0037a0f3a261f7a971fff54eb9c7680185751efc4d99cd2b8b0f1547f220f4a7
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-publish
@@ -3851,7 +3861,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b50aebe78a26d9ce749f929244fd4d3b4995c6085a3805c89e66449e1bac62e3
+            config-hash: 0037a0f3a261f7a971fff54eb9c7680185751efc4d99cd2b8b0f1547f220f4a7
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-workspace
@@ -3999,6 +4009,9 @@
             github_app_private_key_path="",
             github_app_private_key_pem="",
             github_token_ttl_seconds=3600,
+            managed_repo_name_prefix="workspace",
+            managed_repo_owner="",
+            managed_repo_visibility="private",
             mysql_connect_timeout_seconds=10,
             mysql_database="eyelevel",
             mysql_host="db-cluster-haproxy.eyelevel.svc.cluster.local",
@@ -4008,6 +4021,8 @@
             publish_dry_run=True,
             runner_token="test-runner-token",
             service="workspace",
+            workspace_min_free_bytes=0,
+            workspace_min_free_percent=0,
             workspace_root=Path("/tmp/workspaces"),
         )
     kind: ConfigMap

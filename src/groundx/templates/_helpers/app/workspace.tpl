@@ -123,6 +123,21 @@ false
 {{ dig "tokenTtlSeconds" 3600 $g }}
 {{- end }}
 
+{{- define "groundx.workspace.managedRepoNamePrefix" -}}
+{{- $in := include "groundx.workspace.values" . | fromYaml -}}
+{{ dig "managedRepoNamePrefix" "workspace" $in }}
+{{- end }}
+
+{{- define "groundx.workspace.managedRepoOwner" -}}
+{{- $in := include "groundx.workspace.values" . | fromYaml -}}
+{{ dig "managedRepoOwner" "" $in }}
+{{- end }}
+
+{{- define "groundx.workspace.managedRepoVisibility" -}}
+{{- $in := include "groundx.workspace.values" . | fromYaml -}}
+{{ dig "managedRepoVisibility" "private" $in }}
+{{- end }}
+
 {{- define "groundx.workspace.token" -}}
 {{- $in := include "groundx.workspace.values" . | fromYaml -}}
 {{ dig "token" "" $in }}
@@ -169,6 +184,16 @@ false
 {{- define "groundx.workspace.workspaceRoot" -}}
 {{- $in := include "groundx.workspace.values" . | fromYaml -}}
 {{ dig "workspaceRoot" "/tmp/workspaces" $in }}
+{{- end }}
+
+{{- define "groundx.workspace.workspaceMinFreeBytes" -}}
+{{- $in := include "groundx.workspace.values" . | fromYaml -}}
+{{ dig "workspaceMinFreeBytes" 0 $in }}
+{{- end }}
+
+{{- define "groundx.workspace.workspaceMinFreePercent" -}}
+{{- $in := include "groundx.workspace.values" . | fromYaml -}}
+{{ dig "workspaceMinFreePercent" 0 $in }}
 {{- end }}
 
 {{- define "groundx.workspace.workspaceVolumeName" -}}

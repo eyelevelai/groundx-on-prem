@@ -40,6 +40,11 @@ def verify_chart(chart: Path) -> list[str]:
 
     require(rendered, rf"baseURL:\s+{re.escape(base_url)}", "GroundX config workspace.baseURL")
     require(rendered, rf"name:\s+WORKSPACE_RUNNER_BASE_URL\n\s+value:\s+{re.escape(base_url)}", "Partner API runner env")
+    require(rendered, r"managed_repo_name_prefix=\"workspace\"", "workspace config managed repo prefix")
+    require(rendered, r"managed_repo_owner=", "workspace config managed repo owner")
+    require(rendered, r"managed_repo_visibility=\"private\"", "workspace config managed repo visibility")
+    require(rendered, r"workspace_min_free_bytes=0", "workspace config free byte guard")
+    require(rendered, r"workspace_min_free_percent=0", "workspace config free percent guard")
     require(rendered, r"^  name:\s+workspace-api$", "workspace API Deployment or Service name")
     require(rendered, r"^  name:\s+workspace-api-hpa$", "workspace API HPA name")
     require(rendered, r"name:\s+workspace-api:api", "workspace API external metric")
@@ -63,10 +68,15 @@ def main() -> int:
     successes: list[str] = []
 
     for chart in CHARTS:
+        if not chart.exists():
+            continue
         try:
             successes.extend(verify_chart(chart))
         except (AssertionError, RuntimeError) as exc:
             failures.append(f"{chart.relative_to(ROOT)}: {exc}")
+
+    if not successes:
+        failures.append("no chart surfaces found to verify")
 
     if failures:
         print("Workspace chart contract verification failed.", file=sys.stderr)
