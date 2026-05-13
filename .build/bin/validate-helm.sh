@@ -69,7 +69,12 @@ helm template workspace-contract helm \
 
 echo "==> Validating workspace smoke/E2E script syntax and wording"
 bash -n .build/bin/smoke-workspace-runner.sh
-bash -n .build/bin/workspace-runner-e2e.sh
+bash -n .build/bin/workspace-runner-git-e2e.sh
+bash -n .build/bin/workspace-runner-file-api-e2e.sh
+if grep -R --exclude='validate-helm.sh' "workspace-runner-e2e\\.sh" README.md .build/bin src helm >/dev/null 2>&1; then
+  echo "Workspace docs/scripts must use the split git/file-api E2E entrypoints, not workspace-runner-e2e.sh." >&2
+  exit 1
+fi
 if grep -R "pull request creatio[n]\\|merge the managed P[R]" README.md .build/bin >/dev/null 2>&1; then
   echo "Workspace docs/scripts must describe publish as CI/CD, not PR/MR creation." >&2
   exit 1
