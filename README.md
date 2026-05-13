@@ -380,21 +380,22 @@ If you'd like to install redis to your cluster, instances will be automatically 
 
 ### Workspace
 
-The `workspace` service family is optional and disabled by default. Enable it when the Partner API should provision managed coding workspaces for GroundX Studio Harness generated projects. The runner is internal-only: agents call the Partner API, the Partner API calls the runner, and the runner owns temporary workspaces, Git operations, command execution, and publish operations.
+The `workspace` service family is optional and disabled by default. Enable it when the Partner API should provision managed code projects for GroundX Studio Harness generated projects. The runner is internal-only: agents call the Partner API, the Partner API calls the runner, and the runner owns managed repository creation, short-lived git sessions, fallback file operations, command execution, cleanup, and publish operations.
 
 Set `workspace.enabled: true` and provide either `workspace.token` or `workspace.existingSecret`. When `workspace.token` is provided, the chart renders it into the generated GroundX `config.yaml` as `workspace.token`, renders it into the runner `config.py` as `runner_token`, and creates a `workspace-secret` containing `WORKSPACE_RUNNER_TOKEN` as the environment fallback. When `workspace.existingSecret` is provided, that secret must contain `WORKSPACE_RUNNER_TOKEN`; both the Partner API and workspace runner fall back to that environment value because the config files intentionally render the token empty. The internal runner URL is derived into GroundX `config.yaml` as `workspace.baseURL`, not stored as a secret.
 
 The runner follows the standard Python microservice deployment pattern. The API uses the shared Gunicorn deployment template and the workers use the shared supervisord Celery deployment template. Workspace-specific ConfigMaps provide `/app/config.py`, `/app/gunicorn_conf.py`, and one supervisord config per queue: provision, workspace, command, publish, and cleanup. API knobs such as `threads`, `workers`, `timeout`, `timeoutKeepAlive`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under `workspace.api`, matching the other Python API services. Worker knobs such as `queue`, `threads`, `workers`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under each worker section: `provision`, `workspace`, `command`, `publish`, and `cleanup`.
 
-Workspace metadata and operation state are stored in MySQL. Workspace clones are shared across the API and worker pods through the generated `workspace.pvc`, following the same PVC helper pattern as inference services. The chart uses one app-wide persistent storage abstraction: `cluster.pvClass` sets the storage class and `cluster.pvAccessMode` sets the default access mode for workspace, summary inference, ranker inference, and layout inference PVCs. Prefer `ReadWriteMany` when the target cluster provides shared filesystem storage, because workspace writes happen in worker pods while reads may happen in the API pod. On EKS this usually means installing an EFS CSI storage class named `eyelevel-pv`; the example EFS storage class values live at `src/groundx/prereqs/storageclass/values.efs.example.yaml` and require the environment-specific `fileSystemId`. If a deployment only has block/local storage, set `cluster.pvAccessMode: ReadWriteOnce` and use the cluster-provided storage class, understanding that workspace pods must be constrained to a compatible scheduling shape. The runner waits on Redis/Valkey and MySQL but does not wait on file storage because workspace artifacts are not part of the GroundX document file store. Runtime config rendered into `/app/config.py` uses chart helpers for MySQL, Redis/Valkey, command, and workspace defaults, with `workspace.publishDryRun` exposed as the normal safety toggle.
+Workspace project metadata and operation state are stored in MySQL. The primary path creates a managed GitHub or GitLab repository from the scaffold, returns a short-lived repo-scoped git session, and expects agents to clone, edit, commit, and push locally. The optional secondary file API uses `/tmp/workspaces` only as a disposable checkout cache for server-side reads, writes, patches, commands, and diffs; Git remains the source of truth and cache loss is recoverable. By default the chart renders this cache as `emptyDir`. Set `workspace.pvc.enabled: true` only when you want a persistent cache for repeated secondary file API work. When enabled, the PVC follows the same helper pattern as inference services: `cluster.pvClass` sets the storage class and `cluster.pvAccessMode` sets the access mode. Prefer `ReadWriteMany` when multiple workspace pods need to share the cache. The runner waits on Redis/Valkey and MySQL but does not wait on file storage because workspace artifacts are not part of the GroundX document file store. Runtime config rendered into `/app/config.py` uses chart helpers for MySQL, Redis/Valkey, command, and workspace defaults, with `workspace.publishDryRun` exposed as the normal safety toggle.
 
-Publish is dry-run by default. To enable real branch push and pull request creation, set `workspace.publishDryRun: false` and configure the GitHub App owned by the runner service:
+Publish is dry-run by default. To enable real publish, set `workspace.publishDryRun: false`, configure the provider credentials owned by the runner service, and set the workflow or pipeline to trigger. For GitHub Actions:
 
 ```yaml
 workspace:
   enabled: true
   token: "<internal-runner-token>"
   publishDryRun: false
+  publishGithubWorkflowId: deploy.yml
   github:
     appId: "<github-app-id>"
     installationId: "<github-app-installation-id>"
@@ -402,6 +403,8 @@ workspace:
       name: workspace-github-app
       key: private-key.pem
 ```
+
+For GitLab, set `workspace.gitProvider: gitlab`, configure `workspace.gitlab.apiBaseUrl`, and provide a token via `workspace.gitlab.tokenSecret` or `workspace.gitlab.token`.
 
 `privateKeySecret` is the production path: the chart mounts that existing secret only into workspace API and worker pods at `/var/run/secrets/workspace/github/private-key.pem`. For local or lower-environment testing, `workspace.github.privateKeyPem` can populate `GITHUB_APP_PRIVATE_KEY_PEM` in a generated `workspace-github-secret` that is mounted only into workspace API and worker pods. GitHub credentials are not mounted into the Partner API service.
 
@@ -573,7 +576,7 @@ bin/uuid
 
 ### Persistent Storage
 
-GroundX uses one app-wide persistent storage abstraction. Set `cluster.pvClass` to the Kubernetes storage class name and `cluster.pvAccessMode` to the access mode that class supports. Services that need PVCs, including workspace, summary inference, ranker inference, and layout inference, inherit those values unless their local `pvc` block explicitly overrides them.
+GroundX uses one app-wide persistent storage abstraction. Set `cluster.pvClass` to the Kubernetes storage class name and `cluster.pvAccessMode` to the access mode that class supports. Services that need PVCs, including summary inference, ranker inference, layout inference, and workspace when `workspace.pvc.enabled: true`, inherit those values unless their local `pvc` block explicitly overrides them.
 
 Prefer a shared filesystem class with `ReadWriteMany` when available:
 
@@ -583,7 +586,7 @@ cluster:
   pvAccessMode: ReadWriteMany
 ```
 
-Use this mode for workspace runner deployments when possible because API and worker pods share `/tmp/workspaces`. Example storage class values are included for common shared filesystems:
+Use this mode when multiple pods need to share a mounted cache or model/data volume. Workspace does not require this for the primary local-git workflow, but it is useful when the secondary file API cache is configured as a PVC. Example storage class values are included for common shared filesystems:
 
 - EKS/EFS: `src/groundx/prereqs/storageclass/values.efs.example.yaml`
 - AKS/Azure Files: `src/groundx/prereqs/storageclass/values.azure-files.example.yaml`
@@ -597,7 +600,7 @@ cluster:
   pvAccessMode: ReadWriteOnce
 ```
 
-An EKS/EBS example is available at `src/groundx/prereqs/storageclass/values.ebs.example.yaml`. With `ReadWriteOnce`, workspace runner pods must be scheduled in a compatible shape because the local checkout cache cannot be mounted freely across nodes.
+An EKS/EBS example is available at `src/groundx/prereqs/storageclass/values.ebs.example.yaml`. With `ReadWriteOnce`, any pod family sharing the same PVC must be scheduled in a compatible shape because the volume cannot be mounted freely across nodes.
 
 For AWS EKS, `terraform/aws/setup-eks` generates `src/groundx/prereqs/storageclass/values.aws.local.yaml` and `src/groundx/values.aws.local.yaml` from Terraform outputs. Use `STORAGE_DRIVER=efs` for the shared EFS path or `STORAGE_DRIVER=ebs` for EBS. The generated Helm commands printed by the script do not require manually editing the EFS filesystem ID.
 

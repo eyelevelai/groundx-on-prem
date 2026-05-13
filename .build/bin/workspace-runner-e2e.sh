@@ -502,7 +502,7 @@ if [[ "${wrong_status}" != "403" ]]; then
 fi
 
 if [[ "${RUN_PUBLISH}" == "true" ]]; then
-  echo "Running publish operation. This may merge the managed PR if publish_dry_run is false."
+  echo "Running publish operation. This triggers configured publish when publish_dry_run is false."
   publish_body="$(envelope "{\"publish\":{\"title\":\"Workspace E2E ${WORKSPACE_ID}\",\"description\":\"Automated workspace runner E2E\",\"draft\":true}}")"
   api POST "/workspaces/${WORKSPACE_ID}/publish" "${publish_body}" "${tmp_dir}/publish.json"
   publish_operation="$(json_get "${tmp_dir}/publish.json" "workspaceOperation.operationId")"

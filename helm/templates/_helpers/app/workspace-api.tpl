@@ -236,6 +236,7 @@ false
 {{- end -}}
 {{- $svc := include "groundx.workspace.serviceName" . -}}
 {{- $apiSvc := include "groundx.workspace.api.serviceName" . -}}
+{{- $pvc := include "groundx.workspace.pvc" . | fromYaml -}}
 {{- $cfg := dict
   "cfg" (printf "%s-config-py-map" $svc)
   "dependencies" (dict "cache" "cache" "db" "db")
@@ -247,11 +248,11 @@ false
   "node" (include "groundx.workspace.api.node" .)
   "port" (include "groundx.workspace.api.containerPort" .)
   "pull" (include "groundx.workspace.api.imagePullPolicy" .)
-  "pvc" (include "groundx.workspace.pvc" . | fromYaml)
   "replicas" $rep
   "volumeMounts" (include "groundx.workspace.volumeMounts" . | fromYamlArray)
   "volumes" (include "groundx.workspace.volumes" . | fromYamlArray)
 -}}
+{{- if not (empty $pvc) }}{{- $_ := set $cfg "pvc" $pvc -}}{{- end -}}
 {{- if gt (len $data) 0 }}{{- $_ := set $cfg "secrets" $data -}}{{- end -}}
 {{- if hasKey $rep "gracePeriod" -}}
   {{- $_ := set $cfg "gracePeriod" (dig "gracePeriod" nil $rep) -}}

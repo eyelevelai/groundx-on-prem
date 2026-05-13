@@ -44,6 +44,7 @@ data:
         mysql_port={{ include "groundx.db.port" . }},
         mysql_username={{ include "groundx.db.username" . | quote }},
         publish_dry_run={{ if eq (printf "%v" (include "groundx.workspace.publishDryRun" .)) "true" }}True{{ else }}False{{ end }},
+        publish_github_workflow_id={{ include "groundx.workspace.publishGithubWorkflowId" . | quote }},
         runner_token={{ include "groundx.workspace.token" . | quote }},
         service={{ $svc | quote }},
         workspace_min_free_bytes={{ include "groundx.workspace.workspaceMinFreeBytes" . }},

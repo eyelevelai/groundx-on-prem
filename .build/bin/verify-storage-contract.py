@@ -114,7 +114,7 @@ PVC_FIXTURES: typing.Dict[str, PvcFixtureSpec] = {
         ),
     },
     "workspace-local-rwo": {
-        "values": ("src/groundx/tests/files/values.workspace.enabled.yaml",),
+        "values": ("src/groundx/tests/files/values.workspace.pvc.yaml",),
         "must": (
             r"storageClassName:\s+local-path-rwo",
             r"- ReadWriteOnce",
@@ -278,6 +278,7 @@ workspace:
   enabled: true
   existingSecret: eyelevel-secret-credentials
   pvc:
+    enabled: true
     name: workspace-data
     capacity: 50Gi
 """,
@@ -307,6 +308,7 @@ workspace:
   enabled: true
   existingSecret: eyelevel-secret-credentials
   pvc:
+    enabled: true
     name: workspace-data
     capacity: 50Gi
 """,

@@ -19,7 +19,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 080672404770f3dfcbbbe0c2f8e03189082766e00c58f583fe2298989513f835
+            config-hash: dde6387b837e9e41e70823f7b1b731c4498d87b5eeabe79632e41997b42c6be4
             gunicorn-conf-hash: 7b77a5ecbb71e70922f104c678cbaf4ce20a98b86db5735dab4924809990de45
             workspace.groundx.ai/component: api
           labels:
@@ -181,7 +181,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 080672404770f3dfcbbbe0c2f8e03189082766e00c58f583fe2298989513f835
+            config-hash: dde6387b837e9e41e70823f7b1b731c4498d87b5eeabe79632e41997b42c6be4
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-cleanup
@@ -313,7 +313,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 080672404770f3dfcbbbe0c2f8e03189082766e00c58f583fe2298989513f835
+            config-hash: dde6387b837e9e41e70823f7b1b731c4498d87b5eeabe79632e41997b42c6be4
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-command
@@ -453,7 +453,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 080672404770f3dfcbbbe0c2f8e03189082766e00c58f583fe2298989513f835
+            config-hash: dde6387b837e9e41e70823f7b1b731c4498d87b5eeabe79632e41997b42c6be4
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-provision
@@ -585,7 +585,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 080672404770f3dfcbbbe0c2f8e03189082766e00c58f583fe2298989513f835
+            config-hash: dde6387b837e9e41e70823f7b1b731c4498d87b5eeabe79632e41997b42c6be4
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-publish
@@ -717,7 +717,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 080672404770f3dfcbbbe0c2f8e03189082766e00c58f583fe2298989513f835
+            config-hash: dde6387b837e9e41e70823f7b1b731c4498d87b5eeabe79632e41997b42c6be4
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-workspace
@@ -880,6 +880,7 @@
             mysql_port=3306,
             mysql_username="",
             publish_dry_run=True,
+            publish_github_workflow_id="deploy.yml",
             runner_token="test-runner-token",
             service="workspace",
             workspace_min_free_bytes=1.048576e+06,
@@ -1076,6 +1077,7 @@
         version: 0.1.0
       name: workspace-cleanup-supervisord-conf-map
       namespace: eyelevel
+
 'enabled: workspace api ingress':
   1: |
     apiVersion: networking.k8s.io/v1
@@ -1101,6 +1103,7 @@
                       number: 80
                 path: /workspace
                 pathType: ImplementationSpecific
+
 'enabled: workspace github pem fallback secret':
   1: |
     apiVersion: apps/v1
@@ -1122,7 +1125,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6276c706f9d40868fa9b3704840e7e40b6d46316037b1ab7c0cde910f282efdf
+            config-hash: 52c178e821400145b6b5f924abf5cb15a895a116b8230247248c8f21c895109e
             gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
           labels:
             app: workspace-api
@@ -1237,9 +1240,8 @@
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
+            - emptyDir: {}
+              name: workspace-data
   2: |
     apiVersion: v1
     kind: Service
@@ -1257,21 +1259,6 @@
         app: workspace-api
       type: ClusterIP
   3: |
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      labels:
-        app: workspace-api
-      name: workspace-data
-      namespace: eyelevel
-    spec:
-      accessModes:
-        - ReadWriteMany
-      resources:
-        requests:
-          storage: 20Gi
-      storageClassName: eyelevel-pv
-  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1291,7 +1278,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6276c706f9d40868fa9b3704840e7e40b6d46316037b1ab7c0cde910f282efdf
+            config-hash: 52c178e821400145b6b5f924abf5cb15a895a116b8230247248c8f21c895109e
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-cleanup
@@ -1402,10 +1389,9 @@
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
-  5: |
+            - emptyDir: {}
+              name: workspace-data
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1425,7 +1411,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6276c706f9d40868fa9b3704840e7e40b6d46316037b1ab7c0cde910f282efdf
+            config-hash: 52c178e821400145b6b5f924abf5cb15a895a116b8230247248c8f21c895109e
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-command
@@ -1536,10 +1522,9 @@
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
-  6: |
+            - emptyDir: {}
+              name: workspace-data
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1559,7 +1544,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6276c706f9d40868fa9b3704840e7e40b6d46316037b1ab7c0cde910f282efdf
+            config-hash: 52c178e821400145b6b5f924abf5cb15a895a116b8230247248c8f21c895109e
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-provision
@@ -1670,10 +1655,9 @@
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
-  7: |
+            - emptyDir: {}
+              name: workspace-data
+  6: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1693,7 +1677,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6276c706f9d40868fa9b3704840e7e40b6d46316037b1ab7c0cde910f282efdf
+            config-hash: 52c178e821400145b6b5f924abf5cb15a895a116b8230247248c8f21c895109e
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-publish
@@ -1804,10 +1788,9 @@
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
-  8: |
+            - emptyDir: {}
+              name: workspace-data
+  7: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1827,7 +1810,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6276c706f9d40868fa9b3704840e7e40b6d46316037b1ab7c0cde910f282efdf
+            config-hash: 52c178e821400145b6b5f924abf5cb15a895a116b8230247248c8f21c895109e
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-workspace
@@ -1938,10 +1921,9 @@
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
-  9: |
+            - emptyDir: {}
+              name: workspace-data
+  8: |
     apiVersion: v1
     data:
       WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
@@ -1955,7 +1937,7 @@
       name: workspace-secret
       namespace: eyelevel
     type: Opaque
-  10: |
+  9: |
     apiVersion: v1
     data:
       GITHUB_APP_PRIVATE_KEY_PEM: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCnRlc3QKLS0tLS1FTkQgUFJJVkFURSBLRVktLS0tLQo=
@@ -1969,6 +1951,7 @@
       name: workspace-github-secret
       namespace: eyelevel
     type: Opaque
+
 'enabled: workspace github publish config':
   1: |
     apiVersion: apps/v1
@@ -1990,7 +1973,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 2f502d38752812bb4eafc79d2cb41d93dd73a897ab33daed3a76dfba60dcd068
+            config-hash: 8db2bb2b2f4928915df29e1b4601dd67cdac9096462c9ff60e2036fae6f89965
             gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
           labels:
             app: workspace-api
@@ -2106,9 +2089,8 @@
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
+            - emptyDir: {}
+              name: workspace-data
             - name: workspace-github-private-key
               secret:
                 items:
@@ -2132,21 +2114,6 @@
         app: workspace-api
       type: ClusterIP
   3: |
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      labels:
-        app: workspace-api
-      name: workspace-data
-      namespace: eyelevel
-    spec:
-      accessModes:
-        - ReadWriteMany
-      resources:
-        requests:
-          storage: 20Gi
-      storageClassName: azure-files-rwx
-  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2166,7 +2133,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 2f502d38752812bb4eafc79d2cb41d93dd73a897ab33daed3a76dfba60dcd068
+            config-hash: 8db2bb2b2f4928915df29e1b4601dd67cdac9096462c9ff60e2036fae6f89965
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-cleanup
@@ -2278,16 +2245,15 @@
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
+            - emptyDir: {}
+              name: workspace-data
             - name: workspace-github-private-key
               secret:
                 items:
                   - key: private-key.pem
                     path: private-key.pem
                 secretName: workspace-github-app
-  5: |
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2307,7 +2273,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 2f502d38752812bb4eafc79d2cb41d93dd73a897ab33daed3a76dfba60dcd068
+            config-hash: 8db2bb2b2f4928915df29e1b4601dd67cdac9096462c9ff60e2036fae6f89965
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-command
@@ -2419,16 +2385,15 @@
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
+            - emptyDir: {}
+              name: workspace-data
             - name: workspace-github-private-key
               secret:
                 items:
                   - key: private-key.pem
                     path: private-key.pem
                 secretName: workspace-github-app
-  6: |
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2448,7 +2413,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 2f502d38752812bb4eafc79d2cb41d93dd73a897ab33daed3a76dfba60dcd068
+            config-hash: 8db2bb2b2f4928915df29e1b4601dd67cdac9096462c9ff60e2036fae6f89965
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-provision
@@ -2560,16 +2525,15 @@
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
+            - emptyDir: {}
+              name: workspace-data
             - name: workspace-github-private-key
               secret:
                 items:
                   - key: private-key.pem
                     path: private-key.pem
                 secretName: workspace-github-app
-  7: |
+  6: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2589,7 +2553,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 2f502d38752812bb4eafc79d2cb41d93dd73a897ab33daed3a76dfba60dcd068
+            config-hash: 8db2bb2b2f4928915df29e1b4601dd67cdac9096462c9ff60e2036fae6f89965
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-publish
@@ -2701,16 +2665,15 @@
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
+            - emptyDir: {}
+              name: workspace-data
             - name: workspace-github-private-key
               secret:
                 items:
                   - key: private-key.pem
                     path: private-key.pem
                 secretName: workspace-github-app
-  8: |
+  7: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2730,7 +2693,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 2f502d38752812bb4eafc79d2cb41d93dd73a897ab33daed3a76dfba60dcd068
+            config-hash: 8db2bb2b2f4928915df29e1b4601dd67cdac9096462c9ff60e2036fae6f89965
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-workspace
@@ -2842,16 +2805,15 @@
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
+            - emptyDir: {}
+              name: workspace-data
             - name: workspace-github-private-key
               secret:
                 items:
                   - key: private-key.pem
                     path: private-key.pem
                 secretName: workspace-github-app
-  9: |
+  8: |
     apiVersion: v1
     data:
       WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
@@ -2865,7 +2827,7 @@
       name: workspace-secret
       namespace: eyelevel
     type: Opaque
-  10: |
+  9: |
     apiVersion: v1
     data:
       config.py: |
@@ -2902,6 +2864,7 @@
             mysql_port=3306,
             mysql_username="",
             publish_dry_run=False,
+            publish_github_workflow_id="deploy.yml",
             runner_token="test-runner-token",
             service="workspace",
             workspace_min_free_bytes=0,
@@ -2917,6 +2880,7 @@
         version: 0.1.0
       name: workspace-config-py-map
       namespace: eyelevel
+
 'enabled: workspace gitlab publish config':
   1: |
     apiVersion: apps/v1
@@ -2938,7 +2902,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 1bc77e04c2d45f8fef095a11d4e21983bf88235a0b9c0a4e7fabba5ebaa4c98c
+            config-hash: 9d8cd2caadad64536ea6d53465fc0957e4f11aafa04d8d6f9ad1f34aab2ce22f
             gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
           labels:
             app: workspace-api
@@ -3054,9 +3018,8 @@
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
+            - emptyDir: {}
+              name: workspace-data
             - name: workspace-gitlab-token
               secret:
                 items:
@@ -3080,21 +3043,6 @@
         app: workspace-api
       type: ClusterIP
   3: |
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      labels:
-        app: workspace-api
-      name: workspace-data
-      namespace: eyelevel
-    spec:
-      accessModes:
-        - ReadWriteMany
-      resources:
-        requests:
-          storage: 20Gi
-      storageClassName: eyelevel-pv
-  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3114,7 +3062,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 1bc77e04c2d45f8fef095a11d4e21983bf88235a0b9c0a4e7fabba5ebaa4c98c
+            config-hash: 9d8cd2caadad64536ea6d53465fc0957e4f11aafa04d8d6f9ad1f34aab2ce22f
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-cleanup
@@ -3226,16 +3174,15 @@
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
+            - emptyDir: {}
+              name: workspace-data
             - name: workspace-gitlab-token
               secret:
                 items:
                   - key: token
                     path: token
                 secretName: workspace-gitlab-token
-  5: |
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3255,7 +3202,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 1bc77e04c2d45f8fef095a11d4e21983bf88235a0b9c0a4e7fabba5ebaa4c98c
+            config-hash: 9d8cd2caadad64536ea6d53465fc0957e4f11aafa04d8d6f9ad1f34aab2ce22f
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-command
@@ -3367,16 +3314,15 @@
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
+            - emptyDir: {}
+              name: workspace-data
             - name: workspace-gitlab-token
               secret:
                 items:
                   - key: token
                     path: token
                 secretName: workspace-gitlab-token
-  6: |
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3396,7 +3342,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 1bc77e04c2d45f8fef095a11d4e21983bf88235a0b9c0a4e7fabba5ebaa4c98c
+            config-hash: 9d8cd2caadad64536ea6d53465fc0957e4f11aafa04d8d6f9ad1f34aab2ce22f
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-provision
@@ -3508,16 +3454,15 @@
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
+            - emptyDir: {}
+              name: workspace-data
             - name: workspace-gitlab-token
               secret:
                 items:
                   - key: token
                     path: token
                 secretName: workspace-gitlab-token
-  7: |
+  6: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3537,7 +3482,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 1bc77e04c2d45f8fef095a11d4e21983bf88235a0b9c0a4e7fabba5ebaa4c98c
+            config-hash: 9d8cd2caadad64536ea6d53465fc0957e4f11aafa04d8d6f9ad1f34aab2ce22f
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-publish
@@ -3649,16 +3594,15 @@
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
+            - emptyDir: {}
+              name: workspace-data
             - name: workspace-gitlab-token
               secret:
                 items:
                   - key: token
                     path: token
                 secretName: workspace-gitlab-token
-  8: |
+  7: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3678,7 +3622,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 1bc77e04c2d45f8fef095a11d4e21983bf88235a0b9c0a4e7fabba5ebaa4c98c
+            config-hash: 9d8cd2caadad64536ea6d53465fc0957e4f11aafa04d8d6f9ad1f34aab2ce22f
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-workspace
@@ -3790,16 +3734,15 @@
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
+            - emptyDir: {}
+              name: workspace-data
             - name: workspace-gitlab-token
               secret:
                 items:
                   - key: token
                     path: token
                 secretName: workspace-gitlab-token
-  9: |
+  8: |
     apiVersion: v1
     data:
       WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
@@ -3813,7 +3756,7 @@
       name: workspace-secret
       namespace: eyelevel
     type: Opaque
-  10: |
+  9: |
     apiVersion: v1
     data:
       config.py: |
@@ -3850,6 +3793,7 @@
             mysql_port=3306,
             mysql_username="",
             publish_dry_run=False,
+            publish_github_workflow_id="deploy.yml",
             runner_token="test-runner-token",
             service="workspace",
             workspace_min_free_bytes=0,
@@ -3865,6 +3809,7 @@
         version: 0.1.0
       name: workspace-config-py-map
       namespace: eyelevel
+
 'enabled: workspace metrics config':
   1: |
     apiVersion: autoscaling/v2
@@ -4184,6 +4129,7 @@
         apiVersion: apps/v1
         kind: Deployment
         name: workspace-workspace
+
 'workspace-enabled: workspace minimal':
   1: |
     apiVersion: apps/v1
@@ -4205,7 +4151,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3ede29b5b4bd64ac2487eb6ca4e50781ebdc50971fd503c3e436fb0814be513
+            config-hash: 7c425129290206aabcc7c36198493ce597a798a66030573a261ded9a311680b9
             gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
           labels:
             app: workspace-api
@@ -4318,9 +4264,8 @@
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
+            - emptyDir: {}
+              name: workspace-data
   2: |
     apiVersion: v1
     kind: Service
@@ -4338,21 +4283,6 @@
         app: workspace-api
       type: ClusterIP
   3: |
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      labels:
-        app: workspace-api
-      name: workspace-data
-      namespace: eyelevel
-    spec:
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 20Gi
-      storageClassName: local-path-rwo
-  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4372,7 +4302,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3ede29b5b4bd64ac2487eb6ca4e50781ebdc50971fd503c3e436fb0814be513
+            config-hash: 7c425129290206aabcc7c36198493ce597a798a66030573a261ded9a311680b9
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-cleanup
@@ -4481,10 +4411,9 @@
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
-  5: |
+            - emptyDir: {}
+              name: workspace-data
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4504,7 +4433,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3ede29b5b4bd64ac2487eb6ca4e50781ebdc50971fd503c3e436fb0814be513
+            config-hash: 7c425129290206aabcc7c36198493ce597a798a66030573a261ded9a311680b9
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-command
@@ -4613,10 +4542,9 @@
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
-  6: |
+            - emptyDir: {}
+              name: workspace-data
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4636,7 +4564,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3ede29b5b4bd64ac2487eb6ca4e50781ebdc50971fd503c3e436fb0814be513
+            config-hash: 7c425129290206aabcc7c36198493ce597a798a66030573a261ded9a311680b9
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-provision
@@ -4745,10 +4673,9 @@
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
-  7: |
+            - emptyDir: {}
+              name: workspace-data
+  6: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4768,7 +4695,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3ede29b5b4bd64ac2487eb6ca4e50781ebdc50971fd503c3e436fb0814be513
+            config-hash: 7c425129290206aabcc7c36198493ce597a798a66030573a261ded9a311680b9
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-publish
@@ -4877,10 +4804,9 @@
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
-  8: |
+            - emptyDir: {}
+              name: workspace-data
+  7: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4900,7 +4826,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3ede29b5b4bd64ac2487eb6ca4e50781ebdc50971fd503c3e436fb0814be513
+            config-hash: 7c425129290206aabcc7c36198493ce597a798a66030573a261ded9a311680b9
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-workspace
@@ -5009,10 +4935,9 @@
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
-  9: |
+            - emptyDir: {}
+              name: workspace-data
+  8: |
     apiVersion: v1
     data:
       WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
@@ -5026,7 +4951,7 @@
       name: workspace-secret
       namespace: eyelevel
     type: Opaque
-  10: |
+  9: |
     apiVersion: v1
     data:
       config.py: |
@@ -5063,6 +4988,7 @@
             mysql_port=3306,
             mysql_username="",
             publish_dry_run=True,
+            publish_github_workflow_id="deploy.yml",
             runner_token="test-runner-token",
             service="workspace",
             workspace_min_free_bytes=0,
@@ -5078,7 +5004,7 @@
         version: 0.1.0
       name: workspace-config-py-map
       namespace: eyelevel
-  11: |
+  10: |
     apiVersion: v1
     data:
       gunicorn_conf.py: |
@@ -5101,7 +5027,7 @@
         version: 0.1.0
       name: workspace-gunicorn-conf-py-map
       namespace: eyelevel
-  12: |
+  11: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -5130,7 +5056,7 @@
         version: 0.1.0
       name: workspace-provision-supervisord-conf-map
       namespace: eyelevel
-  13: |
+  12: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -5159,7 +5085,7 @@
         version: 0.1.0
       name: workspace-workspace-supervisord-conf-map
       namespace: eyelevel
-  14: |
+  13: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -5188,7 +5114,7 @@
         version: 0.1.0
       name: workspace-command-supervisord-conf-map
       namespace: eyelevel
-  15: |
+  14: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -5217,7 +5143,7 @@
         version: 0.1.0
       name: workspace-publish-supervisord-conf-map
       namespace: eyelevel
-  16: |
+  15: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -5246,5 +5172,7 @@
         version: 0.1.0
       name: workspace-cleanup-supervisord-conf-map
       namespace: eyelevel
+
 'disabled: workspace': {}
+
 'disabled: workspace metrics config': {}

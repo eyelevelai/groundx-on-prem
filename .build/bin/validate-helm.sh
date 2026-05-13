@@ -67,6 +67,14 @@ helm template workspace-contract helm \
   -f src/groundx/tests/files/values.workspace-metrics.yaml \
   >/dev/null
 
+echo "==> Validating workspace smoke/E2E script syntax and wording"
+bash -n .build/bin/smoke-workspace-runner.sh
+bash -n .build/bin/workspace-runner-e2e.sh
+if grep -R "pull request creatio[n]\\|merge the managed P[R]" README.md .build/bin >/dev/null 2>&1; then
+  echo "Workspace docs/scripts must describe publish as CI/CD, not PR/MR creation." >&2
+  exit 1
+fi
+
 if [[ "${RUN_JUNIT}" == "1" ]]; then
   echo "==> Writing Helm unittest JUnit report"
   mkdir -p reports

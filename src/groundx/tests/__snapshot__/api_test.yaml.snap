@@ -413,6 +413,7 @@
       selector:
         app: summary-api
       type: ClusterIP
+
 'cloud: api':
   1: |
     apiVersion: apps/v1
@@ -977,6 +978,7 @@
       selector:
         app: summary-api
       type: ClusterIP
+
 'default: api':
   1: |
     apiVersion: apps/v1
@@ -1389,6 +1391,7 @@
       selector:
         app: summary-api
       type: ClusterIP
+
 'empty: api':
   1: |
     apiVersion: apps/v1
@@ -1801,6 +1804,7 @@
       selector:
         app: summary-api
       type: ClusterIP
+
 'existing: api':
   1: |
     apiVersion: apps/v1
@@ -2076,6 +2080,7 @@
       selector:
         app: ranker-api
       type: ClusterIP
+
 'extract.ingest: api':
   1: |
     apiVersion: apps/v1
@@ -2503,6 +2508,7 @@
       selector:
         app: summary-api
       type: ClusterIP
+
 'extract.oai: api':
   1: |
     apiVersion: apps/v1
@@ -2798,6 +2804,7 @@
       selector:
         app: layout-api
       type: ClusterIP
+
 'extract: api':
   1: |
     apiVersion: apps/v1
@@ -3234,6 +3241,7 @@
       selector:
         app: summary-api
       type: ClusterIP
+
 'metadata: api':
   1: |
     apiVersion: apps/v1
@@ -3608,6 +3616,7 @@
       selector:
         app: myapp-api
       type: ClusterIP
+
 'minikube: api':
   1: |
     apiVersion: apps/v1
@@ -4020,6 +4029,7 @@
       selector:
         app: summary-api
       type: ClusterIP
+
 'openshift: api':
   1: |
     apiVersion: apps/v1
@@ -4414,6 +4424,7 @@
       selector:
         app: summary-api
       type: ClusterIP
+
 'phoenix: api':
   1: |
     apiVersion: apps/v1
@@ -4955,6 +4966,7 @@
       selector:
         app: summary-api
       type: ClusterIP
+
 'workspace-enabled: api':
   1: |
     apiVersion: apps/v1
@@ -4976,7 +4988,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3ede29b5b4bd64ac2487eb6ca4e50781ebdc50971fd503c3e436fb0814be513
+            config-hash: 7c425129290206aabcc7c36198493ce597a798a66030573a261ded9a311680b9
             gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
           labels:
             app: workspace-api
@@ -5089,9 +5101,8 @@
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
-            - name: workspace-data
-              persistentVolumeClaim:
-                claimName: workspace-data
+            - emptyDir: {}
+              name: workspace-data
   2: |
     apiVersion: v1
     kind: Service
@@ -5108,19 +5119,5 @@
       selector:
         app: workspace-api
       type: ClusterIP
-  3: |
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      labels:
-        app: workspace-api
-      name: workspace-data
-      namespace: eyelevel
-    spec:
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 20Gi
-      storageClassName: local-path-rwo
+
 'disabled: api': {}
