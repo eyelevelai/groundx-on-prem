@@ -37,6 +37,12 @@ def reject(text: str, pattern: str, label: str) -> None:
         raise AssertionError(f"unexpected {label}: {pattern}")
 
 
+def require_count_at_least(text: str, pattern: str, minimum: int, label: str) -> None:
+    count = len(re.findall(pattern, text, flags=re.MULTILINE))
+    if count < minimum:
+        raise AssertionError(f"expected at least {minimum} {label}, found {count}: {pattern}")
+
+
 def verify_chart(chart: Path) -> list[str]:
     rendered = render_chart(chart)
     namespace = "eyelevel"
@@ -61,11 +67,19 @@ def verify_chart(chart: Path) -> list[str]:
     require(rendered, r"^  name:\s+workspace-command$", "workspace command worker")
     require(rendered, r"^  name:\s+workspace-publish$", "workspace publish worker")
     require(rendered, r"^  name:\s+workspace-cleanup$", "workspace cleanup worker")
+    require(rendered, r"^  name:\s+\"?workspace-test-data\"?$", "workspace service-wide PVC")
+    require_count_at_least(
+        rendered,
+        r"claimName:\s+workspace-test-data",
+        6,
+        "workspace pod mounts using the service-wide PVC",
+    )
 
     reject(rendered, rf"baseURL:\s+{re.escape(stale_base_url)}", "stale workspace family baseURL")
     reject(rendered, rf"name:\s+WORKSPACE_RUNNER_BASE_URL\n\s+value:\s+{re.escape(stale_base_url)}", "stale Partner API runner env")
     reject(rendered, r"name:\s+workspace:api", "stale workspace API metric")
     reject(rendered, r"name:\s+workspace:throughput", "stale workspace throughput metric")
+    reject(rendered, r"emptyDir:\s+\{\}\n\s+name:\s+workspace-data", "workspace emptyDir cache volume")
 
     return [f"{chart.relative_to(ROOT)} workspace chart contract passed"]
 

@@ -118,7 +118,7 @@ PVC_FIXTURES: typing.Dict[str, PvcFixtureSpec] = {
         "must": (
             r"storageClassName:\s+local-path-rwo",
             r"- ReadWriteOnce",
-            r'name:\s+"workspace-data"',
+            r'name:\s+"?workspace-data"?',
         ),
     },
     "cache-persistence-rwx": {
@@ -278,7 +278,6 @@ workspace:
   enabled: true
   existingSecret: eyelevel-secret-credentials
   pvc:
-    enabled: true
     name: workspace-data
     capacity: 50Gi
 """,
@@ -308,7 +307,6 @@ workspace:
   enabled: true
   existingSecret: eyelevel-secret-credentials
   pvc:
-    enabled: true
     name: workspace-data
     capacity: 50Gi
 """,
@@ -388,18 +386,20 @@ def verify_secret_render(rendered: str, driver: str) -> None:
 
 
 def verify_app_render(rendered: str, driver: str, access: str) -> None:
-    require(rendered, r'name:\s+"workspace-data"', f"{driver} workspace PVC")
+    require(rendered, r'name:\s+"?workspace-data"?', f"{driver} workspace PVC")
     require(rendered, r'name:\s+"layout-model"', f"{driver} layout PVC")
     require(rendered, r'name:\s+"ranker-model"', f"{driver} ranker PVC")
     require(rendered, r'name:\s+"summary-model"', f"{driver} summary PVC")
     require(rendered, r"storageClassName:\s+eyelevel-pv", f"{driver} PVC class")
     require(rendered, rf"- {access}", f"{driver} PVC access")
+    reject(rendered, r"emptyDir:\s+\{\}\n\s+name:\s+workspace-data", f"{driver} workspace emptyDir cache volume")
 
 
 def verify_workspace_pvc(rendered: str, driver: str, access: str) -> None:
-    require(rendered, r'name:\s+"workspace-data"', f"{driver} EKS workspace PVC")
+    require(rendered, r'name:\s+"?workspace-data"?', f"{driver} EKS workspace PVC")
     require(rendered, r"storageClassName:\s+eyelevel-pv", f"{driver} EKS workspace PVC class")
     require(rendered, rf"- {access}", f"{driver} EKS workspace PVC access")
+    reject(rendered, r"emptyDir:\s+\{\}\n\s+name:\s+workspace-data", f"{driver} EKS workspace emptyDir cache volume")
 
 
 def verify_install_flow_render(rendered: str, driver: str, access: str) -> None:

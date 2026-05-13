@@ -413,7 +413,6 @@
       selector:
         app: summary-api
       type: ClusterIP
-
 'cloud: api':
   1: |
     apiVersion: apps/v1
@@ -978,7 +977,6 @@
       selector:
         app: summary-api
       type: ClusterIP
-
 'default: api':
   1: |
     apiVersion: apps/v1
@@ -1391,7 +1389,6 @@
       selector:
         app: summary-api
       type: ClusterIP
-
 'empty: api':
   1: |
     apiVersion: apps/v1
@@ -1804,7 +1801,6 @@
       selector:
         app: summary-api
       type: ClusterIP
-
 'existing: api':
   1: |
     apiVersion: apps/v1
@@ -2080,7 +2076,6 @@
       selector:
         app: ranker-api
       type: ClusterIP
-
 'extract.ingest: api':
   1: |
     apiVersion: apps/v1
@@ -2508,7 +2503,6 @@
       selector:
         app: summary-api
       type: ClusterIP
-
 'extract.oai: api':
   1: |
     apiVersion: apps/v1
@@ -2804,7 +2798,6 @@
       selector:
         app: layout-api
       type: ClusterIP
-
 'extract: api':
   1: |
     apiVersion: apps/v1
@@ -3241,7 +3234,6 @@
       selector:
         app: summary-api
       type: ClusterIP
-
 'metadata: api':
   1: |
     apiVersion: apps/v1
@@ -3616,7 +3608,6 @@
       selector:
         app: myapp-api
       type: ClusterIP
-
 'minikube: api':
   1: |
     apiVersion: apps/v1
@@ -4029,7 +4020,6 @@
       selector:
         app: summary-api
       type: ClusterIP
-
 'openshift: api':
   1: |
     apiVersion: apps/v1
@@ -4424,7 +4414,6 @@
       selector:
         app: summary-api
       type: ClusterIP
-
 'phoenix: api':
   1: |
     apiVersion: apps/v1
@@ -4966,7 +4955,6 @@
       selector:
         app: summary-api
       type: ClusterIP
-
 'workspace-enabled: api':
   1: |
     apiVersion: apps/v1
@@ -5101,8 +5089,9 @@
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
   2: |
     apiVersion: v1
     kind: Service
@@ -5119,5 +5108,19 @@
       selector:
         app: workspace-api
       type: ClusterIP
-
+  3: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-data
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: local-path-rwo
 'disabled: api': {}

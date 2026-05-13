@@ -644,7 +644,6 @@
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
-
 'cloud: celery':
   1: |
     apiVersion: apps/v1
@@ -1714,7 +1713,6 @@
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
-
 'default: celery':
   1: |
     apiVersion: apps/v1
@@ -2356,7 +2354,6 @@
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
-
 'empty: celery':
   1: |
     apiVersion: apps/v1
@@ -2998,7 +2995,6 @@
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
-
 'existing: celery':
   1: |
     apiVersion: apps/v1
@@ -3640,7 +3636,6 @@
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
-
 'extract.ingest: celery':
   1: |
     apiVersion: apps/v1
@@ -4710,7 +4705,6 @@
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
-
 'extract.oai: celery':
   1: |
     apiVersion: apps/v1
@@ -5803,7 +5797,6 @@
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
-
 'extract: celery':
   1: |
     apiVersion: apps/v1
@@ -6896,7 +6889,6 @@
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
-
 'metadata: celery':
   1: |
     apiVersion: apps/v1
@@ -7484,7 +7476,6 @@
             - configMap:
                 name: myapp-save-supervisord-conf-map
               name: supervisord-volume
-
 'minikube: celery':
   1: |
     apiVersion: apps/v1
@@ -8126,7 +8117,6 @@
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
-
 'openshift: celery':
   1: |
     apiVersion: apps/v1
@@ -8738,7 +8728,6 @@
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
-
 'phoenix: celery':
   1: |
     apiVersion: apps/v1
@@ -9776,7 +9765,6 @@
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
-
 'workspace-enabled: celery':
   1: |
     apiVersion: apps/v1
@@ -9907,8 +9895,9 @@
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
   2: |
     apiVersion: apps/v1
     kind: Deployment
@@ -10038,8 +10027,9 @@
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
   3: |
     apiVersion: apps/v1
     kind: Deployment
@@ -10169,8 +10159,9 @@
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
   4: |
     apiVersion: apps/v1
     kind: Deployment
@@ -10300,8 +10291,9 @@
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
   5: |
     apiVersion: apps/v1
     kind: Deployment
@@ -10431,7 +10423,7 @@
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
 'disabled: celery': {}

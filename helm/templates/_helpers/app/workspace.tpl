@@ -261,8 +261,7 @@ workspace-data
 
 {{- define "groundx.workspace.pvc" -}}
 {{- $in := include "groundx.workspace.values" . | fromYaml -}}
-{{- $pvc := dig "pvc" dict $in -}}
-{{- if dig "enabled" false $pvc -}}
+{{- $pvc := omit (dig "pvc" dict $in) "enabled" -}}
 {{- $defaults := dict
   "access" (include "groundx.pvAccessMode" .)
   "capacity" "20Gi"
@@ -270,20 +269,13 @@ workspace-data
   "name" (printf "%s-data" (include "groundx.workspace.serviceName" .))
 -}}
 {{ mergeOverwrite $defaults $pvc | toYaml }}
-{{- else -}}
-{{ dict | toYaml }}
-{{- end -}}
 {{- end }}
 
 {{- define "groundx.workspace.workspaceVolume" -}}
 {{- $pvc := include "groundx.workspace.pvc" . | fromYaml -}}
 - name: {{ include "groundx.workspace.workspaceVolumeName" . }}
-{{- if not (empty $pvc) }}
   persistentVolumeClaim:
     claimName: {{ get $pvc "name" }}
-{{- else }}
-  emptyDir: {}
-{{- end }}
 {{- end }}
 
 {{- define "groundx.workspace.workspaceVolumeMount" -}}

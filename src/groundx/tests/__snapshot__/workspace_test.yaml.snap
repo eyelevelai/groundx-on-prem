@@ -1077,7 +1077,6 @@
         version: 0.1.0
       name: workspace-cleanup-supervisord-conf-map
       namespace: eyelevel
-
 'enabled: workspace api ingress':
   1: |
     apiVersion: networking.k8s.io/v1
@@ -1103,7 +1102,6 @@
                       number: 80
                 path: /workspace
                 pathType: ImplementationSpecific
-
 'enabled: workspace github pem fallback secret':
   1: |
     apiVersion: apps/v1
@@ -1240,8 +1238,9 @@
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
   2: |
     apiVersion: v1
     kind: Service
@@ -1259,6 +1258,21 @@
         app: workspace-api
       type: ClusterIP
   3: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-data
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: eyelevel-pv
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1389,9 +1403,10 @@
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  4: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1522,9 +1537,10 @@
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  5: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  6: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1655,9 +1671,10 @@
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  6: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  7: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1788,9 +1805,10 @@
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  7: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1921,9 +1939,10 @@
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  8: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  9: |
     apiVersion: v1
     data:
       WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
@@ -1937,7 +1956,7 @@
       name: workspace-secret
       namespace: eyelevel
     type: Opaque
-  9: |
+  10: |
     apiVersion: v1
     data:
       GITHUB_APP_PRIVATE_KEY_PEM: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCnRlc3QKLS0tLS1FTkQgUFJJVkFURSBLRVktLS0tLQo=
@@ -1951,7 +1970,6 @@
       name: workspace-github-secret
       namespace: eyelevel
     type: Opaque
-
 'enabled: workspace github publish config':
   1: |
     apiVersion: apps/v1
@@ -2089,8 +2107,9 @@
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
             - name: workspace-github-private-key
               secret:
                 items:
@@ -2114,6 +2133,21 @@
         app: workspace-api
       type: ClusterIP
   3: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-data
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: azure-files-rwx
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2245,15 +2279,16 @@
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
             - name: workspace-github-private-key
               secret:
                 items:
                   - key: private-key.pem
                     path: private-key.pem
                 secretName: workspace-github-app
-  4: |
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2385,15 +2420,16 @@
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
             - name: workspace-github-private-key
               secret:
                 items:
                   - key: private-key.pem
                     path: private-key.pem
                 secretName: workspace-github-app
-  5: |
+  6: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2525,15 +2561,16 @@
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
             - name: workspace-github-private-key
               secret:
                 items:
                   - key: private-key.pem
                     path: private-key.pem
                 secretName: workspace-github-app
-  6: |
+  7: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2665,15 +2702,16 @@
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
             - name: workspace-github-private-key
               secret:
                 items:
                   - key: private-key.pem
                     path: private-key.pem
                 secretName: workspace-github-app
-  7: |
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2805,15 +2843,16 @@
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
             - name: workspace-github-private-key
               secret:
                 items:
                   - key: private-key.pem
                     path: private-key.pem
                 secretName: workspace-github-app
-  8: |
+  9: |
     apiVersion: v1
     data:
       WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
@@ -2827,7 +2866,7 @@
       name: workspace-secret
       namespace: eyelevel
     type: Opaque
-  9: |
+  10: |
     apiVersion: v1
     data:
       config.py: |
@@ -2880,7 +2919,6 @@
         version: 0.1.0
       name: workspace-config-py-map
       namespace: eyelevel
-
 'enabled: workspace gitlab publish config':
   1: |
     apiVersion: apps/v1
@@ -3018,8 +3056,9 @@
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
             - name: workspace-gitlab-token
               secret:
                 items:
@@ -3043,6 +3082,21 @@
         app: workspace-api
       type: ClusterIP
   3: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-data
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: eyelevel-pv
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3174,15 +3228,16 @@
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
             - name: workspace-gitlab-token
               secret:
                 items:
                   - key: token
                     path: token
                 secretName: workspace-gitlab-token
-  4: |
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3314,15 +3369,16 @@
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
             - name: workspace-gitlab-token
               secret:
                 items:
                   - key: token
                     path: token
                 secretName: workspace-gitlab-token
-  5: |
+  6: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3454,15 +3510,16 @@
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
             - name: workspace-gitlab-token
               secret:
                 items:
                   - key: token
                     path: token
                 secretName: workspace-gitlab-token
-  6: |
+  7: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3594,15 +3651,16 @@
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
             - name: workspace-gitlab-token
               secret:
                 items:
                   - key: token
                     path: token
                 secretName: workspace-gitlab-token
-  7: |
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -3734,15 +3792,16 @@
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
             - name: workspace-gitlab-token
               secret:
                 items:
                   - key: token
                     path: token
                 secretName: workspace-gitlab-token
-  8: |
+  9: |
     apiVersion: v1
     data:
       WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
@@ -3756,7 +3815,7 @@
       name: workspace-secret
       namespace: eyelevel
     type: Opaque
-  9: |
+  10: |
     apiVersion: v1
     data:
       config.py: |
@@ -3809,7 +3868,6 @@
         version: 0.1.0
       name: workspace-config-py-map
       namespace: eyelevel
-
 'enabled: workspace metrics config':
   1: |
     apiVersion: autoscaling/v2
@@ -4129,7 +4187,6 @@
         apiVersion: apps/v1
         kind: Deployment
         name: workspace-workspace
-
 'workspace-enabled: workspace minimal':
   1: |
     apiVersion: apps/v1
@@ -4264,8 +4321,9 @@
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
-            - emptyDir: {}
-              name: workspace-data
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
   2: |
     apiVersion: v1
     kind: Service
@@ -4283,6 +4341,21 @@
         app: workspace-api
       type: ClusterIP
   3: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-data
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: local-path-rwo
+  4: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4411,9 +4484,10 @@
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  4: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4542,9 +4616,10 @@
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  5: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  6: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4673,9 +4748,10 @@
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  6: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  7: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4804,9 +4880,10 @@
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  7: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  8: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -4935,9 +5012,10 @@
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume
-            - emptyDir: {}
-              name: workspace-data
-  8: |
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  9: |
     apiVersion: v1
     data:
       WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
@@ -4951,7 +5029,7 @@
       name: workspace-secret
       namespace: eyelevel
     type: Opaque
-  9: |
+  10: |
     apiVersion: v1
     data:
       config.py: |
@@ -5004,7 +5082,7 @@
         version: 0.1.0
       name: workspace-config-py-map
       namespace: eyelevel
-  10: |
+  11: |
     apiVersion: v1
     data:
       gunicorn_conf.py: |
@@ -5027,7 +5105,7 @@
         version: 0.1.0
       name: workspace-gunicorn-conf-py-map
       namespace: eyelevel
-  11: |
+  12: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -5056,7 +5134,7 @@
         version: 0.1.0
       name: workspace-provision-supervisord-conf-map
       namespace: eyelevel
-  12: |
+  13: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -5085,7 +5163,7 @@
         version: 0.1.0
       name: workspace-workspace-supervisord-conf-map
       namespace: eyelevel
-  13: |
+  14: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -5114,7 +5192,7 @@
         version: 0.1.0
       name: workspace-command-supervisord-conf-map
       namespace: eyelevel
-  14: |
+  15: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -5143,7 +5221,7 @@
         version: 0.1.0
       name: workspace-publish-supervisord-conf-map
       namespace: eyelevel
-  15: |
+  16: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -5172,7 +5250,6 @@
         version: 0.1.0
       name: workspace-cleanup-supervisord-conf-map
       namespace: eyelevel
-
 'disabled: workspace': {}
 
 'disabled: workspace metrics config': {}
