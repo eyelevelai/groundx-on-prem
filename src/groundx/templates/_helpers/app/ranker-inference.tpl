@@ -59,6 +59,62 @@ true
 {{ mergeOverwrite $defaults $pvc | toYaml }}
 {{- end }}
 
+{{/* fraction of threshold */}}
+{{- define "groundx.ranker.inference.target.default" -}}
+1
+{{- end }}
+
+{{/* tokens per minute per worker per thread */}}
+{{- define "groundx.ranker.inference.threshold.default" -}}
+20000
+{{- end }}
+
+{{/* tokens per minute per worker per thread */}}
+{{- define "groundx.ranker.inference.throughput.default" -}}
+60000
+{{- end }}
+
+{{- define "groundx.ranker.inference.threshold" -}}
+{{- $rep := (include "groundx.ranker.inference.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.ranker.inference.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "threshold" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.ranker.inference.throughput" -}}
+{{- $rep := (include "groundx.ranker.inference.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.ranker.inference.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "throughput" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.ranker.inference.hpa" -}}
+{{- $ic := include "groundx.ranker.inference.create" . -}}
+{{- $rep := (include "groundx.ranker.inference.replicas" . | fromYaml) -}}
+{{- $enabled := false -}}
+{{- if eq $ic "true" -}}
+{{- $enabled = dig "hpa" false $rep -}}
+{{- end -}}
+{{- $name := (include "groundx.ranker.inference.serviceName" .) -}}
+{{- $cld := dig "cooldown" 60 $rep -}}
+{{- $cfg := dict
+  "downCooldown" (mul $cld 2)
+  "enabled"      $enabled
+  "metric"       (printf "%s:inference" $name)
+  "name"         $name
+  "replicas"     $rep
+  "throughput"   (printf "%s:throughput" $name)
+  "upCooldown"   $cld
+-}}
+{{- $cfg | toYaml -}}
+{{- end }}
+
 {{- define "groundx.ranker.inference.queue" -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "inference" dict $b -}}
@@ -69,9 +125,41 @@ true
 {{- $b := .Values.ranker | default dict -}}
 {{- $c := dig "inference" dict $b -}}
 {{- $in := dig "replicas" dict $c -}}
+{{- $chp := include "groundx.cluster.hpa" . -}}
 {{- if not $in }}
-  {{- $in = dict "desired" 1 "max" 1 "min" 1 -}}
+  {{- $in = dict -}}
 {{- end }}
+{{- if not (hasKey $in "cooldown") -}}
+  {{- $_ := set $in "cooldown" (include "groundx.hpa.cooldown" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "hpa") -}}
+  {{- $_ := set $in "hpa" $chp -}}
+{{- end -}}
+{{- if not (hasKey $in "target") -}}
+  {{- $_ := set $in "target" (include "groundx.ranker.inference.target.default" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "throughput") -}}
+  {{- $threads := (include "groundx.ranker.inference.threads" . | int) -}}
+  {{- $workers := (include "groundx.ranker.inference.workers" . | int) -}}
+  {{- $dflt := (include "groundx.ranker.inference.throughput.default" . | int) -}}
+  {{- $_ := set $in "throughput" (mul $dflt $threads $workers) -}}
+{{- end -}}
+{{- if not (hasKey $in "threshold") -}}
+  {{- $_ := set $in "threshold" (dig "throughput" 0 $in) -}}
+{{- end -}}
+{{- if not (hasKey $in "min") -}}
+  {{- if hasKey $in "desired" -}}
+    {{- $_ := set $in "min" (dig "desired" 1 $in) -}}
+  {{- else -}}
+    {{- $_ := set $in "min" 1 -}}
+  {{- end -}}
+{{- end -}}
+{{- if not (hasKey $in "desired") -}}
+  {{- $_ := set $in "desired" 1 -}}
+{{- end -}}
+{{- if not (hasKey $in "max") -}}
+  {{- $_ := set $in "max" 16 -}}
+{{- end -}}
 {{- toYaml $in | nindent 0 }}
 {{- end }}
 

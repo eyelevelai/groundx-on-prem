@@ -21,9 +21,11 @@
 {{- $gxc := include "groundx.groundx.threshold" . | trim -}}
 {{- $lac := include "groundx.layout.api.threshold" . | trim -}}
 {{- $lwc := include "groundx.layoutWebhook.threshold" . | trim -}}
+{{- $rac := include "groundx.ranker.api.threshold" . | trim -}}
 {{- $wrac := include "groundx.workspace.api.threshold" . | trim -}}
 
 {{- $lic := include "groundx.layout.inference.threshold" . | trim -}}
+{{- $ric := include "groundx.ranker.inference.threshold" . | trim -}}
 {{- $sac := include "groundx.summary.api.threshold" . | trim -}}
 {{- $sic := include "groundx.summary.inference.threshold" . | trim -}}
 {{- $scc := include "groundx.summaryClient.threshold" . | trim -}}
@@ -55,6 +57,8 @@
 {{- $ppt := include "groundx.preProcess.throughput" . | trim -}}
 {{- $prt := include "groundx.process.throughput" . | trim -}}
 {{- $qpt := include "groundx.queue.throughput" . | trim -}}
+{{- $rat := include "groundx.ranker.api.throughput" . | trim -}}
+{{- $rit := include "groundx.ranker.inference.throughput" . | trim -}}
 {{- $sat := include "groundx.summary.api.throughput" . | trim -}}
 {{- $sit := include "groundx.summary.inference.throughput" . | trim -}}
 {{- $sct := include "groundx.summaryClient.throughput" . | trim -}}
@@ -236,7 +240,7 @@ data:
 
     metrics:
       active: true
-      {{- if or (ne $epc "0") (ne $gxc "0") (ne $lac "0") (ne $lwc "0") (ne $wrac "0") }}
+      {{- if or (ne $epc "0") (ne $gxc "0") (ne $lac "0") (ne $lwc "0") (ne $rac "0") (ne $wrac "0") }}
       api:
         {{- if ne $epc "0" }}
         - name: {{ include "groundx.extract.api.serviceName" . }}
@@ -254,6 +258,10 @@ data:
         - name: {{ include "groundx.layoutWebhook.serviceName" . }}
           threshold: {{ $lwc }}
         {{- end }}
+        {{- if ne $rac "0" }}
+        - name: {{ include "groundx.ranker.api.serviceName" . }}
+          threshold: {{ $rac }}
+        {{- end }}
         {{- if ne $wrac "0" }}
         - name: {{ include "groundx.workspace.api.serviceName" . }}
           threshold: {{ $wrac }}
@@ -263,11 +271,15 @@ data:
         tokensPerMinute: {{ include "groundx.throughput.tpm.document" . }}
       extractRequest:
         tokensPerMinute: {{ include "groundx.throughput.tpm.extractRequest" . }}
-      {{- if or (ne $lic "0") (ne $sac "0") (ne $sic "0") (and (eq $sce "true") (ne $scc "0")) }}
+      {{- if or (ne $lic "0") (ne $ric "0") (ne $sac "0") (ne $sic "0") (and (eq $sce "true") (ne $scc "0")) }}
       inference:
         {{- if ne $lic "0" }}
         - name: {{ include "groundx.layout.serviceName" . }}-inference
           tokensPerMinute: {{ $lic }}
+        {{- end }}
+        {{- if ne $ric "0" }}
+        - name: {{ include "groundx.ranker.serviceName" . }}-inference
+          tokensPerMinute: {{ $ric }}
         {{- end }}
         {{- if ne $sac "0" }}
         - name: {{ include "groundx.summary.api.serviceName" . }}
@@ -387,7 +399,7 @@ data:
           threshold: {{ $wrwc }}
         {{- end }}
       {{- end }}
-      {{- if or (ne $eat "0") (ne $ept "0") (ne $edt "0") (ne $est "0") (ne $gxt "0") (ne $lat "0") (ne $lct "0") (ne $lit "0") (ne $lmt "0") (ne $lot "0") (ne $lpt "0") (ne $lst "0") (ne $lwt "0") (ne $ppt "0") (ne $prt "0") (ne $qpt "0") (ne $sat "0") (ne $sit "0") (ne $sct "0") (ne $upt "0") (ne $wrat "0") (ne $wrcut "0") (ne $wrct "0") (ne $wrpt "0") (ne $wrpubt "0") (ne $wrwt "0") }}
+      {{- if or (ne $eat "0") (ne $ept "0") (ne $edt "0") (ne $est "0") (ne $gxt "0") (ne $lat "0") (ne $lct "0") (ne $lit "0") (ne $lmt "0") (ne $lot "0") (ne $lpt "0") (ne $lst "0") (ne $lwt "0") (ne $ppt "0") (ne $prt "0") (ne $qpt "0") (ne $rat "0") (ne $rit "0") (ne $sat "0") (ne $sit "0") (ne $sct "0") (ne $upt "0") (ne $wrat "0") (ne $wrcut "0") (ne $wrct "0") (ne $wrpt "0") (ne $wrpubt "0") (ne $wrwt "0") }}
       throughput:
         {{- if ne $eat "0" }}
         - name: {{ include "groundx.extract.agent.serviceName" . }}
@@ -452,6 +464,14 @@ data:
         {{- if ne $qpt "0" }}
         - name: {{ include "groundx.queue.serviceName" . }}
           tokensPerMinute: {{ $qpt }}
+        {{- end }}
+        {{- if ne $rat "0" }}
+        - name: {{ include "groundx.ranker.api.serviceName" . }}
+          tokensPerMinute: {{ $rat }}
+        {{- end }}
+        {{- if ne $rit "0" }}
+        - name: {{ include "groundx.ranker.inference.serviceName" . }}
+          tokensPerMinute: {{ $rit }}
         {{- end }}
         {{- if ne $sat "0" }}
         - name: {{ include "groundx.summary.api.serviceName" . }}

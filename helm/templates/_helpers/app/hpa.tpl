@@ -19,6 +19,8 @@
   "preProcess"
   "process"
   "queue"
+  "ranker.api"
+  "ranker.inference"
   "summary.api"
   "summary.inference"
   "summaryClient"
