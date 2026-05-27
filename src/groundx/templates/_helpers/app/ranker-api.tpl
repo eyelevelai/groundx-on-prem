@@ -14,10 +14,10 @@
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "api" dict $b -}}
 {{- $io := include "groundx.ingestOnly" . -}}
-{{- if eq $io "true" -}}
-false
-{{- else if hasKey $in "enabled" -}}
+{{- if hasKey $in "enabled" -}}
   {{- if (dig "enabled" false $in) -}}true{{- else -}}false{{- end -}}
+{{- else if eq $io "true" -}}
+false
 {{- else -}}
 true
 {{- end -}}
@@ -231,6 +231,7 @@ false
 {{- $san := include "groundx.ranker.api.serviceAccountName" . -}}
 {{- $cfg := dict
   "cfg"          (printf "%s-config-py-map" $svc)
+  "cache"        (include "groundx.ranker.cache.settings" . | fromYaml)
   "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
   "image"        (include "groundx.ranker.api.image" .)
   "interface"    (include "groundx.ranker.api.interface" .)

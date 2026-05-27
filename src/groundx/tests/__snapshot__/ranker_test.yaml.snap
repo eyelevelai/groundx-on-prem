@@ -1,0 +1,424 @@
+'cache override: ranker api':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: ranker-api
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-api
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: ranker-api
+      template:
+        metadata:
+          annotations:
+            config-hash: 9e90962567931cc0f6532dd90edf2830e7b83094c61024b09c3152278b67f4ba
+            gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
+          labels:
+            app: ranker-api
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/bash
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 12
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              name: ranker-api
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/gunicorn_conf.py
+                  name: gunicorn-conf-volume
+                  subPath: gunicorn_conf.py
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z ranker-cache.existing.com 6380; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: ranker-config-py-map
+              name: config-volume
+            - configMap:
+                name: ranker-gunicorn-conf-py-map
+              name: gunicorn-conf-volume
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: ranker-api
+      name: ranker-api
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: ranker-api
+      type: ClusterIP
+'cache override: ranker config':
+  1: |
+    apiVersion: v1
+    data:
+      config.py: |
+        env = dict(
+            deviceType="cuda",
+            brokerType="valkey",
+            metricsBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            searchBroker="rediss://ranker-cache.existing.com:6380/0",
+            searchLog="ranker",
+            searchResultBroker="rediss://ranker-cache.existing.com:6380/0",
+            service="ranker",
+            validAPIKeys=[
+            ],
+            workers=14,
+        )
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+'cache override: ranker inference':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: ranker-inference
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-inference
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: ranker-inference
+      template:
+        metadata:
+          annotations:
+            config-hash: 9e90962567931cc0f6532dd90edf2830e7b83094c61024b09c3152278b67f4ba
+            config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
+            ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
+            supervisord-hash: c3de8d835a18146d0f59120a18513f20056efbb1cda896213ca789277d88a71b
+          labels:
+            app: ranker-inference
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-gpu-ranker
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-gpu-ranker
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/workspace:$PYTHONPATH &&  supervisord -c /workspace/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
+                failureThreshold: 10
+                initialDelaySeconds: 60
+                periodSeconds: 30
+              name: ranker-inference
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
+                initialDelaySeconds: 60
+                periodSeconds: 30
+              resources:
+                limits:
+                  nvidia.com/gpu: 1
+                requests:
+                  cpu: 1.5
+                  memory: 1Gi
+                  nvidia.com/gpu: 1
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /workspace/config_models.py
+                  name: config-models
+                  subPath: config_models.py
+                - mountPath: /workspace/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /workspace/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /workspace/hf_models_cache
+                  name: model-volume
+              workingDir: /workspace
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z ranker-cache.existing.com 6380; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - args:
+                - echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh
+              command:
+                - /bin/sh
+                - -c
+                - --
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: create-symlink
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 50Mi
+              securityContext:
+                privileged: true
+              volumeMounts:
+                - mountPath: /scripts/ldconfig_symlink.sh
+                  name: ranker-inference
+                  subPath: ldconfig_symlink.sh
+                - mountPath: /host-sbin
+                  name: host-sbin
+                - mountPath: /host-usr-sbin
+                  name: host-usr-sbin
+                - mountPath: /host-bin
+                  name: host-bin
+                - mountPath: /host-usr-bin
+                  name: host-usr-bin
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  download_and_extract_model() {
+                    echo "Model downloading started..."
+
+                    touch /workspace/hf_models_cache/downloading
+
+                    echo "00 01 02" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/ranker/model/current/model.tar.gz.part.$PART; \
+                      while [ $RETRIES -lt $MAX_RETRIES ]; do \
+                        echo "Download [attempt $RETRIES] ranker.tar.gz.part.$PART"; \
+                        wget -q -O /workspace/hf_models_cache/ranker.tar.gz.part.$PART $URL && { echo "Downloaded ranker.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
+                        echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
+                      done; \
+                      [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm /workspace/hf_models_cache/downloading; exit 1; }; \
+                      echo "Unzipping ranker.tar.gz.part.$PART..."; tar -xzf /workspace/hf_models_cache/ranker.tar.gz.part.$PART -C /workspace/hf_models_cache/; echo "Unzipping ranker.tar.gz.part.$PART complete...";'
+
+                    rm /workspace/hf_models_cache/ranker.tar.*
+                    rm /workspace/hf_models_cache/downloading
+                    touch /workspace/hf_models_cache/complete.model
+                  }
+                  if [ ! -f /workspace/hf_models_cache/complete.model ]; then
+                    if [ ! -f /workspace/hf_models_cache/downloading ]; then
+                      download_and_extract_model
+                    else
+                      echo "Download in progress by another pod. Waiting..."
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.model ]; do
+                        sleep $((3 + RANDOM % 2))
+                      done
+
+                      if [ ! -f /workspace/hf_models_cache/complete.model ]; then
+                        download_and_extract_model
+                      else
+                        echo "Model cache ready."
+                      fi
+                    fi
+                  else
+                    echo "Model cache already exists. Skipping download."
+                  fi
+
+                  echo "Model load done."
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: download-model
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /workspace/hf_models_cache
+                  name: model-volume
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-gpu-ranker
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-gpu-ranker
+          volumes:
+            - configMap:
+                name: config-models-map
+              name: config-models
+            - configMap:
+                name: ranker-config-py-map
+              name: config-volume
+            - configMap:
+                name: ranker-inference-supervisord-conf-map
+              name: supervisord-volume
+            - configMap:
+                defaultMode: 365
+                name: ldconfig-symlink-map
+              name: ranker-inference
+            - hostPath:
+                path: /sbin
+                type: Directory
+              name: host-sbin
+            - hostPath:
+                path: /usr/sbin
+                type: Directory
+              name: host-usr-sbin
+            - hostPath:
+                path: /bin
+                type: Directory
+              name: host-bin
+            - hostPath:
+                path: /usr/bin
+                type: Directory
+              name: host-usr-bin
+            - name: model-volume
+              persistentVolumeClaim:
+                claimName: ranker-model
+  2: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: ranker-inference
+      name: ranker-model
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: eyelevel-pv

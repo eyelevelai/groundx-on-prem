@@ -196,6 +196,7 @@ true
 {{- $san := include "groundx.ranker.inference.serviceAccountName" . -}}
 {{- $cfg := dict
   "baseName"       ($svc)
+  "cache"          (include "groundx.ranker.cache.settings" . | fromYaml)
   "celery"         ("ranker.celery.appSearch")
   "cfg"            (printf "%s-config-py-map" $svc)
   "image"          (include "groundx.ranker.inference.image" .)

@@ -231,6 +231,7 @@ false
 {{- $san := include "groundx.ranker.api.serviceAccountName" . -}}
 {{- $cfg := dict
   "cfg"          (printf "%s-config-py-map" $svc)
+  "cache"        (include "groundx.ranker.cache.settings" . | fromYaml)
   "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
   "image"        (include "groundx.ranker.api.image" .)
   "interface"    (include "groundx.ranker.api.interface" .)

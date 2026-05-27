@@ -294,6 +294,15 @@ queue:
       memory: 128Mi
 
 ranker:
+  # Optional ranker-only cache override. When addr is set, ranker API and
+  # inference use this cache for searchBroker/searchResultBroker instead of
+  # the global cache settings.
+  cache: {}
+    # addr: ranker-cache.mycorp.net
+    # port: 6379
+    # ssl: true
+    # type: redis
+
   api:
     enabled: true
 

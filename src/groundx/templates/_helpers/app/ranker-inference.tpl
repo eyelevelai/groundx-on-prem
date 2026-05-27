@@ -14,10 +14,10 @@
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "inference" dict $b -}}
 {{- $io := include "groundx.ingestOnly" . -}}
-{{- if eq $io "true" -}}
-false
-{{- else if hasKey $in "enabled" -}}
+{{- if hasKey $in "enabled" -}}
   {{- if (dig "enabled" false $in) -}}true{{- else -}}false{{- end -}}
+{{- else if eq $io "true" -}}
+false
 {{- else -}}
 true
 {{- end -}}
@@ -196,6 +196,7 @@ true
 {{- $san := include "groundx.ranker.inference.serviceAccountName" . -}}
 {{- $cfg := dict
   "baseName"       ($svc)
+  "cache"          (include "groundx.ranker.cache.settings" . | fromYaml)
   "celery"         ("ranker.celery.appSearch")
   "cfg"            (printf "%s-config-py-map" $svc)
   "image"          (include "groundx.ranker.inference.image" .)

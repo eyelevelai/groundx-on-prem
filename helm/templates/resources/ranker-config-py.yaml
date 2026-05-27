@@ -15,11 +15,11 @@ data:
   config.py: |
     env = dict(
         deviceType={{ include "groundx.ranker.inference.deviceType" . | quote }},
-        brokerType={{ include "groundx.cache.type" . | quote }},
+        brokerType={{ include "groundx.ranker.cache.type" . | quote }},
         metricsBroker={{ printf "%s://%s:%v/0" (include "groundx.metrics.cache.scheme" .) (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) | quote }},
-        searchBroker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
+        searchBroker={{ printf "%s://%s:%v/0" (include "groundx.ranker.cache.scheme" .) (include "groundx.ranker.cache.addr" .) (include "groundx.ranker.cache.port" .) | quote }},
         searchLog={{ include "groundx.ranker.serviceName" . | quote }},
-        searchResultBroker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
+        searchResultBroker={{ printf "%s://%s:%v/0" (include "groundx.ranker.cache.scheme" .) (include "groundx.ranker.cache.addr" .) (include "groundx.ranker.cache.port" .) | quote }},
         service={{ include "groundx.ranker.serviceName" . | quote }},
         validAPIKeys=[
         {{- $apiKey := include "groundx.admin.apiKey" . -}}

@@ -9,6 +9,9 @@
 {{- $anns := get $svcData "annotations" -}}
 {{- $cfg := get $svcData "cfg" -}}
 {{- $cport := get $svcData "port" -}}
+{{- $cache := get $svcData "cache" | default dict -}}
+{{- $cacheAddr := coalesce (get $cache "addr") (include "groundx.cache.addr" $) -}}
+{{- $cachePort := coalesce (get $cache "port") (include "groundx.cache.port" $) -}}
 {{- $csct := get $svcData "containerSecurityContext" -}}
 {{- $dpnd := get $svcData "dependencies" | default dict -}}
 {{- $guni := get $svcData "gunicorn" -}}
@@ -86,7 +89,7 @@ spec:
         - name: wait-for-cache
           image: {{ include "groundx.busybox.image" $ }}
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
-          command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.cache.addr" $) (include "groundx.cache.port" $) }}; do echo waiting for cache; sleep 2; done"]
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" $cacheAddr $cachePort }}; do echo waiting for cache; sleep 2; done"]
 {{- if hasKey $dpnd "metrics" }}
         - name: wait-for-metrics
           image: {{ include "groundx.busybox.image" $ }}
