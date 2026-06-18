@@ -257,7 +257,7 @@ GROUNDX_AGENT_API_KEY
 {{- define "groundx.extract.agent.maxTasksPerChild" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
-{{ dig "maxTasksPerChild" 100 $in }}
+{{ dig "maxTasksPerChild" 1 $in }}
 {{- end }}
 
 {{- define "groundx.extract.agent.secrets" -}}
