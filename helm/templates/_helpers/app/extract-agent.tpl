@@ -254,6 +254,12 @@ GROUNDX_AGENT_API_KEY
 {{ dig "workers" 1 $in }}
 {{- end }}
 
+{{- define "groundx.extract.agent.maxTasksPerChild" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{ dig "maxTasksPerChild" 1 $in }}
+{{- end }}
+
 {{- define "groundx.extract.agent.secrets" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
@@ -305,6 +311,7 @@ GROUNDX_AGENT_API_KEY
   "service"      (include "groundx.extract.serviceName" .)
   "threads"      (include "groundx.extract.agent.threads" .)
   "workers"      (include "groundx.extract.agent.workers" .)
+  "maxTasksPerChild" (include "groundx.extract.agent.maxTasksPerChild" .)
 -}}
 {{- if hasKey $rep "gracePeriod" -}}
   {{- $_ := set $cfg "gracePeriod" (dig "gracePeriod" nil $rep) -}}
