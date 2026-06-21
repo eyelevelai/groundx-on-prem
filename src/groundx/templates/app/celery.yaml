@@ -16,10 +16,12 @@
 {{- $image := get $svcData "image" -}}
 {{- $ips := include "groundx.imagePullSecrets" $ | fromYaml -}}
 {{- $lbls := get $svcData "labels" -}}
+{{- $lifecycle := get $svcData "lifecycle" | default dict -}}
 {{- $mapPrefix := get $svcData "mapPrefix" -}}
 {{- $name := get $svcData "name" -}}
 {{- $node := get $svcData "node" -}}
 {{- $nsl := get $svcData "nodeSelector" -}}
+{{- $env := get $svcData "env" | default dict -}}
 {{- $rp := get $svcData "replicas" -}}
 {{- $rs := get $svcData "resources" -}}
 {{- $pull := get $svcData "pull" -}}
@@ -124,6 +126,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+{{- range $envName, $envValue := $env }}
+            - name: {{ $envName }}
+              value: {{ $envValue | quote }}
+{{- end }}
 {{- if gt (len $scr) 0 }}
           envFrom:
 {{- range $kk, $vv := $scr }}
@@ -137,6 +143,10 @@ spec:
             - -c
             - |
               export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+{{- if gt (len $lifecycle) 0 }}
+          lifecycle:
+{{- toYaml $lifecycle | nindent 12 }}
+{{- end }}
 {{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" $username "cfg" "container") }}
           livenessProbe:
             exec:

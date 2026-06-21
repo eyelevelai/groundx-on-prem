@@ -35,3 +35,55 @@ tests:
       - ./files/values.workspace.enabled.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "extract-agent supervisord waits for active tasks during shutdown"
+    templates:
+      - ../templates/resources/extract-supervisord-conf.yaml
+    values:
+      - ../values/extract/values.yaml
+    documentSelector:
+      path: metadata.name
+      value: extract-agent-supervisord-conf-map
+    asserts:
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "stopwaitsecs=870"
+  - it: "extract-agent deployment drains celery consumers before termination"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values/extract/values.yaml
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].lifecycle.preStop.exec.command[2]
+          pattern: "python -m celery -A celery_agents.app control cancel_consumer agent_queue"
+  - it: "extract-agent deployment exposes image payload guard"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values/extract/values.yaml
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRACT_AGENT_MAX_IMAGE_PAYLOAD_BYTES
+            value: "41943040"
+  - it: "extract-agent hpa keeps a safer default minimum"
+    templates:
+      - ../templates/resources/hpa.yaml
+    set:
+      cluster.hpa: true
+    values:
+      - ../values/extract/values.yaml
+    documentSelector:
+      path: metadata.name
+      value: extract-agent-hpa
+    asserts:
+      - equal:
+          path: spec.minReplicas
+          value: 2

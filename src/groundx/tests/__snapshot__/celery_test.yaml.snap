@@ -666,7 +666,7 @@
         metadata:
           annotations:
             config-hash: 330fc39b12ddba09303c6f5f10210ab18dc2a90bbe9a5a867bcdaad4428deaad
-            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
+            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
           labels:
             app: extract-agent
         spec:
@@ -695,6 +695,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACT_AGENT_MAX_IMAGE_PAYLOAD_BYTES
+                  value: "41943040"
               envFrom:
                 - secretRef:
                     name: extract-agent-secret
@@ -702,6 +704,13 @@
                     name: extract-save-secret
               image: public.ecr.aws/c9r4x6y5/eyelevel/extract:0.1.0
               imagePullPolicy: IfNotPresent
+              lifecycle:
+                preStop:
+                  exec:
+                    command:
+                      - /bin/sh
+                      - -c
+                      - cd /app && export PYTHONPATH=/app && for i in $(seq 1 1); do python -m celery -A celery_agents.app control cancel_consumer agent_queue -d celery@${POD_NAME}-w${i} || true; done; sleep 5
               livenessProbe:
                 exec:
                   command:
@@ -808,7 +817,7 @@
         metadata:
           annotations:
             config-hash: 330fc39b12ddba09303c6f5f10210ab18dc2a90bbe9a5a867bcdaad4428deaad
-            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
+            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
           labels:
             app: extract-download
         spec:
@@ -951,7 +960,7 @@
         metadata:
           annotations:
             config-hash: 330fc39b12ddba09303c6f5f10210ab18dc2a90bbe9a5a867bcdaad4428deaad
-            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
+            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
           labels:
             app: extract-save
         spec:
@@ -3658,7 +3667,7 @@
         metadata:
           annotations:
             config-hash: 858113a5ba41b35cfbc738c3cf03202c375295dce5edbaf7cf206f5c07e7cb35
-            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
+            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
           labels:
             app: extract-agent
         spec:
@@ -3687,6 +3696,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACT_AGENT_MAX_IMAGE_PAYLOAD_BYTES
+                  value: "41943040"
               envFrom:
                 - secretRef:
                     name: extract-agent-secret
@@ -3694,6 +3705,13 @@
                     name: extract-save-secret
               image: public.ecr.aws/c9r4x6y5/eyelevel/extract:0.1.0
               imagePullPolicy: IfNotPresent
+              lifecycle:
+                preStop:
+                  exec:
+                    command:
+                      - /bin/sh
+                      - -c
+                      - cd /app && export PYTHONPATH=/app && for i in $(seq 1 1); do python -m celery -A celery_agents.app control cancel_consumer agent_queue -d celery@${POD_NAME}-w${i} || true; done; sleep 5
               livenessProbe:
                 exec:
                   command:
@@ -3800,7 +3818,7 @@
         metadata:
           annotations:
             config-hash: 858113a5ba41b35cfbc738c3cf03202c375295dce5edbaf7cf206f5c07e7cb35
-            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
+            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
           labels:
             app: extract-download
         spec:
@@ -3943,7 +3961,7 @@
         metadata:
           annotations:
             config-hash: 858113a5ba41b35cfbc738c3cf03202c375295dce5edbaf7cf206f5c07e7cb35
-            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
+            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
           labels:
             app: extract-save
         spec:
@@ -4727,7 +4745,7 @@
         metadata:
           annotations:
             config-hash: b171e89d68d92004c856f126a843d8e3f25c97c9830a0a278d0c510d16cf735f
-            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
+            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
           labels:
             app: extract-agent
         spec:
@@ -4756,6 +4774,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACT_AGENT_MAX_IMAGE_PAYLOAD_BYTES
+                  value: "41943040"
               envFrom:
                 - secretRef:
                     name: extract-save-secret
@@ -4763,6 +4783,13 @@
                     name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/extract:0.1.0
               imagePullPolicy: IfNotPresent
+              lifecycle:
+                preStop:
+                  exec:
+                    command:
+                      - /bin/sh
+                      - -c
+                      - cd /app && export PYTHONPATH=/app && for i in $(seq 1 1); do python -m celery -A celery_agents.app control cancel_consumer agent_queue -d celery@${POD_NAME}-w${i} || true; done; sleep 5
               livenessProbe:
                 exec:
                   command:
@@ -4870,7 +4897,7 @@
         metadata:
           annotations:
             config-hash: b171e89d68d92004c856f126a843d8e3f25c97c9830a0a278d0c510d16cf735f
-            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
+            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
           labels:
             app: extract-download
         spec:
@@ -5014,7 +5041,7 @@
         metadata:
           annotations:
             config-hash: b171e89d68d92004c856f126a843d8e3f25c97c9830a0a278d0c510d16cf735f
-            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
+            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
           labels:
             app: extract-save
         spec:
@@ -5819,7 +5846,7 @@
         metadata:
           annotations:
             config-hash: cbb6f926136bb8397c0704c042af58ac68e06e6da392dba3a594dec4f8c8d892
-            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
+            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
           labels:
             app: extract-agent
         spec:
@@ -5848,6 +5875,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACT_AGENT_MAX_IMAGE_PAYLOAD_BYTES
+                  value: "41943040"
               envFrom:
                 - secretRef:
                     name: extract-save-secret
@@ -5855,6 +5884,13 @@
                     name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/extract:0.1.0
               imagePullPolicy: IfNotPresent
+              lifecycle:
+                preStop:
+                  exec:
+                    command:
+                      - /bin/sh
+                      - -c
+                      - cd /app && export PYTHONPATH=/app && for i in $(seq 1 1); do python -m celery -A celery_agents.app control cancel_consumer agent_queue -d celery@${POD_NAME}-w${i} || true; done; sleep 5
               livenessProbe:
                 exec:
                   command:
@@ -5962,7 +5998,7 @@
         metadata:
           annotations:
             config-hash: cbb6f926136bb8397c0704c042af58ac68e06e6da392dba3a594dec4f8c8d892
-            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
+            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
           labels:
             app: extract-download
         spec:
@@ -6106,7 +6142,7 @@
         metadata:
           annotations:
             config-hash: cbb6f926136bb8397c0704c042af58ac68e06e6da392dba3a594dec4f8c8d892
-            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
+            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
           labels:
             app: extract-save
         spec:
@@ -8750,7 +8786,7 @@
         metadata:
           annotations:
             config-hash: e82d82164b0c860e2a66d97220272037cfd488e78386da32f5ea32b618066f47
-            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
+            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
           labels:
             app: extract-agent
         spec:
@@ -8779,6 +8815,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACT_AGENT_MAX_IMAGE_PAYLOAD_BYTES
+                  value: "41943040"
               envFrom:
                 - secretRef:
                     name: extract-agent-secret
@@ -8786,6 +8824,13 @@
                     name: extract-save-secret
               image: public.ecr.aws/c9r4x6y5/eyelevel/extract:0.1.0
               imagePullPolicy: Always
+              lifecycle:
+                preStop:
+                  exec:
+                    command:
+                      - /bin/sh
+                      - -c
+                      - cd /app && export PYTHONPATH=/app && for i in $(seq 1 1); do python -m celery -A celery_agents.app control cancel_consumer agent_queue -d celery@${POD_NAME}-w${i} || true; done; sleep 5
               livenessProbe:
                 exec:
                   command:
@@ -8888,7 +8933,7 @@
         metadata:
           annotations:
             config-hash: e82d82164b0c860e2a66d97220272037cfd488e78386da32f5ea32b618066f47
-            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
+            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
           labels:
             app: extract-download
         spec:
@@ -9027,7 +9072,7 @@
         metadata:
           annotations:
             config-hash: e82d82164b0c860e2a66d97220272037cfd488e78386da32f5ea32b618066f47
-            supervisord-hash: a1240a7284b0e093f751b8899adff7240bec5178fc865820b25ef95fb74c7715
+            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
           labels:
             app: extract-save
         spec:
@@ -10426,4 +10471,5 @@
             - name: workspace-data
               persistentVolumeClaim:
                 claimName: workspace-data
+
 'disabled: celery': {}

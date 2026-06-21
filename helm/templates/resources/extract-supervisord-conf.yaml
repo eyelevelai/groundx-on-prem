@@ -8,9 +8,12 @@
 {{- $name := get $svcData "name" -}}
 {{- $opts := get $svcData "options" -}}
 {{- $queue := get $svcData "queue" -}}
+{{- $replicas := get $svcData "replicas" | default dict -}}
 {{- $threads := get $svcData "threads" -}}
 {{- $workers := int (get $svcData "workers") -}}
 {{- $maxTasksPerChild := get $svcData "maxTasksPerChild" | default 100 -}}
+{{- $gracePeriod := int (dig "gracePeriod" 900 $replicas) -}}
+{{- $stopWaitSecs := int (max 1 (sub $gracePeriod 30)) -}}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -35,6 +38,7 @@ data:
       PYTHONUNBUFFERED="1"{{ include "groundx.celery.env" $ }}
     autostart=true
     autorestart=true
+    stopwaitsecs={{ $stopWaitSecs }}
     stdout_logfile=/dev/stdout
     stdout_logfile_maxbytes=0
     stderr_logfile=/dev/stderr

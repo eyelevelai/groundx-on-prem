@@ -208,9 +208,9 @@ GROUNDX_AGENT_API_KEY
 {{- end -}}
 {{- if not (hasKey $in "min") -}}
   {{- if hasKey $in "desired" -}}
-    {{- $_ := set $in "min" (dig "desired" 1 $in) -}}
+    {{- $_ := set $in "min" (max 2 (dig "desired" 1 $in | int)) -}}
   {{- else -}}
-    {{- $_ := set $in "min" 1 -}}
+    {{- $_ := set $in "min" 2 -}}
   {{- end -}}
 {{- end -}}
 {{- if not (hasKey $in "desired") -}}
@@ -260,6 +260,12 @@ GROUNDX_AGENT_API_KEY
 {{ dig "maxTasksPerChild" 1 $in }}
 {{- end }}
 
+{{- define "groundx.extract.agent.maxImagePayloadBytes" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{- printf "%.0f" (dig "maxImagePayloadBytes" 41943040 $in | float64) -}}
+{{- end }}
+
 {{- define "groundx.extract.agent.secrets" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
@@ -280,6 +286,9 @@ GROUNDX_AGENT_API_KEY
 {{- define "groundx.extract.agent.settings" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
+{{- $queue := include "groundx.extract.agent.queue" . -}}
+{{- $workers := include "groundx.extract.agent.workers" . | int -}}
+{{- $preStopCommand := printf "cd /app && export PYTHONPATH=/app && for i in $(seq 1 %d); do python -m celery -A celery_agents.app control cancel_consumer %s -d celery@${POD_NAME}-w${i} || true; done; sleep 5" $workers $queue -}}
 
 {{- $dpnd := dict
   "extract" "extract"
@@ -298,9 +307,11 @@ GROUNDX_AGENT_API_KEY
 {{- $cfg := dict
   "celery"       ("celery_agents")
   "dependencies" $dpnd
+  "env"          (dict "EXTRACT_AGENT_MAX_IMAGE_PAYLOAD_BYTES" (include "groundx.extract.agent.maxImagePayloadBytes" .))
   "fileDomain"   (include "groundx.extract.file.serviceDependency" .)
   "filePort"     (include "groundx.extract.file.port" .)
   "image"        (include "groundx.extract.agent.image" .)
+  "lifecycle"    (dict "preStop" (dict "exec" (dict "command" (list "/bin/sh" "-c" $preStopCommand))))
   "mapPrefix"    ("extract")
   "name"         (include "groundx.extract.agent.serviceName" .)
   "node"         (include "groundx.extract.agent.node" .)

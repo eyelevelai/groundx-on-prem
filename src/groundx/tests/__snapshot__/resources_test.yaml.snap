@@ -1398,13 +1398,14 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=1
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -1434,6 +1435,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -1463,6 +1465,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -5402,13 +5405,14 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=1
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -5438,6 +5442,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -5467,6 +5472,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -6535,13 +6541,14 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=1
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -6571,6 +6578,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -6600,6 +6608,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -7580,13 +7589,14 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=1
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -7616,6 +7626,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -7645,6 +7656,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -11601,13 +11613,14 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=1
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -11637,6 +11650,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -11666,6 +11680,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
