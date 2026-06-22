@@ -1,0 +1,87 @@
+# service.yaml — groundx-on-prem. Conforms to service.schema v1.0.0.
+apiVersion: v1
+
+repo:
+  name: groundx-on-prem
+  workspace: groundx
+  role: infra                          # first/only infra node
+  description: Helm chart (+ legacy Terraform) packaging the GroundX RAG platform for self-hosted/air-gapped Kubernetes. No app source — deploys pre-built private images.
+  chart_version: 0.2.5
+
+stack:
+  language: helm                       # Helm 3.8+ (Go templating) + Bash operator CLI + legacy Terraform
+  k8s_targets: [eks, aks, gke, openshift, minikube]
+  deploys_runtimes: [python-celery-gunicorn, go, vllm-gpu]
+  backing_services: [redis, mysql-percona, minio-s3, opensearch, kafka-strimzi-sqs, neo4j-legacy, prometheus-grafana]
+
+entrypoints:
+  model: helm-chart-plus-operator-cli
+  primary: "helm install groundx groundx/groundx (chart from registry.groundx.ai/helm)"
+  operator_cli: "bin/operator, bin/environment (legacy Terraform-driven)"
+  build: src/build.sh (maintainer-only — packages + publishes charts to S3)
+  template_root: src/groundx/templates/ (helpers in _helpers/*.tpl drive everything)
+
+dependencies:
+  internal: []                         # NO in-tree code dep on any groundx repo (verified)
+  external:
+    - { name: registry.groundx.ai/helm, kind: object-store, endpoint: "registry.groundx.ai/helm (hardcoded)", auth: none, capability: "pulls the Helm chart itself" }
+    - { name: public.ecr.aws, kind: object-store, endpoint: "public.ecr.aws/c9r4x6y5 (default, overridable)", capability: "pulls ALL GroundX container images" }
+    - name: upload.groundx.ai
+      kind: object-store
+      endpoint: "upload.groundx.ai (HARDCODED in inference init-containers)"
+      auth: none
+      capability: "downloads GPU model weights at pod startup via wget|tar"
+      note: "AIR-GAP BLOCKER — must be mirrored for offline installs; also a wget|tar supply-chain surface"
+    - name: groundx-api
+      kind: http-api
+      direction: outbound-callback
+      endpoint: "extract.callbackUrl — DEFAULTS to in-cluster groundx /api; only leaves cluster if user sets api.groundx.ai explicitly"
+      auth: x-api-key
+      schematized: false
+      capability: "RAG/ingest callback for the extract subsystem — OPT-IN, not default"
+      note: "the ONLY edge that can phone home to hosted GroundX, and it's air-gap-safe by default"
+    - { name: openai, kind: http-api, auth: api-key, note: "optional external LLM (default is in-cluster vLLM)" }
+    - { name: azure-openai, kind: http-api, auth: api-key, note: optional }
+    - { name: google-sheets, kind: http-api, auth: gcp-service-account, note: "extract.save optional output sink" }
+    - { name: install-time-helm-repos, kind: object-store, note: "nvidia/percona/minio/strimzi/opensearch/prometheus/neo4j — dependency charts" }
+
+generates: []
+
+contracts:
+  - kind: json-schema
+    surface: src/groundx/values.schema.json
+    schematized: true
+    note: "1693 lines, additionalProperties:false (strict) — THE deployment contract; existing:{} swap-out for every backing service"
+  - { kind: json-schema, surface: "rendered K8s objects (templates/)", schematized: true, note: "guarded indirectly by helm-unittest snapshots" }
+  - { kind: rest, surface: "operator CLI component names (bash arrays)", schematized: false }
+  - { kind: rest, surface: "generated config.py -> from groundx.extract import (...)", schematized: false, note: "binds to groundx.extract package in the eyelevel/extract image — constructor signatures are the contract, owned elsewhere, NOTHING validates it" }
+
+agent_boundaries:
+  - zone: helm/ (near-duplicate published copy of src/groundx, tests/ removed)
+    rule: "do NOT hand-edit — it's a mirror of src/groundx; edit src/, not helm/"
+    gate: NONE — no in-repo script regenerates it, no check asserts they match (latent drift, prime cleanup target)
+  - zone: "src/groundx/tests/__snapshot__/*.snap"
+    rule: do not hand-edit; regenerate with helm unittest -u
+    gate: helm-tests.yml (CI asserts rendered output matches snapshots) — THE check guarding template changes
+  - zone: "helm-releases/*.tgz, terraform .lock.hcl"
+    rule: build outputs / lockfiles — never edit
+    gate: none
+
+quality_gates:
+  - "helm unittest src/groundx (snapshot tests — the CI gate)"
+  - "helm template src/groundx -f values/minikube/values.yaml (render check)"
+
+conversion:
+  status: onboarded
+  onboarded_at: 2026-06-08
+  architecture_notes: ARCHITECTURE_NOTES.md
+  agents_md: none                       # author from scratch if converted
+  ai_first_readiness: MED
+  upstream_to_convert_first: []         # infra; convert when the services it deploys are stable
+  known_gaps:
+    - "PRIVILEGED: bin/operator can DESTROY Helm releases incl. stateful stores (db/file/search); bin/environment can create/destroy AWS VPCs+EKS via terraform --auto-approve; build.sh has publish rights to the public chart bucket"
+    - "helm/ <-> src/groundx duplication has NO regen script and NO drift check — manual sync, latent drift (good early-win conversion target)"
+    - "upload.groundx.ai model-weight download is hardcoded + air-gap blocker; wget|tar supply-chain surface"
+    - "plaintext secret defaults in example values (OpenSearch pw, minio123) — footgun if copied to prod"
+    - "groundx.extract config binding is unschematized — image field rename silently breaks rendering"
+    - "Neo4j (graph) wired in legacy bin/terraform but absent from current chart — confirm dead"
