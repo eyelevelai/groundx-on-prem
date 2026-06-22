@@ -266,6 +266,36 @@ GROUNDX_AGENT_API_KEY
 {{- printf "%.0f" (dig "maxImagePayloadBytes" 41943040 $in | float64) -}}
 {{- end }}
 
+{{- define "groundx.extract.agent.imageTransport" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{- lower (dig "imageTransport" "pil" $in | toString) | trim -}}
+{{- end }}
+
+{{- define "groundx.extract.agent.imageTargetDpi" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{- printf "%.0f" (dig "targetDpi" 150 $in | float64) -}}
+{{- end }}
+
+{{- define "groundx.extract.agent.imageMinDpi" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{- printf "%.0f" (dig "minDpi" 100 $in | float64) -}}
+{{- end }}
+
+{{- define "groundx.extract.agent.validateImageSettings" -}}
+{{- $transport := include "groundx.extract.agent.imageTransport" . -}}
+{{- if not (has $transport (list "pil" "data_url" "remote_url")) -}}
+  {{- fail "extract.agent.imageTransport must be one of: pil, data_url, remote_url" -}}
+{{- end -}}
+{{- $targetDpi := include "groundx.extract.agent.imageTargetDpi" . | int -}}
+{{- $minDpi := include "groundx.extract.agent.imageMinDpi" . | int -}}
+{{- if gt $minDpi $targetDpi -}}
+  {{- fail "extract.agent.minDpi must be less than or equal to extract.agent.targetDpi" -}}
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.extract.agent.secrets" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
@@ -289,6 +319,7 @@ GROUNDX_AGENT_API_KEY
 {{- $queue := include "groundx.extract.agent.queue" . -}}
 {{- $workers := include "groundx.extract.agent.workers" . | int -}}
 {{- $preStopCommand := printf "cd /app && export PYTHONPATH=/app && for i in $(seq 1 %d); do python -m celery -A celery_agents.app control cancel_consumer %s -d celery@${POD_NAME}-w${i} || true; done; sleep 5" $workers $queue -}}
+{{- include "groundx.extract.agent.validateImageSettings" . -}}
 
 {{- $dpnd := dict
   "extract" "extract"
@@ -304,10 +335,16 @@ GROUNDX_AGENT_API_KEY
 {{- if ne $apiKey "" -}}
 {{- $_ := set $data (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .) -}}
 {{- end -}}
+{{- $env := dict
+  "EXTRACT_AGENT_IMAGE_MIN_DPI" (include "groundx.extract.agent.imageMinDpi" .)
+  "EXTRACT_AGENT_IMAGE_TARGET_DPI" (include "groundx.extract.agent.imageTargetDpi" .)
+  "EXTRACT_AGENT_IMAGE_TRANSPORT" (include "groundx.extract.agent.imageTransport" .)
+  "EXTRACT_AGENT_MAX_IMAGE_PAYLOAD_BYTES" (include "groundx.extract.agent.maxImagePayloadBytes" .)
+-}}
 {{- $cfg := dict
   "celery"       ("celery_agents")
   "dependencies" $dpnd
-  "env"          (dict "EXTRACT_AGENT_MAX_IMAGE_PAYLOAD_BYTES" (include "groundx.extract.agent.maxImagePayloadBytes" .))
+  "env"          $env
   "fileDomain"   (include "groundx.extract.file.serviceDependency" .)
   "filePort"     (include "groundx.extract.file.port" .)
   "image"        (include "groundx.extract.agent.image" .)

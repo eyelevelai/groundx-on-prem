@@ -1612,7 +1612,22 @@
             },
             "serviceType": { "type": "string" },
             "maxTasksPerChild": { "type": "integer" },
-            "maxImagePayloadBytes": { "type": "integer" },
+            "imageTransport": {
+              "type": "string",
+              "enum": ["pil", "data_url", "remote_url"]
+            },
+            "targetDpi": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "minDpi": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxImagePayloadBytes": {
+              "type": "integer",
+              "minimum": 1
+            },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
             "workers": { "type": "integer" }

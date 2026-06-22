@@ -8,6 +8,7 @@
 {{- $bu := include "groundx.extract.agent.baseUrl" . -}}
 {{- $mid := include "groundx.extract.agent.modelId" . -}}
 {{- $re := include "groundx.extract.agent.reasoningEffort" . -}}
+{{- $it := include "groundx.extract.agent.imageTransport" . -}}
 {{- $did := include "groundx.extract.save.driveId" . -}}
 {{- $tid := include "groundx.extract.save.templateId" . -}}
 {{- $kw := include "groundx.extract.agent.kwargs" . | fromYaml -}}
@@ -38,6 +39,7 @@ data:
         {{- if ne $mid "" }}
         model_id={{ $mid | quote }},
         {{- end }}
+        image_transport={{ $it | quote }},
         {{- if eq $re "null" }}
         reasoning_effort=None,
         {{- else if ne $re "" }}

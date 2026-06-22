@@ -48,6 +48,36 @@ helm lint helm
 echo "==> Running Helm unit tests"
 helm unittest src/groundx
 
+echo "==> Verifying extract-agent image settings validation"
+expect_helm_template_failure() {
+  local chart="$1"
+  local expected="$2"
+  shift 2
+
+  local output
+  local status
+  set +e
+  output="$(helm template invalid-image-settings "${chart}" -f src/groundx/values/extract/values.yaml "$@" 2>&1 >/dev/null)"
+  status=$?
+  set -e
+
+  if [[ "${status}" -eq 0 ]]; then
+    echo "Expected Helm render to fail for ${chart}: $*" >&2
+    exit 1
+  fi
+  if [[ "${output}" != *"${expected}"* ]]; then
+    echo "Helm render failed for ${chart}, but did not mention '${expected}'." >&2
+    echo "${output}" >&2
+    exit 1
+  fi
+}
+
+for chart in src/groundx helm; do
+  expect_helm_template_failure "${chart}" "imageTransport" --set extract.agent.imageTransport=auto
+  expect_helm_template_failure "${chart}" "minDpi" --set extract.agent.targetDpi=99 --set extract.agent.minDpi=100
+  expect_helm_template_failure "${chart}" "maxImagePayloadBytes" --set extract.agent.maxImagePayloadBytes=0
+done
+
 echo "==> Verifying Helm snapshots did not silently drop empty renders"
 python .build/bin/verify-helm-snapshots.py
 
