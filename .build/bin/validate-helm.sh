@@ -13,6 +13,7 @@ Usage: .build/bin/validate-helm.sh [--junit]
 Runs the GroundX Helm production chart gate from one stable entrypoint:
   - helm lint for both chart surfaces
   - helm unittest for src/groundx
+  - snapshot label guard unit tests
   - snapshot label guard
   - workspace chart contract verifier
   - storage chart and generated AWS values contract verifier
@@ -79,6 +80,7 @@ for chart in src/groundx helm; do
 done
 
 echo "==> Verifying Helm snapshots did not silently drop empty renders"
+python .build/tests/test_verify_helm_snapshots.py
 python .build/bin/verify-helm-snapshots.py
 
 echo "==> Verifying workspace chart contract"
