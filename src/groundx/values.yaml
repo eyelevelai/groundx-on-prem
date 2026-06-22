@@ -419,9 +419,11 @@ extract:
   agent:
     enabled: false
     maxTasksPerChild: 1
-    imageTransport: pil
-    targetDpi: 150
-    minDpi: 100
+    imageTransport: data_url
+    targetLongEdgePx: 1000
+    minLongEdgePx: 900
+    jpegQualities:
+      - 20
     maxImagePayloadBytes: 41943040
 
     replicas:

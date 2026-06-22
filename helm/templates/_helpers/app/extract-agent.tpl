@@ -269,19 +269,34 @@ GROUNDX_AGENT_API_KEY
 {{- define "groundx.extract.agent.imageTransport" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
-{{- lower (dig "imageTransport" "pil" $in | toString) | trim -}}
+{{- lower (dig "imageTransport" "data_url" $in | toString) | trim -}}
 {{- end }}
 
-{{- define "groundx.extract.agent.imageTargetDpi" -}}
+{{- define "groundx.extract.agent.imageTargetLongEdgePx" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
-{{- printf "%.0f" (dig "targetDpi" 150 $in | float64) -}}
+{{- printf "%.0f" (dig "targetLongEdgePx" 1000 $in | float64) -}}
 {{- end }}
 
-{{- define "groundx.extract.agent.imageMinDpi" -}}
+{{- define "groundx.extract.agent.imageMinLongEdgePx" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
-{{- printf "%.0f" (dig "minDpi" 100 $in | float64) -}}
+{{- printf "%.0f" (dig "minLongEdgePx" 900 $in | float64) -}}
+{{- end }}
+
+{{- define "groundx.extract.agent.imageJpegQualities" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{- $qualities := dig "jpegQualities" (list 20) $in -}}
+{{- if kindIs "slice" $qualities -}}
+{{- $rendered := list -}}
+{{- range $qualities -}}
+{{- $rendered = append $rendered (printf "%.0f" (. | float64)) -}}
+{{- end -}}
+{{- join "," $rendered -}}
+{{- else -}}
+{{- $qualities | toString -}}
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.validateImageSettings" -}}
@@ -289,10 +304,16 @@ GROUNDX_AGENT_API_KEY
 {{- if not (has $transport (list "pil" "data_url" "remote_url")) -}}
   {{- fail "extract.agent.imageTransport must be one of: pil, data_url, remote_url" -}}
 {{- end -}}
-{{- $targetDpi := include "groundx.extract.agent.imageTargetDpi" . | int -}}
-{{- $minDpi := include "groundx.extract.agent.imageMinDpi" . | int -}}
-{{- if gt $minDpi $targetDpi -}}
-  {{- fail "extract.agent.minDpi must be less than or equal to extract.agent.targetDpi" -}}
+{{- $targetLongEdgePx := include "groundx.extract.agent.imageTargetLongEdgePx" . | int -}}
+{{- $minLongEdgePx := include "groundx.extract.agent.imageMinLongEdgePx" . | int -}}
+{{- if gt $minLongEdgePx $targetLongEdgePx -}}
+  {{- fail "extract.agent.minLongEdgePx must be less than or equal to extract.agent.targetLongEdgePx" -}}
+{{- end -}}
+{{- range $quality := splitList "," (include "groundx.extract.agent.imageJpegQualities" .) -}}
+  {{- $qualityInt := $quality | int -}}
+  {{- if or (lt $qualityInt 1) (gt $qualityInt 95) -}}
+    {{- fail "extract.agent.jpegQualities values must be between 1 and 95" -}}
+  {{- end -}}
 {{- end -}}
 {{- end }}
 
@@ -336,8 +357,9 @@ GROUNDX_AGENT_API_KEY
 {{- $_ := set $data (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .) -}}
 {{- end -}}
 {{- $env := dict
-  "EXTRACT_AGENT_IMAGE_MIN_DPI" (include "groundx.extract.agent.imageMinDpi" .)
-  "EXTRACT_AGENT_IMAGE_TARGET_DPI" (include "groundx.extract.agent.imageTargetDpi" .)
+  "EXTRACT_AGENT_IMAGE_JPEG_QUALITIES" (include "groundx.extract.agent.imageJpegQualities" .)
+  "EXTRACT_AGENT_IMAGE_MIN_LONG_EDGE_PX" (include "groundx.extract.agent.imageMinLongEdgePx" .)
+  "EXTRACT_AGENT_IMAGE_TARGET_LONG_EDGE_PX" (include "groundx.extract.agent.imageTargetLongEdgePx" .)
   "EXTRACT_AGENT_IMAGE_TRANSPORT" (include "groundx.extract.agent.imageTransport" .)
   "EXTRACT_AGENT_MAX_IMAGE_PAYLOAD_BYTES" (include "groundx.extract.agent.maxImagePayloadBytes" .)
 -}}

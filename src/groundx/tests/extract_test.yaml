@@ -77,17 +77,22 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: EXTRACT_AGENT_IMAGE_TRANSPORT
-            value: "pil"
+            value: "data_url"
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: EXTRACT_AGENT_IMAGE_TARGET_DPI
-            value: "150"
+            name: EXTRACT_AGENT_IMAGE_TARGET_LONG_EDGE_PX
+            value: "1000"
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: EXTRACT_AGENT_IMAGE_MIN_DPI
-            value: "100"
+            name: EXTRACT_AGENT_IMAGE_MIN_LONG_EDGE_PX
+            value: "900"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRACT_AGENT_IMAGE_JPEG_QUALITIES
+            value: "20"
   - it: "extract config passes image transport into SDK agent settings"
     templates:
       - ../templates/resources/extract-config-py.yaml
@@ -96,7 +101,7 @@ tests:
     asserts:
       - matchRegex:
           path: data["config.py"]
-          pattern: "image_transport=\"pil\""
+          pattern: "image_transport=\"data_url\""
   - it: "extract-agent hpa keeps a safer default minimum"
     templates:
       - ../templates/resources/hpa.yaml

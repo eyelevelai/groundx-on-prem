@@ -1615,13 +1615,22 @@
               "type": "string",
               "enum": ["pil", "data_url", "remote_url"]
             },
-            "targetDpi": {
+            "targetLongEdgePx": {
               "type": "integer",
               "minimum": 1
             },
-            "minDpi": {
+            "minLongEdgePx": {
               "type": "integer",
               "minimum": 1
+            },
+            "jpegQualities": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 95
+              }
             },
             "maxImagePayloadBytes": {
               "type": "integer",

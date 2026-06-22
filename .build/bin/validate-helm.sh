@@ -75,7 +75,8 @@ expect_helm_template_failure() {
 
 for chart in src/groundx helm; do
   expect_helm_template_failure "${chart}" "imageTransport" --set extract.agent.imageTransport=auto
-  expect_helm_template_failure "${chart}" "minDpi" --set extract.agent.targetDpi=99 --set extract.agent.minDpi=100
+  expect_helm_template_failure "${chart}" "minLongEdgePx" --set extract.agent.targetLongEdgePx=899 --set extract.agent.minLongEdgePx=900
+  expect_helm_template_failure "${chart}" "jpegQualities" --set-json extract.agent.jpegQualities='[96]'
   expect_helm_template_failure "${chart}" "maxImagePayloadBytes" --set extract.agent.maxImagePayloadBytes=0
 done
 
