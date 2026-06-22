@@ -83,10 +83,43 @@ def snapshot_label_sort_key(label: str) -> tuple[str, str]:
     return label, ""
 
 
-def empty_snapshot_labels(path: Path) -> set[str]:
+def snapshot_entries(path: Path) -> list[tuple[str, str, str]]:
     if not path.exists():
-        return set()
-    return set(re.findall(r"^'([^']+)':\s+\{\}\s*$", path.read_text(encoding="utf-8"), flags=re.MULTILINE))
+        return []
+
+    text = path.read_text(encoding="utf-8")
+    matches = list(re.finditer(r"^'([^']+)':.*$", text, flags=re.MULTILINE))
+    entries: list[tuple[str, str, str]] = []
+    for index, match in enumerate(matches):
+        line_end = text.find("\n", match.start())
+        if line_end == -1:
+            line_end = len(text)
+            body_start = len(text)
+        else:
+            body_start = line_end + 1
+
+        next_start = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        entries.append((match.group(1), match.group(0), text[body_start:next_start]))
+
+    return entries
+
+
+def empty_snapshot_labels(path: Path) -> set[str]:
+    labels: set[str] = set()
+    for label, line, body in snapshot_entries(path):
+        if re.match(r"^'[^']+':\s+\{\}\s*$", line) or body.strip() == "":
+            labels.add(label)
+
+    return labels
+
+
+def nonlegacy_empty_snapshot_labels(path: Path) -> set[str]:
+    labels: set[str] = set()
+    for label, line, body in snapshot_entries(path):
+        is_empty = re.match(r"^'[^']+':\s+\{\}\s*$", line) or body.strip() == ""
+        if is_empty and (re.match(r"^'[^']+':\s+\{\}\s*$", line) or body != ""):
+            labels.add(label)
+    return labels
 
 
 def deleted_snapshot_labels_from_diff(diff: str) -> list[str]:
@@ -172,6 +205,13 @@ def verify_snapshot_labels(
             failures.append(
                 f"{snapshot_path_label(name)} required empty snapshot labels missing or rendered: "
                 + ", ".join(missing_empty)
+            )
+
+        nonlegacy_empty = nonlegacy_empty_snapshot_labels(snapshot_file)
+        if nonlegacy_empty:
+            failures.append(
+                f"{snapshot_path_label(name)} empty snapshot labels must use label-only shape without spacer lines: "
+                + ", ".join(sorted(nonlegacy_empty, key=snapshot_label_sort_key))
             )
 
     deleted = deleted_snapshot_labels_from_diff(diff_output) if diff_output is not None else deleted_snapshot_labels()

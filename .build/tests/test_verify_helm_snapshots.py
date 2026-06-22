@@ -53,6 +53,100 @@ tests:
         ]
 
 
+def test_required_empty_snapshot_labels_accept_legacy_label_only_shape():
+    guard = load_guard()
+    with tempfile.TemporaryDirectory() as directory:
+        test_dir = Path(directory) / "tests"
+        snapshot_dir = test_dir / "__snapshot__"
+        snapshot_dir.mkdir(parents=True)
+
+        (test_dir / "cache_test.yaml").write_text(
+            """
+suite: caches render as expected
+tests:
+  - it: "aws: cache"
+    asserts:
+      - matchSnapshot: {}
+  - it: "cache-persistence: cache"
+    asserts:
+      - matchSnapshot: {}
+""",
+            encoding="utf-8",
+        )
+        (snapshot_dir / "cache_test.yaml.snap").write_text(
+            """
+'aws: cache':
+'cache-persistence: cache':
+  1: |
+    apiVersion: v1
+""",
+            encoding="utf-8",
+        )
+
+        failures = guard.verify_snapshot_labels(
+            test_dir=test_dir,
+            snapshot_dir=snapshot_dir,
+            required_empty_labels={"cache_test.yaml.snap": {"aws: cache"}},
+            diff_output="",
+        )
+
+        assert failures == []
+
+
+def test_empty_snapshot_labels_reject_braces_and_spacer_lines():
+    guard = load_guard()
+    with tempfile.TemporaryDirectory() as directory:
+        test_dir = Path(directory) / "tests"
+        snapshot_dir = test_dir / "__snapshot__"
+        snapshot_dir.mkdir(parents=True)
+
+        (test_dir / "cache_test.yaml").write_text(
+            """
+suite: caches render as expected
+tests:
+  - it: "aws: cache"
+    asserts:
+      - matchSnapshot: {}
+  - it: "existing: cache"
+    asserts:
+      - matchSnapshot: {}
+  - it: "cache-persistence: cache"
+    asserts:
+      - matchSnapshot: {}
+  - it: "metadata: cache"
+    asserts:
+      - matchSnapshot: {}
+""",
+            encoding="utf-8",
+        )
+        (snapshot_dir / "cache_test.yaml.snap").write_text(
+            """
+'aws: cache': {}
+
+'cache-persistence: cache':
+  1: |
+    apiVersion: v1
+'existing: cache':
+
+'metadata: cache':
+  1: |
+    apiVersion: v1
+""",
+            encoding="utf-8",
+        )
+
+        failures = guard.verify_snapshot_labels(
+            test_dir=test_dir,
+            snapshot_dir=snapshot_dir,
+            required_empty_labels={"cache_test.yaml.snap": {"aws: cache", "existing: cache"}},
+            diff_output="",
+        )
+
+        assert failures == [
+            "src/groundx/tests/__snapshot__/cache_test.yaml.snap empty snapshot labels must use label-only shape without spacer lines: aws: cache, existing: cache"
+        ]
+
+
 def test_deleted_snapshot_labels_from_diff_catches_block_label_deletion():
     guard = load_guard()
     diff = """
@@ -136,6 +230,8 @@ tests:
 
 def main() -> int:
     test_required_empty_snapshot_labels_must_still_be_empty()
+    test_required_empty_snapshot_labels_accept_legacy_label_only_shape()
+    test_empty_snapshot_labels_reject_braces_and_spacer_lines()
     test_deleted_snapshot_labels_from_diff_catches_block_label_deletion()
     test_deleted_snapshot_labels_from_diff_ignores_moved_labels()
     test_snapshot_labels_must_be_sorted_by_case_then_surface()
