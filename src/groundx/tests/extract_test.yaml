@@ -107,6 +107,21 @@ tests:
       - matchRegex:
           path: data["config.py"]
           pattern: "image_transport=\"data_url\""
+  - it: "extract config renders nested model kwargs as Python objects"
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ../values/extract/values.yaml
+    set:
+      extract.agent.model.kwargs.client_kwargs.max_retries: 1
+      extract.agent.model.kwargs.client_kwargs.timeout: 180
+    asserts:
+      - matchRegex:
+          path: data["config.py"]
+          pattern: '"client_kwargs": \{[^}]*"max_retries": 1'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: '"client_kwargs": \{[^}]*"timeout": 180'
   - it: "extract-agent hpa keeps a safer default minimum"
     templates:
       - ../templates/resources/hpa.yaml
