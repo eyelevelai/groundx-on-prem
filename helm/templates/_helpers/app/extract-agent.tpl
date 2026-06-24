@@ -266,6 +266,12 @@ GROUNDX_AGENT_API_KEY
 {{- printf "%.0f" (dig "maxImagePayloadBytes" 41943040 $in | float64) -}}
 {{- end }}
 
+{{- define "groundx.extract.agent.maxRequestImages" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{- printf "%.0f" (dig "maxRequestImages" 30 $in | float64) -}}
+{{- end }}
+
 {{- define "groundx.extract.agent.imageTransport" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
@@ -308,6 +314,10 @@ GROUNDX_AGENT_API_KEY
 {{- $minLongEdgePx := include "groundx.extract.agent.imageMinLongEdgePx" . | int -}}
 {{- if gt $minLongEdgePx $targetLongEdgePx -}}
   {{- fail "extract.agent.minLongEdgePx must be less than or equal to extract.agent.targetLongEdgePx" -}}
+{{- end -}}
+{{- $maxRequestImages := include "groundx.extract.agent.maxRequestImages" . | int -}}
+{{- if lt $maxRequestImages 1 -}}
+  {{- fail "extract.agent.maxRequestImages must be positive" -}}
 {{- end -}}
 {{- range $quality := splitList "," (include "groundx.extract.agent.imageJpegQualities" .) -}}
   {{- $qualityInt := $quality | int -}}
@@ -362,6 +372,7 @@ GROUNDX_AGENT_API_KEY
   "EXTRACT_AGENT_IMAGE_TARGET_LONG_EDGE_PX" (include "groundx.extract.agent.imageTargetLongEdgePx" .)
   "EXTRACT_AGENT_IMAGE_TRANSPORT" (include "groundx.extract.agent.imageTransport" .)
   "EXTRACT_AGENT_MAX_IMAGE_PAYLOAD_BYTES" (include "groundx.extract.agent.maxImagePayloadBytes" .)
+  "EXTRACT_AGENT_MAX_REQUEST_IMAGES" (include "groundx.extract.agent.maxRequestImages" .)
 -}}
 {{- $cfg := dict
   "celery"       ("celery_agents")

@@ -76,6 +76,11 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
+            name: EXTRACT_AGENT_MAX_REQUEST_IMAGES
+            value: "30"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
             name: EXTRACT_AGENT_IMAGE_TRANSPORT
             value: "data_url"
       - contains:
