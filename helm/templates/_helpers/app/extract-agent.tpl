@@ -99,7 +99,7 @@ GROUNDX_AGENT_API_KEY
 {{- $name := (include "groundx.extract.agent.serviceName" .) -}}
 {{- $cld := dig "cooldown" 60 $rep -}}
 {{- $cfg := dict
-  "downCooldown" (mul $cld 10)
+  "downCooldown" (mul $cld 2)
   "enabled"      $enabled
   "metric"       (printf "%s:task" $name)
   "name"         $name

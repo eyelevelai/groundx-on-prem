@@ -14,10 +14,10 @@
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "api" dict $b -}}
 {{- $io := include "groundx.ingestOnly" . -}}
-{{- if eq $io "true" -}}
-false
-{{- else if hasKey $in "enabled" -}}
+{{- if hasKey $in "enabled" -}}
   {{- if (dig "enabled" false $in) -}}true{{- else -}}false{{- end -}}
+{{- else if eq $io "true" -}}
+false
 {{- else -}}
 true
 {{- end -}}
