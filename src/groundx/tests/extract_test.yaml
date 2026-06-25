@@ -27,3 +27,112 @@ tests:
       - ./files/values.phoenix.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "workspace-enabled: extract"
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.workspace.enabled.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "extract-agent supervisord waits for active tasks during shutdown"
+    templates:
+      - ../templates/resources/extract-supervisord-conf.yaml
+    values:
+      - ../values/extract/values.yaml
+    documentSelector:
+      path: metadata.name
+      value: extract-agent-supervisord-conf-map
+    asserts:
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "stopwaitsecs=870"
+  - it: "extract-agent deployment drains celery consumers before termination"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values/extract/values.yaml
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].lifecycle.preStop.exec.command[2]
+          pattern: "python -m celery -A celery_agents.app control cancel_consumer agent_queue"
+  - it: "extract-agent deployment exposes image payload guard"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values/extract/values.yaml
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRACT_AGENT_MAX_IMAGE_PAYLOAD_BYTES
+            value: "41943040"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRACT_AGENT_MAX_REQUEST_IMAGES
+            value: "30"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRACT_AGENT_IMAGE_TRANSPORT
+            value: "data_url"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRACT_AGENT_IMAGE_TARGET_LONG_EDGE_PX
+            value: "1000"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRACT_AGENT_IMAGE_MIN_LONG_EDGE_PX
+            value: "900"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRACT_AGENT_IMAGE_JPEG_QUALITIES
+            value: "20"
+  - it: "extract config passes image transport into SDK agent settings"
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ../values/extract/values.yaml
+    asserts:
+      - matchRegex:
+          path: data["config.py"]
+          pattern: "image_transport=\"data_url\""
+  - it: "extract config renders nested model kwargs as Python objects"
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ../values/extract/values.yaml
+    set:
+      extract.agent.model.kwargs.client_kwargs.max_retries: 1
+      extract.agent.model.kwargs.client_kwargs.timeout: 180
+    asserts:
+      - matchRegex:
+          path: data["config.py"]
+          pattern: '"client_kwargs": \{[^}]*"max_retries": 1'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: '"client_kwargs": \{[^}]*"timeout": 180'
+  - it: "extract-agent hpa keeps a safer default minimum"
+    templates:
+      - ../templates/resources/hpa.yaml
+    set:
+      cluster.hpa: true
+    values:
+      - ../values/extract/values.yaml
+    documentSelector:
+      path: metadata.name
+      value: extract-agent-hpa
+    asserts:
+      - equal:
+          path: spec.minReplicas
+          value: 2

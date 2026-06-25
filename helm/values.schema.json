@@ -56,6 +56,7 @@
           },
           "additionalProperties": false
         },
+        "pvAccessMode": { "type": "string" },
         "pvClass": { "type": "string" },
         "secrets": {
           "type": "array",
@@ -141,6 +142,14 @@
         "imagePullPolicy": { "type": "string" },
         "labels": { "type": "object" },
         "mountPath": { "type": "string" },
+                "persistence": {
+                  "type": "object",
+                  "properties": {
+                    "capacity": { "type": "string" },
+                    "enabled": { "type": "boolean" }
+                  },
+                  "additionalProperties": false
+                },
         "node": { "type": "string" },
         "nodeSelector": { "type": "object" },
         "port": { "type": "integer" },
@@ -1149,6 +1158,16 @@
     "ranker": {
       "type": "object",
       "properties": {
+        "cache": {
+          "type": "object",
+          "properties": {
+            "addr": { "type": "string" },
+            "port": { "type": "integer" },
+            "ssl": { "type": "boolean" },
+            "type": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
         "api": {
           "type": "object",
           "properties": {
@@ -1343,6 +1362,192 @@
       "required": ["enabled"],
       "additionalProperties": false
     },
+    "workspace": {
+      "type": "object",
+      "properties": {
+        "allowedCommands": { "type": "string" },
+        "api": {
+          "type": "object",
+          "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
+            "containerPort": { "type": "integer" },
+            "containerSecurityContext": { "type": "object" },
+            "enabled": { "type": "boolean" },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
+            "ingress": {
+              "type": "object",
+              "properties": {
+                "annotations": { "type": "object" },
+                "apiVersion": { "type": "string" },
+                "enabled": { "type": "boolean" },
+                "hostName": { "type": "string" },
+                "ingressClassName": { "type": "string" },
+                "labels": { "type": "object" },
+                "path": { "type": "string" },
+                "paths": { "type": "array" },
+                "tls": { "type": "array" }
+              }
+            },
+            "isInternal": { "type": "boolean" },
+            "labels": { "type": "object" },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "cooldown": { "type": "integer" },
+                "desired": { "type": "integer" },
+                "gracePeriod": { "type": "integer" },
+                "hpa": { "type": "boolean" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" },
+                "threshold": { "type": "number" },
+                "throughput": { "type": "number" }
+              },
+              "additionalProperties": false
+            },
+            "resources": { "type": "object" },
+            "securityContext": { "type": "object" },
+            "serviceAccount": {
+              "type": "object",
+              "properties": { "name": { "type": "string" } },
+              "required": ["name"],
+              "additionalProperties": false
+            },
+            "serviceType": { "type": "string" },
+            "threads": { "type": "integer" },
+            "timeout": { "type": "integer" },
+            "timeoutKeepAlive": { "type": "integer" },
+            "tolerations": { "type": "array" },
+            "workers": { "type": "integer" }
+          },
+          "additionalProperties": false
+        },
+        "celeryBrokerUrl": { "type": "string" },
+        "celeryGlobalKeyprefix": { "type": "string" },
+        "celeryResultBackend": { "type": "string" },
+        "celerySoftTimeLimitSeconds": { "type": "integer" },
+        "celeryTaskAlwaysEager": { "type": "boolean" },
+        "cleanup": { "$ref": "#/properties/workspace/properties/provision" },
+        "command": { "$ref": "#/properties/workspace/properties/provision" },
+        "commandTimeoutSeconds": { "type": "integer" },
+        "enabled": { "type": "boolean" },
+        "existingSecret": { "type": "string" },
+        "gitProvider": {
+          "type": "string",
+          "enum": ["github", "gitlab"]
+        },
+        "github": {
+          "type": "object",
+          "properties": {
+            "apiBaseUrl": { "type": "string" },
+            "appId": { "type": "string" },
+            "installationId": { "type": "string" },
+            "privateKeyPem": { "type": "string" },
+            "privateKeySecret": {
+              "type": "object",
+              "properties": {
+                "key": { "type": "string" },
+                "name": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "secretName": { "type": "string" },
+            "tokenTtlSeconds": { "type": "integer" }
+          },
+          "additionalProperties": false
+        },
+        "gitlab": {
+          "type": "object",
+          "properties": {
+            "apiBaseUrl": { "type": "string" },
+            "secretName": { "type": "string" },
+            "token": { "type": "string" },
+            "tokenSecret": {
+              "type": "object",
+              "properties": {
+                "key": { "type": "string" },
+                "name": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "image": { "type": "string" },
+        "imagePullPolicy": { "type": "string" },
+        "managedRepoNamePrefix": { "type": "string" },
+        "managedRepoOwner": { "type": "string" },
+        "managedRepoVisibility": { "type": "string" },
+        "mysqlConnectTimeoutSeconds": { "type": "integer" },
+        "node": { "type": "string" },
+        "publishGithubWorkflowId": { "type": "string" },
+        "pvc": {
+          "type": "object",
+          "properties": {
+            "access": { "type": "string" },
+            "capacity": { "type": "string" },
+            "class": { "type": "string" },
+            "name": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "provision": {
+          "type": "object",
+          "properties": {
+            "affinity": { "type": "object" },
+            "annotations": { "type": "object" },
+            "containerSecurityContext": { "type": "object" },
+            "enabled": { "type": "boolean" },
+            "image": { "type": "string" },
+            "imagePullPolicy": { "type": "string" },
+            "labels": { "type": "object" },
+            "node": { "type": "string" },
+            "nodeSelector": { "type": "object" },
+            "queue": { "type": "string" },
+            "replicas": {
+              "type": "object",
+              "properties": {
+                "cooldown": { "type": "integer" },
+                "desired": { "type": "integer" },
+                "gracePeriod": { "type": "integer" },
+                "hpa": { "type": "boolean" },
+                "max": { "type": "integer" },
+                "min": { "type": "integer" },
+                "threshold": { "type": "number" },
+                "throughput": { "type": "number" }
+              },
+              "additionalProperties": false
+            },
+            "resources": { "type": "object" },
+            "securityContext": { "type": "object" },
+            "serviceAccount": {
+              "type": "object",
+              "properties": { "name": { "type": "string" } },
+              "required": ["name"],
+              "additionalProperties": false
+            },
+            "threads": { "type": "integer" },
+            "tolerations": { "type": "array" },
+            "workers": { "type": "integer" }
+          },
+          "additionalProperties": false
+        },
+        "publish": { "$ref": "#/properties/workspace/properties/provision" },
+        "publishDryRun": { "type": "boolean" },
+        "secretName": { "type": "string" },
+        "serviceName": { "type": "string" },
+        "token": { "type": "string" },
+        "workspace": { "$ref": "#/properties/workspace/properties/provision" },
+        "workspaceMinFreeBytes": { "type": "integer" },
+        "workspaceMinFreePercent": { "type": "integer" },
+        "workspaceRoot": { "type": "string" }
+      },
+      "required": ["enabled"],
+      "additionalProperties": false
+    },
     "dashboard": {
       "type": "object",
       "properties": {
@@ -1405,6 +1610,36 @@
               "additionalProperties": false
             },
             "serviceType": { "type": "string" },
+            "maxTasksPerChild": { "type": "integer" },
+            "imageTransport": {
+              "type": "string",
+              "enum": ["pil", "data_url", "remote_url"]
+            },
+            "targetLongEdgePx": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "minLongEdgePx": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "jpegQualities": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 95
+              }
+            },
+            "maxImagePayloadBytes": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxRequestImages": {
+              "type": "integer",
+              "minimum": 1
+            },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
             "workers": { "type": "integer" }

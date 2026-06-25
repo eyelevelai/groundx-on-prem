@@ -1,5 +1,8 @@
 cluster:
   pvClass: eyelevel-pv
+  # Prefer ReadWriteMany when the deployment has shared filesystem storage
+  # available. Set to ReadWriteOnce for block/local storage classes.
+  pvAccessMode: ReadWriteMany
 
   hpa: false
 
@@ -291,6 +294,15 @@ queue:
       memory: 128Mi
 
 ranker:
+  # Optional ranker-only cache override. When addr is set, ranker API and
+  # inference use this cache for searchBroker/searchResultBroker instead of
+  # the global cache settings.
+  cache: {}
+    # addr: ranker-cache.mycorp.net
+    # port: 6379
+    # ssl: true
+    # type: redis
+
   api:
     enabled: true
 
@@ -335,16 +347,90 @@ upload:
       cpu: 100m
       memory: 128Mi
 
+workspace:
+  enabled: false
+
+  # Required when enabled unless existingSecret provides WORKSPACE_RUNNER_TOKEN.
+  token: ""
+  existingSecret: ""
+  publishDryRun: true
+  gitProvider: github
+  publishGithubWorkflowId: deploy.yml
+
+  github:
+    apiBaseUrl: https://api.github.com
+    appId: ""
+    installationId: ""
+    privateKeyPem: ""
+    privateKeySecret:
+      name: ""
+      key: private-key.pem
+
+  gitlab:
+    apiBaseUrl: https://gitlab.com/api/v4
+    token: ""
+    tokenSecret:
+      name: ""
+      key: token
+
+  pvc:
+    name: workspace-data
+    capacity: 20Gi
+
+  api:
+    enabled: true
+    replicas:
+      desired: 1
+      max: 8
+      min: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+  provision:
+    enabled: true
+    replicas:
+      desired: 1
+
+  workspace:
+    enabled: true
+    replicas:
+      desired: 1
+
+  command:
+    enabled: true
+    replicas:
+      desired: 1
+
+  publish:
+    enabled: true
+    replicas:
+      desired: 1
+
+  cleanup:
+    enabled: true
+    replicas:
+      desired: 1
+
 extract:
   enabled: false
 
   agent:
     enabled: false
+    maxTasksPerChild: 1
+    imageTransport: data_url
+    targetLongEdgePx: 1000
+    minLongEdgePx: 900
+    jpegQualities:
+      - 20
+    maxImagePayloadBytes: 41943040
+    maxRequestImages: 30
 
     replicas:
       desired: 1
       max: 96
-      min: 1
+      min: 2
 
     resources:
       limits:

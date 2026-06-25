@@ -159,7 +159,9 @@ true
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "map" dict $b -}}
 
-{{- $dpnd := dict -}}
+{{- $dpnd := dict
+  "file" "file"
+-}}
 
 {{- $rep := (include "groundx.layout.map.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.layout.map.serviceAccountName" . -}}

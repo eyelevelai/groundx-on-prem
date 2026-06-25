@@ -9,6 +9,9 @@
 {{- $anns := get $svcData "annotations" -}}
 {{- $cfg := get $svcData "cfg" -}}
 {{- $cport := get $svcData "port" -}}
+{{- $cache := get $svcData "cache" | default dict -}}
+{{- $cacheAddr := coalesce (get $cache "addr") (include "groundx.cache.addr" $) -}}
+{{- $cachePort := coalesce (get $cache "port") (include "groundx.cache.port" $) -}}
 {{- $csct := get $svcData "containerSecurityContext" -}}
 {{- $dpnd := get $svcData "dependencies" | default dict -}}
 {{- $guni := get $svcData "gunicorn" -}}
@@ -19,6 +22,7 @@
 {{- $mapPrefix := get $svcData "mapPrefix" -}}
 {{- $node := get $svcData "node" -}}
 {{- $nsl := get $svcData "nodeSelector" -}}
+{{- $pvc := get $svcData "pvc" | default dict -}}
 {{- $rp := get $svcData "replicas" -}}
 {{- $rs := get $svcData "resources" -}}
 {{- $pull := get $svcData "pull" -}}
@@ -33,6 +37,8 @@
 {{- $sct := get $svcData "securityContext" -}}
 {{- $svc := get $svcData "name" -}}
 {{- $tl := get $svcData "tolerations" -}}
+{{- $vm := get $svcData "volumeMounts" | default list -}}
+{{- $vol := get $svcData "volumes" | default list -}}
 
 {{- $desired := get $rp "desired" -}}
 
@@ -83,7 +89,7 @@ spec:
         - name: wait-for-cache
           image: {{ include "groundx.busybox.image" $ }}
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
-          command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.cache.addr" $) (include "groundx.cache.port" $) }}; do echo waiting for cache; sleep 2; done"]
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" $cacheAddr $cachePort }}; do echo waiting for cache; sleep 2; done"]
 {{- if hasKey $dpnd "metrics" }}
         - name: wait-for-metrics
           image: {{ include "groundx.busybox.image" $ }}
@@ -95,6 +101,12 @@ spec:
           image: {{ include "groundx.busybox.image" $ }}
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
           command: ['sh', '-c', "until wget -T 5 -qO- {{ dig "callback" "" $dpnd }}/health; do echo waiting for callback; sleep 2; done"]
+{{- end }}
+{{- if hasKey $dpnd "db" }}
+        - name: wait-for-database
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.db.rw" $) (include "groundx.db.port" $) }}; do echo waiting for database; sleep 2; done"]
 {{- end }}
       containers:
         - name: {{ $svc | quote }}
@@ -143,6 +155,9 @@ spec:
             - name: gunicorn-conf-volume
               mountPath: /app/gunicorn_conf.py
               subPath: gunicorn_conf.py
+{{- if gt (len $vm) 0 }}
+{{ toYaml $vm | nindent 12 }}
+{{- end }}
       volumes:
         - name: config-volume
           configMap:
@@ -150,7 +165,14 @@ spec:
         - name: gunicorn-conf-volume
           configMap:
             name: {{ $guni }}
+{{- if gt (len $vol) 0 }}
+{{ toYaml $vol | nindent 8 }}
+{{- end }}
 
 {{ include "groundx.renderInterface" (dict "name" $svc "lb" $int "root" $) }}
+
+{{- if not (empty $pvc) }}
+{{ include "groundx.renderPVC" (dict "ctx" $pvc "app" $svc "root" $) }}
+{{- end }}
 
 {{ end }}

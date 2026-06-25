@@ -99,7 +99,7 @@ GROUNDX_AGENT_API_KEY
 {{- $name := (include "groundx.extract.agent.serviceName" .) -}}
 {{- $cld := dig "cooldown" 60 $rep -}}
 {{- $cfg := dict
-  "downCooldown" (mul $cld 10)
+  "downCooldown" (mul $cld 2)
   "enabled"      $enabled
   "metric"       (printf "%s:task" $name)
   "name"         $name
@@ -208,9 +208,9 @@ GROUNDX_AGENT_API_KEY
 {{- end -}}
 {{- if not (hasKey $in "min") -}}
   {{- if hasKey $in "desired" -}}
-    {{- $_ := set $in "min" (dig "desired" 1 $in) -}}
+    {{- $_ := set $in "min" (max 2 (dig "desired" 1 $in | int)) -}}
   {{- else -}}
-    {{- $_ := set $in "min" 1 -}}
+    {{- $_ := set $in "min" 2 -}}
   {{- end -}}
 {{- end -}}
 {{- if not (hasKey $in "desired") -}}
@@ -254,6 +254,79 @@ GROUNDX_AGENT_API_KEY
 {{ dig "workers" 1 $in }}
 {{- end }}
 
+{{- define "groundx.extract.agent.maxTasksPerChild" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{ dig "maxTasksPerChild" 1 $in }}
+{{- end }}
+
+{{- define "groundx.extract.agent.maxImagePayloadBytes" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{- printf "%.0f" (dig "maxImagePayloadBytes" 41943040 $in | float64) -}}
+{{- end }}
+
+{{- define "groundx.extract.agent.maxRequestImages" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{- printf "%.0f" (dig "maxRequestImages" 30 $in | float64) -}}
+{{- end }}
+
+{{- define "groundx.extract.agent.imageTransport" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{- lower (dig "imageTransport" "data_url" $in | toString) | trim -}}
+{{- end }}
+
+{{- define "groundx.extract.agent.imageTargetLongEdgePx" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{- printf "%.0f" (dig "targetLongEdgePx" 1000 $in | float64) -}}
+{{- end }}
+
+{{- define "groundx.extract.agent.imageMinLongEdgePx" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{- printf "%.0f" (dig "minLongEdgePx" 900 $in | float64) -}}
+{{- end }}
+
+{{- define "groundx.extract.agent.imageJpegQualities" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "agent" dict $b -}}
+{{- $qualities := dig "jpegQualities" (list 20) $in -}}
+{{- if kindIs "slice" $qualities -}}
+{{- $rendered := list -}}
+{{- range $qualities -}}
+{{- $rendered = append $rendered (printf "%.0f" (. | float64)) -}}
+{{- end -}}
+{{- join "," $rendered -}}
+{{- else -}}
+{{- $qualities | toString -}}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.extract.agent.validateImageSettings" -}}
+{{- $transport := include "groundx.extract.agent.imageTransport" . -}}
+{{- if not (has $transport (list "pil" "data_url" "remote_url")) -}}
+  {{- fail "extract.agent.imageTransport must be one of: pil, data_url, remote_url" -}}
+{{- end -}}
+{{- $targetLongEdgePx := include "groundx.extract.agent.imageTargetLongEdgePx" . | int -}}
+{{- $minLongEdgePx := include "groundx.extract.agent.imageMinLongEdgePx" . | int -}}
+{{- if gt $minLongEdgePx $targetLongEdgePx -}}
+  {{- fail "extract.agent.minLongEdgePx must be less than or equal to extract.agent.targetLongEdgePx" -}}
+{{- end -}}
+{{- $maxRequestImages := include "groundx.extract.agent.maxRequestImages" . | int -}}
+{{- if lt $maxRequestImages 1 -}}
+  {{- fail "extract.agent.maxRequestImages must be positive" -}}
+{{- end -}}
+{{- range $quality := splitList "," (include "groundx.extract.agent.imageJpegQualities" .) -}}
+  {{- $qualityInt := $quality | int -}}
+  {{- if or (lt $qualityInt 1) (gt $qualityInt 95) -}}
+    {{- fail "extract.agent.jpegQualities values must be between 1 and 95" -}}
+  {{- end -}}
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.extract.agent.secrets" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
@@ -274,9 +347,14 @@ GROUNDX_AGENT_API_KEY
 {{- define "groundx.extract.agent.settings" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
+{{- $queue := include "groundx.extract.agent.queue" . -}}
+{{- $workers := include "groundx.extract.agent.workers" . | int -}}
+{{- $preStopCommand := printf "cd /app && export PYTHONPATH=/app && for i in $(seq 1 %d); do python -m celery -A celery_agents.app control cancel_consumer %s -d celery@${POD_NAME}-w${i} || true; done; sleep 5" $workers $queue -}}
+{{- include "groundx.extract.agent.validateImageSettings" . -}}
 
 {{- $dpnd := dict
   "extract" "extract"
+  "file"    "file"
 -}}
 
 {{- $rep := (include "groundx.extract.agent.replicas" . | fromYaml) -}}
@@ -288,12 +366,22 @@ GROUNDX_AGENT_API_KEY
 {{- if ne $apiKey "" -}}
 {{- $_ := set $data (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .) -}}
 {{- end -}}
+{{- $env := dict
+  "EXTRACT_AGENT_IMAGE_JPEG_QUALITIES" (include "groundx.extract.agent.imageJpegQualities" .)
+  "EXTRACT_AGENT_IMAGE_MIN_LONG_EDGE_PX" (include "groundx.extract.agent.imageMinLongEdgePx" .)
+  "EXTRACT_AGENT_IMAGE_TARGET_LONG_EDGE_PX" (include "groundx.extract.agent.imageTargetLongEdgePx" .)
+  "EXTRACT_AGENT_IMAGE_TRANSPORT" (include "groundx.extract.agent.imageTransport" .)
+  "EXTRACT_AGENT_MAX_IMAGE_PAYLOAD_BYTES" (include "groundx.extract.agent.maxImagePayloadBytes" .)
+  "EXTRACT_AGENT_MAX_REQUEST_IMAGES" (include "groundx.extract.agent.maxRequestImages" .)
+-}}
 {{- $cfg := dict
   "celery"       ("celery_agents")
   "dependencies" $dpnd
+  "env"          $env
   "fileDomain"   (include "groundx.extract.file.serviceDependency" .)
   "filePort"     (include "groundx.extract.file.port" .)
   "image"        (include "groundx.extract.agent.image" .)
+  "lifecycle"    (dict "preStop" (dict "exec" (dict "command" (list "/bin/sh" "-c" $preStopCommand))))
   "mapPrefix"    ("extract")
   "name"         (include "groundx.extract.agent.serviceName" .)
   "node"         (include "groundx.extract.agent.node" .)
@@ -304,6 +392,7 @@ GROUNDX_AGENT_API_KEY
   "service"      (include "groundx.extract.serviceName" .)
   "threads"      (include "groundx.extract.agent.threads" .)
   "workers"      (include "groundx.extract.agent.workers" .)
+  "maxTasksPerChild" (include "groundx.extract.agent.maxTasksPerChild" .)
 -}}
 {{- if hasKey $rep "gracePeriod" -}}
   {{- $_ := set $cfg "gracePeriod" (dig "gracePeriod" nil $rep) -}}

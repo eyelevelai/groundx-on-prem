@@ -162,7 +162,9 @@ true
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "correct" dict $b -}}
 
-{{- $dpnd := dict -}}
+{{- $dpnd := dict
+  "file" "file"
+-}}
 
 {{- $rep := (include "groundx.layout.correct.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.layout.correct.serviceAccountName" . -}}

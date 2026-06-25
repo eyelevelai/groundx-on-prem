@@ -47,6 +47,21 @@ true
 {{ dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in }}
 {{- end }}
 
+{{- define "groundx.layout.inference.pvc" -}}
+{{- $b := .Values.layout | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{- $pvc := dig "pvc" dict $in -}}
+
+{{- $defaults := dict
+  "access"   (include "groundx.pvAccessMode" .)
+  "capacity" "20Gi"
+  "class"    (include "groundx.pvClass" .)
+  "name"     (printf "%s-model" (include "groundx.layout.serviceName" .))
+-}}
+
+{{ mergeOverwrite $defaults $pvc | toYaml }}
+{{- end }}
+
 {{/* fraction of threshold */}}
 {{- define "groundx.layout.inference.target.default" -}}
 1
@@ -193,6 +208,7 @@ true
   "node"           (include "groundx.layout.inference.node" .)
   "port"           (include "groundx.layout.inference.containerPort" .)
   "pull"           (include "groundx.layout.inference.imagePullPolicy" .)
+  "pvc"            (include "groundx.layout.inference.pvc" . | fromYaml)
   "queue"          (include "groundx.layout.inference.queue" .)
   "replicas"       ($rep)
   "supervisord"    (printf "%s-inference-supervisord-conf-map" $svc)

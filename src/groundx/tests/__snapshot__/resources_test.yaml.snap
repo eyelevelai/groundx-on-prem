@@ -120,6 +120,8 @@
               threshold: 4000
             - name: layout-webhook
               threshold: 4000
+            - name: ranker-api
+              threshold: 4000
           document:
             tokensPerMinute: 12500
           extractRequest:
@@ -127,6 +129,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -196,6 +200,10 @@
               tokensPerMinute: 150000
             - name: queue
               tokensPerMinute: 100000
+            - name: ranker-api
+              tokensPerMinute: 270000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -1080,6 +1088,8 @@
               threshold: 4000
             - name: layout-webhook
               threshold: 4000
+            - name: ranker-api
+              threshold: 4000
           document:
             tokensPerMinute: 12500
           extractRequest:
@@ -1087,6 +1097,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -1173,6 +1185,10 @@
               tokensPerMinute: 150000
             - name: queue
               tokensPerMinute: 100000
+            - name: ranker-api
+              tokensPerMinute: 270000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -1304,6 +1320,7 @@
         )
 
         agent_settings = AgentSettings(
+            image_transport="data_url",
         )
 
         container_settings = ContainerSettings(
@@ -1382,13 +1399,14 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=1
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -1418,6 +1436,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -1447,6 +1466,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -2255,6 +2275,8 @@
               threshold: 4000
             - name: layout-webhook
               threshold: 4000
+            - name: ranker-api
+              threshold: 4000
           document:
             tokensPerMinute: 12500
           extractRequest:
@@ -2262,6 +2284,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -2331,6 +2355,10 @@
               tokensPerMinute: 150000
             - name: queue
               tokensPerMinute: 100000
+            - name: ranker-api
+              tokensPerMinute: 270000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -3208,6 +3236,8 @@
               threshold: 4000
             - name: layout-webhook
               threshold: 4000
+            - name: ranker-api
+              threshold: 4000
           document:
             tokensPerMinute: 12500
           extractRequest:
@@ -3215,6 +3245,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -3284,6 +3316,10 @@
               tokensPerMinute: 150000
             - name: queue
               tokensPerMinute: 100000
+            - name: ranker-api
+              tokensPerMinute: 270000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -4173,6 +4209,8 @@
               threshold: 4000
             - name: layout-webhook
               threshold: 4000
+            - name: ranker-api
+              threshold: 4000
           document:
             tokensPerMinute: 12500
           extractRequest:
@@ -4180,6 +4218,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              tokensPerMinute: 840000
           namespace: eyelevel
           page:
             tokensPerMinute: 1000
@@ -4246,6 +4286,10 @@
               tokensPerMinute: 150000
             - name: queue
               tokensPerMinute: 100000
+            - name: ranker-api
+              tokensPerMinute: 270000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-client
               tokensPerMinute: 54000
             - name: upload
@@ -5021,6 +5065,8 @@
               threshold: 4000
             - name: layout-webhook
               threshold: 4000
+            - name: ranker-api
+              threshold: 4000
           document:
             tokensPerMinute: 12500
           extractRequest:
@@ -5028,6 +5074,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -5114,6 +5162,10 @@
               tokensPerMinute: 150000
             - name: queue
               tokensPerMinute: 100000
+            - name: ranker-api
+              tokensPerMinute: 270000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -5237,6 +5289,7 @@
         agent_settings = AgentSettings(
             api_base="http://summary-api.eyelevel.svc.cluster.local",
             model_id="google/gemma-3-4b-it",
+            image_transport="data_url",
         )
 
         container_settings = ContainerSettings(
@@ -5310,13 +5363,14 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=1
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -5346,6 +5400,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -5375,6 +5430,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -5688,6 +5744,257 @@
   17: |
     apiVersion: v1
     data:
+      config.py: |
+        env = dict(
+            deviceType="cuda",
+            brokerType="redis",
+            metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            searchBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            searchLog="ranker",
+            searchResultBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            service="ranker",
+            validAPIKeys=[
+            ],
+            workers=14,
+        )
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+  18: |
+    apiVersion: v1
+    data:
+      gunicorn_conf.py: |
+        infolog = "-"
+        accesslog = "-"
+        errorlog = "-"
+
+        loglevel = "info"
+        workers = 1
+        threads = 3
+        timeout = 120
+        timeout_keep_alive = 15
+
+        worker_class = "uvicorn.workers.UvicornWorker"
+
+        bind = "0.0.0.0:8080"
+
+        wsgi_app = "ranker_server:app"
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-gunicorn-conf-py-map
+      namespace: eyelevel
+  19: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_2]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w2 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w2",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_3]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w3 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w3",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_4]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w4 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w4",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_5]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w5 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w5",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_6]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w6 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w6",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_7]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w7 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w7",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_8]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w8 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w8",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_9]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w9 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w9",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_10]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w10 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w10",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_11]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w11 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w11",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_12]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w12 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w12",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_13]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w13 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w13",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_14]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w14 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w14",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-inference-supervisord-conf-map
+      namespace: eyelevel
+  20: |
+    apiVersion: v1
+    data:
       GCP_CREDENTIALS: PG5vIHZhbHVlPg==
     kind: Secret
     metadata:
@@ -5699,7 +6006,7 @@
       name: extract-save-secret
       namespace: eyelevel
     type: Opaque
-  18: |
+  21: |
     apiVersion: v1
     data:
       config.py: |
@@ -5725,7 +6032,7 @@
         version: 0.1.0
       name: summary-config-py-map
       namespace: eyelevel
-  19: |
+  22: |
     apiVersion: v1
     data:
       gunicorn_conf.py: |
@@ -5753,7 +6060,7 @@
         version: 0.1.0
       name: summary-gunicorn-conf-py-map
       namespace: eyelevel
-  20: |
+  23: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -5930,6 +6237,8 @@
               threshold: 4000
             - name: layout-webhook
               threshold: 4000
+            - name: ranker-api
+              threshold: 4000
           document:
             tokensPerMinute: 12500
           extractRequest:
@@ -5937,6 +6246,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -6023,6 +6334,10 @@
               tokensPerMinute: 150000
             - name: queue
               tokensPerMinute: 100000
+            - name: ranker-api
+              tokensPerMinute: 270000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -6168,6 +6483,7 @@
         agent_settings = AgentSettings(
             api_base="http://summary-api.eyelevel.svc.cluster.local",
             model_id="google/gemma-3-4b-it",
+            image_transport="data_url",
             reasoning_effort=None,
             model_kwargs={
               "max_tokens": 2000,
@@ -6248,13 +6564,14 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=1
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -6284,6 +6601,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -6313,6 +6631,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -6631,6 +6950,259 @@
       config.py: |
         env = dict(
             deviceType="cuda",
+            brokerType="redis",
+            metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            searchBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            searchLog="ranker",
+            searchResultBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            service="ranker",
+            validAPIKeys=[
+              "00000000-0000-0000-0000-000000000000",
+              "00000000-0000-0000-0000-000000000000",
+            ],
+            workers=14,
+        )
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+  18: |
+    apiVersion: v1
+    data:
+      gunicorn_conf.py: |
+        infolog = "-"
+        accesslog = "-"
+        errorlog = "-"
+
+        loglevel = "info"
+        workers = 1
+        threads = 3
+        timeout = 120
+        timeout_keep_alive = 15
+
+        worker_class = "uvicorn.workers.UvicornWorker"
+
+        bind = "0.0.0.0:8080"
+
+        wsgi_app = "ranker_server:app"
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-gunicorn-conf-py-map
+      namespace: eyelevel
+  19: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_2]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w2 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w2",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_3]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w3 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w3",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_4]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w4 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w4",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_5]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w5 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w5",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_6]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w6 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w6",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_7]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w7 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w7",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_8]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w8 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w8",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_9]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w9 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w9",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_10]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w10 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w10",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_11]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w11 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w11",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_12]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w12 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w12",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_13]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w13 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w13",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_14]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w14 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w14",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-inference-supervisord-conf-map
+      namespace: eyelevel
+  20: |
+    apiVersion: v1
+    data:
+      config.py: |
+        env = dict(
+            deviceType="cuda",
             deviceUtilize=0.48,
             brokerType="redis",
             metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
@@ -6653,7 +7225,7 @@
         version: 0.1.0
       name: summary-config-py-map
       namespace: eyelevel
-  18: |
+  21: |
     apiVersion: v1
     data:
       gunicorn_conf.py: |
@@ -6681,7 +7253,7 @@
         version: 0.1.0
       name: summary-gunicorn-conf-py-map
       namespace: eyelevel
-  19: |
+  22: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -6839,6 +7411,8 @@
               threshold: 4000
             - name: layout-webhook
               threshold: 4000
+            - name: ranker-api
+              threshold: 4000
           document:
             tokensPerMinute: 12500
           extractRequest:
@@ -6846,6 +7420,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              tokensPerMinute: 840000
           namespace: eyelevel
           page:
             tokensPerMinute: 1000
@@ -6929,6 +7505,10 @@
               tokensPerMinute: 150000
             - name: queue
               tokensPerMinute: 100000
+            - name: ranker-api
+              tokensPerMinute: 270000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-client
               tokensPerMinute: 54000
             - name: upload
@@ -7046,6 +7626,7 @@
         )
 
         agent_settings = AgentSettings(
+            image_transport="data_url",
             reasoning_effort="high",
         )
 
@@ -7120,13 +7701,14 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=1
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -7156,6 +7738,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -7185,6 +7768,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -7498,6 +8082,257 @@
   17: |
     apiVersion: v1
     data:
+      config.py: |
+        env = dict(
+            deviceType="cuda",
+            brokerType="redis",
+            metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            searchBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            searchLog="ranker",
+            searchResultBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            service="ranker",
+            validAPIKeys=[
+            ],
+            workers=14,
+        )
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+  18: |
+    apiVersion: v1
+    data:
+      gunicorn_conf.py: |
+        infolog = "-"
+        accesslog = "-"
+        errorlog = "-"
+
+        loglevel = "info"
+        workers = 1
+        threads = 3
+        timeout = 120
+        timeout_keep_alive = 15
+
+        worker_class = "uvicorn.workers.UvicornWorker"
+
+        bind = "0.0.0.0:8080"
+
+        wsgi_app = "ranker_server:app"
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-gunicorn-conf-py-map
+      namespace: eyelevel
+  19: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_2]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w2 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w2",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_3]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w3 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w3",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_4]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w4 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w4",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_5]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w5 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w5",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_6]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w6 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w6",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_7]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w7 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w7",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_8]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w8 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w8",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_9]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w9 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w9",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_10]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w10 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w10",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_11]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w11 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w11",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_12]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w12 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w12",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_13]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w13 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w13",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_14]
+        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w14 --loglevel=INFO --concurrency=1 --queues=inference_queue
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w14",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-inference-supervisord-conf-map
+      namespace: eyelevel
+  20: |
+    apiVersion: v1
+    data:
       GCP_CREDENTIALS: PG5vIHZhbHVlPg==
     kind: Secret
     metadata:
@@ -7615,6 +8450,8 @@
               threshold: 4000
             - name: layout-webhook
               threshold: 4000
+            - name: myapp-api
+              threshold: 4000
           document:
             tokensPerMinute: 12500
           extractRequest:
@@ -7622,6 +8459,8 @@
           inference:
             - name: myapp-inference
               tokensPerMinute: 240000
+            - name: myapp-inference
+              tokensPerMinute: 480000
             - name: myapp-api
               tokensPerMinute: 9600
             - name: myapp-inference
@@ -7691,6 +8530,10 @@
               tokensPerMinute: 150000
             - name: queue
               tokensPerMinute: 100000
+            - name: myapp-api
+              tokensPerMinute: 720000
+            - name: myapp-inference
+              tokensPerMinute: 480000
             - name: myapp-api
               tokensPerMinute: 9600
             - name: myapp-inference
@@ -8560,6 +9403,8 @@
               threshold: 4000
             - name: layout-webhook
               threshold: 4000
+            - name: ranker-api
+              threshold: 4000
           document:
             tokensPerMinute: 12500
           extractRequest:
@@ -8567,6 +9412,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -8636,6 +9483,10 @@
               tokensPerMinute: 150000
             - name: queue
               tokensPerMinute: 100000
+            - name: ranker-api
+              tokensPerMinute: 270000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -9501,6 +10352,8 @@
               threshold: 4000
             - name: layout-webhook
               threshold: 4000
+            - name: ranker-api
+              threshold: 4000
           document:
             tokensPerMinute: 12500
           extractRequest:
@@ -9508,6 +10361,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -9577,6 +10432,10 @@
               tokensPerMinute: 150000
             - name: queue
               tokensPerMinute: 100000
+            - name: ranker-api
+              tokensPerMinute: 270000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -10449,6 +11308,8 @@
               threshold: 4000
             - name: layout-webhook
               threshold: 4000
+            - name: ranker-api
+              threshold: 4000
           document:
             tokensPerMinute: 12500
           extractRequest:
@@ -10456,6 +11317,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -10542,6 +11405,10 @@
               tokensPerMinute: 150000
             - name: queue
               tokensPerMinute: 100000
+            - name: ranker-api
+              tokensPerMinute: 270000
+            - name: ranker-inference
+              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -10672,6 +11539,7 @@
         )
 
         agent_settings = AgentSettings(
+            image_transport="data_url",
         )
 
         container_settings = ContainerSettings(
@@ -10751,13 +11619,14 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=agent_queue --prefetch-multiplier=1 --max-tasks-per-child=1
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -10787,6 +11656,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -10816,6 +11686,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -11491,4 +12362,240 @@
         heritage: Helm
         version: 0.1.0
       name: summary-inference-supervisord-conf-map
+      namespace: eyelevel
+'workspace-enabled: resources':
+  1: |
+    apiVersion: v1
+    data:
+      WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-secret
+      namespace: eyelevel
+    type: Opaque
+  2: |
+    apiVersion: v1
+    data:
+      config.py: |
+        from pathlib import Path
+
+        from settings import Settings
+
+
+        settings = Settings(
+            allowed_commands="go,npm,pytest,python,node,git",
+            celery_broker_url="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            celery_global_keyprefix="{workspace}",
+            celery_result_backend="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            celery_task_always_eager=False,
+            celery_task_soft_time_limit_seconds=900,
+            command_timeout_seconds=300,
+            git_provider="github",
+            github_api_base_url="https://api.github.com",
+            github_app_id="",
+            github_app_installation_id="",
+            github_app_private_key_path="",
+            github_app_private_key_pem="",
+            github_token_ttl_seconds=3600,
+            gitlab_api_base_url="https://gitlab.com/api/v4",
+            gitlab_token="",
+            gitlab_token_path="",
+            managed_repo_name_prefix="workspace",
+            managed_repo_owner="",
+            managed_repo_visibility="private",
+            mysql_connect_timeout_seconds=10,
+            mysql_database="eyelevel",
+            mysql_host="db-cluster-haproxy.eyelevel.svc.cluster.local",
+            mysql_password="",
+            mysql_port=3306,
+            mysql_username="",
+            publish_dry_run=True,
+            publish_github_workflow_id="deploy.yml",
+            runner_token="test-runner-token",
+            service="workspace",
+            workspace_min_free_bytes=0,
+            workspace_min_free_percent=0,
+            workspace_root=Path("/tmp/workspaces"),
+        )
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-config-py-map
+      namespace: eyelevel
+  3: |
+    apiVersion: v1
+    data:
+      gunicorn_conf.py: |
+        accesslog = "-"
+        errorlog = "-"
+        loglevel = "info"
+        timeout = 120
+        timeout_keep_alive = 15
+        worker_class = "uvicorn.workers.UvicornWorker"
+        workers = 2
+        threads = 2
+        bind = "0.0.0.0:8080"
+        wsgi_app = "server:app"
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-gunicorn-conf-py-map
+      namespace: eyelevel
+  4: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=provision_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-provision-supervisord-conf-map
+      namespace: eyelevel
+  5: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=workspace_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-workspace-supervisord-conf-map
+      namespace: eyelevel
+  6: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=command_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-command-supervisord-conf-map
+      namespace: eyelevel
+  7: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=publish_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-publish-supervisord-conf-map
+      namespace: eyelevel
+  8: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=cleanup_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-cleanup-supervisord-conf-map
       namespace: eyelevel

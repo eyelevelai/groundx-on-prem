@@ -19,10 +19,18 @@
   "preProcess"
   "process"
   "queue"
+  "ranker.api"
+  "ranker.inference"
   "summary.api"
   "summary.inference"
   "summaryClient"
   "upload"
+  "workspace.api"
+  "workspace.cleanup"
+  "workspace.command"
+  "workspace.provision"
+  "workspace.publish"
+  "workspace.workspace"
 -}}
 
 {{- range $svc := $services }}

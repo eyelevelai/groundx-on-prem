@@ -1,0 +1,68 @@
+workspace:
+  enabled: true
+  token: test-runner-token
+  allowedCommands: "python,git"
+  celeryBrokerUrl: "redis://external-cache.example.com:6379/3"
+  celeryGlobalKeyprefix: "{workspace-test}"
+  celeryResultBackend: "redis://external-cache.example.com:6379/4"
+  celerySoftTimeLimitSeconds: 600
+  commandTimeoutSeconds: 180
+  managedRepoNamePrefix: "workspace-test"
+  managedRepoOwner: "GroundX-Studio"
+  managedRepoVisibility: "private"
+  mysqlConnectTimeoutSeconds: 20
+  node: eyelevel-cpu-only
+  pvc:
+    access: ReadWriteMany
+    capacity: 25Gi
+    class: efs-sc
+    name: workspace-test-data
+  workspaceMinFreeBytes: 1048576
+  workspaceMinFreePercent: 5
+  workspaceRoot: /mnt/workspaces
+  api:
+    annotations:
+      workspace.groundx.ai/component: api
+    containerPort: 8081
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+    imagePullPolicy: Always
+    labels:
+      workspace.groundx.ai/tier: api
+    nodeSelector:
+      groundx.ai/pool: api
+    threads: 2
+    timeout: 180
+    timeoutKeepAlive: 20
+    tolerations:
+      - key: dedicated
+        operator: Equal
+        value: workspace
+        effect: NoSchedule
+    workers: 2
+    serviceAccount:
+      name: workspace-api-service-account
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+  command:
+    image: example.com/workspace-command:test
+    imagePullPolicy: IfNotPresent
+    labels:
+      workspace.groundx.ai/tier: worker
+    nodeSelector:
+      groundx.ai/pool: worker
+    queue: custom_command_queue
+    serviceAccount:
+      name: workspace-command-service-account
+    threads: 2
+    workers: 2
+    replicas:
+      desired: 2
+      hpa: true
+      throughput: 1250
+    resources:
+      requests:
+        cpu: 150m
+        memory: 512Mi

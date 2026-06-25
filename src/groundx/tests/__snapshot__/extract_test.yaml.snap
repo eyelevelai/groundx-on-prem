@@ -1,3 +1,59 @@
+'default: extract.existing.1':
+  1: |
+    apiVersion: v1
+    data:
+      config.py: |
+        from groundx.extract import (
+            AgentSettings,
+            ContainerSettings,
+            ContainerUploadSettings,
+            GroundXSettings,
+        )
+
+        agent_settings = AgentSettings(
+            image_transport="data_url",
+        )
+
+        container_settings = ContainerSettings(
+            broker="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            broker_type="redis",
+            cache_dir="/app/cache",
+            callback_api_key="00000000-0000-0000-0000-000000000001",
+            google_sheets_drive_id="abc",
+            google_sheets_template_id="a123",
+            metrics_broker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
+            service="extract",
+            upload=ContainerUploadSettings(
+                base_domain="s3.com",
+                bucket="test",
+                region="us-east-1",
+                ssl=False,
+                type="s3",
+                url="http://s3.com/",
+                key="key",
+                secret="pass",
+            ),
+            valid_api_keys=[
+              "00000000-0000-0000-0000-000000000000",
+              "00000000-0000-0000-0000-000000000000",
+              "00000000-0000-0000-0000-000000000002",
+            ],
+            workers=1,
+        )
+
+        groundx_settings = GroundXSettings(
+          api_key="00000000-0000-0000-0000-000000000001",
+          base_url="https://api.groundx.ai/api",
+        )
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: extract-config-py-map
+      namespace: eyelevel
 'default: extract.ingest':
   1: |
     apiVersion: v1
@@ -13,6 +69,7 @@
         agent_settings = AgentSettings(
             api_base="http://summary-api.eyelevel.svc.cluster.local",
             model_id="google/gemma-3-4b-it",
+            image_transport="data_url",
             reasoning_effort=None,
             model_kwargs={
               "max_tokens": 2000,
@@ -56,61 +113,6 @@
         version: 0.1.0
       name: extract-config-py-map
       namespace: eyelevel
-'default: extract.existing.1':
-  1: |
-    apiVersion: v1
-    data:
-      config.py: |
-        from groundx.extract import (
-            AgentSettings,
-            ContainerSettings,
-            ContainerUploadSettings,
-            GroundXSettings,
-        )
-
-        agent_settings = AgentSettings(
-        )
-
-        container_settings = ContainerSettings(
-            broker="redis://cache.eyelevel.svc.cluster.local:6379/0",
-            broker_type="redis",
-            cache_dir="/app/cache",
-            callback_api_key="00000000-0000-0000-0000-000000000001",
-            google_sheets_drive_id="abc",
-            google_sheets_template_id="a123",
-            metrics_broker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
-            service="extract",
-            upload=ContainerUploadSettings(
-                base_domain="s3.com",
-                bucket="test",
-                region="us-east-1",
-                ssl=False,
-                type="s3",
-                url="http://s3.com/",
-                key="key",
-                secret="pass",
-            ),
-            valid_api_keys=[
-              "00000000-0000-0000-0000-000000000000",
-              "00000000-0000-0000-0000-000000000000",
-              "00000000-0000-0000-0000-000000000002",
-            ],
-            workers=1,
-        )
-
-        groundx_settings = GroundXSettings(
-          api_key="00000000-0000-0000-0000-000000000001",
-          base_url="https://api.groundx.ai/api",
-        )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: extract-config-py-map
-      namespace: eyelevel
 'default: phoenix':
   1: |
     apiVersion: v1
@@ -124,6 +126,7 @@
         )
 
         agent_settings = AgentSettings(
+            image_transport="data_url",
         )
 
         container_settings = ContainerSettings(
@@ -166,3 +169,4 @@
         version: 0.1.0
       name: extract-config-py-map
       namespace: eyelevel
+'workspace-enabled: extract':

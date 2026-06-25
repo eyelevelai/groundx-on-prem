@@ -378,6 +378,66 @@ If you wish to use an existing redis cache, you must configure the `cache.existi
 
 If you'd like to install redis to your cluster, instances will be automatically created during the application installation for you so long as `cache.existing` is an empty dictionary and `cache.enabled` is `true`.
 
+### Workspace
+
+The `workspace` service family is optional and disabled by default. Enable it when the Partner API should provision managed code projects for GroundX Studio Harness generated projects. The runner is internal-only: agents call the Partner API, the Partner API calls the runner, and the runner owns managed repository creation, short-lived git sessions, fallback file operations, command execution, cleanup, and publish operations.
+
+Set `workspace.enabled: true` and provide either `workspace.token` or `workspace.existingSecret`. When `workspace.token` is provided, the chart renders it into the generated GroundX `config.yaml` as `workspace.token`, renders it into the runner `config.py` as `runner_token`, and creates a `workspace-secret` containing `WORKSPACE_RUNNER_TOKEN` as the environment fallback. When `workspace.existingSecret` is provided, that secret must contain `WORKSPACE_RUNNER_TOKEN`; both the Partner API and workspace runner fall back to that environment value because the config files intentionally render the token empty. The internal runner URL is derived into GroundX `config.yaml` as `workspace.baseURL`, not stored as a secret.
+
+The runner follows the standard Python microservice deployment pattern. The API uses the shared Gunicorn deployment template and the workers use the shared supervisord Celery deployment template. Workspace-specific ConfigMaps provide `/app/config.py`, `/app/gunicorn_conf.py`, and one supervisord config per queue: provision, workspace, command, publish, and cleanup. API knobs such as `threads`, `workers`, `timeout`, `timeoutKeepAlive`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under `workspace.api`, matching the other Python API services. Worker knobs such as `queue`, `threads`, `workers`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under each worker section: `provision`, `workspace`, `command`, `publish`, and `cleanup`.
+
+Workspace project metadata and operation state are stored in MySQL. The primary path creates a managed GitHub or GitLab repository from the scaffold, returns a short-lived repo-scoped git session, and expects agents to clone, edit, commit, and push locally. The optional secondary file API uses `/tmp/workspaces` only as a disposable checkout cache for server-side reads, writes, patches, commands, and diffs; Git remains the source of truth and cache loss is recoverable. By default the chart renders this cache as `emptyDir`. Set `workspace.pvc.enabled: true` only when you want a persistent cache for repeated secondary file API work. When enabled, the PVC follows the same helper pattern as inference services: `cluster.pvClass` sets the storage class and `cluster.pvAccessMode` sets the access mode. Prefer `ReadWriteMany` when multiple workspace pods need to share the cache. The runner waits on Redis/Valkey and MySQL but does not wait on file storage because workspace artifacts are not part of the GroundX document file store. Runtime config rendered into `/app/config.py` uses chart helpers for MySQL, Redis/Valkey, command, and workspace defaults, with `workspace.publishDryRun` exposed as the normal safety toggle.
+
+Publish is dry-run by default. To enable real publish, set `workspace.publishDryRun: false`, configure the provider credentials owned by the runner service, and set the workflow or pipeline to trigger. For GitHub Actions:
+
+```yaml
+workspace:
+  enabled: true
+  token: "<internal-runner-token>"
+  publishDryRun: false
+  publishGithubWorkflowId: deploy.yml
+  github:
+    appId: "<github-app-id>"
+    installationId: "<github-app-installation-id>"
+    privateKeySecret:
+      name: workspace-github-app
+      key: private-key.pem
+```
+
+For GitLab, set `workspace.gitProvider: gitlab`, configure `workspace.gitlab.apiBaseUrl`, and provide a token via `workspace.gitlab.tokenSecret` or `workspace.gitlab.token`.
+
+`privateKeySecret` is the production path: the chart mounts that existing secret only into workspace API and worker pods at `/var/run/secrets/workspace/github/private-key.pem`. For local or lower-environment testing, `workspace.github.privateKeyPem` can populate `GITHUB_APP_PRIVATE_KEY_PEM` in a generated `workspace-github-secret` that is mounted only into workspace API and worker pods. GitHub credentials are not mounted into the Partner API service.
+
+Workspace autoscaling uses the same external metrics server as the rest of GroundX. Enable the metrics server and either global or per-component HPA settings so every rendered HPA metric has a matching `config.yaml` metric definition:
+
+```yaml
+metrics:
+  enabled: true
+
+cluster:
+  hpa: true
+
+workspace:
+  enabled: true
+  token: "<internal-runner-token>"
+  command:
+    queue: command_queue
+    replicas:
+      desired: 2
+      threshold: 10
+      throughput: 1250
+```
+
+The API emits `workspace-api:api` with a default threshold of `4000` and, by default, `workspace-api:throughput` with a default throughput of `50000`. The Partner API receives the runner URL from the workspace API helper, so the derived internal URL follows the same pattern as `extract-api`: `http://workspace-api.<namespace>.svc.cluster.local`. Worker HPAs emit `workspace-<worker>:task` and point the metrics server at the configured Celery queue for that worker; worker task thresholds default to `10`, worker targets default to `1`, and worker throughput defaults to `50000`. All of these values may be overridden per worker. Keep custom worker queue names in values rather than editing templates so the HPA and metrics-server config stay in sync.
+
+Run the local Helm production gate before changing chart helpers, values, schemas, or snapshots:
+
+```bash
+.build/bin/validate-helm.sh
+```
+
+The Helm CI gate uses the same script. It lints both chart surfaces, runs Helm unittest, verifies that snapshots did not silently drop empty renders, runs `.build/bin/verify-workspace-chart.py` to prove the workspace API service and metrics contracts stay aligned, and runs `.build/bin/verify-storage-contract.py` to prove StorageClass defaults, provider examples, PVC access modes, mirrored chart files, and the `setup-eks` generated EFS/EBS values and printed Helm commands all render. After deploying to a cluster, run `.build/bin/smoke-workspace-runner.sh` with the target kube context selected to verify the API, workers, cluster DNS, health endpoint, internal `/storage` status endpoint, and Partner API runner URL wiring.
+
 ### MySQL
 
 #### Using an Existing MySQL Cluster
@@ -504,6 +564,7 @@ admin.username  # the admin account for your deployment
 admin.email
 admin.password
 cluster.pvClass # an existing storage class
+cluster.pvAccessMode # ReadWriteMany for shared filesystems, ReadWriteOnce for block/local storage
 cluster.type    # type of Kubernetes cluster
 ```
 
@@ -512,6 +573,36 @@ cluster.type    # type of Kubernetes cluster
 ```bash
 bin/uuid
 ```
+
+### Persistent Storage
+
+GroundX uses one app-wide persistent storage abstraction. Set `cluster.pvClass` to the Kubernetes storage class name and `cluster.pvAccessMode` to the access mode that class supports. Services that need PVCs, including summary inference, ranker inference, layout inference, and workspace when `workspace.pvc.enabled: true`, inherit those values unless their local `pvc` block explicitly overrides them.
+
+Prefer a shared filesystem class with `ReadWriteMany` when available:
+
+```yaml
+cluster:
+  pvClass: eyelevel-pv
+  pvAccessMode: ReadWriteMany
+```
+
+Use this mode when multiple pods need to share a mounted cache or model/data volume. Workspace does not require this for the primary local-git workflow, but it is useful when the secondary file API cache is configured as a PVC. Example storage class values are included for common shared filesystems:
+
+- EKS/EFS: `src/groundx/prereqs/storageclass/values.efs.example.yaml`
+- AKS/Azure Files: `src/groundx/prereqs/storageclass/values.azure-files.example.yaml`
+- GKE Filestore: `src/groundx/prereqs/storageclass/values.gke-filestore.example.yaml`
+
+When only block or local storage is available, use `ReadWriteOnce`:
+
+```yaml
+cluster:
+  pvClass: eyelevel-pv
+  pvAccessMode: ReadWriteOnce
+```
+
+An EKS/EBS example is available at `src/groundx/prereqs/storageclass/values.ebs.example.yaml`. With `ReadWriteOnce`, any pod family sharing the same PVC must be scheduled in a compatible shape because the volume cannot be mounted freely across nodes.
+
+For AWS EKS, `terraform/aws/setup-eks` generates `src/groundx/prereqs/storageclass/values.aws.local.yaml` and `src/groundx/values.aws.local.yaml` from Terraform outputs. Use `STORAGE_DRIVER=efs` for the shared EFS path or `STORAGE_DRIVER=ebs` for EBS. The generated Helm commands printed by the script do not require manually editing the EFS filesystem ID.
 
 ### Helm Installation
 

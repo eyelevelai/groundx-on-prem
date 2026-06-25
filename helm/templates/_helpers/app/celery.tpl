@@ -9,6 +9,11 @@
   "layout.ocr"
   "layout.process"
   "layout.save"
+  "workspace.cleanup"
+  "workspace.command"
+  "workspace.provision"
+  "workspace.publish"
+  "workspace.workspace"
 -}}
 {{- range $svc := $services }}
   {{- $tpl := printf "groundx.%s.create" $svc -}}

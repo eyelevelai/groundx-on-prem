@@ -14,10 +14,10 @@
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "api" dict $b -}}
 {{- $io := include "groundx.ingestOnly" . -}}
-{{- if eq $io "true" -}}
-false
-{{- else if hasKey $in "enabled" -}}
+{{- if hasKey $in "enabled" -}}
   {{- if (dig "enabled" false $in) -}}true{{- else -}}false{{- end -}}
+{{- else if eq $io "true" -}}
+false
 {{- else -}}
 true
 {{- end -}}
@@ -48,16 +48,6 @@ true
 80
 {{- end }}
 
-{{- define "groundx.ranker.api.replicas" -}}
-{{- $b := .Values.ranker | default dict -}}
-{{- $c := dig "api" dict $b -}}
-{{- $in := dig "replicas" dict $c -}}
-{{- if not $in }}
-  {{- $in = dict "desired" 1 "max" 1 "min" 1 -}}
-{{- end }}
-{{- toYaml $in | nindent 0 }}
-{{- end }}
-
 {{- define "groundx.ranker.api.serviceAccountName" -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "api" dict $b -}}
@@ -84,6 +74,104 @@ true
 {{- else -}}
 {{ printf "%s://%s-api.%s.svc.cluster.local:%v" $scheme $name $ns $port }}
 {{- end -}}
+{{- end }}
+
+{{/* fraction of threshold */}}
+{{- define "groundx.ranker.api.target.default" -}}
+1
+{{- end }}
+
+{{/* average latency per minute */}}
+{{- define "groundx.ranker.api.threshold.default" -}}
+4000
+{{- end }}
+
+{{/* tokens per minute per worker per thread */}}
+{{- define "groundx.ranker.api.throughput.default" -}}
+90000
+{{- end }}
+
+{{- define "groundx.ranker.api.threshold" -}}
+{{- $rep := (include "groundx.ranker.api.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.ranker.api.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "threshold" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.ranker.api.throughput" -}}
+{{- $rep := (include "groundx.ranker.api.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.ranker.api.create" . -}}
+{{- if eq $ic "true" -}}
+{{ dig "throughput" 0 $rep }}
+{{- else -}}
+0
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.ranker.api.hpa" -}}
+{{- $ic := include "groundx.ranker.api.create" . -}}
+{{- $rep := (include "groundx.ranker.api.replicas" . | fromYaml) -}}
+{{- $enabled := false -}}
+{{- if eq $ic "true" -}}
+{{- $enabled = dig "hpa" false $rep -}}
+{{- end -}}
+{{- $name := (include "groundx.ranker.api.serviceName" .) -}}
+{{- $cld := dig "cooldown" 60 $rep -}}
+{{- $cfg := dict
+  "downCooldown" (mul $cld 2)
+  "enabled"      $enabled
+  "metric"       (printf "%s:api" $name)
+  "name"         $name
+  "replicas"     $rep
+  "throughput"   (printf "%s:throughput" $name)
+  "upCooldown"   $cld
+-}}
+{{- $cfg | toYaml -}}
+{{- end }}
+
+{{- define "groundx.ranker.api.replicas" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $c := dig "api" dict $b -}}
+{{- $in := dig "replicas" dict $c -}}
+{{- $chp := include "groundx.cluster.hpa" . -}}
+{{- if not $in }}
+  {{- $in = dict -}}
+{{- end }}
+{{- if not (hasKey $in "cooldown") -}}
+  {{- $_ := set $in "cooldown" (include "groundx.hpa.cooldown" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "hpa") -}}
+  {{- $_ := set $in "hpa" $chp -}}
+{{- end -}}
+{{- if not (hasKey $in "target") -}}
+  {{- $_ := set $in "target" (include "groundx.ranker.api.target.default" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "threshold") -}}
+  {{- $_ := set $in "threshold" (include "groundx.ranker.api.threshold.default" .) -}}
+{{- end -}}
+{{- if not (hasKey $in "throughput") -}}
+  {{- $threads := (include "groundx.ranker.api.threads" . | int) -}}
+  {{- $workers := (include "groundx.ranker.api.workers" . | int) -}}
+  {{- $dflt := (include "groundx.ranker.api.throughput.default" . | int) -}}
+  {{- $_ := set $in "throughput" (mul $dflt $threads $workers) -}}
+{{- end -}}
+{{- if not (hasKey $in "min") -}}
+  {{- if hasKey $in "desired" -}}
+    {{- $_ := set $in "min" (dig "desired" 1 $in) -}}
+  {{- else -}}
+    {{- $_ := set $in "min" 1 -}}
+  {{- end -}}
+{{- end -}}
+{{- if not (hasKey $in "desired") -}}
+  {{- $_ := set $in "desired" 1 -}}
+{{- end -}}
+{{- if not (hasKey $in "max") -}}
+  {{- $_ := set $in "max" 16 -}}
+{{- end -}}
+{{- toYaml $in | nindent 0 }}
 {{- end }}
 
 {{- define "groundx.ranker.api.ssl" -}}
@@ -143,6 +231,7 @@ false
 {{- $san := include "groundx.ranker.api.serviceAccountName" . -}}
 {{- $cfg := dict
   "cfg"          (printf "%s-config-py-map" $svc)
+  "cache"        (include "groundx.ranker.cache.settings" . | fromYaml)
   "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
   "image"        (include "groundx.ranker.api.image" .)
   "interface"    (include "groundx.ranker.api.interface" .)

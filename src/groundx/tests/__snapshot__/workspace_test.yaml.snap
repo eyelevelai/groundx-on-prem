@@ -1,0 +1,5254 @@
+'disabled: workspace':
+'disabled: workspace metrics config':
+'enabled: workspace':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-api
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-api
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-api
+      template:
+        metadata:
+          annotations:
+            config-hash: dde6387b837e9e41e70823f7b1b731c4498d87b5eeabe79632e41997b42c6be4
+            gunicorn-conf-hash: 7b77a5ecbb71e70922f104c678cbaf4ce20a98b86db5735dab4924809990de45
+            workspace.groundx.ai/component: api
+          labels:
+            app: workspace-api
+            workspace.groundx.ai/tier: api
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/bash
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 12
+                httpGet:
+                  path: /health
+                  port: 8081
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              name: workspace-api
+              ports:
+                - containerPort: 8081
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8081
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/gunicorn_conf.py
+                  name: gunicorn-conf-volume
+                  subPath: gunicorn_conf.py
+                - mountPath: /mnt/workspaces
+                  name: workspace-data
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            groundx.ai/pool: api
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: workspace-api-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: dedicated
+              operator: Equal
+              value: workspace
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-gunicorn-conf-py-map
+              name: gunicorn-conf-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-test-data
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-api
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8081
+      selector:
+        app: workspace-api
+      type: ClusterIP
+  3: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-test-data
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 25Gi
+      storageClassName: efs-sc
+  4: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-cleanup
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-cleanup
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-cleanup
+      template:
+        metadata:
+          annotations:
+            config-hash: dde6387b837e9e41e70823f7b1b731c4498d87b5eeabe79632e41997b42c6be4
+            supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
+          labels:
+            app: workspace-cleanup
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: Always
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-cleanup
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /mnt/workspaces
+                  name: workspace-data
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-cleanup-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-test-data
+  5: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-command
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-command
+      namespace: eyelevel
+    spec:
+      replicas: 2
+      selector:
+        matchLabels:
+          app: workspace-command
+      template:
+        metadata:
+          annotations:
+            config-hash: dde6387b837e9e41e70823f7b1b731c4498d87b5eeabe79632e41997b42c6be4
+            supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
+          labels:
+            app: workspace-command
+            workspace.groundx.ai/tier: worker
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: example.com/workspace-command:test
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-command
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 150m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /mnt/workspaces
+                  name: workspace-data
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          nodeSelector:
+            groundx.ai/pool: worker
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: workspace-command-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-command-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-test-data
+  6: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-provision
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-provision
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-provision
+      template:
+        metadata:
+          annotations:
+            config-hash: dde6387b837e9e41e70823f7b1b731c4498d87b5eeabe79632e41997b42c6be4
+            supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
+          labels:
+            app: workspace-provision
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: Always
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-provision
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /mnt/workspaces
+                  name: workspace-data
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-provision-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-test-data
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-publish
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-publish
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-publish
+      template:
+        metadata:
+          annotations:
+            config-hash: dde6387b837e9e41e70823f7b1b731c4498d87b5eeabe79632e41997b42c6be4
+            supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
+          labels:
+            app: workspace-publish
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: Always
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-publish
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /mnt/workspaces
+                  name: workspace-data
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-publish-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-test-data
+  8: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-workspace
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-workspace
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-workspace
+      template:
+        metadata:
+          annotations:
+            config-hash: dde6387b837e9e41e70823f7b1b731c4498d87b5eeabe79632e41997b42c6be4
+            supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
+          labels:
+            app: workspace-workspace
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: Always
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-workspace
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /mnt/workspaces
+                  name: workspace-data
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-workspace-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-test-data
+  9: |
+    apiVersion: v1
+    data:
+      WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-secret
+      namespace: eyelevel
+    type: Opaque
+  10: |
+    apiVersion: v1
+    data:
+      config.py: |
+        from pathlib import Path
+
+        from settings import Settings
+
+
+        settings = Settings(
+            allowed_commands="python,git",
+            celery_broker_url="redis://external-cache.example.com:6379/3",
+            celery_global_keyprefix="{workspace-test}",
+            celery_result_backend="redis://external-cache.example.com:6379/4",
+            celery_task_always_eager=False,
+            celery_task_soft_time_limit_seconds=600,
+            command_timeout_seconds=180,
+            git_provider="github",
+            github_api_base_url="https://api.github.com",
+            github_app_id="",
+            github_app_installation_id="",
+            github_app_private_key_path="",
+            github_app_private_key_pem="",
+            github_token_ttl_seconds=3600,
+            gitlab_api_base_url="https://gitlab.com/api/v4",
+            gitlab_token="",
+            gitlab_token_path="",
+            managed_repo_name_prefix="workspace-test",
+            managed_repo_owner="GroundX-Studio",
+            managed_repo_visibility="private",
+            mysql_connect_timeout_seconds=20,
+            mysql_database="eyelevel",
+            mysql_host="db-cluster-haproxy.eyelevel.svc.cluster.local",
+            mysql_password="",
+            mysql_port=3306,
+            mysql_username="",
+            publish_dry_run=True,
+            publish_github_workflow_id="deploy.yml",
+            runner_token="test-runner-token",
+            service="workspace",
+            workspace_min_free_bytes=1.048576e+06,
+            workspace_min_free_percent=5,
+            workspace_root=Path("/mnt/workspaces"),
+        )
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-config-py-map
+      namespace: eyelevel
+  11: |
+    apiVersion: v1
+    data:
+      gunicorn_conf.py: |
+        accesslog = "-"
+        errorlog = "-"
+        loglevel = "info"
+        timeout = 180
+        timeout_keep_alive = 20
+        worker_class = "uvicorn.workers.UvicornWorker"
+        workers = 2
+        threads = 2
+        bind = "0.0.0.0:8081"
+        wsgi_app = "server:app"
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-gunicorn-conf-py-map
+      namespace: eyelevel
+  12: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=provision_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-provision-supervisord-conf-map
+      namespace: eyelevel
+  13: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=workspace_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-workspace-supervisord-conf-map
+      namespace: eyelevel
+  14: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=custom_command_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_worker_2]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w2 --loglevel=INFO --concurrency=2 --queues=custom_command_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w2",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-command-supervisord-conf-map
+      namespace: eyelevel
+  15: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=publish_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-publish-supervisord-conf-map
+      namespace: eyelevel
+  16: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=cleanup_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-cleanup-supervisord-conf-map
+      namespace: eyelevel
+'enabled: workspace api ingress':
+  1: |
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace
+      namespace: eyelevel
+    spec:
+      ingressClassName: nginx
+      rules:
+        - host: workspace.example.com
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: workspace
+                    port:
+                      number: 80
+                path: /workspace
+                pathType: ImplementationSpecific
+'enabled: workspace github pem fallback secret':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-api
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-api
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-api
+      template:
+        metadata:
+          annotations:
+            config-hash: 52c178e821400145b6b5f924abf5cb15a895a116b8230247248c8f21c895109e
+            gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
+          labels:
+            app: workspace-api
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/bash
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-github-secret
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 12
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              name: workspace-api
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/gunicorn_conf.py
+                  name: gunicorn-conf-volume
+                  subPath: gunicorn_conf.py
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-gunicorn-conf-py-map
+              name: gunicorn-conf-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-api
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: workspace-api
+      type: ClusterIP
+  3: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-data
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: eyelevel-pv
+  4: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-cleanup
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-cleanup
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-cleanup
+      template:
+        metadata:
+          annotations:
+            config-hash: 52c178e821400145b6b5f924abf5cb15a895a116b8230247248c8f21c895109e
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-cleanup
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-github-secret
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-cleanup
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-cleanup-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  5: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-command
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-command
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-command
+      template:
+        metadata:
+          annotations:
+            config-hash: 52c178e821400145b6b5f924abf5cb15a895a116b8230247248c8f21c895109e
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-command
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-github-secret
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-command
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-command-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  6: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-provision
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-provision
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-provision
+      template:
+        metadata:
+          annotations:
+            config-hash: 52c178e821400145b6b5f924abf5cb15a895a116b8230247248c8f21c895109e
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-provision
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-github-secret
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-provision
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-provision-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-publish
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-publish
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-publish
+      template:
+        metadata:
+          annotations:
+            config-hash: 52c178e821400145b6b5f924abf5cb15a895a116b8230247248c8f21c895109e
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-publish
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-github-secret
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-publish
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-publish-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  8: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-workspace
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-workspace
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-workspace
+      template:
+        metadata:
+          annotations:
+            config-hash: 52c178e821400145b6b5f924abf5cb15a895a116b8230247248c8f21c895109e
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-workspace
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-github-secret
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-workspace
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-workspace-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  9: |
+    apiVersion: v1
+    data:
+      WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-secret
+      namespace: eyelevel
+    type: Opaque
+  10: |
+    apiVersion: v1
+    data:
+      GITHUB_APP_PRIVATE_KEY_PEM: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCnRlc3QKLS0tLS1FTkQgUFJJVkFURSBLRVktLS0tLQo=
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-github-secret
+      namespace: eyelevel
+    type: Opaque
+'enabled: workspace github publish config':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-api
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-api
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-api
+      template:
+        metadata:
+          annotations:
+            config-hash: 8db2bb2b2f4928915df29e1b4601dd67cdac9096462c9ff60e2036fae6f89965
+            gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
+          labels:
+            app: workspace-api
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/bash
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 12
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              name: workspace-api
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/gunicorn_conf.py
+                  name: gunicorn-conf-volume
+                  subPath: gunicorn_conf.py
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+                - mountPath: /var/run/secrets/workspace/github
+                  name: workspace-github-private-key
+                  readOnly: true
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-gunicorn-conf-py-map
+              name: gunicorn-conf-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+            - name: workspace-github-private-key
+              secret:
+                items:
+                  - key: private-key.pem
+                    path: private-key.pem
+                secretName: workspace-github-app
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-api
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: workspace-api
+      type: ClusterIP
+  3: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-data
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: azure-files-rwx
+  4: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-cleanup
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-cleanup
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-cleanup
+      template:
+        metadata:
+          annotations:
+            config-hash: 8db2bb2b2f4928915df29e1b4601dd67cdac9096462c9ff60e2036fae6f89965
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-cleanup
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-cleanup
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+                - mountPath: /var/run/secrets/workspace/github
+                  name: workspace-github-private-key
+                  readOnly: true
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-cleanup-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+            - name: workspace-github-private-key
+              secret:
+                items:
+                  - key: private-key.pem
+                    path: private-key.pem
+                secretName: workspace-github-app
+  5: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-command
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-command
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-command
+      template:
+        metadata:
+          annotations:
+            config-hash: 8db2bb2b2f4928915df29e1b4601dd67cdac9096462c9ff60e2036fae6f89965
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-command
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-command
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+                - mountPath: /var/run/secrets/workspace/github
+                  name: workspace-github-private-key
+                  readOnly: true
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-command-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+            - name: workspace-github-private-key
+              secret:
+                items:
+                  - key: private-key.pem
+                    path: private-key.pem
+                secretName: workspace-github-app
+  6: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-provision
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-provision
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-provision
+      template:
+        metadata:
+          annotations:
+            config-hash: 8db2bb2b2f4928915df29e1b4601dd67cdac9096462c9ff60e2036fae6f89965
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-provision
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-provision
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+                - mountPath: /var/run/secrets/workspace/github
+                  name: workspace-github-private-key
+                  readOnly: true
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-provision-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+            - name: workspace-github-private-key
+              secret:
+                items:
+                  - key: private-key.pem
+                    path: private-key.pem
+                secretName: workspace-github-app
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-publish
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-publish
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-publish
+      template:
+        metadata:
+          annotations:
+            config-hash: 8db2bb2b2f4928915df29e1b4601dd67cdac9096462c9ff60e2036fae6f89965
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-publish
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-publish
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+                - mountPath: /var/run/secrets/workspace/github
+                  name: workspace-github-private-key
+                  readOnly: true
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-publish-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+            - name: workspace-github-private-key
+              secret:
+                items:
+                  - key: private-key.pem
+                    path: private-key.pem
+                secretName: workspace-github-app
+  8: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-workspace
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-workspace
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-workspace
+      template:
+        metadata:
+          annotations:
+            config-hash: 8db2bb2b2f4928915df29e1b4601dd67cdac9096462c9ff60e2036fae6f89965
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-workspace
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-workspace
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+                - mountPath: /var/run/secrets/workspace/github
+                  name: workspace-github-private-key
+                  readOnly: true
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-workspace-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+            - name: workspace-github-private-key
+              secret:
+                items:
+                  - key: private-key.pem
+                    path: private-key.pem
+                secretName: workspace-github-app
+  9: |
+    apiVersion: v1
+    data:
+      WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-secret
+      namespace: eyelevel
+    type: Opaque
+  10: |
+    apiVersion: v1
+    data:
+      config.py: |
+        from pathlib import Path
+
+        from settings import Settings
+
+
+        settings = Settings(
+            allowed_commands="go,npm,pytest,python,node,git",
+            celery_broker_url="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            celery_global_keyprefix="{workspace}",
+            celery_result_backend="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            celery_task_always_eager=False,
+            celery_task_soft_time_limit_seconds=900,
+            command_timeout_seconds=300,
+            git_provider="github",
+            github_api_base_url="https://github.enterprise.example/api/v3",
+            github_app_id="12345",
+            github_app_installation_id="67890",
+            github_app_private_key_path="/var/run/secrets/workspace/github/private-key.pem",
+            github_app_private_key_pem="",
+            github_token_ttl_seconds=1800,
+            gitlab_api_base_url="https://gitlab.com/api/v4",
+            gitlab_token="",
+            gitlab_token_path="",
+            managed_repo_name_prefix="workspace",
+            managed_repo_owner="",
+            managed_repo_visibility="private",
+            mysql_connect_timeout_seconds=10,
+            mysql_database="eyelevel",
+            mysql_host="db-cluster-haproxy.eyelevel.svc.cluster.local",
+            mysql_password="",
+            mysql_port=3306,
+            mysql_username="",
+            publish_dry_run=False,
+            publish_github_workflow_id="deploy.yml",
+            runner_token="test-runner-token",
+            service="workspace",
+            workspace_min_free_bytes=0,
+            workspace_min_free_percent=0,
+            workspace_root=Path("/tmp/workspaces"),
+        )
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-config-py-map
+      namespace: eyelevel
+'enabled: workspace gitlab publish config':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-api
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-api
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-api
+      template:
+        metadata:
+          annotations:
+            config-hash: 9d8cd2caadad64536ea6d53465fc0957e4f11aafa04d8d6f9ad1f34aab2ce22f
+            gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
+          labels:
+            app: workspace-api
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/bash
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 12
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              name: workspace-api
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/gunicorn_conf.py
+                  name: gunicorn-conf-volume
+                  subPath: gunicorn_conf.py
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+                - mountPath: /var/run/secrets/workspace/gitlab
+                  name: workspace-gitlab-token
+                  readOnly: true
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-gunicorn-conf-py-map
+              name: gunicorn-conf-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+            - name: workspace-gitlab-token
+              secret:
+                items:
+                  - key: token
+                    path: token
+                secretName: workspace-gitlab-token
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-api
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: workspace-api
+      type: ClusterIP
+  3: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-data
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: eyelevel-pv
+  4: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-cleanup
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-cleanup
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-cleanup
+      template:
+        metadata:
+          annotations:
+            config-hash: 9d8cd2caadad64536ea6d53465fc0957e4f11aafa04d8d6f9ad1f34aab2ce22f
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-cleanup
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-cleanup
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+                - mountPath: /var/run/secrets/workspace/gitlab
+                  name: workspace-gitlab-token
+                  readOnly: true
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-cleanup-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+            - name: workspace-gitlab-token
+              secret:
+                items:
+                  - key: token
+                    path: token
+                secretName: workspace-gitlab-token
+  5: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-command
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-command
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-command
+      template:
+        metadata:
+          annotations:
+            config-hash: 9d8cd2caadad64536ea6d53465fc0957e4f11aafa04d8d6f9ad1f34aab2ce22f
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-command
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-command
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+                - mountPath: /var/run/secrets/workspace/gitlab
+                  name: workspace-gitlab-token
+                  readOnly: true
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-command-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+            - name: workspace-gitlab-token
+              secret:
+                items:
+                  - key: token
+                    path: token
+                secretName: workspace-gitlab-token
+  6: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-provision
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-provision
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-provision
+      template:
+        metadata:
+          annotations:
+            config-hash: 9d8cd2caadad64536ea6d53465fc0957e4f11aafa04d8d6f9ad1f34aab2ce22f
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-provision
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-provision
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+                - mountPath: /var/run/secrets/workspace/gitlab
+                  name: workspace-gitlab-token
+                  readOnly: true
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-provision-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+            - name: workspace-gitlab-token
+              secret:
+                items:
+                  - key: token
+                    path: token
+                secretName: workspace-gitlab-token
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-publish
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-publish
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-publish
+      template:
+        metadata:
+          annotations:
+            config-hash: 9d8cd2caadad64536ea6d53465fc0957e4f11aafa04d8d6f9ad1f34aab2ce22f
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-publish
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-publish
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+                - mountPath: /var/run/secrets/workspace/gitlab
+                  name: workspace-gitlab-token
+                  readOnly: true
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-publish-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+            - name: workspace-gitlab-token
+              secret:
+                items:
+                  - key: token
+                    path: token
+                secretName: workspace-gitlab-token
+  8: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-workspace
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-workspace
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-workspace
+      template:
+        metadata:
+          annotations:
+            config-hash: 9d8cd2caadad64536ea6d53465fc0957e4f11aafa04d8d6f9ad1f34aab2ce22f
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-workspace
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-workspace
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+                - mountPath: /var/run/secrets/workspace/gitlab
+                  name: workspace-gitlab-token
+                  readOnly: true
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-workspace-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+            - name: workspace-gitlab-token
+              secret:
+                items:
+                  - key: token
+                    path: token
+                secretName: workspace-gitlab-token
+  9: |
+    apiVersion: v1
+    data:
+      WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-secret
+      namespace: eyelevel
+    type: Opaque
+  10: |
+    apiVersion: v1
+    data:
+      config.py: |
+        from pathlib import Path
+
+        from settings import Settings
+
+
+        settings = Settings(
+            allowed_commands="go,npm,pytest,python,node,git",
+            celery_broker_url="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            celery_global_keyprefix="{workspace}",
+            celery_result_backend="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            celery_task_always_eager=False,
+            celery_task_soft_time_limit_seconds=900,
+            command_timeout_seconds=300,
+            git_provider="gitlab",
+            github_api_base_url="https://api.github.com",
+            github_app_id="",
+            github_app_installation_id="",
+            github_app_private_key_path="",
+            github_app_private_key_pem="",
+            github_token_ttl_seconds=3600,
+            gitlab_api_base_url="https://gitlab.example.com/api/v4",
+            gitlab_token="",
+            gitlab_token_path="/var/run/secrets/workspace/gitlab/token",
+            managed_repo_name_prefix="workspace",
+            managed_repo_owner="",
+            managed_repo_visibility="private",
+            mysql_connect_timeout_seconds=10,
+            mysql_database="eyelevel",
+            mysql_host="db-cluster-haproxy.eyelevel.svc.cluster.local",
+            mysql_password="",
+            mysql_port=3306,
+            mysql_username="",
+            publish_dry_run=False,
+            publish_github_workflow_id="deploy.yml",
+            runner_token="test-runner-token",
+            service="workspace",
+            workspace_min_free_bytes=0,
+            workspace_min_free_percent=0,
+            workspace_root=Path("/tmp/workspaces"),
+        )
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-config-py-map
+      namespace: eyelevel
+'enabled: workspace metrics config':
+  1: |
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    metadata:
+      labels:
+        app: workspace-api-hpa
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-api-hpa
+      namespace: eyelevel
+    spec:
+      behavior:
+        scaleDown:
+          policies:
+            - periodSeconds: 150
+              type: Percent
+              value: 50
+            - periodSeconds: 150
+              type: Pods
+              value: 2
+          stabilizationWindowSeconds: 150
+        scaleUp:
+          policies:
+            - periodSeconds: 75
+              type: Percent
+              value: 100
+            - periodSeconds: 75
+              type: Pods
+              value: 4
+          stabilizationWindowSeconds: 75
+      maxReplicas: 8
+      metrics:
+        - external:
+            metric:
+              name: workspace-api:throughput
+            target:
+              type: Value
+              value: 1
+          type: External
+        - external:
+            metric:
+              name: workspace-api:api
+            target:
+              type: Value
+              value: 1
+          type: External
+      minReplicas: 1
+      scaleTargetRef:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: workspace-api
+  2: |
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    metadata:
+      labels:
+        app: workspace-cleanup-hpa
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-cleanup-hpa
+      namespace: eyelevel
+    spec:
+      behavior:
+        scaleDown:
+          policies:
+            - periodSeconds: 750
+              type: Percent
+              value: 50
+            - periodSeconds: 750
+              type: Pods
+              value: 2
+          stabilizationWindowSeconds: 750
+        scaleUp:
+          policies:
+            - periodSeconds: 75
+              type: Percent
+              value: 100
+            - periodSeconds: 75
+              type: Pods
+              value: 4
+          stabilizationWindowSeconds: 75
+      maxReplicas: 96
+      metrics:
+        - external:
+            metric:
+              name: workspace-cleanup:throughput
+            target:
+              type: Value
+              value: 1
+          type: External
+        - external:
+            metric:
+              name: workspace-cleanup:task
+            target:
+              type: Value
+              value: 1
+          type: External
+      minReplicas: 1
+      scaleTargetRef:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: workspace-cleanup
+  3: |
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    metadata:
+      labels:
+        app: workspace-command-hpa
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-command-hpa
+      namespace: eyelevel
+    spec:
+      behavior:
+        scaleDown:
+          policies:
+            - periodSeconds: 750
+              type: Percent
+              value: 50
+            - periodSeconds: 750
+              type: Pods
+              value: 2
+          stabilizationWindowSeconds: 750
+        scaleUp:
+          policies:
+            - periodSeconds: 75
+              type: Percent
+              value: 100
+            - periodSeconds: 75
+              type: Pods
+              value: 4
+          stabilizationWindowSeconds: 75
+      maxReplicas: 96
+      metrics:
+        - external:
+            metric:
+              name: workspace-command:throughput
+            target:
+              type: Value
+              value: 1
+          type: External
+        - external:
+            metric:
+              name: workspace-command:task
+            target:
+              type: Value
+              value: 1
+          type: External
+      minReplicas: 2
+      scaleTargetRef:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: workspace-command
+  4: |
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    metadata:
+      labels:
+        app: workspace-provision-hpa
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-provision-hpa
+      namespace: eyelevel
+    spec:
+      behavior:
+        scaleDown:
+          policies:
+            - periodSeconds: 750
+              type: Percent
+              value: 50
+            - periodSeconds: 750
+              type: Pods
+              value: 2
+          stabilizationWindowSeconds: 750
+        scaleUp:
+          policies:
+            - periodSeconds: 75
+              type: Percent
+              value: 100
+            - periodSeconds: 75
+              type: Pods
+              value: 4
+          stabilizationWindowSeconds: 75
+      maxReplicas: 96
+      metrics:
+        - external:
+            metric:
+              name: workspace-provision:throughput
+            target:
+              type: Value
+              value: 1
+          type: External
+        - external:
+            metric:
+              name: workspace-provision:task
+            target:
+              type: Value
+              value: 1
+          type: External
+      minReplicas: 1
+      scaleTargetRef:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: workspace-provision
+  5: |
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    metadata:
+      labels:
+        app: workspace-publish-hpa
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-publish-hpa
+      namespace: eyelevel
+    spec:
+      behavior:
+        scaleDown:
+          policies:
+            - periodSeconds: 750
+              type: Percent
+              value: 50
+            - periodSeconds: 750
+              type: Pods
+              value: 2
+          stabilizationWindowSeconds: 750
+        scaleUp:
+          policies:
+            - periodSeconds: 75
+              type: Percent
+              value: 100
+            - periodSeconds: 75
+              type: Pods
+              value: 4
+          stabilizationWindowSeconds: 75
+      maxReplicas: 96
+      metrics:
+        - external:
+            metric:
+              name: workspace-publish:throughput
+            target:
+              type: Value
+              value: 1
+          type: External
+        - external:
+            metric:
+              name: workspace-publish:task
+            target:
+              type: Value
+              value: 1
+          type: External
+      minReplicas: 1
+      scaleTargetRef:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: workspace-publish
+  6: |
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    metadata:
+      labels:
+        app: workspace-workspace-hpa
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-workspace-hpa
+      namespace: eyelevel
+    spec:
+      behavior:
+        scaleDown:
+          policies:
+            - periodSeconds: 750
+              type: Percent
+              value: 50
+            - periodSeconds: 750
+              type: Pods
+              value: 2
+          stabilizationWindowSeconds: 750
+        scaleUp:
+          policies:
+            - periodSeconds: 75
+              type: Percent
+              value: 100
+            - periodSeconds: 75
+              type: Pods
+              value: 4
+          stabilizationWindowSeconds: 75
+      maxReplicas: 96
+      metrics:
+        - external:
+            metric:
+              name: workspace-workspace:throughput
+            target:
+              type: Value
+              value: 1
+          type: External
+        - external:
+            metric:
+              name: workspace-workspace:task
+            target:
+              type: Value
+              value: 1
+          type: External
+      minReplicas: 1
+      scaleTargetRef:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: workspace-workspace
+'workspace-enabled: workspace minimal':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-api
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-api
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-api
+      template:
+        metadata:
+          annotations:
+            config-hash: 7c425129290206aabcc7c36198493ce597a798a66030573a261ded9a311680b9
+            gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
+          labels:
+            app: workspace-api
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/bash
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && LOCAL=0 gunicorn -c /app/gunicorn_conf.py --capture-output --enable-stdio-inheritance
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 12
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              name: workspace-api
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/gunicorn_conf.py
+                  name: gunicorn-conf-volume
+                  subPath: gunicorn_conf.py
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-gunicorn-conf-py-map
+              name: gunicorn-conf-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-api
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: workspace-api
+      type: ClusterIP
+  3: |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: workspace-api
+      name: workspace-data
+      namespace: eyelevel
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: local-path-rwo
+  4: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-cleanup
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-cleanup
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-cleanup
+      template:
+        metadata:
+          annotations:
+            config-hash: 7c425129290206aabcc7c36198493ce597a798a66030573a261ded9a311680b9
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-cleanup
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-cleanup
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-cleanup-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  5: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-command
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-command
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-command
+      template:
+        metadata:
+          annotations:
+            config-hash: 7c425129290206aabcc7c36198493ce597a798a66030573a261ded9a311680b9
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-command
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-command
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-command-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  6: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-provision
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-provision
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-provision
+      template:
+        metadata:
+          annotations:
+            config-hash: 7c425129290206aabcc7c36198493ce597a798a66030573a261ded9a311680b9
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-provision
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-provision
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-provision-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-publish
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-publish
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-publish
+      template:
+        metadata:
+          annotations:
+            config-hash: 7c425129290206aabcc7c36198493ce597a798a66030573a261ded9a311680b9
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-publish
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-publish
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-publish-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  8: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: workspace-workspace
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-workspace
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: workspace-workspace
+      template:
+        metadata:
+          annotations:
+            config-hash: 7c425129290206aabcc7c36198493ce597a798a66030573a261ded9a311680b9
+            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+          labels:
+            app: workspace-workspace
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: workspace-secret
+              image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: workspace-workspace
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ps aux | grep 'celery_app.app' | grep -v grep || exit 1
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/supervisord.conf
+                  name: supervisord-volume
+                  subPath: supervisord.conf
+                - mountPath: /tmp/workspaces
+                  name: workspace-data
+              workingDir: /app
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - configMap:
+                name: workspace-config-py-map
+              name: config-volume
+            - configMap:
+                name: workspace-workspace-supervisord-conf-map
+              name: supervisord-volume
+            - name: workspace-data
+              persistentVolumeClaim:
+                claimName: workspace-data
+  9: |
+    apiVersion: v1
+    data:
+      WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-secret
+      namespace: eyelevel
+    type: Opaque
+  10: |
+    apiVersion: v1
+    data:
+      config.py: |
+        from pathlib import Path
+
+        from settings import Settings
+
+
+        settings = Settings(
+            allowed_commands="go,npm,pytest,python,node,git",
+            celery_broker_url="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            celery_global_keyprefix="{workspace}",
+            celery_result_backend="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            celery_task_always_eager=False,
+            celery_task_soft_time_limit_seconds=900,
+            command_timeout_seconds=300,
+            git_provider="github",
+            github_api_base_url="https://api.github.com",
+            github_app_id="",
+            github_app_installation_id="",
+            github_app_private_key_path="",
+            github_app_private_key_pem="",
+            github_token_ttl_seconds=3600,
+            gitlab_api_base_url="https://gitlab.com/api/v4",
+            gitlab_token="",
+            gitlab_token_path="",
+            managed_repo_name_prefix="workspace",
+            managed_repo_owner="",
+            managed_repo_visibility="private",
+            mysql_connect_timeout_seconds=10,
+            mysql_database="eyelevel",
+            mysql_host="db-cluster-haproxy.eyelevel.svc.cluster.local",
+            mysql_password="",
+            mysql_port=3306,
+            mysql_username="",
+            publish_dry_run=True,
+            publish_github_workflow_id="deploy.yml",
+            runner_token="test-runner-token",
+            service="workspace",
+            workspace_min_free_bytes=0,
+            workspace_min_free_percent=0,
+            workspace_root=Path("/tmp/workspaces"),
+        )
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-config-py-map
+      namespace: eyelevel
+  11: |
+    apiVersion: v1
+    data:
+      gunicorn_conf.py: |
+        accesslog = "-"
+        errorlog = "-"
+        loglevel = "info"
+        timeout = 120
+        timeout_keep_alive = 15
+        worker_class = "uvicorn.workers.UvicornWorker"
+        workers = 2
+        threads = 2
+        bind = "0.0.0.0:8080"
+        wsgi_app = "server:app"
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-gunicorn-conf-py-map
+      namespace: eyelevel
+  12: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=provision_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-provision-supervisord-conf-map
+      namespace: eyelevel
+  13: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=workspace_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-workspace-supervisord-conf-map
+      namespace: eyelevel
+  14: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=command_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-command-supervisord-conf-map
+      namespace: eyelevel
+  15: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=publish_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-publish-supervisord-conf-map
+      namespace: eyelevel
+  16: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=cleanup_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-cleanup-supervisord-conf-map
+      namespace: eyelevel

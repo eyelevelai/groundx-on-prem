@@ -70,9 +70,22 @@ spec:
           volumeMounts:
             - name: {{ $mountName | quote }}
               mountPath: {{ include "groundx.cache.mountPath" . | quote }}
+{{- if eq (include "groundx.cache.persistence.enabled" . | trim) "true" }}
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ $mountName | quote }}
+      spec:
+        accessModes:
+          - {{ include "groundx.pvAccessMode" . }}
+        storageClassName: {{ include "groundx.pvClass" . }}
+        resources:
+          requests:
+            storage: {{ include "groundx.cache.persistence.capacity" . }}
+{{- else }}
       volumes:
         - name: {{ $mountName | quote }}
           emptyDir: {}
+{{- end }}
 
 {{ include "groundx.renderInterface" (dict "name" $svc "lb" $int "root" $) }}
 

@@ -1,0 +1,44 @@
+suite: "ranker renders as expected"
+chart:
+  appVersion: 0.1.0
+  version: 0.1.0
+
+tests:
+  - it: "cache override: ranker config"
+    templates:
+      - ../templates/resources/ranker-config-py.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      ranker.api.enabled: true
+      ranker.inference.enabled: true
+      ranker.cache.addr: ranker-cache.existing.com
+      ranker.cache.port: 6380
+      ranker.cache.ssl: true
+      ranker.cache.type: valkey
+    asserts:
+      - matchSnapshot: {}
+  - it: "cache override: ranker api"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      ranker.api.enabled: true
+      ranker.cache.addr: ranker-cache.existing.com
+      ranker.cache.port: 6380
+      ranker.cache.ssl: true
+    asserts:
+      - matchSnapshot: {}
+  - it: "cache override: ranker inference"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      ranker.inference.enabled: true
+      ranker.cache.addr: ranker-cache.existing.com
+      ranker.cache.port: 6380
+      ranker.cache.ssl: true
+    asserts:
+      - matchSnapshot: {}

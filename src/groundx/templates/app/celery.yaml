@@ -16,10 +16,12 @@
 {{- $image := get $svcData "image" -}}
 {{- $ips := include "groundx.imagePullSecrets" $ | fromYaml -}}
 {{- $lbls := get $svcData "labels" -}}
+{{- $lifecycle := get $svcData "lifecycle" | default dict -}}
 {{- $mapPrefix := get $svcData "mapPrefix" -}}
 {{- $name := get $svcData "name" -}}
 {{- $node := get $svcData "node" -}}
 {{- $nsl := get $svcData "nodeSelector" -}}
+{{- $env := get $svcData "env" | default dict -}}
 {{- $rp := get $svcData "replicas" -}}
 {{- $rs := get $svcData "resources" -}}
 {{- $pull := get $svcData "pull" -}}
@@ -34,6 +36,8 @@
 {{- $sct := get $svcData "securityContext" -}}
 {{- $svc := get $svcData "service" -}}
 {{- $tl := get $svcData "tolerations" -}}
+{{- $vm := get $svcData "volumeMounts" | default list -}}
+{{- $vol := get $svcData "volumes" | default list -}}
 
 {{- $desired := get $rp "desired" -}}
 ---
@@ -87,10 +91,12 @@ spec:
           image: {{ include "groundx.busybox.image" $ }}
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
           command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.cache.addr" $) (include "groundx.cache.port" $) }}; do echo waiting for cache; sleep 2; done"]
+{{- if hasKey $dpnd "file" }}
         - name: wait-for-file-storage
           image: {{ include "groundx.busybox.image" $ }}
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
           command: ['sh', '-c', "until nc -z {{ printf "%s %v" $fileDomain $filePort }}; do echo waiting for file storage; sleep 2; done"]
+{{- end }}
 {{- if not (empty $dpnd) }}
 {{- if hasKey $dpnd "metrics" }}
         - name: wait-for-metrics
@@ -104,6 +110,12 @@ spec:
           imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
           command: ['sh', '-c', "until wget -T 5 -qO- {{ include "groundx.extract.api.serviceUrl" $ }}/health; do echo waiting for extract; sleep 2; done"]
 {{- end }}
+{{- if hasKey $dpnd "db" }}
+        - name: wait-for-database
+          image: {{ include "groundx.busybox.image" $ }}
+          imagePullPolicy: {{ include "groundx.busybox.pull" $ | quote }}
+          command: ['sh', '-c', "until nc -z {{ printf "%s %v" (include "groundx.db.rw" $) (include "groundx.db.port" $) }}; do echo waiting for database; sleep 2; done"]
+{{- end }}
 {{- end }}
       containers:
         - name: {{ $name | quote }}
@@ -114,6 +126,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+{{- range $envName, $envValue := $env }}
+            - name: {{ $envName }}
+              value: {{ $envValue | quote }}
+{{- end }}
 {{- if gt (len $scr) 0 }}
           envFrom:
 {{- range $kk, $vv := $scr }}
@@ -127,6 +143,10 @@ spec:
             - -c
             - |
               export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+{{- if gt (len $lifecycle) 0 }}
+          lifecycle:
+{{- toYaml $lifecycle | nindent 12 }}
+{{- end }}
 {{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" $username "cfg" "container") }}
           livenessProbe:
             exec:
@@ -157,6 +177,9 @@ spec:
             - name: supervisord-volume
               mountPath: /app/supervisord.conf
               subPath: supervisord.conf
+{{- if gt (len $vm) 0 }}
+{{ toYaml $vm | nindent 12 }}
+{{- end }}
       volumes:
         - name: config-volume
           configMap:
@@ -169,5 +192,8 @@ spec:
         - name: supervisord-volume
           configMap:
             name: {{ $name }}-supervisord-conf-map
+{{- if gt (len $vol) 0 }}
+{{ toYaml $vol | nindent 8 }}
+{{- end }}
 
 {{ end }}

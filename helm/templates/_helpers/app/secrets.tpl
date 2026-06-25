@@ -15,6 +15,21 @@
 {{- $_ := set $svcs "extract.save" "extract.save" -}}
 {{- end -}}
 
+{{- $wr := include "groundx.workspace.create" . -}}
+{{- $wrs := include "groundx.workspace.existingSecret" . -}}
+{{- $wrt := include "groundx.workspace.token" . -}}
+{{- $wrg := include "groundx.workspace.github.privateKeyPem" . -}}
+{{- $wrl := include "groundx.workspace.gitlab.token" . -}}
+{{- if and (eq $wr "true") (eq $wrs "") (ne $wrt "") -}}
+{{- $_ := set $svcs "workspace" "workspace" -}}
+{{- end -}}
+{{- if and (eq $wr "true") (ne $wrg "") -}}
+{{- $_ := set $svcs "workspace.github" "workspace.github" -}}
+{{- end -}}
+{{- if and (eq $wr "true") (ne $wrl "") -}}
+{{- $_ := set $svcs "workspace.gitlab" "workspace.gitlab" -}}
+{{- end -}}
+
 {{- $svcs | toYaml -}}
 
 {{- end }}

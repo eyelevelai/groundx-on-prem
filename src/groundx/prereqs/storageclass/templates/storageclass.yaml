@@ -13,5 +13,9 @@ reclaimPolicy: {{ . }}
 {{- end }}
 {{- with .Values.parameters }}
 parameters:
-{{ toYaml . | nindent 2 }}
+{{- range $key, $value := . }}
+{{- if and $value (ne (toString $value) "") (or (ne $key "type") (eq $.Values.provisioner "ebs.csi.aws.com")) }}
+  {{ $key }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
 {{- end }}

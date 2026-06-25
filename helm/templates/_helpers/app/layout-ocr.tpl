@@ -177,7 +177,9 @@ true
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "ocr" dict $b -}}
 
-{{- $dpnd := dict -}}
+{{- $dpnd := dict
+  "file" "file"
+-}}
 
 {{- $rep := (include "groundx.layout.ocr.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.layout.ocr.serviceAccountName" . -}}

@@ -115,6 +115,21 @@ variable "deployment_type" {
   }
 }
 
+variable "storage" {
+  description = "AWS persistent storage driver for Kubernetes PVCs. Valid values: efs, ebs."
+  type             = object({
+    driver = string
+  })
+  default          = {
+    driver = "efs"
+  }
+
+  validation {
+    condition     = contains(["efs", "ebs"], var.storage.driver)
+    error_message = "storage.driver must be either efs or ebs."
+  }
+}
+
 variable "cluster_internal" {
   description      = "Kubernetes cluster internal settings"
   type             = object({

@@ -102,3 +102,11 @@ tests:
       - ./files/values.phoenix.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "workspace-enabled: metrics"
+    templates:
+      - ../templates/app/metrics.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.workspace.enabled.yaml
+    asserts:
+      - matchSnapshot: {}
