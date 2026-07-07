@@ -2,8 +2,8 @@
 
 ## What this repo is
 
-`groundx-on-prem` is the **infra** repo of the GroundX workspace: a **Helm chart** (chart version
-`0.2.5`, Helm 3.8+ / Go templating) plus a Bash operator CLI and a **legacy, deprecated** Terraform
+`groundx-on-prem` is the **infra** repo of the GroundX workspace: a **Helm chart** (version and
+image app version come from `src/groundx/Chart.yaml`, Helm 3.8+ / Go templating) plus a Bash operator CLI and a **legacy, deprecated** Terraform
 path that package the commercial **GroundX RAG platform** (document ingestion + hybrid text/vector
 search + re-ranking + LLM summarization) for **self-hosted / air-gapped Kubernetes**. There is **no
 application source code here** — the product ships as **pre-built private container images**
@@ -19,7 +19,11 @@ dependency on any other `groundx-*` repo** (verified).
 - **Test:** `helm unittest src/groundx` (requires the `helm-unittest` plugin:
   `helm plugin install https://github.com/helm-unittest/helm-unittest.git`)
 - **Helpers:** `bin/uuid` generates the UUIDs needed for `admin.apiKey` / `admin.username`
-- **Real install** (needs a cluster + license):
+- **Real install from this checkout** (needs a cluster + license and a complete env values file):
+  `helm upgrade --install groundx src/groundx -n eyelevel -f values.ranker-only-eks.yaml`
+  Use the environment-specific values file for the target cluster. Do not set extract image tags
+  manually for a normal release; the extract workloads default to the chart `appVersion`.
+- **Published chart install** (customer/released chart path):
   `helm repo add groundx https://registry.groundx.ai/helm && helm repo update`
   then `helm install groundx groundx/groundx -n eyelevel -f values.yaml`
 - **Quality gates that MUST pass before any PR merges:**

@@ -606,6 +606,16 @@ For AWS EKS, `terraform/aws/setup-eks` generates `src/groundx/prereqs/storagecla
 
 ### Helm Installation
 
+When deploying from this checkout with an environment-specific values file, use the local source chart:
+
+```bash
+helm upgrade --install groundx src/groundx -n eyelevel -f values.ranker-only-eks.yaml
+```
+
+Replace `values.ranker-only-eks.yaml` with the values file for your target cluster. Do not set image
+tags manually for a normal release; workloads that do not override their image tag use the chart
+`appVersion` from `src/groundx/Chart.yaml`.
+
 To install GroundX, add the chart repo to helm by running the following commands:
 
 ```bash
