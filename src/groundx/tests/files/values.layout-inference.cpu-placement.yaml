@@ -1,0 +1,11 @@
+layout:
+  inference:
+    deviceType: cpu
+    node: custom-layout-node
+    nodeSelector:
+      workload: layout-cpu
+    tolerations:
+      - key: workload
+        operator: Equal
+        value: layout-cpu
+        effect: NoSchedule
