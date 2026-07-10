@@ -21,10 +21,12 @@ operators can configure it through values.
 
 - Permit positive integer `engines.default.maxImages` values in
   `src/groundx/values.schema.json`.
-- Reject non-positive configured values during Helm schema validation.
+- Permit explicit `null` and treat it the same as omission/default.
+- Reject non-positive and non-integer configured values during Helm schema
+  validation.
 - Render `maxImages` into the generated application `config.yaml` engine block
   in `src/groundx/templates/resources/config-yaml.yaml` only when an operator
-  sets it.
+  sets a positive integer.
 - Mirror source chart changes to `helm/` during implementation.
 - Update Helm snapshots if rendered output changes.
 

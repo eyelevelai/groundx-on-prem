@@ -55,9 +55,11 @@ engines:
 
 in the application `config.yaml` engine entry.
 
-When operators provide `maxImages`, preserve and render their supplied value.
-When operators omit `maxImages`, do not render the field; the app runtime default
-of 30 remains the source of default behavior.
+When operators provide a positive integer `maxImages`, preserve and render their
+supplied value. When operators omit `maxImages` or explicitly set it to `null`,
+do not render the field; the app runtime default of 30 remains the source of
+default behavior. Reject non-positive and non-integer values during Helm schema
+validation.
 
 ## Rollout
 
