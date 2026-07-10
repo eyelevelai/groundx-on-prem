@@ -20,8 +20,10 @@
 - [x] Add `maxImages` to `src/groundx/values.schema.json` under
       `engines.default`.
 - [x] Render `maxImages` in
-      `src/groundx/templates/resources/config-yaml.yaml` when present.
+      `src/groundx/templates/resources/config-yaml.yaml` when set to a
+      non-null value.
 - [x] Do not add a chart default; the app runtime owns the default of 30.
+- [x] Treat explicit `null` the same as omission/default.
 - [x] Add or update values comments/examples only if the repo has a nearby
       pattern for engine field documentation.
 
@@ -29,6 +31,9 @@
 
 - [x] Confirm schema validation accepts the new field.
 - [x] Confirm rendered app `config.yaml` contains `maxImages`.
+- [x] Confirm schema validation accepts explicit `null` and rendering omits
+      `maxImages`.
+- [x] Confirm schema validation rejects non-positive and non-integer values.
 
 ## 3. Mirror Published Chart Files
 

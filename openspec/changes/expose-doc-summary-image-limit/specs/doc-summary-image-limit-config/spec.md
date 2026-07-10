@@ -18,6 +18,13 @@ image limit through the existing engine values surface.
 - **THEN** the rendered config does not include `maxImages`
 - **AND** the app runtime default remains responsible for the default limit.
 
+#### Scenario: Operator sets maxImages to null
+
+- **GIVEN** values include `engines.default.maxImages: null`
+- **WHEN** the chart renders the default engine config
+- **THEN** the rendered config does not include `maxImages`
+- **AND** the app runtime default remains responsible for the default limit.
+
 ### Requirement: Schema permits maxImages
 
 The chart SHALL accept `engines.default.maxImages` under strict values schema
@@ -29,11 +36,23 @@ validation.
 - **WHEN** Helm validates the chart values schema
 - **THEN** validation succeeds.
 
+#### Scenario: Helm validates values with null maxImages
+
+- **GIVEN** values include `engines.default.maxImages: null`
+- **WHEN** Helm validates the chart values schema
+- **THEN** validation succeeds.
+
 #### Scenario: Helm rejects non-positive maxImages
 
 - **GIVEN** values include `engines.default.maxImages: 0`
 - **WHEN** Helm validates the chart values schema
 - **THEN** validation fails because maxImages must be greater than or equal to 1.
+
+#### Scenario: Helm rejects non-integer maxImages
+
+- **GIVEN** values include `engines.default.maxImages: many`
+- **WHEN** Helm validates the chart values schema
+- **THEN** validation fails because maxImages must be an integer or null.
 
 ### Requirement: Config exposure does not change deployment topology
 

@@ -134,6 +134,26 @@ tests:
       - ../values/minikube/values.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "engine maxImages renders when positive"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.engine-max-images-valid.yaml
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "maxImages: 30"
+  - it: "engine maxImages null is omitted"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.engine-max-images-null.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "maxImages:"
   - it: "existing: resources"
     templates:
       - ../templates/resources/config-models.yaml

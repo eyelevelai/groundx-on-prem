@@ -80,6 +80,44 @@ for chart in src/groundx helm; do
   expect_helm_template_failure "${chart}" "maxImagePayloadBytes" --set extract.agent.maxImagePayloadBytes=0
 done
 
+echo "==> Verifying engine maxImages schema validation"
+expect_helm_lint_failure() {
+  local chart="$1"
+  local expected_description="$2"
+  local expected_regex="$3"
+  shift 3
+
+  local output
+  local status
+  set +e
+  output="$(helm lint "${chart}" --set engines.default.engineId=test-engine "$@" 2>&1)"
+  status=$?
+  set -e
+
+  if [[ "${status}" -eq 0 ]]; then
+    echo "Expected Helm lint to fail for ${chart}: $*" >&2
+    exit 1
+  fi
+  if [[ "${output}" != *"/engines/default/maxImages"* ]]; then
+    echo "Helm lint failed for ${chart}, but did not mention engines.default.maxImages." >&2
+    echo "${output}" >&2
+    exit 1
+  fi
+  if [[ ! "${output}" =~ ${expected_regex} ]]; then
+    echo "Helm lint failed for ${chart}, but did not mention ${expected_description}." >&2
+    echo "${output}" >&2
+    exit 1
+  fi
+}
+
+for chart in src/groundx helm; do
+  helm lint "${chart}" --set engines.default.engineId=test-engine --set-json engines.default.maxImages=null >/dev/null
+  helm lint "${chart}" --set engines.default.engineId=test-engine --set engines.default.maxImages=30 >/dev/null
+  expect_helm_lint_failure "${chart}" "a minimum-value failure" "greater than or equal to 1|minimum: got -?[0-9]+, want 1" --set engines.default.maxImages=0
+  expect_helm_lint_failure "${chart}" "a minimum-value failure" "greater than or equal to 1|minimum: got -?[0-9]+, want 1" --set engines.default.maxImages=-1
+  expect_helm_lint_failure "${chart}" "an invalid-type failure" "Invalid type|Expected:.*integer|got string, want null or integer" --set engines.default.maxImages=many
+done
+
 echo "==> Verifying Helm snapshots did not silently drop empty renders"
 python .build/tests/test_verify_helm_snapshots.py
 python .build/bin/verify-helm-snapshots.py
