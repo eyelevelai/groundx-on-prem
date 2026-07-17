@@ -61,10 +61,7 @@ without explicit human authorization.**
   - **`helm-releases/*.tgz`** — build outputs of `src/build.sh` (`helm package`). Never edit.
   - **`terraform/**/.terraform.lock.hcl`** — generated lockfiles. Never edit.
 - **`terraform/`** is **legacy / deprecated** (2025-11-04). Don't build on it; prefer the Helm path.
-- Keep code/template comments sparse: explain non-obvious behavior, invariants,
-  or risk. Do not commit PR history, ticket rationale, implementation-plan
-  prose, or "this test proves..." narration; put that context in Linear,
-  OpenSpec, the PR body, or docs.
+- Contribution hygiene lives in `CONTRIBUTING.md`.
 
 ## Where specs live
 
