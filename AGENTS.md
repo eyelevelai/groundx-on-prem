@@ -61,8 +61,6 @@ without explicit human authorization.**
   - **`helm-releases/*.tgz`** — build outputs of `src/build.sh` (`helm package`). Never edit.
   - **`terraform/**/.terraform.lock.hcl`** — generated lockfiles. Never edit.
 - **`terraform/`** is **legacy / deprecated** (2025-11-04). Don't build on it; prefer the Helm path.
-- Use `CONTRIBUTING.md` for pull request preparation, validation notes, and
-  comment style.
 
 ## Where specs live
 
