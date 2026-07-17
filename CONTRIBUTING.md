@@ -1,8 +1,18 @@
 # Contributing
 
-## Comment Hygiene
+## Pull Requests
 
-Use comments for non-obvious behavior, invariants, or risk. Do not commit PR
-history, ticket rationale, implementation-plan prose, or "this test proves..."
-narration in code, chart templates, examples, or tests. Put that context in
-Linear, OpenSpec, the PR body, or durable docs.
+- Keep Helm chart changes in `src/groundx/` first; mirror to `helm/` when the
+  change needs to ship through the published chart.
+- Explain chart behavior in committed comments only when it captures a
+  non-obvious invariant, operational risk, or template constraint.
+- Put ticket discussion, rejected approaches, and implementation history in
+  Linear, OpenSpec, or the PR body.
+- Call out any `src/groundx/` to `helm/` mirror work in the PR.
+
+## Validation
+
+- Run `helm unittest src/groundx` for chart logic or snapshot changes.
+- Run `helm template` or an existing focused render command for values/template
+  changes.
+- For docs-only changes, run `git diff --check` before pushing.
