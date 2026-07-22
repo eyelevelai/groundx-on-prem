@@ -39,4 +39,3 @@ Because `helm/` is a manual, unenforced mirror of `src/groundx/` (no regen scrip
 - **THEN** `helm/values.schema.json` is edited with the identical `pvc` block at the identical
   structural location
 - **AND** `diff src/groundx/values.schema.json helm/values.schema.json` reports no differences
-

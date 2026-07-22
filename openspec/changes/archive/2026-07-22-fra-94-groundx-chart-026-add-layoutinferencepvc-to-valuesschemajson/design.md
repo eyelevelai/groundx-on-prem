@@ -50,14 +50,11 @@ between `nodeSelector` (line 735) and `queue` (line 736) — i.e. immediately af
 ### 2. `helm/` mirror — manual, no regen tooling
 
 Confirmed: `diff src/groundx/values.schema.json helm/values.schema.json` currently reports no
-differences (both 1929 lines). Per repo `AGENTS.md`, `helm/` has **no in-repo regen script and no
-drift check** against `src/groundx/` — this is a known, logged gap (`service.yaml` `known_gaps`),
-not something this change is scoped to fix. Ben Fletcher's ticket comment confirms: `src/groundx/`
-is authoritative and `helm/` "should not be edited directly" as a generation source, but since no
-generator exists, the only way to keep the files in sync is a manual, identical hand-edit in the
-same change — which is what this change does. **Decision:** hand-mirror the identical `pvc` block
-into `helm/values.schema.json` at the structurally identical location, then verify byte-identity
-with `diff` (see tasks.md) rather than relying on any tooling that doesn't exist.
+differences (both 1929 lines). `src/groundx/` is authoritative, and `helm/` is a manual mirror for
+the published chart surface. Because there is no in-repo generator, the source edit must be synced
+into `helm/values.schema.json` in the same change. **Decision:** hand-mirror the identical `pvc`
+block into `helm/values.schema.json` at the structurally identical location, then verify
+byte-identity with `diff` (see tasks.md) rather than relying on tooling that does not exist.
 
 ### 3. No new compatibility mechanism needed — this is additive, not breaking
 

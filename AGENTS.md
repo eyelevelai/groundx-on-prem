@@ -54,11 +54,13 @@ without explicit human authorization.**
 
 - **You MAY edit:** `src/groundx/` (the **source of truth** — all chart changes go here), `src/opensearch/`,
   `src/containers/`, `monitoring/`, `bin/` logic (with the privileged caveats above), docs.
-- **You MUST NOT hand-edit:**
-  - **`helm/`** — a **near-identical published mirror** of `src/groundx` (tests/ removed, `Chart.yaml`
-    reordered). Edit `src/groundx/`, then sync to `helm/`. Reason: **mirror**. ⚠️ **Enforcement: NONE** —
-    there is no in-repo script that regenerates `helm/` from `src/` and no check that asserts they match.
-    Manual sync, latent drift; a prime cleanup target (logged in `service.yaml` `known_gaps`).
+- **You MUST NOT edit these as source-of-truth artifacts:**
+  - **`helm/` as an independent source** — **do not edit it independently.** It is a near-identical
+    published mirror of `src/groundx` (tests/ removed, `Chart.yaml` reordered). Edit `src/groundx/`
+    first, then sync the matching changed files into `helm/` when the change needs to ship through
+    the published chart. Reason: **mirror**. ⚠️ **Enforcement: NONE** — there is no in-repo script
+    that regenerates `helm/` from `src/` and no check that asserts they match. Manual sync, latent
+    drift; a prime cleanup target (logged in `service.yaml` `known_gaps`).
   - **`src/groundx/tests/__snapshot__/*.snap`** — generated golden files. Do not hand-edit; regenerate
     with `helm unittest -u src/groundx`. Reason: **generated**. Enforcement: `helm-tests.yml` CI asserts
     rendered output matches these snapshots.

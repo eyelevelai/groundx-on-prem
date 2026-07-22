@@ -98,7 +98,7 @@ expect_helm_lint_failure() {
     echo "Expected Helm lint to fail for ${chart}: $*" >&2
     exit 1
   fi
-  if [[ "${output}" != *"/engines/default/maxImages"* ]]; then
+  if [[ "${output}" != *"/engines/default/maxImages"* && "${output}" != *"engines.default.maxImages"* ]]; then
     echo "Helm lint failed for ${chart}, but did not mention engines.default.maxImages." >&2
     echo "${output}" >&2
     exit 1
@@ -116,6 +116,37 @@ for chart in src/groundx helm; do
   expect_helm_lint_failure "${chart}" "a minimum-value failure" "greater than or equal to 1|minimum: got -?[0-9]+, want 1" --set engines.default.maxImages=0
   expect_helm_lint_failure "${chart}" "a minimum-value failure" "greater than or equal to 1|minimum: got -?[0-9]+, want 1" --set engines.default.maxImages=-1
   expect_helm_lint_failure "${chart}" "an invalid-type failure" "Invalid type|Expected:.*integer|got string, want null or integer" --set engines.default.maxImages=many
+done
+
+echo "==> Verifying layout inference PVC schema validation"
+layout_pvc_values="$(mktemp)"
+layout_pvc_render="$(mktemp)"
+trap 'rm -f "${layout_pvc_values:-}" "${layout_pvc_render:-}"' EXIT
+cat > "${layout_pvc_values}" <<'YAML'
+layout:
+  inference:
+    pvc:
+      access: ReadWriteMany
+      capacity: 20Gi
+      class: eyelevel-efs
+      name: layout-model-efs
+    replicas:
+      desired: 2
+YAML
+
+for chart in src/groundx helm; do
+  helm lint "${chart}" -f "${layout_pvc_values}" >/dev/null
+  helm template layout-pvc "${chart}" -f "${layout_pvc_values}" > "${layout_pvc_render}"
+  for expected in \
+    "claimName: layout-model-efs" \
+    "storageClassName: eyelevel-efs" \
+    "storage: 20Gi" \
+    "ReadWriteMany"; do
+    if ! grep -q "${expected}" "${layout_pvc_render}"; then
+      echo "Rendered ${chart} output did not contain expected layout PVC evidence: ${expected}" >&2
+      exit 1
+    fi
+  done
 done
 
 echo "==> Verifying Helm snapshots did not silently drop empty renders"
