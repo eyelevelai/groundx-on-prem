@@ -26,7 +26,7 @@ context: |
   
   - AGENT BOUNDARY — READ THIS BEFORE ANY EDIT:
     - src/groundx/ is the SOURCE OF TRUTH. All Helm chart changes go here.
-    - helm/ is a MANUAL MIRROR of src/groundx/ with tests/ removed and Chart.yaml reformatted. DO NOT HAND-EDIT helm/. There is NO in-repo regen script and NO drift check between helm/ and src/. Any change to src/ must be manually synced to helm/. This is a latent drift risk and a prime early-win cleanup target.
+    - helm/ is a MANUAL MIRROR of src/groundx/ with tests/ removed and Chart.yaml reformatted. Do not edit helm/ as an independent source. Edit src/ first, then manually sync matching changed files to helm/ when the change ships through the published chart. There is NO in-repo regen script and NO drift check between helm/ and src/. This is a latent drift risk and a prime early-win cleanup target.
     - helm-releases/*.tgz are build outputs of src/build.sh (helm package). Never edit.
     - src/groundx/tests/__snapshot__/*.snap are generated golden files from helm-unittest. Never hand-edit; regenerate with: helm unittest -u src/groundx. CI (helm-tests.yml) enforces snapshot match — this is the ONLY check that guards template changes.
     - terraform/**/.terraform.lock.hcl are generated lockfiles.
