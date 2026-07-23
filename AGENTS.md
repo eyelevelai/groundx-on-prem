@@ -81,6 +81,10 @@ without explicit human authorization.**
   templates. Sync both, every time.
 - **`upload.groundx.ai` model-weight download is HARDCODED** in inference init-containers — an
   **air-gap blocker**; weights must be mirrored for offline installs (mechanism not documented in-repo).
+- **Hosted ranker-only EKS is migration-state, not generic chart truth.** As of 2026-07-23,
+  hosted search inference is two EC2 `search-inference-*.groundx.ai` servers plus one EKS
+  `ranker-inference` pod. One EKS replica can mean one GPU node; judge HPA behavior with
+  GPU node-group scale-up and model readiness, not just pod count.
 - **The `groundx.extract` config binding is UNSCHEMATIZED.** `extract-config-py.yaml` generates Python
   that does `from groundx.extract import (AgentSettings, ContainerSettings, ContainerUploadSettings,
   GroundXSettings)` — binding to constructor signatures in the `eyelevel/extract` **image**, not this

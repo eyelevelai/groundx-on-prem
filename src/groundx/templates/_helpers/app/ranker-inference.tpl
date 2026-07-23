@@ -23,6 +23,12 @@ true
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.ranker.inference.containerPort" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{ dig "containerPort" 8080 $in }}
+{{- end }}
+
 {{- define "groundx.ranker.inference.deviceType" -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "inference" dict $b -}}
@@ -103,6 +109,7 @@ true
 {{- end -}}
 {{- $name := (include "groundx.ranker.inference.serviceName" .) -}}
 {{- $cld := dig "cooldown" 60 $rep -}}
+{{- $upCl := dig "upCooldown" $cld $rep -}}
 {{- $cfg := dict
   "downCooldown" (mul $cld 2)
   "enabled"      $enabled
@@ -110,7 +117,7 @@ true
   "name"         $name
   "replicas"     $rep
   "throughput"   (printf "%s:throughput" $name)
-  "upCooldown"   $cld
+  "upCooldown"   $upCl
 -}}
 {{- $cfg | toYaml -}}
 {{- end }}
@@ -197,7 +204,6 @@ true
 {{- $cfg := dict
   "baseName"       ($svc)
   "cache"          (include "groundx.ranker.cache.settings" . | fromYaml)
-  "celery"         ("ranker.celery.appSearch")
   "cfg"            (printf "%s-config-py-map" $svc)
   "image"          (include "groundx.ranker.inference.image" .)
   "mapPrefix"      ("ranker")
@@ -205,6 +211,7 @@ true
   "modelVersion"   ("model")
   "name"           (include "groundx.ranker.inference.serviceName" .)
   "node"           (include "groundx.ranker.inference.node" .)
+  "port"           (include "groundx.ranker.inference.containerPort" .)
   "pull"           (include "groundx.ranker.inference.imagePullPolicy" .)
   "pvc"            (include "groundx.ranker.inference.pvc" . | fromYaml)
   "replicas"       ($rep)

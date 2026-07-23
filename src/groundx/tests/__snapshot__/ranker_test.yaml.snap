@@ -186,7 +186,7 @@
             config-hash: 9e90962567931cc0f6532dd90edf2830e7b83094c61024b09c3152278b67f4ba
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: c3de8d835a18146d0f59120a18513f20056efbb1cda896213ca789277d88a71b
+            supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
           labels:
             app: ranker-inference
         spec:
@@ -218,23 +218,23 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                failureThreshold: 10
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 8
+                httpGet:
+                  path: /alive
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               name: ranker-inference
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
               readinessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 30
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               resources:
                 limits:
                   nvidia.com/gpu: 1

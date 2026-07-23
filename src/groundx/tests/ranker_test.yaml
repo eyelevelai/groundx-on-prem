@@ -4,6 +4,68 @@ chart:
   version: 0.1.0
 
 tests:
+  - it: "ranker inference uses worker-aware HTTP probes"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      ranker.inference.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: ranker-inference
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /alive
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+          value: 8080
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /health
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: 8080
+      - notExists:
+          path: spec.template.spec.containers[0].readinessProbe.exec
+  - it: "ranker inference HPA scales early and keeps one replica"
+    templates:
+      - ../templates/resources/hpa.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      ranker.inference.enabled: true
+      ranker.inference.replicas.hpa: true
+      ranker.inference.replicas.desired: 1
+      ranker.inference.replicas.min: 1
+      ranker.inference.replicas.max: 4
+      ranker.inference.replicas.target: 0.4
+      ranker.inference.replicas.threshold: 60000
+      ranker.inference.replicas.throughput: 60000
+      ranker.inference.replicas.upCooldown: 15
+    documentSelector:
+      path: metadata.name
+      value: ranker-inference-hpa
+    asserts:
+      - equal:
+          path: spec.minReplicas
+          value: 1
+      - equal:
+          path: spec.maxReplicas
+          value: 4
+      - equal:
+          path: spec.metrics[0].external.target.value
+          value: 0.4
+      - equal:
+          path: spec.metrics[1].external.target.value
+          value: 0.4
+      - equal:
+          path: spec.behavior.scaleUp.stabilizationWindowSeconds
+          value: 15
+      - equal:
+          path: spec.behavior.scaleDown.stabilizationWindowSeconds
+          value: 150
   - it: "cache override: ranker config"
     templates:
       - ../templates/resources/ranker-config-py.yaml

@@ -1263,9 +1263,15 @@
             "replicas": {
               "type": "object",
               "properties": {
+                "cooldown": { "type": "integer" },
                 "desired": { "type": "integer" },
+                "hpa": { "type": "boolean" },
                 "max": { "type": "integer" },
-                "min": { "type": "integer" }
+                "min": { "type": "integer" },
+                "target": { "type": "number" },
+                "threshold": { "type": "number" },
+                "throughput": { "type": "number" },
+                "upCooldown": { "type": "integer" }
               },
               "required": ["desired"],
               "additionalProperties": false
