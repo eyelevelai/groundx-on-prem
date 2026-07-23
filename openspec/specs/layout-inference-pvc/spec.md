@@ -1,7 +1,7 @@
 # layout-inference-pvc Specification
 
 ## Purpose
-TBD - created by archiving change fra-94-groundx-chart-026-add-layoutinferencepvc-to-valuesschemajson. Update Purpose after archive.
+Document how the chart permits layout-inference PVC configuration so operators can use shared RWX model storage and scale layout inference across GPU nodes while preserving strict schema validation.
 ## Requirements
 ### Requirement: Schema permits `layout.inference.pvc`
 
