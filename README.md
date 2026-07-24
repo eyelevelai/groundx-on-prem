@@ -693,6 +693,10 @@ Every autoscaled pod scales on **two metrics**:
    - **task**: Celery task backlog (default target **10**)
    - **inference**: model request throughput (scales when requests exceed per-replica capacity)
 
+For GPU inference, HPA scale-up also depends on node readiness. If each inference
+pod uses a full GPU node, every additional replica needs both a new pod and a new
+GPU node before it can absorb traffic.
+
 ## Enabling the Custom Metrics Server
 
 The custom metrics server exposes:
