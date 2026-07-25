@@ -53,9 +53,9 @@ scale-up before the current replica is saturated.
 - **WHEN** the chart renders the ranker HPA
 - **THEN** minimum replicas is `1`
 - **AND** maximum replicas is `4`
-- **AND** each ranker external metric target is `0.4`
-- **AND** scale-up stabilization is `15` seconds
-- **AND** scale-down stabilization remains `150` seconds.
+- **AND** each ranker external metric target is `0.7`
+- **AND** scale-up stabilization is `60` seconds
+- **AND** scale-down stabilization remains `900` seconds.
 
 #### Scenario: Hosted ranker traffic is idle
 
@@ -72,4 +72,4 @@ This change SHALL not modify GPU node or Cluster Autoscaler configuration.
 - **WHEN** the implementation diff is reviewed
 - **THEN** no node type, node group, scheduling label, taint, or Cluster
   Autoscaler setting has changed
-- **AND** no deployment has been performed.
+- **AND** deployment only occurs after separate approval.

@@ -32,15 +32,15 @@ deployed as part of implementation.
 - Keep `/health` unavailable until the configured ranker workers have
   registered, so polling preserves their capacity records.
 - Keep hosted ranker HPA minimum at 1 and maximum at 4.
-- Set the hosted ranker HPA target to `0.4`.
-- Set the hosted ranker scale-up cooldown to 15 seconds.
+- Set the hosted ranker HPA target to `0.7`.
+- Keep the hosted ranker scale-up cooldown at 60 seconds.
 - Keep the existing ranker throughput sizing values unchanged.
 - Add focused AI-server and Helm tests.
 - Mirror chart source changes into `helm/`.
 
 ## Out Of Scope
 
-- Deploying these changes.
+- Deploying these changes without separate approval.
 - Changing GPU instance type, node group size, node labels, or scheduling.
 - Changing or upgrading Cluster Autoscaler.
 - Changing search fanout, OpenSearch candidates, model code, or API routing.
@@ -68,7 +68,10 @@ Rollforward:
 
 - build the ranker image with worker health reporting;
 - render and inspect the chart;
-- deploy to a non-production environment and confirm health and HPA metrics;
+- deploy the chart/HPA readiness change;
+- deploy the matching cashbot-go metrics server before treating a controlled
+  ramp as HPA evidence;
+- confirm health, idle metrics, and ranker Redis queue monitoring;
 - promote separately after an explicit production approval.
 
 ## Open Design Questions

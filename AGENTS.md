@@ -114,6 +114,10 @@ tasks). **Implementation** is done with **Superpowers** (brainstorm → plan →
 finish), which is ambient in the harness and triggers automatically. All spec work runs inside
 this repo on the feature branch.
 
+Before approving or executing a nontrivial plan, use the private GroundX Studio
+Harness `openspec-plan-review` skill. OpenSpec validation proves structure, not
+that the plan is executable or behaviorally protected.
+
 **Schema:** `spec-driven` (official)   **Role:** `infra`   **Profile:** `custom`   **Default command:** `/opsx:continue`
 
 Per-artifact content rules live in `openspec/config.yaml`. Inspect templates and runtime
