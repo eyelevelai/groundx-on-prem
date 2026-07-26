@@ -85,12 +85,23 @@ tests:
     asserts:
       - equal:
           path: spec.metrics[0].external.metric.name
-          value: ranker-api:api
+          value: ranker-api:capacity
       - equal:
           path: spec.metrics[0].external.target.value
           value: 0.7
       - notExists:
           path: spec.metrics[1]
+  - it: "ranker api config defines capacity metric"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      ranker.api.enabled: true
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "(?s)capacity:\\n\\s+- name: ranker-api"
   - it: "cache override: ranker config"
     templates:
       - ../templates/resources/ranker-config-py.yaml

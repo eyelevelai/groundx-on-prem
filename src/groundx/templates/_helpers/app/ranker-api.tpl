@@ -123,7 +123,7 @@ true
 {{- $cfg := dict
   "downCooldown" (mul $cld 2)
   "enabled"      $enabled
-  "metric"       (printf "%s:api" $name)
+  "metric"       (printf "%s:capacity" $name)
   "name"         $name
   "replicas"     $rep
   "throughput"   "0"

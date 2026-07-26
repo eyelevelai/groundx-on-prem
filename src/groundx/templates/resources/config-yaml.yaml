@@ -7,6 +7,7 @@
 {{- $sq := (include "groundx.stream.topic.summary" . | fromYaml) -}}
 {{- $uq := (include "groundx.stream.topic.update" . | fromYaml) -}}
 {{- $lq := (include "groundx.stream.topic.upload" . | fromYaml) -}}
+{{- $rai := include "groundx.ranker.api.create" . | trim -}}
 
 {{- $eac := include "groundx.extract.agent.threshold" . | trim -}}
 {{- $edc := include "groundx.extract.download.threshold" . | trim -}}
@@ -269,6 +270,10 @@ data:
         - name: {{ include "groundx.workspace.api.serviceName" . }}
           threshold: {{ $wrac }}
         {{- end }}
+      {{- end }}
+      {{- if eq $rai "true" }}
+      capacity:
+        - name: {{ include "groundx.ranker.api.serviceName" . }}
       {{- end }}
       document:
         tokensPerMinute: {{ include "groundx.throughput.tpm.document" . }}

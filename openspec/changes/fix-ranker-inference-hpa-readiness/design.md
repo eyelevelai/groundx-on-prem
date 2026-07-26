@@ -30,7 +30,7 @@ The hosted inference HPA also uses a target of `0.8`, which did not scale during
 the observed 100 requests/minute strain.
 
 Ranker API now publishes process-unique request-slot capacity, and cashbot-go
-uses it for `ranker-api:api`. The chart still renders the older
+uses it for the `capacity` metric type. The chart still renders the older
 `ranker-api:throughput` metric and defaults the API target to `1`, so the HPA
 does not yet match the new metric contract.
 
@@ -84,12 +84,14 @@ stabilization window.
 Render ranker API with one external metric:
 
 ```text
-ranker-api:api target 0.7
+ranker-api:capacity target 0.7
 ```
 
 The metric is current request-slot utilization from online API workers. Do not
 also render `ranker-api:throughput`; that older signal could scale independently
 and would make the HPA behavior differ from the cashbot-go capacity contract.
+The generated app `config.yaml` must define the ranker API under
+`metrics.capacity`.
 This does not change ranker inference, which keeps its existing throughput
 fallback.
 
@@ -121,7 +123,7 @@ Production deployment was approved on 2026-07-25:
 1. Build and publish the ranker image.
 2. Deploy the hosted ranker values with one minimum ranker replica.
 3. Deploy the matching cashbot-go PR 1535 metrics server that reads
-   `ranker-inference:inference` and `ranker-api:api`.
+   `ranker-inference:inference` and `ranker-api:capacity`.
 4. Confirm `/alive` and `/health` pass and the external metric retains its idle
    capacity baseline for more than five minutes.
 5. Confirm sampled `ranker-inference:*` worker keys map to current EKS ranker

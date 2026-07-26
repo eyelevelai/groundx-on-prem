@@ -12,7 +12,7 @@ inference. Hosted HPA settings should also begin scaling earlier while keeping
 one always-on replica.
 
 Ranker API now publishes process-level request capacity and cashbot-go exposes
-that capacity as `ranker-api:api`. Its HPA should use that signal alone at the
+that capacity as `ranker-api:capacity`. Its HPA should use that signal alone at the
 same `0.7` target instead of also scaling from the older throughput metric.
 
 ## Blast Radius

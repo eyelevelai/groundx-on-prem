@@ -6,7 +6,7 @@
 - [x] Trace the external ranker metric from worker status through
       `cashbot-go/pkg/operator/metrics.go`.
 - [x] Compare ranker inference probes with layout and summary inference.
-- [x] Trace `ranker-api:api` from process-level request capacity through the
+- [x] Trace `ranker-api:capacity` from process-level request capacity through the
       cashbot-go metrics server and Helm HPA.
 - [x] Confirm GPU node and Cluster Autoscaler changes are out of scope.
 - [x] Confirm implementation must stop before deployment.
@@ -18,7 +18,9 @@
       60-second scale-up stabilization.
 - [x] Run the focused Helm test and confirm it fails before the template fix.
 - [x] Add a Helm test that requires ranker API to render only
-      `ranker-api:api` at target `0.7`.
+      `ranker-api:capacity` at target `0.7`.
+- [x] Add a Helm test that requires the generated `config.yaml` ranker API
+      metric to be listed under `metrics.capacity`.
 
 ## 3. Implement Probe And HPA Fix
 

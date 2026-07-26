@@ -66,14 +66,20 @@ scale-up before the current replica is saturated.
 ### Requirement: Ranker API scales from request capacity
 
 The ranker API HPA SHALL use the process-level request capacity exposed by
-`ranker-api:api`.
+`ranker-api:capacity`.
 
 #### Scenario: Ranker API HPA is rendered
 
 - **GIVEN** ranker API and cluster HPA are enabled
 - **WHEN** the chart renders the ranker API HPA
-- **THEN** it contains `ranker-api:api` with target `0.7`
+- **THEN** it contains `ranker-api:capacity` with target `0.7`
 - **AND** it does not contain a separate `ranker-api:throughput` metric.
+
+#### Scenario: Ranker API config is rendered
+
+- **GIVEN** ranker API is enabled
+- **WHEN** the chart renders the application `config.yaml`
+- **THEN** the ranker API metric is listed under `metrics.capacity`.
 
 #### Scenario: Published chart mirror is inspected
 
