@@ -1,4 +1,4 @@
-# Fix Ranker Inference HPA Readiness Design
+# Fix Ranker Autoscaling Readiness Design
 
 ## Goals
 
@@ -6,6 +6,8 @@
 - Keep ranker worker-capacity records alive during idle periods.
 - Start adding ranker capacity before the current pod is saturated.
 - Keep one always-on ranker replica after traffic subsides.
+- Scale ranker API from current request-slot use instead of delayed latency or
+  a separate throughput signal.
 
 ## Non-Goals
 
@@ -24,8 +26,13 @@ therefore never polls `/health`.
 Idle worker records expire from Redis after five minutes. Once they expire, the
 external HPA metric no longer has an accurate ranker-capacity baseline.
 
-The hosted HPA also uses a target of `0.8`, which did not scale during the
-observed 100 requests/minute strain.
+The hosted inference HPA also uses a target of `0.8`, which did not scale during
+the observed 100 requests/minute strain.
+
+Ranker API now publishes process-unique request-slot capacity, and cashbot-go
+uses it for `ranker-api:api`. The chart still renders the older
+`ranker-api:throughput` metric and defaults the API target to `1`, so the HPA
+does not yet match the new metric contract.
 
 ## Design
 
@@ -72,6 +79,20 @@ initial sizing floor. `upCooldown` stays at one minute to avoid reacting to
 one-off fanout spikes. The 450-second cooldown produces a 900-second scale-down
 stabilization window.
 
+### Ranker API capacity HPA
+
+Render ranker API with one external metric:
+
+```text
+ranker-api:api target 0.7
+```
+
+The metric is current request-slot utilization from online API workers. Do not
+also render `ranker-api:throughput`; that older signal could scale independently
+and would make the HPA behavior differ from the cashbot-go capacity contract.
+This does not change ranker inference, which keeps its existing throughput
+fallback.
+
 ### Metric ownership
 
 This chart continues to point the HPA at `ranker-inference:inference`. The
@@ -88,18 +109,19 @@ cooldowns.
 - `ai-server/constants.py`
 - `cashbot-go/openspec/changes/add-ranker-rolling-busy-hpa-metric/design.md`
 - `groundx-on-prem/src/groundx/templates/_helpers/app/ranker-inference.tpl`
+- `groundx-on-prem/src/groundx/templates/_helpers/app/ranker-api.tpl`
 - `groundx-on-prem/src/groundx/templates/app/inference.yaml`
 - `groundx-on-prem/src/groundx/templates/resources/hpa.yaml`
 - `cashbot-go/pkg/operator/metrics.go`
 
 ## Rollout
 
-After separate approval:
+Production deployment was approved on 2026-07-25:
 
 1. Build and publish the ranker image.
 2. Deploy the hosted ranker values with one minimum ranker replica.
-3. Deploy the matching cashbot-go metrics server that reads
-   `ranker-inference:inference`.
+3. Deploy the matching cashbot-go PR 1535 metrics server that reads
+   `ranker-inference:inference` and `ranker-api:api`.
 4. Confirm `/alive` and `/health` pass and the external metric retains its idle
    capacity baseline for more than five minutes.
 5. Confirm sampled `ranker-inference:*` worker keys map to current EKS ranker

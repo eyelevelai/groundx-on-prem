@@ -78,7 +78,7 @@ true
 
 {{/* fraction of threshold */}}
 {{- define "groundx.ranker.api.target.default" -}}
-1
+0.7
 {{- end }}
 
 {{/* average latency per minute */}}
@@ -126,7 +126,7 @@ true
   "metric"       (printf "%s:api" $name)
   "name"         $name
   "replicas"     $rep
-  "throughput"   (printf "%s:throughput" $name)
+  "throughput"   "0"
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}

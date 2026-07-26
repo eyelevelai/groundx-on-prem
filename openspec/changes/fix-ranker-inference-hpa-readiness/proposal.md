@@ -1,4 +1,4 @@
-# Fix Ranker Inference HPA Readiness
+# Fix Ranker Autoscaling Readiness
 
 ## Why
 
@@ -11,19 +11,24 @@ Ranker inference should use the same HTTP health contract as layout and summary
 inference. Hosted HPA settings should also begin scaling earlier while keeping
 one always-on replica.
 
+Ranker API now publishes process-level request capacity and cashbot-go exposes
+that capacity as `ranker-api:api`. Its HPA should use that signal alone at the
+same `0.7` target instead of also scaling from the older throughput metric.
+
 ## Blast Radius
 
 - Changes ranker inference readiness and liveness probes from process checks to
   the existing HTTP health server.
 - Changes hosted ranker HPA scale-up sensitivity and timing.
+- Changes ranker API HPA input from latency plus throughput to request-slot
+  capacity only.
 - Affects ranker inference rollouts in environments that adopt these chart and
   image changes.
 - Does not change search request routing, ranker model behavior, GPU node type,
   node groups, Cluster Autoscaler, secrets, or stateful resources.
 
 The chart currently uses `Recreate` for the hosted ranker deployment, so a
-deployment can briefly remove EKS ranker capacity. This change will not be
-deployed as part of implementation.
+deployment can briefly remove EKS ranker capacity.
 
 ## What Changes
 
@@ -35,12 +40,13 @@ deployed as part of implementation.
 - Set the hosted ranker HPA target to `0.7`.
 - Keep the hosted ranker scale-up cooldown at 60 seconds.
 - Keep the existing ranker throughput sizing values unchanged.
+- Set ranker API HPA target to `0.7` and remove its separate throughput metric.
 - Add focused AI-server and Helm tests.
 - Mirror chart source changes into `helm/`.
 
 ## Out Of Scope
 
-- Deploying these changes without separate approval.
+- Deploying these changes without explicit approval.
 - Changing GPU instance type, node group size, node labels, or scheduling.
 - Changing or upgrading Cluster Autoscaler.
 - Changing search fanout, OpenSearch candidates, model code, or API routing.
@@ -50,7 +56,7 @@ deployed as part of implementation.
 ## Affected Environments
 
 - The tracked chart change applies to environments that enable ranker
-  inference.
+  inference or ranker API.
 - The HPA tuning applies to the hosted EKS values file only.
 - Dev, staging, and production are unaffected until an operator deploys the
   matching chart and ranker image.
@@ -63,6 +69,7 @@ Rollback:
 
 - deploy the previous chart and ranker image;
 - restore the previous hosted HPA target and cooldown.
+- restore the prior ranker API target and throughput metric.
 
 Rollforward:
 

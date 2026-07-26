@@ -63,6 +63,23 @@ scale-up before the current replica is saturated.
 - **WHEN** the HPA reaches its configured minimum
 - **THEN** one ranker inference replica remains running.
 
+### Requirement: Ranker API scales from request capacity
+
+The ranker API HPA SHALL use the process-level request capacity exposed by
+`ranker-api:api`.
+
+#### Scenario: Ranker API HPA is rendered
+
+- **GIVEN** ranker API and cluster HPA are enabled
+- **WHEN** the chart renders the ranker API HPA
+- **THEN** it contains `ranker-api:api` with target `0.7`
+- **AND** it does not contain a separate `ranker-api:throughput` metric.
+
+#### Scenario: Published chart mirror is inspected
+
+- **WHEN** the ranker API helper and values schema are compared
+- **THEN** `src/groundx` and `helm` contain the same ranker API HPA contract.
+
 ### Requirement: Node provisioning remains unchanged
 
 This change SHALL not modify GPU node or Cluster Autoscaler configuration.
@@ -72,4 +89,4 @@ This change SHALL not modify GPU node or Cluster Autoscaler configuration.
 - **WHEN** the implementation diff is reviewed
 - **THEN** no node type, node group, scheduling label, taint, or Cluster
   Autoscaler setting has changed
-- **AND** deployment only occurs after separate approval.
+- **AND** deployment only occurs after explicit approval.

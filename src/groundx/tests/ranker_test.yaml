@@ -67,6 +67,30 @@ tests:
       - equal:
           path: spec.behavior.scaleDown.stabilizationWindowSeconds
           value: 900
+  - it: "ranker api HPA uses capacity metric only"
+    templates:
+      - ../templates/resources/hpa.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      cluster.hpa: true
+      ranker.api.enabled: true
+      ranker.api.replicas.desired: 1
+      ranker.api.replicas.min: 1
+      ranker.api.replicas.max: 4
+      ranker.api.replicas.target: 0.7
+    documentSelector:
+      path: metadata.name
+      value: ranker-api-hpa
+    asserts:
+      - equal:
+          path: spec.metrics[0].external.metric.name
+          value: ranker-api:api
+      - equal:
+          path: spec.metrics[0].external.target.value
+          value: 0.7
+      - notExists:
+          path: spec.metrics[1]
   - it: "cache override: ranker config"
     templates:
       - ../templates/resources/ranker-config-py.yaml
