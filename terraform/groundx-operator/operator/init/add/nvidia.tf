@@ -1,3 +1,43 @@
+locals {
+  nvidia_operator_daemonset_tolerations = [
+    {
+      key      = "nvidia.com/gpu"
+      operator = "Exists"
+      effect   = "NoSchedule"
+    },
+    {
+      key      = "eyelevel_node"
+      operator = "Exists"
+      effect   = "NoSchedule"
+    }
+  ]
+
+  nvidia_operator_nfd_worker_tolerations = [
+    {
+      key      = "node-role.kubernetes.io/master"
+      operator = "Equal"
+      value    = ""
+      effect   = "NoSchedule"
+    },
+    {
+      key      = "node-role.kubernetes.io/control-plane"
+      operator = "Equal"
+      value    = ""
+      effect   = "NoSchedule"
+    },
+    {
+      key      = "nvidia.com/gpu"
+      operator = "Exists"
+      effect   = "NoSchedule"
+    },
+    {
+      key      = "eyelevel_node"
+      operator = "Exists"
+      effect   = "NoSchedule"
+    }
+  ]
+}
+
 resource "helm_release" "gpu_operator" {
   count = (var.cluster.has_nvidia || local.is_openshift) ? 0 : 1
 
@@ -16,12 +56,28 @@ resource "helm_release" "gpu_operator" {
 
   values = var.cluster.type == "aks" ? [
     yamlencode({
+      daemonsets = {
+        tolerations = local.nvidia_operator_daemonset_tolerations
+      }
+      "node-feature-discovery" = {
+        worker = {
+          tolerations = local.nvidia_operator_nfd_worker_tolerations
+        }
+      }
       operator = {
         runtimeClass = "nvidia-container-runtime"
       }
     })
   ] : [
     yamlencode({
+      daemonsets = {
+        tolerations = local.nvidia_operator_daemonset_tolerations
+      }
+      "node-feature-discovery" = {
+        worker = {
+          tolerations = local.nvidia_operator_nfd_worker_tolerations
+        }
+      }
       operator = {
         runtimeClass = "nvidia"
       }
