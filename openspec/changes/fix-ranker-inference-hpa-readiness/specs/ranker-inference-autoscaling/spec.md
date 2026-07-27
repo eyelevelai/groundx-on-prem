@@ -19,9 +19,10 @@ pod-specific autoscaling pressure.
 - **GIVEN** ranker inference is enabled
 - **WHEN** the chart renders `config.yaml`
 - **THEN** `metrics.task` includes `ranker-inference`
-- **AND** its session is `ranker-inference`
 - **AND** its target is `inference_queue`
 - **AND** its threshold defaults to `10`
+- **AND** it does not render a ranker-specific task session without an explicit
+  ranker cache override
 - **AND** `metrics.inference` does not include `ranker-inference`.
 
 #### Scenario: Ranker cache override renders service-named metrics session

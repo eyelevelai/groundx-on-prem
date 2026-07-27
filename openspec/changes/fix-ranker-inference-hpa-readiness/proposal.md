@@ -17,9 +17,11 @@ that same queue back-pressure path.
 - Keep `ranker-inference:throughput` as the pipeline throughput axis.
 - Move ranker inference metrics config from `metrics.inference` to
   `metrics.task`.
-- Render the ranker task session key from the ranker inference service name.
+- Render the ranker task session key from the ranker inference service name
+  only when `ranker.cache.addr` selects a separate ranker cache.
 - Set the ranker task target to `inference_queue`.
 - Default the ranker task threshold to the existing task backlog default, `10`.
+- Keep the shared HPA cooldown behavior unchanged.
 - Mirror source chart changes into `helm/`.
 
 ## Out Of Scope
@@ -37,8 +39,9 @@ that same queue back-pressure path.
 2. Confirm the deployed ranker inference HPA uses `ranker-inference:task` and
    `ranker-inference:throughput`.
 3. Confirm rendered `config.yaml` lists ranker inference under `metrics.task`
-   with `session: ranker-inference`, `target: inference_queue`, and
-   `threshold: 10`.
+   with `target: inference_queue` and `threshold: 10`; if `ranker.cache.addr`
+   is set, confirm it also includes `session: ranker-inference` and
+   `metrics.sessions.ranker-inference`.
 4. At idle, confirm `ranker-inference:task` remains near zero.
 5. During a controlled ramp, compare `LLEN {celery}inference_queue` with the
    Kubernetes external metric.

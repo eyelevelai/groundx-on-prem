@@ -15,7 +15,6 @@
 {{- $replicas := dig "replicas" dict $svcData -}}
 {{- $throughput := dig "throughput" "0" $svcData -}}
 {{- $upCooldown := dig "upCooldown" "" $svcData -}}
-{{- $upPolicyPeriod := dig "upPolicyPeriod" $upCooldown $svcData -}}
 
 {{- $max := dig "max" "1" $replicas -}}
 {{- $min := dig "min" "1" $replicas -}}
@@ -66,10 +65,10 @@ spec:
       policies:
         - type: Percent
           value: 100
-          periodSeconds: {{ $upPolicyPeriod }}
+          periodSeconds: {{ $upCooldown }}
         - type: Pods
           value: 4
-          periodSeconds: {{ $upPolicyPeriod }}
+          periodSeconds: {{ $upCooldown }}
     scaleDown:
       stabilizationWindowSeconds: {{ $downCooldown }}
       policies:

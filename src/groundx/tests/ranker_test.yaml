@@ -29,7 +29,7 @@ tests:
           value: 8080
       - notExists:
           path: spec.template.spec.containers[0].readinessProbe.exec
-  - it: "ranker inference HPA uses celery queue backpressure with multi-sample scale-up stabilization"
+  - it: "ranker inference HPA uses celery queue backpressure"
     templates:
       - ../templates/resources/hpa.yaml
     values:
@@ -68,7 +68,7 @@ tests:
           value: ranker-inference:task
       - equal:
           path: spec.behavior.scaleUp.stabilizationWindowSeconds
-          value: 45
+          value: 450
       - equal:
           path: spec.behavior.scaleUp.policies[0].periodSeconds
           value: 450
@@ -88,7 +88,13 @@ tests:
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "(?s)task:\\n(?:\\s+.*\\n)*\\s+- name: ranker-inference\\n\\s+session: ranker-inference\\n\\s+target: inference_queue\\n\\s+threshold: 10"
+          pattern: "(?s)task:\\n(?:\\s+.*\\n)*\\s+- name: ranker-inference\\n\\s+target: inference_queue\\n\\s+threshold: 10"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "(?s)sessions:\\n(?:\\s+.*\\n)*\\s+ranker-inference:"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "\\s+session: ranker-inference"
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "(?s)inference:\\n(?:\\s+- name: [^\\n]+\\n\\s+tokensPerMinute: [0-9]+\\n)*\\s+- name: ranker-inference\\n\\s+tokensPerMinute:"

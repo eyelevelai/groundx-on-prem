@@ -109,7 +109,7 @@ true
 {{- end -}}
 {{- $name := (include "groundx.ranker.inference.serviceName" .) -}}
 {{- $cld := dig "cooldown" 60 $rep -}}
-{{- $upCl := dig "upCooldown" 45 $rep -}}
+{{- $upCl := dig "upCooldown" $cld $rep -}}
 {{- $cfg := dict
   "downCooldown" (mul $cld 2)
   "enabled"      $enabled
@@ -118,7 +118,6 @@ true
   "replicas"     $rep
   "throughput"   (printf "%s:throughput" $name)
   "upCooldown"   $upCl
-  "upPolicyPeriod" $cld
 -}}
 {{- $cfg | toYaml -}}
 {{- end }}
