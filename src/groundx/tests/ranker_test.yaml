@@ -29,7 +29,7 @@ tests:
           value: 8080
       - notExists:
           path: spec.template.spec.containers[0].readinessProbe.exec
-  - it: "ranker inference HPA uses celery queue backpressure and keeps one replica"
+  - it: "ranker inference HPA uses celery queue backpressure without scale-up stabilization"
     templates:
       - ../templates/resources/hpa.yaml
     values:
@@ -43,7 +43,6 @@ tests:
       ranker.inference.replicas.target: 0.7
       ranker.inference.replicas.threshold: 10
       ranker.inference.replicas.throughput: 60000
-      ranker.inference.replicas.upCooldown: 60
       ranker.inference.replicas.cooldown: 450
     documentSelector:
       path: metadata.name
@@ -69,7 +68,13 @@ tests:
           value: ranker-inference:task
       - equal:
           path: spec.behavior.scaleUp.stabilizationWindowSeconds
-          value: 60
+          value: 0
+      - equal:
+          path: spec.behavior.scaleUp.policies[0].periodSeconds
+          value: 450
+      - equal:
+          path: spec.behavior.scaleUp.policies[1].periodSeconds
+          value: 450
       - equal:
           path: spec.behavior.scaleDown.stabilizationWindowSeconds
           value: 900
