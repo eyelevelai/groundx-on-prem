@@ -279,7 +279,7 @@ variable "nodes" {
           volume_size           = 75
           volume_type           = "gp2"
         }
-        instance_types          = ["g4dn.2xlarge"]
+        instance_types          = ["g6e.xlarge"]
         max_size                = 10
         min_size                = 1
       }

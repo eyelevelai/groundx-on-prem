@@ -199,6 +199,14 @@ locals {
           "eyelevel_node"                                   = local.gpu_layout_label
         }
 
+        taints                                              = {
+          eyelevel_node                                      = {
+            key                                             = "eyelevel_node"
+            value                                           = local.gpu_layout_label
+            effect                                          = "NO_SCHEDULE"
+          }
+        }
+
         tags                                                = {
           Environment                                       = var.environment.stage
           Name                                              = local.gpu_layout_label
@@ -238,6 +246,14 @@ locals {
 
         labels                                              = {
           "eyelevel_node"                                   = local.gpu_summary_label
+        }
+
+        taints                                              = {
+          eyelevel_node                                      = {
+            key                                             = "eyelevel_node"
+            value                                           = local.gpu_summary_label
+            effect                                          = "NO_SCHEDULE"
+          }
         }
 
         tags                                                = {
@@ -281,6 +297,14 @@ locals {
 
         labels                                              = {
           "eyelevel_node"                                   = local.gpu_ranker_label
+        }
+
+        taints                                              = {
+          eyelevel_node                                      = {
+            key                                             = "eyelevel_node"
+            value                                           = local.gpu_ranker_label
+            effect                                          = "NO_SCHEDULE"
+          }
         }
 
         tags                                                = {
