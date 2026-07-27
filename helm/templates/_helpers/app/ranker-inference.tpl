@@ -109,7 +109,7 @@ true
 {{- end -}}
 {{- $name := (include "groundx.ranker.inference.serviceName" .) -}}
 {{- $cld := dig "cooldown" 60 $rep -}}
-{{- $upCl := dig "upCooldown" 0 $rep -}}
+{{- $upCl := dig "upCooldown" 15 $rep -}}
 {{- $cfg := dict
   "downCooldown" (mul $cld 2)
   "enabled"      $enabled
