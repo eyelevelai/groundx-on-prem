@@ -24,7 +24,7 @@ The chart renders ranker inference in `metrics.task`:
 ```yaml
 task:
   - name: ranker-inference
-    session: ranker
+    session: ranker-inference
     target: inference_queue
     threshold: 10
 ```
@@ -33,20 +33,22 @@ The ranker inference entry is removed from `metrics.inference`.
 
 cashbot-go already implements `task` metrics by reading
 `{celery}<target queue>` and dividing the backlog by `threshold`. The chart
-supplies the ranker inference task config and marks it with `session: ranker` so
-cashbot-go can use a ranker-specific Redis session when one is configured.
+supplies the ranker inference task config and marks it with the rendered service
+name, `session: ranker-inference`, so cashbot-go can use a named Redis session
+when one is configured.
 
 When `ranker.cache.addr` is set, the chart also renders:
 
 ```yaml
-rankerSession:
-  addr: <ranker cache addr>:<ranker cache port>
-  notCluster: <derived from ranker.cache.isCluster>
-  ssl: <ranker cache ssl>
+sessions:
+  ranker-inference:
+    addr: <ranker cache addr>:<ranker cache port>
+    notCluster: <derived from ranker.cache.isCluster>
+    ssl: <ranker cache ssl>
 ```
 
-When ranker uses the global cache, `rankerSession` is omitted and cashbot-go
-falls back to the existing process Redis path.
+When ranker uses the global cache, `sessions.ranker-inference` is omitted and
+cashbot-go falls back to the existing process Redis path.
 
 ## Threshold
 

@@ -17,9 +17,9 @@
 - [x] Move ranker inference config from `metrics.inference` to `metrics.task`.
 - [x] Set target queue to `inference_queue`.
 - [x] Set default threshold to `10`.
-- [x] Render `session: ranker` for the ranker inference task metric.
-- [x] Render `metrics.rankerSession` from `ranker.cache` when a separate ranker
-      cache is configured.
+- [x] Render the ranker inference service name as the task metric `session`.
+- [x] Render `metrics.sessions.<ranker inference service name>` from
+      `ranker.cache` when a separate ranker cache is configured.
 - [x] Add `ranker.cache.isCluster` support so the metrics Redis client can use
       the same cluster/simple connection mode as existing cache overrides.
 - [x] Mirror the changed source templates into `helm/`.

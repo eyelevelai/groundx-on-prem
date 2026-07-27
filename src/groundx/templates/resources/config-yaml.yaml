@@ -328,10 +328,11 @@ data:
         notCluster: {{ include "groundx.metrics.cache.notCluster" . }}
         ssl: {{ include "groundx.metrics.cache.ssl" . }}
       {{ if eq (include "groundx.ranker.cache.existing" .) "true" }}
-      rankerSession:
-        addr: {{ printf "%s:%v" (include "groundx.ranker.cache.addr" .) (include "groundx.ranker.cache.port" .) }}
-        notCluster: {{ include "groundx.ranker.cache.notCluster" . }}
-        ssl: {{ include "groundx.ranker.cache.ssl" . }}
+      sessions:
+        {{ include "groundx.ranker.inference.serviceName" . }}:
+          addr: {{ printf "%s:%v" (include "groundx.ranker.cache.addr" .) (include "groundx.ranker.cache.port" .) }}
+          notCluster: {{ include "groundx.ranker.cache.notCluster" . }}
+          ssl: {{ include "groundx.ranker.cache.ssl" . }}
       {{ end }}
       summaryRequest:
         tokensPerMinute: {{ include "groundx.throughput.tpm.summaryRequest" . }}
@@ -379,7 +380,7 @@ data:
         {{- end }}
         {{- if ne $ric "0" }}
         - name: {{ include "groundx.ranker.inference.serviceName" . }}
-          session: ranker
+          session: {{ include "groundx.ranker.inference.serviceName" . }}
           target: {{ include "groundx.ranker.inference.queue" . }}
           threshold: {{ $ric }}
         {{- end }}

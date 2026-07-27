@@ -88,7 +88,7 @@ tests:
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "(?s)task:\\n(?:\\s+.*\\n)*\\s+- name: ranker-inference\\n\\s+session: ranker\\n\\s+target: inference_queue\\n\\s+threshold: 10"
+          pattern: "(?s)task:\\n(?:\\s+.*\\n)*\\s+- name: ranker-inference\\n\\s+session: ranker-inference\\n\\s+target: inference_queue\\n\\s+threshold: 10"
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "(?s)inference:\\n(?:\\s+- name: [^\\n]+\\n\\s+tokensPerMinute: [0-9]+\\n)*\\s+- name: ranker-inference\\n\\s+tokensPerMinute:"
@@ -109,10 +109,10 @@ tests:
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "(?s)rankerSession:\\n\\s+addr: ranker-cache\\.existing\\.com:6380\\n\\s+notCluster: true\\n\\s+ssl: true"
+          pattern: "(?s)sessions:\\n\\s+ranker-inference:\\n\\s+addr: ranker-cache\\.existing\\.com:6380\\n\\s+notCluster: true\\n\\s+ssl: true"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "(?s)task:\\n(?:\\s+.*\\n)*\\s+- name: ranker-inference\\n\\s+session: ranker\\n\\s+target: inference_queue\\n\\s+threshold: 10"
+          pattern: "(?s)task:\\n(?:\\s+.*\\n)*\\s+- name: ranker-inference\\n\\s+session: ranker-inference\\n\\s+target: inference_queue\\n\\s+threshold: 10"
   - it: "cache override: ranker config"
     templates:
       - ../templates/resources/ranker-config-py.yaml
