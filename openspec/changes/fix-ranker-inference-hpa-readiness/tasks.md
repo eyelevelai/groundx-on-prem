@@ -17,6 +17,11 @@
 - [x] Move ranker inference config from `metrics.inference` to `metrics.task`.
 - [x] Set target queue to `inference_queue`.
 - [x] Set default threshold to `10`.
+- [x] Render `session: ranker` for the ranker inference task metric.
+- [x] Render `metrics.rankerSession` from `ranker.cache` when a separate ranker
+      cache is configured.
+- [x] Add `ranker.cache.isCluster` support so the metrics Redis client can use
+      the same cluster/simple connection mode as existing cache overrides.
 - [x] Mirror the changed source templates into `helm/`.
 - [x] Leave ranker API HPA, ai-server, node settings, secrets, and stateful
       resources unchanged.
@@ -25,6 +30,7 @@
 
 - [x] Add Helm test coverage for the ranker inference HPA metric names.
 - [x] Add Helm test coverage for the generated `metrics.task` config.
+- [x] Add Helm test coverage for ranker cache override metrics config.
 - [x] Regenerate Helm snapshots with `helm unittest -u src/groundx`.
 - [x] Run focused ranker Helm tests.
 - [x] Run the full Helm unit test suite.

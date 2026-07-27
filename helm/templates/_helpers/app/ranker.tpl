@@ -39,6 +39,21 @@
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.ranker.cache.isCluster" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "cache" dict $b -}}
+{{- if eq (include "groundx.ranker.cache.existing" .) "true" -}}
+{{ dig "isCluster" "true" $in }}
+{{- else -}}
+{{ include "groundx.cache.isCluster" . }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.ranker.cache.notCluster" -}}
+{{- $ic := include "groundx.ranker.cache.isCluster" . | trim | lower -}}
+{{- if eq $ic "true" -}}false{{- else -}}true{{- end -}}
+{{- end }}
+
 {{- define "groundx.ranker.cache.scheme" -}}
 {{- $ssl := include "groundx.ranker.cache.ssl" . | trim | lower -}}
 {{- if eq $ssl "true" -}}rediss{{- else -}}redis{{- end -}}
