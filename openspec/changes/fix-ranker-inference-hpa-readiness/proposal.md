@@ -1,76 +1,51 @@
-# Fix Ranker Inference HPA Readiness
+# Use Ranker Inference Queue Back-Pressure HPA
 
 ## Why
 
-The ranker image now publishes worker-capacity metrics, but the Helm chart still
-uses a process check for readiness. After an idle period, worker records expire
-and the HPA loses the capacity signal it needs to scale before the current pod is
-saturated.
+Ranker inference is a Celery worker pool, but the chart rendered its
+pod-specific HPA signal as `ranker-inference:inference`. That older signal uses
+point-in-time model worker state and can miss pressure between HPA samples.
 
-Ranker inference should use the same HTTP health contract as layout and summary
-inference. Hosted HPA settings should also begin scaling earlier while keeping
-one always-on replica.
-
-## Blast Radius
-
-- Changes ranker inference readiness and liveness probes from process checks to
-  the existing HTTP health server.
-- Changes hosted ranker HPA scale-up sensitivity and timing.
-- Affects ranker inference rollouts in environments that adopt these chart and
-  image changes.
-- Does not change search request routing, ranker model behavior, GPU node type,
-  node groups, Cluster Autoscaler, secrets, or stateful resources.
-
-The chart currently uses `Recreate` for the hosted ranker deployment, so a
-deployment can briefly remove EKS ranker capacity. This change will not be
-deployed as part of implementation.
+Other Celery workers already scale from queue backlog through the existing
+cashbot-go `task` metric. The smallest chart fix is to wire ranker inference to
+that same queue back-pressure path.
 
 ## What Changes
 
-- Make ranker inference expose and use HTTP `/alive` and `/health` probes,
-  matching layout and summary inference.
-- Keep `/health` unavailable until the configured ranker workers have
-  registered, so polling preserves their capacity records.
-- Keep hosted ranker HPA minimum at 1 and maximum at 4.
-- Set the hosted ranker HPA target to `0.4`.
-- Set the hosted ranker scale-up cooldown to 15 seconds.
-- Keep the existing ranker throughput sizing values unchanged.
-- Add focused AI-server and Helm tests.
-- Mirror chart source changes into `helm/`.
+- Render the ranker inference pod-specific HPA metric as
+  `ranker-inference:task`.
+- Keep `ranker-inference:throughput` as the pipeline throughput axis.
+- Move ranker inference metrics config from `metrics.inference` to
+  `metrics.task`.
+- Set the ranker task target to `inference_queue`.
+- Default the ranker task threshold to the existing task backlog default, `10`.
+- Mirror source chart changes into `helm/`.
 
 ## Out Of Scope
 
-- Deploying these changes.
-- Changing GPU instance type, node group size, node labels, or scheduling.
-- Changing or upgrading Cluster Autoscaler.
-- Changing search fanout, OpenSearch candidates, model code, or API routing.
-- Changing secrets.
-- Changing the hosted ranker `Recreate` update strategy.
+- No ranker API HPA change.
+- No new cashbot-go metric type.
+- No ai-server image or health contract change.
+- No search, ranking, OpenSearch, node group, Cluster Autoscaler, secret, or
+  stateful resource change.
+- No deployment without separate approval.
 
-## Affected Environments
+## Rollout
 
-- The tracked chart change applies to environments that enable ranker
-  inference.
-- The HPA tuning applies to the hosted EKS values file only.
-- Dev, staging, and production are unaffected until an operator deploys the
-  matching chart and ranker image.
+1. Deploy the chart change after approval.
+2. Confirm the deployed ranker inference HPA uses `ranker-inference:task` and
+   `ranker-inference:throughput`.
+3. Confirm rendered `config.yaml` lists ranker inference under `metrics.task`
+   with `target: inference_queue` and `threshold: 10`.
+4. At idle, confirm `ranker-inference:task` remains near zero.
+5. During a controlled ramp, compare `LLEN {celery}inference_queue` with the
+   Kubernetes external metric.
+6. Watch HPA events, Pending pods, GPU node readiness, model readiness,
+   ranker-inference CPU/GPU, ranker API latency, and Lambda duration/errors.
+7. Tune `ranker.inference.replicas.threshold` only from live ramp data.
 
-There is no data or stateful resource impact.
+## Rollback
 
-## Rollback / Rollforward
-
-Rollback:
-
-- deploy the previous chart and ranker image;
-- restore the previous hosted HPA target and cooldown.
-
-Rollforward:
-
-- build the ranker image with worker health reporting;
-- render and inspect the chart;
-- deploy to a non-production environment and confirm health and HPA metrics;
-- promote separately after an explicit production approval.
-
-## Open Design Questions
-
-None. The approved scope is limited to ranker health polling and HPA behavior.
+Roll back the chart to the previous ranker inference HPA metric if
+`ranker-inference:task` does not match live broker state. No data rollback is
+required.

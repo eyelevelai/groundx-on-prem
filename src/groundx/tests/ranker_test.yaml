@@ -29,7 +29,7 @@ tests:
           value: 8080
       - notExists:
           path: spec.template.spec.containers[0].readinessProbe.exec
-  - it: "ranker inference HPA scales early and keeps one replica"
+  - it: "ranker inference HPA uses celery queue backpressure and keeps one replica"
     templates:
       - ../templates/resources/hpa.yaml
     values:
@@ -40,10 +40,11 @@ tests:
       ranker.inference.replicas.desired: 1
       ranker.inference.replicas.min: 1
       ranker.inference.replicas.max: 4
-      ranker.inference.replicas.target: 0.4
-      ranker.inference.replicas.threshold: 60000
+      ranker.inference.replicas.target: 0.7
+      ranker.inference.replicas.threshold: 10
       ranker.inference.replicas.throughput: 60000
-      ranker.inference.replicas.upCooldown: 15
+      ranker.inference.replicas.upCooldown: 60
+      ranker.inference.replicas.cooldown: 450
     documentSelector:
       path: metadata.name
       value: ranker-inference-hpa
@@ -56,16 +57,36 @@ tests:
           value: 4
       - equal:
           path: spec.metrics[0].external.target.value
-          value: 0.4
+          value: 0.7
       - equal:
           path: spec.metrics[1].external.target.value
-          value: 0.4
+          value: 0.7
+      - equal:
+          path: spec.metrics[0].external.metric.name
+          value: ranker-inference:throughput
+      - equal:
+          path: spec.metrics[1].external.metric.name
+          value: ranker-inference:task
       - equal:
           path: spec.behavior.scaleUp.stabilizationWindowSeconds
-          value: 15
+          value: 60
       - equal:
           path: spec.behavior.scaleDown.stabilizationWindowSeconds
-          value: 150
+          value: 900
+  - it: "ranker inference config uses celery task queue metric"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      ranker.inference.enabled: true
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "(?s)task:\\n(?:\\s+.*\\n)*\\s+- name: ranker-inference\\n\\s+target: inference_queue\\n\\s+threshold: 10"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "(?s)inference:\\n(?:\\s+- name: [^\\n]+\\n\\s+tokensPerMinute: [0-9]+\\n)*\\s+- name: ranker-inference\\n\\s+tokensPerMinute:"
   - it: "cache override: ranker config"
     templates:
       - ../templates/resources/ranker-config-py.yaml

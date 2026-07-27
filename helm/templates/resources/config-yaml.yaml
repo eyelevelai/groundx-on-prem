@@ -7,7 +7,6 @@
 {{- $sq := (include "groundx.stream.topic.summary" . | fromYaml) -}}
 {{- $uq := (include "groundx.stream.topic.update" . | fromYaml) -}}
 {{- $lq := (include "groundx.stream.topic.upload" . | fromYaml) -}}
-
 {{- $eac := include "groundx.extract.agent.threshold" . | trim -}}
 {{- $edc := include "groundx.extract.download.threshold" . | trim -}}
 {{- $esc := include "groundx.extract.save.threshold" . | trim -}}
@@ -274,15 +273,11 @@ data:
         tokensPerMinute: {{ include "groundx.throughput.tpm.document" . }}
       extractRequest:
         tokensPerMinute: {{ include "groundx.throughput.tpm.extractRequest" . }}
-      {{- if or (ne $lic "0") (ne $ric "0") (ne $sac "0") (ne $sic "0") (and (eq $sce "true") (ne $scc "0")) }}
+      {{- if or (ne $lic "0") (ne $sac "0") (ne $sic "0") (and (eq $sce "true") (ne $scc "0")) }}
       inference:
         {{- if ne $lic "0" }}
         - name: {{ include "groundx.layout.serviceName" . }}-inference
           tokensPerMinute: {{ $lic }}
-        {{- end }}
-        {{- if ne $ric "0" }}
-        - name: {{ include "groundx.ranker.serviceName" . }}-inference
-          tokensPerMinute: {{ $ric }}
         {{- end }}
         {{- if ne $sac "0" }}
         - name: {{ include "groundx.summary.api.serviceName" . }}
@@ -334,7 +329,7 @@ data:
         ssl: {{ include "groundx.metrics.cache.ssl" . }}
       summaryRequest:
         tokensPerMinute: {{ include "groundx.throughput.tpm.summaryRequest" . }}
-      {{- if or (ne $eac "0") (ne $edc "0") (ne $esc "0") (ne $lcc "0") (ne $lmc "0") (ne $loc "0") (ne $lpc "0") (ne $lsc "0") (ne $wrcuc "0") (ne $wrcc "0") (ne $wrpc "0") (ne $wrpubc "0") (ne $wrwc "0") }}
+      {{- if or (ne $eac "0") (ne $edc "0") (ne $esc "0") (ne $lcc "0") (ne $lmc "0") (ne $loc "0") (ne $lpc "0") (ne $lsc "0") (ne $ric "0") (ne $wrcuc "0") (ne $wrcc "0") (ne $wrpc "0") (ne $wrpubc "0") (ne $wrwc "0") }}
       task:
         {{- if ne $eac "0" }}
         - name: {{ include "groundx.extract.agent.serviceName" . }}
@@ -375,6 +370,11 @@ data:
         - name: {{ include "groundx.layout.save.serviceName" . }}
           target: {{ include "groundx.layout.save.queue" . }}
           threshold: {{ $lsc }}
+        {{- end }}
+        {{- if ne $ric "0" }}
+        - name: {{ include "groundx.ranker.inference.serviceName" . }}
+          target: {{ include "groundx.ranker.inference.queue" . }}
+          threshold: {{ $ric }}
         {{- end }}
         {{- if ne $wrcuc "0" }}
         - name: {{ include "groundx.workspace.cleanup.metricName" . }}

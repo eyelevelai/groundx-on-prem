@@ -1,61 +1,48 @@
-# Fix Ranker Inference HPA Readiness Tasks
+# Ranker Inference Queue Back-Pressure HPA Tasks
 
-## 1. Confirm Scope
+## 1. Confirm Existing Pattern
 
-- [x] Re-read repo instructions and OpenSpec configuration.
-- [x] Trace the external ranker metric from worker status through
-      `cashbot-go/pkg/operator/metrics.go`.
-- [x] Compare ranker inference probes with layout and summary inference.
-- [x] Confirm GPU node and Cluster Autoscaler changes are out of scope.
+- [x] Re-read repo instructions and the GroundX Studio Harness autoscaling
+      guidance.
+- [x] Confirm task backlog metrics default to threshold `10`.
+- [x] Confirm ranker inference uses Celery queue `inference_queue`.
+- [x] Confirm cashbot-go already implements the `task` metric path.
 - [x] Confirm implementation must stop before deployment.
 
-## 2. Add Regression Coverage
+## 2. Implement Chart Change
 
-- [x] Add a Helm test that expects ranker HTTP `/alive` and `/health` probes.
-- [x] Assert hosted HPA values render as min 1, max 4, target `0.4`, and
-      15-second scale-up stabilization.
-- [x] Run the focused Helm test and confirm it fails before the template fix.
+- [x] Switch ranker inference HPA from `ranker-inference:inference` to
+      `ranker-inference:task`.
+- [x] Keep `ranker-inference:throughput`.
+- [x] Move ranker inference config from `metrics.inference` to `metrics.task`.
+- [x] Set target queue to `inference_queue`.
+- [x] Set default threshold to `10`.
+- [x] Mirror the changed source templates into `helm/`.
+- [x] Leave ranker API HPA, ai-server, node settings, secrets, and stateful
+      resources unchanged.
 
-## 3. Implement Probe And HPA Fix
+## 3. Validate
 
-- [x] Add ranker inference port `8080` to the source chart helper.
-- [x] Select the shared HTTP probe path for ranker inference.
-- [x] Mirror the changed chart helper into `helm/`.
-- [x] Set hosted ranker HPA target to `0.4` and scale-up cooldown to 15 seconds.
-- [x] Keep hosted ranker min 1, max 4, threshold 60000, and throughput 60000.
-- [x] Leave secrets, node settings, and update strategy unchanged.
-
-## 4. Verify Worker State
-
-- [x] Test that a malformed ranker request restores worker availability.
-- [x] Test that a ranker inference exception restores worker availability.
-- [x] Confirm the ranker health process uses the same worker count as the
-      ranker worker process.
-
-## 5. Validate
-
+- [x] Add Helm test coverage for the ranker inference HPA metric names.
+- [x] Add Helm test coverage for the generated `metrics.task` config.
 - [x] Regenerate Helm snapshots with `helm unittest -u src/groundx`.
-- [x] Run all `ai-server` ranker tests and Python compile checks.
-- [x] Run `helm lint` for source and mirror charts with hosted values.
+- [x] Run focused ranker Helm tests.
 - [x] Run the full Helm unit test suite.
-- [x] Render hosted ranker resources and inspect probes, HPA metrics, and
-      scale-up behavior.
-- [x] Confirm changed source and mirror files match.
-- [x] Validate OpenSpec strictly.
-- [x] Run `git diff --check` in both repos.
+- [x] Render the chart and inspect ranker inference HPA/config output.
+- [x] Run `helm lint`.
+- [x] Run OpenSpec validation.
+- [x] Run `git diff --check`.
 
-## 6. Review And Handoff
+## 4. Post-Approval Deployment Test Plan
 
-- [x] Run an independent adversarial review against this OpenSpec change.
-- [x] Normalize Celery task hostnames to the worker names used by health.
-- [x] Keep 15-second scale-up separate from 150-second scale-down.
-- [x] Resolve all in-scope findings.
-- [x] Report validation evidence and remaining node-provisioning risk.
-- [x] Confirm no deployment was performed.
-
-## 7. Future Rollout
-
-- [ ] Deploy to non-production after separate approval.
-- [ ] Confirm worker capacity remains visible after more than five idle minutes.
-- [ ] Confirm controlled load scales above one replica and later returns to one.
-- [ ] Obtain separate approval before production deployment.
+- [ ] Deploy the chart change after explicit approval.
+- [ ] Confirm deployed HPA and metrics server versions.
+- [ ] Confirm `ranker-inference:task` is near zero at idle.
+- [ ] Confirm `{celery}inference_queue` backlog explains the external metric.
+- [ ] If `ranker.cache.addr` is overridden, confirm the metrics server reads the
+      same Redis instance that owns `{celery}inference_queue`.
+- [ ] Run a controlled ramp that exercises ranker inference.
+- [ ] Watch `ranker-inference:task`, `ranker-inference:throughput`,
+      `inference_queue` depth, HPA events, pending pods, GPU node readiness,
+      model readiness, ranker API latency, and Lambda duration/errors.
+- [ ] Tune threshold only from observed queue depth and scale-up timing.
