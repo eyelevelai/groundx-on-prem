@@ -70,9 +70,9 @@ true
 1
 {{- end }}
 
-{{/* tokens per minute per worker per thread */}}
+{{/* queue message backlog */}}
 {{- define "groundx.ranker.inference.threshold.default" -}}
-20000
+10
 {{- end }}
 
 {{/* tokens per minute per worker per thread */}}
@@ -113,7 +113,7 @@ true
 {{- $cfg := dict
   "downCooldown" (mul $cld 2)
   "enabled"      $enabled
-  "metric"       (printf "%s:inference" $name)
+  "metric"       (printf "%s:task" $name)
   "name"         $name
   "replicas"     $rep
   "throughput"   (printf "%s:throughput" $name)
@@ -152,7 +152,7 @@ true
   {{- $_ := set $in "throughput" (mul $dflt $threads $workers) -}}
 {{- end -}}
 {{- if not (hasKey $in "threshold") -}}
-  {{- $_ := set $in "threshold" (dig "throughput" 0 $in) -}}
+  {{- $_ := set $in "threshold" (include "groundx.ranker.inference.threshold.default" .) -}}
 {{- end -}}
 {{- if not (hasKey $in "min") -}}
   {{- if hasKey $in "desired" -}}

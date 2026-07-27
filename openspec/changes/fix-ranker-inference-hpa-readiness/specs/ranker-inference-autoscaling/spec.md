@@ -1,75 +1,53 @@
 ## ADDED Requirements
 
-### Requirement: Ranker inference uses worker-aware HTTP health probes
+### Requirement: Ranker Inference HPA Uses Celery Queue Back-Pressure
 
-The chart SHALL use the ranker health server for Kubernetes liveness and
-readiness, matching layout and summary inference.
+Ranker inference HPA SHALL use the existing Celery task backlog metric for
+pod-specific autoscaling pressure.
 
-#### Scenario: Ranker inference is rendered
+#### Scenario: Ranker inference HPA is rendered
 
-- **GIVEN** ranker inference is enabled
-- **WHEN** the chart renders the ranker Deployment
-- **THEN** liveness uses HTTP `GET /alive` on port `8080`
-- **AND** readiness uses HTTP `GET /health` on port `8080`
-- **AND** ranker readiness does not use a process-name check.
-
-#### Scenario: Ranker workers are not registered
-
-- **GIVEN** fewer ranker workers are registered than the configured worker count
-- **WHEN** Kubernetes polls `/health`
-- **THEN** the endpoint reports that ranker inference is not ready.
-
-#### Scenario: Ranker workers are idle
-
-- **GIVEN** all ranker workers are registered and no requests are running
-- **WHEN** Kubernetes continues polling `/health`
-- **THEN** worker availability records remain present for the external HPA
+- **GIVEN** ranker inference HPA is enabled
+- **WHEN** the chart renders the ranker inference HPA
+- **THEN** it includes `ranker-inference:throughput`
+- **AND** it includes `ranker-inference:task`
+- **AND** it does not use `ranker-inference:inference` as the pod-specific
   metric.
 
-### Requirement: Ranker workers restore availability
+#### Scenario: Ranker inference task config is rendered
 
-Each ranker worker SHALL report itself available after request handling ends.
+- **GIVEN** ranker inference is enabled
+- **WHEN** the chart renders `config.yaml`
+- **THEN** `metrics.task` includes `ranker-inference`
+- **AND** its target is `inference_queue`
+- **AND** its threshold defaults to `10`
+- **AND** it does not render a ranker-specific task session without an explicit
+  ranker cache override
+- **AND** `metrics.inference` does not include `ranker-inference`.
 
-#### Scenario: Ranker inference succeeds
+#### Scenario: Ranker cache override renders service-named metrics session
 
-- **GIVEN** a ranker worker accepts a valid request
-- **WHEN** inference completes
-- **THEN** the worker reports itself available.
+- **GIVEN** ranker inference is enabled
+- **AND** `ranker.cache.addr` is set
+- **WHEN** the chart renders `config.yaml`
+- **THEN** `metrics.sessions` includes `ranker-inference`
+- **AND** the task metric session is `ranker-inference`.
 
-#### Scenario: Ranker inference fails
+#### Scenario: Published chart mirror stays aligned
 
-- **GIVEN** a ranker worker accepts a request
-- **WHEN** validation or inference fails
-- **THEN** the worker reports itself available before the failure returns.
+- **WHEN** the ranker inference HPA and config templates are compared
+- **THEN** `src/groundx` and `helm` contain the same queue back-pressure
+  contract.
 
-### Requirement: Hosted ranker HPA scales earlier
+### Requirement: Other Ranker Surfaces Stay Unchanged
 
-The hosted ranker configuration SHALL preserve one always-on replica and begin
-scale-up before the current replica is saturated.
+This change SHALL NOT modify ranker API HPA behavior, ranker application code,
+node provisioning, secrets, search behavior, ranking behavior, or stateful
+resources.
 
-#### Scenario: Hosted ranker HPA is rendered
-
-- **GIVEN** the hosted EKS ranker values file
-- **WHEN** the chart renders the ranker HPA
-- **THEN** minimum replicas is `1`
-- **AND** maximum replicas is `4`
-- **AND** each ranker external metric target is `0.4`
-- **AND** scale-up stabilization is `15` seconds
-- **AND** scale-down stabilization remains `150` seconds.
-
-#### Scenario: Hosted ranker traffic is idle
-
-- **GIVEN** traffic has subsided and scale-down completes
-- **WHEN** the HPA reaches its configured minimum
-- **THEN** one ranker inference replica remains running.
-
-### Requirement: Node provisioning remains unchanged
-
-This change SHALL not modify GPU node or Cluster Autoscaler configuration.
-
-#### Scenario: The change is implemented
+#### Scenario: The implementation diff is reviewed
 
 - **WHEN** the implementation diff is reviewed
-- **THEN** no node type, node group, scheduling label, taint, or Cluster
-  Autoscaler setting has changed
-- **AND** no deployment has been performed.
+- **THEN** there is no ranker API capacity metric change
+- **AND** there is no ai-server or cashbot-go production algorithm change
+- **AND** deployment still requires explicit approval.
