@@ -29,7 +29,7 @@ tests:
           value: 8080
       - notExists:
           path: spec.template.spec.containers[0].readinessProbe.exec
-  - it: "ranker inference HPA uses celery queue backpressure with short scale-up stabilization"
+  - it: "ranker inference HPA uses celery queue backpressure with multi-sample scale-up stabilization"
     templates:
       - ../templates/resources/hpa.yaml
     values:
@@ -68,7 +68,7 @@ tests:
           value: ranker-inference:task
       - equal:
           path: spec.behavior.scaleUp.stabilizationWindowSeconds
-          value: 15
+          value: 45
       - equal:
           path: spec.behavior.scaleUp.policies[0].periodSeconds
           value: 450
