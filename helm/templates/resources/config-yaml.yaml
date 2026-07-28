@@ -24,7 +24,7 @@
 {{- $wrac := include "groundx.workspace.api.threshold" . | trim -}}
 
 {{- $lic := include "groundx.layout.inference.threshold" . | trim -}}
-{{- $ric := include "groundx.ranker.inference.threshold" . | trim -}}
+{{- $ribw := include "groundx.ranker.inference.busyWindowSeconds" . | trim -}}
 {{- $sac := include "groundx.summary.api.threshold" . | trim -}}
 {{- $sic := include "groundx.summary.inference.threshold" . | trim -}}
 {{- $scc := include "groundx.summaryClient.threshold" . | trim -}}
@@ -273,11 +273,15 @@ data:
         tokensPerMinute: {{ include "groundx.throughput.tpm.document" . }}
       extractRequest:
         tokensPerMinute: {{ include "groundx.throughput.tpm.extractRequest" . }}
-      {{- if or (ne $lic "0") (ne $sac "0") (ne $sic "0") (and (eq $sce "true") (ne $scc "0")) }}
+      {{- if or (ne $lic "0") (ne $ribw "0") (ne $sac "0") (ne $sic "0") (and (eq $sce "true") (ne $scc "0")) }}
       inference:
         {{- if ne $lic "0" }}
         - name: {{ include "groundx.layout.serviceName" . }}-inference
           tokensPerMinute: {{ $lic }}
+        {{- end }}
+        {{- if ne $ribw "0" }}
+        - name: {{ include "groundx.ranker.inference.serviceName" . }}
+          busyWindowSeconds: {{ $ribw }}
         {{- end }}
         {{- if ne $sac "0" }}
         - name: {{ include "groundx.summary.api.serviceName" . }}
@@ -327,16 +331,9 @@ data:
         addr: {{ printf "%s:%v" (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) }}
         notCluster: {{ include "groundx.metrics.cache.notCluster" . }}
         ssl: {{ include "groundx.metrics.cache.ssl" . }}
-      {{- if eq (include "groundx.ranker.cache.existing" .) "true" }}
-      sessions:
-        {{ include "groundx.ranker.inference.serviceName" . }}:
-          addr: {{ printf "%s:%v" (include "groundx.ranker.cache.addr" .) (include "groundx.ranker.cache.port" .) }}
-          notCluster: {{ include "groundx.ranker.cache.notCluster" . }}
-          ssl: {{ include "groundx.ranker.cache.ssl" . }}
-      {{- end }}
       summaryRequest:
         tokensPerMinute: {{ include "groundx.throughput.tpm.summaryRequest" . }}
-      {{- if or (ne $eac "0") (ne $edc "0") (ne $esc "0") (ne $lcc "0") (ne $lmc "0") (ne $loc "0") (ne $lpc "0") (ne $lsc "0") (ne $ric "0") (ne $wrcuc "0") (ne $wrcc "0") (ne $wrpc "0") (ne $wrpubc "0") (ne $wrwc "0") }}
+      {{- if or (ne $eac "0") (ne $edc "0") (ne $esc "0") (ne $lcc "0") (ne $lmc "0") (ne $loc "0") (ne $lpc "0") (ne $lsc "0") (ne $wrcuc "0") (ne $wrcc "0") (ne $wrpc "0") (ne $wrpubc "0") (ne $wrwc "0") }}
       task:
         {{- if ne $eac "0" }}
         - name: {{ include "groundx.extract.agent.serviceName" . }}
@@ -377,14 +374,6 @@ data:
         - name: {{ include "groundx.layout.save.serviceName" . }}
           target: {{ include "groundx.layout.save.queue" . }}
           threshold: {{ $lsc }}
-        {{- end }}
-        {{- if ne $ric "0" }}
-        - name: {{ include "groundx.ranker.inference.serviceName" . }}
-          {{- if eq (include "groundx.ranker.cache.existing" .) "true" }}
-          session: {{ include "groundx.ranker.inference.serviceName" . }}
-          {{- end }}
-          target: {{ include "groundx.ranker.inference.queue" . }}
-          threshold: {{ $ric }}
         {{- end }}
         {{- if ne $wrcuc "0" }}
         - name: {{ include "groundx.workspace.cleanup.metricName" . }}
