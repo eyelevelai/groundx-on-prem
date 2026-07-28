@@ -339,8 +339,7 @@ The default resource configurations for AWS EC2 are specified [here](#total-reco
 1x m6a.xlarge
 4x t3a.medium
 1x g4dn.xlarge
-1x g4dn.2xlarge
-1x g6e.xlarge
+2x g6e.xlarge
 ~300 GB gp2
 ```
 
