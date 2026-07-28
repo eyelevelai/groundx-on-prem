@@ -1,34 +1,39 @@
-# Use Ranker Inference Queue Back-Pressure HPA
+# Use Windowed Ranker Inference Busy HPA
 
 ## Why
 
-Ranker inference is a Celery worker pool, but the chart rendered its
-pod-specific HPA signal as `ranker-inference:inference`. That older signal uses
-point-in-time model worker state and can miss pressure between HPA samples.
+Ranker inference is a Celery worker pool running long GPU tasks. Queue backlog
+was a poor HPA signal because one queued request could make the metric look
+fully saturated even while a single replica was still healthy. The older
+`ranker-inference:inference` signal was also too point-in-time because it
+sampled whether a worker happened to be busy when the metrics server checked.
 
-Other Celery workers already scale from queue backlog through the existing
-cashbot-go `task` metric. The smallest chart fix is to wire ranker inference to
-that same queue back-pressure path.
+The fix is to make `ranker-inference:inference` mean average busy time over a
+short window. ai-server records busy starts/finishes into the existing metrics
+Redis, cashbot-go reads those samples through the existing metrics session, and
+the chart wires ranker inference to that metric.
 
 ## What Changes
 
 - Render the ranker inference pod-specific HPA metric as
-  `ranker-inference:task`.
+  `ranker-inference:inference`.
 - Keep `ranker-inference:throughput` as the pipeline throughput axis.
-- Move ranker inference metrics config from `metrics.inference` to
-  `metrics.task`.
-- Render the ranker task session key from the ranker inference service name
-  only when `ranker.cache.addr` selects a separate ranker cache.
-- Set the ranker task target to `inference_queue`.
-- Default the ranker task threshold to the existing task backlog default, `10`.
-- Keep the shared HPA cooldown behavior unchanged.
+- Render ranker inference under `metrics.inference` with
+  `busyWindowSeconds`, defaulting to `60`.
+- Pass the same `metricsBusyWindowSeconds` value to ranker ai-server config.
+- Keep ranker busy samples on the existing `metrics.session` Redis path. If
+  `ranker.cache.addr` is overridden, search/Celery traffic uses that ranker
+  cache, but the HPA busy metric still uses the metrics cache.
+- Remove ranker inference from `metrics.task`; no ranker-specific
+  `metrics.sessions` block is rendered for this metric.
+- Default the HPA target to `0.9`.
 - Mirror source chart changes into `helm/`.
+- Add the cashbot-go reader and ai-server writer changes required by this
+  chart contract.
 
 ## Out Of Scope
 
 - No ranker API HPA change.
-- No new cashbot-go metric type.
-- No ai-server image or health contract change.
 - No search, ranking, OpenSearch, node group, Cluster Autoscaler, secret, or
   stateful resource change.
 - No deployment without separate approval.
@@ -36,21 +41,23 @@ that same queue back-pressure path.
 ## Rollout
 
 1. Deploy the chart change after approval.
-2. Confirm the deployed ranker inference HPA uses `ranker-inference:task` and
+2. Confirm the deployed ranker inference HPA uses `ranker-inference:inference`
+   and
    `ranker-inference:throughput`.
-3. Confirm rendered `config.yaml` lists ranker inference under `metrics.task`
-   with `target: inference_queue` and `threshold: 10`; if `ranker.cache.addr`
-   is set, confirm it also includes `session: ranker-inference` and
-   `metrics.sessions.ranker-inference`.
-4. At idle, confirm `ranker-inference:task` remains near zero.
-5. During a controlled ramp, compare `LLEN {celery}inference_queue` with the
-   Kubernetes external metric.
+3. Confirm rendered `config.yaml` lists ranker inference under
+   `metrics.inference` with `busyWindowSeconds: 60`.
+4. Confirm rendered ranker config includes `metricsBusyWindowSeconds=60` and
+   points `metricsBroker` at the metrics cache.
+5. At idle, confirm `ranker-inference:inference` remains near zero.
+6. During a controlled ramp, compare active/in-flight ranker requests with the
+   Kubernetes external metric over the configured window.
 6. Watch HPA events, Pending pods, GPU node readiness, model readiness,
    ranker-inference CPU/GPU, ranker API latency, and Lambda duration/errors.
-7. Tune `ranker.inference.replicas.threshold` only from live ramp data.
+7. Tune `ranker.inference.busyWindowSeconds` or
+   `ranker.inference.replicas.target` only from live ramp data.
 
 ## Rollback
 
-Roll back the chart to the previous ranker inference HPA metric if
-`ranker-inference:task` does not match live broker state. No data rollback is
+Disable `ranker.inference.busyWindowSeconds` and roll back the chart/app images
+if the windowed metric does not match live ranker activity. No data rollback is
 required.

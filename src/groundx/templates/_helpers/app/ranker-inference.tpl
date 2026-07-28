@@ -67,7 +67,7 @@ true
 
 {{/* fraction of threshold */}}
 {{- define "groundx.ranker.inference.target.default" -}}
-1
+0.9
 {{- end }}
 
 {{/* queue message backlog */}}
@@ -113,7 +113,7 @@ true
 {{- $cfg := dict
   "downCooldown" (mul $cld 2)
   "enabled"      $enabled
-  "metric"       (printf "%s:task" $name)
+  "metric"       (printf "%s:inference" $name)
   "name"         $name
   "replicas"     $rep
   "throughput"   (printf "%s:throughput" $name)
@@ -126,6 +126,17 @@ true
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "inference" dict $b -}}
 {{ (dig "queue" "inference_queue" $in) }}
+{{- end }}
+
+{{- define "groundx.ranker.inference.busyWindowSeconds" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{- $rep := (include "groundx.ranker.inference.replicas" . | fromYaml) -}}
+{{- if dig "hpa" false $rep -}}
+{{ dig "busyWindowSeconds" 60 $in }}
+{{- else -}}
+0
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.ranker.inference.replicas" -}}

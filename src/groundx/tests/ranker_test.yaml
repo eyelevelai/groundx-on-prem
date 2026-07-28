@@ -29,7 +29,7 @@ tests:
           value: 8080
       - notExists:
           path: spec.template.spec.containers[0].readinessProbe.exec
-  - it: "ranker inference HPA uses celery queue backpressure"
+  - it: "ranker inference HPA uses windowed busy metric"
     templates:
       - ../templates/resources/hpa.yaml
     values:
@@ -41,7 +41,6 @@ tests:
       ranker.inference.replicas.min: 1
       ranker.inference.replicas.max: 4
       ranker.inference.replicas.target: 0.7
-      ranker.inference.replicas.threshold: 10
       ranker.inference.replicas.throughput: 60000
       ranker.inference.replicas.cooldown: 450
     documentSelector:
@@ -65,7 +64,7 @@ tests:
           value: ranker-inference:throughput
       - equal:
           path: spec.metrics[1].external.metric.name
-          value: ranker-inference:task
+          value: ranker-inference:inference
       - equal:
           path: spec.behavior.scaleUp.stabilizationWindowSeconds
           value: 450
@@ -78,7 +77,7 @@ tests:
       - equal:
           path: spec.behavior.scaleDown.stabilizationWindowSeconds
           value: 900
-  - it: "ranker inference config uses celery task queue metric"
+  - it: "ranker inference config uses windowed inference busy metric"
     templates:
       - ../templates/resources/config-yaml.yaml
     values:
@@ -88,7 +87,7 @@ tests:
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "(?s)task:\\n(?:\\s+.*\\n)*\\s+- name: ranker-inference\\n\\s+target: inference_queue\\n\\s+threshold: 10"
+          pattern: "(?s)inference:\\n(?:\\s+.*\\n)*\\s+- name: ranker-inference\\n\\s+busyWindowSeconds: 60"
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "(?s)sessions:\\n(?:\\s+.*\\n)*\\s+ranker-inference:"
@@ -97,11 +96,35 @@ tests:
           pattern: "\\s+session: ranker-inference"
       - notMatchRegex:
           path: data["config.yaml"]
-          pattern: "(?s)inference:\\n(?:\\s+- name: [^\\n]+\\n\\s+tokensPerMinute: [0-9]+\\n)*\\s+- name: ranker-inference\\n\\s+tokensPerMinute:"
+          pattern: "(?m)^  task:\\n(?:^    .*\\n)*^    - name: ranker-inference$"
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "rankerSession:"
-  - it: "ranker cache override configures ranker metrics task session"
+  - it: "ranker inference busy metric is omitted when HPA is disabled"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/ranker-config-py.yaml
+      - ../templates/resources/hpa.yaml
+    values:
+      - ./files/values.metadata.yaml
+    set:
+      cluster.hpa: false
+      metrics.enabled: true
+      ranker.inference.replicas.desired: 1
+      ranker.inference.replicas.hpa: false
+    asserts:
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "(?s)inference:\\n(?:\\s+.*\\n)*\\s+- name: myapp-inference\\n\\s+busyWindowSeconds:"
+        template: ../templates/resources/config-yaml.yaml
+      - notMatchRegex:
+          path: data["config.py"]
+          pattern: "metricsBusyWindowSeconds=60"
+        template: ../templates/resources/ranker-config-py.yaml
+      - hasDocuments:
+          count: 0
+        template: ../templates/resources/hpa.yaml
+  - it: "ranker cache override keeps ranker busy metric on metrics session"
     templates:
       - ../templates/resources/config-yaml.yaml
     values:
@@ -113,12 +136,15 @@ tests:
       ranker.cache.port: 6380
       ranker.cache.ssl: true
     asserts:
-      - matchRegex:
+      - notMatchRegex:
           path: data["config.yaml"]
           pattern: "(?s)sessions:\\n\\s+ranker-inference:\\n\\s+addr: ranker-cache\\.existing\\.com:6380\\n\\s+notCluster: true\\n\\s+ssl: true"
-      - matchRegex:
+      - notMatchRegex:
           path: data["config.yaml"]
           pattern: "(?s)task:\\n(?:\\s+.*\\n)*\\s+- name: ranker-inference\\n\\s+session: ranker-inference\\n\\s+target: inference_queue\\n\\s+threshold: 10"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "(?s)inference:\\n(?:\\s+.*\\n)*\\s+- name: ranker-inference\\n\\s+busyWindowSeconds: 60"
   - it: "cache override: ranker config"
     templates:
       - ../templates/resources/ranker-config-py.yaml

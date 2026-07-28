@@ -1,9 +1,9 @@
-# Ranker Inference Queue Back-Pressure HPA Design
+# Ranker Inference Windowed Busy HPA Design
 
 ## Goal
 
-Reuse the existing Celery task backlog autoscaling implementation for ranker
-inference with the smallest chart change.
+Scale ranker inference from a stable per-pod busy-time signal instead of a
+point-in-time worker sample or queue backlog.
 
 ## HPA Contract
 
@@ -11,55 +11,53 @@ The rendered ranker inference HPA uses two external metrics:
 
 ```text
 ranker-inference:throughput
-ranker-inference:task
+ranker-inference:inference
 ```
 
 `ranker-inference:throughput` stays as the existing pipeline throughput axis.
-`ranker-inference:task` becomes the pod-specific back-pressure axis.
+`ranker-inference:inference` becomes the pod-specific busy-time axis.
 
 ## Metrics Config
 
-The chart renders ranker inference in `metrics.task`:
+The chart renders ranker inference in `metrics.inference`:
 
 ```yaml
-task:
+inference:
   - name: ranker-inference
-    target: inference_queue
-    threshold: 10
+    busyWindowSeconds: 60
 ```
 
-The ranker inference entry is removed from `metrics.inference`.
+The ranker inference entry is removed from `metrics.task`.
 
-cashbot-go already implements `task` metrics by reading
-`{celery}<target queue>` and dividing the backlog by `threshold`. Without a
-ranker cache override, the ranker inference task metric uses the same process
-Redis path as the existing task backlog metrics.
+cashbot-go computes this metric from the existing metrics Redis session:
 
-When `ranker.cache.addr` is set, the chart also renders:
+- ai-server marks a worker busy when ranker inference starts handling a task.
+- ai-server marks the worker available in `finally` and writes elapsed
+  milliseconds into second-sized Redis buckets.
+- cashbot-go sums completed busy buckets inside the configured window.
+- cashbot-go also counts currently active workers from their busy start keys,
+  capped to the same window.
+- The external metric value is busy milliseconds divided by
+  `online workers * busyWindowSeconds`.
 
-```yaml
-sessions:
-  ranker-inference:
-    addr: <ranker cache addr>:<ranker cache port>
-    notCluster: <derived from ranker.cache.isCluster>
-    ssl: <ranker cache ssl>
-task:
-  - name: ranker-inference
-    session: ranker-inference
-    target: inference_queue
-    threshold: 10
-```
+For windowed inference metrics, cashbot-go does not use the old instantaneous
+availability sample.
 
-When ranker uses the global cache, `sessions.ranker-inference` and the task
-`session` field are omitted.
+## Redis Contract
 
-## Threshold
+Ranker busy samples are written to the same Redis configured by `metricsBroker`.
+That is the existing metrics cache in the chart.
 
-The default ranker inference task threshold is `10`, matching the existing task
-backlog default documented in the GroundX Studio Harness autoscaling reference.
+If `ranker.cache.addr` is set, ranker search/Celery brokers use that ranker
+cache, but the busy HPA metric still uses `metrics.session`. The chart does not
+render `metrics.sessions.ranker-inference` for the busy metric.
 
-A threshold of `1` is intentionally avoided because one queued ranker task would
-report full utilization and can make GPU HPA behavior too sensitive.
+## Sensitivity
+
+The default window is `60` seconds. The default HPA target is `0.9`, so a
+single one-second request on one worker reports about `0.0167`, not `1.0`.
+Sustained saturation across the window is required before the pod-specific
+metric reaches the scale target.
 
 ## Source And Mirror
 
@@ -72,8 +70,9 @@ Because ranker inference pods can require GPU node launch plus model readiness,
 rendered correctness is not enough. After approval, validate under a controlled
 ramp while watching:
 
-- `ranker-inference:task`
-- `LLEN {celery}inference_queue`
+- `ranker-inference:inference`
+- Redis `ranker-inference:*:busy_start_ms`
+- Redis `ranker-inference:busy:*:ms`
 - HPA events
 - Pending pods
 - GPU node readiness
@@ -81,12 +80,11 @@ ramp while watching:
 - ranker API latency
 - Lambda duration and errors
 
-If `ranker.cache.addr` is overridden, confirm the metrics server reads the Redis
-instance that owns `{celery}inference_queue`.
+If `ranker.cache.addr` is overridden, confirm ranker search/Celery uses the
+ranker cache while busy samples still land in the metrics cache.
 
 ## Non-Goals
 
 - No ranker API HPA or capacity metric change.
-- No new cashbot-go task metric algorithm.
-- No ai-server image, worker-health, or ranker-specific metric change.
+- No task backlog metric change for other Celery workers.
 - No node, GPU, Cluster Autoscaler, secret, search, ranking, or data change.

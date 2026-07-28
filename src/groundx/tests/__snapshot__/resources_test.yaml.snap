@@ -129,6 +129,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              busyWindowSeconds: 60
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -172,9 +174,6 @@
               threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 10
-            - name: ranker-inference
-              target: inference_queue
               threshold: 10
           throughput:
             - name: groundx
@@ -616,6 +615,7 @@
             deviceType="cuda",
             brokerType="redis",
             metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            metricsBusyWindowSeconds=60,
             searchBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             searchLog="ranker",
             searchResultBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
@@ -1123,6 +1123,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              busyWindowSeconds: 60
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -1175,9 +1177,6 @@
               threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 10
-            - name: ranker-inference
-              target: inference_queue
               threshold: 10
           throughput:
             - name: extract-agent
@@ -1814,6 +1813,7 @@
             deviceType="cuda",
             brokerType="redis",
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
+            metricsBusyWindowSeconds=60,
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
@@ -2336,6 +2336,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              busyWindowSeconds: 60
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -2379,9 +2381,6 @@
               threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 10
-            - name: ranker-inference
-              target: inference_queue
               threshold: 10
           throughput:
             - name: groundx
@@ -2832,6 +2831,7 @@
             deviceType="cuda",
             brokerType="redis",
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
+            metricsBusyWindowSeconds=60,
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
@@ -3323,6 +3323,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              busyWindowSeconds: 60
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -3366,9 +3368,6 @@
               threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 10
-            - name: ranker-inference
-              target: inference_queue
               threshold: 10
           throughput:
             - name: groundx
@@ -3819,6 +3818,7 @@
             deviceType="cuda",
             brokerType="redis",
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
+            metricsBusyWindowSeconds=60,
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
@@ -4322,6 +4322,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              busyWindowSeconds: 60
           namespace: eyelevel
           page:
             tokensPerMinute: 1000
@@ -4362,9 +4364,6 @@
               threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 10
-            - name: ranker-inference
-              target: inference_queue
               threshold: 10
           throughput:
             - name: groundx
@@ -4817,6 +4816,7 @@
             deviceType="cuda",
             brokerType="redis",
             metricsBroker="rediss://metrics-cache.existing.com:6379/0",
+            metricsBusyWindowSeconds=60,
             searchBroker="rediss://cache.existing.com:6379/0",
             searchLog="ranker",
             searchResultBroker="rediss://cache.existing.com:6379/0",
@@ -5204,6 +5204,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              busyWindowSeconds: 60
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -5256,9 +5258,6 @@
               threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 10
-            - name: ranker-inference
-              target: inference_queue
               threshold: 10
           throughput:
             - name: extract-agent
@@ -5880,6 +5879,7 @@
             deviceType="cuda",
             brokerType="redis",
             metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            metricsBusyWindowSeconds=60,
             searchBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             searchLog="ranker",
             searchResultBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
@@ -6402,6 +6402,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              busyWindowSeconds: 60
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -6454,9 +6456,6 @@
               threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 10
-            - name: ranker-inference
-              target: inference_queue
               threshold: 10
           throughput:
             - name: extract-agent
@@ -7109,6 +7108,7 @@
             deviceType="cuda",
             brokerType="redis",
             metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            metricsBusyWindowSeconds=60,
             searchBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             searchLog="ranker",
             searchResultBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
@@ -7602,6 +7602,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              busyWindowSeconds: 60
           namespace: eyelevel
           page:
             tokensPerMinute: 1000
@@ -7651,9 +7653,6 @@
               threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 10
-            - name: ranker-inference
-              target: inference_queue
               threshold: 10
           throughput:
             - name: extract-agent
@@ -8270,6 +8269,7 @@
             deviceType="cuda",
             brokerType="redis",
             metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            metricsBusyWindowSeconds=60,
             searchBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             searchLog="ranker",
             searchResultBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
@@ -8667,6 +8667,8 @@
           inference:
             - name: myapp-inference
               tokensPerMinute: 240000
+            - name: myapp-inference
+              busyWindowSeconds: 60
             - name: myapp-api
               tokensPerMinute: 9600
             - name: myapp-inference
@@ -8709,9 +8711,6 @@
               target: my-queue
               threshold: 10
             - name: myapp-save
-              target: my-queue
-              threshold: 10
-            - name: myapp-inference
               target: my-queue
               threshold: 10
           throughput:
@@ -9262,6 +9261,7 @@
             deviceType="cpu",
             brokerType="redis",
             metricsBroker="redis://myapp-myapp.eyelevel.svc.cluster.local:8082/0",
+            metricsBusyWindowSeconds=60,
             searchBroker="redis://myapp.eyelevel.svc.cluster.local:8082/0",
             searchLog="myapp",
             searchResultBroker="redis://myapp.eyelevel.svc.cluster.local:8082/0",
@@ -9646,6 +9646,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              busyWindowSeconds: 60
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -9689,9 +9691,6 @@
               threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 10
-            - name: ranker-inference
-              target: inference_queue
               threshold: 10
           throughput:
             - name: groundx
@@ -10116,6 +10115,7 @@
             deviceType="cuda",
             brokerType="redis",
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
+            metricsBusyWindowSeconds=60,
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
@@ -10621,6 +10621,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              busyWindowSeconds: 60
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -10664,9 +10666,6 @@
               threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 10
-            - name: ranker-inference
-              target: inference_queue
               threshold: 10
           throughput:
             - name: groundx
@@ -11091,6 +11090,7 @@
             deviceType="cuda",
             brokerType="redis",
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
+            metricsBusyWindowSeconds=60,
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
@@ -11603,6 +11603,8 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
+            - name: ranker-inference
+              busyWindowSeconds: 60
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -11655,9 +11657,6 @@
               threshold: 10
             - name: layout-save
               target: save_queue,celery
-              threshold: 10
-            - name: ranker-inference
-              target: inference_queue
               threshold: 10
           throughput:
             - name: extract-agent
@@ -12266,6 +12265,7 @@
             deviceType="cuda",
             brokerType="redis",
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
+            metricsBusyWindowSeconds=60,
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
