@@ -20,6 +20,10 @@ data:
         {{- if ne (include "groundx.ranker.inference.busyWindowSeconds" . | trim) "0" }}
         metricsBusyWindowSeconds={{ include "groundx.ranker.inference.busyWindowSeconds" . }},
         {{- end }}
+        {{- $perf := get (.Values.ranker | default dict) "performance" | default "" -}}
+        {{- if ne (toString $perf) "" }}
+        PERFORMANCE={{ $perf | quote }},
+        {{- end }}
         searchBroker={{ printf "%s://%s:%v/0" (include "groundx.ranker.cache.scheme" .) (include "groundx.ranker.cache.addr" .) (include "groundx.ranker.cache.port" .) | quote }},
         searchLog={{ include "groundx.ranker.serviceName" . | quote }},
         searchResultBroker={{ printf "%s://%s:%v/0" (include "groundx.ranker.cache.scheme" .) (include "groundx.ranker.cache.addr" .) (include "groundx.ranker.cache.port" .) | quote }},
