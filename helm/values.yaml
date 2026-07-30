@@ -294,6 +294,11 @@ queue:
       memory: 128Mi
 
 ranker:
+  # Optional diagnostic logging switch. Empty is off; "1" enables ranker/search
+  # timing logs, and "2" may be used by callers that already emit deeper
+  # PERFORMANCE logs.
+  performance: ""
+
   # Optional ranker-only cache override. When addr is set, ranker API and
   # inference use this cache for searchBroker/searchResultBroker instead of
   # the global cache settings.
