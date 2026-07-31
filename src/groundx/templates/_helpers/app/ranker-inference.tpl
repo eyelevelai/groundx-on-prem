@@ -67,7 +67,7 @@ true
 
 {{/* fraction of threshold */}}
 {{- define "groundx.ranker.inference.target.default" -}}
-0.9
+0.5
 {{- end }}
 
 {{/* queue message backlog */}}
@@ -110,13 +110,17 @@ true
 {{- $name := (include "groundx.ranker.inference.serviceName" .) -}}
 {{- $cld := dig "cooldown" 60 $rep -}}
 {{- $upCl := dig "upCooldown" $cld $rep -}}
+{{- $throughputMetric := "0" -}}
+{{- if gt (dig "throughput" 0 $rep | float64) 0.0 -}}
+  {{- $throughputMetric = printf "%s:throughput" $name -}}
+{{- end -}}
 {{- $cfg := dict
   "downCooldown" (mul $cld 2)
   "enabled"      $enabled
   "metric"       (printf "%s:inference" $name)
   "name"         $name
   "replicas"     $rep
-  "throughput"   (printf "%s:throughput" $name)
+  "throughput"   $throughputMetric
   "upCooldown"   $upCl
 -}}
 {{- $cfg | toYaml -}}

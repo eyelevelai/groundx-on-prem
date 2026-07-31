@@ -311,6 +311,7 @@ ranker:
 
   api:
     enabled: true
+    batchSize: 3
 
     resources:
       requests:
@@ -318,6 +319,10 @@ ranker:
         memory: 128Mi
   inference:
     enabled: true
+
+    replicas:
+      desired: 1
+      throughput: 0
 
     resources:
       limits:

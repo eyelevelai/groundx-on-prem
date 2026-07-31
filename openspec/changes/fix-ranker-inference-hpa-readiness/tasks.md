@@ -23,7 +23,10 @@
 ## 3. Implement Chart Change
 
 - [x] Keep ranker inference HPA on `ranker-inference:inference`.
-- [x] Keep `ranker-inference:throughput`.
+- [x] Default ranker inference throughput to `0`.
+- [x] Suppress the ranker inference throughput HPA metric when throughput is
+      `0`.
+- [x] Preserve explicit nonzero throughput overrides.
 - [x] Render ranker inference under `metrics.inference` with
       `busyWindowSeconds: 60`.
 - [x] Omit ranker busy metrics and writer config when ranker inference HPA is
@@ -31,7 +34,8 @@
 - [x] Remove ranker inference from `metrics.task`.
 - [x] Do not render a ranker-specific metrics session for the busy metric.
 - [x] Pass `metricsBusyWindowSeconds` to ranker ai-server config.
-- [x] Default the HPA target to `0.9`.
+- [x] Default the HPA target to `0.5`.
+- [x] Render `ranker.api.batchSize` into ranker config and default it to `3`.
 - [x] Mirror the changed source templates into `helm/`.
 - [x] Leave ranker API HPA, node settings, secrets, and stateful
       resources unchanged.
@@ -59,14 +63,18 @@
 
 ## 5. Post-Approval Deployment Test Plan
 
-- [ ] Deploy the chart change after explicit approval.
-- [ ] Confirm deployed HPA and metrics server versions.
-- [ ] Confirm `ranker-inference:inference` is near zero at idle.
-- [ ] Confirm busy start/bucket Redis keys explain the external metric.
-- [ ] If `ranker.cache.addr` is overridden, confirm the metrics server reads the
+- [x] Deploy the chart change after explicit approval.
+- [x] Confirm deployed HPA and metrics server versions.
+- [x] Confirm `ranker-inference:inference` is near zero at idle.
+- [x] Confirm busy start/bucket Redis keys explain the external metric.
+- [x] If `ranker.cache.addr` is overridden, confirm the metrics server reads the
       metrics cache while ranker search/Celery uses the ranker cache.
-- [ ] Run a controlled ramp that exercises ranker inference.
-- [ ] Watch `ranker-inference:inference`, `ranker-inference:throughput`,
-      busy Redis keys, HPA events, pending pods, GPU node readiness, model
+- [x] Run a controlled ramp that exercises ranker inference.
+- [x] Watch `ranker-inference:inference`, busy Redis keys, HPA events, pending
+      pods, GPU node readiness, model
       readiness, ranker API latency, and Lambda duration/errors.
-- [ ] Tune `busyWindowSeconds` or HPA target only from observed scale timing.
+- [x] Tune `busyWindowSeconds` or HPA target only from observed scale timing.
+
+Live canary result: batch size `3` with HPA target `0.5` scaled earlier than
+`0.6`, preserved successful response score hashes, and still showed that
+`min=1` cannot hide GPU/model warm-up during burst traffic.

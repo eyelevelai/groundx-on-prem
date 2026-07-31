@@ -202,8 +202,6 @@
               tokensPerMinute: 100000
             - name: ranker-api
               tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -616,6 +614,7 @@
             brokerType="redis",
             metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
             searchBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             searchLog="ranker",
             searchResultBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
@@ -1213,8 +1212,6 @@
               tokensPerMinute: 100000
             - name: ranker-api
               tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -1814,6 +1811,7 @@
             brokerType="redis",
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
@@ -2409,8 +2407,6 @@
               tokensPerMinute: 100000
             - name: ranker-api
               tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -2832,6 +2828,7 @@
             brokerType="redis",
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
@@ -3396,8 +3393,6 @@
               tokensPerMinute: 100000
             - name: ranker-api
               tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -3819,6 +3814,7 @@
             brokerType="redis",
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
@@ -4392,8 +4388,6 @@
               tokensPerMinute: 100000
             - name: ranker-api
               tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-client
               tokensPerMinute: 54000
             - name: upload
@@ -4817,6 +4811,7 @@
             brokerType="redis",
             metricsBroker="rediss://metrics-cache.existing.com:6379/0",
             metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
             searchBroker="rediss://cache.existing.com:6379/0",
             searchLog="ranker",
             searchResultBroker="rediss://cache.existing.com:6379/0",
@@ -5294,8 +5289,6 @@
               tokensPerMinute: 100000
             - name: ranker-api
               tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -5880,6 +5873,7 @@
             brokerType="redis",
             metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
             searchBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             searchLog="ranker",
             searchResultBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
@@ -6492,8 +6486,6 @@
               tokensPerMinute: 100000
             - name: ranker-api
               tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -7109,6 +7101,7 @@
             brokerType="redis",
             metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
             searchBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             searchLog="ranker",
             searchResultBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
@@ -7689,8 +7682,6 @@
               tokensPerMinute: 100000
             - name: ranker-api
               tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-client
               tokensPerMinute: 54000
             - name: upload
@@ -8270,6 +8261,7 @@
             brokerType="redis",
             metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
             searchBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             searchLog="ranker",
             searchResultBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
@@ -8740,8 +8732,6 @@
               tokensPerMinute: 100000
             - name: myapp-api
               tokensPerMinute: 720000
-            - name: myapp-inference
-              tokensPerMinute: 480000
             - name: myapp-api
               tokensPerMinute: 9600
             - name: myapp-inference
@@ -9262,6 +9252,7 @@
             brokerType="redis",
             metricsBroker="redis://myapp-myapp.eyelevel.svc.cluster.local:8082/0",
             metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
             searchBroker="redis://myapp.eyelevel.svc.cluster.local:8082/0",
             searchLog="myapp",
             searchResultBroker="redis://myapp.eyelevel.svc.cluster.local:8082/0",
@@ -9719,8 +9710,6 @@
               tokensPerMinute: 100000
             - name: ranker-api
               tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -10116,6 +10105,7 @@
             brokerType="redis",
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
@@ -10694,8 +10684,6 @@
               tokensPerMinute: 100000
             - name: ranker-api
               tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -11091,6 +11079,7 @@
             brokerType="redis",
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
@@ -11693,8 +11682,6 @@
               tokensPerMinute: 100000
             - name: ranker-api
               tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -12266,6 +12253,7 @@
             brokerType="redis",
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
             metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",

@@ -24,6 +24,7 @@ data:
         {{- if ne (toString $perf) "" }}
         PERFORMANCE={{ $perf | quote }},
         {{- end }}
+        rankerBatchSize={{ include "groundx.ranker.api.batchSize" . }},
         searchBroker={{ printf "%s://%s:%v/0" (include "groundx.ranker.cache.scheme" .) (include "groundx.ranker.cache.addr" .) (include "groundx.ranker.cache.port" .) | quote }},
         searchLog={{ include "groundx.ranker.serviceName" . | quote }},
         searchResultBroker={{ printf "%s://%s:%v/0" (include "groundx.ranker.cache.scheme" .) (include "groundx.ranker.cache.addr" .) (include "groundx.ranker.cache.port" .) | quote }},

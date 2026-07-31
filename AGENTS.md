@@ -26,6 +26,14 @@ dependency on any other `groundx-*` repo** (verified).
 - **Published chart install** (customer/released chart path):
   `helm repo add groundx https://registry.groundx.ai/helm && helm repo update`
   then `helm install groundx groundx/groundx -n eyelevel -f values.yaml`
+- **Temporary app-image canaries:** this repo does not build `ai-server` images. Build deployable
+  `python-api`, `ranker-inference`, and related image tags from the owning repo's GitHub Actions
+  `Build Containers` workflow on the exact branch/SHA under test, then deploy them with explicit
+  Helm image overrides. Do not rely on local Docker as the primary deployable-image path. If an
+  API/worker contract changes, override all affected images together and verify every consumer on
+  the Celery queue is compatible. Hosted prod can have external `inf*@ip-*` workers on the same
+  ranker `inference_queue`; the chart only controls the Kubernetes workers. Isolate the queue before
+  a Kubernetes-only payload-contract canary.
 - **Quality gates that MUST pass before any PR merges:**
   - `helm unittest src/groundx` — snapshot tests; **this is the CI gate** (`.github/workflows/helm-tests.yml`, runs on every push/PR/release). It is the **only** check that guards template changes.
   - `helm template src/groundx -f src/groundx/values/minikube/values.yaml` — render check (must render cleanly).

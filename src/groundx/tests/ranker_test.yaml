@@ -100,6 +100,19 @@ tests:
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "rankerSession:"
+  - it: "ranker API batch size renders into ranker config"
+    templates:
+      - ../templates/resources/ranker-config-py.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      ranker.api.enabled: true
+      ranker.api.batchSize: 4
+      ranker.inference.enabled: true
+    asserts:
+      - matchRegex:
+          path: data["config.py"]
+          pattern: "rankerBatchSize=4"
   - it: "ranker inference busy metric is omitted when HPA is disabled"
     templates:
       - ../templates/resources/config-yaml.yaml
