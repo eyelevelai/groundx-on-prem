@@ -7,15 +7,19 @@ point-in-time worker sample or queue backlog.
 
 ## HPA Contract
 
-The rendered ranker inference HPA uses two external metrics:
+The rendered ranker inference HPA uses one external metric by default:
 
 ```text
-ranker-inference:throughput
 ranker-inference:inference
 ```
 
-`ranker-inference:throughput` stays as the existing pipeline throughput axis.
-`ranker-inference:inference` becomes the pod-specific busy-time axis.
+`ranker-inference:inference` is the pod-specific busy-time axis.
+
+`ranker-inference:throughput` is opt-in. If
+`ranker.inference.replicas.throughput` is greater than `0`, the chart still
+renders the throughput HPA metric. The base chart default is `0`, because this
+service should scale from actual inference busy time instead of request
+throughput.
 
 ## Metrics Config
 
@@ -54,10 +58,16 @@ render `metrics.sessions.ranker-inference` for the busy metric.
 
 ## Sensitivity
 
-The default window is `60` seconds. The default HPA target is `0.9`, so a
+The default window is `60` seconds. The default HPA target is `0.5`, so a
 single one-second request on one worker reports about `0.0167`, not `1.0`.
 Sustained saturation across the window is required before the pod-specific
 metric reaches the scale target.
+
+## Ranker API Batch Size
+
+`ranker.api.batchSize` renders into ranker config as `rankerBatchSize`. The
+default is `3`, based on live canary testing with production-like search
+payloads. Successful responses kept the same score hash during the canary.
 
 ## Source And Mirror
 

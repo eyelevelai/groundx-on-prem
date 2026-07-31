@@ -17,16 +17,18 @@ the chart wires ranker inference to that metric.
 
 - Render the ranker inference pod-specific HPA metric as
   `ranker-inference:inference`.
-- Keep `ranker-inference:throughput` as the pipeline throughput axis.
+- Default ranker inference throughput to `0` so the HPA ignores the pipeline
+  throughput axis unless an install explicitly sets a nonzero value.
 - Render ranker inference under `metrics.inference` with
   `busyWindowSeconds`, defaulting to `60`.
 - Pass the same `metricsBusyWindowSeconds` value to ranker ai-server config.
+- Render `ranker.api.batchSize` into ranker config, defaulting to `3`.
 - Keep ranker busy samples on the existing `metrics.session` Redis path. If
   `ranker.cache.addr` is overridden, search/Celery traffic uses that ranker
   cache, but the HPA busy metric still uses the metrics cache.
 - Remove ranker inference from `metrics.task`; no ranker-specific
   `metrics.sessions` block is rendered for this metric.
-- Default the HPA target to `0.9`.
+- Default the HPA target to `0.5`.
 - Mirror source chart changes into `helm/`.
 - Add the cashbot-go reader and ai-server writer changes required by this
   chart contract.
@@ -42,8 +44,7 @@ the chart wires ranker inference to that metric.
 
 1. Deploy the chart change after approval.
 2. Confirm the deployed ranker inference HPA uses `ranker-inference:inference`
-   and
-   `ranker-inference:throughput`.
+   only by default.
 3. Confirm rendered `config.yaml` lists ranker inference under
    `metrics.inference` with `busyWindowSeconds: 60`.
 4. Confirm rendered ranker config includes `metricsBusyWindowSeconds=60` and
