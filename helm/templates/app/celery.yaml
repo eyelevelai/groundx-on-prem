@@ -72,6 +72,8 @@ spec:
     spec:
 {{- if and $rp (hasKey $rp "gracePeriod") }}
       terminationGracePeriodSeconds: {{ get $rp "gracePeriod" }}
+{{- else if eq $mapPrefix "extract" }}
+      terminationGracePeriodSeconds: 900
 {{- end }}
 {{- if $san }}
       serviceAccountName: {{ $san }}
