@@ -47,6 +47,70 @@ tests:
       - matchRegex:
           path: data["supervisord.conf"]
           pattern: "stopwaitsecs=870"
+  - it: "extract-agent pod allows supervisor to drain"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values/extract/values.yaml
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+  - it: "extract-download pod allows supervisor to drain"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values/extract/values.yaml
+    documentSelector:
+      path: metadata.name
+      value: extract-download
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+  - it: "extract-save pod allows supervisor to drain"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values/extract/values.yaml
+    documentSelector:
+      path: metadata.name
+      value: extract-save
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+  - it: "extract-agent pod honors a custom shutdown budget"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values/extract/values.yaml
+    set:
+      extract.agent.replicas.gracePeriod: 120
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 120
+  - it: "extract-agent supervisor keeps a margin inside a custom shutdown budget"
+    templates:
+      - ../templates/resources/extract-supervisord-conf.yaml
+    values:
+      - ../values/extract/values.yaml
+    set:
+      extract.agent.replicas.gracePeriod: 120
+    documentSelector:
+      path: metadata.name
+      value: extract-agent-supervisord-conf-map
+    asserts:
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "stopwaitsecs=90"
   - it: "extract-agent deployment drains celery consumers before termination"
     templates:
       - ../templates/app/celery.yaml
