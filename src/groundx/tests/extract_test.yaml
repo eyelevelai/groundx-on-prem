@@ -171,6 +171,25 @@ tests:
       - matchRegex:
           path: data["config.py"]
           pattern: "image_transport=\"data_url\""
+  - it: "extract config uses the same custom queues as its workers"
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ../values/extract/values.yaml
+    set:
+      extract.agent.queue: custom_agent_queue
+      extract.download.queue: custom_download_queue
+      extract.save.queue: custom_save_queue
+    asserts:
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'agent_queue = "custom_agent_queue"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'download_queue = "custom_download_queue"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'save_queue = "custom_save_queue"'
   - it: "extract config renders nested model kwargs as Python objects"
     templates:
       - ../templates/resources/extract-config-py.yaml

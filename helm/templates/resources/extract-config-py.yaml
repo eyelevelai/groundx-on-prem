@@ -45,6 +45,10 @@ data:
         GroundXSettings,
     )
 
+    agent_queue = {{ include "groundx.extract.agent.queue" . | quote }}
+    download_queue = {{ include "groundx.extract.download.queue" . | quote }}
+    save_queue = {{ include "groundx.extract.save.queue" . | quote }}
+
     agent_settings = AgentSettings(
         {{- if ne $bu "" }}
         api_base={{ $bu | quote }},
