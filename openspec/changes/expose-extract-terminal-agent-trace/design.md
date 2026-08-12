@@ -84,8 +84,10 @@ AGE-272. That rollout must:
 
 1. Verify the processed-layout prefix has encryption, blocked public access,
    least-privilege access, audit logging, and an effective lifecycle rule.
-2. Prove each stage's bounded artifact and total deadline preserve callback or
-   API response behavior.
+2. Prove API diagnostics add at most one second to a failed response while
+   preserving status and body. Prove Celery stages write no terminal object or
+   processing terminal record while callback publication can retry or requeue
+   the task.
 3. Deploy a compatible extract image and this chart with capture disabled.
 4. Verify all four workloads are ready and receive the intended effective
    setting.

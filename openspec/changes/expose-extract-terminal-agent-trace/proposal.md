@@ -40,7 +40,10 @@ shared default and an optional override for each pod.
 
 Internal Arcadia AGE-272 owns terminal behavior for API, agent, download, and
 save. The chart is not complete delivery until a compatible extract image uses
-the effective setting in each pod's terminal failure owner.
+the effective setting in each pod's terminal failure owner. API diagnostics use
+one absolute one-second deadline without changing the general request timeout.
+Celery diagnostics are terminal only after callback publication cannot retry or
+requeue the task.
 
 ## Affected Environments
 

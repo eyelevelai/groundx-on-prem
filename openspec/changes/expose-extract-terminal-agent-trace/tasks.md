@@ -45,6 +45,10 @@
 
 - [ ] Confirm the compatible Internal Arcadia image uses the setting in API,
       agent, download, and save terminal failure owners.
+- [ ] Confirm API failure diagnostics have one absolute one-second deadline and
+      preserve response status and body.
+- [ ] Confirm download, agent, and save write no terminal artifact or processing
+      terminal record while callback publication can retry or requeue the task.
 - [ ] Leave deployment and enablement to the existing AGE-272 storage, budget,
       security, readiness, and natural-failure gates.
 - [ ] Do not deploy or publish from this chart implementation plan.
