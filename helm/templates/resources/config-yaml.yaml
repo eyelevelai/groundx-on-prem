@@ -539,12 +539,20 @@ data:
 
     preProcessFileServer:
       baseURL: {{ include "groundx.preProcess.serviceUrl" . }}
+      {{- $ppRep := (include "groundx.preProcess.replicas" . | fromYaml) }}
+      {{- if hasKey $ppRep "gracePeriod" }}
+      drainSeconds: {{ int (max 1 (sub (int (get $ppRep "gracePeriod")) 30)) }}
+      {{- end }}
       maxConcurrent: {{ include "groundx.preProcess.queueSize" . }}
       port: {{ include "groundx.preProcess.containerPort" . }}
       serviceName: {{ include "groundx.preProcess.serviceName" . }}
 
     processFileServer:
       baseURL: {{ include "groundx.process.serviceUrl" . }}
+      {{- $pRep := (include "groundx.process.replicas" . | fromYaml) }}
+      {{- if hasKey $pRep "gracePeriod" }}
+      drainSeconds: {{ int (max 1 (sub (int (get $pRep "gracePeriod")) 30)) }}
+      {{- end }}
       maxConcurrent: {{ include "groundx.process.queueSize" . }}
       port: {{ include "groundx.process.containerPort" . }}
       serviceName: {{ include "groundx.process.serviceName" . }}
@@ -574,6 +582,10 @@ data:
 
     queueFileServer:
       baseURL: {{ include "groundx.queue.serviceUrl" . }}
+      {{- $qRep := (include "groundx.queue.replicas" . | fromYaml) }}
+      {{- if hasKey $qRep "gracePeriod" }}
+      drainSeconds: {{ int (max 1 (sub (int (get $qRep "gracePeriod")) 30)) }}
+      {{- end }}
       maxConcurrent: {{ include "groundx.queue.queueSize" . }}
       pollTime: 1
       port: {{ include "groundx.queue.containerPort" . }}
@@ -608,6 +620,10 @@ data:
 
     summaryServer:
       baseURL: {{ include "groundx.summaryClient.serviceUrl" . }}
+      {{- $scRep := (include "groundx.summaryClient.replicas" . | fromYaml) }}
+      {{- if hasKey $scRep "gracePeriod" }}
+      drainSeconds: {{ int (max 1 (sub (int (get $scRep "gracePeriod")) 30)) }}
+      {{- end }}
       maxConcurrent: {{ include "groundx.summaryClient.queueSize" . }}
       port: {{ include "groundx.summaryClient.containerPort" . }}
       serviceName: {{ include "groundx.summaryClient.serviceName" . }}
@@ -634,6 +650,10 @@ data:
 
     uploadFileServer:
       baseURL: {{ include "groundx.upload.serviceUrl" . }}
+      {{- $upRep := (include "groundx.upload.replicas" . | fromYaml) }}
+      {{- if hasKey $upRep "gracePeriod" }}
+      drainSeconds: {{ int (max 1 (sub (int (get $upRep "gracePeriod")) 30)) }}
+      {{- end }}
       maxConcurrent: {{ include "groundx.upload.queueSize" . }}
       port: {{ include "groundx.upload.containerPort" . }}
       serviceName: {{ include "groundx.upload.serviceName" . }}
