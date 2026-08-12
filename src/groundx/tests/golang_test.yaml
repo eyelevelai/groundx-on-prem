@@ -202,3 +202,12 @@ tests:
       summaryClient.replicas.timeoutSeconds: 30
     asserts:
       - failedTemplate: {}
+  - it: "schema rejects a non-positive gracePeriod on a Go queue-service replicas block"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      summaryClient.replicas.gracePeriod: 0
+    asserts:
+      - failedTemplate: {}
