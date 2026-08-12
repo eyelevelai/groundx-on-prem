@@ -103,3 +103,102 @@ tests:
       - ./files/values.workspace.enabled.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "summaryClient pod honors a custom shutdown budget"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      summaryClient.replicas.gracePeriod: 900
+    documentSelector:
+      path: metadata.name
+      value: summary-client
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+  - it: "process pod honors a custom shutdown budget independently"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      process.replicas.gracePeriod: 300
+    documentSelector:
+      path: metadata.name
+      value: process
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 300
+  - it: "upload pod honors a custom shutdown budget independently"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      upload.replicas.gracePeriod: 180
+    documentSelector:
+      path: metadata.name
+      value: upload
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 180
+  - it: "queue pod honors a custom shutdown budget independently"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      queue.replicas.gracePeriod: 60
+    documentSelector:
+      path: metadata.name
+      value: queue
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 60
+  - it: "preProcess pod honors a custom shutdown budget independently"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      preProcess.replicas.gracePeriod: 45
+    documentSelector:
+      path: metadata.name
+      value: pre-process
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 45
+  - it: "a Go queue service pod with no gracePeriod set renders unchanged"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/minikube/values.yaml
+    documentSelector:
+      path: metadata.name
+      value: summary-client
+    asserts:
+      - notExists:
+          path: spec.template.spec.terminationGracePeriodSeconds
+  - it: "schema rejects a non-integer gracePeriod"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      summaryClient.replicas.gracePeriod: "soon"
+    asserts:
+      - failedTemplate: {}
+  - it: "schema rejects an unknown key on a Go queue-service replicas block"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      summaryClient.replicas.timeoutSeconds: 30
+    asserts:
+      - failedTemplate: {}
