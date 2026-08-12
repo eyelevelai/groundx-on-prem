@@ -25,6 +25,8 @@
 {{- $did := include "groundx.extract.save.driveId" . -}}
 {{- $tid := include "groundx.extract.save.templateId" . -}}
 {{- $kw := include "groundx.extract.agent.kwargs" . | fromYaml -}}
+{{- $uploadKey := get $fs "username" | default "" -}}
+{{- $uploadSecret := get $fs "password" | default "" -}}
 {{- if eq $st "s3" }}
 {{- $bucketSuffix = "" -}}
 {{- end }}
@@ -100,8 +102,12 @@ data:
             ssl={{ if eq (printf "%v" (get $fs "bucketSSL")) "true" }}True{{ else }}False{{ end }},
             type={{ $st | quote }},
             url={{ printf "%s://%s/%s" (get $fs "scheme") (get $fs "baseDomain") $bucketSuffix | quote }},
-            key={{ get $fs "username" | quote }},
-            secret={{ get $fs "password" | quote }},
+            {{- if ne $uploadKey "" }}
+            key={{ $uploadKey | quote }},
+            {{- end }}
+            {{- if ne $uploadSecret "" }}
+            secret={{ $uploadSecret | quote }},
+            {{- end }}
         ),
         valid_api_keys=[
         {{- $apiKey := include "groundx.admin.apiKey" . -}}

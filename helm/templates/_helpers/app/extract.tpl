@@ -61,7 +61,7 @@ false
 {{- define "groundx.extract.file.existing" -}}
 {{- $in := .Values.extract | default dict -}}
 {{- $efs := dig "file" dict $in -}}
-{{- if and (hasKey $efs "password") (hasKey $efs "serviceType") (hasKey $efs "url") (hasKey $efs "username") (hasKey $efs "bucketName") -}}
+{{- if and (hasKey $efs "serviceType") (hasKey $efs "url") (hasKey $efs "bucketName") -}}
 true
 {{- else -}}
 false

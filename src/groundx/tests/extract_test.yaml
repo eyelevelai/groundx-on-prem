@@ -344,6 +344,51 @@ tests:
       - matchRegex:
           path: data["config.py"]
           pattern: 'save_queue = "custom_save_queue"'
+  - it: "extract config uses credentialless S3 settings for workload identity"
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ../values/extract/values.yaml
+    set:
+      extract.file.bucketName: eyelevel-upload
+      extract.file.region: us-west-2
+      extract.file.serviceType: s3
+      extract.file.url: https://upload.groundx.ai
+    asserts:
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'bucket="eyelevel-upload"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'region="us-west-2"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'type="s3"'
+      - notMatchRegex:
+          path: data["config.py"]
+          pattern: '(?m)^\s+key='
+      - notMatchRegex:
+          path: data["config.py"]
+          pattern: '(?m)^\s+secret='
+  - it: "extract config keeps explicit S3 credentials when configured"
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ../values/extract/values.yaml
+    set:
+      extract.file.bucketName: eyelevel-upload
+      extract.file.region: us-west-2
+      extract.file.serviceType: s3
+      extract.file.url: https://upload.groundx.ai
+      extract.file.username: configured-key
+      extract.file.password: configured-secret
+    asserts:
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'key="configured-key"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'secret="configured-secret"'
   - it: "extract config renders nested model kwargs as Python objects"
     templates:
       - ../templates/resources/extract-config-py.yaml
