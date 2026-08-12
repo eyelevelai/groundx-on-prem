@@ -86,13 +86,13 @@ is the no-op-by-default guarantee for every current install and every one of the
   service-name-based, so it applies uniformly and safely to every service the shared
   template loops over.
 
-### Requirement: Schema accepts `gracePeriod` as an optional integer, strict otherwise
+### Requirement: Schema accepts `gracePeriod` as an optional integer ≥ 1, strict otherwise
 
-`src/groundx/values.schema.json` SHALL add `gracePeriod` (`type: integer`) to the `replicas` schema block of all five Go queue-service entries (`summaryClient`/`process`/`upload`/`queue`/`preProcess`), preserving `additionalProperties: false` on each `replicas` block.
+`src/groundx/values.schema.json` SHALL add `gracePeriod` (`type: integer`, `minimum: 1`) to the `replicas` schema block of all five Go queue-service entries (`summaryClient`/`process`/`upload`/`queue`/`preProcess`), preserving `additionalProperties: false` on each `replicas` block.
 
-Polarity: **reject before state** — an invalid `gracePeriod` (wrong type) or an unknown
-`replicas` key must fail schema validation before any values are accepted; validation
-failure creates no chart state.
+Polarity: **reject before state** — an invalid `gracePeriod` (wrong type, or an integer less
+than `1`) or an unknown `replicas` key must fail schema validation before any values are
+accepted; validation failure creates no chart state.
 
 #### Scenario: Schema accepts a valid integer gracePeriod
 
@@ -105,6 +105,12 @@ failure creates no chart state.
 - **GIVEN** values set `summaryClient.replicas.gracePeriod: "soon"`
 - **WHEN** Helm validates the chart values against `values.schema.json`
 - **THEN** validation fails because `gracePeriod` must be an integer.
+
+#### Scenario: Schema rejects a non-positive gracePeriod
+
+- **GIVEN** values set `summaryClient.replicas.gracePeriod: 0`
+- **WHEN** Helm validates the chart values against `values.schema.json`
+- **THEN** validation fails because `gracePeriod` must satisfy `minimum: 1`.
 
 #### Scenario: Schema rejects an unknown key on a Go queue-service replicas block
 

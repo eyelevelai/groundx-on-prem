@@ -153,3 +153,28 @@ how one service's setting could leak into a sibling's block.
 - Rollback: revert the chart change (or, for FraudX, drop the values override that sets
   `gracePeriod`). Since no `gracePeriod` renders identically to today, rollback is a plain
   `helm upgrade` to the prior chart version/values with no data to unwind.
+
+## Amendments
+
+### 2026-08-12 — `minimum: 1` added to the five Go queue-service `gracePeriod` schema entries
+
+Decision 1 above ("No `minimum`/`maximum` constraint is added … this proposal does not ask
+for one") is **superseded**. A review advisory identified that a non-positive `gracePeriod`
+(`0` or negative) pairs incoherently with the rendered fields: `terminationGracePeriodSeconds:
+0` forces an immediate kill (no drain window at all) while the same value's derived
+`drainSeconds` floors to `1` (per the `max 1 (sub gracePeriod 30)` expression) — the pod is
+killed before the config value it was given even has meaning. `values.schema.json` was
+changed to add `"minimum": 1` to `gracePeriod` on the five Go queue-service `replicas` blocks
+(`summaryClient`/`process`/`upload`/`queue`/`preProcess`), rejecting `0` and negative values at
+schema validation.
+
+This intentionally diverges from the `extract.*` `replicas.gracePeriod` precedent cited in
+Decision 1, which has no `minimum` and remains unguarded. `extract.*` is a separate service
+family, out of this proposal's scope, and its existing unguarded `gracePeriod` is a
+pre-existing condition, not something this change introduces or fixes. Bringing `extract.*`
+into alignment is left for a possible follow-up guard-completeness ticket, not filed as part
+of this change.
+
+The promoted spec (`openspec/specs/queue-service-grace-period/spec.md`, "Schema accepts
+`gracePeriod` as an optional integer ≥ 1, strict otherwise" requirement) was updated to match
+and now carries a reject-non-positive scenario.
