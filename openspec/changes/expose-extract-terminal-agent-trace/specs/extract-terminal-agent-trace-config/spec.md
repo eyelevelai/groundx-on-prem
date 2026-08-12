@@ -73,3 +73,15 @@ changing stateful configuration.
 - **THEN** only the environment of existing extract deployments changes
 - **AND** no service, queue, PVC, RBAC resource, HPA, or stateful resource is
   added or changed.
+
+### Requirement: Runtime rollout remains externally gated
+
+The chart SHALL NOT treat environment rendering as proof that terminal
+diagnostics are safe or active.
+
+#### Scenario: Chart implementation is complete
+
+- **WHEN** chart tests prove the shared and pod values render correctly
+- **THEN** no production capture is enabled by this chart change
+- **AND** deployment remains gated by the Internal Arcadia AGE-272 storage,
+  budget, security, readiness, and natural-failure checks.

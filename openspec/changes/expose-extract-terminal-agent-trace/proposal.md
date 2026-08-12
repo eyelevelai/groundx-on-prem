@@ -2,10 +2,10 @@
 
 ## Why
 
-The extract runtime already reads
-`EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED`, but chart users cannot configure it.
-The setting must be available to every extract pod, with one shared default and
-an optional override for each pod.
+The extract runtime uses `EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED` to retain
+bounded private evidence after terminal failures, but chart users cannot
+configure it. The setting must be available to every extract pod, with one
+shared default and an optional override for each pod.
 
 ## Blast Radius
 
@@ -13,8 +13,8 @@ an optional override for each pod.
   deployments.
 - Any changed effective value rolls only the affected extract deployments.
 - Does not add resources, change queues, storage, RBAC, HPA, or stateful data.
-- Runtime behavior still requires an extract image that consumes the environment
-  variable. The current terminal artifact path runs in agent tasks.
+- Runtime behavior requires the matching Internal Arcadia AGE-272 extension.
+  The chart change alone only injects configuration.
 
 ## What Changes
 
@@ -31,10 +31,16 @@ an optional override for each pod.
 
 ## Out Of Scope
 
-- Adding terminal artifact capture to API, download, or save task paths.
+- Implementing terminal artifact capture. Internal Arcadia owns that runtime.
 - Adding an arbitrary environment-variable map.
 - Changing the extract application image.
 - Deploying or publishing the chart.
+
+## Runtime Dependency
+
+Internal Arcadia AGE-272 owns terminal behavior for API, agent, download, and
+save. The chart is not complete delivery until a compatible extract image uses
+the effective setting in each pod's terminal failure owner.
 
 ## Affected Environments
 
@@ -44,8 +50,8 @@ chart upgrade. There is no data migration or stateful resource impact.
 ## Rollback / Rollforward
 
 Rollback by setting the shared and pod values to `false`, or by deploying the
-previous chart. Roll forward by deploying the updated chart and enabling the
-shared value or selected pod overrides.
+previous chart. Roll forward only through the Internal Arcadia AGE-272 storage,
+budget, security, readiness, and natural-failure gates.
 
 ## Open Design Questions
 

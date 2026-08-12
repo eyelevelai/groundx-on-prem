@@ -58,9 +58,9 @@ The agent helper merges this entry with its existing image-transport variables.
 
 ## Runtime Impact
 
-Every extract process receives the effective value. The current application
-uses the value when creating terminal agent diagnostics. API, download, and save
-do not gain new terminal artifact behavior from this chart-only change.
+Every extract process receives the effective value. Internal Arcadia AGE-272
+owns the matching runtime behavior in the API, agent, download, and save
+terminal failure owners. This chart-only change does not create artifacts.
 
 No success-path logs or artifacts are added. Enabling the value only changes
 behavior in compatible runtime paths that already consume it.
@@ -79,11 +79,19 @@ behavior in compatible runtime paths that already consume it.
 
 ## Rollout
 
-1. Deploy the updated chart with the shared default `false` and verify all four
-   extract workloads remain ready.
-2. Enable the shared value or selected pod overrides through Helm.
-3. Verify the effective environment value in each extract deployment.
-4. Verify a compatible agent image writes one bounded artifact only after a
-   terminal agent failure.
+This plan stops after chart validation and hands deployment to Internal Arcadia
+AGE-272. That rollout must:
+
+1. Verify the processed-layout prefix has encryption, blocked public access,
+   least-privilege access, audit logging, and an effective lifecycle rule.
+2. Prove each stage's bounded artifact and total deadline preserve callback or
+   API response behavior.
+3. Deploy a compatible extract image and this chart with capture disabled.
+4. Verify all four workloads are ready and receive the intended effective
+   setting.
+5. Enable pods through their overrides, then use the shared value only after all
+   four pod paths pass their rollout gates.
+6. Verify successful requests write no terminal artifact. Inspect only natural
+   production failures.
 
 No deployment or chart publication is part of implementation.

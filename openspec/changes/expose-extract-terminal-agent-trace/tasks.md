@@ -32,7 +32,7 @@
 ## 5. Documentation
 
 - [ ] Document the shared value, pod overrides, precedence, and default.
-- [ ] State that only compatible runtime paths act on the setting.
+- [ ] Link the compatible Internal Arcadia AGE-272 runtime and rollout contract.
 
 ## 6. Validation
 
@@ -41,9 +41,10 @@
 - [ ] Run `git diff --check`.
 - [ ] Review the rendered manifest diff for unrelated changes.
 
-## 7. Rollout
+## 7. Runtime Handoff
 
-- [ ] Deploy with the shared default `false` and verify all extract workloads.
-- [ ] Enable the shared setting or selected pod overrides through Helm.
-- [ ] Verify each deployment receives its intended effective value.
-- [ ] Verify terminal agent artifact behavior with a compatible extract image.
+- [ ] Confirm the compatible Internal Arcadia image uses the setting in API,
+      agent, download, and save terminal failure owners.
+- [ ] Leave deployment and enablement to the existing AGE-272 storage, budget,
+      security, readiness, and natural-failure gates.
+- [ ] Do not deploy or publish from this chart implementation plan.
