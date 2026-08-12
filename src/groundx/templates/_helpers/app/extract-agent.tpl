@@ -373,6 +373,7 @@ GROUNDX_AGENT_API_KEY
   "EXTRACT_AGENT_IMAGE_TRANSPORT" (include "groundx.extract.agent.imageTransport" .)
   "EXTRACT_AGENT_MAX_IMAGE_PAYLOAD_BYTES" (include "groundx.extract.agent.maxImagePayloadBytes" .)
   "EXTRACT_AGENT_MAX_REQUEST_IMAGES" (include "groundx.extract.agent.maxRequestImages" .)
+  "EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED" (include "groundx.extract.terminalAgentTraceEnabled" (dict "root" . "pod" "agent"))
 -}}
 {{- $cfg := dict
   "celery"       ("celery_agents")

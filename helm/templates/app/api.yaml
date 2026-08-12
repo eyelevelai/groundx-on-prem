@@ -14,6 +14,7 @@
 {{- $cachePort := coalesce (get $cache "port") (include "groundx.cache.port" $) -}}
 {{- $csct := get $svcData "containerSecurityContext" -}}
 {{- $dpnd := get $svcData "dependencies" | default dict -}}
+{{- $env := get $svcData "env" | default dict -}}
 {{- $guni := get $svcData "gunicorn" -}}
 {{- $image := get $svcData "image" -}}
 {{- $int := get $svcData "interface" -}}
@@ -120,6 +121,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+{{- range $envName, $envValue := $env }}
+            - name: {{ $envName }}
+              value: {{ $envValue | quote }}
+{{- end }}
 {{- if gt (len $scr) 0 }}
           envFrom:
 {{- range $kk, $vv := $scr }}

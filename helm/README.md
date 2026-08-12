@@ -17,3 +17,5 @@ The following table lists the configurable parameters of the GroundX chart and t
 | `admin.username`                            | A UUID that will be associated with the admin account in this deployment        | `00000000-0000-0000-0000-000000000000`|
 | `admin.email`                               | The password associated with the admin account in this deployment               | `support@mycorp.net`                  |
 | `admin.password`                            | The email associated with the admin account in this deployment                  | `password`                            |
+| `extract.terminalAgentTraceEnabled`         | Enables terminal-only private diagnostics for every extract pod                  | `false`                               |
+| `extract.<pod>.terminalAgentTraceEnabled`   | Overrides the shared diagnostic value for api, agent, download, or save           | inherited                             |

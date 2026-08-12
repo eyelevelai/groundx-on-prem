@@ -181,9 +181,13 @@ false
 {{- if ne $apiKey "" -}}
 {{- $_ := set $data (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .) -}}
 {{- end -}}
+{{- $env := dict
+  "EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED" (include "groundx.extract.terminalAgentTraceEnabled" (dict "root" . "pod" "download"))
+-}}
 {{- $cfg := dict
   "celery"       ("celery_agents")
   "dependencies" $dpnd
+  "env"          $env
   "fileDomain"   (include "groundx.extract.file.serviceDependency" .)
   "filePort"     (include "groundx.extract.file.port" .)
   "image"        (include "groundx.extract.download.image" .)
