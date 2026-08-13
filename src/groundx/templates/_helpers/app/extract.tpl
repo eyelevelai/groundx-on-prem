@@ -61,7 +61,10 @@ false
 {{- define "groundx.extract.file.existing" -}}
 {{- $in := .Values.extract | default dict -}}
 {{- $efs := dig "file" dict $in -}}
-{{- if and (hasKey $efs "password") (hasKey $efs "serviceType") (hasKey $efs "url") (hasKey $efs "username") (hasKey $efs "bucketName") -}}
+{{- $serviceType := dig "serviceType" "" $efs | toString | lower -}}
+{{- $workloadIdentityS3 := and (eq $serviceType "s3") (hasKey $efs "url") (hasKey $efs "bucketName") (hasKey $efs "region") -}}
+{{- $credentialedStorage := and (hasKey $efs "password") (hasKey $efs "serviceType") (hasKey $efs "url") (hasKey $efs "username") (hasKey $efs "bucketName") -}}
+{{- if or $workloadIdentityS3 $credentialedStorage -}}
 true
 {{- else -}}
 false

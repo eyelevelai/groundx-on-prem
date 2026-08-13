@@ -59,6 +59,25 @@ tests:
       - equal:
           path: spec.template.spec.terminationGracePeriodSeconds
           value: 900
+  - it: "extract-agent accepts credential-free S3 through workload identity"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.file.bucketName: eyelevel-upload
+      extract.file.region: us-west-2
+      extract.file.serviceType: s3
+      extract.file.url: https://upload.groundx.ai
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[1].command[2]
+          value: "until nc -z upload.groundx.ai 443; do echo waiting for file storage; sleep 2; done"
   - it: "extract-download pod allows supervisor to drain"
     templates:
       - ../templates/app/celery.yaml
