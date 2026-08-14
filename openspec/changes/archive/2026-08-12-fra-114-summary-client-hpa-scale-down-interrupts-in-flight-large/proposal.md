@@ -166,3 +166,18 @@ rendering; this is new chart surface, not a change to previously-specified behav
   values for any service; DLQ; HPA `scaleDown` tuning; raising the SQS visibility timeout. Sizing
   values (`gracePeriod: 900`/`drainSeconds: 870`) live in the private FraudX values override, a
   separate repo, not touched here.
+
+## Amendments
+
+### 2026-08-14 — visibility-timeout figure corrected (FRA-114 review, Ben `bc2327f0`)
+
+The `## Why` above describes the redelivery window as the **"15-minute visibility timeout"** with a
+"≥15-minute tail latency". Per Ben (owner of the queue infra), the deployed `file-summary` SQS
+queue's base visibility timeout is **600s (10 minutes)**, not 900s/15 minutes, and the path
+`groundx-infrastructure/application/sqs.tf` referenced in the cashbot-go implementation does **not
+exist**. The mechanism and the fix are unchanged — cashbot-go renews each in-flight message's
+visibility for the full job regardless of the base window, so the correct figure only tightens the
+"how long a lost message waits" framing (10 min, not 15). No chart or schema change follows from
+this (Ben: "No chart change needed"); the pod `gracePeriod`/`terminationGracePeriodSeconds` values
+(`900`) are a separate concern and remain correct. Original `## Why` text left intact per
+no-silent-rewrite of archived history.
