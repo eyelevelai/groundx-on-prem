@@ -59,6 +59,129 @@ tests:
       - equal:
           path: spec.template.spec.terminationGracePeriodSeconds
           value: 900
+  - it: "extract-agent accepts credential-free S3 through workload identity"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.file.bucketName: eyelevel-upload
+      extract.file.region: us-west-2
+      extract.file.serviceType: s3
+      extract.file.url: https://upload.groundx.ai
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[1].command[2]
+          value: "until nc -z upload.groundx.ai 443; do echo waiting for file storage; sleep 2; done"
+  - it: "extract storage inherits account-wide values field by field"
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.file.bucketName: extract-bucket
+      file.bucketName: account-bucket
+      file.username: account-user
+      file.password: account-secret
+      file.existing.region: us-east-1
+      file.existing.serviceType: minio
+      file.existing.url: https://account-storage.example.com
+    asserts:
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'bucket="extract-bucket"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'region="us-east-1"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'type="minio"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'url="https://account-storage.example.com/extract-bucket/"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'key="account-user"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'secret="account-secret"'
+  - it: "empty extract credentials preserve platform credential injection"
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.file.bucketName: ""
+      extract.file.password: ""
+      extract.file.region: ""
+      extract.file.serviceType: ""
+      extract.file.url: ""
+      extract.file.username: ""
+      file.bucketName: account-bucket
+      file.username: account-user
+      file.password: account-secret
+      file.existing.region: us-west-2
+      file.existing.serviceType: s3
+      file.existing.url: https://account-bucket.s3.us-west-2.amazonaws.com
+    asserts:
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'bucket="account-bucket"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'region="us-west-2"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'type="s3"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'url="https://account-bucket.s3.us-west-2.amazonaws.com/"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'key=""'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'secret=""'
+  - it: "extract pods inherit the account-wide service account"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      serviceAccount.name: account-workload-role
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: account-workload-role
+  - it: "extract pod service account overrides the account-wide service account"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.serviceAccount.name: extract-workload-role
+      serviceAccount.name: account-workload-role
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: extract-workload-role
   - it: "extract-download pod allows supervisor to drain"
     templates:
       - ../templates/app/celery.yaml
