@@ -18,6 +18,21 @@
 {{ dig "callbackUrl" (include "groundx.groundx.serviceUrl" .) $in }}
 {{- end }}
 
+{{- define "groundx.extract.terminalAgentTraceEnabled" -}}
+{{- $root := .root -}}
+{{- $podName := .pod -}}
+{{- $extract := $root.Values.extract | default dict -}}
+{{- $pod := get $extract $podName | default dict -}}
+{{- $enabled := false -}}
+{{- if hasKey $extract "terminalAgentTraceEnabled" -}}
+  {{- $enabled = get $extract "terminalAgentTraceEnabled" -}}
+{{- end -}}
+{{- if hasKey $pod "terminalAgentTraceEnabled" -}}
+  {{- $enabled = get $pod "terminalAgentTraceEnabled" -}}
+{{- end -}}
+{{- $enabled | toString -}}
+{{- end }}
+
 {{- define "groundx.extract.serviceUrl" -}}
 {{- $in := .Values.extract | default dict -}}
 {{- $ur := dig "callbackUrl" (include "groundx.groundx.serviceUrl" .) $in -}}

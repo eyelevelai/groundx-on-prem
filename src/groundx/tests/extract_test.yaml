@@ -162,6 +162,160 @@ tests:
           content:
             name: EXTRACT_AGENT_IMAGE_JPEG_QUALITIES
             value: "20"
+  - it: "extract-api receives terminal diagnostics disabled by default"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values/extract/values.yaml
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: extract-api
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+            value: "false"
+  - it: "extract-agent receives the shared terminal diagnostics value"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values/extract/values.yaml
+    set:
+      extract.terminalAgentTraceEnabled: true
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+            value: "true"
+  - it: "extract-agent receives terminal diagnostics disabled by default"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values/extract/values.yaml
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+            value: "false"
+  - it: "extract-download receives terminal diagnostics disabled by default"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values/extract/values.yaml
+    documentSelector:
+      path: metadata.name
+      value: extract-download
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+            value: "false"
+  - it: "extract-save receives terminal diagnostics disabled by default"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values/extract/values.yaml
+    documentSelector:
+      path: metadata.name
+      value: extract-save
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+            value: "false"
+  - it: "extract-api receives the shared terminal diagnostics value"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values/extract/values.yaml
+    set:
+      extract.terminalAgentTraceEnabled: true
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: extract-api
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+            value: "true"
+  - it: "extract-download receives the shared terminal diagnostics value"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values/extract/values.yaml
+    set:
+      extract.terminalAgentTraceEnabled: true
+    documentSelector:
+      path: metadata.name
+      value: extract-download
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+            value: "true"
+  - it: "extract-save receives the shared terminal diagnostics value"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values/extract/values.yaml
+    set:
+      extract.terminalAgentTraceEnabled: true
+    documentSelector:
+      path: metadata.name
+      value: extract-save
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+            value: "true"
+  - it: "extract-download explicit false overrides shared true"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values/extract/values.yaml
+    set:
+      extract.terminalAgentTraceEnabled: true
+      extract.download.terminalAgentTraceEnabled: false
+    documentSelector:
+      path: metadata.name
+      value: extract-download
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+            value: "false"
+  - it: "extract-save explicit true overrides shared false"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values/extract/values.yaml
+    set:
+      extract.terminalAgentTraceEnabled: false
+      extract.save.terminalAgentTraceEnabled: true
+    documentSelector:
+      path: metadata.name
+      value: extract-save
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+            value: "true"
   - it: "extract config passes image transport into SDK agent settings"
     templates:
       - ../templates/resources/extract-config-py.yaml
