@@ -58,163 +58,115 @@ false
 {{- end -}}
 {{- end }}
 
-{{- define "groundx.extract.file.existing" -}}
+{{- define "groundx.extract.file.effectiveSettings" -}}
+{{- $settings := include "groundx.file.settings" . | fromYaml | deepCopy -}}
 {{- $in := .Values.extract | default dict -}}
 {{- $efs := dig "file" dict $in -}}
-{{- $serviceType := dig "serviceType" "" $efs | toString | lower -}}
-{{- $workloadIdentityS3 := and (eq $serviceType "s3") (hasKey $efs "url") (hasKey $efs "bucketName") (hasKey $efs "region") -}}
-{{- $credentialedStorage := and (hasKey $efs "password") (hasKey $efs "serviceType") (hasKey $efs "url") (hasKey $efs "username") (hasKey $efs "bucketName") -}}
-{{- if or $workloadIdentityS3 $credentialedStorage -}}
-true
-{{- else -}}
-false
-{{- end -}}
-{{- end }}
-
-{{- define "groundx.extract.file.bucketName" -}}
-{{- $in := .Values.extract | default dict -}}
-{{- $efs := dig "file" dict $in -}}
-{{ dig "bucketName" (include "groundx.file.bucketName" .) $efs }}
-{{- end }}
-
-{{- define "groundx.extract.file.domain" -}}
-{{- $in := .Values.extract | default dict -}}
-{{- $ic := include "groundx.extract.file.existing" . -}}
-{{- if eq $ic "true" -}}
-  {{- $ex := dig "file" dict $in -}}
-  {{- $url := dig "url" "" $ex -}}
-  {{- $parts := splitList "://" $url -}}
-  {{- if and (kindIs "slice" $parts) (eq (len $parts) 2) -}}
-    {{ index $parts 1 }}
-  {{- else -}}
-    {{ include "groundx.file.serviceHost" . }}
-  {{- end -}}
-{{- else -}}
-  {{ include "groundx.file.serviceHost" . }}
-{{- end -}}
-{{- end }}
-
-{{- define "groundx.extract.file.serviceDependency" -}}
-{{- $in := .Values.extract | default dict -}}
-{{- $ic := include "groundx.extract.file.existing" . -}}
-{{- if eq $ic "true" -}}
-  {{- $ex := dig "file" dict $in -}}
-  {{- $url := dig "url" "" $ex -}}
-  {{- $parts := splitList "://" $url -}}
-  {{- if and (kindIs "slice" $parts) (eq (len $parts) 2) -}}
-    {{ index $parts 1 }}
-  {{- else -}}
-    {{ include "groundx.file.serviceDependency" . }}
-  {{- end -}}
-{{- else -}}
-  {{ include "groundx.file.serviceDependency" . }}
-{{- end -}}
-{{- end }}
-
-{{- define "groundx.extract.file.password" -}}
-{{- $in := .Values.extract | default dict -}}
-{{- $efs := dig "file" dict $in -}}
-{{ dig "password" (include "groundx.file.password" .) $efs }}
-{{- end }}
-
-{{- define "groundx.extract.file.port" -}}
-{{- $in := .Values.extract | default dict -}}
-{{- $ic := include "groundx.extract.file.existing" . -}}
-{{- if eq $ic "true" -}}
-  {{- $ex := dig "file" dict $in -}}
-  {{- $url := dig "url" "" $ex -}}
+{{- $bucketName := dig "bucketName" "" $efs -}}
+{{- if not (empty $bucketName) -}}{{- $_ := set $settings "bucketName" $bucketName -}}{{- end -}}
+{{- $region := dig "region" "" $efs -}}
+{{- if not (empty $region) -}}{{- $_ := set $settings "region" $region -}}{{- end -}}
+{{- $storageType := dig "serviceType" "" $efs -}}
+{{- if not (empty $storageType) -}}{{- $_ := set $settings "storageType" $storageType -}}{{- end -}}
+{{- if hasKey $efs "username" -}}{{- $_ := set $settings "username" (get $efs "username") -}}{{- end -}}
+{{- if hasKey $efs "password" -}}{{- $_ := set $settings "password" (get $efs "password") -}}{{- end -}}
+{{- $url := dig "url" "" $efs -}}
+{{- if not (empty $url) -}}
   {{- $parts := splitList "://" $url -}}
   {{- $domain := $url -}}
-  {{- $sch := "http" -}}
+  {{- $scheme := "http" -}}
   {{- if and (kindIs "slice" $parts) (eq (len $parts) 2) -}}
-    {{- $sch = index $parts 0 -}}
+    {{- $scheme = index $parts 0 -}}
     {{- $domain = index $parts 1 -}}
   {{- end -}}
-  {{- $pparts := splitList ":" $domain -}}
-  {{- $rawPort := dig "port" "" $ex -}}
+  {{- $ssl := eq $scheme "https" -}}
+  {{- $_ := set $settings "baseDomain" $domain -}}
+  {{- $_ := set $settings "bucketDomain" $domain -}}
+  {{- $_ := set $settings "bucketSSL" $ssl -}}
+  {{- $_ := set $settings "scheme" $scheme -}}
+  {{- $_ := set $settings "ssl" $ssl -}}
+  {{- $dependencyParts := splitList ":" $domain -}}
+  {{- if and (kindIs "slice" $dependencyParts) (eq (len $dependencyParts) 2) -}}
+    {{- $_ := set $settings "dependency" (index $dependencyParts 0) -}}
+  {{- else -}}
+    {{- $_ := set $settings "dependency" $domain -}}
+  {{- end -}}
+  {{- $rawPort := dig "port" "" $efs -}}
   {{- $port := -1 -}}
-  {{- if (kindIs "string" $rawPort) }}
-    {{- $port = (int $rawPort) -}}
-  {{- else if (kindIs "int" $rawPort) }}
+  {{- if kindIs "string" $rawPort -}}
+    {{- $port = int $rawPort -}}
+  {{- else if kindIs "int" $rawPort -}}
     {{- $port = $rawPort -}}
   {{- end -}}
   {{- if gt $port 0 -}}
-    {{ $port }}
-  {{- else if and (kindIs "slice" $pparts) (eq (len $pparts) 2) -}}
-    {{ index $pparts 1 }}
-  {{- else if eq $sch "https" -}}
-443
+    {{- $_ := set $settings "port" $port -}}
+  {{- else if and (kindIs "slice" $dependencyParts) (eq (len $dependencyParts) 2) -}}
+    {{- $_ := set $settings "port" (index $dependencyParts 1) -}}
+  {{- else if $ssl -}}
+    {{- $_ := set $settings "port" 443 -}}
   {{- else -}}
-80
+    {{- $_ := set $settings "port" 80 -}}
   {{- end -}}
 {{- else -}}
-  {{ include "groundx.file.port" . }}
+  {{- $rawPort := dig "port" "" $efs -}}
+  {{- $port := -1 -}}
+  {{- if kindIs "string" $rawPort -}}
+    {{- $port = int $rawPort -}}
+  {{- else if kindIs "int" $rawPort -}}
+    {{- $port = $rawPort -}}
+  {{- end -}}
+  {{- if gt $port 0 -}}{{- $_ := set $settings "port" $port -}}{{- end -}}
 {{- end -}}
+{{- $_ := set $settings "serviceType" (get $settings "storageType") -}}
+{{- $settings | toYaml -}}
 {{- end }}
 
-{{- define "groundx.extract.file.region" -}}
-{{- $in := .Values.extract | default dict -}}
-{{- $efs := dig "file" dict $in -}}
-{{ dig "region" (include "groundx.file.region" .) $efs }}
-{{- end }}
-
-{{- define "groundx.extract.file.storageType" -}}
-{{- $in := .Values.extract | default dict -}}
-{{- $efs := dig "file" dict $in -}}
-{{ dig "serviceType" (include "groundx.file.storageType" .) $efs }}
-{{- end }}
-
-{{- define "groundx.extract.file.ssl" -}}
-{{- $ic := include "groundx.extract.file.existing" . -}}
-{{- if eq $ic "true" -}}
+{{- define "groundx.extract.file.existing" -}}
 {{- $in := .Values.extract | default dict -}}
 {{- $efs := dig "file" dict $in -}}
 {{- $url := dig "url" "" $efs -}}
-{{- $parts := splitList "://" $url -}}
-{{- $sch := "http" -}}
-{{- if and (kindIs "slice" $parts) (eq (len $parts) 2) -}}
-{{- $sch = index $parts 0 -}}
-{{- end -}}
-{{- if eq $sch "https" -}}
-true
-{{- else -}}
-false
-{{- end -}}
-{{- else -}}
-{{ include "groundx.file.ssl" . }}
-{{- end -}}
+{{- $accountExisting := include "groundx.file.existing" . | trim | lower -}}
+{{- if or (not (empty $url)) (eq $accountExisting "true") -}}true{{- else -}}false{{- end -}}
+{{- end }}
+
+{{- define "groundx.extract.file.bucketName" -}}
+{{- get (include "groundx.extract.file.effectiveSettings" . | fromYaml) "bucketName" -}}
+{{- end }}
+
+{{- define "groundx.extract.file.domain" -}}
+{{- get (include "groundx.extract.file.effectiveSettings" . | fromYaml) "baseDomain" -}}
+{{- end }}
+
+{{- define "groundx.extract.file.serviceDependency" -}}
+{{- get (include "groundx.extract.file.effectiveSettings" . | fromYaml) "dependency" -}}
+{{- end }}
+
+{{- define "groundx.extract.file.password" -}}
+{{- get (include "groundx.extract.file.effectiveSettings" . | fromYaml) "password" -}}
+{{- end }}
+
+{{- define "groundx.extract.file.port" -}}
+{{- get (include "groundx.extract.file.effectiveSettings" . | fromYaml) "port" -}}
+{{- end }}
+
+{{- define "groundx.extract.file.region" -}}
+{{- get (include "groundx.extract.file.effectiveSettings" . | fromYaml) "region" -}}
+{{- end }}
+
+{{- define "groundx.extract.file.storageType" -}}
+{{- get (include "groundx.extract.file.effectiveSettings" . | fromYaml) "storageType" -}}
+{{- end }}
+
+{{- define "groundx.extract.file.ssl" -}}
+{{- get (include "groundx.extract.file.effectiveSettings" . | fromYaml) "bucketSSL" -}}
 {{- end }}
 
 {{- define "groundx.extract.file.username" -}}
-{{- $in := .Values.extract | default dict -}}
-{{- $efs := dig "file" dict $in -}}
-{{ dig "username" (include "groundx.file.username" .) $efs }}
+{{- get (include "groundx.extract.file.effectiveSettings" . | fromYaml) "username" -}}
 {{- end }}
 
 {{- define "groundx.extract.file.settings" -}}
-{{- $ic := include "groundx.extract.file.existing" . -}}
-{{- if eq $ic "true" -}}
-{{- $in := .Values.extract | default dict -}}
-{{- $efs := dig "file" dict $in -}}
-{{- $bucketSSL := include "groundx.extract.file.ssl" . -}}
-{{- $bucketSSLStr := printf "%v" $bucketSSL -}}
-{{- $bucketScheme := "http" -}}
-{{- if eq $bucketSSLStr "true" -}}{{- $bucketScheme = "https" -}}{{- end -}}
-{{- dict
-    "baseDomain"   (include "groundx.extract.file.domain" .)
-    "bucketDomain" (include "groundx.extract.file.domain" .)
-    "bucketName"   (include "groundx.extract.file.bucketName" .)
-    "bucketSSL"    $bucketSSL
-    "password"     (include "groundx.extract.file.password" .)
-    "port"         (include "groundx.extract.file.port" .)
-    "region"       (include "groundx.extract.file.region" .)
-    "scheme"       $bucketScheme
-    "serviceType"  (include "groundx.extract.file.storageType" .)
-    "username"     (include "groundx.extract.file.username" .)
-  | toYaml -}}
-{{- else -}}
-{{- include "groundx.file.settings" . -}}
-{{- end -}}
+{{- include "groundx.extract.file.effectiveSettings" . -}}
 {{- end }}
 
 {{- define "groundx.extract.services" -}}
