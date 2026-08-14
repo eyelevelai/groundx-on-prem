@@ -85,7 +85,8 @@ diagnostics are safe or active.
 - **THEN** no production capture is enabled by this chart change
 - **AND** deployment remains gated by the Internal Arcadia AGE-272 storage,
   budget, security, readiness, and natural-failure checks
-- **AND** those runtime checks prove API failure diagnostics add at most one
-  second while preserving status and body
+- **AND** those runtime checks prove API failure diagnostics use one best-effort
+  one-second transport budget while preserving status and body, without
+  claiming a hard wall-clock limit
 - **AND** Celery callback retry or requeue retains no terminal artifact or
   processing terminal record.
