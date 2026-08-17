@@ -362,6 +362,15 @@ tests:
       - ./files/values.phoenix.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "summaryClient gracePeriod renders drainSeconds into the config document"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      summaryClient.replicas.gracePeriod: 900
+    asserts:
+      - matchSnapshot: {}
   - it: "summaryClient gracePeriod renders drainSeconds only in the summaryServer block"
     templates:
       - ../templates/resources/config-yaml.yaml

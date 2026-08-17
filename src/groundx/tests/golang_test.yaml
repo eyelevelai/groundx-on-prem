@@ -103,6 +103,18 @@ tests:
       - ./files/values.workspace.enabled.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "summaryClient gracePeriod renders terminationGracePeriodSeconds into the deployment"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      summaryClient.replicas.gracePeriod: 900
+    documentSelector:
+      path: metadata.name
+      value: summary-client
+    asserts:
+      - matchSnapshot: {}
   - it: "summaryClient pod honors a custom shutdown budget"
     templates:
       - ../templates/app/golang.yaml

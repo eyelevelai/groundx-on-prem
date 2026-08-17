@@ -12919,3 +12919,296 @@
         version: 0.1.0
       name: workspace-cleanup-supervisord-conf-map
       namespace: eyelevel
+summaryClient gracePeriod renders drainSeconds into the config document:
+  1: |
+    apiVersion: v1
+    data:
+      config.yaml: |
+        _mysql: &mysql
+          ro_addr: db-cluster-haproxy-replicas.eyelevel.svc.cluster.local
+          rw_addr: db-cluster-haproxy.eyelevel.svc.cluster.local
+          database: eyelevel
+          maxIdle: 5
+          maxOpen: 10
+
+        admin:
+          apiKey: 00000000-0000-0000-0000-000000000000
+          email: "support@mycorp.net"
+          licenseKey: 00000000-0000-0000-0000-000000000000
+          password: "password"
+          username: 00000000-0000-0000-0000-000000000000
+
+        ai:
+          aws:
+            search:
+              baseURL: https://opensearch-cluster-master.eyelevel.svc.cluster.local:9200
+              index: prod-1
+              languages:
+                - en
+              username: "eyelevel"
+              password: "R0otb_*t!kazs"
+          extract:
+            client:
+              apiKey: 00000000-0000-0000-0000-000000000000
+              baseURL: http://extract-api.eyelevel.svc.cluster.local
+              callbackURL: http://layout-webhook.eyelevel.svc.cluster.local
+          eyelevelSearch:
+            apiKey: 00000000-0000-0000-0000-000000000000
+            baseURL: http://ranker-api.eyelevel.svc.cluster.local
+          layout:
+            client:
+              apiKey: 00000000-0000-0000-0000-000000000000
+              baseURL: http://layout-api.eyelevel.svc.cluster.local
+              callbackURL: http://layout-webhook.eyelevel.svc.cluster.local
+          openai:
+            apiKey: 00000000-0000-0000-0000-000000000000
+            baseURL: http://summary-api.eyelevel.svc.cluster.local
+            defaultKitId: 0
+          summaryType: summary
+          searchIndexes:
+            prod-1:
+              languages:
+                - en
+
+        engines:
+          google/gemma-3-4b-it:
+            engineID: "google/gemma-3-4b-it"
+            service: eyelevel
+            maxInputTokens: 100000
+            maxRequests: 4
+            requestLimit: 4
+            vision: true
+
+        environment: prod
+
+        groundxServer:
+          baseURL: http://groundx.eyelevel.svc.cluster.local
+          port: 8080
+          serviceName: groundx
+
+        init:
+          ingestOnly: false
+          search:
+            password: "R0otb_*t!kazs"
+            searchModel: all_access
+            username: "admin"
+
+        integrationTests:
+          search:
+            duration: 3660
+            fileId: "ey-mtr6hapxq7d94zigammwir6xz4"
+            modelId: 1
+
+        layoutWebhookServer:
+          baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          port: 8080
+          serviceName: layout-webhook
+
+        metrics:
+          active: true
+          api:
+            - name: groundx
+              threshold: 4000
+            - name: layout-api
+              threshold: 4000
+            - name: layout-webhook
+              threshold: 4000
+            - name: ranker-api
+              threshold: 4000
+          document:
+            tokensPerMinute: 12500
+          extractRequest:
+            tokensPerMinute: 6000
+          inference:
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: ranker-inference
+              busyWindowSeconds: 60
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 1600
+            - name: summary-client
+              tokensPerMinute: 9600
+          namespace: eyelevel
+          page:
+            tokensPerMinute: 1000
+          queue:
+            - name: pre-process
+              target: pre-process
+              threshold: 10
+            - name: process
+              target: process
+              threshold: 10
+            - name: queue
+              target: queue
+              threshold: 10
+            - name: upload
+              target: upload
+              threshold: 10
+          session:
+            addr: cache-metrics.eyelevel.svc.cluster.local:6379
+            notCluster: true
+            ssl: false
+          summaryRequest:
+            tokensPerMinute: 625
+          task:
+            - name: layout-correct
+              target: correct_queue
+              threshold: 10
+            - name: layout-map
+              target: map_queue
+              threshold: 10
+            - name: layout-ocr
+              target: ocr_queue
+              threshold: 10
+            - name: layout-process
+              target: process_queue
+              threshold: 10
+            - name: layout-save
+              target: save_queue,celery
+              threshold: 10
+          throughput:
+            - name: groundx
+              tokensPerMinute: 150000
+            - name: layout-api
+              tokensPerMinute: 180000
+            - name: layout-correct
+              tokensPerMinute: 100000
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: layout-map
+              tokensPerMinute: 100000
+            - name: layout-ocr
+              tokensPerMinute: 100000
+            - name: layout-process
+              tokensPerMinute: 100000
+            - name: layout-save
+              tokensPerMinute: 150000
+            - name: layout-webhook
+              tokensPerMinute: 150000
+            - name: pre-process
+              tokensPerMinute: 100000
+            - name: process
+              tokensPerMinute: 150000
+            - name: queue
+              tokensPerMinute: 100000
+            - name: ranker-api
+              tokensPerMinute: 270000
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 1600
+            - name: summary-client
+              tokensPerMinute: 9600
+            - name: upload
+              tokensPerMinute: 100000
+
+        owner:
+          baseURL: http://groundx.eyelevel.svc.cluster.local/api/v1
+          name: on-prem
+          type: all
+          username: 00000000-0000-0000-0000-000000000000
+
+        preProcessFileServer:
+          baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: pre-process
+
+        processFileServer:
+          baseURL: http://process.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: process
+
+        processors:
+          convert: [11]
+          extract: [13]
+          layout: [3]
+          map: [4]
+          saveFile: [2]
+          skipConvert: [12]
+          skipGenerate: [1]
+          skipLayout: [5]
+          skipMap: [6]
+          skipSummarize: [7]
+          summarize: [8]
+          summarizeChunks: [10]
+          summarizeSections: [9]
+
+        queueFileServer:
+          baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          pollTime: 1
+          port: 8080
+          serviceName: queue
+
+        queues:
+          filePreProcess:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-pre-process
+            topic: file-pre-process
+            type: kafka
+          fileProcess:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-process
+            topic: file-process
+            type: kafka
+          fileSummaryDev:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-summary
+            topic: file-summary
+            type: kafka
+          fileSummaryProd:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-summary
+            topic: file-summary
+            type: kafka
+          fileUpdate:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-update
+            topic: file-update
+            type: kafka
+          fileUpload:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-upload
+            topic: file-upload
+            type: kafka
+
+        rec:
+          mysql: *mysql
+          session:
+            addr: cache.eyelevel.svc.cluster.local:6379
+            notCluster: true
+            ssl: false
+
+        summaryServer:
+          baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
+          maxConcurrent: 3
+          port: 8080
+          serviceName: summary-client
+
+        upload:
+          baseDomain: minio.eyelevel.svc.cluster.local
+          baseUrl: http://minio.eyelevel.svc.cluster.local
+          bucket: eyelevel
+          bucketUrl: http://minio.eyelevel.svc.cluster.local
+          service: minio
+          ssl: false
+
+        uploadFileServer:
+          baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: upload
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
