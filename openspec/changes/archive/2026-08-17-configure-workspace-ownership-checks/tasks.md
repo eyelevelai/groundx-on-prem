@@ -30,6 +30,7 @@
 
 ## 5. Rollout
 
-- [ ] Deploy the compatible runner image before this chart.
-- [ ] Verify default-on startup before setting the internal environment to false.
-- [ ] Prove rollback to true before production completion.
+- [x] Deploy the compatible runner image before this chart.
+- [x] Verify default-on startup before setting the internal environment to false.
+- [x] Set the internal environment to false and verify every runner process uses it.
+- [x] Record the operator decision to keep ownership checks disabled and not exercise rollback while Workspace is internal-only.
