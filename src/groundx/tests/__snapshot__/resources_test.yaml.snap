@@ -12683,243 +12683,7 @@
         version: 0.1.0
       name: summary-inference-supervisord-conf-map
       namespace: eyelevel
-'workspace-enabled: resources':
-  1: |
-    apiVersion: v1
-    data:
-      WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
-    kind: Secret
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: workspace-secret
-      namespace: eyelevel
-    type: Opaque
-  2: |
-    apiVersion: v1
-    data:
-      config.py: |
-        from pathlib import Path
-
-        from settings import Settings
-
-
-        settings = Settings(
-            allowed_commands="go,npm,pytest,python,node,git",
-            celery_broker_url="redis://cache.eyelevel.svc.cluster.local:6379/0",
-            celery_global_keyprefix="{workspace}",
-            celery_result_backend="redis://cache.eyelevel.svc.cluster.local:6379/0",
-            celery_task_always_eager=False,
-            celery_task_soft_time_limit_seconds=900,
-            command_timeout_seconds=300,
-            git_provider="github",
-            github_api_base_url="https://api.github.com",
-            github_app_id="",
-            github_app_installation_id="",
-            github_app_private_key_path="",
-            github_app_private_key_pem="",
-            github_token_ttl_seconds=3600,
-            gitlab_api_base_url="https://gitlab.com/api/v4",
-            gitlab_token="",
-            gitlab_token_path="",
-            managed_repo_name_prefix="workspace",
-            managed_repo_owner="",
-            managed_repo_visibility="private",
-            mysql_connect_timeout_seconds=10,
-            mysql_database="eyelevel",
-            mysql_host="db-cluster-haproxy.eyelevel.svc.cluster.local",
-            mysql_password="",
-            mysql_port=3306,
-            mysql_username="",
-            publish_dry_run=True,
-            publish_github_workflow_id="deploy.yml",
-            runner_token="test-runner-token",
-            service="workspace",
-            workspace_min_free_bytes=0,
-            workspace_min_free_percent=0,
-            workspace_root=Path("/tmp/workspaces"),
-        )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: workspace-config-py-map
-      namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
-      gunicorn_conf.py: |
-        accesslog = "-"
-        errorlog = "-"
-        loglevel = "info"
-        timeout = 120
-        timeout_keep_alive = 15
-        worker_class = "uvicorn.workers.UvicornWorker"
-        workers = 2
-        threads = 2
-        bind = "0.0.0.0:8080"
-        wsgi_app = "server:app"
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: workspace-gunicorn-conf-py-map
-      namespace: eyelevel
-  4: |
-    apiVersion: v1
-    data:
-      supervisord.conf: |
-        [supervisord]
-        nodaemon=true
-        logfile=/dev/null
-
-        [program:celery_worker_1]
-        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=provision_queue --prefetch-multiplier=1 --max-tasks-per-child=100
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: workspace-provision-supervisord-conf-map
-      namespace: eyelevel
-  5: |
-    apiVersion: v1
-    data:
-      supervisord.conf: |
-        [supervisord]
-        nodaemon=true
-        logfile=/dev/null
-
-        [program:celery_worker_1]
-        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=workspace_queue --prefetch-multiplier=1 --max-tasks-per-child=100
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: workspace-workspace-supervisord-conf-map
-      namespace: eyelevel
-  6: |
-    apiVersion: v1
-    data:
-      supervisord.conf: |
-        [supervisord]
-        nodaemon=true
-        logfile=/dev/null
-
-        [program:celery_worker_1]
-        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=command_queue --prefetch-multiplier=1 --max-tasks-per-child=100
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: workspace-command-supervisord-conf-map
-      namespace: eyelevel
-  7: |
-    apiVersion: v1
-    data:
-      supervisord.conf: |
-        [supervisord]
-        nodaemon=true
-        logfile=/dev/null
-
-        [program:celery_worker_1]
-        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=publish_queue --prefetch-multiplier=1 --max-tasks-per-child=100
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: workspace-publish-supervisord-conf-map
-      namespace: eyelevel
-  8: |
-    apiVersion: v1
-    data:
-      supervisord.conf: |
-        [supervisord]
-        nodaemon=true
-        logfile=/dev/null
-
-        [program:celery_worker_1]
-        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=cleanup_queue --prefetch-multiplier=1 --max-tasks-per-child=100
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: workspace-cleanup-supervisord-conf-map
-      namespace: eyelevel
-summaryClient gracePeriod renders drainSeconds into the config document:
+'summaryClient gracePeriod: resources':
   1: |
     apiVersion: v1
     data:
@@ -13211,4 +12975,240 @@ summaryClient gracePeriod renders drainSeconds into the config document:
         heritage: Helm
         version: 0.1.0
       name: config-yaml-map
+      namespace: eyelevel
+'workspace-enabled: resources':
+  1: |
+    apiVersion: v1
+    data:
+      WORKSPACE_RUNNER_TOKEN: dGVzdC1ydW5uZXItdG9rZW4=
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-secret
+      namespace: eyelevel
+    type: Opaque
+  2: |
+    apiVersion: v1
+    data:
+      config.py: |
+        from pathlib import Path
+
+        from settings import Settings
+
+
+        settings = Settings(
+            allowed_commands="go,npm,pytest,python,node,git",
+            celery_broker_url="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            celery_global_keyprefix="{workspace}",
+            celery_result_backend="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            celery_task_always_eager=False,
+            celery_task_soft_time_limit_seconds=900,
+            command_timeout_seconds=300,
+            git_provider="github",
+            github_api_base_url="https://api.github.com",
+            github_app_id="",
+            github_app_installation_id="",
+            github_app_private_key_path="",
+            github_app_private_key_pem="",
+            github_token_ttl_seconds=3600,
+            gitlab_api_base_url="https://gitlab.com/api/v4",
+            gitlab_token="",
+            gitlab_token_path="",
+            managed_repo_name_prefix="workspace",
+            managed_repo_owner="",
+            managed_repo_visibility="private",
+            mysql_connect_timeout_seconds=10,
+            mysql_database="eyelevel",
+            mysql_host="db-cluster-haproxy.eyelevel.svc.cluster.local",
+            mysql_password="",
+            mysql_port=3306,
+            mysql_username="",
+            publish_dry_run=True,
+            publish_github_workflow_id="deploy.yml",
+            runner_token="test-runner-token",
+            service="workspace",
+            workspace_min_free_bytes=0,
+            workspace_min_free_percent=0,
+            workspace_root=Path("/tmp/workspaces"),
+        )
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-config-py-map
+      namespace: eyelevel
+  3: |
+    apiVersion: v1
+    data:
+      gunicorn_conf.py: |
+        accesslog = "-"
+        errorlog = "-"
+        loglevel = "info"
+        timeout = 120
+        timeout_keep_alive = 15
+        worker_class = "uvicorn.workers.UvicornWorker"
+        workers = 2
+        threads = 2
+        bind = "0.0.0.0:8080"
+        wsgi_app = "server:app"
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-gunicorn-conf-py-map
+      namespace: eyelevel
+  4: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=provision_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-provision-supervisord-conf-map
+      namespace: eyelevel
+  5: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=workspace_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-workspace-supervisord-conf-map
+      namespace: eyelevel
+  6: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=command_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-command-supervisord-conf-map
+      namespace: eyelevel
+  7: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=publish_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-publish-supervisord-conf-map
+      namespace: eyelevel
+  8: |
+    apiVersion: v1
+    data:
+      supervisord.conf: |
+        [supervisord]
+        nodaemon=true
+        logfile=/dev/null
+
+        [program:celery_worker_1]
+        command=celery -A celery_app.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=cleanup_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        environment=
+          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+    kind: ConfigMap
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-cleanup-supervisord-conf-map
       namespace: eyelevel
