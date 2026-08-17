@@ -68,6 +68,11 @@ false
 {{ dig "mysqlConnectTimeoutSeconds" 10 $in }}
 {{- end }}
 
+{{- define "groundx.workspace.ownershipChecksEnabled" -}}
+{{- $in := include "groundx.workspace.values" . | fromYaml -}}
+{{ dig "ownershipChecksEnabled" true $in }}
+{{- end }}
+
 {{- define "groundx.workspace.publishDryRun" -}}
 {{- $in := include "groundx.workspace.values" . | fromYaml -}}
 {{ dig "publishDryRun" true $in }}

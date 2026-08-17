@@ -111,3 +111,25 @@ tests:
       - ./files/values.workspace.enabled.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "workspace ownership checks default to enabled"
+    templates:
+      - ../templates/resources/workspace-config-py.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.workspace.yaml
+    asserts:
+      - matchRegex:
+          path: data["config.py"]
+          pattern: "workspace_ownership_checks_enabled=True"
+  - it: "workspace ownership checks can be disabled"
+    templates:
+      - ../templates/resources/workspace-config-py.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.workspace.yaml
+    set:
+      workspace.ownershipChecksEnabled: false
+    asserts:
+      - matchRegex:
+          path: data["config.py"]
+          pattern: "workspace_ownership_checks_enabled=False"
