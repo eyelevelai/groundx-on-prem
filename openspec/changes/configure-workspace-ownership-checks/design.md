@@ -18,9 +18,11 @@ workspace_ownership_checks_enabled=True
 That ConfigMap is mounted by the runner API and every worker. Existing config
 hash annotations force their Deployments to roll when the value changes.
 
-The runner also accepts `WORKSPACE_OWNERSHIP_CHECKS_ENABLED`. The direct
-environment value takes precedence over the chart-rendered value, so either
-configuration path works without a second authorization implementation.
+The runner also accepts `WORKSPACE_OWNERSHIP_CHECKS_ENABLED`, using its standard
+precedence: mounted `config.py`, then environment, then default. This chart always
+renders the mounted value, so `workspace.ownershipChecksEnabled` is authoritative for
+Helm deployments. The environment form remains available when a deployment omits the
+setting from mounted config.
 
 ## Contract
 
