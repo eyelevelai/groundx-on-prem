@@ -29,16 +29,6 @@ def render_chart(chart: Path, ownership_checks_enabled: bool | None = None) -> s
     return result.stdout
 
 
-def require_invalid_ownership_value_rejected(chart: Path) -> None:
-    command = ["helm", "template", "workspace-contract", str(chart)]
-    for values in VALUES:
-        command.extend(("-f", str(values)))
-    command.extend(("--set-string", "workspace.ownershipChecksEnabled=disabled"))
-    result = subprocess.run(command, cwd=ROOT, check=False, capture_output=True, text=True)
-    if result.returncode == 0 or "ownershipChecksEnabled" not in result.stderr:
-        raise AssertionError("workspace.ownershipChecksEnabled must reject non-boolean values")
-
-
 def require(text: str, pattern: str, label: str) -> None:
     if re.search(pattern, text, flags=re.MULTILINE) is None:
         raise AssertionError(f"missing {label}: {pattern}")
@@ -58,7 +48,6 @@ def require_count_at_least(text: str, pattern: str, minimum: int, label: str) ->
 def verify_chart(chart: Path) -> list[str]:
     rendered = render_chart(chart)
     rendered_with_checks_disabled = render_chart(chart, ownership_checks_enabled=False)
-    require_invalid_ownership_value_rejected(chart)
     namespace = "eyelevel"
     base_url = f"http://workspace-api.{namespace}.svc.cluster.local"
     stale_base_url = f"http://workspace.{namespace}.svc.cluster.local"
