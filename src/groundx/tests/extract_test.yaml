@@ -4,7 +4,7 @@ chart:
   version: 0.1.0
 
 tests:
-  - it: "extract-agent defaults reserve resources for concurrency two"
+  - it: "extract-agent defaults fit one worker on a two-vCPU node"
     templates:
       - ../templates/app/celery.yaml
     values:
@@ -18,7 +18,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].resources.requests.cpu
-          value: 2
+          value: 1400m
       - equal:
           path: spec.template.spec.containers[0].resources.requests.memory
           value: 1Gi
