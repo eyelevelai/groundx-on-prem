@@ -362,6 +362,141 @@ tests:
       - ./files/values.phoenix.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "summaryClient gracePeriod: resources"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      summaryClient.replicas.gracePeriod: 900
+    asserts:
+      - matchSnapshot: {}
+  - it: "summaryClient gracePeriod renders drainSeconds only in the summaryServer block"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      summaryClient.replicas.gracePeriod: 900
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds: 870\n"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "preProcessFileServer:\n  baseURL: .*\n  drainSeconds"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "processFileServer:\n  baseURL: .*\n  drainSeconds"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "queueFileServer:\n  baseURL: .*\n  drainSeconds"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds"
+  - it: "preProcess gracePeriod renders drainSeconds only in the preProcessFileServer block"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      preProcess.replicas.gracePeriod: 120
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "preProcessFileServer:\n  baseURL: .*\n  drainSeconds: 90\n"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "processFileServer:\n  baseURL: .*\n  drainSeconds"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "queueFileServer:\n  baseURL: .*\n  drainSeconds"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds"
+  - it: "process gracePeriod renders drainSeconds in the processFileServer block"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      process.replicas.gracePeriod: 300
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "processFileServer:\n  baseURL: .*\n  drainSeconds: 270\n"
+  - it: "upload gracePeriod renders drainSeconds in the uploadFileServer block"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      upload.replicas.gracePeriod: 180
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds: 150\n"
+  - it: "queue gracePeriod renders drainSeconds in the queueFileServer block"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      queue.replicas.gracePeriod: 60
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "queueFileServer:\n  baseURL: .*\n  drainSeconds: 30\n"
+  - it: "all five Go queue services set distinct gracePeriod values independently"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      preProcess.replicas.gracePeriod: 120
+      process.replicas.gracePeriod: 300
+      queue.replicas.gracePeriod: 60
+      summaryClient.replicas.gracePeriod: 900
+      upload.replicas.gracePeriod: 180
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "preProcessFileServer:\n  baseURL: .*\n  drainSeconds: 90\n"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "processFileServer:\n  baseURL: .*\n  drainSeconds: 270\n"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "queueFileServer:\n  baseURL: .*\n  drainSeconds: 30\n"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds: 870\n"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds: 150\n"
+  - it: "gracePeriod below the 30-second margin floors drainSeconds at 1"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      summaryClient.replicas.gracePeriod: 10
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds: 1\n"
+  - it: "no gracePeriod set anywhere - config-yaml renders with no drainSeconds key"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "drainSeconds"
   - it: "workspace-enabled: resources"
     templates:
       - ../templates/resources/config-models.yaml
