@@ -28,7 +28,11 @@ false
 {{- define "groundx.extract.agent.apiKey" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
+{{- if eq (include "groundx.extract.agent.serviceType" .) "bedrock" -}}
+{{ dig "apiKey" "" $in }}
+{{- else -}}
 {{ dig "apiKey" (include "groundx.admin.apiKey" .) $in }}
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.apiKeyEnv" -}}
@@ -41,7 +45,7 @@ GROUNDX_AGENT_API_KEY
 {{- $dflt := "" -}}
 {{- $ic := include "groundx.summary.create" . -}}
 {{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") -}}
+{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") (eq $st "bedrock") -}}
 {{- if and (eq $ic "true") (not $svcAllowed) -}}
 {{- $dflt = (include "groundx.summary.api.serviceUrl" .) -}}
 {{- end -}}
@@ -131,7 +135,7 @@ GROUNDX_AGENT_API_KEY
 {{- $dflt := lower (dig "modelId" "" $in) | trim -}}
 {{- $ic := include "groundx.summary.create" . -}}
 {{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") -}}
+{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") (eq $st "bedrock") -}}
 {{- if and (eq $ic "true") (not $svcAllowed) (eq $dflt "") -}}
 {{- $dflt = (include "groundx.summary.inference.model.name" .) -}}
 {{- end -}}
@@ -146,7 +150,7 @@ GROUNDX_AGENT_API_KEY
 {{- $val := dig "kwargs" dict $in -}}
 {{- $ic := include "groundx.summary.create" . -}}
 {{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") -}}
+{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") (eq $st "bedrock") -}}
 {{- if $has -}}
   {{- toYaml $val -}}
 {{- else if and (eq $ic "true") (not $svcAllowed) -}}
@@ -164,7 +168,7 @@ GROUNDX_AGENT_API_KEY
 {{- $val := dig "reasoningEffort" nil $in -}}
 {{- $ic := include "groundx.summary.create" . -}}
 {{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") -}}
+{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") (eq $st "bedrock") -}}
 {{- if $has -}}
   {{- toJson $val -}}
 {{- else if and (eq $ic "true") (not $svcAllowed) -}}
@@ -319,6 +323,23 @@ GROUNDX_AGENT_API_KEY
 {{- if lt $maxRequestImages 1 -}}
   {{- fail "extract.agent.maxRequestImages must be positive" -}}
 {{- end -}}
+{{- if eq (include "groundx.extract.agent.serviceType" .) "bedrock" -}}
+  {{- if ne (include "groundx.extract.file.storageType" .) "s3" -}}
+    {{- fail "extract.agent.serviceType bedrock requires AWS S3 file storage" -}}
+  {{- end -}}
+  {{- if eq (include "groundx.extract.agent.baseUrl" . | trim) "" -}}
+    {{- fail "extract.agent.serviceType bedrock requires extract.agent.apiBaseUrl" -}}
+  {{- end -}}
+  {{- if eq (include "groundx.extract.agent.modelId" . | trim) "" -}}
+    {{- fail "extract.agent.serviceType bedrock requires extract.agent.modelId" -}}
+  {{- end -}}
+  {{- $apiKey := include "groundx.extract.agent.apiKey" . | trim -}}
+  {{- $existingSecret := include "groundx.extract.agent.existingSecret" . -}}
+  {{- $clusterSecrets := include "groundx.secrets" . | fromYaml | default dict -}}
+  {{- if and (eq $apiKey "") (eq $existingSecret "false") (eq (len $clusterSecrets) 0) -}}
+    {{- fail "extract.agent.serviceType bedrock requires extract.agent.apiKey, extract.agent.existingSecret, or cluster.secrets" -}}
+  {{- end -}}
+{{- end -}}
 {{- range $quality := splitList "," (include "groundx.extract.agent.imageJpegQualities" .) -}}
   {{- $qualityInt := $quality | int -}}
   {{- if or (lt $qualityInt 1) (gt $qualityInt 95) -}}
@@ -363,7 +384,8 @@ GROUNDX_AGENT_API_KEY
   (include "groundx.extract.save.secretName" .) (include "groundx.extract.save.secretName" .)
 -}}
 {{- $apiKey := include "groundx.extract.agent.apiKey" . -}}
-{{- if ne $apiKey "" -}}
+{{- $existingSecret := include "groundx.extract.agent.existingSecret" . -}}
+{{- if or (ne $apiKey "") (eq $existingSecret "true") -}}
 {{- $_ := set $data (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .) -}}
 {{- end -}}
 {{- $env := dict

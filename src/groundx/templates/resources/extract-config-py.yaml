@@ -14,6 +14,7 @@
 {{- $ic := include "groundx.extract.create" . -}}
 
 {{- if eq $ic "true" }}
+{{- include "groundx.extract.agent.validateImageSettings" . -}}
 {{- $fs := (include "groundx.extract.file.settings" . | fromYaml) -}}
 {{- $svc := include "groundx.extract.serviceName" . -}}
 {{- $bucketSuffix := printf "%s/" (get $fs "bucketName") -}}
@@ -22,6 +23,7 @@
 {{- $mid := include "groundx.extract.agent.modelId" . -}}
 {{- $re := include "groundx.extract.agent.reasoningEffort" . -}}
 {{- $it := include "groundx.extract.agent.imageTransport" . -}}
+{{- $ast := include "groundx.extract.agent.serviceType" . -}}
 {{- $did := include "groundx.extract.save.driveId" . -}}
 {{- $tid := include "groundx.extract.save.templateId" . -}}
 {{- $kw := include "groundx.extract.agent.kwargs" . | fromYaml -}}
@@ -57,6 +59,9 @@ data:
         model_id={{ $mid | quote }},
         {{- end }}
         image_transport={{ $it | quote }},
+        {{- if eq $ast "bedrock" }}
+        service={{ $ast | quote }},
+        {{- end }}
         {{- if eq $re "null" }}
         reasoning_effort=None,
         {{- else if ne $re "" }}

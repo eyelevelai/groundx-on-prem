@@ -229,7 +229,8 @@ GCP_CREDENTIALS
   (include "groundx.extract.save.secretName" .) (include "groundx.extract.save.secretName" .)
 -}}
 {{- $apiKey := include "groundx.extract.agent.apiKey" . -}}
-{{- if ne $apiKey "" -}}
+{{- $existingSecret := include "groundx.extract.agent.existingSecret" . -}}
+{{- if or (ne $apiKey "") (eq $existingSecret "true") -}}
 {{- $_ := set $data (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .) -}}
 {{- end -}}
 {{- $env := dict
