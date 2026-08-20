@@ -1,33 +1,10 @@
 # doc-summary-image-limit-config Specification
 
 ## Purpose
-Document how the chart exposes the application document-summary image limit through strict values-schema validation and config.yaml rendering, while leaving runtime enforcement to compatible application images.
+Document how the chart exposes the application engine image-count limit through
+strict values-schema validation and config.yaml rendering, while leaving runtime
+enforcement to compatible application images.
 ## Requirements
-### Requirement: Chart exposes document summary maxImages config
-
-The chart SHALL allow operators to configure the app's document-summary page
-image limit through the existing engine values surface.
-
-#### Scenario: Operator sets maxImages
-
-- **GIVEN** values include `engines.default.maxImages: 30`
-- **WHEN** the chart renders application `config.yaml`
-- **THEN** the rendered `engines.default` config contains `maxImages: 30`.
-
-#### Scenario: Operator omits maxImages
-
-- **GIVEN** values do not include `engines.default.maxImages`
-- **WHEN** the chart renders the default engine config
-- **THEN** the rendered config does not include `maxImages`
-- **AND** the app runtime default remains responsible for the default limit.
-
-#### Scenario: Operator sets maxImages to null
-
-- **GIVEN** values include `engines.default.maxImages: null`
-- **WHEN** the chart renders the default engine config
-- **THEN** the rendered config does not include `maxImages`
-- **AND** the app runtime default remains responsible for the default limit.
-
 ### Requirement: Schema permits maxImages
 
 The chart SHALL accept `engines.default.maxImages` under strict values schema
@@ -77,3 +54,32 @@ The chart SHALL not claim to enforce image limits by itself.
 - **AND** the deployed app image does not consume that config key
 - **WHEN** a long document is summarized
 - **THEN** the chart alone is not considered a complete fix for FRA-76.
+
+### Requirement: Chart exposes engine maxImages config
+
+The chart SHALL allow operators to configure the maximum image attachments for
+requests using the default application engine.
+
+#### Scenario: Operator sets maxImages
+
+- **GIVEN** values include `engines.default.maxImages: 20`
+- **WHEN** the chart renders application `config.yaml`
+- **THEN** the rendered `engines.default` config contains `maxImages: 20`
+- **AND** a compatible application uses 20 as the image-count limit for
+  requests using that engine.
+
+#### Scenario: Operator omits maxImages
+
+- **GIVEN** values do not include `engines.default.maxImages`
+- **WHEN** the chart renders the default engine config
+- **THEN** the rendered config does not include `maxImages`
+- **AND** a compatible application applies no image-count limit from this
+  field.
+
+#### Scenario: Operator sets maxImages to null
+
+- **GIVEN** values include `engines.default.maxImages: null`
+- **WHEN** the chart renders the default engine config
+- **THEN** the rendered config does not include `maxImages`
+- **AND** a compatible application applies no image-count limit from this
+  field.
