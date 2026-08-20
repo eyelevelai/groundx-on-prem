@@ -495,7 +495,7 @@ tests:
       - matchRegex:
           path: data["config.py"]
           pattern: "image_transport=\"data_url\""
-  - it: "bedrock extract config renders service and S3 transport"
+  - it: "bedrock extract config renders service and preserves configured transport"
     templates:
       - ../templates/resources/extract-config-py.yaml
     values:
@@ -504,6 +504,7 @@ tests:
       extract.agent.apiBaseUrl: https://bedrock-mantle.us-west-2.api.aws/openai/v1
       extract.agent.modelId: google.gemma-4-31b
       extract.agent.serviceType: bedrock
+      extract.agent.imageTransport: pil
       extract.file.bucketName: configured-bucket
       extract.file.region: us-west-2
       extract.file.serviceType: s3
@@ -514,7 +515,7 @@ tests:
           pattern: 'service="bedrock"'
       - matchRegex:
           path: data["config.py"]
-          pattern: 'image_transport="remote_url"'
+          pattern: 'image_transport="pil"'
       - matchRegex:
           path: data["config.py"]
           pattern: 'bucket="configured-bucket"'
@@ -533,6 +534,117 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "extract.agent.serviceType bedrock requires AWS S3 file storage"
+  - it: "bedrock extract config requires an endpoint"
+    templates:
+      - ../templates/resources/extract-supervisord-conf.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.apiKey: bedrock-key
+      extract.agent.modelId: google.gemma-4-31b
+      extract.agent.serviceType: bedrock
+      extract.file.bucketName: configured-bucket
+      extract.file.region: us-west-2
+      extract.file.serviceType: s3
+      extract.file.url: https://configured-bucket.s3.us-west-2.amazonaws.com
+    asserts:
+      - failedTemplate:
+          errorMessage: "extract.agent.serviceType bedrock requires extract.agent.apiBaseUrl"
+  - it: "bedrock extract config requires a model"
+    templates:
+      - ../templates/resources/extract-supervisord-conf.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.apiBaseUrl: https://bedrock-mantle.us-west-2.api.aws/openai/v1
+      extract.agent.apiKey: bedrock-key
+      extract.agent.serviceType: bedrock
+      extract.file.bucketName: configured-bucket
+      extract.file.region: us-west-2
+      extract.file.serviceType: s3
+      extract.file.url: https://configured-bucket.s3.us-west-2.amazonaws.com
+    asserts:
+      - failedTemplate:
+          errorMessage: "extract.agent.serviceType bedrock requires extract.agent.modelId"
+  - it: "bedrock extract config requires a Bedrock credential source"
+    templates:
+      - ../templates/resources/extract-supervisord-conf.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      admin.apiKey: groundx-admin-key
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.apiBaseUrl: https://bedrock-mantle.us-west-2.api.aws/openai/v1
+      extract.agent.modelId: google.gemma-4-31b
+      extract.agent.serviceType: bedrock
+      extract.file.bucketName: configured-bucket
+      extract.file.region: us-west-2
+      extract.file.serviceType: s3
+      extract.file.url: https://configured-bucket.s3.us-west-2.amazonaws.com
+    asserts:
+      - failedTemplate:
+          errorMessage: "extract.agent.serviceType bedrock requires extract.agent.apiKey, extract.agent.existingSecret, or cluster.secrets"
+  - it: "bedrock uses the configured cluster secret instead of the admin API key"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      admin.apiKey: groundx-admin-key
+      cluster.secrets[0]: bedrock-credentials
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.apiBaseUrl: https://bedrock-mantle.us-west-2.api.aws/openai/v1
+      extract.agent.modelId: google.gemma-4-31b
+      extract.agent.serviceType: bedrock
+      extract.file.bucketName: configured-bucket
+      extract.file.region: us-west-2
+      extract.file.serviceType: s3
+      extract.file.url: https://configured-bucket.s3.us-west-2.amazonaws.com
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: bedrock-credentials
+      - notContains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: extract-agent-secret
+  - it: "bedrock uses the configured extract agent secret"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.apiBaseUrl: https://bedrock-mantle.us-west-2.api.aws/openai/v1
+      extract.agent.existingSecret: true
+      extract.agent.modelId: google.gemma-4-31b
+      extract.agent.serviceType: bedrock
+      extract.file.bucketName: configured-bucket
+      extract.file.region: us-west-2
+      extract.file.serviceType: s3
+      extract.file.url: https://configured-bucket.s3.us-west-2.amazonaws.com
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: extract-agent-secret
   - it: "extract config uses the same custom queues as its workers"
     templates:
       - ../templates/resources/extract-config-py.yaml

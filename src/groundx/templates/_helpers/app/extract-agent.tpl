@@ -28,7 +28,11 @@ false
 {{- define "groundx.extract.agent.apiKey" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
+{{- if eq (include "groundx.extract.agent.serviceType" .) "bedrock" -}}
+{{ dig "apiKey" "" $in }}
+{{- else -}}
 {{ dig "apiKey" (include "groundx.admin.apiKey" .) $in }}
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.apiKeyEnv" -}}
@@ -275,11 +279,7 @@ GROUNDX_AGENT_API_KEY
 {{- define "groundx.extract.agent.imageTransport" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
-{{- if eq (include "groundx.extract.agent.serviceType" .) "bedrock" -}}
-remote_url
-{{- else -}}
 {{- lower (dig "imageTransport" "data_url" $in | toString) | trim -}}
-{{- end -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.imageTargetLongEdgePx" -}}
@@ -323,8 +323,22 @@ remote_url
 {{- if lt $maxRequestImages 1 -}}
   {{- fail "extract.agent.maxRequestImages must be positive" -}}
 {{- end -}}
-{{- if and (eq (include "groundx.extract.agent.serviceType" .) "bedrock") (ne (include "groundx.extract.file.storageType" .) "s3") -}}
-  {{- fail "extract.agent.serviceType bedrock requires AWS S3 file storage" -}}
+{{- if eq (include "groundx.extract.agent.serviceType" .) "bedrock" -}}
+  {{- if ne (include "groundx.extract.file.storageType" .) "s3" -}}
+    {{- fail "extract.agent.serviceType bedrock requires AWS S3 file storage" -}}
+  {{- end -}}
+  {{- if eq (include "groundx.extract.agent.baseUrl" . | trim) "" -}}
+    {{- fail "extract.agent.serviceType bedrock requires extract.agent.apiBaseUrl" -}}
+  {{- end -}}
+  {{- if eq (include "groundx.extract.agent.modelId" . | trim) "" -}}
+    {{- fail "extract.agent.serviceType bedrock requires extract.agent.modelId" -}}
+  {{- end -}}
+  {{- $apiKey := include "groundx.extract.agent.apiKey" . | trim -}}
+  {{- $existingSecret := include "groundx.extract.agent.existingSecret" . -}}
+  {{- $clusterSecrets := include "groundx.secrets" . | fromYaml | default dict -}}
+  {{- if and (eq $apiKey "") (eq $existingSecret "false") (eq (len $clusterSecrets) 0) -}}
+    {{- fail "extract.agent.serviceType bedrock requires extract.agent.apiKey, extract.agent.existingSecret, or cluster.secrets" -}}
+  {{- end -}}
 {{- end -}}
 {{- range $quality := splitList "," (include "groundx.extract.agent.imageJpegQualities" .) -}}
   {{- $qualityInt := $quality | int -}}
@@ -370,7 +384,9 @@ remote_url
   (include "groundx.extract.save.secretName" .) (include "groundx.extract.save.secretName" .)
 -}}
 {{- $apiKey := include "groundx.extract.agent.apiKey" . -}}
-{{- if ne $apiKey "" -}}
+{{- $existingSecret := include "groundx.extract.agent.existingSecret" . -}}
+{{- $serviceType := include "groundx.extract.agent.serviceType" . -}}
+{{- if or (ne $apiKey "") (and (eq $serviceType "bedrock") (eq $existingSecret "true")) -}}
 {{- $_ := set $data (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .) -}}
 {{- end -}}
 {{- $env := dict
