@@ -645,6 +645,58 @@ tests:
           content:
             secretRef:
               name: extract-agent-secret
+  - it: "bedrock provides the configured extract agent secret to the download worker"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.apiBaseUrl: https://bedrock-mantle.us-west-2.api.aws/openai/v1
+      extract.agent.existingSecret: true
+      extract.agent.modelId: google.gemma-4-31b
+      extract.agent.serviceType: bedrock
+      extract.download.enabled: true
+      extract.file.bucketName: configured-bucket
+      extract.file.region: us-west-2
+      extract.file.serviceType: s3
+      extract.file.url: https://configured-bucket.s3.us-west-2.amazonaws.com
+    documentSelector:
+      path: metadata.name
+      value: extract-download
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: extract-agent-secret
+  - it: "bedrock provides the configured extract agent secret to the save worker"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.apiBaseUrl: https://bedrock-mantle.us-west-2.api.aws/openai/v1
+      extract.agent.existingSecret: true
+      extract.agent.modelId: google.gemma-4-31b
+      extract.agent.serviceType: bedrock
+      extract.file.bucketName: configured-bucket
+      extract.file.region: us-west-2
+      extract.file.serviceType: s3
+      extract.file.url: https://configured-bucket.s3.us-west-2.amazonaws.com
+      extract.save.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: extract-save
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: extract-agent-secret
   - it: "extract config uses the same custom queues as its workers"
     templates:
       - ../templates/resources/extract-config-py.yaml

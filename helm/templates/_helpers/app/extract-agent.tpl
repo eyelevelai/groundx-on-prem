@@ -385,8 +385,7 @@ GROUNDX_AGENT_API_KEY
 -}}
 {{- $apiKey := include "groundx.extract.agent.apiKey" . -}}
 {{- $existingSecret := include "groundx.extract.agent.existingSecret" . -}}
-{{- $serviceType := include "groundx.extract.agent.serviceType" . -}}
-{{- if or (ne $apiKey "") (and (eq $serviceType "bedrock") (eq $existingSecret "true")) -}}
+{{- if or (ne $apiKey "") (eq $existingSecret "true") -}}
 {{- $_ := set $data (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .) -}}
 {{- end -}}
 {{- $env := dict
