@@ -149,6 +149,54 @@ for chart in src/groundx helm; do
   done
 done
 
+echo "==> Verifying deprecated compatibility values contract"
+python - <<'PY'
+import json
+from pathlib import Path
+
+for chart in (Path("src/groundx"), Path("helm")):
+    schema = json.loads((chart / "values.schema.json").read_text())
+    cluster = schema["properties"]["cluster"]["properties"]
+    fields = {
+        "cluster.hasMig": cluster["hasMig"],
+        "cluster.tls.existingSecret": cluster["tls"]["properties"]["existingSecret"],
+    }
+    for path, field in fields.items():
+        if field.get("deprecated") is not True:
+            raise SystemExit(f"{chart}: {path} must be marked deprecated")
+        description = field.get("description", "").lower()
+        if "accepted for compatibility" not in description or "does not change rendered resources" not in description:
+            raise SystemExit(f"{chart}: {path} must describe its inert compatibility behavior")
+PY
+
+for chart in src/groundx helm; do
+  if ! diff -q \
+    <(helm template deprecated-values "${chart}") \
+    <(helm template deprecated-values "${chart}" --set cluster.hasMig=true) \
+    >/dev/null; then
+    echo "${chart}: cluster.hasMig must remain an inert compatibility field in 0.2.7." >&2
+    exit 1
+  fi
+  if ! diff -q \
+    <(helm template deprecated-values "${chart}") \
+    <(helm template deprecated-values "${chart}" --set cluster.tls.existingSecret=legacy-tls) \
+    >/dev/null; then
+    echo "${chart}: cluster.tls.existingSecret must remain an inert compatibility field in 0.2.7." >&2
+    exit 1
+  fi
+done
+
+if grep -R -q 'define "groundx\.hasMig"' \
+  src/groundx/templates helm/templates; then
+  echo "The current chart must not retain an unused groundx.hasMig helper." >&2
+  exit 1
+fi
+if grep -R -q '\.Values\.tls\|cluster\.tls\.existingSecret' \
+  src/groundx/templates/NOTES.txt helm/templates/NOTES.txt; then
+  echo "Helm notes must not claim unsupported TLS Secret behavior." >&2
+  exit 1
+fi
+
 echo "==> Verifying Helm snapshots did not silently drop empty renders"
 python .build/tests/test_verify_helm_snapshots.py
 python .build/bin/verify-helm-snapshots.py

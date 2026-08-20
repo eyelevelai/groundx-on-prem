@@ -25,7 +25,11 @@
     "cluster": {
       "type": "object",
       "properties": {
-        "hasMig": { "type": "boolean" },
+        "hasMig": {
+          "type": "boolean",
+          "deprecated": true,
+          "description": "Accepted for compatibility in chart 0.2.7; this field does not change rendered resources. Configure GPU resources through each workload's resources field."
+        },
         "hpa": { "type": "boolean" },
         "imagePullPolicy": { "type": "string" },
         "imagePullSecrets": {
@@ -65,7 +69,11 @@
         "tls": {
           "type": "object",
           "properties": {
-            "existingSecret": { "type": "string" }
+            "existingSecret": {
+              "type": "string",
+              "deprecated": true,
+              "description": "Accepted for compatibility in chart 0.2.7; this field does not change rendered resources or mount a Secret. Use each service's supported ingress.tls list for ingress TLS."
+            }
           },
           "additionalProperties": false
         },
