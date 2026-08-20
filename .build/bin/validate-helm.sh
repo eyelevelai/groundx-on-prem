@@ -4,6 +4,10 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${ROOT_DIR}"
 
+# Resolve a Python interpreter (the verifier scripts are python3; prefer it, fall back to python).
+# Works whether the host exposes it as python3 or python; fails fast if neither is present.
+PY="$(command -v python3 || command -v python)" || { echo "no python interpreter on PATH (need python3 or python)" >&2; exit 1; }
+
 RUN_JUNIT=0
 
 usage() {
@@ -81,14 +85,14 @@ for chart in src/groundx helm; do
 done
 
 echo "==> Verifying Helm snapshots did not silently drop empty renders"
-python .build/tests/test_verify_helm_snapshots.py
-python .build/bin/verify-helm-snapshots.py
+"${PY}" .build/tests/test_verify_helm_snapshots.py
+"${PY}" .build/bin/verify-helm-snapshots.py
 
 echo "==> Verifying workspace chart contract"
-python .build/bin/verify-workspace-chart.py
+"${PY}" .build/bin/verify-workspace-chart.py
 
 echo "==> Verifying storage contract"
-python .build/bin/verify-storage-contract.py
+"${PY}" .build/bin/verify-storage-contract.py
 
 echo "==> Rendering workspace chart fixtures"
 helm template workspace-contract src/groundx \
