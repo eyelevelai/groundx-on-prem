@@ -495,6 +495,44 @@ tests:
       - matchRegex:
           path: data["config.py"]
           pattern: "image_transport=\"data_url\""
+  - it: "bedrock extract config renders service and S3 transport"
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ../values/extract/values.yaml
+    set:
+      extract.agent.apiBaseUrl: https://bedrock-mantle.us-west-2.api.aws/openai/v1
+      extract.agent.modelId: google.gemma-4-31b
+      extract.agent.serviceType: bedrock
+      extract.file.bucketName: configured-bucket
+      extract.file.region: us-west-2
+      extract.file.serviceType: s3
+      extract.file.url: https://configured-bucket.s3.us-west-2.amazonaws.com
+    asserts:
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'service="bedrock"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'image_transport="remote_url"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'bucket="configured-bucket"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'type="s3"'
+  - it: "bedrock extract config rejects non-S3 storage"
+    templates:
+      - ../templates/resources/extract-supervisord-conf.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.serviceType: bedrock
+    asserts:
+      - failedTemplate:
+          errorMessage: "extract.agent.serviceType bedrock requires AWS S3 file storage"
   - it: "extract config uses the same custom queues as its workers"
     templates:
       - ../templates/resources/extract-config-py.yaml

@@ -41,7 +41,7 @@ GROUNDX_AGENT_API_KEY
 {{- $dflt := "" -}}
 {{- $ic := include "groundx.summary.create" . -}}
 {{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") -}}
+{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") (eq $st "bedrock") -}}
 {{- if and (eq $ic "true") (not $svcAllowed) -}}
 {{- $dflt = (include "groundx.summary.api.serviceUrl" .) -}}
 {{- end -}}
@@ -131,7 +131,7 @@ GROUNDX_AGENT_API_KEY
 {{- $dflt := lower (dig "modelId" "" $in) | trim -}}
 {{- $ic := include "groundx.summary.create" . -}}
 {{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") -}}
+{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") (eq $st "bedrock") -}}
 {{- if and (eq $ic "true") (not $svcAllowed) (eq $dflt "") -}}
 {{- $dflt = (include "groundx.summary.inference.model.name" .) -}}
 {{- end -}}
@@ -146,7 +146,7 @@ GROUNDX_AGENT_API_KEY
 {{- $val := dig "kwargs" dict $in -}}
 {{- $ic := include "groundx.summary.create" . -}}
 {{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") -}}
+{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") (eq $st "bedrock") -}}
 {{- if $has -}}
   {{- toYaml $val -}}
 {{- else if and (eq $ic "true") (not $svcAllowed) -}}
@@ -164,7 +164,7 @@ GROUNDX_AGENT_API_KEY
 {{- $val := dig "reasoningEffort" nil $in -}}
 {{- $ic := include "groundx.summary.create" . -}}
 {{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") -}}
+{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") (eq $st "bedrock") -}}
 {{- if $has -}}
   {{- toJson $val -}}
 {{- else if and (eq $ic "true") (not $svcAllowed) -}}
@@ -275,7 +275,11 @@ GROUNDX_AGENT_API_KEY
 {{- define "groundx.extract.agent.imageTransport" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
+{{- if eq (include "groundx.extract.agent.serviceType" .) "bedrock" -}}
+remote_url
+{{- else -}}
 {{- lower (dig "imageTransport" "data_url" $in | toString) | trim -}}
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.imageTargetLongEdgePx" -}}
@@ -318,6 +322,9 @@ GROUNDX_AGENT_API_KEY
 {{- $maxRequestImages := include "groundx.extract.agent.maxRequestImages" . | int -}}
 {{- if lt $maxRequestImages 1 -}}
   {{- fail "extract.agent.maxRequestImages must be positive" -}}
+{{- end -}}
+{{- if and (eq (include "groundx.extract.agent.serviceType" .) "bedrock") (ne (include "groundx.extract.file.storageType" .) "s3") -}}
+  {{- fail "extract.agent.serviceType bedrock requires AWS S3 file storage" -}}
 {{- end -}}
 {{- range $quality := splitList "," (include "groundx.extract.agent.imageJpegQualities" .) -}}
   {{- $qualityInt := $quality | int -}}
