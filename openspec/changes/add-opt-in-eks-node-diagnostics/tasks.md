@@ -84,7 +84,7 @@
 - [x] 5.1 Document the default-off setting, CPU-pool add-on impact, capture
   command, evidence locations, cost, disable procedure, and the fact that the
   feature does not repair nodes.
-- [ ] 5.2 Submit the verified implementation as a PR whose base branch is
+- [x] 5.2 Submit the verified implementation as a PR whose base branch is
   `0.2.7`; verify the PR does not target the repository default branch.
 - [ ] 5.3 Obtain explicit production approval and review the production
   Terraform plan; do not use the auto-approved `bin/environment` wrapper.
