@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+COMMAND="$ROOT_DIR/bin/eks-node-logs"
+FAKE_KUBECTL="$ROOT_DIR/bin/tests/fake-kubectl"
+NODE="ip-10-0-1-42.us-west-2.compute.internal"
+
+fail() {
+  echo "FAIL: $*" >&2
+  exit 1
+}
+
+assert_contains() {
+  local file="$1"
+  local expected="$2"
+  grep -Fq "$expected" "$file" || fail "expected [$expected] in $file"
+}
+
+assert_not_contains() {
+  local file="$1"
+  local unexpected="$2"
+  if grep -Fq "$unexpected" "$file"; then
+    fail "did not expect [$unexpected] in $file"
+  fi
+}
+
+run_scenario() {
+  local scenario="$1"
+  local run_dir="$TEST_ROOT/$scenario"
+  mkdir -p "$run_dir/bin" "$run_dir/output"
+  ln -s "$FAKE_KUBECTL" "$run_dir/bin/kubectl"
+  FAKE_SCENARIO="$scenario" \
+    FAKE_KUBECTL_LOG="$run_dir/kubectl.log" \
+    PATH="$run_dir/bin:$PATH" \
+    "$COMMAND" --output-dir "$run_dir/output" "$NODE" \
+    >"$run_dir/stdout" 2>"$run_dir/stderr"
+}
+
+TEST_ROOT=$(mktemp -d)
+trap 'rm -rf "$TEST_ROOT"' EXIT
+
+run_scenario success || fail "successful capture failed"
+success_log="$TEST_ROOT/success/kubectl.log"
+assert_contains "$success_log" "create -f - -o json"
+assert_contains "$success_log" "get --raw /api/v1/nodes/$NODE/proxy/logs/support/$NODE-logs.tar.gz"
+assert_contains "$success_log" 'DELETE_BODY={"apiVersion":"v1","kind":"DeleteOptions","preconditions":{"uid":"uid-owned"}}'
+bundle=$(find "$TEST_ROOT/success/output" -type f -name '*-logs.tar.gz' -print -quit)
+[[ -n "$bundle" ]] || fail "successful capture did not save a bundle"
+[[ "$(cat "$bundle")" == "diagnostic bundle" ]] || fail "saved bundle content is wrong"
+
+if run_scenario conflict; then
+  fail "create conflict unexpectedly succeeded"
+fi
+assert_not_contains "$TEST_ROOT/conflict/kubectl.log" "delete --raw="
+
+if run_scenario interrupt; then
+  fail "interrupted capture unexpectedly succeeded"
+fi
+assert_contains "$TEST_ROOT/interrupt/kubectl.log" 'DELETE_BODY={"apiVersion":"v1","kind":"DeleteOptions","preconditions":{"uid":"uid-owned"}}'
+
+run_scenario replacement || fail "same-name replacement handling failed"
+replacement_log="$TEST_ROOT/replacement/kubectl.log"
+assert_contains "$replacement_log" 'DELETE_BODY={"apiVersion":"v1","kind":"DeleteOptions","preconditions":{"uid":"uid-owned"}}'
+assert_contains "$replacement_log" "get nodediagnostic $NODE --ignore-not-found -o jsonpath={.metadata.uid}"
+assert_not_contains "$replacement_log" "delete nodediagnostic"
+
+echo "eks-node-logs tests passed"

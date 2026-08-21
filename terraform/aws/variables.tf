@@ -26,6 +26,14 @@ variable "environment_internal" {
   }
 }
 
+variable "node_diagnostics" {
+  description = "Optional EKS node diagnostics. Disabled unless explicitly enabled."
+  type = object({
+    enabled = optional(bool, false)
+  })
+  default = {}
+}
+
 variable "autoscaler_internal" {
   type           = object({
     chart        = object({

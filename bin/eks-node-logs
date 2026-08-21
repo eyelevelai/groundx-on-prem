@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+TIMEOUT="300s"
+OUTPUT_DIR="."
+
+usage() {
+  cat <<'EOF'
+Usage: bin/eks-node-logs [--timeout 300s] [--output-dir PATH] NODE
+
+Collect one EKS NodeDiagnostic bundle from the exact node and save it locally.
+EOF
+}
+
+fail() {
+  echo "Error: $*" >&2
+  exit 1
+}
+
+warn() {
+  echo "Warning: $*" >&2
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --timeout)
+      [[ -n "${2:-}" ]] || fail "--timeout requires a value"
+      TIMEOUT="$2"
+      shift 2
+      ;;
+    --output-dir)
+      [[ -n "${2:-}" ]] || fail "--output-dir requires a value"
+      OUTPUT_DIR="$2"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --*)
+      fail "unknown option: $1"
+      ;;
+    *)
+      [[ -z "${NODE:-}" ]] || fail "provide exactly one node"
+      NODE="$1"
+      shift
+      ;;
+  esac
+done
+
+[[ -n "${NODE:-}" ]] || {
+  usage >&2
+  exit 1
+}
+[[ "$TIMEOUT" =~ ^[1-9][0-9]*s$ ]] || fail "timeout must be positive seconds, such as 300s"
+[[ -d "$OUTPUT_DIR" ]] || fail "output directory does not exist: $OUTPUT_DIR"
+
+command -v kubectl >/dev/null 2>&1 || fail "kubectl is required"
+command -v jq >/dev/null 2>&1 || fail "jq is required"
+
+kubectl get crd nodediagnostics.eks.amazonaws.com >/dev/null 2>&1 ||
+  fail "NodeDiagnostic CRD is unavailable; enable node diagnostics first"
+kubectl get node "$NODE" >/dev/null 2>&1 || fail "node not found: $NODE"
+
+umask 077
+created_uid=""
+partial_path=""
+
+delete_owned_capture() {
+  [[ -n "$created_uid" ]] || return 0
+
+  local resource_path="/apis/eks.amazonaws.com/v1alpha1/nodediagnostics/$NODE"
+  local delete_options
+  delete_options="{\"apiVersion\":\"v1\",\"kind\":\"DeleteOptions\",\"preconditions\":{\"uid\":\"$created_uid\"}}"
+
+  if printf '%s\n' "$delete_options" |
+    kubectl delete --raw="$resource_path" -f - >/dev/null 2>&1; then
+    created_uid=""
+    return 0
+  fi
+
+  local current_uid
+  if ! current_uid=$(kubectl get nodediagnostic "$NODE" --ignore-not-found -o 'jsonpath={.metadata.uid}' 2>/dev/null); then
+    warn "could not verify cleanup for NodeDiagnostic $NODE"
+    return 1
+  fi
+
+  if [[ -z "$current_uid" ]]; then
+    created_uid=""
+    return 0
+  fi
+
+  if [[ "$current_uid" != "$created_uid" ]]; then
+    warn "NodeDiagnostic $NODE was replaced; leaving the replacement untouched"
+    created_uid=""
+    return 0
+  fi
+
+  warn "could not delete the NodeDiagnostic created by this command"
+  return 1
+}
+
+cleanup() {
+  local exit_code=$?
+  trap - EXIT INT TERM
+
+  if [[ -n "$partial_path" ]]; then
+    rm -f "$partial_path"
+  fi
+
+  if ! delete_owned_capture && [[ $exit_code -eq 0 ]]; then
+    exit_code=1
+  fi
+
+  exit "$exit_code"
+}
+
+trap cleanup EXIT INT TERM
+
+created=$(cat <<EOF | kubectl create -f - -o json
+apiVersion: eks.amazonaws.com/v1alpha1
+kind: NodeDiagnostic
+metadata:
+  name: $NODE
+spec:
+  logCapture:
+    destination: node
+EOF
+)
+created_uid=$(printf '%s' "$created" | jq -er '.metadata.uid') ||
+  fail "created NodeDiagnostic did not return a UID"
+
+echo "Collecting logs from $NODE..."
+kubectl wait \
+  --for='jsonpath={.status.captureStatuses[0].state.completed}' \
+  "nodediagnostic/$NODE" \
+  --timeout="$TIMEOUT" >/dev/null
+
+reason=$(kubectl get nodediagnostic "$NODE" -o 'jsonpath={.status.captureStatuses[0].state.completed.reason}')
+message=$(kubectl get nodediagnostic "$NODE" -o 'jsonpath={.status.captureStatuses[0].state.completed.message}')
+
+case "$reason" in
+  Success)
+    ;;
+  SuccessWithErrors)
+    warn "capture completed with errors: $message"
+    ;;
+  *)
+    fail "capture failed: ${reason:-unknown} ${message:-}"
+    ;;
+esac
+
+timestamp=$(date -u +%Y%m%dT%H%M%SZ)
+output_path="$OUTPUT_DIR/$NODE-$timestamp-logs.tar.gz"
+partial_path="$output_path.partial.$$"
+[[ ! -e "$output_path" ]] || fail "output already exists: $output_path"
+
+kubectl get --raw "/api/v1/nodes/$NODE/proxy/logs/support/$NODE-logs.tar.gz" >"$partial_path"
+[[ -s "$partial_path" ]] || fail "downloaded bundle is empty"
+mv "$partial_path" "$output_path"
+partial_path=""
+
+echo "Saved $output_path"

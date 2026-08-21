@@ -62,6 +62,7 @@
 
 **[Legacy Terraform Deployment](#legacy-terraform-deployment)**
 - [Accessing Legacy Scripts](#accessing-legacy-scripts)
+- [Optional EKS Node Diagnostics](#optional-eks-node-diagnostics)
 
 # What is GroundX On-Prem?
 
@@ -824,3 +825,9 @@ As of November 4, 2025, we have migrated to a pure helm release deployment. The 
 
 ## Accessing Legacy Scripts
 If you would like to access the legacy terraform scripts, they can be pulled from [legacy-terraform-deployment](https://github.com/eyelevelai/groundx-on-prem/releases/tag/legacy-terraform-deployment).
+
+## Optional EKS Node Diagnostics
+
+Existing AWS EKS deployments still managed by the bundled Terraform can enable
+default-off diagnostics with one setting. See
+[EKS Node Diagnostics](docs/eks-node-diagnostics.md).

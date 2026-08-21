@@ -15,6 +15,7 @@
     - [Options](#options-1)
     - [Examples](#examples-1)
     - [Customization](#customization)
+  - [bin/eks-node-logs](#bineks-node-logs)
   - [Troubleshooting](#troubleshooting)
 
 The following sections describe the function of a variety of tools and tips which can be used to manage resources within GroundX On-Prem.
@@ -163,6 +164,19 @@ To add new components or modify existing ones, update the following arrays in th
 - `valid_services`
 
 Ensure that the directory structure under the `operator/` folder matches these configurations.
+
+## bin/eks-node-logs
+
+`bin/eks-node-logs` captures one local diagnostic bundle from an exact EKS node
+after the optional Terraform node diagnostics feature is enabled:
+
+```bash
+bin/eks-node-logs --output-dir node-evidence NODE_NAME
+```
+
+It refuses an existing `NodeDiagnostic` and cleans up only the resource UID it
+created. See [EKS Node Diagnostics](../docs/eks-node-diagnostics.md) for
+enablement, permissions, evidence correlation, and unreachable-node limits.
 
 ## Troubleshooting
 

@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+printf '%s\n' "$*" >> "$FAKE_KUBECTL_LOG"
+
+if [[ "$1" == "get" && "$2" == "crd" ]]; then
+  exit 0
+fi
+
+if [[ "$1" == "get" && "$2" == "node" ]]; then
+  exit 0
+fi
+
+if [[ "$1" == "create" ]]; then
+  cat >/dev/null
+  if [[ "$FAKE_SCENARIO" == "conflict" ]]; then
+    echo "Error from server (AlreadyExists): nodediagnostics.eks.amazonaws.com already exists" >&2
+    exit 1
+  fi
+  printf '{"metadata":{"uid":"uid-owned"}}\n'
+  exit 0
+fi
+
+if [[ "$1" == "wait" ]]; then
+  if [[ "$FAKE_SCENARIO" == "interrupt" ]]; then
+    kill -TERM "$PPID"
+    sleep 1
+    exit 143
+  fi
+  exit 0
+fi
+
+if [[ "$1" == "get" && "$2" == "nodediagnostic" ]]; then
+  if [[ "$*" == *"completed.reason"* ]]; then
+    printf 'Success'
+  elif [[ "$*" == *"completed.message"* ]]; then
+    printf 'capture complete'
+  elif [[ "$FAKE_SCENARIO" == "replacement" ]]; then
+    printf 'uid-replacement'
+  else
+    printf 'uid-owned'
+  fi
+  exit 0
+fi
+
+if [[ "$1" == "get" && "$2" == "--raw" ]]; then
+  printf 'diagnostic bundle'
+  exit 0
+fi
+
+if [[ "$1" == "delete" && "$2" == --raw=* ]]; then
+  body=$(cat)
+  printf 'DELETE_BODY=%s\n' "$body" >> "$FAKE_KUBECTL_LOG"
+  if [[ "$FAKE_SCENARIO" == "replacement" ]]; then
+    exit 1
+  fi
+  exit 0
+fi
+
+echo "unexpected kubectl invocation: $*" >&2
+exit 2
