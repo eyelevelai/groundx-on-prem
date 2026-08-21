@@ -32,11 +32,23 @@ if [[ "$1" == "wait" ]]; then
 fi
 
 if [[ "$1" == "get" && "$2" == "nodediagnostic" ]]; then
-  if [[ "$*" == *"completed.reason"* ]]; then
+  if [[ "${5:-}" == "json" ]]; then
+    uid="uid-owned"
+    if [[ "$FAKE_SCENARIO" == "replacement_during_capture" ]]; then
+      uid="uid-replacement"
+    elif [[ "$FAKE_SCENARIO" == "replacement_during_download" ]]; then
+      reads=$(cat "$FAKE_KUBECTL_STATE" 2>/dev/null || printf '0')
+      printf '%s\n' "$((reads + 1))" >"$FAKE_KUBECTL_STATE"
+      if [[ "$reads" -gt 0 ]]; then
+        uid="uid-replacement"
+      fi
+    fi
+    printf '{"metadata":{"uid":"%s"},"status":{"captureStatuses":[{"state":{"completed":{"reason":"Success","message":"capture complete"}}}]}}\n' "$uid"
+  elif [[ "$*" == *"completed.reason"* ]]; then
     printf 'Success'
   elif [[ "$*" == *"completed.message"* ]]; then
     printf 'capture complete'
-  elif [[ "$FAKE_SCENARIO" == "replacement" ]]; then
+  elif [[ "$FAKE_SCENARIO" == replacement* ]]; then
     printf 'uid-replacement'
   else
     printf 'uid-owned'
@@ -52,7 +64,7 @@ fi
 if [[ "$1" == "delete" && "$2" == --raw=* ]]; then
   body=$(cat)
   printf 'DELETE_BODY=%s\n' "$body" >> "$FAKE_KUBECTL_LOG"
-  if [[ "$FAKE_SCENARIO" == "replacement" ]]; then
+  if [[ "$FAKE_SCENARIO" == replacement* ]]; then
     exit 1
   fi
   exit 0

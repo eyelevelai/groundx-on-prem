@@ -79,12 +79,15 @@ invocation. It SHALL NOT implement batch or S3 upload behavior.
 - **THEN** capture stops for that target
 - **AND** the existing resource is not deleted, replaced, or overlapped.
 
-#### Scenario: The resource name is reused before cleanup
+#### Scenario: The resource name is reused during capture
 
 - **GIVEN** the command created a `NodeDiagnostic` and recorded its UID
 - **AND** that resource is replaced by another resource with the same node name
-- **WHEN** the command performs cleanup
-- **THEN** the replacement resource is not deleted.
+- **WHEN** the command reads capture status, downloads the bundle, or performs
+  cleanup
+- **THEN** it rejects status or output that cannot be tied to the recorded UID
+- **AND** it removes any partial local bundle
+- **AND** the replacement resource is not deleted.
 
 ### Requirement: Incident evidence is correlated outside the bundle
 

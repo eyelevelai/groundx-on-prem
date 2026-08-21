@@ -11,6 +11,7 @@ locals {
     var.node_diagnostics.enabled ? {
       eks-node-monitoring-agent = {
         addon_version = "v1.7.0-eksbuild.1"
+        preserve      = false
         configuration_values = jsonencode({
           nodeAgent = {
             affinity = {

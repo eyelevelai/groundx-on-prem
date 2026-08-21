@@ -33,6 +33,7 @@ run_scenario() {
   ln -s "$FAKE_KUBECTL" "$run_dir/bin/kubectl"
   FAKE_SCENARIO="$scenario" \
     FAKE_KUBECTL_LOG="$run_dir/kubectl.log" \
+    FAKE_KUBECTL_STATE="$run_dir/kubectl.state" \
     PATH="$run_dir/bin:$PATH" \
     "$COMMAND" --output-dir "$run_dir/output" "$NODE" \
     >"$run_dir/stdout" 2>"$run_dir/stderr"
@@ -65,5 +66,21 @@ replacement_log="$TEST_ROOT/replacement/kubectl.log"
 assert_contains "$replacement_log" 'DELETE_BODY={"apiVersion":"v1","kind":"DeleteOptions","preconditions":{"uid":"uid-owned"}}'
 assert_contains "$replacement_log" "get nodediagnostic $NODE --ignore-not-found -o jsonpath={.metadata.uid}"
 assert_not_contains "$replacement_log" "delete nodediagnostic"
+
+if run_scenario replacement_during_capture; then
+  fail "capture accepted a replacement NodeDiagnostic"
+fi
+capture_replacement_log="$TEST_ROOT/replacement_during_capture/kubectl.log"
+assert_not_contains "$capture_replacement_log" "get --raw"
+assert_contains "$capture_replacement_log" 'DELETE_BODY={"apiVersion":"v1","kind":"DeleteOptions","preconditions":{"uid":"uid-owned"}}'
+
+if run_scenario replacement_during_download; then
+  fail "capture accepted a NodeDiagnostic replaced during download"
+fi
+download_replacement_log="$TEST_ROOT/replacement_during_download/kubectl.log"
+assert_contains "$download_replacement_log" "get --raw /api/v1/nodes/$NODE/proxy/logs/support/$NODE-logs.tar.gz"
+if find "$TEST_ROOT/replacement_during_download/output" -type f -name '*-logs.tar.gz' -print -quit | grep -q .; then
+  fail "capture saved a bundle from a replaced NodeDiagnostic"
+fi
 
 echo "eks-node-logs tests passed"

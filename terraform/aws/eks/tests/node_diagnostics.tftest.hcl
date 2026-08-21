@@ -97,6 +97,11 @@ run "diagnostics_cover_only_cpu_pools" {
   }
 
   assert {
+    condition     = local.cluster_addons["eks-node-monitoring-agent"].preserve == false
+    error_message = "Disabling diagnostics must delete the managed add-on."
+  }
+
+  assert {
     condition = jsondecode(local.cluster_addons["eks-node-monitoring-agent"].configuration_values).nodeAgent.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0] == {
       key      = "eyelevel_node"
       operator = "In"

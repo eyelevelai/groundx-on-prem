@@ -101,6 +101,21 @@ delete_owned_capture() {
   return 1
 }
 
+get_owned_capture() {
+  local capture
+  if ! capture=$(kubectl get nodediagnostic "$NODE" -o json); then
+    fail "NodeDiagnostic $NODE disappeared before capture completed"
+  fi
+
+  local current_uid
+  current_uid=$(printf '%s' "$capture" | jq -er '.metadata.uid') ||
+    fail "NodeDiagnostic $NODE did not return a UID"
+  [[ "$current_uid" == "$created_uid" ]] ||
+    fail "NodeDiagnostic $NODE was replaced during capture"
+
+  printf '%s' "$capture"
+}
+
 cleanup() {
   local exit_code=$?
   trap - EXIT INT TERM
@@ -137,8 +152,9 @@ kubectl wait \
   "nodediagnostic/$NODE" \
   --timeout="$TIMEOUT" >/dev/null
 
-reason=$(kubectl get nodediagnostic "$NODE" -o 'jsonpath={.status.captureStatuses[0].state.completed.reason}')
-message=$(kubectl get nodediagnostic "$NODE" -o 'jsonpath={.status.captureStatuses[0].state.completed.message}')
+capture=$(get_owned_capture)
+reason=$(printf '%s' "$capture" | jq -r '.status.captureStatuses[0].state.completed.reason // empty')
+message=$(printf '%s' "$capture" | jq -r '.status.captureStatuses[0].state.completed.message // empty')
 
 case "$reason" in
   Success)
@@ -157,6 +173,7 @@ partial_path="$output_path.partial.$$"
 [[ ! -e "$output_path" ]] || fail "output already exists: $output_path"
 
 kubectl get --raw "/api/v1/nodes/$NODE/proxy/logs/support/$NODE-logs.tar.gz" >"$partial_path"
+get_owned_capture >/dev/null
 [[ -s "$partial_path" ]] || fail "downloaded bundle is empty"
 mv "$partial_path" "$output_path"
 partial_path=""

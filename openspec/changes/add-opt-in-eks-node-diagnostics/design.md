@@ -83,9 +83,11 @@ Provide one small repo-owned operator command over the native `NodeDiagnostic`
 API for one exact node and local download. This is a safe frontend to the AWS
 collector, not another collector or service. It uses create-only semantics,
 records the created resource UID, waits for and downloads the bundle, and
-deletes with that UID as a precondition. A concurrent or pre-existing capture
-fails without being deleted, replaced, or overlapped. If another resource later
-uses the same node name, cleanup leaves it untouched.
+deletes with that UID as a precondition. Status and the downloaded output are
+accepted only while that UID still owns the name. A concurrent or pre-existing
+capture fails without being deleted, replaced, or overlapped. If another
+resource later uses the same node name, the command fails, removes any partial
+download, and leaves the replacement untouched.
 
 The upstream `kubectl ekslogs` command deletes resources by node name, including
 pre-existing resources. Do not invoke or copy that ownership behavior. Keep

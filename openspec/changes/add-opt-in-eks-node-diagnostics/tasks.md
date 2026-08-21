@@ -35,8 +35,9 @@
   that UID as a cleanup precondition. Leave a pre-existing, concurrent, or
   same-name replacement resource untouched.
 - [x] 3.3 Add focused command tests with a stubbed `kubectl` for successful local
-  capture, create conflict, interruption, and same-name replacement before
-  cleanup. Verify only the resource UID created by the command can be deleted.
+  capture, create conflict, interruption, and same-name replacement during
+  capture, download, or cleanup. Verify status and output belong to the created
+  UID and only that resource can be deleted.
 - [x] 3.4 Document AWS's manual S3 procedure only as a separate option using an
   existing approved bucket and retention policy.
 - [x] 3.5 Document UTC correlation across the bundle, node name, instance ID,
@@ -59,8 +60,8 @@
 - [ ] 4.3 Review an enabled non-production plan and prove it contains only the
   exact EKS module pin, input, and managed add-on changes.
 - [x] 4.4 Run the focused operator-command tests and prove create conflicts,
-  interruption, and same-name replacement cannot delete a resource the command
-  did not create.
+  interruption, and same-name replacement cannot accept another resource's
+  status or output or delete a resource the command did not create.
 - [ ] 4.5 With separate authorization, canary the exact add-on version in a
   disposable non-production cluster. Verify node conditions and events, native
   bundle collection, refusal to alter a pre-existing capture, owned cleanup,
