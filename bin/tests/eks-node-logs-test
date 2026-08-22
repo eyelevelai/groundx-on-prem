@@ -46,7 +46,7 @@ run_scenario success || fail "successful capture failed"
 success_log="$TEST_ROOT/success/kubectl.log"
 assert_contains "$success_log" "create -f - -o json"
 assert_contains "$success_log" "get --raw /api/v1/nodes/$NODE/proxy/logs/support/$NODE-logs.tar.gz"
-assert_contains "$success_log" 'DELETE_BODY={"apiVersion":"v1","kind":"DeleteOptions","preconditions":{"uid":"uid-owned"}}'
+assert_contains "$success_log" 'DELETE_BODY={"apiVersion":"v1","kind":"DeleteOptions","preconditions":{"uid":"uid-owned","resourceVersion":"11"}}'
 bundle=$(find "$TEST_ROOT/success/output" -type f -name '*-logs.tar.gz' -print -quit)
 [[ -n "$bundle" ]] || fail "successful capture did not save a bundle"
 [[ "$(cat "$bundle")" == "diagnostic bundle" ]] || fail "saved bundle content is wrong"
@@ -59,12 +59,12 @@ assert_not_contains "$TEST_ROOT/conflict/kubectl.log" "delete --raw="
 if run_scenario interrupt; then
   fail "interrupted capture unexpectedly succeeded"
 fi
-assert_contains "$TEST_ROOT/interrupt/kubectl.log" 'DELETE_BODY={"apiVersion":"v1","kind":"DeleteOptions","preconditions":{"uid":"uid-owned"}}'
+assert_contains "$TEST_ROOT/interrupt/kubectl.log" 'DELETE_BODY={"apiVersion":"v1","kind":"DeleteOptions","preconditions":{"uid":"uid-owned","resourceVersion":"11"}}'
 
 run_scenario replacement || fail "same-name replacement handling failed"
 replacement_log="$TEST_ROOT/replacement/kubectl.log"
-assert_contains "$replacement_log" 'DELETE_BODY={"apiVersion":"v1","kind":"DeleteOptions","preconditions":{"uid":"uid-owned"}}'
-assert_contains "$replacement_log" "get nodediagnostic $NODE --ignore-not-found -o jsonpath={.metadata.uid}"
+assert_not_contains "$replacement_log" "DELETE_BODY="
+assert_contains "$replacement_log" "get nodediagnostic $NODE --ignore-not-found -o json"
 assert_not_contains "$replacement_log" "delete nodediagnostic"
 
 if run_scenario replacement_during_capture; then
@@ -72,7 +72,7 @@ if run_scenario replacement_during_capture; then
 fi
 capture_replacement_log="$TEST_ROOT/replacement_during_capture/kubectl.log"
 assert_not_contains "$capture_replacement_log" "get --raw"
-assert_contains "$capture_replacement_log" 'DELETE_BODY={"apiVersion":"v1","kind":"DeleteOptions","preconditions":{"uid":"uid-owned"}}'
+assert_not_contains "$capture_replacement_log" "DELETE_BODY="
 
 if run_scenario replacement_during_download; then
   fail "capture accepted a NodeDiagnostic replaced during download"
@@ -82,5 +82,21 @@ assert_contains "$download_replacement_log" "get --raw /api/v1/nodes/$NODE/proxy
 if find "$TEST_ROOT/replacement_during_download/output" -type f -name '*-logs.tar.gz' -print -quit | grep -q .; then
   fail "capture saved a bundle from a replaced NodeDiagnostic"
 fi
+
+if run_scenario updated_during_download; then
+  fail "capture accepted a NodeDiagnostic updated during download"
+fi
+updated_download_log="$TEST_ROOT/updated_during_download/kubectl.log"
+assert_contains "$updated_download_log" "get --raw /api/v1/nodes/$NODE/proxy/logs/support/$NODE-logs.tar.gz"
+assert_not_contains "$updated_download_log" "DELETE_BODY="
+if find "$TEST_ROOT/updated_during_download/output" -type f -name '*-logs.tar.gz' -print -quit | grep -q .; then
+  fail "capture saved a bundle from an updated NodeDiagnostic"
+fi
+
+run_scenario updated_before_cleanup || fail "valid capture failed before cleanup ownership check"
+updated_cleanup_log="$TEST_ROOT/updated_before_cleanup/kubectl.log"
+assert_not_contains "$updated_cleanup_log" "DELETE_BODY="
+bundle=$(find "$TEST_ROOT/updated_before_cleanup/output" -type f -name '*-logs.tar.gz' -print -quit)
+[[ -n "$bundle" ]] || fail "valid bundle was not saved before cleanup update"
 
 echo "eks-node-logs tests passed"

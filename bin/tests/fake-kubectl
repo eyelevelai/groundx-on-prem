@@ -18,7 +18,7 @@ if [[ "$1" == "create" ]]; then
     echo "Error from server (AlreadyExists): nodediagnostics.eks.amazonaws.com already exists" >&2
     exit 1
   fi
-  printf '{"metadata":{"uid":"uid-owned"}}\n'
+  printf '{"metadata":{"uid":"uid-owned","generation":1,"resourceVersion":"10"}}\n'
   exit 0
 fi
 
@@ -32,18 +32,31 @@ if [[ "$1" == "wait" ]]; then
 fi
 
 if [[ "$1" == "get" && "$2" == "nodediagnostic" ]]; then
-  if [[ "${5:-}" == "json" ]]; then
+  if [[ "$*" == *"-o json"* ]]; then
     uid="uid-owned"
-    if [[ "$FAKE_SCENARIO" == "replacement_during_capture" ]]; then
+    generation=1
+    resource_version="11"
+    destination="node"
+    reads=$(cat "$FAKE_KUBECTL_STATE" 2>/dev/null || printf '0')
+    printf '%s\n' "$((reads + 1))" >"$FAKE_KUBECTL_STATE"
+
+    if [[ "$FAKE_SCENARIO" == "replacement" && "$reads" -gt 1 ]]; then
       uid="uid-replacement"
-    elif [[ "$FAKE_SCENARIO" == "replacement_during_download" ]]; then
-      reads=$(cat "$FAKE_KUBECTL_STATE" 2>/dev/null || printf '0')
-      printf '%s\n' "$((reads + 1))" >"$FAKE_KUBECTL_STATE"
-      if [[ "$reads" -gt 0 ]]; then
-        uid="uid-replacement"
-      fi
+    elif [[ "$FAKE_SCENARIO" == "replacement_during_capture" ]]; then
+      uid="uid-replacement"
+    elif [[ "$FAKE_SCENARIO" == "replacement_during_download" && "$reads" -gt 0 ]]; then
+      uid="uid-replacement"
+    elif [[ "$FAKE_SCENARIO" == "updated_during_download" && "$reads" -gt 0 ]]; then
+      generation=2
+      resource_version="12"
+      destination="https://example.invalid/upload"
+    elif [[ "$FAKE_SCENARIO" == "updated_before_cleanup" && "$reads" -gt 1 ]]; then
+      generation=2
+      resource_version="12"
+      destination="https://example.invalid/upload"
     fi
-    printf '{"metadata":{"uid":"%s"},"status":{"captureStatuses":[{"state":{"completed":{"reason":"Success","message":"capture complete"}}}]}}\n' "$uid"
+    printf '{"metadata":{"uid":"%s","generation":%s,"resourceVersion":"%s"},"spec":{"logCapture":{"destination":"%s"}},"status":{"captureStatuses":[{"state":{"completed":{"reason":"Success","message":"capture complete"}}}]}}\n' \
+      "$uid" "$generation" "$resource_version" "$destination"
   elif [[ "$*" == *"completed.reason"* ]]; then
     printf 'Success'
   elif [[ "$*" == *"completed.message"* ]]; then

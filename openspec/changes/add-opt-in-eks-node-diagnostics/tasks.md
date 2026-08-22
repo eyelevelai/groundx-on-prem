@@ -31,13 +31,14 @@
 - [x] 3.1 Add and document one small repo-owned, exact-node operator command over
   the native `NodeDiagnostic` API. Download the bundle locally; do not implement
   batch or S3 upload behavior.
-- [x] 3.2 Use create-only semantics, record the created resource UID, and use
-  that UID as a cleanup precondition. Leave a pre-existing, concurrent, or
-  same-name replacement resource untouched.
+- [x] 3.2 Use create-only semantics, record the created resource UID and
+  generation, and use the UID and latest resource version as cleanup
+  preconditions. Leave a pre-existing, concurrent, replaced, or edited resource
+  untouched.
 - [x] 3.3 Add focused command tests with a stubbed `kubectl` for successful local
-  capture, create conflict, interruption, and same-name replacement during
-  capture, download, or cleanup. Verify status and output belong to the created
-  UID and only that resource can be deleted.
+  capture, create conflict, interruption, same-name replacement, and in-place
+  update during capture, download, or cleanup. Verify status and output belong
+  to the unchanged created generation and only that resource can be deleted.
 - [x] 3.4 Document AWS's manual S3 procedure only as a separate option using an
   existing approved bucket and retention policy.
 - [x] 3.5 Document UTC correlation across the bundle, node name, instance ID,
@@ -60,8 +61,9 @@
 - [ ] 4.3 Review an enabled non-production plan and prove it contains only the
   exact EKS module pin, input, and managed add-on changes.
 - [x] 4.4 Run the focused operator-command tests and prove create conflicts,
-  interruption, and same-name replacement cannot accept another resource's
-  status or output or delete a resource the command did not create.
+  interruption, same-name replacement, and in-place updates cannot accept
+  another capture's status or output or delete a resource the command no longer
+  owns unchanged.
 - [ ] 4.5 With separate authorization, canary the exact add-on version in a
   disposable non-production cluster. Verify node conditions and events, native
   bundle collection, refusal to alter a pre-existing capture, owned cleanup,

@@ -69,7 +69,8 @@ invocation. It SHALL NOT implement batch or S3 upload behavior.
   target
 - **AND** that resource produces a host log bundle
 - **AND** the bundle is downloaded locally
-- **AND** cleanup deletes only the same resource UID created by that invocation
+- **AND** cleanup deletes only the unchanged resource generation created by
+  that invocation, using UID and resource-version preconditions
 - **AND** no GroundX workload or cluster capacity is modified.
 
 #### Scenario: A selected node already has an active capture
@@ -79,15 +80,18 @@ invocation. It SHALL NOT implement batch or S3 upload behavior.
 - **THEN** capture stops for that target
 - **AND** the existing resource is not deleted, replaced, or overlapped.
 
-#### Scenario: The resource name is reused during capture
+#### Scenario: The capture resource is replaced or edited
 
-- **GIVEN** the command created a `NodeDiagnostic` and recorded its UID
-- **AND** that resource is replaced by another resource with the same node name
+- **GIVEN** the command created a `NodeDiagnostic` and recorded its UID and
+  generation
+- **AND** that resource is replaced under the same name or its specification is
+  edited in place
 - **WHEN** the command reads capture status, downloads the bundle, or performs
   cleanup
-- **THEN** it rejects status or output that cannot be tied to the recorded UID
+- **THEN** it rejects status or output that cannot be tied to the recorded UID,
+  generation, and local-node destination
 - **AND** it removes any partial local bundle
-- **AND** the replacement resource is not deleted.
+- **AND** the replacement or edited resource is not deleted.
 
 ### Requirement: Incident evidence is correlated outside the bundle
 

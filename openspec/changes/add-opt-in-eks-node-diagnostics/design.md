@@ -82,12 +82,12 @@ collection.
 Provide one small repo-owned operator command over the native `NodeDiagnostic`
 API for one exact node and local download. This is a safe frontend to the AWS
 collector, not another collector or service. It uses create-only semantics,
-records the created resource UID, waits for and downloads the bundle, and
-deletes with that UID as a precondition. Status and the downloaded output are
-accepted only while that UID still owns the name. A concurrent or pre-existing
-capture fails without being deleted, replaced, or overlapped. If another
-resource later uses the same node name, the command fails, removes any partial
-download, and leaves the replacement untouched.
+records the created resource UID and generation, waits for and downloads the
+bundle, and deletes with the UID and latest resource version as preconditions.
+Status and output are accepted only while the UID, generation, and local-node
+destination remain unchanged. A concurrent, pre-existing, replaced, or edited
+capture fails without being deleted or overlapped. The command removes any
+partial download and leaves the other operator's resource untouched.
 
 The upstream `kubectl ekslogs` command deletes resources by node name, including
 pre-existing resources. Do not invoke or copy that ownership behavior. Keep
@@ -163,8 +163,9 @@ production plan to show no unrelated change.
   not background automation.
 - **Sensitive bundles:** save locally by default and use existing access and
   retention controls for any separately approved manual upload.
-- **Capture ownership:** create conflicts and UID-guarded cleanup are verified
-  with focused command tests and a pre-existing-resource canary.
+- **Capture ownership:** create conflicts and identity, generation, and
+  resource-version-guarded cleanup are verified with focused command tests and
+  a pre-existing-resource canary.
 - **Legacy Terraform remains production authority:** keep the change optional
   and AWS-specific; do not make the Helm contract depend on it.
 

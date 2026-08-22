@@ -174,9 +174,9 @@ after the optional Terraform node diagnostics feature is enabled:
 bin/eks-node-logs --output-dir node-evidence NODE_NAME
 ```
 
-It refuses an existing `NodeDiagnostic` and cleans up only the resource UID it
-created. See [EKS Node Diagnostics](../docs/eks-node-diagnostics.md) for
-enablement, permissions, evidence correlation, and unreachable-node limits.
+It refuses an existing `NodeDiagnostic` and cleans up only the unchanged
+resource generation it created. See [EKS Node Diagnostics](../docs/eks-node-diagnostics.md)
+for enablement, permissions, evidence correlation, and unreachable-node limits.
 
 ## Troubleshooting
 

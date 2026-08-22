@@ -54,9 +54,10 @@ bin/eks-node-logs --output-dir node-evidence NODE_NAME
 ```
 
 The command refuses an existing capture. It creates one temporary
-`NodeDiagnostic`, records its UID, downloads the bundle, and deletes only that
-UID. An interrupted command attempts the same guarded cleanup. A replacement
-with the same name is left untouched.
+`NodeDiagnostic`, records its UID and generation, downloads the bundle, and
+deletes it only if its identity and capture specification are unchanged. An
+interrupted command attempts the same resource-version-guarded cleanup. A
+replacement or in-place update is left untouched.
 
 Bundles contain sensitive host and workload evidence. Do not commit them or
 attach them to tickets without review. For an approved S3 destination, use
