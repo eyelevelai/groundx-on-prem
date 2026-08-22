@@ -34,6 +34,12 @@ variable "node_diagnostics" {
   default = {}
 }
 
+variable "eks_kms_source_policy_documents" {
+  description = "Optional existing policy documents to merge into the EKS cluster KMS key policy."
+  type        = list(string)
+  default     = []
+}
+
 variable "autoscaler_internal" {
   type           = object({
     chart        = object({

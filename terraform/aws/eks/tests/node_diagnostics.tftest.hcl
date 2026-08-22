@@ -120,3 +120,27 @@ run "diagnostics_cover_only_cpu_pools" {
     error_message = "The add-on DCGM component must have no eligible nodes."
   }
 }
+
+run "kms_source_policy_documents_default_empty" {
+  command = plan
+
+  assert {
+    condition     = length(local.eks_kms_source_policy_documents) == 0
+    error_message = "Additional EKS KMS source policy documents must default to empty."
+  }
+}
+
+run "kms_source_policy_documents_pass_through" {
+  command = plan
+
+  variables {
+    eks_kms_source_policy_documents = [
+      "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"KeepExistingPolicy\"}]}"
+    ]
+  }
+
+  assert {
+    condition     = local.eks_kms_source_policy_documents == var.eks_kms_source_policy_documents
+    error_message = "Configured EKS KMS source policy documents must pass through unchanged."
+  }
+}
