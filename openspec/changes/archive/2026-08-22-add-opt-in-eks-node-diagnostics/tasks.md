@@ -56,9 +56,9 @@
   format-check the new Terraform test, run shell syntax and safety tests, and
   run `git diff --check`. Do not reformat the nine pre-existing Terraform files
   that fail the recursive formatting check on `0.2.7`.
-- [ ] 4.2 Review an omitted and disabled plan against current state and prove
+- [x] 4.2 Review an omitted and disabled plan against current state and prove
   there is no diagnostic or Helm change.
-- [ ] 4.3 Review an enabled non-production plan and prove it contains only the
+- [x] 4.3 Review an enabled non-production plan and prove it contains only the
   exact EKS module pin, input, and managed add-on changes.
 - [x] 4.4 Run the focused operator-command tests and prove create conflicts,
   interruption, same-name replacement, and in-place updates cannot accept
@@ -112,7 +112,19 @@ remain.
   feature does not repair nodes.
 - [x] 5.2 Submit the verified implementation as a PR whose base branch is
   `0.2.7`; verify the PR does not target the repository default branch.
-- [ ] 5.3 Obtain explicit production approval and review the production
+- [x] 5.3 Obtain explicit production approval and review the production
   Terraform plan; do not use the auto-approved `bin/environment` wrapper.
 - [ ] 5.4 Review one natural incident before proposing automatic capture,
   termination hooks, snapshots, or node repair.
+
+Production plan evidence, 2026-08-22: after explicit approval, the disabled
+production baseline planned two unrelated in-place changes: upgrading
+`amazon-cloudwatch-observability` from `v5.4.0-eksbuild.1` to
+`v6.5.0-eksbuild.1`, and removing the existing Inspector SBOM export statement
+from the EKS KMS key policy. Enabling `node_diagnostics` added only creation of
+`eks-node-monitoring-agent` `v1.7.0-eksbuild.1`; it introduced no replacement,
+deletion, Helm, node-group, workload, or application change. The plan was not
+applied. Production rollout remains blocked until the unrelated baseline
+changes are reconciled and a new plan contains only the intended add-on.
+Natural-incident review remains a required gate before any automatic capture,
+termination hook, snapshot, or repair proposal.
