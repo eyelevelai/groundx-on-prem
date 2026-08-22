@@ -1,0 +1,241 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+TIMEOUT="300s"
+OUTPUT_DIR="."
+
+usage() {
+  cat <<'EOF'
+Usage: bin/eks-node-logs [--timeout 300s] [--output-dir PATH] NODE
+
+Collect one EKS NodeDiagnostic bundle from the exact node and save it locally.
+EOF
+}
+
+fail() {
+  echo "Error: $*" >&2
+  exit 1
+}
+
+warn() {
+  echo "Warning: $*" >&2
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --timeout)
+      [[ -n "${2:-}" ]] || fail "--timeout requires a value"
+      TIMEOUT="$2"
+      shift 2
+      ;;
+    --output-dir)
+      [[ -n "${2:-}" ]] || fail "--output-dir requires a value"
+      OUTPUT_DIR="$2"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --*)
+      fail "unknown option: $1"
+      ;;
+    *)
+      [[ -z "${NODE:-}" ]] || fail "provide exactly one node"
+      NODE="$1"
+      shift
+      ;;
+  esac
+done
+
+[[ -n "${NODE:-}" ]] || {
+  usage >&2
+  exit 1
+}
+[[ "$TIMEOUT" =~ ^[1-9][0-9]*s$ ]] || fail "timeout must be positive seconds, such as 300s"
+[[ -d "$OUTPUT_DIR" ]] || fail "output directory does not exist: $OUTPUT_DIR"
+
+command -v kubectl >/dev/null 2>&1 || fail "kubectl is required"
+command -v jq >/dev/null 2>&1 || fail "jq is required"
+
+kubectl get crd nodediagnostics.eks.amazonaws.com >/dev/null 2>&1 ||
+  fail "NodeDiagnostic CRD is unavailable; enable node diagnostics first"
+kubectl get node "$NODE" >/dev/null 2>&1 || fail "node not found: $NODE"
+
+umask 077
+created_uid=""
+created_generation=""
+partial_path=""
+
+clear_ownership() {
+  created_uid=""
+  created_generation=""
+}
+
+delete_owned_capture() {
+  [[ -n "$created_uid" ]] || return 0
+  if [[ -z "$created_generation" ]]; then
+    warn "could not safely clean up NodeDiagnostic $NODE without its created generation"
+    return 1
+  fi
+
+  local capture
+  if ! capture=$(kubectl get nodediagnostic "$NODE" --ignore-not-found -o json 2>/dev/null); then
+    warn "could not verify cleanup for NodeDiagnostic $NODE"
+    return 1
+  fi
+
+  if [[ -z "$capture" ]]; then
+    clear_ownership
+    return 0
+  fi
+
+  local identity current_uid current_generation current_resource_version current_destination
+  if ! identity=$(printf '%s' "$capture" | jq -er \
+    '[.metadata.uid, (.metadata.generation | tostring), .metadata.resourceVersion, .spec.logCapture.destination] | @tsv'); then
+    warn "could not verify cleanup identity for NodeDiagnostic $NODE"
+    return 1
+  fi
+  IFS=$'\t' read -r current_uid current_generation current_resource_version current_destination <<<"$identity"
+
+  if [[ "$current_uid" != "$created_uid" ]]; then
+    warn "NodeDiagnostic $NODE was replaced; leaving the replacement untouched"
+    clear_ownership
+    return 0
+  fi
+
+  if [[ "$current_generation" != "$created_generation" || "$current_destination" != "node" ]]; then
+    warn "NodeDiagnostic $NODE was updated; leaving the updated capture untouched"
+    clear_ownership
+    return 0
+  fi
+
+  local resource_path="/apis/eks.amazonaws.com/v1alpha1/nodediagnostics/$NODE"
+  local delete_options
+  delete_options=$(jq -nc \
+    --arg uid "$created_uid" \
+    --arg resource_version "$current_resource_version" \
+    '{apiVersion:"v1",kind:"DeleteOptions",preconditions:{uid:$uid,resourceVersion:$resource_version}}')
+
+  if printf '%s\n' "$delete_options" |
+    kubectl delete --raw="$resource_path" -f - >/dev/null 2>&1; then
+    clear_ownership
+    return 0
+  fi
+
+  local latest latest_identity latest_uid latest_generation latest_resource_version latest_destination
+  if ! latest=$(kubectl get nodediagnostic "$NODE" --ignore-not-found -o json 2>/dev/null); then
+    warn "could not verify cleanup for NodeDiagnostic $NODE"
+    return 1
+  fi
+
+  if [[ -z "$latest" ]]; then
+    clear_ownership
+    return 0
+  fi
+
+  if ! latest_identity=$(printf '%s' "$latest" | jq -er \
+    '[.metadata.uid, (.metadata.generation | tostring), .metadata.resourceVersion, .spec.logCapture.destination] | @tsv'); then
+    warn "could not verify cleanup identity for NodeDiagnostic $NODE"
+    return 1
+  fi
+  IFS=$'\t' read -r latest_uid latest_generation latest_resource_version latest_destination <<<"$latest_identity"
+
+  if [[ "$latest_uid" != "$created_uid" ||
+        "$latest_generation" != "$created_generation" ||
+        "$latest_destination" != "node" ||
+        "$latest_resource_version" != "$current_resource_version" ]]; then
+    warn "NodeDiagnostic $NODE changed during cleanup; leaving it untouched"
+    clear_ownership
+    return 0
+  fi
+
+  warn "could not delete the NodeDiagnostic created by this command"
+  return 1
+}
+
+get_owned_capture() {
+  local capture
+  if ! capture=$(kubectl get nodediagnostic "$NODE" -o json); then
+    fail "NodeDiagnostic $NODE disappeared before capture completed"
+  fi
+
+  local identity current_uid current_generation current_destination
+  identity=$(printf '%s' "$capture" | jq -er \
+    '[.metadata.uid, (.metadata.generation | tostring), .spec.logCapture.destination] | @tsv') ||
+    fail "NodeDiagnostic $NODE did not return its capture identity"
+  IFS=$'\t' read -r current_uid current_generation current_destination <<<"$identity"
+  [[ "$current_uid" == "$created_uid" ]] ||
+    fail "NodeDiagnostic $NODE was replaced during capture"
+  [[ "$current_generation" == "$created_generation" && "$current_destination" == "node" ]] ||
+    fail "NodeDiagnostic $NODE was updated during capture"
+
+  printf '%s' "$capture"
+}
+
+cleanup() {
+  local exit_code=$?
+  trap - EXIT INT TERM
+
+  if [[ -n "$partial_path" ]]; then
+    rm -f "$partial_path"
+  fi
+
+  if ! delete_owned_capture && [[ $exit_code -eq 0 ]]; then
+    exit_code=1
+  fi
+
+  exit "$exit_code"
+}
+
+trap cleanup EXIT INT TERM
+
+created=$(cat <<EOF | kubectl create -f - -o json
+apiVersion: eks.amazonaws.com/v1alpha1
+kind: NodeDiagnostic
+metadata:
+  name: $NODE
+spec:
+  logCapture:
+    destination: node
+EOF
+)
+created_uid=$(printf '%s' "$created" | jq -er '.metadata.uid') ||
+  fail "created NodeDiagnostic did not return a UID"
+created_generation=$(printf '%s' "$created" | jq -er '.metadata.generation | tostring') ||
+  fail "created NodeDiagnostic did not return a generation"
+
+echo "Collecting logs from $NODE..."
+kubectl wait \
+  --for='jsonpath={.status.captureStatuses[0].state.completed}' \
+  "nodediagnostic/$NODE" \
+  --timeout="$TIMEOUT" >/dev/null
+
+capture=$(get_owned_capture)
+reason=$(printf '%s' "$capture" | jq -r '.status.captureStatuses[0].state.completed.reason // empty')
+message=$(printf '%s' "$capture" | jq -r '.status.captureStatuses[0].state.completed.message // empty')
+
+case "$reason" in
+  Success)
+    ;;
+  SuccessWithErrors)
+    warn "capture completed with errors: $message"
+    ;;
+  *)
+    fail "capture failed: ${reason:-unknown} ${message:-}"
+    ;;
+esac
+
+timestamp=$(date -u +%Y%m%dT%H%M%SZ)
+output_path="$OUTPUT_DIR/$NODE-$timestamp-logs.tar.gz"
+partial_path="$output_path.partial.$$"
+[[ ! -e "$output_path" ]] || fail "output already exists: $output_path"
+
+kubectl get --raw "/api/v1/nodes/$NODE/proxy/logs/support/$NODE-logs.tar.gz" >"$partial_path"
+get_owned_capture >/dev/null
+[[ -s "$partial_path" ]] || fail "downloaded bundle is empty"
+mv "$partial_path" "$output_path"
+partial_path=""
+
+echo "Saved $output_path"

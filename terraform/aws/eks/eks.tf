@@ -1,6 +1,50 @@
 locals {
   should_create = var.environment.vpc_id != "" && length(var.environment.subnets) > 0
 
+  cluster_addons = merge(
+    {
+      amazon-cloudwatch-observability = {
+        resolve_conflicts_on_create = "OVERWRITE"
+        resolve_conflicts_on_update = "OVERWRITE"
+      }
+    },
+    var.node_diagnostics.enabled ? {
+      eks-node-monitoring-agent = {
+        addon_version = "v1.7.0-eksbuild.1"
+        preserve      = false
+        configuration_values = jsonencode({
+          nodeAgent = {
+            affinity = {
+              nodeAffinity = {
+                requiredDuringSchedulingIgnoredDuringExecution = {
+                  nodeSelectorTerms = [{
+                    matchExpressions = [{
+                      key      = "eyelevel_node"
+                      operator = "In"
+                      values   = [local.cpu_only_label, local.cpu_memory_label]
+                    }]
+                  }]
+                }
+              }
+            }
+            monitors = {
+              nvidia = {
+                enabled = false
+              }
+            }
+          }
+          dcgmAgent = {
+            nodeSelector = {
+              "diagnostics.groundx.ai/dcgm" = "disabled"
+            }
+          }
+        })
+        resolve_conflicts_on_create = "OVERWRITE"
+        resolve_conflicts_on_update = "OVERWRITE"
+      }
+    } : {}
+  )
+
   access_entries = merge({
     for entry in var.environment.cluster_role_arns : entry.name => {
       kubernetes_groups = []
@@ -322,7 +366,7 @@ module "eyelevel_eks" {
   count = local.should_create ? 1 : 0
 
   source                                   = "terraform-aws-modules/eks/aws"
-  version                                  = "~> 20.0"
+  version                                  = "20.37.2"
 
   enable_irsa                              = true
 
@@ -346,12 +390,7 @@ module "eyelevel_eks" {
 
   eks_managed_node_groups                  = local.node_groups
 
-  cluster_addons = {
-    amazon-cloudwatch-observability = {
-      resolve_conflicts_on_create = "OVERWRITE"
-      resolve_conflicts_on_update = "OVERWRITE"
-    }
-  }
+  cluster_addons                           = local.cluster_addons
 }
 
 resource "null_resource" "wait_for_eks" {
