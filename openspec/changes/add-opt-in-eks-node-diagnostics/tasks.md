@@ -22,7 +22,7 @@
 - [x] 2.3 Conditionally merge the pinned add-on into the existing
   `cluster_addons` map without enabling EKS node repair or adding new AWS
   permissions.
-- [ ] 2.4 Record the verified managed-add-on scheduling, tolerations,
+- [x] 2.4 Record the verified managed-add-on scheduling, tolerations,
   privileges, requests, and limits. Verify its pods run on both configured CPU
   pools and not on GPU pools, while existing CloudWatch GPU monitoring remains.
 
@@ -64,15 +64,15 @@
   interruption, same-name replacement, and in-place updates cannot accept
   another capture's status or output or delete a resource the command no longer
   owns unchanged.
-- [ ] 4.5 With separate authorization, canary the exact add-on version in a
+- [x] 4.5 With separate authorization, canary the exact add-on version in a
   disposable non-production cluster. Verify node conditions and events, native
   bundle collection, refusal to alter a pre-existing capture, owned cleanup,
   scheduling on both CPU pools and nowhere else, resource use, unchanged
   CloudWatch GPU monitoring, and disable behavior.
-- [ ] 4.6 Inspect a reachable bundle for the expected kernel, memory, storage,
+- [x] 4.6 Inspect a reachable bundle for the expected kernel, memory, storage,
   container-runtime, and networking evidence sources. Stop and revise the plan
   if required sources are absent.
-- [ ] 4.7 With separate authorization, remove EKS API connectivity from a
+- [x] 4.7 With separate authorization, remove EKS API connectivity from a
   disposable non-production CPU node while preserving CloudWatch and EC2
   connectivity. Confirm final host and data-plane logs, node conditions and
   events, EC2 and Auto Scaling timestamps, console evidence, and a clear native
@@ -81,6 +81,29 @@
 - [x] 4.8 Run existing Helm lint, unit, and minikube render gates and confirm
   `src/groundx`, `helm`, and their rendered manifests are unchanged.
 - [x] 4.9 Run strict OpenSpec validation.
+
+Canary evidence, 2026-08-22: an authorized disposable EKS 1.35 cluster in
+`us-west-1` ran `eks-node-monitoring-agent` `v1.7.0-eksbuild.1` on exactly one
+CPU-only and one CPU-memory node. The node agent requested 10m CPU and 30 MiB,
+limited 250m CPU and 200 MiB, used about 4 to 6m CPU and 49 to 51 MiB, and kept
+its vendor tolerations and documented privileged host access. Its exact CPU-pool
+affinity excluded other pools, NVIDIA monitoring was disabled, the DCGM selector
+matched no node, and the existing CloudWatch add-on remained active. Both
+reachable captures contained kernel, memory-pressure, storage, containerd, and
+networking evidence; one also reported a missing optional VPC CNI IPAM file
+without losing the other sources. A pre-existing capture was preserved, owned
+captures were removed, and the disabled plan removed only this add-on.
+
+At 02:53:28 UTC, the CPU-only node was denied only EKS API TCP/443 while EC2 and
+CloudWatch connectivity remained available. Kubernetes changed it to
+`NodeStatusUnknown` at 02:54:11 and marked an ordinary pod for eviction at
+02:59:11. EC2 reachability and Auto Scaling health stayed healthy. CloudWatch
+continued recording normal node CPU, memory, disk, and network metrics plus
+kubelet connection failures to both EKS endpoint IPs after Kubernetes lost the
+node. Native capture timed out clearly and cleaned up its owned request. The
+EC2 console output remained available. The cluster, nodes, add-ons, IAM,
+networking, logs, and Terraform state were then destroyed; no canary resources
+remain.
 
 ## 5. Production Handoff
 
