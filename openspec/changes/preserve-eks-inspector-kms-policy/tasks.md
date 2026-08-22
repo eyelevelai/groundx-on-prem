@@ -19,7 +19,7 @@
 - [x] 3.2 Review a targeted production plan and prove it contains exactly one
   add-on creation, with no KMS, CloudWatch, Helm, update, replacement, or
   deletion action.
-- [ ] 3.3 Submit the change against `0.2.7`. Do not apply Terraform.
+- [x] 3.3 Submit the change against `0.2.7`. Do not apply Terraform.
 
 Production plan evidence, 2026-08-22: the targeted plan against account
 `903713046261`, region `us-west-2`, and cluster `eyelevel_890ng3` contained one
