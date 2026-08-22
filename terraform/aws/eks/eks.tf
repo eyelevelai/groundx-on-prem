@@ -1,5 +1,6 @@
 locals {
-  should_create = var.environment.vpc_id != "" && length(var.environment.subnets) > 0
+  should_create                   = var.environment.vpc_id != "" && length(var.environment.subnets) > 0
+  eks_kms_source_policy_documents = var.eks_kms_source_policy_documents
 
   cluster_addons = merge(
     {
@@ -391,6 +392,7 @@ module "eyelevel_eks" {
   eks_managed_node_groups                  = local.node_groups
 
   cluster_addons                           = local.cluster_addons
+  kms_key_source_policy_documents          = local.eks_kms_source_policy_documents
 }
 
 resource "null_resource" "wait_for_eks" {
