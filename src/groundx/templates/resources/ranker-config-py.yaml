@@ -15,8 +15,9 @@ metadata:
 {{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
 data:
   config.py: |
+    {{- if eq $admEs "true" }}
     import os
-
+{{ end }}
     env = dict(
         deviceType={{ include "groundx.ranker.inference.deviceType" . | quote }},
         brokerType={{ include "groundx.ranker.cache.type" . | quote }},
