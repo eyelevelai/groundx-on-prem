@@ -102,3 +102,7 @@ documents unrelated deprecated-field compatibility and is unaffected by this cha
   owner-asserted precedence; record unverified env names as assumptions), and D3 (base =
   `origin/0.2.7`) were already approved in the brainstorming phase and are binding; the
   `superpowers:brainstorming` skill is not re-invoked for this proposal.
+
+## Amendments
+
+- **2026-08-25 — app-side changes required (this record's "application-code change: out of scope" is superseded).** Verification against the shipped 0.2.7 images, the live EKS deployment, and the cashbot-go/ai-server source showed the on-prem apps read OpenSearch, Redis, and the summary/OpenAI key **only from `config.yaml`**; the env fallback (cashbot-go `pkg/config/api.go LoadEnvVars`) covered only the admin API keys. The chart's Secret paths for OpenSearch/Redis/summary were therefore inert. The chart (this change) is correct and unchanged. Coordinated app-side fixes ship alongside it: cashbot-go `LoadEnvVars` now reads `SEARCH_USERNAME`/`SEARCH_PASSWORD`/`SEARCH_PRIVILEGED_*`, `REDIS_AUTH` (Rec + Metrics session), `GROUNDX_SUMMARY_API_KEY`; ai-server injects `REDIS_AUTH` into the Celery broker URLs (`redis_auth.patch_env`). Application API keys (`GROUNDX_ADMIN_*`) and Google OCR (file mount) already worked. All additive/opt-in and backward compatible. See the cross-service change folder's `contract.md` (External-semantics assumptions, now resolved) and `design.md`.
