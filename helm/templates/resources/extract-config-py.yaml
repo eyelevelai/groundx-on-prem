@@ -42,8 +42,9 @@ metadata:
 {{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
 data:
   config.py: |
+    {{- if eq $admEs "true" }}
     import os
-
+{{ end }}
     from groundx.extract import (
         AgentSettings,
         ContainerSettings,
