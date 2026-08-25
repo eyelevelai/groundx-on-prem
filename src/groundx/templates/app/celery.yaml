@@ -1,5 +1,6 @@
 {{- $svcs := (include "groundx.celery.process.services" . | fromYaml) -}}
 {{- $hasOCR := include "groundx.layout.hasOCRCredentials" . -}}
+{{- $ocrCreate := include "groundx.layout.ocr.create" . -}}
 {{- $username := include "groundx.container.username" . -}}
 
 {{- range $idx, $entry := $svcs }}
@@ -63,7 +64,7 @@ spec:
       annotations:
         config-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-config-py.yaml") $ | sha256sum }}
         supervisord-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-supervisord-conf.yaml") $ | sha256sum }}
-{{- if eq $hasOCR "true" }}
+{{- if and (eq $ocrCreate "true") (eq $hasOCR "true") }}
         ocr-credentials-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-ocr-credentials.yaml") $ | sha256sum }}
 {{- end }}
 {{- if gt (len $anns) 0 }}
@@ -171,7 +172,7 @@ spec:
             - name: config-volume
               mountPath: /app/config.py
               subPath: config.py
-{{- if eq $hasOCR "true" }}
+{{- if and (eq $ocrCreate "true") (eq $hasOCR "true") }}
             - name: credentials-volume
               mountPath: /app/credentials.json
               subPath: credentials.json
@@ -186,7 +187,7 @@ spec:
         - name: config-volume
           configMap:
             name: {{ $svc }}-config-py-map
-{{- if eq $hasOCR "true" }}
+{{- if and (eq $ocrCreate "true") (eq $hasOCR "true") }}
         - name: credentials-volume
           configMap:
             name: {{ $svc }}-ocr-credentials-map

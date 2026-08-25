@@ -135,13 +135,18 @@ None.
   `helm package` on **`src/groundx`** (not `helm/`) before publishing. The reason both
   `src/groundx` and `helm/` are edited is the manual-mirror convention, not that the
   package is built from `helm/`.
-- **2026-08-25 — deferred follow-up (F5).** cx-reviewer surfaced (verified) a
+- **2026-08-25 — RESOLVED in this change (F5).** cx-reviewer surfaced (verified) a
   pre-existing gating divergence, newly reachable now that the `$hasOCR`-true path
-  renders: `celery.yaml` gates the `credentials-volume`/mount/annotation on `$hasOCR`
-  (credentials set), while `templates/resources/layout-ocr-credentials.yaml` gates the
-  ConfigMap on `groundx.layout.ocr.create` (= `layout.ocr.enabled`, default true) **and**
-  `$hasOCR`. With `layout.ocr.credentials` set **and** `layout.ocr.enabled: false`
-  (schema-valid), `celery.yaml` mounts `<svc>-ocr-credentials-map` that is never created,
-  so those pods fail to start. Out of scope for GX-11 (a whitespace-render fix); the
-  primary Google-OCR-enabled path (`enabled` unset/true) is unaffected. Tracked as a
-  follow-up to be filed.
+  renders: `celery.yaml` gated the `credentials-volume`/mount/annotation on `$hasOCR`
+  (credentials set) alone, while `templates/resources/layout-ocr-credentials.yaml` gates
+  the ConfigMap on `groundx.layout.ocr.create` (= `layout.ocr.enabled`, default true)
+  **and** `$hasOCR`. With `layout.ocr.credentials` set **and** `layout.ocr.enabled: false`
+  (schema-valid), `celery.yaml` mounted `<svc>-ocr-credentials-map` that was never created,
+  so those pods failed to start (verified by real render: 4 Deployments referencing an
+  absent ConfigMap). Fixed by aligning the three `celery.yaml` guards (in both
+  `src/groundx/` and its `helm/` mirror) to `and (eq $ocrCreate "true") (eq $hasOCR
+  "true")`, matching the ConfigMap's own condition — the volume/mount/annotation now
+  render iff the ConfigMap that backs them is created. Covered by a new durable
+  helm-unittest case ("google OCR credentials set but layout.ocr disabled") in
+  `src/groundx/tests/celery_test.yaml`, verified to fail on the unfixed (`$hasOCR`-only)
+  guard and pass on the fix. No separate follow-up ticket needed.

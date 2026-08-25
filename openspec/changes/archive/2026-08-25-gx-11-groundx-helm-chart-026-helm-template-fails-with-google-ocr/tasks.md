@@ -44,4 +44,7 @@ a reintroduced `-}}` chomp, so a **durable** helm-unittest case was added:
 `src/groundx/files/ocr/google-fixture-credentials.json`. It asserts the three guarded keys
 render on their own line and fails when the chomp is reintroduced. The 1.1/1.2 throwaway
 checks above remain valid; the unittest case is the standing CI guard. See design.md
-`## Amendments` for the shipped-fixture tradeoff (F3) and the deferred gating follow-up (F5).
+`## Amendments` for the shipped-fixture tradeoff (F3) and the resolved guard-alignment
+fix (F5 — the `layout.ocr.credentials`-set + `layout.ocr.enabled: false` dangling
+ConfigMap reference, fixed in the same-session review-fix round, not a deferred
+follow-up).
