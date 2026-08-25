@@ -1,7 +1,8 @@
 # layout-ocr-credentials-render Specification
 
 ## Purpose
-TBD - created by archiving change gx-11-groundx-helm-chart-026-helm-template-fails-with-google-ocr. Update Purpose after archive.
+Guarantee that `celery.yaml`'s `$hasOCR` conditional blocks (the OCR credentials annotation, volume mount, and volume) render as valid YAML on both the Google-OCR and default/Tesseract branches, in `src/groundx` and its `helm/` mirror alike.
+
 ## Requirements
 ### Requirement: Celery template's `$hasOCR` guard renders valid YAML on every branch
 
