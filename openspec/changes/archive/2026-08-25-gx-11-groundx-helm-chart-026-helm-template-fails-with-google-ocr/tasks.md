@@ -33,3 +33,15 @@
   that no rollout/canary/secret/migration step is required beyond a normal
   chart release (per design.md's Migration Plan).
   check: n/a — documentation/record-keeping task, no behavior to assert.
+
+## Amendment (2026-08-25, round-2 review)
+
+Task 2.1's original plan treated the `$hasOCR`-true branch as covered only by the
+throwaway render checks in 1.1/1.2. Round-2 review found that leaves CI unable to catch
+a reintroduced `-}}` chomp, so a **durable** helm-unittest case was added:
+`src/groundx/tests/celery_test.yaml` "google OCR enabled", driven by
+`src/groundx/tests/files/values.ocr-google.yaml` + the committed fixture
+`src/groundx/files/ocr/google-fixture-credentials.json`. It asserts the three guarded keys
+render on their own line and fails when the chomp is reintroduced. The 1.1/1.2 throwaway
+checks above remain valid; the unittest case is the standing CI guard. See design.md
+`## Amendments` for the shipped-fixture tradeoff (F3) and the deferred gating follow-up (F5).

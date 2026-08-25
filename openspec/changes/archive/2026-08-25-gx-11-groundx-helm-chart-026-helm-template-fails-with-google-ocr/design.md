@@ -109,3 +109,39 @@ environment can render with Google OCR enabled today.
 ## Open Questions
 
 None.
+
+## Amendments
+
+- **2026-08-25 — round-2 review supersedes the "no committed fixture" Non-Goal.**
+  The Non-Goals and Decisions above state this change deliberately does not add a
+  permanent Google-OCR helm-unittest fixture, relying only on ad-hoc throwaway
+  render checks. Code review (sdd-reviewer + cx-reviewer, corroborated) found that
+  approach leaves the repaired `$hasOCR`-true branch unguarded by CI: `helm unittest`
+  never sets `layout.ocr.credentials`, so a reintroduced `-}}` chomp would pass CI
+  green. Round-2 review therefore **committed a permanent regression test** —
+  `src/groundx/tests/celery_test.yaml` "google OCR enabled" case, driven by
+  `src/groundx/tests/files/values.ocr-google.yaml` and the placeholder fixture
+  `src/groundx/files/ocr/google-fixture-credentials.json` (`{}`) — verified to fail
+  when the chomp is reintroduced. The `tasks.md` 1.1/1.2 render checks (throwaway
+  file) remain as-is; the committed unittest case is the durable CI guard that
+  supplements them.
+- **2026-08-25 — accepted tradeoff (F3).** The `{}` fixture ships in the published
+  chart: `.Files.Glob` (used to resolve `layout.ocr.credentials`) honors `.helmignore`,
+  so the fixture cannot be both excluded from the package and usable by the test.
+  It is inert (empty JSON, unreferenced by default values since `layout.ocr.credentials`
+  defaults to `""`) and clearly named as a fixture; accepted as-is at the review gate.
+- **2026-08-25 — correction.** The Decisions section states the published chart is
+  "built from `helm/` via `src/build.sh`". That is inaccurate: `src/build.sh` runs
+  `helm package` on **`src/groundx`** (not `helm/`) before publishing. The reason both
+  `src/groundx` and `helm/` are edited is the manual-mirror convention, not that the
+  package is built from `helm/`.
+- **2026-08-25 — deferred follow-up (F5).** cx-reviewer surfaced (verified) a
+  pre-existing gating divergence, newly reachable now that the `$hasOCR`-true path
+  renders: `celery.yaml` gates the `credentials-volume`/mount/annotation on `$hasOCR`
+  (credentials set), while `templates/resources/layout-ocr-credentials.yaml` gates the
+  ConfigMap on `groundx.layout.ocr.create` (= `layout.ocr.enabled`, default true) **and**
+  `$hasOCR`. With `layout.ocr.credentials` set **and** `layout.ocr.enabled: false`
+  (schema-valid), `celery.yaml` mounts `<svc>-ocr-credentials-map` that is never created,
+  so those pods fail to start. Out of scope for GX-11 (a whitespace-render fix); the
+  primary Google-OCR-enabled path (`enabled` unset/true) is unaffected. Tracked as a
+  follow-up to be filed.
