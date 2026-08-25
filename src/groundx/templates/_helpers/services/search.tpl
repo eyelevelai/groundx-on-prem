@@ -109,3 +109,12 @@ true
 {{- $in := .Values.search | default dict -}}
 {{ dig "username" "eyelevel" $in }}
 {{- end }}
+
+{{- define "groundx.search.existingSecret" -}}
+{{- $in := .Values.search | default dict -}}
+{{ dig "existingSecret" false $in }}
+{{- end }}
+
+{{- define "groundx.search.secretName" -}}
+opensearch-secret
+{{- end }}

@@ -22,6 +22,34 @@
 {{- (dig "username" "" $b) | trim -}}
 {{- end }}
 
+{{- define "groundx.admin.existingSecret" -}}
+{{- $b := .Values.admin | default dict -}}
+{{- dig "existingSecret" false $b -}}
+{{- end }}
+
+{{- define "groundx.admin.secretName" -}}
+groundx-admin-secret
+{{- end }}
+
+{{- define "groundx.admin.secrets" -}}
+{{- $apiKey := include "groundx.admin.apiKey" . -}}
+{{- $username := include "groundx.admin.username" . -}}
+{{- $cfg := dict
+  "name" (include "groundx.admin.secretName" .)
+-}}
+{{- if or (ne $apiKey "") (ne $username "") -}}
+{{- $data := dict -}}
+{{- if ne $apiKey "" -}}
+{{- $_ := set $data "GROUNDX_ADMIN_API_KEY" $apiKey -}}
+{{- end -}}
+{{- if ne $username "" -}}
+{{- $_ := set $data "GROUNDX_ADMIN_USERNAME" $username -}}
+{{- end -}}
+{{- $_ := set $cfg "data" $data -}}
+{{- end -}}
+{{- $cfg | toYaml -}}
+{{- end }}
+
 {{- define "groundx.busybox.image" -}}
 {{- $in := .Values.busybox | default dict -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
@@ -176,6 +204,11 @@ extraPreDefaults:
 {{- range $arr }}
   {{- $_ := set $dict . . -}}
 {{- end }}
+{{- $cp := include "groundx.cache.password" . -}}
+{{- $ce := include "groundx.cache.existingSecret" . | trim -}}
+{{- if or (ne $cp "") (eq $ce "true") -}}
+  {{- $_ := set $dict "redis-secret" "redis-secret" -}}
+{{- end -}}
 {{ $dict | toYaml }}
 {{- end }}
 

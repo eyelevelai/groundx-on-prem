@@ -173,9 +173,25 @@ true
 {{ dig "workers" 1 $in }}
 {{- end }}
 
+{{- define "groundx.layout.ocr.existingSecret" -}}
+{{- $b := .Values.layout | default dict -}}
+{{- $in := dig "ocr" dict $b -}}
+{{ dig "existingSecret" false $in }}
+{{- end }}
+
+{{- define "groundx.layout.ocr.secretName" -}}
+layout-ocr-secret
+{{- end }}
+
 {{- define "groundx.layout.ocr.settings" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "ocr" dict $b -}}
+
+{{- $credPath := include "groundx.layout.ocr.credentials" . -}}
+{{- $ocrExistingSecret := include "groundx.layout.ocr.existingSecret" . -}}
+{{- if and (ne $credPath "") (eq $ocrExistingSecret "true") -}}
+{{- fail "layout.ocr.credentials and layout.ocr.existingSecret are mutually exclusive" -}}
+{{- end -}}
 
 {{- $dpnd := dict
   "file" "file"
@@ -197,6 +213,17 @@ true
   "threads"      (include "groundx.layout.ocr.threads" .)
   "workers"      (include "groundx.layout.ocr.workers" .)
 -}}
+{{- if eq $ocrExistingSecret "true" -}}
+  {{- $_ := set $cfg "volumes" (list (dict
+      "name"   "credentials-secret-volume"
+      "secret" (dict "secretName" (include "groundx.layout.ocr.secretName" .))
+    )) -}}
+  {{- $_ := set $cfg "volumeMounts" (list (dict
+      "name"      "credentials-secret-volume"
+      "mountPath" "/app/credentials.json"
+      "subPath"   "credentials.json"
+    )) -}}
+{{- end -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}
 {{- end -}}

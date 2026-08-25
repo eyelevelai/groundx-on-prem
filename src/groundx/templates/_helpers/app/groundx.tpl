@@ -236,6 +236,17 @@ false
 {{- $_ := set $secrets (include "groundx.workspace.secretName" .) (include "groundx.workspace.secretName" .) -}}
 {{- end -}}
 
+{{- $sak := include "groundx.summary.apiKey" . -}}
+{{- $ses := include "groundx.summary.existingSecret" . -}}
+{{- if or (ne $sak "") (eq $ses "true") -}}
+{{- $_ := set $secrets (include "groundx.summary.secretName" .) (include "groundx.summary.secretName" .) -}}
+{{- end -}}
+
+{{- $seg := include "groundx.search.existingSecret" . -}}
+{{- if eq $seg "true" -}}
+{{- $_ := set $secrets (include "groundx.search.secretName" .) (include "groundx.search.secretName" .) -}}
+{{- end -}}
+
 {{- $cfg := dict
   "dependencies" $dpnd
   "image"        (include "groundx.groundx.image" .)

@@ -174,6 +174,43 @@ false
 {{- if eq $ic "true" -}}false{{- else -}}true{{- end -}}
 {{- end }}
 
+{{- define "groundx.cache.password" -}}
+{{- $in := .Values.cache | default dict -}}
+{{- $ex := (dig "existing" nil $in) | default dict -}}
+{{- if not (empty (dig "addr" "" $ex)) -}}
+{{ dig "password" "" $ex }}
+{{- else -}}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.cache.existingSecret" -}}
+{{- $in := .Values.cache | default dict -}}
+{{- $ex := (dig "existing" nil $in) | default dict -}}
+{{- if not (empty (dig "addr" "" $ex)) -}}
+{{ dig "existingSecret" false $ex }}
+{{- else -}}
+false
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.cache.secretName" -}}
+redis-secret
+{{- end }}
+
+{{- define "groundx.cache.secrets" -}}
+{{- $pwd := include "groundx.cache.password" . -}}
+{{- $cfg := dict
+  "name" (include "groundx.cache.secretName" .)
+-}}
+{{- if ne $pwd "" -}}
+{{- $data := dict
+  "REDIS_AUTH" $pwd
+-}}
+{{- $_ := set $cfg "data" $data -}}
+{{- end -}}
+{{- $cfg | toYaml -}}
+{{- end }}
+
 {{- define "groundx.cache.port" -}}
 {{- $in := .Values.cache | default dict -}}
 {{- $ex := (dig "existing" nil $in) | default dict -}}

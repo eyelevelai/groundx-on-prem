@@ -1,6 +1,6 @@
 ## 1. Summary API key (first vertical slice — mirrors `extract.agent` exactly)
 
-- [ ] 1.1 In `src/groundx/`: add `summary.existing.existingSecret` (boolean) to
+- [x] 1.1 In `src/groundx/`: add `summary.existing.existingSecret` (boolean) to
   `values.schema.json`; add `groundx.summary.existingSecret`, `groundx.summary.secretName`
   (fixed `summary-secret`), and `groundx.summary.apiKeyEnv` (`GROUNDX_SUMMARY_API_KEY`) to
   `templates/_helpers/app/summary.tpl`; extend `groundx.app.secrets`
@@ -10,12 +10,12 @@
   `secrets` dict in `templates/_helpers/app/groundx.tpl` whenever `apiKey!="" OR
   existingSecret=="true"`).
   check: helm unittest src/groundx -f 'tests/summary-secret_test.yaml'
-- [ ] 1.2 Mirror the four changed files from 1.1 into `helm/` byte-for-byte.
+- [x] 1.2 Mirror the four changed files from 1.1 into `helm/` byte-for-byte.
   check: diff src/groundx/values.schema.json helm/values.schema.json && diff src/groundx/templates/_helpers/app/summary.tpl helm/templates/_helpers/app/summary.tpl && diff src/groundx/templates/_helpers/app/groundx.tpl helm/templates/_helpers/app/groundx.tpl && diff src/groundx/templates/_helpers/app/secrets.tpl helm/templates/_helpers/app/secrets.tpl && grep -q 'summary-secret' helm/templates/_helpers/app/summary.tpl
 
 ## 2. OpenSearch credentials
 
-- [ ] 2.1 In `src/groundx/`: add `search.existingSecret` (boolean) to `values.schema.json`; add
+- [x] 2.1 In `src/groundx/`: add `search.existingSecret` (boolean) to `values.schema.json`; add
   `groundx.search.existingSecret` and `groundx.search.secretName` (fixed `opensearch-secret`) to
   `templates/_helpers/services/search.tpl` — **no auto-create branch** (see design.md D2/D3: the
   chart never creates this Secret from the non-empty default plaintext values, only references a
@@ -26,12 +26,12 @@
   `SEARCH_PRIVILEGED_PASSWORD` into `groundx.groundx.settings`'s `secrets` dict
   (`templates/_helpers/app/groundx.tpl`) only when `existingSecret=="true"`.
   check: helm unittest src/groundx -f 'tests/search-secret_test.yaml'
-- [ ] 2.2 Mirror the three changed files from 2.1 into `helm/` byte-for-byte.
+- [x] 2.2 Mirror the three changed files from 2.1 into `helm/` byte-for-byte.
   check: diff src/groundx/values.schema.json helm/values.schema.json && diff src/groundx/templates/_helpers/services/search.tpl helm/templates/_helpers/services/search.tpl && diff src/groundx/templates/resources/config-yaml.yaml helm/templates/resources/config-yaml.yaml && diff src/groundx/templates/_helpers/app/groundx.tpl helm/templates/_helpers/app/groundx.tpl && grep -q 'opensearch-secret' helm/templates/_helpers/services/search.tpl
 
 ## 3. Redis AUTH (external cache only)
 
-- [ ] 3.1 In `src/groundx/`: add `cache.existing.password` (string) and
+- [x] 3.1 In `src/groundx/`: add `cache.existing.password` (string) and
   `cache.existing.existingSecret` (boolean) to `values.schema.json`; add
   `groundx.cache.password` and `groundx.cache.existingSecret` to
   `templates/_helpers/services/cache.tpl`, both returning empty/false unless
@@ -42,7 +42,7 @@
   existing universal `envFrom` mechanism (design.md D4) with **zero edits to any of the five app
   pod templates**.
   check: helm unittest src/groundx -f 'tests/redis-auth_test.yaml'
-- [ ] 3.2 Mirror the two changed files from 3.1 into `helm/` byte-for-byte.
+- [x] 3.2 Mirror the two changed files from 3.1 into `helm/` byte-for-byte.
   check: diff src/groundx/values.schema.json helm/values.schema.json && diff src/groundx/templates/_helpers/services/cache.tpl helm/templates/_helpers/services/cache.tpl && diff src/groundx/templates/_helpers/main.tpl helm/templates/_helpers/main.tpl && grep -q 'redis-secret' helm/templates/_helpers/main.tpl
 
 ## 4. Application API keys (extract/ranker) — gate-class: same invariant at 5 pod sites
@@ -53,7 +53,7 @@ Invariant (see design.md `## Decisions` opening + spec.md polarity scenarios): a
 `admin.existingSecret==true`, independent of whether the plaintext value is also set — never the
 other way around.
 
-- [ ] 4.1 In `src/groundx/`: add `admin.existingSecret` (boolean) to `values.schema.json`; add
+- [x] 4.1 In `src/groundx/`: add `admin.existingSecret` (boolean) to `values.schema.json`; add
   `groundx.admin.existingSecret` and `groundx.admin.secretName` (fixed `groundx-admin-secret`) to
   `templates/_helpers/main.tpl`; extend `groundx.app.secrets`
   (`templates/_helpers/app/secrets.tpl`) with an `admin` entry (create from
@@ -66,7 +66,7 @@ other way around.
   when the sourced value is empty and `existingSecret==true` (config still wins when non-empty);
   apply the same treatment to `validAPIKeys=[...]` in `templates/resources/ranker-config-py.yaml`.
   check: helm unittest src/groundx -f 'tests/app-api-keys-secret_test.yaml'
-- [ ] 4.2 Wire the `groundx-admin-secret` `envFrom` entry into each of the five pods whose config
+- [x] 4.2 Wire the `groundx-admin-secret` `envFrom` entry into each of the five pods whose config
   bakes these values — add the same conditional `secrets` dict entry
   (`admin!="" OR existingSecret=="true"` → include `groundx.admin.secretName`) to
   `groundx.extract.agent.settings` (`templates/_helpers/app/extract-agent.tpl`),
@@ -75,7 +75,7 @@ other way around.
   `groundx.ranker.api.settings` (`templates/_helpers/app/ranker-api.tpl`), and
   `groundx.ranker.inference.settings` (`templates/_helpers/app/ranker-inference.tpl`).
   check: helm unittest src/groundx -f 'tests/app-api-keys-secret_test.yaml'
-- [ ] 4.3 Mirror the eight changed files from 4.1/4.2 into `helm/` byte-for-byte.
+- [x] 4.3 Mirror the eight changed files from 4.1/4.2 into `helm/` byte-for-byte.
   check: diff src/groundx/values.schema.json helm/values.schema.json && diff src/groundx/templates/_helpers/main.tpl helm/templates/_helpers/main.tpl && diff src/groundx/templates/_helpers/app/secrets.tpl helm/templates/_helpers/app/secrets.tpl && diff src/groundx/templates/resources/extract-config-py.yaml helm/templates/resources/extract-config-py.yaml && diff src/groundx/templates/resources/ranker-config-py.yaml helm/templates/resources/ranker-config-py.yaml && diff src/groundx/templates/_helpers/app/extract-agent.tpl helm/templates/_helpers/app/extract-agent.tpl && diff src/groundx/templates/_helpers/app/extract-download.tpl helm/templates/_helpers/app/extract-download.tpl && diff src/groundx/templates/_helpers/app/extract-save.tpl helm/templates/_helpers/app/extract-save.tpl && diff src/groundx/templates/_helpers/app/ranker-api.tpl helm/templates/_helpers/app/ranker-api.tpl && diff src/groundx/templates/_helpers/app/ranker-inference.tpl helm/templates/_helpers/app/ranker-inference.tpl && grep -q 'groundx-admin-secret' helm/templates/_helpers/main.tpl
 
 ## 5. Google OCR credential (Secret-volume, additive to the packaged file — GX-11 boundary)
@@ -86,7 +86,7 @@ GX-11 `hasOCR` `-}}`-guarded conditional (lines ~66-68, ~174-178, ~189-193 of `c
 never opened. If implementing this without touching those lines turns out to be impossible,
 escalate-and-stop rather than editing them.
 
-- [ ] 5.1 In `src/groundx/`: add `layout.ocr.existingSecret` (boolean) to `values.schema.json`; in
+- [x] 5.1 In `src/groundx/`: add `layout.ocr.existingSecret` (boolean) to `values.schema.json`; in
   `templates/_helpers/app/layout-ocr.tpl`, add `groundx.layout.ocr.existingSecret` and
   `groundx.layout.ocr.secretName` (fixed `layout-ocr-secret`); in `groundx.layout.ocr.settings`,
   `fail` the render when both `layout.ocr.credentials` and `layout.ocr.existingSecret` are set
@@ -95,18 +95,18 @@ escalate-and-stop rather than editing them.
   `credentials.json`) and matching `volumeMounts` entry at `/app/credentials.json` to the `$cfg`
   dict's `volumes`/`volumeMounts` keys.
   check: helm unittest src/groundx -f 'tests/layout-ocr-secret_test.yaml'
-- [ ] 5.2 Mirror the two changed files from 5.1 into `helm/` byte-for-byte.
+- [x] 5.2 Mirror the two changed files from 5.1 into `helm/` byte-for-byte.
   check: diff src/groundx/values.schema.json helm/values.schema.json && diff src/groundx/templates/_helpers/app/layout-ocr.tpl helm/templates/_helpers/app/layout-ocr.tpl && grep -q 'layout-ocr-secret' helm/templates/_helpers/app/layout-ocr.tpl
 
 ## 6. Chart-wide validation
 
-- [ ] 6.1 Run the full local test suite (all families plus the pre-existing suites) and confirm
+- [x] 6.1 Run the full local test suite (all families plus the pre-existing suites) and confirm
   every test passes, not only the five new files.
   check: helm unittest src/groundx
-- [ ] 6.2 Lint and render-check both chart surfaces (`helm lint src/groundx && helm lint helm &&
+- [x] 6.2 Lint and render-check both chart surfaces (`helm lint src/groundx && helm lint helm &&
   helm template src/groundx -f src/groundx/values/minikube/values.yaml > /dev/null`).
   check: n/a — always-green structural CI-parity gate, not a feature assertion; not RED-able at baseline, run manually before the PR
-- [ ] 6.3 Confirm `helm/` and `src/groundx/` stayed in sync everywhere, not only in the files this
+- [x] 6.3 Confirm `helm/` and `src/groundx/` stayed in sync everywhere, not only in the files this
   change touched (catches an accidental one-sided edit anywhere in the tree, via `diff -rq
   src/groundx/templates helm/templates && diff src/groundx/values.schema.json
   helm/values.schema.json`).

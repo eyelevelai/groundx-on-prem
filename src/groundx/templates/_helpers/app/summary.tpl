@@ -39,3 +39,31 @@
 {{- $ex := dig "existing" dict $in -}}
 {{ coalesce (dig "serviceType" "" $ex) "eyelevel" }}
 {{- end }}
+
+{{- define "groundx.summary.existingSecret" -}}
+{{- $in := .Values.summary | default dict -}}
+{{- $ex := dig "existing" dict $in -}}
+{{ dig "existingSecret" false $ex }}
+{{- end }}
+
+{{- define "groundx.summary.secretName" -}}
+summary-secret
+{{- end }}
+
+{{- define "groundx.summary.apiKeyEnv" -}}
+GROUNDX_SUMMARY_API_KEY
+{{- end }}
+
+{{- define "groundx.summary.secrets" -}}
+{{- $apiKey := include "groundx.summary.apiKey" . -}}
+{{- $cfg := dict
+  "name" (include "groundx.summary.secretName" .)
+-}}
+{{- if ne $apiKey "" -}}
+{{- $data := dict
+  (include "groundx.summary.apiKeyEnv" .) $apiKey
+-}}
+{{- $_ := set $cfg "data" $data -}}
+{{- end -}}
+{{- $cfg | toYaml -}}
+{{- end }}
