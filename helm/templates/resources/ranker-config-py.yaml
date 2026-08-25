@@ -4,6 +4,8 @@
 {{- if or (eq $ic "true") (eq $ec "true") }}
 {{- $svc := include "groundx.ranker.serviceName" . -}}
 
+{{- $admEs := include "groundx.admin.existingSecret" . -}}
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -13,6 +15,8 @@ metadata:
 {{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
 data:
   config.py: |
+    import os
+
     env = dict(
         deviceType={{ include "groundx.ranker.inference.deviceType" . | quote }},
         brokerType={{ include "groundx.ranker.cache.type" . | quote }},
@@ -33,10 +37,14 @@ data:
         {{- $apiKey := include "groundx.admin.apiKey" . -}}
         {{- if ne $apiKey "" }}
           {{ $apiKey | quote }},
+        {{- else if eq $admEs "true" }}
+          os.environ.get("GROUNDX_ADMIN_API_KEY", ""),
         {{- end }}
         {{- $admin := include "groundx.admin.username" . -}}
         {{- if ne $admin "" }}
           {{ $admin | quote }},
+        {{- else if eq $admEs "true" }}
+          os.environ.get("GROUNDX_ADMIN_USERNAME", ""),
         {{- end }}
           {{- $extras := (get .Values "cluster") | default (dict) -}}{{- $list := (get $extras "validApiKeys") | default (list) -}}{{- range $list }}
           {{ . | quote }},{{- end }}

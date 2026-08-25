@@ -182,6 +182,12 @@ false
 {{- if or (ne $apiKey "") (eq $existingSecret "true") -}}
 {{- $_ := set $data (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .) -}}
 {{- end -}}
+{{- $admApi := include "groundx.admin.apiKey" . -}}
+{{- $admUser := include "groundx.admin.username" . -}}
+{{- $admEs := include "groundx.admin.existingSecret" . -}}
+{{- if or (ne $admApi "") (ne $admUser "") (eq $admEs "true") -}}
+{{- $_ := set $data (include "groundx.admin.secretName" .) (include "groundx.admin.secretName" .) -}}
+{{- end -}}
 {{- $env := dict
   "EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED" (include "groundx.extract.terminalAgentTraceEnabled" (dict "root" . "pod" "download"))
 -}}

@@ -248,6 +248,12 @@ false
   "pull"         (include "groundx.ranker.api.imagePullPolicy" .)
   "replicas"     ($rep)
 -}}
+{{- $admApi := include "groundx.admin.apiKey" . -}}
+{{- $admUser := include "groundx.admin.username" . -}}
+{{- $admEs := include "groundx.admin.existingSecret" . -}}
+{{- if or (ne $admApi "") (ne $admUser "") (eq $admEs "true") -}}
+{{- $_ := set $cfg "secrets" (dict (include "groundx.admin.secretName" .) (include "groundx.admin.secretName" .)) -}}
+{{- end -}}
 {{- if and $san (ne $san "") -}}
   {{- $_ := set $cfg "serviceAccountName" $san -}}
 {{- end -}}

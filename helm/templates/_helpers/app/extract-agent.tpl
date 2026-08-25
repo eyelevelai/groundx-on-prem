@@ -388,6 +388,12 @@ GROUNDX_AGENT_API_KEY
 {{- if or (ne $apiKey "") (eq $existingSecret "true") -}}
 {{- $_ := set $data (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .) -}}
 {{- end -}}
+{{- $admApi := include "groundx.admin.apiKey" . -}}
+{{- $admUser := include "groundx.admin.username" . -}}
+{{- $admEs := include "groundx.admin.existingSecret" . -}}
+{{- if or (ne $admApi "") (ne $admUser "") (eq $admEs "true") -}}
+{{- $_ := set $data (include "groundx.admin.secretName" .) (include "groundx.admin.secretName" .) -}}
+{{- end -}}
 {{- $env := dict
   "EXTRACT_AGENT_IMAGE_JPEG_QUALITIES" (include "groundx.extract.agent.imageJpegQualities" .)
   "EXTRACT_AGENT_IMAGE_MIN_LONG_EDGE_PX" (include "groundx.extract.agent.imageMinLongEdgePx" .)

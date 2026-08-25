@@ -124,8 +124,12 @@ data:
           {{- range (include "groundx.languages" . | fromYamlArray) }}
             - {{ . }}
           {{- end }}
+          {{- if ne (include "groundx.search.username" .) "" }}
           username: {{ include "groundx.search.username" . | quote }}
+          {{- end }}
+          {{- if ne (include "groundx.search.password" .) "" }}
           password: {{ include "groundx.search.password" . | quote }}
+          {{- end }}
       extract:
         client:
           {{- if ne (include "groundx.admin.username" .) "" }}
@@ -225,9 +229,13 @@ data:
         {{- end }}
       {{- end }}
       search:
+        {{- if ne (include "groundx.search.privilegedPassword" .) "" }}
         password: {{ include "groundx.search.privilegedPassword" . | quote }}
+        {{- end }}
         searchModel: all_access
+        {{- if ne (include "groundx.search.privilegedUsername" .) "" }}
         username: {{ include "groundx.search.privilegedUsername" . | quote }}
+        {{- end }}
 
     integrationTests:
       search:
