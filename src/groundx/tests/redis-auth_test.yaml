@@ -1,0 +1,80 @@
+suite: "Redis AUTH Secret-backed path, external cache only (GX-17)"
+
+tests:
+  - it: "external cache, existingSecret set, password empty: redis-secret envFrom reaches every workload, chart creates nothing"
+    templates:
+      - ../templates/app/celery.yaml
+      - ../templates/app/golang.yaml
+      - ../templates/resources/secret.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      groundx.enabled: true
+      extract.enabled: true
+      extract.agent.enabled: true
+      cache.existing.addr: redis.mycorp.net
+      cache.existing.existingSecret: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: redis-secret
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: extract-agent
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: redis-secret
+        template: ../templates/app/golang.yaml
+        documentIndex: 0
+      - hasDocuments:
+          count: 0
+        template: ../templates/resources/secret.yaml
+  - it: "plaintext path: external cache with password set - chart creates redis-secret from the plaintext value"
+    templates:
+      - ../templates/resources/secret.yaml
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      groundx.enabled: true
+      cache.existing.addr: redis.mycorp.net
+      cache.existing.password: test-redis-auth
+    asserts:
+      - equal:
+          path: metadata.name
+          value: redis-secret
+        template: ../templates/resources/secret.yaml
+      - matchRegex:
+          path: data["REDIS_AUTH"]
+          pattern: "test-redis-auth"
+          decodeBase64: true
+        template: ../templates/resources/secret.yaml
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: redis-secret
+        template: ../templates/app/golang.yaml
+        documentIndex: 0
+  - it: "must not block: bundled cache (no existing.addr) stays auth-less regardless of other fields"
+    templates:
+      - ../templates/app/golang.yaml
+      - ../templates/resources/secret.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      groundx.enabled: true
+      cache.enabled: true
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].envFrom
+        template: ../templates/app/golang.yaml
+        documentIndex: 0
+      - hasDocuments:
+          count: 0
+        template: ../templates/resources/secret.yaml
