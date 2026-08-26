@@ -103,3 +103,52 @@ tests:
       - ./files/values.workspace.enabled.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "google OCR enabled: hasOCR-true renders the credentials annotation, mount and volume on their own keys"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.ocr-google.yaml
+    asserts:
+      - isKind:
+          of: Deployment
+      - matchRegex:
+          path: spec.template.metadata.annotations["ocr-credentials-hash"]
+          pattern: "^[0-9a-f]{64}$"
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: credentials-volume
+            mountPath: /app/credentials.json
+            subPath: credentials.json
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: credentials-volume
+            configMap:
+              name: layout-ocr-credentials-map
+  - it: "google OCR credentials set but layout.ocr disabled: must not mount, volume, or annotate a ConfigMap that layout-ocr-credentials.yaml never creates"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.ocr-google-disabled.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-correct
+    asserts:
+      - isKind:
+          of: Deployment
+      - notExists:
+          path: spec.template.metadata.annotations["ocr-credentials-hash"]
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: credentials-volume
+            mountPath: /app/credentials.json
+            subPath: credentials.json
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: credentials-volume
+            configMap:
+              name: layout-ocr-credentials-map
