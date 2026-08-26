@@ -5,13 +5,13 @@
 {{- $svc := include "groundx.ranker.serviceName" . -}}
 
 apiVersion: v1
-kind: ConfigMap
+kind: Secret
 metadata:
   name: {{ $svc }}-config-py-map
   namespace: {{ include "groundx.ns" . }}
   labels:
 {{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
-data:
+stringData:
   config.py: |
     env = dict(
         deviceType={{ include "groundx.ranker.inference.deviceType" . | quote }},

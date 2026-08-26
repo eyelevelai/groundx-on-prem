@@ -70,13 +70,13 @@
 {{- $wrwt := include "groundx.workspace.workspace.throughput" . | trim -}}
 {{- if gt (len $svcs) 0 }}
 apiVersion: v1
-kind: ConfigMap
+kind: Secret
 metadata:
   name: config-yaml-map
   namespace: {{ include "groundx.ns" . }}
   labels:
 {{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
-data:
+stringData:
   config.yaml: |
     _mysql: &mysql
       ro_addr: {{ include "groundx.db.ro" . }}

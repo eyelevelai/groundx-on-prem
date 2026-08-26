@@ -21,7 +21,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2148b812d5d23888901d3b23f810695398d471c855151d818606b8e5696d1f4
+            config-hash: cd1aec097cc9363c8b5b3fa5096871d253dfce0b52a028b045c339c527c50019
             gunicorn-conf-hash: 7b77a5ecbb71e70922f104c678cbaf4ce20a98b86db5735dab4924809990de45
             workspace.groundx.ai/component: api
           labels:
@@ -123,9 +123,9 @@
               operator: Equal
               value: workspace
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -183,7 +183,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2148b812d5d23888901d3b23f810695398d471c855151d818606b8e5696d1f4
+            config-hash: cd1aec097cc9363c8b5b3fa5096871d253dfce0b52a028b045c339c527c50019
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-cleanup
@@ -286,9 +286,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
@@ -315,7 +315,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2148b812d5d23888901d3b23f810695398d471c855151d818606b8e5696d1f4
+            config-hash: cd1aec097cc9363c8b5b3fa5096871d253dfce0b52a028b045c339c527c50019
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-command
@@ -426,9 +426,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
@@ -455,7 +455,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2148b812d5d23888901d3b23f810695398d471c855151d818606b8e5696d1f4
+            config-hash: cd1aec097cc9363c8b5b3fa5096871d253dfce0b52a028b045c339c527c50019
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-provision
@@ -558,9 +558,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
@@ -587,7 +587,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2148b812d5d23888901d3b23f810695398d471c855151d818606b8e5696d1f4
+            config-hash: cd1aec097cc9363c8b5b3fa5096871d253dfce0b52a028b045c339c527c50019
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-publish
@@ -690,9 +690,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
@@ -719,7 +719,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2148b812d5d23888901d3b23f810695398d471c855151d818606b8e5696d1f4
+            config-hash: cd1aec097cc9363c8b5b3fa5096871d253dfce0b52a028b045c339c527c50019
             supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
           labels:
             app: workspace-workspace
@@ -822,9 +822,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume
@@ -847,7 +847,16 @@
     type: Opaque
   10: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         from pathlib import Path
 
@@ -890,15 +899,6 @@
             workspace_min_free_percent=5,
             workspace_root=Path("/mnt/workspaces"),
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: workspace-config-py-map
-      namespace: eyelevel
   11: |
     apiVersion: v1
     data:
@@ -1126,7 +1126,7 @@
       template:
         metadata:
           annotations:
-            config-hash: f98c6beba748ccbac352add7af77fcf037f644d7e19c5154a2d5101d84de0cde
+            config-hash: 721826726fc4eb69292538324a71915d802079afaf30b1ce8b39cd5c5dad773d
             gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
           labels:
             app: workspace-api
@@ -1235,9 +1235,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -1295,7 +1295,7 @@
       template:
         metadata:
           annotations:
-            config-hash: f98c6beba748ccbac352add7af77fcf037f644d7e19c5154a2d5101d84de0cde
+            config-hash: 721826726fc4eb69292538324a71915d802079afaf30b1ce8b39cd5c5dad773d
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-cleanup
@@ -1400,9 +1400,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
@@ -1429,7 +1429,7 @@
       template:
         metadata:
           annotations:
-            config-hash: f98c6beba748ccbac352add7af77fcf037f644d7e19c5154a2d5101d84de0cde
+            config-hash: 721826726fc4eb69292538324a71915d802079afaf30b1ce8b39cd5c5dad773d
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-command
@@ -1534,9 +1534,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
@@ -1563,7 +1563,7 @@
       template:
         metadata:
           annotations:
-            config-hash: f98c6beba748ccbac352add7af77fcf037f644d7e19c5154a2d5101d84de0cde
+            config-hash: 721826726fc4eb69292538324a71915d802079afaf30b1ce8b39cd5c5dad773d
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-provision
@@ -1668,9 +1668,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
@@ -1697,7 +1697,7 @@
       template:
         metadata:
           annotations:
-            config-hash: f98c6beba748ccbac352add7af77fcf037f644d7e19c5154a2d5101d84de0cde
+            config-hash: 721826726fc4eb69292538324a71915d802079afaf30b1ce8b39cd5c5dad773d
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-publish
@@ -1802,9 +1802,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
@@ -1831,7 +1831,7 @@
       template:
         metadata:
           annotations:
-            config-hash: f98c6beba748ccbac352add7af77fcf037f644d7e19c5154a2d5101d84de0cde
+            config-hash: 721826726fc4eb69292538324a71915d802079afaf30b1ce8b39cd5c5dad773d
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-workspace
@@ -1936,9 +1936,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume
@@ -1994,7 +1994,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6053b1d9e41b387edaecbf8f85dc8cfb29eb20b5701d9f06d907cb13503313d3
+            config-hash: 56e3041cd33a178a584db52c0968f8c00c384be83d315cda59b5d8de9ac5fcf3
             gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
           labels:
             app: workspace-api
@@ -2104,9 +2104,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -2170,7 +2170,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6053b1d9e41b387edaecbf8f85dc8cfb29eb20b5701d9f06d907cb13503313d3
+            config-hash: 56e3041cd33a178a584db52c0968f8c00c384be83d315cda59b5d8de9ac5fcf3
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-cleanup
@@ -2276,9 +2276,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
@@ -2311,7 +2311,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6053b1d9e41b387edaecbf8f85dc8cfb29eb20b5701d9f06d907cb13503313d3
+            config-hash: 56e3041cd33a178a584db52c0968f8c00c384be83d315cda59b5d8de9ac5fcf3
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-command
@@ -2417,9 +2417,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
@@ -2452,7 +2452,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6053b1d9e41b387edaecbf8f85dc8cfb29eb20b5701d9f06d907cb13503313d3
+            config-hash: 56e3041cd33a178a584db52c0968f8c00c384be83d315cda59b5d8de9ac5fcf3
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-provision
@@ -2558,9 +2558,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
@@ -2593,7 +2593,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6053b1d9e41b387edaecbf8f85dc8cfb29eb20b5701d9f06d907cb13503313d3
+            config-hash: 56e3041cd33a178a584db52c0968f8c00c384be83d315cda59b5d8de9ac5fcf3
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-publish
@@ -2699,9 +2699,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
@@ -2734,7 +2734,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6053b1d9e41b387edaecbf8f85dc8cfb29eb20b5701d9f06d907cb13503313d3
+            config-hash: 56e3041cd33a178a584db52c0968f8c00c384be83d315cda59b5d8de9ac5fcf3
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-workspace
@@ -2840,9 +2840,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume
@@ -2871,7 +2871,16 @@
     type: Opaque
   10: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         from pathlib import Path
 
@@ -2914,15 +2923,6 @@
             workspace_min_free_percent=0,
             workspace_root=Path("/tmp/workspaces"),
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: workspace-config-py-map
-      namespace: eyelevel
 'enabled: workspace gitlab publish config':
   1: |
     apiVersion: apps/v1
@@ -2944,7 +2944,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ff799c7d5e1f4764d1cc9ab06e26e294dc1eb61b07c4f2db3def5d86dc83bb5d
+            config-hash: 6b67d4d13ce263098c3d7b3ce737eb82f27febd214f4599aa3c09c3e67942007
             gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
           labels:
             app: workspace-api
@@ -3054,9 +3054,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -3120,7 +3120,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ff799c7d5e1f4764d1cc9ab06e26e294dc1eb61b07c4f2db3def5d86dc83bb5d
+            config-hash: 6b67d4d13ce263098c3d7b3ce737eb82f27febd214f4599aa3c09c3e67942007
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-cleanup
@@ -3226,9 +3226,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
@@ -3261,7 +3261,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ff799c7d5e1f4764d1cc9ab06e26e294dc1eb61b07c4f2db3def5d86dc83bb5d
+            config-hash: 6b67d4d13ce263098c3d7b3ce737eb82f27febd214f4599aa3c09c3e67942007
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-command
@@ -3367,9 +3367,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
@@ -3402,7 +3402,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ff799c7d5e1f4764d1cc9ab06e26e294dc1eb61b07c4f2db3def5d86dc83bb5d
+            config-hash: 6b67d4d13ce263098c3d7b3ce737eb82f27febd214f4599aa3c09c3e67942007
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-provision
@@ -3508,9 +3508,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
@@ -3543,7 +3543,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ff799c7d5e1f4764d1cc9ab06e26e294dc1eb61b07c4f2db3def5d86dc83bb5d
+            config-hash: 6b67d4d13ce263098c3d7b3ce737eb82f27febd214f4599aa3c09c3e67942007
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-publish
@@ -3649,9 +3649,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
@@ -3684,7 +3684,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ff799c7d5e1f4764d1cc9ab06e26e294dc1eb61b07c4f2db3def5d86dc83bb5d
+            config-hash: 6b67d4d13ce263098c3d7b3ce737eb82f27febd214f4599aa3c09c3e67942007
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-workspace
@@ -3790,9 +3790,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume
@@ -3821,7 +3821,16 @@
     type: Opaque
   10: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         from pathlib import Path
 
@@ -3864,15 +3873,6 @@
             workspace_min_free_percent=0,
             workspace_root=Path("/tmp/workspaces"),
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: workspace-config-py-map
-      namespace: eyelevel
 'enabled: workspace metrics config':
   1: |
     apiVersion: autoscaling/v2
@@ -4213,7 +4213,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cbbb6cf1449744b1cac172f8d63301d97de8336d5a5dff91a25b4e5ab092d533
+            config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
             gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
           labels:
             app: workspace-api
@@ -4320,9 +4320,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -4380,7 +4380,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cbbb6cf1449744b1cac172f8d63301d97de8336d5a5dff91a25b4e5ab092d533
+            config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-cleanup
@@ -4483,9 +4483,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
@@ -4512,7 +4512,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cbbb6cf1449744b1cac172f8d63301d97de8336d5a5dff91a25b4e5ab092d533
+            config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-command
@@ -4615,9 +4615,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
@@ -4644,7 +4644,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cbbb6cf1449744b1cac172f8d63301d97de8336d5a5dff91a25b4e5ab092d533
+            config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-provision
@@ -4747,9 +4747,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
@@ -4776,7 +4776,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cbbb6cf1449744b1cac172f8d63301d97de8336d5a5dff91a25b4e5ab092d533
+            config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-publish
@@ -4879,9 +4879,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
@@ -4908,7 +4908,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cbbb6cf1449744b1cac172f8d63301d97de8336d5a5dff91a25b4e5ab092d533
+            config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-workspace
@@ -5011,9 +5011,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume
@@ -5036,7 +5036,16 @@
     type: Opaque
   10: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         from pathlib import Path
 
@@ -5079,15 +5088,6 @@
             workspace_min_free_percent=0,
             workspace_root=Path("/tmp/workspaces"),
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: workspace-config-py-map
-      namespace: eyelevel
   11: |
     apiVersion: v1
     data:

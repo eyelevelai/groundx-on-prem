@@ -19,7 +19,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 8341a7f845ecf5e6aaf5f9f98476491cd9e06b4b13da7e960873f62f5f1ff31e
+            config-hash: 86118eb7bb1a72bdff437d861d7eb59a6333f2908555c1d2383e794f022af59d
           labels:
             app: groundx
         spec:
@@ -120,9 +120,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -159,7 +159,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 8341a7f845ecf5e6aaf5f9f98476491cd9e06b4b13da7e960873f62f5f1ff31e
+            config-hash: 86118eb7bb1a72bdff437d861d7eb59a6333f2908555c1d2383e794f022af59d
           labels:
             app: layout-webhook
         spec:
@@ -239,9 +239,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -278,7 +278,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 8341a7f845ecf5e6aaf5f9f98476491cd9e06b4b13da7e960873f62f5f1ff31e
+            config-hash: 86118eb7bb1a72bdff437d861d7eb59a6333f2908555c1d2383e794f022af59d
           labels:
             app: pre-process
         spec:
@@ -358,9 +358,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -381,7 +381,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 8341a7f845ecf5e6aaf5f9f98476491cd9e06b4b13da7e960873f62f5f1ff31e
+            config-hash: 86118eb7bb1a72bdff437d861d7eb59a6333f2908555c1d2383e794f022af59d
           labels:
             app: process
         spec:
@@ -461,9 +461,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -484,7 +484,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 8341a7f845ecf5e6aaf5f9f98476491cd9e06b4b13da7e960873f62f5f1ff31e
+            config-hash: 86118eb7bb1a72bdff437d861d7eb59a6333f2908555c1d2383e794f022af59d
           labels:
             app: queue
         spec:
@@ -564,9 +564,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -587,7 +587,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 8341a7f845ecf5e6aaf5f9f98476491cd9e06b4b13da7e960873f62f5f1ff31e
+            config-hash: 86118eb7bb1a72bdff437d861d7eb59a6333f2908555c1d2383e794f022af59d
           labels:
             app: summary-client
         spec:
@@ -667,9 +667,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -690,7 +690,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 8341a7f845ecf5e6aaf5f9f98476491cd9e06b4b13da7e960873f62f5f1ff31e
+            config-hash: 86118eb7bb1a72bdff437d861d7eb59a6333f2908555c1d2383e794f022af59d
           labels:
             app: upload
         spec:
@@ -770,9 +770,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'cloud: golang':
   1: |
     apiVersion: apps/v1
@@ -794,7 +794,7 @@
       template:
         metadata:
           annotations:
-            config-hash: be9f100b088d2c7350616edcc08520e812a5d5ccb1ba5a876c4cc4e16ef4ab94
+            config-hash: 1953d9ee5ab6707a565a9650536768d2c7cfa6816fa0e02946f6d6dba1b8d450
           labels:
             app: groundx
         spec:
@@ -901,9 +901,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -940,7 +940,7 @@
       template:
         metadata:
           annotations:
-            config-hash: be9f100b088d2c7350616edcc08520e812a5d5ccb1ba5a876c4cc4e16ef4ab94
+            config-hash: 1953d9ee5ab6707a565a9650536768d2c7cfa6816fa0e02946f6d6dba1b8d450
           labels:
             app: layout-webhook
         spec:
@@ -1019,9 +1019,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -1058,7 +1058,7 @@
       template:
         metadata:
           annotations:
-            config-hash: be9f100b088d2c7350616edcc08520e812a5d5ccb1ba5a876c4cc4e16ef4ab94
+            config-hash: 1953d9ee5ab6707a565a9650536768d2c7cfa6816fa0e02946f6d6dba1b8d450
           labels:
             app: pre-process
         spec:
@@ -1137,9 +1137,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -1160,7 +1160,7 @@
       template:
         metadata:
           annotations:
-            config-hash: be9f100b088d2c7350616edcc08520e812a5d5ccb1ba5a876c4cc4e16ef4ab94
+            config-hash: 1953d9ee5ab6707a565a9650536768d2c7cfa6816fa0e02946f6d6dba1b8d450
           labels:
             app: process
         spec:
@@ -1239,9 +1239,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -1262,7 +1262,7 @@
       template:
         metadata:
           annotations:
-            config-hash: be9f100b088d2c7350616edcc08520e812a5d5ccb1ba5a876c4cc4e16ef4ab94
+            config-hash: 1953d9ee5ab6707a565a9650536768d2c7cfa6816fa0e02946f6d6dba1b8d450
           labels:
             app: queue
         spec:
@@ -1341,9 +1341,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -1364,7 +1364,7 @@
       template:
         metadata:
           annotations:
-            config-hash: be9f100b088d2c7350616edcc08520e812a5d5ccb1ba5a876c4cc4e16ef4ab94
+            config-hash: 1953d9ee5ab6707a565a9650536768d2c7cfa6816fa0e02946f6d6dba1b8d450
           labels:
             app: summary-client
         spec:
@@ -1443,9 +1443,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -1466,7 +1466,7 @@
       template:
         metadata:
           annotations:
-            config-hash: be9f100b088d2c7350616edcc08520e812a5d5ccb1ba5a876c4cc4e16ef4ab94
+            config-hash: 1953d9ee5ab6707a565a9650536768d2c7cfa6816fa0e02946f6d6dba1b8d450
           labels:
             app: upload
         spec:
@@ -1545,9 +1545,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'default: golang':
   1: |
     apiVersion: apps/v1
@@ -1569,7 +1569,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3e83b4c0ffc961d48eb12230e8f2070ed8b64932c481fb22b652728059a0158
+            config-hash: 889b46bbad71d58beaae8c182d8c578e483a43d80b72e0571f02cea338627ddd
           labels:
             app: groundx
         spec:
@@ -1676,9 +1676,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -1715,7 +1715,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3e83b4c0ffc961d48eb12230e8f2070ed8b64932c481fb22b652728059a0158
+            config-hash: 889b46bbad71d58beaae8c182d8c578e483a43d80b72e0571f02cea338627ddd
           labels:
             app: layout-webhook
         spec:
@@ -1794,9 +1794,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -1833,7 +1833,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3e83b4c0ffc961d48eb12230e8f2070ed8b64932c481fb22b652728059a0158
+            config-hash: 889b46bbad71d58beaae8c182d8c578e483a43d80b72e0571f02cea338627ddd
           labels:
             app: pre-process
         spec:
@@ -1912,9 +1912,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -1935,7 +1935,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3e83b4c0ffc961d48eb12230e8f2070ed8b64932c481fb22b652728059a0158
+            config-hash: 889b46bbad71d58beaae8c182d8c578e483a43d80b72e0571f02cea338627ddd
           labels:
             app: process
         spec:
@@ -2014,9 +2014,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2037,7 +2037,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3e83b4c0ffc961d48eb12230e8f2070ed8b64932c481fb22b652728059a0158
+            config-hash: 889b46bbad71d58beaae8c182d8c578e483a43d80b72e0571f02cea338627ddd
           labels:
             app: queue
         spec:
@@ -2116,9 +2116,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2139,7 +2139,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3e83b4c0ffc961d48eb12230e8f2070ed8b64932c481fb22b652728059a0158
+            config-hash: 889b46bbad71d58beaae8c182d8c578e483a43d80b72e0571f02cea338627ddd
           labels:
             app: summary-client
         spec:
@@ -2218,9 +2218,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2241,7 +2241,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3e83b4c0ffc961d48eb12230e8f2070ed8b64932c481fb22b652728059a0158
+            config-hash: 889b46bbad71d58beaae8c182d8c578e483a43d80b72e0571f02cea338627ddd
           labels:
             app: upload
         spec:
@@ -2320,9 +2320,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'disabled: golang':
 'empty: golang':
   1: |
@@ -2345,7 +2345,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3e83b4c0ffc961d48eb12230e8f2070ed8b64932c481fb22b652728059a0158
+            config-hash: 889b46bbad71d58beaae8c182d8c578e483a43d80b72e0571f02cea338627ddd
           labels:
             app: groundx
         spec:
@@ -2452,9 +2452,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -2491,7 +2491,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3e83b4c0ffc961d48eb12230e8f2070ed8b64932c481fb22b652728059a0158
+            config-hash: 889b46bbad71d58beaae8c182d8c578e483a43d80b72e0571f02cea338627ddd
           labels:
             app: layout-webhook
         spec:
@@ -2570,9 +2570,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -2609,7 +2609,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3e83b4c0ffc961d48eb12230e8f2070ed8b64932c481fb22b652728059a0158
+            config-hash: 889b46bbad71d58beaae8c182d8c578e483a43d80b72e0571f02cea338627ddd
           labels:
             app: pre-process
         spec:
@@ -2688,9 +2688,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2711,7 +2711,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3e83b4c0ffc961d48eb12230e8f2070ed8b64932c481fb22b652728059a0158
+            config-hash: 889b46bbad71d58beaae8c182d8c578e483a43d80b72e0571f02cea338627ddd
           labels:
             app: process
         spec:
@@ -2790,9 +2790,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2813,7 +2813,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3e83b4c0ffc961d48eb12230e8f2070ed8b64932c481fb22b652728059a0158
+            config-hash: 889b46bbad71d58beaae8c182d8c578e483a43d80b72e0571f02cea338627ddd
           labels:
             app: queue
         spec:
@@ -2892,9 +2892,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2915,7 +2915,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3e83b4c0ffc961d48eb12230e8f2070ed8b64932c481fb22b652728059a0158
+            config-hash: 889b46bbad71d58beaae8c182d8c578e483a43d80b72e0571f02cea338627ddd
           labels:
             app: summary-client
         spec:
@@ -2994,9 +2994,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -3017,7 +3017,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d3e83b4c0ffc961d48eb12230e8f2070ed8b64932c481fb22b652728059a0158
+            config-hash: 889b46bbad71d58beaae8c182d8c578e483a43d80b72e0571f02cea338627ddd
           labels:
             app: upload
         spec:
@@ -3096,9 +3096,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'existing: golang':
   1: |
     apiVersion: apps/v1
@@ -3120,7 +3120,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 13f973712b064980975f7cc49b2c0d8f856645ff41d76add7822a4b335c46275
+            config-hash: fea171131a4cecbc1345a22b3b51638c599688aae3a3efcf0e132a39847e4da6
           labels:
             app: groundx
         spec:
@@ -3227,9 +3227,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -3266,7 +3266,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 13f973712b064980975f7cc49b2c0d8f856645ff41d76add7822a4b335c46275
+            config-hash: fea171131a4cecbc1345a22b3b51638c599688aae3a3efcf0e132a39847e4da6
           labels:
             app: layout-webhook
         spec:
@@ -3345,9 +3345,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -3384,7 +3384,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 13f973712b064980975f7cc49b2c0d8f856645ff41d76add7822a4b335c46275
+            config-hash: fea171131a4cecbc1345a22b3b51638c599688aae3a3efcf0e132a39847e4da6
           labels:
             app: pre-process
         spec:
@@ -3463,9 +3463,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -3486,7 +3486,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 13f973712b064980975f7cc49b2c0d8f856645ff41d76add7822a4b335c46275
+            config-hash: fea171131a4cecbc1345a22b3b51638c599688aae3a3efcf0e132a39847e4da6
           labels:
             app: process
         spec:
@@ -3565,9 +3565,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -3588,7 +3588,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 13f973712b064980975f7cc49b2c0d8f856645ff41d76add7822a4b335c46275
+            config-hash: fea171131a4cecbc1345a22b3b51638c599688aae3a3efcf0e132a39847e4da6
           labels:
             app: queue
         spec:
@@ -3667,9 +3667,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -3690,7 +3690,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 13f973712b064980975f7cc49b2c0d8f856645ff41d76add7822a4b335c46275
+            config-hash: fea171131a4cecbc1345a22b3b51638c599688aae3a3efcf0e132a39847e4da6
           labels:
             app: summary-client
         spec:
@@ -3769,9 +3769,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -3792,7 +3792,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 13f973712b064980975f7cc49b2c0d8f856645ff41d76add7822a4b335c46275
+            config-hash: fea171131a4cecbc1345a22b3b51638c599688aae3a3efcf0e132a39847e4da6
           labels:
             app: upload
         spec:
@@ -3871,9 +3871,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'extract: golang':
   1: |
     apiVersion: apps/v1
@@ -3895,7 +3895,7 @@
       template:
         metadata:
           annotations:
-            config-hash: a3af80e2d824ab8aa49608b85b07d305647516c169527598d8d15254b2d40d26
+            config-hash: 3d66699afba67d19f7488040f2e637bee88b25082b1da9571e9ec76f5f9c8a9e
           labels:
             app: groundx
         spec:
@@ -3992,9 +3992,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -4031,7 +4031,7 @@
       template:
         metadata:
           annotations:
-            config-hash: a3af80e2d824ab8aa49608b85b07d305647516c169527598d8d15254b2d40d26
+            config-hash: 3d66699afba67d19f7488040f2e637bee88b25082b1da9571e9ec76f5f9c8a9e
           labels:
             app: layout-webhook
         spec:
@@ -4114,9 +4114,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -4153,7 +4153,7 @@
       template:
         metadata:
           annotations:
-            config-hash: a3af80e2d824ab8aa49608b85b07d305647516c169527598d8d15254b2d40d26
+            config-hash: 3d66699afba67d19f7488040f2e637bee88b25082b1da9571e9ec76f5f9c8a9e
           labels:
             app: pre-process
         spec:
@@ -4236,9 +4236,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -4259,7 +4259,7 @@
       template:
         metadata:
           annotations:
-            config-hash: a3af80e2d824ab8aa49608b85b07d305647516c169527598d8d15254b2d40d26
+            config-hash: 3d66699afba67d19f7488040f2e637bee88b25082b1da9571e9ec76f5f9c8a9e
           labels:
             app: process
         spec:
@@ -4342,9 +4342,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -4365,7 +4365,7 @@
       template:
         metadata:
           annotations:
-            config-hash: a3af80e2d824ab8aa49608b85b07d305647516c169527598d8d15254b2d40d26
+            config-hash: 3d66699afba67d19f7488040f2e637bee88b25082b1da9571e9ec76f5f9c8a9e
           labels:
             app: queue
         spec:
@@ -4448,9 +4448,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -4471,7 +4471,7 @@
       template:
         metadata:
           annotations:
-            config-hash: a3af80e2d824ab8aa49608b85b07d305647516c169527598d8d15254b2d40d26
+            config-hash: 3d66699afba67d19f7488040f2e637bee88b25082b1da9571e9ec76f5f9c8a9e
           labels:
             app: summary-client
         spec:
@@ -4554,9 +4554,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -4577,7 +4577,7 @@
       template:
         metadata:
           annotations:
-            config-hash: a3af80e2d824ab8aa49608b85b07d305647516c169527598d8d15254b2d40d26
+            config-hash: 3d66699afba67d19f7488040f2e637bee88b25082b1da9571e9ec76f5f9c8a9e
           labels:
             app: upload
         spec:
@@ -4660,9 +4660,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'extract.ingest: golang':
   1: |
     apiVersion: apps/v1
@@ -4684,7 +4684,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b03dec8d294322c9e2a9fd04a5ec15373c5c1fa223c69e7de610f5a035b41075
+            config-hash: cf11993db0e67d4465602727e7ef37fa9bac77cb9762db67c3544fa16ce7ab27
           labels:
             app: groundx
         spec:
@@ -4777,9 +4777,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -4816,7 +4816,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b03dec8d294322c9e2a9fd04a5ec15373c5c1fa223c69e7de610f5a035b41075
+            config-hash: cf11993db0e67d4465602727e7ef37fa9bac77cb9762db67c3544fa16ce7ab27
           labels:
             app: layout-webhook
         spec:
@@ -4895,9 +4895,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -4934,7 +4934,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b03dec8d294322c9e2a9fd04a5ec15373c5c1fa223c69e7de610f5a035b41075
+            config-hash: cf11993db0e67d4465602727e7ef37fa9bac77cb9762db67c3544fa16ce7ab27
           labels:
             app: pre-process
         spec:
@@ -5013,9 +5013,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -5036,7 +5036,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b03dec8d294322c9e2a9fd04a5ec15373c5c1fa223c69e7de610f5a035b41075
+            config-hash: cf11993db0e67d4465602727e7ef37fa9bac77cb9762db67c3544fa16ce7ab27
           labels:
             app: process
         spec:
@@ -5115,9 +5115,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -5138,7 +5138,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b03dec8d294322c9e2a9fd04a5ec15373c5c1fa223c69e7de610f5a035b41075
+            config-hash: cf11993db0e67d4465602727e7ef37fa9bac77cb9762db67c3544fa16ce7ab27
           labels:
             app: queue
         spec:
@@ -5217,9 +5217,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -5240,7 +5240,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b03dec8d294322c9e2a9fd04a5ec15373c5c1fa223c69e7de610f5a035b41075
+            config-hash: cf11993db0e67d4465602727e7ef37fa9bac77cb9762db67c3544fa16ce7ab27
           labels:
             app: summary-client
         spec:
@@ -5319,9 +5319,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -5342,7 +5342,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b03dec8d294322c9e2a9fd04a5ec15373c5c1fa223c69e7de610f5a035b41075
+            config-hash: cf11993db0e67d4465602727e7ef37fa9bac77cb9762db67c3544fa16ce7ab27
           labels:
             app: upload
         spec:
@@ -5421,9 +5421,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'extract.oai: golang':
   1: |
     apiVersion: apps/v1
@@ -5445,7 +5445,7 @@
       template:
         metadata:
           annotations:
-            config-hash: dd3fb92717ea78bd7994a46296f528f9dce5451e79400fa51d8433b979588c39
+            config-hash: 73232a1513b9a509cf1b82383228096bdc5c08595720080ad627c404e283eebd
           labels:
             app: groundx
         spec:
@@ -5542,9 +5542,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -5581,7 +5581,7 @@
       template:
         metadata:
           annotations:
-            config-hash: dd3fb92717ea78bd7994a46296f528f9dce5451e79400fa51d8433b979588c39
+            config-hash: 73232a1513b9a509cf1b82383228096bdc5c08595720080ad627c404e283eebd
           labels:
             app: layout-webhook
         spec:
@@ -5664,9 +5664,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -5703,7 +5703,7 @@
       template:
         metadata:
           annotations:
-            config-hash: dd3fb92717ea78bd7994a46296f528f9dce5451e79400fa51d8433b979588c39
+            config-hash: 73232a1513b9a509cf1b82383228096bdc5c08595720080ad627c404e283eebd
           labels:
             app: pre-process
         spec:
@@ -5786,9 +5786,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -5809,7 +5809,7 @@
       template:
         metadata:
           annotations:
-            config-hash: dd3fb92717ea78bd7994a46296f528f9dce5451e79400fa51d8433b979588c39
+            config-hash: 73232a1513b9a509cf1b82383228096bdc5c08595720080ad627c404e283eebd
           labels:
             app: process
         spec:
@@ -5892,9 +5892,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -5915,7 +5915,7 @@
       template:
         metadata:
           annotations:
-            config-hash: dd3fb92717ea78bd7994a46296f528f9dce5451e79400fa51d8433b979588c39
+            config-hash: 73232a1513b9a509cf1b82383228096bdc5c08595720080ad627c404e283eebd
           labels:
             app: queue
         spec:
@@ -5998,9 +5998,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -6021,7 +6021,7 @@
       template:
         metadata:
           annotations:
-            config-hash: dd3fb92717ea78bd7994a46296f528f9dce5451e79400fa51d8433b979588c39
+            config-hash: 73232a1513b9a509cf1b82383228096bdc5c08595720080ad627c404e283eebd
           labels:
             app: summary-client
         spec:
@@ -6104,9 +6104,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -6127,7 +6127,7 @@
       template:
         metadata:
           annotations:
-            config-hash: dd3fb92717ea78bd7994a46296f528f9dce5451e79400fa51d8433b979588c39
+            config-hash: 73232a1513b9a509cf1b82383228096bdc5c08595720080ad627c404e283eebd
           labels:
             app: upload
         spec:
@@ -6210,9 +6210,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'metadata: golang':
   1: |
     apiVersion: apps/v1
@@ -6234,7 +6234,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e757205473bd718d035123757d520d9a06fb966773c5f9e37c83f66e130fcb63
+            config-hash: b11394e7b108ba2e3d225060c419ca15de6304926aa2f214e8e20feb1cb87b61
             prometheus.io/port: "8081"
           labels:
             app: myapp
@@ -6325,9 +6325,9 @@
               operator: Equal
               value: batch
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -6364,7 +6364,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e757205473bd718d035123757d520d9a06fb966773c5f9e37c83f66e130fcb63
+            config-hash: b11394e7b108ba2e3d225060c419ca15de6304926aa2f214e8e20feb1cb87b61
           labels:
             app: layout-webhook
         spec:
@@ -6442,9 +6442,9 @@
               operator: Equal
               value: batch
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -6481,7 +6481,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e757205473bd718d035123757d520d9a06fb966773c5f9e37c83f66e130fcb63
+            config-hash: b11394e7b108ba2e3d225060c419ca15de6304926aa2f214e8e20feb1cb87b61
           labels:
             app: pre-process
         spec:
@@ -6563,9 +6563,9 @@
               key: eyelevel_node
               value: test-label-1
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -6586,7 +6586,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e757205473bd718d035123757d520d9a06fb966773c5f9e37c83f66e130fcb63
+            config-hash: b11394e7b108ba2e3d225060c419ca15de6304926aa2f214e8e20feb1cb87b61
           labels:
             app: process
         spec:
@@ -6666,9 +6666,9 @@
               key: eyelevel_node
               value: test-label-1
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -6689,7 +6689,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e757205473bd718d035123757d520d9a06fb966773c5f9e37c83f66e130fcb63
+            config-hash: b11394e7b108ba2e3d225060c419ca15de6304926aa2f214e8e20feb1cb87b61
           labels:
             app: queue
         spec:
@@ -6748,9 +6748,9 @@
               type: RuntimeDefault
           serviceAccountName: other-service-account
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -6771,7 +6771,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e757205473bd718d035123757d520d9a06fb966773c5f9e37c83f66e130fcb63
+            config-hash: b11394e7b108ba2e3d225060c419ca15de6304926aa2f214e8e20feb1cb87b61
           labels:
             app: summary-client
         spec:
@@ -6835,9 +6835,9 @@
               operator: Equal
               value: batch
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -6858,7 +6858,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e757205473bd718d035123757d520d9a06fb966773c5f9e37c83f66e130fcb63
+            config-hash: b11394e7b108ba2e3d225060c419ca15de6304926aa2f214e8e20feb1cb87b61
           labels:
             app: upload
         spec:
@@ -6919,9 +6919,9 @@
               type: RuntimeDefault
           serviceAccountName: other-service-account
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'minikube: golang':
   1: |
     apiVersion: apps/v1
@@ -6943,7 +6943,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4f7ea44b4bd733779b96ca3ad93e102332303eff938115bfa3eb511f981a410a
+            config-hash: e320bcfdb7021c5cad743f6afd6c6662e562ca5cd35ebad30393f06123b2fcb8
           labels:
             app: groundx
         spec:
@@ -7050,9 +7050,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -7089,7 +7089,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4f7ea44b4bd733779b96ca3ad93e102332303eff938115bfa3eb511f981a410a
+            config-hash: e320bcfdb7021c5cad743f6afd6c6662e562ca5cd35ebad30393f06123b2fcb8
           labels:
             app: layout-webhook
         spec:
@@ -7168,9 +7168,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -7207,7 +7207,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4f7ea44b4bd733779b96ca3ad93e102332303eff938115bfa3eb511f981a410a
+            config-hash: e320bcfdb7021c5cad743f6afd6c6662e562ca5cd35ebad30393f06123b2fcb8
           labels:
             app: pre-process
         spec:
@@ -7286,9 +7286,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -7309,7 +7309,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4f7ea44b4bd733779b96ca3ad93e102332303eff938115bfa3eb511f981a410a
+            config-hash: e320bcfdb7021c5cad743f6afd6c6662e562ca5cd35ebad30393f06123b2fcb8
           labels:
             app: process
         spec:
@@ -7388,9 +7388,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -7411,7 +7411,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4f7ea44b4bd733779b96ca3ad93e102332303eff938115bfa3eb511f981a410a
+            config-hash: e320bcfdb7021c5cad743f6afd6c6662e562ca5cd35ebad30393f06123b2fcb8
           labels:
             app: queue
         spec:
@@ -7490,9 +7490,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -7513,7 +7513,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4f7ea44b4bd733779b96ca3ad93e102332303eff938115bfa3eb511f981a410a
+            config-hash: e320bcfdb7021c5cad743f6afd6c6662e562ca5cd35ebad30393f06123b2fcb8
           labels:
             app: summary-client
         spec:
@@ -7592,9 +7592,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -7615,7 +7615,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4f7ea44b4bd733779b96ca3ad93e102332303eff938115bfa3eb511f981a410a
+            config-hash: e320bcfdb7021c5cad743f6afd6c6662e562ca5cd35ebad30393f06123b2fcb8
           labels:
             app: upload
         spec:
@@ -7694,9 +7694,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'openshift: golang':
   1: |
     apiVersion: apps/v1
@@ -7718,7 +7718,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4f7ea44b4bd733779b96ca3ad93e102332303eff938115bfa3eb511f981a410a
+            config-hash: e320bcfdb7021c5cad743f6afd6c6662e562ca5cd35ebad30393f06123b2fcb8
           labels:
             app: groundx
         spec:
@@ -7819,9 +7819,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -7858,7 +7858,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4f7ea44b4bd733779b96ca3ad93e102332303eff938115bfa3eb511f981a410a
+            config-hash: e320bcfdb7021c5cad743f6afd6c6662e562ca5cd35ebad30393f06123b2fcb8
           labels:
             app: layout-webhook
         spec:
@@ -7931,9 +7931,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -7970,7 +7970,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4f7ea44b4bd733779b96ca3ad93e102332303eff938115bfa3eb511f981a410a
+            config-hash: e320bcfdb7021c5cad743f6afd6c6662e562ca5cd35ebad30393f06123b2fcb8
           labels:
             app: pre-process
         spec:
@@ -8043,9 +8043,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -8066,7 +8066,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4f7ea44b4bd733779b96ca3ad93e102332303eff938115bfa3eb511f981a410a
+            config-hash: e320bcfdb7021c5cad743f6afd6c6662e562ca5cd35ebad30393f06123b2fcb8
           labels:
             app: process
         spec:
@@ -8139,9 +8139,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -8162,7 +8162,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4f7ea44b4bd733779b96ca3ad93e102332303eff938115bfa3eb511f981a410a
+            config-hash: e320bcfdb7021c5cad743f6afd6c6662e562ca5cd35ebad30393f06123b2fcb8
           labels:
             app: queue
         spec:
@@ -8235,9 +8235,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -8258,7 +8258,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4f7ea44b4bd733779b96ca3ad93e102332303eff938115bfa3eb511f981a410a
+            config-hash: e320bcfdb7021c5cad743f6afd6c6662e562ca5cd35ebad30393f06123b2fcb8
           labels:
             app: summary-client
         spec:
@@ -8331,9 +8331,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -8354,7 +8354,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4f7ea44b4bd733779b96ca3ad93e102332303eff938115bfa3eb511f981a410a
+            config-hash: e320bcfdb7021c5cad743f6afd6c6662e562ca5cd35ebad30393f06123b2fcb8
           labels:
             app: upload
         spec:
@@ -8427,9 +8427,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'phoenix: golang':
   1: |
     apiVersion: apps/v1
@@ -8451,7 +8451,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 7b3b3156b694ef0b56c0cf31eee5bf11ec02cba1bed24ad23a88e313e1dcd2d4
+            config-hash: ae1d0dadc118e61b7f111a36743e8972cbb48f8f627a28b1bddada8d1fb3d851
           labels:
             app: groundx-service
         spec:
@@ -8554,9 +8554,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -8593,7 +8593,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 7b3b3156b694ef0b56c0cf31eee5bf11ec02cba1bed24ad23a88e313e1dcd2d4
+            config-hash: ae1d0dadc118e61b7f111a36743e8972cbb48f8f627a28b1bddada8d1fb3d851
           labels:
             app: layout-webhook
         spec:
@@ -8668,9 +8668,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -8707,7 +8707,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 7b3b3156b694ef0b56c0cf31eee5bf11ec02cba1bed24ad23a88e313e1dcd2d4
+            config-hash: ae1d0dadc118e61b7f111a36743e8972cbb48f8f627a28b1bddada8d1fb3d851
           labels:
             app: pre-process
         spec:
@@ -8782,9 +8782,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -8805,7 +8805,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 7b3b3156b694ef0b56c0cf31eee5bf11ec02cba1bed24ad23a88e313e1dcd2d4
+            config-hash: ae1d0dadc118e61b7f111a36743e8972cbb48f8f627a28b1bddada8d1fb3d851
           labels:
             app: process
         spec:
@@ -8880,9 +8880,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -8903,7 +8903,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 7b3b3156b694ef0b56c0cf31eee5bf11ec02cba1bed24ad23a88e313e1dcd2d4
+            config-hash: ae1d0dadc118e61b7f111a36743e8972cbb48f8f627a28b1bddada8d1fb3d851
           labels:
             app: queue
         spec:
@@ -8978,9 +8978,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -9001,7 +9001,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 7b3b3156b694ef0b56c0cf31eee5bf11ec02cba1bed24ad23a88e313e1dcd2d4
+            config-hash: ae1d0dadc118e61b7f111a36743e8972cbb48f8f627a28b1bddada8d1fb3d851
           labels:
             app: summary-client
         spec:
@@ -9076,9 +9076,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -9099,7 +9099,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 7b3b3156b694ef0b56c0cf31eee5bf11ec02cba1bed24ad23a88e313e1dcd2d4
+            config-hash: ae1d0dadc118e61b7f111a36743e8972cbb48f8f627a28b1bddada8d1fb3d851
           labels:
             app: upload
         spec:
@@ -9174,9 +9174,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'summaryClient gracePeriod: golang':
   1: |
     apiVersion: apps/v1
@@ -9198,7 +9198,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 3a7410574cd152026e9db65dc15d5e0d4432e6fa2cf821dca88e2f7598abd88a
+            config-hash: f510cdb16347fc3748c572757d92e85e7677de4c1c048a466b55a777ecc5a427
           labels:
             app: summary-client
         spec:
@@ -9278,7 +9278,7 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'workspace-enabled: golang':

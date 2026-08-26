@@ -142,7 +142,7 @@ tests:
       - ./files/values.engine-max-images-valid.yaml
     asserts:
       - matchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "maxImages: 30"
   - it: "engine maxImages null is omitted"
     templates:
@@ -152,7 +152,7 @@ tests:
       - ./files/values.engine-max-images-null.yaml
     asserts:
       - notMatchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "maxImages:"
   - it: "existing: resources"
     templates:
@@ -380,19 +380,19 @@ tests:
       summaryClient.replicas.gracePeriod: 900
     asserts:
       - matchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds: 870\n"
       - notMatchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "preProcessFileServer:\n  baseURL: .*\n  drainSeconds"
       - notMatchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "processFileServer:\n  baseURL: .*\n  drainSeconds"
       - notMatchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "queueFileServer:\n  baseURL: .*\n  drainSeconds"
       - notMatchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds"
   - it: "preProcess gracePeriod renders drainSeconds only in the preProcessFileServer block"
     templates:
@@ -403,19 +403,19 @@ tests:
       preProcess.replicas.gracePeriod: 120
     asserts:
       - matchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "preProcessFileServer:\n  baseURL: .*\n  drainSeconds: 90\n"
       - notMatchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "processFileServer:\n  baseURL: .*\n  drainSeconds"
       - notMatchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "queueFileServer:\n  baseURL: .*\n  drainSeconds"
       - notMatchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds"
       - notMatchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds"
   - it: "process gracePeriod renders drainSeconds in the processFileServer block"
     templates:
@@ -426,7 +426,7 @@ tests:
       process.replicas.gracePeriod: 300
     asserts:
       - matchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "processFileServer:\n  baseURL: .*\n  drainSeconds: 270\n"
   - it: "upload gracePeriod renders drainSeconds in the uploadFileServer block"
     templates:
@@ -437,7 +437,7 @@ tests:
       upload.replicas.gracePeriod: 180
     asserts:
       - matchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds: 150\n"
   - it: "queue gracePeriod renders drainSeconds in the queueFileServer block"
     templates:
@@ -448,7 +448,7 @@ tests:
       queue.replicas.gracePeriod: 60
     asserts:
       - matchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "queueFileServer:\n  baseURL: .*\n  drainSeconds: 30\n"
   - it: "all five Go queue services set distinct gracePeriod values independently"
     templates:
@@ -463,19 +463,19 @@ tests:
       upload.replicas.gracePeriod: 180
     asserts:
       - matchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "preProcessFileServer:\n  baseURL: .*\n  drainSeconds: 90\n"
       - matchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "processFileServer:\n  baseURL: .*\n  drainSeconds: 270\n"
       - matchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "queueFileServer:\n  baseURL: .*\n  drainSeconds: 30\n"
       - matchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds: 870\n"
       - matchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds: 150\n"
   - it: "gracePeriod below the 30-second margin floors drainSeconds at 1"
     templates:
@@ -486,7 +486,7 @@ tests:
       summaryClient.replicas.gracePeriod: 10
     asserts:
       - matchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds: 1\n"
   - it: "no gracePeriod set anywhere - config-yaml renders with no drainSeconds key"
     templates:
@@ -495,7 +495,7 @@ tests:
       - ../values/minikube/values.yaml
     asserts:
       - notMatchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "drainSeconds"
   - it: "workspace-enabled: resources"
     templates:

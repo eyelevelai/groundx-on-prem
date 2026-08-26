@@ -165,8 +165,8 @@ spec:
 {{- end }}
       volumes:
         - name: config-volume
-          configMap:
-            name: {{ $cfg }}
+          secret:
+            secretName: {{ $cfg }}
         - name: gunicorn-conf-volume
           configMap:
             name: {{ $guni }}

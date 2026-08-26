@@ -1,7 +1,16 @@
 'default: extract.existing.1':
   1: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: extract-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         from groundx.extract import (
             AgentSettings,
@@ -49,7 +58,10 @@
           api_key="00000000-0000-0000-0000-000000000001",
           base_url="https://api.groundx.ai/api",
         )
-    kind: ConfigMap
+'default: extract.ingest':
+  1: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
@@ -58,10 +70,7 @@
         version: 0.1.0
       name: extract-config-py-map
       namespace: eyelevel
-'default: extract.ingest':
-  1: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         from groundx.extract import (
             AgentSettings,
@@ -112,7 +121,10 @@
           api_key="00000000-0000-0000-0000-000000000000",
           base_url="http://groundx.eyelevel.svc.cluster.local/api",
         )
-    kind: ConfigMap
+'default: phoenix':
+  1: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
@@ -121,10 +133,7 @@
         version: 0.1.0
       name: extract-config-py-map
       namespace: eyelevel
-'default: phoenix':
-  1: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         from groundx.extract import (
             AgentSettings,
@@ -172,13 +181,4 @@
           api_key="00000000-0000-0000-0000-000000000001",
           base_url="https://api.groundx.ai/api",
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: extract-config-py-map
-      namespace: eyelevel
 'workspace-enabled: extract':

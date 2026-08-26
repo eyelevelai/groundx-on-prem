@@ -102,12 +102,19 @@ without explicit human authorization.**
   It is the **only** edge that can phone home to hosted GroundX.
 - **Plaintext secret defaults in example values** (OpenSearch password, MinIO `minio123`) — example
   only, but a footgun if copied to prod.
+- **Credential-bearing config maps render as `Secret`s, not `ConfigMap`s** (GX-17): `config-yaml-map`,
+  the `*-config-py-map`s (extract/ranker/summary/layout/workspace), and `*-ocr-credentials-map` are
+  `kind: Secret` (mounted as file volumes exactly as before) so workload credentials never sit in a
+  plaintext ConfigMap. Non-secret maps (`*-supervisord-conf-map`, `*-gunicorn-conf-py-map`,
+  `config-models-map`, `ldconfig-symlink-map`) stay `ConfigMap`. The consuming apps are unaffected —
+  they read the same mounted file regardless of source.
 - **Data-driven templating:** there are only ~5 workload templates
   (`templates/app/{api,celery,inference,golang,metrics}.yaml`); each `range`s over a list of service
   names and resolves per-service config via `include (printf "groundx.%s.settings" $name)`. **All
   per-pod detail lives in `_helpers/*.tpl`** — to understand any pod, read its `.settings` helper.
 - **Config-hash restart pattern:** Deployments annotate `config-hash: {{ …sha256sum }}` of their
-  ConfigMaps, so editing `config.py`/`gunicorn_conf.py`/`supervisord.conf` forces a rollout.
+  config maps (now a mix of `Secret` and `ConfigMap` — see the credential-map note above), so editing
+  `config.py`/`gunicorn_conf.py`/`supervisord.conf` forces a rollout.
 - **`existing: {}` swap-out:** every backing service (`cache`, `db`, `file`, `search`, `stream`) is
   either deployed by the chart or attached to external infra via `existing:` + `serviceType`.
 - **Neo4j (`graph`)** is wired in legacy `bin/`/Terraform but absent from the current `src/groundx`
