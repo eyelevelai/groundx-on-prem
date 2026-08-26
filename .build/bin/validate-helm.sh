@@ -13,6 +13,7 @@ Usage: .build/bin/validate-helm.sh [--junit]
 Runs the GroundX Helm production chart gate from one stable entrypoint:
   - helm lint for both chart surfaces
   - helm unittest for src/groundx
+  - google OCR credentials render for both chart surfaces
   - snapshot label guard unit tests
   - snapshot label guard
   - workspace chart contract verifier
@@ -42,12 +43,57 @@ for arg in "$@"; do
   esac
 done
 
+# The Google-OCR tests render a credentials file that layout-ocr-credentials.yaml reads
+# via .Files.Get. That file must NOT ship in the packaged chart (files/ is packaged),
+# so generate a throwaway one for the duration of this gate and remove it on exit. The
+# gcv-*.json name is git-ignored, so it can never be committed by accident.
+OCR_TEST_CREDENTIALS="files/ocr/gcv-test.json"
+layout_pvc_values=""
+layout_pvc_render=""
+cleanup() {
+  rm -f "src/groundx/${OCR_TEST_CREDENTIALS}" "helm/${OCR_TEST_CREDENTIALS}"
+  rmdir src/groundx/files/ocr src/groundx/files helm/files/ocr helm/files 2>/dev/null || true
+  rm -f "${layout_pvc_values}" "${layout_pvc_render}"
+}
+trap cleanup EXIT
+for chart in src/groundx helm; do
+  mkdir -p "${chart}/files/ocr"
+  cat > "${chart}/${OCR_TEST_CREDENTIALS}" <<'JSON'
+{
+  "type": "service_account",
+  "project_id": "groundx-helm-test",
+  "private_key_id": "test",
+  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",
+  "token_uri": "https://oauth2.googleapis.com/token"
+}
+JSON
+done
+
 echo "==> Linting Helm chart surfaces"
 helm lint src/groundx
 helm lint helm
 
 echo "==> Running Helm unit tests"
 helm unittest src/groundx
+
+echo "==> Verifying Google OCR credentials rendering for both chart surfaces"
+for chart in src/groundx helm; do
+  ocr_enabled_render="$(helm template ocr-google "${chart}" -f src/groundx/tests/files/values.ocr-google.yaml)"
+  for expected in \
+    "-ocr-credentials-map" \
+    "ocr-credentials-hash" \
+    "credentials-volume"; do
+    if ! grep -q -- "${expected}" <<<"${ocr_enabled_render}"; then
+      echo "${chart}: google OCR enabled render is missing expected evidence: ${expected}" >&2
+      exit 1
+    fi
+  done
+  ocr_disabled_render="$(helm template ocr-google-disabled "${chart}" -f src/groundx/tests/files/values.ocr-google-disabled.yaml)"
+  if grep -q -- "credentials-volume" <<<"${ocr_disabled_render}"; then
+    echo "${chart}: google OCR disabled render must not mount a ConfigMap that is never created." >&2
+    exit 1
+  fi
+done
 
 echo "==> Verifying extract-agent image settings validation"
 expect_helm_template_failure() {
@@ -121,7 +167,6 @@ done
 echo "==> Verifying layout inference PVC schema validation"
 layout_pvc_values="$(mktemp)"
 layout_pvc_render="$(mktemp)"
-trap 'rm -f "${layout_pvc_values:-}" "${layout_pvc_render:-}"' EXIT
 cat > "${layout_pvc_values}" <<'YAML'
 layout:
   inference:
