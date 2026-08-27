@@ -10,9 +10,11 @@ The in-place conversion adds no Secret objects on top of the existing set (7 Con
 
 ## RED / GREEN acceptance
 
-Each `tasks.md` check asserts the target resource renders as `kind: Secret` (or a pod volume references it via `secretName`). This is a real RED/GREEN signal, not a snapshot tautology:
-- **RED (base `origin/0.2.7`)**: the resources render as `ConfigMap`, so every check fails. Verified against a base worktree at `4259bbc`: `config-yaml.yaml` renders `kind: ConfigMap`; the extract and OCR checks fail; the golang pod mounts `config-volume` from `configMap:`.
-- **GREEN (this branch)**: the resources render as `Secret` and the pod volumes reference `secretName`, so every check passes. Verified under pinned helm v3.19.0.
+Every **runnable** `tasks.md` check is a positive assertion that the target renders `kind: Secret` and still carries its payload key (or that a pod volume references it via `secretName`). This is a real RED/GREEN signal, not a snapshot tautology, and a resource that stopped rendering fails the check rather than passing:
+- **RED (base `origin/0.2.7`)**: the credential resources render as `ConfigMap`, so every runnable check fails. Verified against a base worktree at `4259bbc`: `config-yaml.yaml` renders `kind: ConfigMap`; the config-py, extract, and OCR checks fail; the golang pod mounts `config-volume` from `configMap:`.
+- **GREEN (this branch)**: the resources render as `Secret` and the pod volumes reference `secretName`, so every runnable check passes. Verified under pinned helm v3.19.0.
+
+Two tasks are deliberately **not** runnable RED/GREEN checks and are marked `n/a`: the "non-credential maps stay ConfigMaps" scope guard (task 5.1) passes on the unchanged base, so it is not a valid RED check — it is a must-not-change invariant covered by the golden-snapshot suite; and the docs update (5.2). What the runnable checks prove is the kind flip, payload-key presence, and the secret volume source. **Byte-identical payload parity** is established separately, by the review-time snapshot diff (below), not per check — a self-contained acceptance check has no base render to diff against.
 
 ## Verification
 
