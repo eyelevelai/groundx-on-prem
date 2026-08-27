@@ -41,12 +41,10 @@ Every check is runnable. Each is a **positive** assertion: the target renders `k
 - [x] 5.1 The conversion does not widen beyond credential-bearing resources: `config-models-map` stays a `ConfigMap` while a credential map (`config-yaml-map`) became a `Secret`. Folded into one check so it fails RED (the Secret half) and proves the scope boundary (the ConfigMap half) at once.
   check: bash -c 'cm=$(helm template gx src/groundx -n eyelevel --show-only templates/resources/config-models.yaml); sec=$(helm template gx src/groundx -n eyelevel --show-only templates/resources/config-yaml.yaml); grep -q "^kind: ConfigMap" <<<"$cm" && grep -q "^kind: Secret" <<<"$sec"'
 
-## 6. Byte-identical payload parity vs 0.2.7 (runnable)
+## 6. Byte-identical payload parity vs 0.2.7 — every converted payload, both mirrors (runnable)
 
-- [x] 6.1 The `config.yaml` payload the Secret carries is byte-identical to the 0.2.7 ConfigMap payload (only the kind and the `data:`/`stringData:` wrapper changed). Renders the base via `git archive origin/0.2.7`, asserts the branch renders a Secret, and diffs the payload block.
-  check: bash -c 'set -e; tmp=$(mktemp -d); trap "rm -rf \"$tmp\"" EXIT; git archive origin/0.2.7 src/groundx | tar -x -C "$tmp"; h=$(helm template gx src/groundx -n eyelevel --show-only templates/resources/config-yaml.yaml); grep -q "^kind: Secret" <<<"$h"; b=$(helm template gx "$tmp/src/groundx" -n eyelevel --show-only templates/resources/config-yaml.yaml); pb=$(sed -n "/^  config\.yaml: |/,/^[^ ]/p" <<<"$b"); ph=$(sed -n "/^  config\.yaml: |/,/^[^ ]/p" <<<"$h"); [ -n "$pb" ] && [ "$pb" = "$ph" ]'
-- [x] 6.2 The `config.py` payload (ranker) the Secret carries is byte-identical to the 0.2.7 ConfigMap payload.
-  check: bash -c 'set -e; tmp=$(mktemp -d); trap "rm -rf \"$tmp\"" EXIT; git archive origin/0.2.7 src/groundx | tar -x -C "$tmp"; h=$(helm template gx src/groundx -n eyelevel --show-only templates/resources/ranker-config-py.yaml); grep -q "^kind: Secret" <<<"$h"; b=$(helm template gx "$tmp/src/groundx" -n eyelevel --show-only templates/resources/ranker-config-py.yaml); pb=$(sed -n "/^  config\.py: |/,/^[^ ]/p" <<<"$b"); ph=$(sed -n "/^  config\.py: |/,/^[^ ]/p" <<<"$h"); [ -n "$pb" ] && [ "$pb" = "$ph" ]'
+- [x] 6.1 Every converted resource (`config-yaml-map`, the five `*-config-py-map`, `layout-ocr-credentials-map`) renders `kind: Secret` on this branch with a payload byte-identical to the 0.2.7 ConfigMap payload, in **both** `src/groundx` and the `helm/` mirror. The helper renders the base via `git archive origin/0.2.7`, asserts each HEAD render is a Secret, and diffs the payload block per resource per mirror. Fails RED on 0.2.7 (renders ConfigMap); uses unique `mktemp` OCR fixtures it removes.
+  check: bash openspec/changes/gx-17-config-maps-as-secrets/verify-payload-parity.sh
 
 ## 7. Docs
 
