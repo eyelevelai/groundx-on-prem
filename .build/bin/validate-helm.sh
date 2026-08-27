@@ -13,6 +13,7 @@ Usage: .build/bin/validate-helm.sh [--junit]
 Runs the GroundX Helm production chart gate from one stable entrypoint:
   - helm lint for both chart surfaces
   - helm unittest for src/groundx
+  - google OCR credentials render for both chart surfaces
   - snapshot label guard unit tests
   - snapshot label guard
   - workspace chart contract verifier
@@ -42,12 +43,81 @@ for arg in "$@"; do
   esac
 done
 
+# The Google-OCR tests render a credentials file that layout-ocr-credentials.yaml reads
+# via .Files.Get. That file must NOT ship in the packaged chart (files/ is packaged), so
+# generate a throwaway one for the duration of this gate and remove it on exit. The
+# gcv-*.json name is git-ignored, so it can never be committed by accident. We refuse to
+# overwrite a pre-existing file at that path and only ever delete files we created here,
+# so a developer's own credential file at that path is never clobbered or removed.
+OCR_TEST_CREDENTIALS="files/ocr/gcv-test.json"
+layout_pvc_values=""
+layout_pvc_render=""
+ocr_generated_files=()
+cleanup() {
+  if ((${#ocr_generated_files[@]})); then
+    rm -f "${ocr_generated_files[@]}"
+  fi
+  rmdir src/groundx/files/ocr src/groundx/files helm/files/ocr helm/files 2>/dev/null || true
+  rm -f "${layout_pvc_values}" "${layout_pvc_render}"
+}
+trap cleanup EXIT
+for chart in src/groundx helm; do
+  ocr_target="${chart}/${OCR_TEST_CREDENTIALS}"
+  if [[ -e "${ocr_target}" ]]; then
+    echo "Refusing to overwrite existing ${ocr_target}; remove it and re-run the gate." >&2
+    exit 1
+  fi
+  mkdir -p "${chart}/files/ocr"
+  cat > "${ocr_target}" <<'JSON'
+{
+  "type": "service_account",
+  "project_id": "groundx-helm-test",
+  "private_key_id": "test",
+  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",
+  "token_uri": "https://oauth2.googleapis.com/token"
+}
+JSON
+  ocr_generated_files+=("${ocr_target}")
+done
+
 echo "==> Linting Helm chart surfaces"
 helm lint src/groundx
 helm lint helm
 
 echo "==> Running Helm unit tests"
 helm unittest src/groundx
+
+echo "==> Verifying Google OCR credentials rendering for both chart surfaces"
+for chart in src/groundx helm; do
+  # Enabled: the credentials Secret resource must actually render. --show-only isolates
+  # that one resource, so this cannot be satisfied by the volume's mere reference to the
+  # same name (both carry the -ocr-credentials-map token in a full render).
+  ocr_configmap="$(helm template ocr-google "${chart}" -f src/groundx/tests/files/values.ocr-google.yaml --show-only templates/resources/layout-ocr-credentials.yaml 2>/dev/null || true)"
+  if ! grep -q 'kind: Secret' <<<"${ocr_configmap}" || ! grep -q -- '-ocr-credentials-map' <<<"${ocr_configmap}"; then
+    echo "${chart}: google OCR enabled render must create the -ocr-credentials-map Secret resource." >&2
+    exit 1
+  fi
+  # ...and the celery Deployment must mount that Secret and hash it.
+  ocr_enabled_render="$(helm template ocr-google "${chart}" -f src/groundx/tests/files/values.ocr-google.yaml)"
+  for expected in "ocr-credentials-hash" "credentials-volume"; do
+    if ! grep -q -- "${expected}" <<<"${ocr_enabled_render}"; then
+      echo "${chart}: google OCR enabled render is missing expected evidence: ${expected}" >&2
+      exit 1
+    fi
+  done
+  # Disabled (credentials set, layout.ocr.enabled=false): the Secret resource must NOT
+  # render (--show-only fails when the guard drops it to an empty document), and the
+  # Deployment must NOT mount a Secret that is never created (the F5 must-not-mount case).
+  if helm template ocr-google-disabled "${chart}" -f src/groundx/tests/files/values.ocr-google-disabled.yaml --show-only templates/resources/layout-ocr-credentials.yaml >/dev/null 2>&1; then
+    echo "${chart}: google OCR disabled render must not create the -ocr-credentials-map Secret." >&2
+    exit 1
+  fi
+  ocr_disabled_render="$(helm template ocr-google-disabled "${chart}" -f src/groundx/tests/files/values.ocr-google-disabled.yaml)"
+  if grep -q -- "credentials-volume" <<<"${ocr_disabled_render}"; then
+    echo "${chart}: google OCR disabled render must not mount a Secret that is never created." >&2
+    exit 1
+  fi
+done
 
 echo "==> Verifying extract-agent image settings validation"
 expect_helm_template_failure() {
@@ -121,7 +191,6 @@ done
 echo "==> Verifying layout inference PVC schema validation"
 layout_pvc_values="$(mktemp)"
 layout_pvc_render="$(mktemp)"
-trap 'rm -f "${layout_pvc_values:-}" "${layout_pvc_render:-}"' EXIT
 cat > "${layout_pvc_values}" <<'YAML'
 layout:
   inference:

@@ -16,8 +16,13 @@ dependency on any other `groundx-*` repo** (verified).
 ## How to run and test
 
 - **Lint / render:** `helm lint src/groundx` · `helm template src/groundx -f src/groundx/values/minikube/values.yaml`
-- **Test:** `helm unittest src/groundx` (requires the `helm-unittest` plugin:
-  `helm plugin install https://github.com/helm-unittest/helm-unittest.git`)
+- **Test:** `.build/bin/validate-helm.sh` runs the full local gate (lint + `helm unittest` +
+  dual-surface render checks) and is the entrypoint to prefer. It generates the throwaway
+  Google-OCR credentials fixture the OCR unit tests need; a bare `helm unittest src/groundx`
+  (and `helm unittest -u src/groundx` for snapshot regen) fails the `celery` OCR case with
+  `layout.ocr.credentials file not found` unless that fixture exists, so generate it first or run
+  the gate. Both require the `helm-unittest` plugin:
+  `helm plugin install https://github.com/helm-unittest/helm-unittest.git`.
 - **Helpers:** `bin/uuid` generates the UUIDs needed for `admin.apiKey` / `admin.username`
 - **Real install from this checkout** (needs a cluster + license and a complete env values file):
   `helm upgrade --install groundx src/groundx -n eyelevel -f values.ranker-only-eks.yaml`
@@ -35,7 +40,7 @@ dependency on any other `groundx-*` repo** (verified).
   ranker `inference_queue`; the chart only controls the Kubernetes workers. Isolate the queue before
   a Kubernetes-only payload-contract canary.
 - **Quality gates that MUST pass before any PR merges:**
-  - `helm unittest src/groundx` — snapshot tests; **this is the CI gate** (`.github/workflows/helm-tests.yml`, runs on every push/PR/release). It is the **only** check that guards template changes.
+  - `.build/bin/validate-helm.sh` — lint + `helm unittest` snapshot tests + dual-surface render checks; **this is the CI gate** (`.github/workflows/helm-tests.yml` runs it on every push/PR/release) and the **only** check that guards template changes. It generates the OCR credentials fixture first (see Test above).
   - `helm template src/groundx -f src/groundx/values/minikube/values.yaml` — render check (must render cleanly).
 
 ## Privileged operations — Tier 3 ⚠️ DO NOT RUN UNPROMPTED
