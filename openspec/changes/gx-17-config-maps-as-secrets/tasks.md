@@ -1,8 +1,6 @@
 # Tasks — GX-17: Render credential-bearing config maps as Secrets (chart-only)
 
-Each runnable check is a **positive** assertion that the target renders `kind: Secret` **and** still carries its payload key (so a resource that silently stopped rendering fails the check, it cannot pass by disappearing). On the unchanged base (`origin/0.2.7`) these resources render `kind: ConfigMap`, so **every runnable check below FAILS (RED)**; on this branch they render `kind: Secret`, so every one PASSES (GREEN). `helm` on PATH must be the pinned v3.19.0 (the repo's gate binary).
-
-Scope of what these checks prove: the resource-kind flip, that the payload key is still present, and that the pod volume reads from the Secret. **Byte-identical payload parity** with 0.2.7 is not re-proven per check (a self-contained check has no base to diff against); it was established at review by diffing every changed `helm unittest` snapshot line, where the only changes were `kind`, the `data:`/`stringData:` wrapper, the `config-hash`, and the volume source, with no change inside any `config.yaml` / `config.py` / `credentials.json` payload.
+Every check is runnable. Each is a **positive** assertion: the target renders `kind: Secret` (and carries its payload key, or a pod volume reads it via `secretName`, or its payload is byte-identical to 0.2.7). On the unchanged base (`origin/0.2.7`) the credential resources render `kind: ConfigMap`, so **every check FAILS (RED)**; on this branch they render `kind: Secret`, so every check PASSES (GREEN). `helm` on PATH must be the pinned v3.19.0. The byte-identity checks (§6) read the base render via `git archive origin/0.2.7`, so the `origin/0.2.7` ref must be present (the pipeline fetches it).
 
 ## 1. Convert `config-yaml-map` to a Secret (both mirrors)
 
@@ -25,16 +23,34 @@ Scope of what these checks prove: the resource-kind flip, that the payload key i
 - [x] 3.1 With Google OCR enabled, `layout-ocr-credentials.yaml` renders `layout-ocr-credentials-map` as a Secret carrying `credentials.json`. Uses a unique `mktemp` fixture under `files/ocr/` (never the fixed `credentials.json`, so it cannot clobber a real untracked credential) and removes only what it created.
   check: bash -c 'd=src/groundx/files/ocr; created=0; [ -d "$d" ] || { mkdir -p "$d"; created=1; }; f=$(mktemp "$d/gx17-acc-XXXXXX.json"); trap "rm -f \"$f\"; [ \"$created\" = 1 ] && rmdir \"$d\" src/groundx/files 2>/dev/null; true" EXIT; printf "{}" > "$f"; rel=${f#src/groundx/}; o=$(helm template gx src/groundx -n eyelevel --set layout.ocr.type=google --set layout.ocr.project=p --set layout.ocr.credentials="$rel" --show-only templates/resources/layout-ocr-credentials.yaml); grep -q "^kind: Secret" <<<"$o" && grep -q "credentials.json:" <<<"$o"'
 
-## 4. Switch the credential-map pod volumes to a Secret source
+## 4. Switch every credential-map pod volume to a Secret source
 
-- [x] 4.1 The golang deployment mounts `config-volume` from the `config-yaml-map` Secret (not a ConfigMap).
+- [x] 4.1 golang deployment mounts `config-volume` from the `config-yaml-map` Secret.
   check: bash -c "helm template gx src/groundx -n eyelevel --show-only templates/app/golang.yaml | grep -A2 'name: config-volume' | grep -q 'secretName: config-yaml-map'"
+- [x] 4.2 metrics deployment mounts `config-volume` from the `config-yaml-map` Secret.
+  check: bash -c "helm template gx src/groundx -n eyelevel -f src/groundx/tests/files/values.workspace-metrics.yaml --show-only templates/app/metrics.yaml | grep -A2 'name: config-volume' | grep -q 'secretName: config-yaml-map'"
+- [x] 4.3 api deployments mount `config-volume` from a `*-config-py-map` Secret.
+  check: bash -c "helm template gx src/groundx -n eyelevel --show-only templates/app/api.yaml | grep -A2 'name: config-volume' | grep -q 'secretName: ranker-config-py-map'"
+- [x] 4.4 inference deployments mount `config-volume` from a `*-config-py-map` Secret.
+  check: bash -c "helm template gx src/groundx -n eyelevel --show-only templates/app/inference.yaml | grep -A2 'name: config-volume' | grep -q 'secretName: ranker-config-py-map'"
+- [x] 4.5 celery deployments mount `config-volume` from a `*-config-py-map` Secret.
+  check: bash -c "helm template gx src/groundx -n eyelevel -f src/groundx/tests/files/values.extract.ingest.yaml --show-only templates/app/celery.yaml | grep -A2 'name: config-volume' | grep -q 'secretName: extract-config-py-map'"
 
-## 5. Scope guard + docs (not RED/GREEN behavioral checks)
+## 5. Scope guard (a non-credential map stays a ConfigMap)
 
-- [x] 5.1 Non-credential maps stay ConfigMaps — the conversion does not widen beyond credential-bearing resources.
-  check: n/a — a must-not-change invariant, not new behavior: `config-models-map`/`*-supervisord-conf`/`*-gunicorn-conf-py`/`ldconfig-symlink` render as `ConfigMap` on both base and branch, so a runnable check here passes on the unchanged base (it is not a valid RED check). Covered by the `helm unittest` golden-snapshot suite, which pins these unchanged.
-- [x] 5.2 Update `AGENTS.md` / `README.md` to describe the credential maps as Secrets.
+- [x] 5.1 The conversion does not widen beyond credential-bearing resources: `config-models-map` stays a `ConfigMap` while a credential map (`config-yaml-map`) became a `Secret`. Folded into one check so it fails RED (the Secret half) and proves the scope boundary (the ConfigMap half) at once.
+  check: bash -c 'cm=$(helm template gx src/groundx -n eyelevel --show-only templates/resources/config-models.yaml); sec=$(helm template gx src/groundx -n eyelevel --show-only templates/resources/config-yaml.yaml); grep -q "^kind: ConfigMap" <<<"$cm" && grep -q "^kind: Secret" <<<"$sec"'
+
+## 6. Byte-identical payload parity vs 0.2.7 (runnable)
+
+- [x] 6.1 The `config.yaml` payload the Secret carries is byte-identical to the 0.2.7 ConfigMap payload (only the kind and the `data:`/`stringData:` wrapper changed). Renders the base via `git archive origin/0.2.7`, asserts the branch renders a Secret, and diffs the payload block.
+  check: bash -c 'set -e; tmp=$(mktemp -d); trap "rm -rf \"$tmp\"" EXIT; git archive origin/0.2.7 src/groundx | tar -x -C "$tmp"; h=$(helm template gx src/groundx -n eyelevel --show-only templates/resources/config-yaml.yaml); grep -q "^kind: Secret" <<<"$h"; b=$(helm template gx "$tmp/src/groundx" -n eyelevel --show-only templates/resources/config-yaml.yaml); pb=$(sed -n "/^  config\.yaml: |/,/^[^ ]/p" <<<"$b"); ph=$(sed -n "/^  config\.yaml: |/,/^[^ ]/p" <<<"$h"); [ -n "$pb" ] && [ "$pb" = "$ph" ]'
+- [x] 6.2 The `config.py` payload (ranker) the Secret carries is byte-identical to the 0.2.7 ConfigMap payload.
+  check: bash -c 'set -e; tmp=$(mktemp -d); trap "rm -rf \"$tmp\"" EXIT; git archive origin/0.2.7 src/groundx | tar -x -C "$tmp"; h=$(helm template gx src/groundx -n eyelevel --show-only templates/resources/ranker-config-py.yaml); grep -q "^kind: Secret" <<<"$h"; b=$(helm template gx "$tmp/src/groundx" -n eyelevel --show-only templates/resources/ranker-config-py.yaml); pb=$(sed -n "/^  config\.py: |/,/^[^ ]/p" <<<"$b"); ph=$(sed -n "/^  config\.py: |/,/^[^ ]/p" <<<"$h"); [ -n "$pb" ] && [ "$pb" = "$ph" ]'
+
+## 7. Docs
+
+- [x] 7.1 Update `AGENTS.md` / `README.md` to describe the credential maps as Secrets.
   check: n/a — documentation change, no behavior.
 
 ## Hand-off
