@@ -15,8 +15,10 @@ Go services and the metrics service. Databases, queues, files, customer data,
 workflow compilation, and extraction behavior are unchanged.
 
 Production rollout sets the approved internal testing account, waits for all
-affected workloads to become ready with zero new restarts, and verifies the
-rendered allowlist before certification. Rollback removes the value and repeats
-the Helm upgrade. No data migration is required.
+affected Helm workloads to become ready with zero new restarts, and verifies the
+rendered allowlist. This chart does not deploy the hosted GroundX Lambda. Hosted
+API certification also requires the Cashbot-owned production config and Lambda
+release path. Rollback removes the value and repeats the owning deployment. No
+data migration is required.
 
 Open design questions: none.
