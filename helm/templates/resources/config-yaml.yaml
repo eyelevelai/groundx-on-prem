@@ -68,6 +68,8 @@
 {{- $wrpt := include "groundx.workspace.provision.throughput" . | trim -}}
 {{- $wrpubt := include "groundx.workspace.publish.throughput" . | trim -}}
 {{- $wrwt := include "groundx.workspace.workspace.throughput" . | trim -}}
+{{- $integration := .Values.integration | default dict -}}
+{{- $captureAccounts := get $integration "extractionCaptureAccounts" | default list -}}
 {{- if gt (len $svcs) 0 }}
 apiVersion: v1
 kind: ConfigMap
@@ -230,6 +232,10 @@ data:
         username: {{ include "groundx.search.privilegedUsername" . | quote }}
 
     integrationTests:
+{{- if gt (len $captureAccounts) 0 }}
+      extractionCaptureAccounts:
+{{ toYaml $captureAccounts | nindent 8 }}
+{{- end }}
       search:
         duration: {{ include "groundx.integration.search.duration" . }}
         fileId: {{ include "groundx.integration.search.fileId" . | quote }}

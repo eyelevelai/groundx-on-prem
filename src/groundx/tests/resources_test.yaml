@@ -4,6 +4,32 @@ chart:
   version: 0.1.0
 
 tests:
+  - it: "extraction capture accounts default to none"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "extractionCaptureAccounts"
+  - it: "configured extraction capture accounts render exactly"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      integration.extractionCaptureAccounts[0]: "internal-certification-account"
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "integrationTests:[\\s\\S]*extractionCaptureAccounts:[\\s\\S]*- internal-certification-account"
   - it: "default: resources"
     templates:
       - ../templates/resources/config-models.yaml
