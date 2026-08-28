@@ -1,5 +1,11 @@
 # Anthropic workflow engine service implementation plan
 
+## Global constraints
+
+- Base the plan and implementation on current pushed `origin/0.2.7` in an isolated
+  worktree. Carry only this OpenSpec change and its eventual implementation; do not
+  include `origin/main`-only commits.
+
 ## 1. Lock current failure with render tests
 
 - [ ] 1.1 Add failing summary tests showing `anthropic` is currently classified as
