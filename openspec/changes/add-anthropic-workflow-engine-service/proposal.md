@@ -10,10 +10,13 @@ configure a native Anthropic runtime safely.
 
 ## Blast Radius
 
-Only deployments that select `anthropic` for `summary.existing.serviceType` or
-`extract.agent.serviceType` change. Existing service selections, Kubernetes resources,
-stateful services, queues, and default deployments remain unchanged. Enabling Anthropic
-changes outbound model traffic and requires an Anthropic endpoint, model, and credential.
+Deployments that select `anthropic` for `summary.existing.serviceType` or
+`extract.agent.serviceType` change. Per-engine summary configuration also changes when
+it sets the documented `engines.<name>.service`: that value becomes effective. For a
+non-default custom engine that supplies both `service` and the legacy `serviceType`,
+documented `service` becomes authoritative instead of `serviceType`. Defaults and
+engines that set neither field remain unchanged. Enabling Anthropic changes outbound
+model traffic and requires an Anthropic endpoint, model, and credential.
 
 ## What Changes
 
@@ -47,10 +50,12 @@ None.
 - Values contract: no new or renamed field.
 - Images: no application image is built here. A chart release is blocked until its
   referenced runtime images support native Anthropic.
-- Environments: dev, staging, and production only when an operator opts into
-  `anthropic`.
+- Environments: dev, staging, and production when an operator opts into `anthropic` or
+  already supplies per-engine `service`; conflicting custom-engine values follow the
+  documented `service` field after upgrade.
 - Data and stateful resources: none.
 - Rollout: render and canary with a matching immutable runtime image before production.
-  Roll back by restoring the prior service selection and secret while keeping the
-  additive public enum readable.
+  Release notes call out the per-engine precedence correction. Roll back by restoring
+  the prior chart or service selection and secret while keeping the additive public
+  enum readable.
 - Open design questions: none.

@@ -49,16 +49,26 @@ and MUST NOT fall back to the GroundX admin API key.
 - **Then** rendering fails with a configuration error
 - **And** the admin API key is not used
 
-### Requirement: Existing providers remain stable
+### Requirement: Existing providers remain stable outside the documented precedence correction
 
 The chart MUST retain the current rendered behavior for every existing service value
-and for deployments that do not select Anthropic.
+and for deployments that do not select Anthropic, except that documented per-engine
+`service` becomes effective and takes precedence over legacy `serviceType`.
+
+#### Scenario: Documented per-engine service wins
+
+- **Given** a custom non-default engine supplies conflicting `service` and
+  `serviceType` values
+- **When** the chart renders application configuration
+- **Then** the documented `service` value is rendered
+- **And** the chart release notes identify the upgrade behavior change.
 
 #### Scenario: Existing service regression suite
 
 - **Given** the existing service fixtures and default values
 - **When** the full Helm validation gate runs
-- **Then** their provider routing and credential behavior remain unchanged
+- **Then** their provider routing and credential behavior remain unchanged outside the
+  explicit per-engine precedence correction
 
 ### Requirement: Chart and runtime support are released together
 
