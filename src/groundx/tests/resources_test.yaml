@@ -21,15 +21,14 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
-    set:
-      integration.extractionCaptureAccounts[0]: "internal-certification-account"
+      - ./files/values.extraction-capture-accounts.yaml
     documentSelector:
       path: metadata.name
       value: config-yaml-map
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "integrationTests:[\\s\\S]*extractionCaptureAccounts:[\\s\\S]*- internal-certification-account"
+          pattern: "integrationTests:\\n  extractionCaptureAccounts:\\n\\n    - internal-certification-account\\n    - second-internal-account\\n  search:"
   - it: "default: resources"
     templates:
       - ../templates/resources/config-models.yaml
