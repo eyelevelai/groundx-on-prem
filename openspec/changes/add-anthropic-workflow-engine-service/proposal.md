@@ -45,6 +45,9 @@ None.
 
 ## Impact
 
+- Branch: base the plan and implementation on current pushed `origin/0.2.7`, the active
+  chart release line. Do not carry `origin/main` history or validate against its older
+  chart and CI surfaces.
 - Templates: summary and extraction-agent provider classification, validation,
   per-engine service rendering, and credential selection.
 - Values contract: no new or renamed field.

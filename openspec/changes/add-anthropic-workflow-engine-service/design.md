@@ -45,9 +45,12 @@ secret name, or environment variable.
 
 ## Source and mirror
 
-Implement in `src/groundx` first. Regenerate snapshots through Helm tooling, then copy
-the matching changed source files into `helm` because that directory is the manually
-maintained published mirror. Compare both surfaces after synchronization.
+Base the plan and implementation on current pushed `origin/0.2.7`, the active chart
+release line. Do not use `origin/main` as the base: its chart templates, schema, and
+validation script have diverged from the release line. Implement in `src/groundx`
+first. Regenerate snapshots through Helm tooling, then copy the matching changed source
+files into `helm` because that directory is the manually maintained published mirror.
+Compare both surfaces after synchronization.
 
 ## Deployment
 
