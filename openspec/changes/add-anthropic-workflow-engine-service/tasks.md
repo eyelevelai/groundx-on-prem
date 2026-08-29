@@ -41,7 +41,7 @@
 
 ## 4. Validate and release safely
 
-- [ ] 4.1 Run `.build/bin/validate-helm.sh`, `helm template src/groundx -f
+- [x] 4.1 Run `.build/bin/validate-helm.sh`, `helm template src/groundx -f
   src/groundx/values/minikube/values.yaml`, strict OpenSpec validation, and `git diff
   --check`.
 - [ ] 4.2 Record the Fern and Cashbot prerequisite versions and the immutable application
