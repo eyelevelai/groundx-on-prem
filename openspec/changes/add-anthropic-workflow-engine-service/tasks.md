@@ -32,10 +32,10 @@
 
 ## 3. Synchronize generated and published surfaces
 
-- [ ] 3.1 Regenerate affected Helm unit snapshots. Do not edit snapshots manually.
-- [ ] 3.2 Copy the matching changed source templates and contract files into the
+- [x] 3.1 Regenerate affected Helm unit snapshots. Do not edit snapshots manually.
+- [x] 3.2 Copy the matching changed source templates and contract files into the
   published `helm` mirror and compare both surfaces.
-- [ ] 3.3 Update concise values guidance for the existing fields without adding
+- [x] 3.3 Update concise values guidance for the existing fields without adding
   credentials or a second configuration shape. Add a release note that per-engine
   `service` now takes effect and wins over legacy `serviceType` when both are present.
 
