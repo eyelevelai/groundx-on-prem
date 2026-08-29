@@ -18,6 +18,10 @@ notes. This makes the documented field effective without adding a value.
 The chart selects configuration only. The matching application image owns native
 Messages API transport and response handling.
 
+Anthropic URL values are API roots such as `https://api.anthropic.com/v1`, not the
+`/v1/messages` operation endpoint. Cashbot and Internal Arcadia append their native
+Messages paths.
+
 ## Provider classification
 
 Add exact `anthropic` wherever summary or extraction-agent templates distinguish an

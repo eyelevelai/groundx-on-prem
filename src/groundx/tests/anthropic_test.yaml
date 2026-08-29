@@ -14,14 +14,14 @@ tests:
       engines.default.engineId: claude-sonnet-4-20250514
       summary.existing.apiKey: provider-key
       summary.existing.serviceType: anthropic
-      summary.existing.url: https://api.anthropic.test/v1/messages
+      summary.existing.url: https://api.anthropic.test/v1
     documentSelector:
       path: metadata.name
       value: config-yaml-map
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "baseURL: https://api.anthropic.test/v1/messages"
+          pattern: "baseURL: https://api.anthropic.test/v1"
       - matchRegex:
           path: data["config.yaml"]
           pattern: 'engineID: "claude-sonnet-4-20250514"\n\s+service: anthropic'
@@ -40,7 +40,7 @@ tests:
     set:
       summary.existing.apiKey: provider-key
       summary.existing.serviceType: anthropic
-      summary.existing.url: https://api.anthropic.test/v1/messages
+      summary.existing.url: https://api.anthropic.test/v1
     asserts:
       - failedTemplate:
           errorMessage: "summary Anthropic requires engines.<name>.engineId"
@@ -68,7 +68,7 @@ tests:
       admin.apiKey: admin-only-sentinel
       engines.default.engineId: claude-sonnet-4-20250514
       summary.existing.serviceType: anthropic
-      summary.existing.url: https://api.anthropic.test/v1/messages
+      summary.existing.url: https://api.anthropic.test/v1
     asserts:
       - failedTemplate:
           errorMessage: "summary Anthropic engine default requires engines.default.apiKey or summary.existing.apiKey"
@@ -80,7 +80,7 @@ tests:
       - ../values.yaml
     set:
       engines.default.apiKey: provider-key
-      engines.default.baseUrl: https://api.anthropic.test/v1/messages
+      engines.default.baseUrl: https://api.anthropic.test/v1
       engines.default.engineId: claude-sonnet-4-20250514
       engines.default.service: anthropic
     documentSelector:
@@ -92,7 +92,7 @@ tests:
           pattern: 'engineID: "claude-sonnet-4-20250514"\n\s+service: anthropic'
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "baseURL: https://api.anthropic.test/v1/messages"
+          pattern: "baseURL: https://api.anthropic.test/v1"
 
   - it: "Anthropic-only engines omit local summary workloads"
     templates:
@@ -102,7 +102,7 @@ tests:
       - ./files/values.disabled.yaml
     set:
       engines.default.apiKey: provider-key
-      engines.default.baseUrl: https://api.anthropic.test/v1/messages
+      engines.default.baseUrl: https://api.anthropic.test/v1
       engines.default.engineId: claude-sonnet-4-20250514
       engines.default.service: anthropic
       summary.api.enabled: true
@@ -123,7 +123,7 @@ tests:
       - ./files/values.disabled.yaml
     set:
       engines.default.apiKey: provider-key
-      engines.default.baseUrl: https://api.anthropic.test/v1/messages
+      engines.default.baseUrl: https://api.anthropic.test/v1
       engines.default.engineId: claude-sonnet-4-20250514
       engines.default.service: anthropic
       engines.local.engineId: google/gemma-3-4b-it
@@ -145,7 +145,7 @@ tests:
     values:
       - ./files/values.disabled.yaml
     set:
-      engines.default.baseUrl: https://api.anthropic.test/v1/messages
+      engines.default.baseUrl: https://api.anthropic.test/v1
       engines.default.engineId: claude-sonnet-4-20250514
       engines.local.engineId: google/gemma-3-4b-it
       engines.local.service: eyelevel
@@ -174,7 +174,7 @@ tests:
       engines.local.service: eyelevel
       summary.api.enabled: true
       summary.existing.apiKey: provider-key
-      summary.existing.url: https://api.anthropic.test/v1/messages
+      summary.existing.url: https://api.anthropic.test/v1
       summary.inference.enabled: true
     asserts:
       - hasDocuments:
@@ -191,7 +191,7 @@ tests:
       - ../values.yaml
     set:
       admin.apiKey: groundx-admin-test-key
-      engines.default.baseUrl: https://api.anthropic.test/v1/messages
+      engines.default.baseUrl: https://api.anthropic.test/v1
       engines.default.engineId: claude-sonnet-4-20250514
       engines.local.engineId: google/gemma-3-4b-it
       engines.local.service: eyelevel
@@ -206,7 +206,7 @@ tests:
           pattern: "openai:\\n\\s+apiKey: anthropic-provider-test-key\\n\\s+baseURL: http://summary-api.eyelevel.svc.cluster.local"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: 'engineID: "claude-sonnet-4-20250514"\n\s+service: anthropic\n\s+baseURL: https://api.anthropic.test/v1/messages'
+          pattern: 'engineID: "claude-sonnet-4-20250514"\n\s+service: anthropic\n\s+baseURL: https://api.anthropic.test/v1'
       - matchRegex:
           path: data["config.yaml"]
           pattern: 'vision: true\n\s+google/gemma-3-4b-it:'
@@ -226,14 +226,14 @@ tests:
       engines.local.engineId: google/gemma-3-4b-it
       engines.local.service: eyelevel
       summary.existing.apiKey: anthropic-provider-test-key
-      summary.existing.url: https://api.anthropic.test/v1/messages
+      summary.existing.url: https://api.anthropic.test/v1
     documentSelector:
       path: metadata.name
       value: config-yaml-map
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "openai:\\n\\s+apiKey: anthropic-provider-test-key\\n\\s+baseURL: https://api.anthropic.test/v1/messages"
+          pattern: "openai:\\n\\s+apiKey: anthropic-provider-test-key\\n\\s+baseURL: https://api.anthropic.test/v1"
       - matchRegex:
           path: data["config.yaml"]
           pattern: 'engineID: "google/gemma-3-4b-it"\n\s+service: eyelevel\n\s+apiKey: groundx-admin-test-key\n\s+baseURL: http://summary-api.eyelevel.svc.cluster.local'
@@ -252,7 +252,7 @@ tests:
     set:
       engines.default.engineId: gpt-5-mini
       engines.custom.apiKey: provider-key
-      engines.custom.baseUrl: https://api.anthropic.test/v1/messages
+      engines.custom.baseUrl: https://api.anthropic.test/v1
       engines.custom.engineId: claude-sonnet-4-20250514
       engines.custom.service: anthropic
       engines.custom.serviceType: openai
@@ -272,7 +272,7 @@ tests:
     set:
       engines.default.engineId: gpt-5-mini
       engines.custom.apiKey: provider-key
-      engines.custom.baseUrl: https://api.anthropic.test/v1/messages
+      engines.custom.baseUrl: https://api.anthropic.test/v1
       engines.custom.service: anthropic
     asserts:
       - failedTemplate:
@@ -300,7 +300,7 @@ tests:
     set:
       admin.apiKey: admin-only-sentinel
       engines.default.engineId: gpt-5-mini
-      engines.custom.baseUrl: https://api.anthropic.test/v1/messages
+      engines.custom.baseUrl: https://api.anthropic.test/v1
       engines.custom.engineId: claude-sonnet-4-20250514
       engines.custom.service: anthropic
     asserts:
@@ -315,7 +315,7 @@ tests:
     set:
       extract.enabled: true
       extract.agent.enabled: true
-      extract.agent.apiBaseUrl: https://api.anthropic.test/v1/messages
+      extract.agent.apiBaseUrl: https://api.anthropic.test/v1
       extract.agent.apiKey: provider-key
       extract.agent.modelId: claude-sonnet-4-20250514
       extract.agent.serviceType: anthropic
@@ -327,7 +327,7 @@ tests:
     asserts:
       - matchRegex:
           path: data["config.py"]
-          pattern: 'api_base="https://api.anthropic.test/v1/messages"'
+          pattern: 'api_base="https://api.anthropic.test/v1"'
       - matchRegex:
           path: data["config.py"]
           pattern: 'model_id="claude-sonnet-4-20250514"'
@@ -364,7 +364,7 @@ tests:
     set:
       extract.enabled: true
       extract.agent.enabled: true
-      extract.agent.apiBaseUrl: https://api.anthropic.test/v1/messages
+      extract.agent.apiBaseUrl: https://api.anthropic.test/v1
       extract.agent.apiKey: provider-key
       extract.agent.serviceType: anthropic
     asserts:
@@ -380,7 +380,7 @@ tests:
       admin.apiKey: admin-only-sentinel
       extract.enabled: true
       extract.agent.enabled: true
-      extract.agent.apiBaseUrl: https://api.anthropic.test/v1/messages
+      extract.agent.apiBaseUrl: https://api.anthropic.test/v1
       extract.agent.modelId: claude-sonnet-4-20250514
       extract.agent.serviceType: anthropic
     asserts:
@@ -396,7 +396,7 @@ tests:
       admin.apiKey: admin-only-sentinel
       extract.enabled: true
       extract.agent.enabled: true
-      extract.agent.apiBaseUrl: https://api.anthropic.test/v1/messages
+      extract.agent.apiBaseUrl: https://api.anthropic.test/v1
       extract.agent.existingSecret: true
       extract.agent.modelId: claude-sonnet-4-20250514
       extract.agent.serviceType: anthropic
@@ -420,7 +420,7 @@ tests:
       cluster.secrets[0]: anthropic-credentials
       extract.enabled: true
       extract.agent.enabled: true
-      extract.agent.apiBaseUrl: https://api.anthropic.test/v1/messages
+      extract.agent.apiBaseUrl: https://api.anthropic.test/v1
       extract.agent.modelId: claude-sonnet-4-20250514
       extract.agent.serviceType: anthropic
     documentSelector:

@@ -38,6 +38,8 @@
 - [x] 3.3 Update concise values guidance for the existing fields without adding
   credentials or a second configuration shape. Add a release note that per-engine
   `service` now takes effect and wins over legacy `serviceType` when both are present.
+- [x] 3.4 Document and test Anthropic URL values as API roots ending at `/v1`; do not
+  configure the `/v1/messages` operation path because each native runtime appends it.
 
 ## 4. Validate and release safely
 

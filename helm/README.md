@@ -29,12 +29,12 @@ engines:
   default:
     engineId: claude-sonnet-4-20250514
     service: anthropic
-    baseUrl: https://api.anthropic.com/v1/messages
+    baseUrl: https://api.anthropic.com/v1
 
 extract:
   agent:
     serviceType: anthropic
-    apiBaseUrl: https://api.anthropic.com/v1/messages
+    apiBaseUrl: https://api.anthropic.com/v1
     modelId: claude-sonnet-4-20250514
 ```
 
