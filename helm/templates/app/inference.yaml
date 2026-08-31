@@ -268,8 +268,8 @@ spec:
           configMap:
             name: config-models-map
         - name: config-volume
-          configMap:
-            name: {{ $cfg }}
+          secret:
+            secretName: {{ $cfg }}
         - name: supervisord-volume
           configMap:
             name: {{ $supe }}

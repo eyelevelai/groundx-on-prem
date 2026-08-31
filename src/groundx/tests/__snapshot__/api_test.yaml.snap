@@ -19,7 +19,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0e62c00d3b122115c882493823cdaa38d82aed94891faac8b29b80d6b1a32960
+            config-hash: 27319637c17dae4a9a05683d0e2c16fb2a2f3428ed8ee62f15295009a659fa99
             gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
           labels:
             app: layout-api
@@ -115,9 +115,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -157,7 +157,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 733e45adac5787e4ffd55a434b154abb5bc0550a965d20c621344e406bd14e52
+            config-hash: 80984f2c4c5a566db5f4dd7a3c86abb0733bb079165671ca808e888a3cd8f9af
             gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
           labels:
             app: ranker-api
@@ -253,9 +253,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -295,7 +295,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 17ef124814867fcbb6212c1851edc76e6acdb7802e42c7fef134a2fb6f3ec938
+            config-hash: ea698157e5a248cb307974eaf0b410f6b3b67dfa9c1de3ee0df957acbe0d63f9
             gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
           labels:
             app: summary-api
@@ -391,9 +391,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -434,7 +434,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6abd0516c76aeaf4d3a1187cd7b55d3da0392b6d7d063d01eb834a8385cb37c7
+            config-hash: ab5ba052c4f14c34e1b743b4cb6b6a9e67e4957ba84a7ada8f88f322a4e5bcfa
             gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
           labels:
             app: extract-api
@@ -546,9 +546,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -588,7 +588,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 049c37fdbe18201176cad7589519f0abedd3f900a382056ce812fbb34445447f
+            config-hash: ac64ede8ede164dcea7675a7bc1abe41d057a51a4ab9eebbebdd705b70bc81ce
             gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
           labels:
             app: layout-api
@@ -683,9 +683,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -725,7 +725,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 24aff6348b1fea7073493e71f63a6fbf3f1656e86a2cfc90c360ac0be2745d4b
+            config-hash: ac9291d84ab87466fb7f0b6f351533f5e84e0af9b65a4917346adef6cdd66621
             gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
           labels:
             app: ranker-api
@@ -820,9 +820,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -862,7 +862,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9b550f83fe615008fd7a3bd4fb324f3a3b8607943a72f3da1da21a0b31921ebc
+            config-hash: f19515bd35dbbf61aa32bae04e98da83bcb133856d7d855eed7f3c170e247b5f
             gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
           labels:
             app: summary-api
@@ -957,9 +957,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -1000,7 +1000,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2f8a61a500bc77e4c1e128cb58c29295ae9d683661b44342c038609ac387352
+            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
             gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
           labels:
             app: layout-api
@@ -1095,9 +1095,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -1137,7 +1137,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c6c50f072a3a410ffff2319cc26c1f7772989921b79ba752c875ac36a51d3be7
+            config-hash: 90d8d3d124b674c0682da50361feded1ac99639c608b03372420c8d6942bc5cc
             gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
           labels:
             app: ranker-api
@@ -1232,9 +1232,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -1274,7 +1274,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 98ce5b024876419328628261ed1d43fb288560dba6cfc74a959b79cf197491ab
+            config-hash: 99f41ef2cfafc8c53d00c72d079fe6433f24db2e19f2e5ce76160425923f03b9
             gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
           labels:
             app: summary-api
@@ -1369,9 +1369,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -1413,7 +1413,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2f8a61a500bc77e4c1e128cb58c29295ae9d683661b44342c038609ac387352
+            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
             gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
           labels:
             app: layout-api
@@ -1508,9 +1508,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -1550,7 +1550,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c6c50f072a3a410ffff2319cc26c1f7772989921b79ba752c875ac36a51d3be7
+            config-hash: 90d8d3d124b674c0682da50361feded1ac99639c608b03372420c8d6942bc5cc
             gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
           labels:
             app: ranker-api
@@ -1645,9 +1645,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -1687,7 +1687,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 98ce5b024876419328628261ed1d43fb288560dba6cfc74a959b79cf197491ab
+            config-hash: 99f41ef2cfafc8c53d00c72d079fe6433f24db2e19f2e5ce76160425923f03b9
             gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
           labels:
             app: summary-api
@@ -1782,9 +1782,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -1825,7 +1825,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b06b20f2d0b0544c43eca2ac371f76b5837528a388f92d53a07c20e32c9a9d5b
+            config-hash: adf484b64913429b71d5d179fc3045f2df5c48110f935e02bb6e95268a741789
             gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
           labels:
             app: layout-api
@@ -1920,9 +1920,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -1962,7 +1962,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5ebad025767c6f3e527aea8e90214814fdfd2922ab2e71fb562d66657cba8c30
+            config-hash: 7b60f1b2132310ead672f894395f75bc3e4db6b2d3dd7900ac2bf51d99ea9023
             gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
           labels:
             app: ranker-api
@@ -2057,9 +2057,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -2100,7 +2100,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 06bf95b0ce815466c2a1f202e72eb81c5df9341a915367f38ccbed50bd687212
+            config-hash: 90eeafa1e6a435f745d9c21c23e4a632eadbc16143aa119c86bad81ab57f1332
             gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
           labels:
             app: extract-api
@@ -2213,9 +2213,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -2255,7 +2255,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cd27bb81927f5164f824cd11d7ddc53bf1ae2d7ca47d4608dfdd0eb9c5ad1637
+            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
             gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
           labels:
             app: layout-api
@@ -2354,9 +2354,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -2396,7 +2396,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c5a4ab40a805fc0aa3b879f0ed57468d4bb5b0b2c86fa0b31307bd5302c51742
+            config-hash: 3992bea0a7ef8e1b59fcda5335ce3098aab0d90eda669eefc4e300628fef8eec
             gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
           labels:
             app: ranker-api
@@ -2495,9 +2495,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -2537,7 +2537,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4219e04ff7ea14faa1eb8b710e1d62388ae5cc16d802bb65bd902a646bdcbcb4
+            config-hash: 1fe84656d42aeaadd42f108c33efed189e6cbe10a886b815e2733c0de6d3653e
             gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
           labels:
             app: summary-api
@@ -2636,9 +2636,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -2679,7 +2679,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 777c5b290b4786cccb0997d415ec24e8daf204b1411d8b5ad19ffd1f5621a88d
+            config-hash: 9f240f10285010e32dcea4417911c0ad26b8777bec1ccd9b869affafc47f206a
             gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
           labels:
             app: extract-api
@@ -2791,9 +2791,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -2833,7 +2833,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5c76b67f2bc7e2de68d10d8d00ba8610e5397db2016a1ef5398f139b3f716062
+            config-hash: e836b26fff276f9e1ebed3b1eef5c3003c1fd50adcb280c94fda20becddcceb4
             gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
           labels:
             app: layout-api
@@ -2928,9 +2928,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -2970,7 +2970,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 11e34bf411b790fb053c5f7d87095f3df68fed7c523323f4ce14ab1c731b001a
+            config-hash: 7e376485c604c89cfabc614b42d2e378da2fab7f6ad0dd09c5cb30af313477b2
             gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
           labels:
             app: ranker-api
@@ -3065,9 +3065,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -3107,7 +3107,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e059715cac78edb91cf35e9d601b544d69549ff9efa79b4ca64efeb88b19f652
+            config-hash: 58a2df1961226517dde68430c4cde9ff29487e1dae3dcbf8c7027af93a9fd243
             gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
           labels:
             app: summary-api
@@ -3202,9 +3202,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -3245,7 +3245,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 64ee76a5d13130cca78ec39808f64dbc4b6d017989feaf1ba35053458b23727f
+            config-hash: be0d0c62b00ddb6a324ab1d81a432f1d63844ad1687f91764f5aa0cce5404e64
             gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
           labels:
             app: extract-api
@@ -3358,9 +3358,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -3400,7 +3400,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cd27bb81927f5164f824cd11d7ddc53bf1ae2d7ca47d4608dfdd0eb9c5ad1637
+            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
             gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
           labels:
             app: layout-api
@@ -3499,9 +3499,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -3541,7 +3541,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c5a4ab40a805fc0aa3b879f0ed57468d4bb5b0b2c86fa0b31307bd5302c51742
+            config-hash: 3992bea0a7ef8e1b59fcda5335ce3098aab0d90eda669eefc4e300628fef8eec
             gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
           labels:
             app: ranker-api
@@ -3640,9 +3640,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -3683,7 +3683,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 24b8fbd2f36aa9f97623483c8c28954253e4d7a331f1ddf9bb0e9bd38d415521
+            config-hash: 9b1da618fb9cb28d7e067e866353abe6fc6b6f7ccdd5938ae44029cd78062e34
             gunicorn-conf-hash: 83c12b1b7b62e11b58c3977068cad50ec59ee79a1f19eb1261da2490d219c23c
           labels:
             app: myapp-api
@@ -3779,9 +3779,9 @@
               key: eyelevel_node
               value: test-label-1
           volumes:
-            - configMap:
-                name: myapp-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: myapp-config-py-map
             - configMap:
                 name: myapp-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -3821,7 +3821,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d99d002053b8144d0eb5345347e371fdc962fc6fb03b6e017d485b0c86149b70
+            config-hash: 341d44e61c7b48386a4bc1cb6bb40ea2b700340e1c5d76472f7c18777811f057
             gunicorn-conf-hash: a549b26517e32f7a8ffda2515b3c71d7e219de4734ba5efb1178364200945858
             prometheus.io/port: "8081"
           labels:
@@ -3898,9 +3898,9 @@
               operator: Equal
               value: batch
           volumes:
-            - configMap:
-                name: myapp-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: myapp-config-py-map
             - configMap:
                 name: myapp-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -3940,7 +3940,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 56c8f18fe0eff2755753436654dc07e20e637e6c2706f1c53014edcfd7ee498c
+            config-hash: e3e55899a2ad709cb04aae6178d9d39ba8089f3a82339d4541992a330e7d0246
             gunicorn-conf-hash: 53cd8f931b746c1417345baed9c6a6b673f1f70836554d582f7040894bdeaa2b
             prometheus.io/port: "8081"
           labels:
@@ -4014,9 +4014,9 @@
             fsGroup: 2000
           serviceAccountName: other-service-account
           volumes:
-            - configMap:
-                name: myapp-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: myapp-config-py-map
             - configMap:
                 name: myapp-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -4057,7 +4057,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ebaefc6af0f1c9c3731fb790ce2235c0a0ed6224f8265c625fc8bb28f856298a
+            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
             gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
           labels:
             app: layout-api
@@ -4152,9 +4152,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -4194,7 +4194,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 24aff6348b1fea7073493e71f63a6fbf3f1656e86a2cfc90c360ac0be2745d4b
+            config-hash: ac9291d84ab87466fb7f0b6f351533f5e84e0af9b65a4917346adef6cdd66621
             gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
           labels:
             app: ranker-api
@@ -4289,9 +4289,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -4331,7 +4331,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9b550f83fe615008fd7a3bd4fb324f3a3b8607943a72f3da1da21a0b31921ebc
+            config-hash: f19515bd35dbbf61aa32bae04e98da83bcb133856d7d855eed7f3c170e247b5f
             gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
           labels:
             app: summary-api
@@ -4426,9 +4426,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -4469,7 +4469,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ebaefc6af0f1c9c3731fb790ce2235c0a0ed6224f8265c625fc8bb28f856298a
+            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
             gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
           labels:
             app: layout-api
@@ -4558,9 +4558,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -4600,7 +4600,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 24aff6348b1fea7073493e71f63a6fbf3f1656e86a2cfc90c360ac0be2745d4b
+            config-hash: ac9291d84ab87466fb7f0b6f351533f5e84e0af9b65a4917346adef6cdd66621
             gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
           labels:
             app: ranker-api
@@ -4689,9 +4689,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -4731,7 +4731,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9b550f83fe615008fd7a3bd4fb324f3a3b8607943a72f3da1da21a0b31921ebc
+            config-hash: f19515bd35dbbf61aa32bae04e98da83bcb133856d7d855eed7f3c170e247b5f
             gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
           labels:
             app: summary-api
@@ -4820,9 +4820,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -4863,7 +4863,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 8bd8132c2793d70f006504380b6bea53b8f53d1f87eb6c98e9915dc91f7f84b2
+            config-hash: 802220636858c6e1aaf6e1779acc1b466038e6c470d9345225d4491b1d25bc58
             gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
           labels:
             app: extract-api
@@ -4964,9 +4964,9 @@
               key: eyelevel_node
               value: eyelevel-cpu
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -5006,7 +5006,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9cb086224bcbefcd195a92ba8c0903e63036900c20fb5797d656ce5dffe4bc0c
+            config-hash: c46fd29f427efea3f2e374c353f6d3ad42ae56b2936cafdb64187b5c5f0d8d03
             gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
           labels:
             app: layout-api
@@ -5097,9 +5097,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -5139,7 +5139,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6eeb52486112983f5073bc799ec53c2d265bd90e6ad2af31f577505b5e67e3ff
+            config-hash: 42531a5b3e71b2717e16ee81e69bd953744e418bbd246e89b45e1bc763d22bfb
             gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
           labels:
             app: ranker-api
@@ -5230,9 +5230,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -5272,7 +5272,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 1b1aead3ca98c3ddee0f7bd5b82db625856ebb4bd9fe5fe1cef654c9499d87fb
+            config-hash: 303137171c8c7bb69bfb0c4c4d1f73d31384a1fd40a4cf2ac410b059b2f270da
             gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
           labels:
             app: summary-api
@@ -5363,9 +5363,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -5406,7 +5406,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cbbb6cf1449744b1cac172f8d63301d97de8336d5a5dff91a25b4e5ab092d533
+            config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
             gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
           labels:
             app: workspace-api
@@ -5513,9 +5513,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-gunicorn-conf-py-map
               name: gunicorn-conf-volume

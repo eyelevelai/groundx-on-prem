@@ -125,9 +125,9 @@ tests:
           path: spec.template.spec.volumes
           content:
             name: credentials-volume
-            configMap:
-              name: layout-ocr-credentials-map
-  - it: "google OCR credentials set but layout.ocr disabled: must not mount, volume, or annotate a ConfigMap that layout-ocr-credentials.yaml never creates"
+            secret:
+              secretName: layout-ocr-credentials-map
+  - it: "google OCR credentials set but layout.ocr disabled: must not mount, volume, or annotate a Secret that layout-ocr-credentials.yaml never creates"
     templates:
       - ../templates/app/celery.yaml
     values:
@@ -150,5 +150,5 @@ tests:
           path: spec.template.spec.volumes
           content:
             name: credentials-volume
-            configMap:
-              name: layout-ocr-credentials-map
+            secret:
+              secretName: layout-ocr-credentials-map

@@ -19,7 +19,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 1b5c4fa010f419579c114bf43436e5d9de34d640c02782938153cb803500ae15
+            config-hash: fa275ef26120644c26a9aa638b6abec26ae980d9c12a46b009261588f24a312c
             gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
           labels:
             app: ranker-api
@@ -114,9 +114,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -139,7 +139,16 @@
 'cache override: ranker config':
   1: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -155,15 +164,6 @@
             ],
             workers=14,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
 'cache override: ranker inference':
   1: |
     apiVersion: apps/v1
@@ -185,7 +185,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 1b5c4fa010f419579c114bf43436e5d9de34d640c02782938153cb803500ae15
+            config-hash: fa275ef26120644c26a9aa638b6abec26ae980d9c12a46b009261588f24a312c
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
@@ -380,9 +380,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume

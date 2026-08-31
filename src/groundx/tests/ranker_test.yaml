@@ -86,19 +86,19 @@ tests:
       ranker.inference.enabled: true
     asserts:
       - matchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "(?s)inference:\\n(?:\\s+.*\\n)*\\s+- name: ranker-inference\\n\\s+busyWindowSeconds: 60"
       - notMatchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "(?s)sessions:\\n(?:\\s+.*\\n)*\\s+ranker-inference:"
       - notMatchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "\\s+session: ranker-inference"
       - notMatchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "(?m)^  task:\\n(?:^    .*\\n)*^    - name: ranker-inference$"
       - notMatchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "rankerSession:"
   - it: "ranker API batch size renders into ranker config"
     templates:
@@ -111,7 +111,7 @@ tests:
       ranker.inference.enabled: true
     asserts:
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: "rankerBatchSize=4"
   - it: "ranker inference busy metric is omitted when HPA is disabled"
     templates:
@@ -127,11 +127,11 @@ tests:
       ranker.inference.replicas.hpa: false
     asserts:
       - notMatchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "(?s)inference:\\n(?:\\s+.*\\n)*\\s+- name: myapp-inference\\n\\s+busyWindowSeconds:"
         template: ../templates/resources/config-yaml.yaml
       - notMatchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: "metricsBusyWindowSeconds=60"
         template: ../templates/resources/ranker-config-py.yaml
       - hasDocuments:
@@ -150,13 +150,13 @@ tests:
       ranker.cache.ssl: true
     asserts:
       - notMatchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "(?s)sessions:\\n\\s+ranker-inference:\\n\\s+addr: ranker-cache\\.existing\\.com:6380\\n\\s+notCluster: true\\n\\s+ssl: true"
       - notMatchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "(?s)task:\\n(?:\\s+.*\\n)*\\s+- name: ranker-inference\\n\\s+session: ranker-inference\\n\\s+target: inference_queue\\n\\s+threshold: 10"
       - matchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "(?s)inference:\\n(?:\\s+.*\\n)*\\s+- name: ranker-inference\\n\\s+busyWindowSeconds: 60"
   - it: "cache override: ranker config"
     templates:

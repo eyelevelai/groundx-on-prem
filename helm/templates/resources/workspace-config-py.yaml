@@ -3,13 +3,13 @@
 {{- $svc := include "groundx.workspace.serviceName" . -}}
 
 apiVersion: v1
-kind: ConfigMap
+kind: Secret
 metadata:
   name: {{ $svc }}-config-py-map
   namespace: {{ include "groundx.ns" . }}
   labels:
 {{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
-data:
+stringData:
   config.py: |
     from pathlib import Path
 

@@ -24,7 +24,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: X.X.us-east-2.rds.amazonaws.com
@@ -297,18 +306,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: layout-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         env = dict(
             accessKey="",
@@ -346,15 +355,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -607,7 +607,16 @@
       namespace: eyelevel
   12: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -625,15 +634,6 @@
             ],
             workers=14,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
   13: |
     apiVersion: v1
     data:
@@ -887,7 +887,16 @@
       namespace: eyelevel
   15: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -904,15 +913,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-config-py-map
-      namespace: eyelevel
   16: |
     apiVersion: v1
     data:
@@ -1020,7 +1020,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: db-cluster-haproxy-replicas.eyelevel.svc.cluster.local
@@ -1322,18 +1331,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: extract-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         from groundx.extract import (
             AgentSettings,
@@ -1380,15 +1389,6 @@
           api_key="00000000-0000-0000-0000-000000000000",
           base_url="http://groundx.eyelevel.svc.cluster.local/api",
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: extract-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -1509,7 +1509,16 @@
       namespace: eyelevel
   8: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             accessKey="awsKey",
@@ -1547,15 +1556,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   9: |
     apiVersion: v1
     data:
@@ -1808,7 +1808,16 @@
       namespace: eyelevel
   17: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -1826,15 +1835,6 @@
             ],
             workers=14,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
   18: |
     apiVersion: v1
     data:
@@ -2116,7 +2116,16 @@
     type: Opaque
   22: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -2133,15 +2142,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-config-py-map
-      namespace: eyelevel
   23: |
     apiVersion: v1
     data:
@@ -2249,7 +2249,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: db-cluster-haproxy-replicas.eyelevel.svc.cluster.local
@@ -2517,18 +2526,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: layout-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         env = dict(
             accessKey="",
@@ -2564,15 +2573,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -2825,7 +2825,16 @@
       namespace: eyelevel
   12: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -2841,15 +2850,6 @@
             ],
             workers=14,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
   13: |
     apiVersion: v1
     data:
@@ -3103,7 +3103,16 @@
       namespace: eyelevel
   15: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -3118,15 +3127,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-config-py-map
-      namespace: eyelevel
   16: |
     apiVersion: v1
     data:
@@ -3235,7 +3235,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: db-cluster-haproxy-replicas.eyelevel.svc.cluster.local
@@ -3503,18 +3512,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: layout-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         env = dict(
             accessKey="",
@@ -3550,15 +3559,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -3811,7 +3811,16 @@
       namespace: eyelevel
   12: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -3827,15 +3836,6 @@
             ],
             workers=14,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
   13: |
     apiVersion: v1
     data:
@@ -4089,7 +4089,16 @@
       namespace: eyelevel
   15: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -4104,15 +4113,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-config-py-map
-      namespace: eyelevel
   16: |
     apiVersion: v1
     data:
@@ -4220,7 +4220,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: db-ro.existing.com
@@ -4498,18 +4507,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: layout-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         env = dict(
             accessKey="myuser",
@@ -4547,15 +4556,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -4808,7 +4808,16 @@
       namespace: eyelevel
   12: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -4826,15 +4835,6 @@
             ],
             workers=14,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
   13: |
     apiVersion: v1
     data:
@@ -5112,7 +5112,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: X.X.us-east-2.rds.amazonaws.com
@@ -5393,18 +5402,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: extract-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         from groundx.extract import (
             AgentSettings,
@@ -5448,15 +5457,6 @@
         groundx_settings = GroundXSettings(
           base_url="http://groundx.eyelevel.svc.cluster.local/api",
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: extract-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -5577,7 +5577,16 @@
       namespace: eyelevel
   8: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             accessKey="",
@@ -5613,15 +5622,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   9: |
     apiVersion: v1
     data:
@@ -5874,7 +5874,16 @@
       namespace: eyelevel
   17: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -5890,15 +5899,6 @@
             ],
             workers=14,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
   18: |
     apiVersion: v1
     data:
@@ -6166,7 +6166,16 @@
     type: Opaque
   21: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -6181,15 +6190,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-config-py-map
-      namespace: eyelevel
   22: |
     apiVersion: v1
     data:
@@ -6297,7 +6297,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: X.X.us-east-2.rds.amazonaws.com
@@ -6616,18 +6625,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: extract-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         from groundx.extract import (
             AgentSettings,
@@ -6678,15 +6687,6 @@
           api_key="00000000-0000-0000-0000-000000000000",
           base_url="http://groundx.eyelevel.svc.cluster.local/api",
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: extract-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -6807,7 +6807,16 @@
       namespace: eyelevel
   8: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             accessKey="awsKey",
@@ -6845,15 +6854,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   9: |
     apiVersion: v1
     data:
@@ -7106,7 +7106,16 @@
       namespace: eyelevel
   17: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -7124,15 +7133,6 @@
             ],
             workers=14,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
   18: |
     apiVersion: v1
     data:
@@ -7386,7 +7386,16 @@
       namespace: eyelevel
   20: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -7403,15 +7412,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-config-py-map
-      namespace: eyelevel
   21: |
     apiVersion: v1
     data:
@@ -7519,7 +7519,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: X.X.us-east-2.rds.amazonaws.com
@@ -7790,18 +7799,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: extract-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         from groundx.extract import (
             AgentSettings,
@@ -7844,15 +7853,6 @@
         groundx_settings = GroundXSettings(
           base_url="http://groundx.eyelevel.svc.cluster.local/api",
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: extract-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -7973,7 +7973,16 @@
       namespace: eyelevel
   8: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             accessKey="",
@@ -8009,15 +8018,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   9: |
     apiVersion: v1
     data:
@@ -8270,7 +8270,16 @@
       namespace: eyelevel
   17: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -8286,15 +8295,6 @@
             ],
             workers=14,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
   18: |
     apiVersion: v1
     data:
@@ -8586,7 +8586,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: db-cluster-haproxy-replicas.eyelevel.svc.cluster.local
@@ -8856,18 +8865,18 @@
           maxConcurrent: 2
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: myapp-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         env = dict(
             accessKey="minio",
@@ -8903,15 +8912,6 @@
             ],
             workers=2,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: myapp-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -9261,7 +9261,16 @@
       namespace: eyelevel
   12: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: myapp-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cpu",
@@ -9277,15 +9286,6 @@
             ],
             workers=4,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: myapp-config-py-map
-      namespace: eyelevel
   13: |
     apiVersion: v1
     data:
@@ -9409,7 +9409,16 @@
       namespace: eyelevel
   15: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: myapp-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cpu",
@@ -9424,15 +9433,6 @@
             ],
             workers=2,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: myapp-config-py-map
-      namespace: eyelevel
   16: |
     apiVersion: v1
     data:
@@ -9553,7 +9553,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: db-cluster-haproxy-replicas.eyelevel.svc.cluster.local
@@ -9833,18 +9842,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: layout-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         env = dict(
             accessKey="",
@@ -9882,15 +9891,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -10114,7 +10114,16 @@
       namespace: eyelevel
   11: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -10132,15 +10141,6 @@
             ],
             workers=14,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
   12: |
     apiVersion: v1
     data:
@@ -10394,7 +10394,16 @@
       namespace: eyelevel
   14: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -10411,15 +10420,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-config-py-map
-      namespace: eyelevel
   15: |
     apiVersion: v1
     data:
@@ -10527,7 +10527,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: db-cluster-haproxy-replicas.eyelevel.svc.cluster.local
@@ -10807,18 +10816,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: layout-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         env = dict(
             accessKey="",
@@ -10856,15 +10865,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -11088,7 +11088,16 @@
       namespace: eyelevel
   11: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -11106,15 +11115,6 @@
             ],
             workers=14,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
   12: |
     apiVersion: v1
     data:
@@ -11368,7 +11368,16 @@
       namespace: eyelevel
   14: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -11385,15 +11394,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-config-py-map
-      namespace: eyelevel
   15: |
     apiVersion: v1
     data:
@@ -11501,7 +11501,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: db-ro.existing.com
@@ -11807,18 +11816,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: extract-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         from groundx.extract import (
             AgentSettings,
@@ -11866,15 +11875,6 @@
           api_key="00000000-0000-0000-0000-000000000001",
           base_url="https://api.groundx.ai/api",
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: extract-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -11995,7 +11995,16 @@
       namespace: eyelevel
   8: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             accessKey="minio",
@@ -12034,15 +12043,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   9: |
     apiVersion: v1
     data:
@@ -12266,7 +12266,16 @@
       namespace: eyelevel
   16: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -12285,15 +12294,6 @@
             ],
             workers=14,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
   17: |
     apiVersion: v1
     data:
@@ -12575,7 +12575,16 @@
     type: Opaque
   21: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -12593,15 +12602,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-config-py-map
-      namespace: eyelevel
   22: |
     apiVersion: v1
     data:
@@ -12686,7 +12686,16 @@
 'summaryClient gracePeriod: resources':
   1: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: db-cluster-haproxy-replicas.eyelevel.svc.cluster.local
@@ -12967,15 +12976,6 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: config-yaml-map
-      namespace: eyelevel
 'workspace-enabled: resources':
   1: |
     apiVersion: v1
@@ -12993,7 +12993,16 @@
     type: Opaque
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         from pathlib import Path
 
@@ -13036,15 +13045,6 @@
             workspace_min_free_percent=0,
             workspace_root=Path("/tmp/workspaces"),
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: workspace-config-py-map
-      namespace: eyelevel
   3: |
     apiVersion: v1
     data:
