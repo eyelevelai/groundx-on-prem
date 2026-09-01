@@ -130,19 +130,20 @@ Re-read against the actual code (not just the plan-gate outline) at branch time:
 
 - **groundx-on-prem → cashbot-go** (session blocks): confirmed **Additive**. cashbot-go's YAML
   decoder is lenient (`yaml.NewDecoder`, no `KnownFields` — `pkg/config/config.go:94,125`) and its
-  consumer side (`config.Redis.User`/`Pass`) is already shipped and archived
-  (`eaee3388`). No mechanism needed beyond "the field is optional and ignored if unrecognized",
-  which is already true today.
+  consumer side (`config.Redis.User`/`Pass`) is already shipped, via an image containing the
+  GX-24 change, and archived. No mechanism needed beyond "the field is optional and ignored if
+  unrecognized", which is already true today.
 - **groundx-on-prem → ai-server** (Celery broker/result URLs): confirmed **Additive**, per the
   held AGE-221 spike (kombu/redis-py accept URL userinfo with no code change).
 - **groundx-on-prem → ai-server** (`status.py` / `metricsBroker`): confirmed **Breaking for an
   un-updated image**, exactly as contract.md records — `status.py`'s hand-rolled URL parser does not
-  strip userinfo, so a credentialed `metricsBroker` would misparse on the pre-`f25ff87` image. The
-  compatibility mechanism is the **default-empty gate** (D6) plus the **fail-loud guard** (D4) —
-  there is no versioned-field or feature-flag mechanism available at the chart-values layer for this
-  case, and none is needed: an operator cannot reach the breaking path unless they explicitly set a
-  credential, and the release-management ordering constraint (chart PR must not merge before the
-  `f25ff87`-carrying ai-server image is what 0.2.7 advertises) is already recorded in the proposal's
+  strip userinfo, so a credentialed `metricsBroker` would misparse on an ai-server image that does
+  not yet contain the GX-24 change. The compatibility mechanism is the **default-empty gate** (D6)
+  plus the **fail-loud guard** (D4) — there is no versioned-field or feature-flag mechanism
+  available at the chart-values layer for this case, and none is needed: an operator cannot reach
+  the breaking path unless they explicitly set a credential, and the release-management ordering
+  constraint (chart PR must not merge before an ai-server image containing the GX-24 change is
+  what 0.2.7 advertises) is already recorded in the proposal's
   Impact section as the actual mitigation, not a chart mechanic. This re-confirms — does not
   change — the contract.md classification; `contract_section` (produced at apply time, per the
   apply-mode contract) will point back to the actual rendered shapes once implemented.
@@ -185,7 +186,8 @@ values (per spec's backward-compatibility scenario). An upgrade that sets a cred
 rendered Secret content, which triggers the existing `config-hash` pod-restart mechanism — no new
 rollout mechanism introduced. `helm rollback` reverses cleanly (proposal's Impact section already
 covers rollback/rollforward; not repeated here). The one ordering constraint — this chart PR must not
-merge before the ai-server 0.2.7-release image carries the `f25ff87` `status.py` fix — is a
+merge before the ai-server 0.2.7-release image is an image containing the GX-24 change (the
+`status.py` fix) — is a
 release-management fact recorded in the proposal, not something this design can enforce from inside
 the chart.
 
@@ -230,3 +232,53 @@ decisions that implement them without exceeding them.
   exclude, so it failed on every case regardless of credential-render parity. A deliberately
   broken mirror file was used to confirm the narrowed comparison still catches a real mismatch
   before this fix was kept.
+
+## Amendments (review round 1, 2026-09-01)
+
+Five review findings changed rendering behavior (D4's guard predicate, D2/D3's inheritance
+predicate, and userinfo encoding); recorded here rather than rewritten into D1–D7 above, which
+describe what the plan-gate resolutions actually decided at authoring time.
+
+- **F1 — metrics/ranker credential inheritance now gates on the same predicate the addr helpers
+  use, not unconditionally.** `groundx.metrics.cache.password`/`.username` and
+  `groundx.ranker.cache.password`/`.username` previously fell back to the main cache's credential
+  whenever the identity had no credential of its own, regardless of whether the identity had its
+  *own* external `existing.addr`/`addr`. `values.existing.yaml`'s own configuration (two distinct
+  external Redis addresses, main and metrics, one credential set on main) triggered this: the
+  metrics identity would render the main cache's credential against a different host. The fix:
+  when the identity has its own external address, its resolved credential is its own value only
+  (no main fallback) — an identity pointed at its own external Redis with no credential of its own
+  now renders no credential, never someone else's.
+- **F4 — the fail-loud guard (D4) now keys on the identity's resolved externality
+  (`groundx.<identity>.cache.isExternal`), not `groundx.<identity>.cache.create`.** Two silent
+  cases existed under the `create`-keyed guard: (i) `cache.enabled: false` with no
+  `existing.addr` resolved `create` to `false` (the `enabled` flag short-circuited the check)
+  while the identity's address still resolved to the chart's own bundled DNS name, silently
+  rendering a credential there; (ii) an external main cache with a bundled (default-enabled)
+  metrics identity made `groundx.metrics.cache.create` delegate to the *main* identity's
+  create/external state, so a metrics credential inherited from an external main cache rendered
+  silently at the metrics identity's own bundled pod (`cache-metrics.<ns>`), which has no AUTH
+  support. `isExternal` is derived purely from the identity's own resolved address (mirroring the
+  addr helper's own branching), independent of the other identities' state.
+- **F3 — userinfo encoding is `urlquery` followed by `replace "+" "%20"` (`groundx.redis.
+  userinfoEscape`), not bare `urlquery`.** `urlquery` (Go's `url.QueryEscape`) encodes a space as
+  `+`; a URL userinfo decoder (`urllib.parse.unquote`, the ai-server/Python side, and any
+  standards-conformant URL userinfo parser) leaves a literal `+` as `+`, not a space — so a
+  space-containing password decoded to the wrong value on the consumer side. `openspec/config.yaml`'s
+  durable convention (the "URL-EMBEDDING A CREDENTIAL" line) is corrected to match, and also
+  corrects the `urlquery` attribution: it is a Go `text/template` builtin, not a Sprig function.
+- **F5 — a username with no password (nopass ACL) is rejected for all three identities,
+  independent of the bundled-vs-external check.** Per human decision (a): the chart's Secret
+  rendering path has no in-chart mechanism to express a nopass ACL for the ai-server broker-URL
+  consumer shape, so `validateCredentials` now also `fail`s when a username is set with an empty
+  password on an otherwise-external identity, naming the offending identity.
+- **F12 — `groundx.redis.yamlScalar` is unconditional `| quote`,** replacing the
+  `regexMatch`-gated conditional quoting (quote only when the value contains a character outside
+  `[A-Za-z0-9_.-]`). Per human decision (c): always-quoted YAML scalars are simpler to reason
+  about and equally valid YAML; the conditional form saved a few bytes on the common case at the
+  cost of two code paths to verify instead of one.
+
+The round's test-file, `tasks.md`, and `openspec/config.yaml` corrections (including the F6
+round-trip decode check, the F7 archive-stable `verify-mirror-parity.sh` check path, and the F10
+both-mirrors-fail-identically case) are described inline at their respective task entries in
+`tasks.md` rather than repeated here.

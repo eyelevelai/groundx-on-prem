@@ -59,12 +59,41 @@ check_identical() {
   fi
 }
 
+# Both surfaces must FAIL identically on the bundled-credential render (F10 / spec.md's
+# "both mirrors fail identically on the bundled-cache case" scenario) - a chart-surface
+# render divergence on the failure path is just as much a parity break as one on a
+# successful render.
+check_both_fail_identically() {
+  local desc="$1" tmpl="$2"
+  shift 2
+  local a b rc_a rc_b
+  a="$(render src/groundx --show-only "$tmpl" "$@" 2>&1)"
+  rc_a=$?
+  b="$(render helm --show-only "$tmpl" "$@" 2>&1)"
+  rc_b=$?
+  if [[ $rc_a -eq 0 || $rc_b -eq 0 ]]; then
+    echo "FAIL ($desc): expected both renders to fail, got exit $rc_a (src/groundx) / $rc_b (helm/)" >&2
+    fail=1
+    return
+  fi
+  if [[ "$a" != "$b" ]]; then
+    echo "FAIL ($desc): src/groundx and helm/ failure output differs:" >&2
+    diff <(echo "$a") <(echo "$b") >&2 || true
+    fail=1
+  fi
+}
+
+# cache.metrics.enabled=false isolates main-cache-credential parity from the metrics
+# identity's own bundled-vs-external guard (F4/F1) - these three checks are about the
+# main identity only.
 check_identical "main cache credentialed config-yaml session blocks" \
   templates/resources/config-yaml.yaml \
+  --set cache.metrics.enabled=false \
   --set cache.existing.addr=mirror.example.com --set cache.password=mirrorpass --set cache.username=mirroruser
 
 check_identical "layout broker/result/metrics URLs, main+metrics identities credentialed" \
   templates/resources/layout-config-py.yaml \
+  --set cache.metrics.enabled=false \
   --set cache.existing.addr=mirror.example.com --set cache.password=mirrorpass --set cache.username=mirroruser
 
 check_identical "ranker searchBroker/searchResultBroker, ranker identity credentialed" \
@@ -73,6 +102,11 @@ check_identical "ranker searchBroker/searchResultBroker, ranker identity credent
 
 check_identical "summary broker/result URLs, main identity credentialed" \
   templates/resources/summary-config-py.yaml \
+  --set cache.metrics.enabled=false \
   --set cache.existing.addr=mirror.example.com --set cache.password=mirrorpass
+
+check_both_fail_identically "bundled-cache credential render fails identically on both surfaces" \
+  templates/resources/config-yaml.yaml \
+  --set cache.password=mirrorpass
 
 exit "$fail"

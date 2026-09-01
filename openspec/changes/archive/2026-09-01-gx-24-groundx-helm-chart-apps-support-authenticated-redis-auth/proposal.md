@@ -10,9 +10,9 @@ The chart today assumes an auth-less Redis: it renders host, port, and TLS schem
 credential. A customer pointing GroundX on-prem at their own external or managed Redis with
 authentication enabled (AWS ElastiCache AUTH/RBAC, Azure Cache access key/ACL, GCP Memorystore
 AUTH string, or an on-prem `requirepass` baseline) gets `NOAUTH` and the dependent services fail
-to start. This is the producer half of GX-24: the two consumer repos already carry their sides on
-separate branches (cashbot-go @ `eaee3388`, ai-server @ `f25ff87`, both implemented, verified, and
-archived), so this chart change is what actually lets an operator opt in. It is the functional
+to start. This is the producer half of GX-24: the two consumer repos already carry an image
+containing the GX-24 change on separate branches (cashbot-go, ai-server; both implemented,
+verified, and archived), so this chart change is what actually lets an operator opt in. It is the functional
 complement to GX-17, which got GroundX's own credentials out of plaintext ConfigMaps; this ticket
 lets GroundX consume a credential the customer's Redis requires.
 
@@ -54,8 +54,8 @@ lets GroundX consume a credential the customer's Redis requires.
   byte-identical — no snapshot is hand-edited; any legitimate snapshot change comes only from
   `helm unittest -u`.
 - **BREAKING for an un-updated ai-server image only, and mitigated by the default-off gate**: an
-  operator who sets `cache.password` before the ai-server image built from `f25ff87` is the image
-  the 0.2.7 chart advertises will hit `status.py`'s pre-fix URL parser, which does not strip
+  operator who sets `cache.password` before an ai-server image containing the GX-24 change is the
+  image the 0.2.7 chart advertises will hit `status.py`'s pre-fix URL parser, which does not strip
   userinfo from a credentialed `metricsBroker` URL. This is why the chart PR must not merge ahead
   of that image being current for the 0.2.7 release (see Impact). No other consumer is affected:
   an install that never sets these values renders byte-identical to today.
@@ -100,8 +100,8 @@ spec's requirements.)
 - **Blast radius**: scoped to this producer chart change. The two consumer repos are already
   implemented and archived on their own branches; this chart's `contract.md` records the
   cross-repo touchpoints and the one **rollout ordering constraint**: this chart PR targets the
-  0.2.7 release branch and must not merge before the ai-server image tagged for that release
-  carries the `f25ff87` `status.py` fix, because an operator opting in before then would hit the
+  0.2.7 release branch and must not merge before the ai-server image tagged for that release is
+  an image containing the GX-24 change (the `status.py` fix), because an operator opting in before then would hit the
   Breaking un-updated-image case named above. That ordering is a release-management fact, not a
   chart mechanic — nothing in this PR can enforce it directly.
 - **Open design questions**: none. The plan-gate resolutions already fixed the scope and shape

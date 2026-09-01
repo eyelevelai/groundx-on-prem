@@ -14,8 +14,11 @@ cache:
 
   # Redis AUTH password / ACL username for an EXTERNAL cache only (the
   # chart's own bundled Redis has no AUTH support and the render fails
-  # loudly if these are set without cache.existing.addr). Stored in a
-  # Secret, never a ConfigMap. Defaults empty (auth-less, byte-identical).
+  # loudly if these are set without cache.existing.addr). A username with
+  # no password (nopass ACL) is rejected; set both or neither.
+  # NOTE: extract-config-py.yaml and workspace-config-py.yaml do not read
+  # this credential - those two surfaces remain unauthenticated to Redis
+  # when a cache password is set (explicitly out of scope, see proposal.md).
   # username: mycacheuser
   # password: mycachepass
 
