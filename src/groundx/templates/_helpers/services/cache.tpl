@@ -80,12 +80,11 @@ false
 {{- $b := .Values.cache | default dict -}}
 {{- $m := (dig "metrics" nil $b) | default dict -}}
 {{- $ex := (dig "existing" nil $m) | default dict -}}
-{{- $own := coalesce (dig "password" "" $ex) (dig "password" "" $m) -}}
-{{- if not (empty (dig "addr" "" $ex)) -}}
-{{ $own | default "" }}
+{{- if not (dig "enabled" false $m) -}}
+{{- include "groundx.cache.password" . -}}
 {{- else -}}
-{{- $main := include "groundx.cache.password" . -}}
-{{ coalesce $own $main | default "" }}
+{{- $own := coalesce (dig "password" "" $ex) (dig "password" "" $m) -}}
+{{ $own | default "" }}
 {{- end -}}
 {{- end }}
 
@@ -93,12 +92,11 @@ false
 {{- $b := .Values.cache | default dict -}}
 {{- $m := (dig "metrics" nil $b) | default dict -}}
 {{- $ex := (dig "existing" nil $m) | default dict -}}
-{{- $own := coalesce (dig "username" "" $ex) (dig "username" "" $m) -}}
-{{- if not (empty (dig "addr" "" $ex)) -}}
-{{ $own | default "" }}
+{{- if not (dig "enabled" false $m) -}}
+{{- include "groundx.cache.username" . -}}
 {{- else -}}
-{{- $main := include "groundx.cache.username" . -}}
-{{ coalesce $own $main | default "" }}
+{{- $own := coalesce (dig "username" "" $ex) (dig "username" "" $m) -}}
+{{ $own | default "" }}
 {{- end -}}
 {{- end }}
 

@@ -83,9 +83,10 @@ false
 {{- $own := dig "password" "" $in -}}
 {{- if eq (include "groundx.ranker.cache.existing" .) "true" -}}
 {{ $own | default "" }}
+{{- else if eq (include "groundx.cache.isExternal" .) "true" -}}
+{{- include "groundx.cache.password" . -}}
 {{- else -}}
-{{- $main := include "groundx.cache.password" . -}}
-{{ coalesce $own $main | default "" }}
+{{ $own | default "" }}
 {{- end -}}
 {{- end }}
 
@@ -95,9 +96,10 @@ false
 {{- $own := dig "username" "" $in -}}
 {{- if eq (include "groundx.ranker.cache.existing" .) "true" -}}
 {{ $own | default "" }}
+{{- else if eq (include "groundx.cache.isExternal" .) "true" -}}
+{{- include "groundx.cache.username" . -}}
 {{- else -}}
-{{- $main := include "groundx.cache.username" . -}}
-{{ coalesce $own $main | default "" }}
+{{ $own | default "" }}
 {{- end -}}
 {{- end }}
 

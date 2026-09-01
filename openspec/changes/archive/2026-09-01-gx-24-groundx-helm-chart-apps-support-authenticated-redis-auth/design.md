@@ -282,3 +282,73 @@ The round's test-file, `tasks.md`, and `openspec/config.yaml` corrections (inclu
 round-trip decode check, the F7 archive-stable `verify-mirror-parity.sh` check path, and the F10
 both-mirrors-fail-identically case) are described inline at their respective task entries in
 `tasks.md` rather than repeated here.
+
+## Amendments (review round 2, 2026-09-01)
+
+**Binding invariant added (this round):** *A Redis identity's credential resolution MUST use the
+identical externality predicate as that identity's address resolution. An identity inherits the
+main cache's credential only when it also inherits the main cache's address; the credential and
+the address for one identity can never resolve from different sources.* Round 1's F1 fix (above)
+gated credential *inheritance* on the identity's own-address predicate, but round 2 (F13) found
+the metrics helpers used a *different variable* than the addr helper to decide that predicate in
+the first place — the invariant now states explicitly what F1 assumed implicitly.
+
+- **F13 — `groundx.metrics.cache.password`/`.username` now gate on `cache.metrics.enabled`, the
+  same variable `groundx.metrics.cache.addr`/`.isExternal` already gate on, not on
+  `cache.metrics.existing.addr` presence.** The two predicates could disagree:
+  `cache.metrics.enabled: false` with a stale `cache.metrics.existing.addr`/`.password` still set,
+  and an external main cache, made the address helper (correctly gated on `enabled`) resolve to
+  the **main** cache's address while the credential helper (wrongly gated on the metrics block's
+  own `existing.addr` presence) resolved to the **metrics** block's own password — verified live,
+  `metricsBroker="redis://:metricspass@main.example.com:6379/0"`, an address/credential pair that
+  does not correspond to any real server. Fixed resolution, matching the addr helper's own
+  branching exactly: when `cache.metrics.enabled` is `false`, the metrics identity fully collapses
+  onto the main identity — `groundx.metrics.cache.password`/`.username` delegate wholly to
+  `groundx.cache.password`/`.username`, ignoring `cache.metrics`/`cache.metrics.existing` entirely
+  (mirroring how the addr helper already ignores them in this state). When `cache.metrics.enabled`
+  is `true`, the metrics identity resolves its own value only (`coalesce(existing.<key>,
+  metrics.<key>)`, no main fallback) — matching D2/F1's already-correct behavior for the
+  has-its-own-identity case. One side effect, itself required by the invariant: the round-1 F4(ii)
+  fail-loud case (an external, credentialed main cache with a default-enabled, non-addressed
+  metrics identity) no longer fails — under the corrected resolution the metrics identity's
+  resolved credential is empty in that state (never main's, since metrics is enabled and thus
+  resolves its own — empty — state), so it renders unauthenticated against its own bundled pod,
+  which is the correct behavior, not a misconfiguration. `tests/cache_metrics_credentials_test.yaml`
+  is updated accordingly (the old F4(ii) case now asserts the unauthenticated bundled render; a new
+  case reproduces F13's exact `enabled: false` + stale `existing.addr` + external-main combo and
+  asserts the main host renders with the main's own credential, never the metrics block's).
+- **F13 (ranker re-confirmation) — `groundx.ranker.cache.password`/`.username` had the same class
+  of defect, reached differently.** Ranker's addr and credential helpers already shared one gating
+  variable (`groundx.ranker.cache.existing`, i.e. `ranker.cache.addr` presence) — no `enabled`-style
+  divergence — but the *not-existing* branch still coalesced ranker's own top-level
+  `password`/`username` ahead of the main cache's, even though the address in that branch
+  unconditionally resolves to the main cache's address (`groundx.cache.addr`, no fallback of its
+  own). Whenever the main cache was external with its own credential and `ranker.cache.password`
+  was independently set with no `ranker.cache.addr`, the render used ranker's own (wrong) password
+  against the main cache's real external host — a live source mismatch, uncaught by the fail-loud
+  guard because `groundx.ranker.cache.isExternal` in that branch delegates to the main cache's own
+  (true) externality. Fixed: the not-existing branch now resolves to the main cache's credential
+  whenever the main cache is external (matching the address source exactly, own value discarded),
+  and falls back to ranker's own value only when the main cache is *not* external — which is also
+  what keeps the round-1 fail-loud guard reachable and tested (a plain `coalesce`-removal, unlike
+  metrics's `enabled`-gated fix, would have made that guard's specific message permanently
+  unreachable, since ranker's resolved credential would then always equal the main cache's own,
+  which the main cache's own guard clause already catches first). `tests/
+  ranker_cache_credentials_test.yaml` keeps the existing fail-loud case (still fails, now for the
+  same underlying reason) and adds a case for the external-main mismatch this round found.
+- **F8 — process/ordering note (not a rendering change):** this round's `src/groundx/` and `helm/`
+  edits are committed by the orchestrator with `src/groundx/` first, `helm/` second — the
+  established mirror-sync ordering (see AGENTS.md "`helm/` ↔ `src/groundx/` duplication"). The
+  round-1 mirror-parity commit (`5d825ba`, "refresh helm/ mirror with external-Redis credential
+  support") predates this ordering rule being made explicit and is not amended retroactively (per
+  this repo's record-hygiene rule: a shipped record is corrected by appending an amendment, not by
+  rewriting history) — its commit message should be read as historical, not as the ordering
+  convention this change now follows.
+- **F15 — `values.yaml` documents the metrics-identity interaction (both `src/groundx/values.yaml`
+  and `helm/values.yaml`), beside the existing credential comment block.** A new commented `NOTE:`
+  states that a credentialed external main cache does not implicitly credential the default
+  bundled metrics identity (`cache.metrics.enabled: true`, no `cache.metrics.existing.addr`) — that
+  identity must be disabled (to fully inherit the main cache, address and credential together) or
+  given its own external address and credential; setting a credential directly on
+  `cache.metrics`/`cache.metrics.existing` while the identity still resolves to its own bundled pod
+  fails the render loudly, per D4.
