@@ -22,6 +22,16 @@ cache:
   # username: mycacheuser
   # password: mycachepass
 
+  # NOTE: with a credentialed external cache (cache.password/cache.username
+  # set above), the default bundled metrics identity (cache.metrics.enabled:
+  # true, no cache.metrics.existing.addr of its own) does NOT inherit this
+  # credential - it renders unauthenticated against its own bundled pod. Set
+  # cache.metrics.enabled: false to have metrics fully proxy the main cache
+  # (address AND credential), or give metrics its own external
+  # cache.metrics.existing.addr + credential. Setting a credential directly
+  # on cache.metrics/cache.metrics.existing while metrics still resolves to
+  # its own bundled (uncredentialed) pod fails the render loudly.
+
   metrics:
     enabled: true
     existing: {}
