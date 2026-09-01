@@ -12,9 +12,26 @@ cluster:
 cache:
   enabled: true
 
+  # Redis AUTH password / ACL username for an EXTERNAL cache only (the
+  # chart's own bundled Redis has no AUTH support and the render fails
+  # loudly if these are set without cache.existing.addr). Stored in a
+  # Secret, never a ConfigMap. Defaults empty (auth-less, byte-identical).
+  # username: mycacheuser
+  # password: mycachepass
+
   metrics:
     enabled: true
     existing: {}
+      # addr: metrics-cache.mycorp.net
+      # isCluster: true
+      # port: 6379
+      # ssl: true
+      # username: mymetricscacheuser
+      # password: mymetricscachepass
+
+    # inherits the main cache's username/password when unset
+    # username: mymetricscacheuser
+    # password: mymetricscachepass
 
     resources:
       requests:
@@ -33,6 +50,8 @@ cache:
     # isCluster: true
     # port: 6379
     # ssl: true
+    # username: mycacheuser
+    # password: mycachepass
 
 db:
   enabled: true
@@ -308,6 +327,9 @@ ranker:
     # port: 6379
     # ssl: true
     # type: redis
+    # inherits the main cache's username/password when unset
+    # username: myrankercacheuser
+    # password: myrankercachepass
 
   api:
     enabled: true

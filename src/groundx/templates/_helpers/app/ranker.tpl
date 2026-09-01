@@ -69,6 +69,36 @@
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.ranker.cache.create" -}}
+{{- if eq (include "groundx.ranker.cache.existing" .) "true" -}}
+false
+{{- else -}}
+{{ include "groundx.cache.create" . }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.ranker.cache.password" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "cache" dict $b -}}
+{{- $main := include "groundx.cache.password" . -}}
+{{ coalesce (dig "password" "" $in) $main | default "" }}
+{{- end }}
+
+{{- define "groundx.ranker.cache.username" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "cache" dict $b -}}
+{{- $main := include "groundx.cache.username" . -}}
+{{ coalesce (dig "username" "" $in) $main | default "" }}
+{{- end }}
+
+{{- define "groundx.ranker.cache.userinfo" -}}
+{{- $password := include "groundx.ranker.cache.password" . -}}
+{{- if ne $password "" -}}
+{{- $username := include "groundx.ranker.cache.username" . -}}
+{{ printf "%s:%s@" (urlquery $username) (urlquery $password) }}
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.ranker.cache.settings" -}}
 {{- dict
     "addr"   (include "groundx.ranker.cache.addr" .)

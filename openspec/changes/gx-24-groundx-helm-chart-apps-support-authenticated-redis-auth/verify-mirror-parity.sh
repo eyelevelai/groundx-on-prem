@@ -5,6 +5,13 @@
 #
 # Fails closed: any render error (e.g. the schema not yet declaring the new
 # keys) or any content mismatch between the two chart surfaces is a failure.
+#
+# Known, out-of-scope exception (see proposal.md / design.md D-Risks): helm/'s
+# Chart.yaml carries a pre-existing, unrelated version drift (0.2.6 vs
+# src/groundx's 0.2.7) that this change does not touch. That drift surfaces in
+# every rendered manifest's default labels (appVersion/chart/version), so it
+# is stripped before comparing — this script's job is credential-render
+# parity, not chart-version parity.
 set -uo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
@@ -16,6 +23,13 @@ render() {
   local chart="$1"
   shift
   helm template gx "$chart" -n eyelevel "$@"
+}
+
+strip_known_version_drift() {
+  # Drop the three default-label lines derived from Chart.yaml's version
+  # fields (appVersion/chart/version) — the only known, out-of-scope
+  # difference between the two chart surfaces.
+  grep -Ev '^ *(appVersion|chart|version): ' <<<"$1"
 }
 
 check_identical() {
@@ -36,6 +50,8 @@ check_identical() {
     fail=1
     return
   fi
+  a="$(strip_known_version_drift "$a")"
+  b="$(strip_known_version_drift "$b")"
   if [[ "$a" != "$b" ]]; then
     echo "FAIL ($desc): src/groundx and helm/ renders differ:" >&2
     diff <(echo "$a") <(echo "$b") >&2 || true

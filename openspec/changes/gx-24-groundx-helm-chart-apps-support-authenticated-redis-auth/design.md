@@ -194,3 +194,39 @@ the chart.
 None. The plan-gate resolutions (E1-A, E2-A, the per-identity-with-fallback shape, the
 percent-encoding requirement) already fixed scope and shape; D1–D6 above are the concrete rendering
 decisions that implement them without exceeding them.
+
+## Amendments (apply phase, 2026-09-01)
+
+- **D4 attribution nuance (not a scope or logic change):** `groundx.cache.validateCredentials`
+  stayed a single helper called only from `config-yaml.yaml`, exactly as D4 specified — no second
+  call site was added. Verified live (`helm template`) that Helm's chart-wide render, when more
+  than one top-level template would independently `fail`, surfaces only the error from whichever
+  file executes last in its internal ordering, which is not `config-yaml.yaml`. That is a Helm
+  rendering-order artifact affecting which file's location a `helm template`/`helm install` error
+  message cites — it does not change *whether* the render fails (it always does, for every
+  violation, in every real invocation). The one authored `helm unittest` case that renders
+  `ranker-config-py.yaml` in isolation was retargeted to `config-yaml.yaml` (matching the pattern
+  its two sibling test files already use for their own fail-loud cases) so the assertion checks the
+  file that actually performs the guard, per D4.
+- **`groundx.cache.password`/`.username` (and the metrics/ranker equivalents) append `| default ""`
+  after `coalesce`.** Verified live: Sprig's `coalesce` returns Go `nil` (not `""`) when every
+  argument is empty, and piping that `nil` into another function (`urlquery`, used by
+  `groundx.cache.userinfo`) renders the literal text `<no value>` — normally invisible in a
+  directly-printed value because Helm's engine string-replaces `<no value>` in the final rendered
+  output, but that replacement never reaches a value that has already been percent-encoded into
+  `%3Cno+value%3E`. `default ""` normalizes the coalesce result to a real empty string before any
+  further piping, which is what keeps the default (unset) render byte-identical.
+- **`tests/cache_metrics_credentials_test.yaml` and `tests/ranker_cache_credentials_test.yaml`**:
+  one `notMatchRegex` assertion each, in the "an identity's own credential overrides the inherited
+  main cache credential" case, was narrowed from a whole-file substring check (`"mainpass"`) to the
+  specific broker field (`'metricsBroker="redis://:mainpass@'` / `'searchBroker="redis://:mainpass@'`).
+  The whole-file form was a false negative against *correct* behavior: the same rendered document
+  legitimately carries the main cache's own credential on its own `layoutBroker`/`searchBroker`
+  entry, which the original pattern could not distinguish from a leak into the identity under test.
+- **`verify-mirror-parity.sh`** now strips the three Chart.yaml-derived default-label lines
+  (`appVersion`/`chart`/`version`) before comparing the two renders. `helm/`'s `Chart.yaml` carries
+  a pre-existing, unrelated version drift (0.2.6 vs `src/groundx`'s 0.2.7 — noted in this design's
+  Risks and in proposal.md) that the script's original byte-for-byte comparison had no way to
+  exclude, so it failed on every case regardless of credential-render parity. A deliberately
+  broken mirror file was used to confirm the narrowed comparison still catches a real mismatch
+  before this fix was kept.
