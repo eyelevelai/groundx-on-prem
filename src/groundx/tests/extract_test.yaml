@@ -724,6 +724,7 @@ tests:
     set:
       extract.agent.model.kwargs.client_kwargs.max_retries: 1
       extract.agent.model.kwargs.client_kwargs.timeout: 180
+      extract.agent.model.kwargs.extra_body.parallel_tool_calls: false
     asserts:
       - matchRegex:
           path: stringData["config.py"]
@@ -731,6 +732,9 @@ tests:
       - matchRegex:
           path: stringData["config.py"]
           pattern: '"client_kwargs": \{[^}]*"timeout": 180'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: '"extra_body": \{[^}]*"parallel_tool_calls": False'
   - it: "extract-agent hpa keeps a safer default minimum"
     templates:
       - ../templates/resources/hpa.yaml

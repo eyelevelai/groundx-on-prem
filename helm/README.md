@@ -19,3 +19,20 @@ The following table lists the configurable parameters of the GroundX chart and t
 | `admin.password`                            | The email associated with the admin account in this deployment                  | `password`                            |
 | `extract.terminalAgentTraceEnabled`         | Enables terminal-only private diagnostics for every extract pod                  | `false`                               |
 | `extract.<pod>.terminalAgentTraceEnabled`   | Overrides the shared diagnostic value for api, agent, download, or save           | inherited                             |
+
+## Extract model request overrides
+
+Use the existing extraction-agent model kwargs for provider request-body options:
+
+```yaml
+extract:
+  agent:
+    model:
+      kwargs:
+        extra_body:
+          parallel_tool_calls: false
+```
+
+This example makes the extraction model call one tool per turn. Workflow
+`requestPassthrough` values override matching `extra_body` defaults. The selected
+extraction runtime image must support the option.
