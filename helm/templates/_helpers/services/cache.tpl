@@ -43,12 +43,11 @@ false
 {{- end }}
 
 {{- define "groundx.redis.yamlScalar" -}}
-{{- $v := . -}}
-{{- if regexMatch "^[A-Za-z0-9_.-]*$" $v -}}
-{{ $v }}
-{{- else -}}
-{{ $v | quote }}
-{{- end -}}
+{{ . | quote }}
+{{- end }}
+
+{{- define "groundx.redis.userinfoEscape" -}}
+{{- urlquery . | replace "+" "%20" -}}
 {{- end }}
 
 {{- define "groundx.cache.password" -}}
@@ -67,55 +66,94 @@ false
 {{- $password := include "groundx.cache.password" . -}}
 {{- if ne $password "" -}}
 {{- $username := include "groundx.cache.username" . -}}
-{{ printf "%s:%s@" (urlquery $username) (urlquery $password) }}
+{{ printf "%s:%s@" (include "groundx.redis.userinfoEscape" $username) (include "groundx.redis.userinfoEscape" $password) }}
 {{- end -}}
+{{- end }}
+
+{{- define "groundx.cache.isExternal" -}}
+{{- $in := .Values.cache | default dict -}}
+{{- $ex := (dig "existing" nil $in) | default dict -}}
+{{- if not (empty (dig "addr" "" $ex)) -}}true{{- else -}}false{{- end -}}
 {{- end }}
 
 {{- define "groundx.metrics.cache.password" -}}
 {{- $b := .Values.cache | default dict -}}
 {{- $m := (dig "metrics" nil $b) | default dict -}}
 {{- $ex := (dig "existing" nil $m) | default dict -}}
+{{- $own := coalesce (dig "password" "" $ex) (dig "password" "" $m) -}}
+{{- if not (empty (dig "addr" "" $ex)) -}}
+{{ $own | default "" }}
+{{- else -}}
 {{- $main := include "groundx.cache.password" . -}}
-{{ coalesce (dig "password" "" $ex) (dig "password" "" $m) $main | default "" }}
+{{ coalesce $own $main | default "" }}
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.metrics.cache.username" -}}
 {{- $b := .Values.cache | default dict -}}
 {{- $m := (dig "metrics" nil $b) | default dict -}}
 {{- $ex := (dig "existing" nil $m) | default dict -}}
+{{- $own := coalesce (dig "username" "" $ex) (dig "username" "" $m) -}}
+{{- if not (empty (dig "addr" "" $ex)) -}}
+{{ $own | default "" }}
+{{- else -}}
 {{- $main := include "groundx.cache.username" . -}}
-{{ coalesce (dig "username" "" $ex) (dig "username" "" $m) $main | default "" }}
+{{ coalesce $own $main | default "" }}
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.metrics.cache.userinfo" -}}
 {{- $password := include "groundx.metrics.cache.password" . -}}
 {{- if ne $password "" -}}
 {{- $username := include "groundx.metrics.cache.username" . -}}
-{{ printf "%s:%s@" (urlquery $username) (urlquery $password) }}
+{{ printf "%s:%s@" (include "groundx.redis.userinfoEscape" $username) (include "groundx.redis.userinfoEscape" $password) }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.metrics.cache.isExternal" -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $m := (dig "metrics" nil $b) | default dict -}}
+{{- $ex := (dig "existing" nil $m) | default dict -}}
+{{- if (dig "enabled" false $m) -}}
+{{- if not (empty (dig "addr" "" $ex)) -}}true{{- else -}}false{{- end -}}
+{{- else -}}
+{{ include "groundx.cache.isExternal" . }}
 {{- end -}}
 {{- end }}
 
 {{- define "groundx.cache.validateCredentials" -}}
 {{- $cachePassword := include "groundx.cache.password" . -}}
 {{- $cacheUsername := include "groundx.cache.username" . -}}
+{{- $cacheExternal := include "groundx.cache.isExternal" . | trim -}}
 {{- if or (ne $cachePassword "") (ne $cacheUsername "") -}}
-  {{- if eq (include "groundx.cache.create" .) "true" -}}
+  {{- if ne $cacheExternal "true" -}}
     {{- fail "cache.password/cache.username require an external Redis (cache.existing.addr); the chart's own bundled Redis has no AUTH support" -}}
   {{- end -}}
 {{- end -}}
+{{- if and (eq $cacheExternal "true") (ne $cacheUsername "") (eq $cachePassword "") -}}
+  {{- fail "cache.username requires cache.password to also be set; a username with no password (nopass ACL) is not supported" -}}
+{{- end -}}
 {{- $metricsPassword := include "groundx.metrics.cache.password" . -}}
 {{- $metricsUsername := include "groundx.metrics.cache.username" . -}}
+{{- $metricsExternal := include "groundx.metrics.cache.isExternal" . | trim -}}
 {{- if or (ne $metricsPassword "") (ne $metricsUsername "") -}}
-  {{- if eq (include "groundx.metrics.cache.create" .) "true" -}}
+  {{- if ne $metricsExternal "true" -}}
     {{- fail "cache.metrics.password/cache.metrics.username require an external Redis (cache.metrics.existing.addr) or an external main cache; the chart's own bundled Redis has no AUTH support" -}}
   {{- end -}}
 {{- end -}}
+{{- if and (eq $metricsExternal "true") (ne $metricsUsername "") (eq $metricsPassword "") -}}
+  {{- fail "cache.metrics.username requires cache.metrics.password to also be set; a username with no password (nopass ACL) is not supported" -}}
+{{- end -}}
 {{- $rankerPassword := include "groundx.ranker.cache.password" . -}}
 {{- $rankerUsername := include "groundx.ranker.cache.username" . -}}
+{{- $rankerExternal := include "groundx.ranker.cache.isExternal" . | trim -}}
 {{- if or (ne $rankerPassword "") (ne $rankerUsername "") -}}
-  {{- if eq (include "groundx.ranker.cache.create" .) "true" -}}
+  {{- if ne $rankerExternal "true" -}}
     {{- fail "ranker.cache.password/ranker.cache.username require an external Redis (ranker.cache.addr) or an external main cache; the chart's own bundled Redis has no AUTH support" -}}
   {{- end -}}
+{{- end -}}
+{{- if and (eq $rankerExternal "true") (ne $rankerUsername "") (eq $rankerPassword "") -}}
+  {{- fail "ranker.cache.username requires ranker.cache.password to also be set; a username with no password (nopass ACL) is not supported" -}}
 {{- end -}}
 {{- end }}
 

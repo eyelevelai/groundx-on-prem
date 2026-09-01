@@ -80,23 +80,37 @@ false
 {{- define "groundx.ranker.cache.password" -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "cache" dict $b -}}
+{{- $own := dig "password" "" $in -}}
+{{- if eq (include "groundx.ranker.cache.existing" .) "true" -}}
+{{ $own | default "" }}
+{{- else -}}
 {{- $main := include "groundx.cache.password" . -}}
-{{ coalesce (dig "password" "" $in) $main | default "" }}
+{{ coalesce $own $main | default "" }}
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.ranker.cache.username" -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "cache" dict $b -}}
+{{- $own := dig "username" "" $in -}}
+{{- if eq (include "groundx.ranker.cache.existing" .) "true" -}}
+{{ $own | default "" }}
+{{- else -}}
 {{- $main := include "groundx.cache.username" . -}}
-{{ coalesce (dig "username" "" $in) $main | default "" }}
+{{ coalesce $own $main | default "" }}
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.ranker.cache.userinfo" -}}
 {{- $password := include "groundx.ranker.cache.password" . -}}
 {{- if ne $password "" -}}
 {{- $username := include "groundx.ranker.cache.username" . -}}
-{{ printf "%s:%s@" (urlquery $username) (urlquery $password) }}
+{{ printf "%s:%s@" (include "groundx.redis.userinfoEscape" $username) (include "groundx.redis.userinfoEscape" $password) }}
 {{- end -}}
+{{- end }}
+
+{{- define "groundx.ranker.cache.isExternal" -}}
+{{- if eq (include "groundx.ranker.cache.existing" .) "true" -}}true{{- else -}}{{ include "groundx.cache.isExternal" . }}{{- end -}}
 {{- end }}
 
 {{- define "groundx.ranker.cache.settings" -}}
