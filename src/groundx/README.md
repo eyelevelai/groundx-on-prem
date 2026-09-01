@@ -17,3 +17,20 @@ The following table lists the configurable parameters of the GroundX chart and t
 | `admin.username`                            | A UUID that will be associated with the admin account in this deployment        | `00000000-0000-0000-0000-000000000000`|
 | `admin.email`                               | The password associated with the admin account in this deployment               | `support@mycorp.net`                  |
 | `admin.password`                            | The email associated with the admin account in this deployment                  | `password`                            |
+
+## Extract model request overrides
+
+Use the existing extraction-agent model kwargs for provider request-body options:
+
+```yaml
+extract:
+  agent:
+    model:
+      kwargs:
+        extra_body:
+          parallel_tool_calls: false
+```
+
+This example makes the extraction model call one tool per turn. Workflow
+`requestPassthrough` values override matching `extra_body` defaults. The selected
+extraction runtime image must support the option.
