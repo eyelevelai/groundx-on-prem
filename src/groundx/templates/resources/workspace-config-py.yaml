@@ -37,6 +37,18 @@ data:
         managed_repo_name_prefix={{ include "groundx.workspace.managedRepoNamePrefix" . | quote }},
         managed_repo_owner={{ include "groundx.workspace.managedRepoOwner" . | quote }},
         managed_repo_visibility={{ include "groundx.workspace.managedRepoVisibility" . | quote }},
+{{- if eq (printf "%v" (include "groundx.workspace.managedData.enabled" .)) "true" }}
+        managed_data_enabled={{ if eq (printf "%v" (include "groundx.workspace.managedData.enabled" .)) "true" }}True{{ else }}False{{ end }},
+        managed_data_aws_region={{ include "groundx.workspace.managedData.awsRegion" . | quote }},
+        managed_data_rds_admin_connection_dev="",
+        managed_data_rds_admin_connection_prod="",
+        managed_data_s3_bucket_dev={{ include "groundx.workspace.managedData.s3Bucket" (dict "root" . "environment" "dev") | quote }},
+        managed_data_s3_bucket_prod={{ include "groundx.workspace.managedData.s3Bucket" (dict "root" . "environment" "prod") | quote }},
+        managed_data_redis_endpoint_dev={{ include "groundx.workspace.managedData.redisEndpoint" (dict "root" . "environment" "dev") | quote }},
+        managed_data_redis_endpoint_prod={{ include "groundx.workspace.managedData.redisEndpoint" (dict "root" . "environment" "prod") | quote }},
+        managed_data_redis_user_group_dev={{ include "groundx.workspace.managedData.redisUserGroup" (dict "root" . "environment" "dev") | quote }},
+        managed_data_redis_user_group_prod={{ include "groundx.workspace.managedData.redisUserGroup" (dict "root" . "environment" "prod") | quote }},
+{{- end }}
         mysql_connect_timeout_seconds={{ include "groundx.workspace.mysqlConnectTimeoutSeconds" . }},
         mysql_database={{ include "groundx.db.dbName" . | quote }},
         mysql_host={{ include "groundx.db.rw" . | quote }},
