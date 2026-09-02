@@ -59,7 +59,7 @@ stringData:
         model_id={{ $mid | quote }},
         {{- end }}
         image_transport={{ $it | quote }},
-        {{- if eq $ast "bedrock" }}
+        {{- if has $ast (list "bedrock" "anthropic") }}
         service={{ $ast | quote }},
         {{- end }}
         {{- if eq $re "null" }}

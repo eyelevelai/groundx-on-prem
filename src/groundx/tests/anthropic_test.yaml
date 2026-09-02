@@ -1,0 +1,480 @@
+suite: "anthropic workflow engine renders safely"
+chart:
+  appVersion: 0.1.0
+  version: 0.1.0
+
+tests:
+  - it: "summary existing Anthropic renders only supplied external configuration"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      admin.apiKey: admin-only-sentinel
+      engines.default.engineId: claude-sonnet-4-20250514
+      summary.existing.apiKey: provider-key
+      summary.existing.serviceType: anthropic
+      summary.existing.url: https://api.anthropic.test/v1
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "baseURL: https://api.anthropic.test/v1"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: 'engineID: "claude-sonnet-4-20250514"\n\s+service: anthropic'
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "openai:\\n\\s+apiKey: provider-key"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "google/gemma"
+
+  - it: "summary Anthropic requires an explicitly configured engine ID"
+    templates:
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ../values.yaml
+    set:
+      summary.existing.apiKey: provider-key
+      summary.existing.serviceType: anthropic
+      summary.existing.url: https://api.anthropic.test/v1
+    asserts:
+      - failedTemplate:
+          errorMessage: "summary Anthropic requires engines.<name>.engineId"
+
+  - it: "summary Anthropic requires an external endpoint"
+    templates:
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ../values.yaml
+    set:
+      engines.default.apiKey: provider-key
+      engines.default.engineId: claude-sonnet-4-20250514
+      summary.existing.apiKey: provider-key
+      summary.existing.serviceType: anthropic
+    asserts:
+      - failedTemplate:
+          errorMessage: "summary Anthropic engine default requires engines.default.baseUrl or summary.existing.url"
+
+  - it: "summary Anthropic rejects the GroundX admin key as a provider credential"
+    templates:
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ../values.yaml
+    set:
+      admin.apiKey: admin-only-sentinel
+      engines.default.engineId: claude-sonnet-4-20250514
+      summary.existing.serviceType: anthropic
+      summary.existing.url: https://api.anthropic.test/v1
+    asserts:
+      - failedTemplate:
+          errorMessage: "summary Anthropic engine default requires engines.default.apiKey or summary.existing.apiKey"
+
+  - it: "documented per-engine service selects Anthropic"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      engines.default.apiKey: provider-key
+      engines.default.baseUrl: https://api.anthropic.test/v1
+      engines.default.engineId: claude-sonnet-4-20250514
+      engines.default.service: anthropic
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: 'engineID: "claude-sonnet-4-20250514"\n\s+service: anthropic'
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "baseURL: https://api.anthropic.test/v1"
+
+  - it: "Anthropic-only engines omit local summary workloads"
+    templates:
+      - ../templates/app/api.yaml
+      - ../templates/app/inference.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      engines.default.apiKey: provider-key
+      engines.default.baseUrl: https://api.anthropic.test/v1
+      engines.default.engineId: claude-sonnet-4-20250514
+      engines.default.service: anthropic
+      summary.api.enabled: true
+      summary.inference.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: ../templates/app/api.yaml
+      - hasDocuments:
+          count: 0
+        template: ../templates/app/inference.yaml
+
+  - it: "mixed local and Anthropic engines keep local summary workloads"
+    templates:
+      - ../templates/app/api.yaml
+      - ../templates/app/inference.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      engines.default.apiKey: provider-key
+      engines.default.baseUrl: https://api.anthropic.test/v1
+      engines.default.engineId: claude-sonnet-4-20250514
+      engines.default.service: anthropic
+      engines.local.engineId: google/gemma-3-4b-it
+      engines.local.service: eyelevel
+      summary.api.enabled: true
+      summary.inference.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+        template: ../templates/app/api.yaml
+      - hasDocuments:
+          count: 2
+        template: ../templates/app/inference.yaml
+
+  - it: "a global Anthropic service keeps workloads required by an explicit local engine"
+    templates:
+      - ../templates/app/api.yaml
+      - ../templates/app/inference.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      engines.default.baseUrl: https://api.anthropic.test/v1
+      engines.default.engineId: claude-sonnet-4-20250514
+      engines.local.engineId: google/gemma-3-4b-it
+      engines.local.service: eyelevel
+      summary.api.enabled: true
+      summary.existing.apiKey: provider-key
+      summary.existing.serviceType: anthropic
+      summary.inference.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+        template: ../templates/app/api.yaml
+      - hasDocuments:
+          count: 2
+        template: ../templates/app/inference.yaml
+
+  - it: "a global Anthropic URL keeps workloads required by an explicit local engine"
+    templates:
+      - ../templates/app/api.yaml
+      - ../templates/app/inference.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      engines.default.engineId: claude-sonnet-4-20250514
+      engines.default.service: anthropic
+      engines.local.engineId: google/gemma-3-4b-it
+      engines.local.service: eyelevel
+      summary.api.enabled: true
+      summary.existing.apiKey: provider-key
+      summary.existing.url: https://api.anthropic.test/v1
+      summary.inference.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+        template: ../templates/app/api.yaml
+      - hasDocuments:
+          count: 2
+        template: ../templates/app/inference.yaml
+
+  - it: "a global Anthropic service renders separate Anthropic and local engine config"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      admin.apiKey: groundx-admin-test-key
+      engines.default.baseUrl: https://api.anthropic.test/v1
+      engines.default.engineId: claude-sonnet-4-20250514
+      engines.local.engineId: google/gemma-3-4b-it
+      engines.local.service: eyelevel
+      summary.existing.apiKey: anthropic-provider-test-key
+      summary.existing.serviceType: anthropic
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "openai:\\n\\s+apiKey: anthropic-provider-test-key\\n\\s+baseURL: http://summary-api.eyelevel.svc.cluster.local"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: 'engineID: "claude-sonnet-4-20250514"\n\s+service: anthropic\n\s+baseURL: https://api.anthropic.test/v1'
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: 'vision: true\n\s+google/gemma-3-4b-it:'
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: 'engineID: "google/gemma-3-4b-it"\n\s+service: eyelevel\n\s+apiKey: groundx-admin-test-key'
+
+  - it: "a global Anthropic URL renders separate Anthropic and local engine config"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      admin.apiKey: groundx-admin-test-key
+      engines.default.engineId: claude-sonnet-4-20250514
+      engines.default.service: anthropic
+      engines.local.engineId: google/gemma-3-4b-it
+      engines.local.service: eyelevel
+      summary.existing.apiKey: anthropic-provider-test-key
+      summary.existing.url: https://api.anthropic.test/v1
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "openai:\\n\\s+apiKey: anthropic-provider-test-key\\n\\s+baseURL: https://api.anthropic.test/v1"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: 'engineID: "google/gemma-3-4b-it"\n\s+service: eyelevel\n\s+apiKey: groundx-admin-test-key\n\s+baseURL: http://summary-api.eyelevel.svc.cluster.local'
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: 'vision: true\n\s+google/gemma-3-4b-it:'
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: 'engineID: "google/gemma-3-4b-it"\n\s+service: eyelevel\n\s+apiKey: groundx-admin-test-key\n\s+baseURL: http://summary-api.eyelevel.svc.cluster.local'
+
+  - it: "documented service wins over legacy serviceType on a custom engine"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      engines.default.engineId: gpt-5-mini
+      engines.custom.apiKey: provider-key
+      engines.custom.baseUrl: https://api.anthropic.test/v1
+      engines.custom.engineId: claude-sonnet-4-20250514
+      engines.custom.service: anthropic
+      engines.custom.serviceType: openai
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: 'engineID: "claude-sonnet-4-20250514"\n\s+service: anthropic'
+
+  - it: "per-engine Anthropic requires an engine ID"
+    templates:
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ../values.yaml
+    set:
+      engines.default.engineId: gpt-5-mini
+      engines.custom.apiKey: provider-key
+      engines.custom.baseUrl: https://api.anthropic.test/v1
+      engines.custom.service: anthropic
+    asserts:
+      - failedTemplate:
+          errorMessage: "summary Anthropic engine custom requires engines.custom.engineId"
+
+  - it: "per-engine Anthropic requires an endpoint"
+    templates:
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ../values.yaml
+    set:
+      engines.default.engineId: gpt-5-mini
+      engines.custom.apiKey: provider-key
+      engines.custom.engineId: claude-sonnet-4-20250514
+      engines.custom.service: anthropic
+    asserts:
+      - failedTemplate:
+          errorMessage: "summary Anthropic engine custom requires engines.custom.baseUrl or summary.existing.url"
+
+  - it: "per-engine Anthropic requires a provider credential"
+    templates:
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ../values.yaml
+    set:
+      admin.apiKey: admin-only-sentinel
+      engines.default.engineId: gpt-5-mini
+      engines.custom.baseUrl: https://api.anthropic.test/v1
+      engines.custom.engineId: claude-sonnet-4-20250514
+      engines.custom.service: anthropic
+    asserts:
+      - failedTemplate:
+          errorMessage: "summary Anthropic engine custom requires engines.custom.apiKey or summary.existing.apiKey"
+
+  - it: "extract Anthropic renders only supplied provider model settings"
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.apiBaseUrl: https://api.anthropic.test/v1
+      extract.agent.apiKey: provider-key
+      extract.agent.modelId: claude-sonnet-4-20250514
+      extract.agent.serviceType: anthropic
+      summary.inference.model.kwargs.temperature: 0.25
+      summary.inference.model.reasoningEffort: low
+    documentSelector:
+      path: metadata.name
+      value: extract-config-py-map
+    asserts:
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'api_base="https://api.anthropic.test/v1"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'model_id="claude-sonnet-4-20250514"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'service="anthropic"'
+      - notMatchRegex:
+          path: data["config.py"]
+          pattern: "reasoning_effort="
+      - notMatchRegex:
+          path: data["config.py"]
+          pattern: "model_kwargs="
+
+  - it: "extract Anthropic requires an endpoint"
+    templates:
+      - ../templates/resources/extract-supervisord-conf.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.apiKey: provider-key
+      extract.agent.modelId: claude-sonnet-4-20250514
+      extract.agent.serviceType: anthropic
+    asserts:
+      - failedTemplate:
+          errorMessage: "extract.agent.serviceType anthropic requires extract.agent.apiBaseUrl"
+
+  - it: "extract Anthropic requires a model"
+    templates:
+      - ../templates/resources/extract-supervisord-conf.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.apiBaseUrl: https://api.anthropic.test/v1
+      extract.agent.apiKey: provider-key
+      extract.agent.serviceType: anthropic
+    asserts:
+      - failedTemplate:
+          errorMessage: "extract.agent.serviceType anthropic requires extract.agent.modelId"
+
+  - it: "extract Anthropic rejects the GroundX admin key as a provider credential"
+    templates:
+      - ../templates/resources/extract-supervisord-conf.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      admin.apiKey: admin-only-sentinel
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.apiBaseUrl: https://api.anthropic.test/v1
+      extract.agent.modelId: claude-sonnet-4-20250514
+      extract.agent.serviceType: anthropic
+    asserts:
+      - failedTemplate:
+          errorMessage: "extract.agent.serviceType anthropic requires extract.agent.apiKey, extract.agent.existingSecret, or cluster.secrets"
+
+  - it: "extract Anthropic accepts the configured existing Secret"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      admin.apiKey: admin-only-sentinel
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.apiBaseUrl: https://api.anthropic.test/v1
+      extract.agent.existingSecret: true
+      extract.agent.modelId: claude-sonnet-4-20250514
+      extract.agent.serviceType: anthropic
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: extract-agent-secret
+
+  - it: "extract Anthropic accepts a configured cluster Secret without a local provider Secret"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      admin.apiKey: admin-only-sentinel
+      cluster.secrets[0]: anthropic-credentials
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.apiBaseUrl: https://api.anthropic.test/v1
+      extract.agent.modelId: claude-sonnet-4-20250514
+      extract.agent.serviceType: anthropic
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: anthropic-credentials
+      - notContains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: extract-agent-secret
+
+  - it: "unknown summary service keeps the existing local fallback behavior"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      summary.existing.serviceType: custom-provider
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "baseURL: http://summary-api.eyelevel.svc.cluster.local"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: 'engineID: "google/gemma-3-4b-it"\n\s+service: custom-provider'
+
+  - it: "unknown extraction service keeps the existing local model fallback"
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.serviceType: custom-provider
+    documentSelector:
+      path: metadata.name
+      value: extract-config-py-map
+    asserts:
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'api_base="http://summary-api.eyelevel.svc.cluster.local"'
+      - matchRegex:
+          path: data["config.py"]
+          pattern: 'model_id="google/gemma-3-4b-it"'
+      - notMatchRegex:
+          path: data["config.py"]
+          pattern: 'service="custom-provider"'

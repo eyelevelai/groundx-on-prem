@@ -70,6 +70,16 @@
 {{- $wrwt := include "groundx.workspace.workspace.throughput" . | trim -}}
 {{- $integration := .Values.integration | default dict -}}
 {{- $captureAccounts := get $integration "extractionCaptureAccounts" | default list -}}
+{{- $summary := .Values.summary | default dict -}}
+{{- $summaryExisting := dig "existing" dict $summary -}}
+{{- $summaryUrl := dig "url" "" $summaryExisting | trim -}}
+{{- $anthropicSelected := eq (include "groundx.summary.serviceType" . | lower | trim) "anthropic" -}}
+{{- range $engine := $engs -}}
+  {{- $service := coalesce (get $engine "service") (get $engine "serviceType") (include "groundx.summary.serviceType" $) | default "" | toString | lower | trim -}}
+  {{- if eq $service "anthropic" -}}
+    {{- $anthropicSelected = true -}}
+  {{- end -}}
+{{- end -}}
 {{- if gt (len $svcs) 0 }}
 apiVersion: v1
 kind: Secret
@@ -164,16 +174,21 @@ stringData:
           {{- end }}
 
     engines:
-      {{ range $i, $e := $engs }}
+      {{- range $i, $e := $engs }}
       {{- $engineID := get $e "engineId" -}}
-      {{ $engineID }}:
+      {{- $engineService := coalesce (get $e "service") (get $e "serviceType") (include "groundx.summary.serviceType" $) -}}
+{{ printf "\n      %s:" $engineID }}
         engineID: {{ $engineID | quote }}
-        service: {{ coalesce (get $e "serviceType") (include "groundx.summary.serviceType" $) }}
+        service: {{ $engineService }}
         {{- if hasKey $e "apiKey" }}
         apiKey: {{ get $e "apiKey" }}
+        {{- else if and $anthropicSelected (eq ($engineService | toString | lower | trim) "eyelevel") }}
+        apiKey: {{ include "groundx.admin.apiKey" $ }}
         {{- end }}
         {{- if hasKey $e "baseUrl" }}
         baseURL: {{ get $e "baseUrl" }}
+        {{- else if and (eq ($engineService | toString | trim) "eyelevel") (ne $summaryUrl "") (eq $sce "true") }}
+        baseURL: {{ include "groundx.summary.api.serviceUrl" $ }}
         {{- end }}
         {{- if and (hasKey $e "maxImages") (ne (get $e "maxImages") nil) }}
         maxImages: {{ get $e "maxImages" }}
@@ -198,9 +213,7 @@ stringData:
         {{- else }}
         vision: true
         {{- end }}
-      {{- end }}
-
-    environment: {{ include "groundx.environment" . }}
+      {{- end }}{{ "\n\n" }}    environment: {{ include "groundx.environment" . }}
 
     groundxServer:
       baseURL: {{ include "groundx.groundx.serviceUrl" . }}

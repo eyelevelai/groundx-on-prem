@@ -19,3 +19,30 @@ The following table lists the configurable parameters of the GroundX chart and t
 | `admin.password`                            | The email associated with the admin account in this deployment                  | `password`                            |
 | `extract.terminalAgentTraceEnabled`         | Enables terminal-only private diagnostics for every extract pod                  | `false`                               |
 | `extract.<pod>.terminalAgentTraceEnabled`   | Overrides the shared diagnostic value for api, agent, download, or save           | inherited                             |
+
+## Anthropic workflow engines
+
+Use the existing engine and extraction-agent fields:
+
+```yaml
+engines:
+  default:
+    engineId: claude-sonnet-4-20250514
+    service: anthropic
+    baseUrl: https://api.anthropic.com/v1
+
+extract:
+  agent:
+    serviceType: anthropic
+    apiBaseUrl: https://api.anthropic.com/v1
+    modelId: claude-sonnet-4-20250514
+```
+
+Supply the summary provider key through `engines.<name>.apiKey` or
+`summary.existing.apiKey`. Supply the extraction provider key through
+`extract.agent.apiKey`, `extract.agent.existingSecret`, or `cluster.secrets`. Do not
+commit credentials to a values file.
+
+Upgrade note: per-engine `engines.<name>.service` now takes effect and wins over the
+legacy `serviceType` field when both are set. Review custom engine values containing
+either field before upgrading.

@@ -13,6 +13,7 @@ provider for summary and extraction-agent workloads.
 - **When** the chart renders application configuration
 - **Then** the exact service, supplied summary URL or engine base URL, and engine ID
   are rendered
+- **And** the supplied URL is an API root rather than the Messages operation endpoint
 - **And** no in-cluster summary endpoint or model is substituted
 
 #### Scenario: Per-engine service uses the schema field
@@ -27,6 +28,8 @@ provider for summary and extraction-agent workloads.
 - **Given** extraction-agent values select `anthropic`
 - **When** the chart renders application configuration
 - **Then** the exact service, supplied endpoint, and supplied model are rendered
+- **And** the supplied endpoint is an API root rather than the Messages operation
+  endpoint
 - **And** no in-cluster endpoint, model, kwargs, or reasoning default is substituted
 
 ### Requirement: Anthropic uses explicit provider credentials

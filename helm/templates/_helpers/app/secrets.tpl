@@ -6,7 +6,8 @@
 {{- $es := include "groundx.extract.agent.existingSecret" . -}}
 {{- $ak := include "groundx.extract.agent.apiKey" . -}}
 {{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- if and (eq $il "true") (eq $es "false") (or (ne $st "bedrock") (ne $ak "")) -}}
+{{- $needsProviderKey := has $st (list "bedrock" "anthropic") -}}
+{{- if and (eq $il "true") (eq $es "false") (or (not $needsProviderKey) (ne $ak "")) -}}
 {{- $_ := set $svcs "extract.agent" "extract.agent" -}}
 {{- end -}}
 

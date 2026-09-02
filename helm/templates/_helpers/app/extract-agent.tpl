@@ -28,7 +28,7 @@ false
 {{- define "groundx.extract.agent.apiKey" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "agent" dict $b -}}
-{{- if eq (include "groundx.extract.agent.serviceType" .) "bedrock" -}}
+{{- if has (include "groundx.extract.agent.serviceType" .) (list "bedrock" "anthropic") -}}
 {{ dig "apiKey" "" $in }}
 {{- else -}}
 {{ dig "apiKey" (include "groundx.admin.apiKey" .) $in }}
@@ -45,7 +45,7 @@ GROUNDX_AGENT_API_KEY
 {{- $dflt := "" -}}
 {{- $ic := include "groundx.summary.create" . -}}
 {{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") (eq $st "bedrock") -}}
+{{- $svcAllowed := has $st (list "openai" "openai-base64" "bedrock" "anthropic") -}}
 {{- if and (eq $ic "true") (not $svcAllowed) -}}
 {{- $dflt = (include "groundx.summary.api.serviceUrl" .) -}}
 {{- end -}}
@@ -135,7 +135,7 @@ GROUNDX_AGENT_API_KEY
 {{- $dflt := lower (dig "modelId" "" $in) | trim -}}
 {{- $ic := include "groundx.summary.create" . -}}
 {{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") (eq $st "bedrock") -}}
+{{- $svcAllowed := has $st (list "openai" "openai-base64" "bedrock" "anthropic") -}}
 {{- if and (eq $ic "true") (not $svcAllowed) (eq $dflt "") -}}
 {{- $dflt = (include "groundx.summary.inference.model.name" .) -}}
 {{- end -}}
@@ -150,7 +150,7 @@ GROUNDX_AGENT_API_KEY
 {{- $val := dig "kwargs" dict $in -}}
 {{- $ic := include "groundx.summary.create" . -}}
 {{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") (eq $st "bedrock") -}}
+{{- $svcAllowed := has $st (list "openai" "openai-base64" "bedrock" "anthropic") -}}
 {{- if $has -}}
   {{- toYaml $val -}}
 {{- else if and (eq $ic "true") (not $svcAllowed) -}}
@@ -168,7 +168,7 @@ GROUNDX_AGENT_API_KEY
 {{- $val := dig "reasoningEffort" nil $in -}}
 {{- $ic := include "groundx.summary.create" . -}}
 {{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") (eq $st "bedrock") -}}
+{{- $svcAllowed := has $st (list "openai" "openai-base64" "bedrock" "anthropic") -}}
 {{- if $has -}}
   {{- toJson $val -}}
 {{- else if and (eq $ic "true") (not $svcAllowed) -}}
@@ -323,21 +323,22 @@ GROUNDX_AGENT_API_KEY
 {{- if lt $maxRequestImages 1 -}}
   {{- fail "extract.agent.maxRequestImages must be positive" -}}
 {{- end -}}
-{{- if eq (include "groundx.extract.agent.serviceType" .) "bedrock" -}}
-  {{- if ne (include "groundx.extract.file.storageType" .) "s3" -}}
+{{- $serviceType := include "groundx.extract.agent.serviceType" . -}}
+{{- if has $serviceType (list "bedrock" "anthropic") -}}
+  {{- if and (eq $serviceType "bedrock") (ne (include "groundx.extract.file.storageType" .) "s3") -}}
     {{- fail "extract.agent.serviceType bedrock requires AWS S3 file storage" -}}
   {{- end -}}
   {{- if eq (include "groundx.extract.agent.baseUrl" . | trim) "" -}}
-    {{- fail "extract.agent.serviceType bedrock requires extract.agent.apiBaseUrl" -}}
+    {{- fail (printf "extract.agent.serviceType %s requires extract.agent.apiBaseUrl" $serviceType) -}}
   {{- end -}}
   {{- if eq (include "groundx.extract.agent.modelId" . | trim) "" -}}
-    {{- fail "extract.agent.serviceType bedrock requires extract.agent.modelId" -}}
+    {{- fail (printf "extract.agent.serviceType %s requires extract.agent.modelId" $serviceType) -}}
   {{- end -}}
   {{- $apiKey := include "groundx.extract.agent.apiKey" . | trim -}}
   {{- $existingSecret := include "groundx.extract.agent.existingSecret" . -}}
   {{- $clusterSecrets := include "groundx.secrets" . | fromYaml | default dict -}}
   {{- if and (eq $apiKey "") (eq $existingSecret "false") (eq (len $clusterSecrets) 0) -}}
-    {{- fail "extract.agent.serviceType bedrock requires extract.agent.apiKey, extract.agent.existingSecret, or cluster.secrets" -}}
+    {{- fail (printf "extract.agent.serviceType %s requires extract.agent.apiKey, extract.agent.existingSecret, or cluster.secrets" $serviceType) -}}
   {{- end -}}
 {{- end -}}
 {{- range $quality := splitList "," (include "groundx.extract.agent.imageJpegQualities" .) -}}
