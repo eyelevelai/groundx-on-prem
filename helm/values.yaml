@@ -12,9 +12,17 @@ cluster:
 cache:
   enabled: true
 
+  # set to authenticate to Redis (AUTH password / ACL username)
+  password: ""
+  username: ""
+
   metrics:
     enabled: true
     existing: {}
+
+    # set to authenticate to the metrics Redis instance; falls back to cache.password/username when unset
+    password: ""
+    username: ""
 
     resources:
       requests:
@@ -305,9 +313,11 @@ ranker:
   cache: {}
     # addr: ranker-cache.mycorp.net
     # isCluster: true
+    # password: ranker-p@ss
     # port: 6379
     # ssl: true
     # type: redis
+    # username: ranker-user
 
   api:
     enabled: true
