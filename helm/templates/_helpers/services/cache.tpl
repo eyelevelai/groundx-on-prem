@@ -208,9 +208,46 @@ redis
 {{- $u := include "groundx.cache.username" . -}}
 {{- if eq $p "" -}}
 {{- else if eq $u "" -}}
-{{- printf "%s@" (urlquery $p | replace "+" "%20") -}}
+{{- printf ":%s@" (urlquery $p | replace "+" "%20") -}}
 {{- else -}}
 {{- printf "%s:%s@" (urlquery $u | replace "+" "%20") (urlquery $p | replace "+" "%20") -}}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.cache.confEnabled" -}}
+{{- $cc := include "groundx.cache.create" . | trim -}}
+{{- $p := include "groundx.cache.password" . | trim -}}
+{{- if and (ne $cc "false") (ne $p "") -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.cache.confSecretName" -}}
+{{- printf "%s-conf" (include "groundx.cache.serviceName" .) -}}
+{{- end }}
+
+{{- define "groundx.cache.confVolumeName" -}}
+{{- printf "%s-conf" (include "groundx.cache.serviceName" .) -}}
+{{- end }}
+
+{{- define "groundx.cache.confMountPath" -}}
+/etc/redis
+{{- end }}
+
+{{- define "groundx.redisConfEscape" -}}
+{{- . | replace "\\" "\\\\" | replace "\"" "\\\"" -}}
+{{- end }}
+
+{{- define "groundx.cache.confContent" -}}
+{{- $p := include "groundx.cache.password" . -}}
+{{- $u := include "groundx.cache.username" . -}}
+{{- if eq $u "" -}}
+requirepass "{{ include "groundx.redisConfEscape" $p }}"
+{{- else -}}
+user default off
+user {{ $u }} on ">{{ include "groundx.redisConfEscape" $p }}" ~* &* +@all
 {{- end -}}
 {{- end }}
 
@@ -329,9 +366,42 @@ false
 {{- $u := include "groundx.metrics.cache.username" . -}}
 {{- if eq $p "" -}}
 {{- else if eq $u "" -}}
-{{- printf "%s@" (urlquery $p | replace "+" "%20") -}}
+{{- printf ":%s@" (urlquery $p | replace "+" "%20") -}}
 {{- else -}}
 {{- printf "%s:%s@" (urlquery $u | replace "+" "%20") (urlquery $p | replace "+" "%20") -}}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.metrics.cache.confEnabled" -}}
+{{- $cc := include "groundx.metrics.cache.create" . | trim -}}
+{{- $p := include "groundx.metrics.cache.password" . | trim -}}
+{{- if and (ne $cc "false") (ne $p "") -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.metrics.cache.confSecretName" -}}
+{{- printf "%s-%s-conf" (include "groundx.cache.serviceName" .) (include "groundx.metrics.cache.serviceName" .) -}}
+{{- end }}
+
+{{- define "groundx.metrics.cache.confVolumeName" -}}
+{{- printf "%s-%s-conf" (include "groundx.cache.serviceName" .) (include "groundx.metrics.cache.serviceName" .) -}}
+{{- end }}
+
+{{- define "groundx.metrics.cache.confMountPath" -}}
+/etc/redis
+{{- end }}
+
+{{- define "groundx.metrics.cache.confContent" -}}
+{{- $p := include "groundx.metrics.cache.password" . -}}
+{{- $u := include "groundx.metrics.cache.username" . -}}
+{{- if eq $u "" -}}
+requirepass "{{ include "groundx.redisConfEscape" $p }}"
+{{- else -}}
+user default off
+user {{ $u }} on ">{{ include "groundx.redisConfEscape" $p }}" ~* &* +@all
 {{- end -}}
 {{- end }}
 
