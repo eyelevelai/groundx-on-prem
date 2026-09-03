@@ -151,6 +151,7 @@
         "imagePullPolicy": { "type": "string" },
         "labels": { "type": "object" },
         "mountPath": { "type": "string" },
+        "password": { "type": "string" },
                 "persistence": {
                   "type": "object",
                   "properties": {
@@ -177,6 +178,7 @@
         "serviceAccountName": { "type": "string" },
         "serviceName": { "type": "string" },
         "tolerations": { "type": "array" },
+        "username": { "type": "string" },
         "metrics": {
           "type": "object",
           "properties": {
@@ -201,6 +203,7 @@
             "mountPath": { "type": "string" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
+            "password": { "type": "string" },
             "port": { "type": "integer" },
             "replicas": {
               "type": "object",
@@ -216,7 +219,8 @@
             "securityContext": { "type": "object" },
             "serviceAccountName": { "type": "string" },
             "serviceName": { "type": "string" },
-            "tolerations": { "type": "array" }
+            "tolerations": { "type": "array" },
+            "username": { "type": "string" }
           },
           "required": ["existing"],
           "additionalProperties": false
@@ -1185,9 +1189,11 @@
           "properties": {
             "addr": { "type": "string" },
             "isCluster": { "type": "boolean" },
+            "password": { "type": "string" },
             "port": { "type": "integer" },
             "ssl": { "type": "boolean" },
-            "type": { "type": "string" }
+            "type": { "type": "string" },
+            "username": { "type": "string" }
           },
           "additionalProperties": false
         },

@@ -193,6 +193,27 @@ redis
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.cache.password" -}}
+{{- $in := .Values.cache | default dict -}}
+{{ dig "password" "" $in }}
+{{- end }}
+
+{{- define "groundx.cache.username" -}}
+{{- $in := .Values.cache | default dict -}}
+{{ dig "username" "" $in }}
+{{- end }}
+
+{{- define "groundx.cache.userinfo" -}}
+{{- $p := include "groundx.cache.password" . -}}
+{{- $u := include "groundx.cache.username" . -}}
+{{- if eq $p "" -}}
+{{- else if eq $u "" -}}
+{{- printf "%s@" (urlquery $p) -}}
+{{- else -}}
+{{- printf "%s:%s@" (urlquery $u) (urlquery $p) -}}
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.cache.ssl" -}}
 {{- $in := .Values.cache | default dict -}}
 {{- $ex := (dig "existing" nil $in) | default dict -}}
@@ -281,6 +302,37 @@ false
   {{- $in = dict "desired" 1 "max" 1 "min" 1 -}}
 {{- end }}
 {{- toYaml $in | nindent 0 }}
+{{- end }}
+
+{{- define "groundx.metrics.cache.password" -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $m := (dig "metrics" nil $b) | default dict -}}
+{{- if (dig "enabled" false $m) -}}
+{{ dig "password" "" $m }}
+{{- else -}}
+{{ include "groundx.cache.password" . }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.metrics.cache.username" -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $m := (dig "metrics" nil $b) | default dict -}}
+{{- if (dig "enabled" false $m) -}}
+{{ dig "username" "" $m }}
+{{- else -}}
+{{ include "groundx.cache.username" . }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.metrics.cache.userinfo" -}}
+{{- $p := include "groundx.metrics.cache.password" . -}}
+{{- $u := include "groundx.metrics.cache.username" . -}}
+{{- if eq $p "" -}}
+{{- else if eq $u "" -}}
+{{- printf "%s@" (urlquery $p) -}}
+{{- else -}}
+{{- printf "%s:%s@" (urlquery $u) (urlquery $p) -}}
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.cache.interface" -}}

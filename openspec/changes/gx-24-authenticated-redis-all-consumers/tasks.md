@@ -1,6 +1,6 @@
 ## 1. Main cache identity end-to-end (cashbot-go's shared session client)
 
-- [ ] 1.1 Add `groundx.cache.password`/`groundx.cache.username` helpers to
+- [x] 1.1 Add `groundx.cache.password`/`groundx.cache.username` helpers to
   `templates/_helpers/services/cache.tpl` (both `src/groundx/` and `helm/`), mirroring
   `groundx.db.password` exactly (`dig "password"/"username" "" .Values.cache`, no `existing`
   indirection). Render guarded `username`/`password` fields into `config-yaml.yaml`'s `rec.session`
@@ -16,7 +16,7 @@
 
 ## 2. Metrics identity (R1 fallback, same consumer)
 
-- [ ] 2.1 Add `groundx.metrics.cache.password`/`username` helpers to `cache.tpl` (both mirrors):
+- [x] 2.1 Add `groundx.metrics.cache.password`/`username` helpers to `cache.tpl` (both mirrors):
   own value from `.Values.cache.metrics` when `cache.metrics.enabled` is `true` (the same
   condition `groundx.metrics.cache.addr` already branches on), else `include
   "groundx.cache.password"`/`"groundx.cache.username"`. Render the same guarded fields into
@@ -29,7 +29,7 @@
 
 ## 3. URL-embedded consumers: layout, summary, extract (main + metrics identity)
 
-- [ ] 3.1 Add `groundx.cache.userinfo` and `groundx.metrics.cache.userinfo` helpers to `cache.tpl`
+- [x] 3.1 Add `groundx.cache.userinfo` and `groundx.metrics.cache.userinfo` helpers to `cache.tpl`
   (both mirrors): return `""` when no password is set, `"<urlquery(password)>@"` when only a
   password is set, and `"<urlquery(username)>:<urlquery(password)>@"` when both are set (Sprig
   `urlquery` for percent-encoding). Update every `printf "%s://%s:%v/0" scheme addr port` call site
@@ -42,7 +42,7 @@
 
 ## 4. Ranker identity (R1 own-instance fallback)
 
-- [ ] 4.1 Add `groundx.ranker.cache.password`/`username`/`userinfo` helpers to
+- [x] 4.1 Add `groundx.ranker.cache.password`/`username`/`userinfo` helpers to
   `templates/_helpers/app/ranker.tpl` (both mirrors): own value from `.Values.ranker.cache` when
   `groundx.ranker.cache.existing` is `"true"` (the same gate `groundx.ranker.cache.addr` already
   uses), else `include "groundx.cache.password"`/`"groundx.cache.username"`; `userinfo` follows the
@@ -59,7 +59,7 @@
 
 ## 5. Workspace identity (R2 — fallback-only injection)
 
-- [ ] 5.1 Update `groundx.workspace.celeryBrokerUrl` and `groundx.workspace.celeryResultBackend` in
+- [x] 5.1 Update `groundx.workspace.celeryBrokerUrl` and `groundx.workspace.celeryResultBackend` in
   `templates/_helpers/app/workspace.tpl` (both mirrors): embed `groundx.cache.userinfo` into the
   `$fallback` URL's `printf` only; the `coalesce (dig "celeryBrokerUrl"/"celeryResultBackend" "" $in)
   $fallback` line itself is unchanged, so a value the operator sets explicitly is never rewritten.
@@ -67,11 +67,11 @@
 
 ## 6. Cross-cutting gates
 
-- [ ] 6.1 Confirm `helm lint src/groundx` and `helm lint helm` both stay clean after the
+- [x] 6.1 Confirm `helm lint src/groundx` and `helm lint helm` both stay clean after the
   `values.schema.json`/`values.yaml` edits above.
   check: n/a — non-behavioral lint gate; no new lint rule is added, this is a pass/fail-only
   smoke that is not expected to change state (see design.md test-economy note)
-- [ ] 6.2 Confirm both chart mirrors render the credentialed `values/values.existing.yaml` fixture
+- [x] 6.2 Confirm both chart mirrors render the credentialed `values/values.existing.yaml` fixture
   identically (the full-chart, both-mirrors-identical proof design.md commits to), spot-checked on
   `config-yaml.yaml` (plain-field shape) and `workspace-config-py.yaml` (URL-embedded shape) as the
   two representative credential-delivery shapes — the shared `_helpers/*.tpl` mirroring already

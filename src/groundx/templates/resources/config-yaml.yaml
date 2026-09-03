@@ -337,6 +337,12 @@ stringData:
         addr: {{ printf "%s:%v" (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) }}
         notCluster: {{ include "groundx.metrics.cache.notCluster" . }}
         ssl: {{ include "groundx.metrics.cache.ssl" . }}
+        {{- if ne (include "groundx.metrics.cache.username" .) "" }}
+        username: {{ include "groundx.metrics.cache.username" . | quote }}
+        {{- end }}
+        {{- if ne (include "groundx.metrics.cache.password" .) "" }}
+        password: {{ include "groundx.metrics.cache.password" . | quote }}
+        {{- end }}
       summaryRequest:
         tokensPerMinute: {{ include "groundx.throughput.tpm.summaryRequest" . }}
       {{- if or (ne $eac "0") (ne $edc "0") (ne $esc "0") (ne $lcc "0") (ne $lmc "0") (ne $loc "0") (ne $lpc "0") (ne $lsc "0") (ne $wrcuc "0") (ne $wrcc "0") (ne $wrpc "0") (ne $wrpubc "0") (ne $wrwc "0") }}
@@ -617,6 +623,12 @@ stringData:
         addr: {{ printf "%s:%v" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) }}
         notCluster: {{ include "groundx.cache.notCluster" . }}
         ssl: {{ include "groundx.cache.ssl" . }}
+        {{- if ne (include "groundx.cache.username" .) "" }}
+        username: {{ include "groundx.cache.username" . | quote }}
+        {{- end }}
+        {{- if ne (include "groundx.cache.password" .) "" }}
+        password: {{ include "groundx.cache.password" . | quote }}
+        {{- end }}
 
     {{- if .Values.dashboard }}
     ssp:
