@@ -208,9 +208,9 @@ redis
 {{- $u := include "groundx.cache.username" . -}}
 {{- if eq $p "" -}}
 {{- else if eq $u "" -}}
-{{- printf "%s@" (urlquery $p) -}}
+{{- printf "%s@" (urlquery $p | replace "+" "%20") -}}
 {{- else -}}
-{{- printf "%s:%s@" (urlquery $u) (urlquery $p) -}}
+{{- printf "%s:%s@" (urlquery $u | replace "+" "%20") (urlquery $p | replace "+" "%20") -}}
 {{- end -}}
 {{- end }}
 
@@ -329,9 +329,9 @@ false
 {{- $u := include "groundx.metrics.cache.username" . -}}
 {{- if eq $p "" -}}
 {{- else if eq $u "" -}}
-{{- printf "%s@" (urlquery $p) -}}
+{{- printf "%s@" (urlquery $p | replace "+" "%20") -}}
 {{- else -}}
-{{- printf "%s:%s@" (urlquery $u) (urlquery $p) -}}
+{{- printf "%s:%s@" (urlquery $u | replace "+" "%20") (urlquery $p | replace "+" "%20") -}}
 {{- end -}}
 {{- end }}
 
