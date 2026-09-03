@@ -103,3 +103,29 @@ tests:
       - ./files/values.workspace.enabled.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "v1-compat: KafkaTopic renders v1 and its namespace matches the default bootstrap-host namespace"
+    templates:
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ../values.yaml
+    asserts:
+      - equal:
+          path: apiVersion
+          value: kafka.strimzi.io/v1
+      - equal:
+          path: metadata.namespace
+          value: eyelevel
+  - it: "v1-compat: a custom namespace override still pairs the KafkaTopic with the bootstrap-host namespace"
+    templates:
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ../values.yaml
+    set:
+      namespace: custom-ns
+    asserts:
+      - equal:
+          path: apiVersion
+          value: kafka.strimzi.io/v1
+      - equal:
+          path: metadata.namespace
+          value: custom-ns

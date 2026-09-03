@@ -1,13 +1,15 @@
-namespace: eyelevel
 node: eyelevel-cpu-only
 serviceName: stream
 
 cluster:
-  metaVersion: 4.1
+  # Leave unset for a fresh install; pin on an in-place upgrade; see README.md
+  # "Upgrading an existing 0.1.x install".
+  metaVersion: ""
   port: 9092
+  # replicas drives the Kafka broker replication-factor config block and must not
+  # exceed nodepool.replicas (the actual broker/controller pool size).
   replicas: 1
-  storage: 10Gi
-  version: 4.1.1
+  version: ""
 
 nodepool:
   replicas: 1
