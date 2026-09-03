@@ -14,7 +14,7 @@ tests:
       value: config-yaml-map
     asserts:
       - notMatchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "extractionCaptureAccounts"
   - it: "configured extraction capture accounts render exactly"
     templates:
@@ -27,7 +27,7 @@ tests:
       value: config-yaml-map
     asserts:
       - matchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: "integrationTests:\\n  extractionCaptureAccounts:\\n\\n    - internal-certification-account\\n    - second-internal-account\\n  search:"
   - it: "default: resources"
     templates:
