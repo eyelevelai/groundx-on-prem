@@ -324,12 +324,17 @@ redis
 {{- end }}
 
 {{- define "groundx.metrics.cache.ssl" -}}
-{{- $in := .Values.cache | default dict -}}
-{{- $ex := (dig "existing" nil $in) | default dict -}}
+{{- $b := .Values.cache | default dict -}}
+{{- $m := (dig "metrics" nil $b) | default dict -}}
+{{- $ex := dig "existing" dict $m -}}
+{{- if (dig "enabled" false $m) -}}
 {{- if not (empty (dig "addr" "" $ex)) -}}
 {{ dig "ssl" "false" $ex }}
 {{- else -}}
 false
+{{- end -}}
+{{- else -}}
+{{ include "groundx.cache.ssl" . }}
 {{- end -}}
 {{- end }}
 

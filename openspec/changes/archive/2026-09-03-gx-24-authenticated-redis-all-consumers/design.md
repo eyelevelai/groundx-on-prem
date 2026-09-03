@@ -170,6 +170,15 @@ design and the ticket's own Out-of-scope section):**
 
 ## Amendments
 
+- 2026-09-03: `groundx.metrics.cache.ssl` was corrected to resolve per-identity, mirroring
+  `groundx.metrics.cache.addr`. It previously read the *main* cache's `cache.existing.ssl`, so a
+  separately hosted TLS metrics Redis rendered `redis://` when the main cache was non-TLS — and once
+  this change embeds credentials into that URL, that wrong scheme would send the credential over a
+  plaintext connection (or fail the TLS handshake). It now reads `cache.metrics.existing.ssl` when
+  metrics has its own external instance (chart-created metrics is non-TLS; a disabled metrics proxies
+  to the main cache's scheme), completing R1's invariant that a rendered credential matches the exact
+  instance — including its transport — it authenticates to. Default render is unchanged (default
+  metrics is chart-created, so the scheme was and stays `redis://`).
 - 2026-09-03: the space-encoding Risk note above ("Percent-encoding via `urlquery` ... a password
   containing a space is round-tripped through kombu differently than through a strict userinfo
   percent-encoder") is superseded — it is no longer deferred. All three userinfo helpers
