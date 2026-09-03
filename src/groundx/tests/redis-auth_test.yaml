@@ -419,3 +419,20 @@ tests:
           path: stringData["redis.conf"]
           pattern: 'requirepass pw with space'
         template: ../templates/resources/cache-conf.yaml
+
+  - it: "a chart-created cache password containing a double-quote and backslash is escaped so it cannot terminate the quoted requirepass string early"
+    templates:
+      - ../templates/resources/cache-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      cache.password: 'a"b\c'
+    asserts:
+      - matchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'requirepass "a\\"b\\\\c"'
+        template: ../templates/resources/cache-conf.yaml
+      - notMatchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'requirepass "a"'
+        template: ../templates/resources/cache-conf.yaml

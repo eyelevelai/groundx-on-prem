@@ -133,6 +133,10 @@ changes, tracked in their own OpenSpec changes; this proposal covers only the ch
   (credential injected into the existing `celeryBrokerUrl`/`celeryResultBackend` fallback),
   `templates/resources/config-yaml.yaml`, `templates/resources/{extract,layout,ranker,summary,
   workspace}-config-py.yaml`, `values.yaml`, `values.schema.json`, `values/values.existing.yaml`,
+  and — for the 2026-09-03 chart-created-Redis server-auth amendment — the new
+  `templates/resources/cache-conf.yaml` and `templates/resources/cache-metrics-conf.yaml` Secret
+  templates plus the `templates/services/cache.yaml` and `templates/services/cache-metrics.yaml`
+  StatefulSet edits (conf volume/mount, `args: [redis-server, <path>]`, `config-hash` annotation),
   and the corresponding `helm-unittest` suites under `tests/` (`src/groundx/` only — `helm/` has
   no `tests/` tree, per the mirror convention).
 - **Quality gates**: `.build/bin/validate-helm.sh` (lint + `helm unittest` snapshot tests +

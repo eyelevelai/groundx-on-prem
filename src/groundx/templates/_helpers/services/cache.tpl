@@ -216,7 +216,7 @@ redis
 
 {{- define "groundx.cache.confEnabled" -}}
 {{- $cc := include "groundx.cache.create" . | trim -}}
-{{- $p := include "groundx.cache.password" . | trim -}}
+{{- $p := include "groundx.cache.password" . -}}
 {{- if and (ne $cc "false") (ne $p "") -}}
 true
 {{- else -}}
@@ -237,7 +237,7 @@ false
 {{- end }}
 
 {{- define "groundx.redisConfEscape" -}}
-{{- . | replace "\\" "\\\\" | replace "\"" "\\\"" -}}
+{{- . | replace "\\" "\\\\" | replace "\"" "\\\"" | replace "\n" "\\n" | replace "\r" "\\r" | replace "\t" "\\t" -}}
 {{- end }}
 
 {{- define "groundx.cache.confContent" -}}
@@ -376,7 +376,7 @@ false
 
 {{- define "groundx.metrics.cache.confEnabled" -}}
 {{- $cc := include "groundx.metrics.cache.create" . | trim -}}
-{{- $p := include "groundx.metrics.cache.password" . | trim -}}
+{{- $p := include "groundx.metrics.cache.password" . -}}
 {{- if and (ne $cc "false") (ne $p "") -}}
 true
 {{- else -}}

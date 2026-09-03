@@ -78,6 +78,21 @@
   makes the other four templates structurally identical once these two prove out.
   check: bash -c 'set -e -o pipefail; a="$(helm template t src/groundx -f src/groundx/values/values.existing.yaml --set workspace.enabled=true --set workspace.token=test-runner-token --show-only templates/resources/config-yaml.yaml --show-only templates/resources/workspace-config-py.yaml | grep -v -E "^ *(appVersion|chart|version):")"; b="$(helm template t helm -f helm/values/values.existing.yaml --set workspace.enabled=true --set workspace.token=test-runner-token --show-only templates/resources/config-yaml.yaml --show-only templates/resources/workspace-config-py.yaml | grep -v -E "^ *(appVersion|chart|version):")"; [ "$a" = "$b" ]; grep -q "cache-acl-user:cache-p%40ss%3Aw0rd@cache.existing.com" <<< "$a"'
 
+## 7. Chart-created Redis server-side auth (2026-09-03 amendment)
+
+- [x] 7.1 For a chart-created (in-cluster) `cache`/`cache.metrics` with a credential set, render a
+  `kind: Secret` `redis.conf` (`templates/resources/cache-conf.yaml`,
+  `templates/resources/cache-metrics-conf.yaml`, both mirrors) whose content begins with
+  `include /etc/redis.conf` (preserving the shipped `eyelevel/redis:1.0.0` image defaults) and then
+  adds the credential — `requirepass "<escaped>"` for password-only, or `user default off` /
+  `user <u> on ">escaped" ~* &* +@all` for an ACL user — with the credential double-quoted and
+  control/quote/backslash-escaped (`groundx.redisConfEscape`). Mount the Secret into the identity's
+  StatefulSet (`templates/services/cache.yaml`, `templates/services/cache-metrics.yaml`, both
+  mirrors), set `args: ["redis-server", "<mounted>/redis.conf"]` (the image entrypoint is
+  `exec "$@"` and does not re-inject `redis-server`), and annotate `config-hash` for a rolling
+  restart. Default-off renders no conf Secret, mount, or args.
+  check: helm unittest -f 'tests/redis-auth_test.yaml' src/groundx
+
 Cross-service coordination (cashbot-go's `Username` field, ai-server's `status.py` credential
 parse, the internal-arcadia-agents/groundx-workspace-runner broker-URL spikes, and the rollout
 ordering across all of them) is tracked in the workspace-level
