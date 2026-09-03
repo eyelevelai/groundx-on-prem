@@ -178,7 +178,7 @@
         "serviceAccountName": { "type": "string" },
         "serviceName": { "type": "string" },
         "tolerations": { "type": "array" },
-        "username": { "type": "string" },
+        "username": { "type": "string", "pattern": "^\\S*$" },
         "metrics": {
           "type": "object",
           "properties": {
@@ -220,7 +220,7 @@
             "serviceAccountName": { "type": "string" },
             "serviceName": { "type": "string" },
             "tolerations": { "type": "array" },
-            "username": { "type": "string" }
+            "username": { "type": "string", "pattern": "^\\S*$" }
           },
           "required": ["existing"],
           "additionalProperties": false
@@ -1193,7 +1193,7 @@
             "port": { "type": "integer" },
             "ssl": { "type": "boolean" },
             "type": { "type": "string" },
-            "username": { "type": "string" }
+            "username": { "type": "string", "pattern": "^\\S*$" }
           },
           "additionalProperties": false
         },

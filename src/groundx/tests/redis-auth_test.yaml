@@ -450,6 +450,19 @@ tests:
           pattern: 'requirepass "line1\\nline2"'
         template: ../templates/resources/cache-conf.yaml
 
+  - it: "a whitespace ACL username is rejected by the schema before it can produce an invalid redis.conf"
+    templates:
+      - ../templates/resources/cache-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      cache.username: "alice bob"
+      cache.password: "pw"
+    asserts:
+      - failedTemplate:
+          errorPattern: "cache/username.*does not match pattern"
+        template: ../templates/resources/cache-conf.yaml
+
   - it: "a separately hosted TLS metrics Redis uses its own ssl setting for the scheme, not the main cache's"
     templates:
       - ../templates/resources/layout-config-py.yaml
