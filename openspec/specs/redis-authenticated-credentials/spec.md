@@ -128,3 +128,41 @@ SHALL render output identical to the chart's pre-GX-24 (0.2.7) output, in both `
   `values/values.existing.yaml` gained a credential fixture); the no-credential cases within
   those same files render unchanged
 
+### Requirement: A chart-created cache/metrics Redis is configured to require the same credential its clients send
+
+SHALL, for each of the two chart-created identities only (main `cache`, gated on
+`groundx.cache.create != "false"`, and metrics `cache.metrics`, gated on
+`groundx.metrics.cache.create != "false"` — `ranker.cache` and `workspace` are external-only and
+out of scope), render a Secret carrying a `redis.conf` key whenever that identity's create gate is
+true AND its resolved credential is non-empty, mount it into the identity's StatefulSet, and start
+`redis-server` with that file, so the server actually enforces the credential its clients already
+send (previously the chart-created Redis ran with no auth of its own, so a client credential
+authenticated against an unauthenticated server).
+
+#### Scenario: Password-only main cache renders a requirepass conf Secret (polarity: finalize success)
+
+- **GIVEN** the main cache is chart-created (no `cache.existing.addr`) and `cache.password` is set
+  with `cache.username` unset
+- **WHEN** `helm template` renders `templates/resources/cache-conf.yaml` and
+  `templates/services/cache.yaml`
+- **THEN** the conf Secret's `redis.conf` contains a `requirepass <password>` line, the cache
+  StatefulSet mounts that Secret as a file volume, passes the mounted path as the container's
+  `args`, and carries a `config-hash` pod-template annotation derived from the conf Secret
+
+#### Scenario: ACL username+password metrics cache renders a user-ACL conf Secret (polarity: finalize success)
+
+- **GIVEN** the metrics cache is chart-created and both `cache.metrics.username` and
+  `cache.metrics.password` are set
+- **WHEN** `helm template` renders `templates/resources/cache-metrics-conf.yaml` and
+  `templates/services/cache-metrics.yaml`
+- **THEN** the conf Secret's `redis.conf` contains `user default off` followed by
+  `user <username> on ><password> ~* &* +@all`, and the metrics cache StatefulSet mounts it, passes
+  its path as `args`, and carries the `config-hash` annotation
+
+#### Scenario: No credential configured renders no conf Secret, mount, args, or annotation (polarity: reject before state — no new state)
+
+- **GIVEN** a chart-created main or metrics cache with no credential configured (the default)
+- **WHEN** `helm template` renders the corresponding conf-Secret template and StatefulSet
+- **THEN** the conf-Secret template renders zero documents, and the StatefulSet has no `args`, no
+  conf volume/mount, and no `config-hash` annotation — byte-identical to the pre-amendment render
+

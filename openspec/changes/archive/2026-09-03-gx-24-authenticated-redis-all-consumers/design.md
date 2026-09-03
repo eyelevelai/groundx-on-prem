@@ -165,3 +165,22 @@ design and the ticket's own Out-of-scope section):**
 - Rollback: `helm rollback` to the pre-change release; the config-hash annotation on each affected
   Deployment forces a rollout back to the prior rendered config on the next apply, matching every
   other config-file change in this chart (no new rollback mechanism needed).
+
+## Amendments
+
+- 2026-09-03: the space-encoding Risk note above ("Percent-encoding via `urlquery` ... a password
+  containing a space is round-tripped through kombu differently than through a strict userinfo
+  percent-encoder") is superseded — it is no longer deferred. All three userinfo helpers
+  (`groundx.cache.userinfo`, `groundx.metrics.cache.userinfo`, `groundx.ranker.cache.userinfo`)
+  post-process `urlquery`'s output with `replace "+" "%20"`, so a space in a password or username
+  renders as the standard percent-encoded userinfo form (`%20`), never the literal `+`. Covered by
+  the `redis-auth_test.yaml` case "a credential containing a space percent-encodes to %20 (never
+  urlquery's literal '+'), for every identity", which asserts the `%20` form and asserts the
+  literal-`+` form is absent, across the main cache, metrics cache, and the ranker's own instance.
+- 2026-09-03: a fourth decision, orthogonal to the client-URL userinfo work above — the two
+  chart-created Redis identities (main `cache` and `cache.metrics`; ranker/workspace are
+  external-only and out of scope) are now themselves configured to require the same credential
+  their clients send, via a Secret-mounted `redis.conf` (`requirepass` for password-only,
+  `user default off` / `user <name> on >...` ACL lines for username+password), started with
+  `redis-server <path>/redis.conf`; default-off (no credential configured) renders no conf Secret,
+  mount, or args, byte-identical to the prior render.
