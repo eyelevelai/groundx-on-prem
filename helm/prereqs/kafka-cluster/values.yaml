@@ -2,8 +2,10 @@ node: eyelevel-cpu-only
 serviceName: stream
 
 cluster:
-  # version/metaVersion: leave unset so Strimzi picks its own supported defaults;
-  # set both to pin an explicit Kafka version/metadata version.
+  # version/metaVersion: leave unset only for a fresh/greenfield install so Strimzi picks its own
+  # supported defaults. An existing cluster upgrading this chart in place must set both to its
+  # currently-running Kafka version/metadata version, or the unpinned operator can roll it to a
+  # newer default version.
   metaVersion: ""
   port: 9092
   # replicas drives the Kafka broker replication-factor config block and must not
