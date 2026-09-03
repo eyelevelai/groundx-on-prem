@@ -112,9 +112,13 @@ SHALL render output identical to the chart's pre-GX-24 (0.2.7) output, in both `
 #### Scenario: Existing default and `values.yaml`-driven installs are unaffected (polarity: reject before state — no new state, no new render, no new field)
 
 - **GIVEN** any values file that does not set a cache/metrics/ranker credential (including the
-  chart's own `values.yaml` defaults and every pre-existing `helm-unittest` values fixture)
+  chart's own `values.yaml` defaults)
 - **WHEN** `helm template` renders the chart, in either `src/groundx/` or `helm/`
-- **THEN** the rendered output for every affected template is unchanged from 0.2.7 — proven by the
-  pre-existing `helm-unittest` golden snapshots (`cache_test.yaml`, `resources_test.yaml`,
-  `golang_test.yaml`, `metrics_test.yaml`, `celery_test.yaml`, `inference_test.yaml`,
-  `stream_test.yaml`, `api_test.yaml`) continuing to match without regeneration
+- **THEN** the rendered output for every affected template is byte-identical to 0.2.7 — verified
+  directly by rendering both `src/groundx/` at 0.2.7 and at this change's tip with no credential
+  set and diffing the output (zero-diff). The `cache_test.yaml`/`resources_test.yaml`/
+  `golang_test.yaml`/`metrics_test.yaml`/`celery_test.yaml`/`inference_test.yaml`/
+  `stream_test.yaml`/`api_test.yaml` golden snapshots **were regenerated** as part of this
+  change (their `values.existing.yaml`-loading cases legitimately changed once
+  `values/values.existing.yaml` gained a credential fixture); the no-credential cases within
+  those same files render unchanged

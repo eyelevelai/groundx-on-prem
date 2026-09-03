@@ -134,6 +134,44 @@ tests:
           path: stringData["config.py"]
           pattern: 'celery_result_backend="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
 
+  - it: "a credential containing a space percent-encodes to %20 (never urlquery's literal '+'), for every identity"
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+      - ../templates/resources/ranker-config-py.yaml
+    values:
+      - ../values.yaml
+    set:
+      cache.password: "has space"
+      cache.metrics.password: "metrics has space"
+      ranker.cache.addr: ranker-cache.other.net
+      ranker.cache.username: ranker-user
+      ranker.cache.password: "ranker has space"
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'layoutBroker="redis://has%20space@cache\.eyelevel\.svc\.cluster\.local:6379/0"'
+        template: ../templates/resources/layout-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: "has\\+space"
+        template: ../templates/resources/layout-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="redis://metrics%20has%20space@cache-metrics\.eyelevel\.svc\.cluster\.local:6379/0"'
+        template: ../templates/resources/layout-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: "metrics\\+has\\+space"
+        template: ../templates/resources/layout-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'searchBroker="redis://ranker-user:ranker%20has%20space@ranker-cache\.other\.net:6379/0"'
+        template: ../templates/resources/ranker-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: "ranker\\+has\\+space"
+        template: ../templates/resources/ranker-config-py.yaml
+
   - it: "workspace's operator-supplied Celery URL is never rewritten with an injected credential"
     templates:
       - ../templates/resources/workspace-config-py.yaml
