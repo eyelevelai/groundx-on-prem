@@ -27,6 +27,9 @@ jobs:
         with:
           cluster_name: groundx-strimzi-kind
 
+      - name: Label kind node for the chart's default nodeAffinity
+        run: kubectl label node --all node=eyelevel-cpu-only --overwrite
+
       - name: Create validation namespace
         run: kubectl create namespace "${KIND_NAMESPACE}"
 
