@@ -37,6 +37,43 @@ jobs:
             --set watchNamespaces="{${KIND_NAMESPACE}}" \
             --wait --timeout 5m
 
+      - name: Reject a stale-API-version Kafka CR (adversarial probe — proves the operator rejects, not just accepts)
+        run: |
+          cat <<EOF > /tmp/kafka-cr-invalid.yaml
+          apiVersion: kafka.strimzi.io/v1beta2
+          kind: Kafka
+          metadata:
+            name: kafka-invalid-v1beta2-probe
+            namespace: ${KIND_NAMESPACE}
+            annotations:
+              strimzi.io/node-pools: enabled
+              strimzi.io/kraft: enabled
+          spec:
+            kafka:
+              listeners:
+                - name: kafka
+                  port: 9092
+                  type: internal
+                  tls: false
+              config:
+                offsets.topic.replication.factor: 1
+            entityOperator:
+              topicOperator: {}
+          EOF
+          if kubectl apply -f /tmp/kafka-cr-invalid.yaml 2>/tmp/kafka-cr-invalid.err; then
+            echo "FAIL: a Kafka CR on the removed kafka.strimzi.io/v1beta2 apiVersion was accepted; the current (v1-only) operator was expected to reject it" >&2
+            cat /tmp/kafka-cr-invalid.err >&2
+            kubectl delete -f /tmp/kafka-cr-invalid.yaml --ignore-not-found
+            exit 1
+          fi
+          if ! grep -qi "v1beta2" /tmp/kafka-cr-invalid.err; then
+            echo "FAIL: apply was rejected, but not for the expected v1beta2 apiVersion reason:" >&2
+            cat /tmp/kafka-cr-invalid.err >&2
+            exit 1
+          fi
+          echo "OK: kafka.strimzi.io/v1beta2 Kafka CR was rejected as expected"
+          cat /tmp/kafka-cr-invalid.err
+
       - name: Install groundx-strimzi-kafka-cluster subchart
         run: |
           helm install groundx-kafka-cluster src/groundx/prereqs/kafka-cluster \

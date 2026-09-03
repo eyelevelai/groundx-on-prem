@@ -35,7 +35,7 @@ helm install groundx-kafka-cluster groundx/groundx-strimzi-kafka-cluster --versi
 | `node` | `eyelevel-cpu-only` | Node-affinity/toleration selector for the Kafka pods. |
 | `cluster.port` | `9092` | Internal Kafka listener port. |
 | `cluster.replicas` | `1` | Drives the replication-factor config block (`default.replication.factor` etc). Must not exceed `nodepool.replicas` — the render fails otherwise. |
-| `cluster.version` | unset | Optional Kafka version passthrough. Leave unset to let Strimzi pick a version it supports; set to pin an explicit version (e.g. for an air-gapped/pinned-image install). |
+| `cluster.version` | unset | Optional Kafka version passthrough. Leave unset only for a fresh/greenfield install so Strimzi picks a supported default; an existing cluster upgrading this chart in place must set this to its currently-running Kafka version (and `cluster.metaVersion` alongside it) or the unpinned operator can roll it to a newer default version. |
 | `cluster.metaVersion` | unset | Optional Kafka metadata version passthrough, same rule as `cluster.version`. |
 | `nodepool.replicas` | `1` | Broker/controller pool size (KRaft dual-role nodes). |
 | `nodepool.storage` | `5Gi` | Per-broker persistent volume size. |

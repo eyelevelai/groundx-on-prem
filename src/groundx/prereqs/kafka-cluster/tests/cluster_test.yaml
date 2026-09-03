@@ -56,7 +56,8 @@ tests:
       cluster.replicas: 3
       nodepool.replicas: 1
     asserts:
-      - failedTemplate: {}
+      - failedTemplate:
+          errorMessage: "cluster.replicas (3) must not exceed nodepool.replicas (1)"
 
   - it: "cluster.replicas at or below nodepool.replicas renders the replication-factor config"
     set:
