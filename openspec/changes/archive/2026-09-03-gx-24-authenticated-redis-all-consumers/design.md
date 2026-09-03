@@ -137,12 +137,14 @@ design and the ticket's own Out-of-scope section):**
 
 ## Risks / Trade-offs
 
-- [Risk] A customer sets `cache.password` intending it for the chart-deployed Redis but that
-  Redis does not have `requirepass` enabled → the AUTH call fails and the session/Celery clients
-  cannot connect (a self-inflicted misconfiguration, not a defect in this render). → Mitigation:
-  out of scope for this Helm-only change (this chart does not manage the Redis instance's own
-  config); the render is unconditional on whether the target actually requires auth, matching the
-  existing `db`/`search` precedent, which has the identical property.
+- [Risk] A customer sets `cache.password` intending it for an *external* Redis (`cache.existing.addr`
+  set) that does not actually have `requirepass`/ACL enabled → the AUTH call fails and the
+  session/Celery clients cannot connect (a self-inflicted misconfiguration, not a defect in this
+  render). → Mitigation: out of scope for this Helm-only change for an external instance, whose own
+  auth config the customer owns; the client render is unconditional on whether the external target
+  requires auth, matching the `db`/`search` precedent. For a *chart-created* (in-cluster) Redis this
+  risk does not apply — the fourth decision in Amendments configures that server to require the same
+  credential (see below).
 - [Risk] Percent-encoding via `urlquery` uses Go's `url.QueryEscape`, which encodes a literal space
   as `+`, not `%20`; a password containing a space is round-tripped through kombu differently than
   through a strict userinfo percent-encoder. → Mitigation: out of scope for this chart change
@@ -177,15 +179,20 @@ design and the ticket's own Out-of-scope section):**
   the `redis-auth_test.yaml` case "a credential containing a space percent-encodes to %20 (never
   urlquery's literal '+'), for every identity", which asserts the `%20` form and asserts the
   literal-`+` form is absent, across the main cache, metrics cache, and the ranker's own instance.
-- 2026-09-03: configuring the two chart-created Redis identities (main `cache`, `cache.metrics`) to
-  require the same credential their clients send was considered and **deferred to a follow-up**. This
-  change's scope is authenticated **external/managed** Redis, where the operator runs the
-  authenticated server and the chart only needs to render the credential correctly (covered above).
-  Server-side auth for the chart-created in-cluster Redis is a distinct feature: the shipped image
-  (`eyelevel/redis:1.0.0`, a UBI redis-6 with `ENTRYPOINT ["container-entrypoint"]` = `exec "$@"` and
-  `CMD ["redis-server", "/etc/redis.conf"]`) needs its launch command and default-config inheritance
-  handled deliberately, and cannot be runtime-verified without a live canary against that image, so
-  it belongs in its own spiked change rather than riding this one. Until then, setting a credential
-  against a chart-created (not `existing:`) Redis leaves the server unauthenticated while clients send
-  the credential — the pre-existing limitation noted in the Risks above stands; the `values.yaml`
-  credential comments point operators at external/managed Redis.
+- 2026-09-03: a fourth decision, orthogonal to the client-URL userinfo work above — the two
+  chart-created Redis identities (main `cache` and `cache.metrics`; ranker/workspace are
+  external-only and out of scope) are themselves configured to require the same credential their
+  clients send, via a Secret-mounted `redis.conf`. The conf begins with `include /etc/redis.conf`
+  (so the shipped image's own default config — `protected-mode no`, port, persistence — is
+  preserved) and then adds the credential: `requirepass "<pw>"` for password-only, or
+  `user default off` / `user <name> on ">pw" ~* &* +@all` for an ACL user; the credential is
+  double-quoted and backslash/quote-escaped so a space or reserved character does not break startup.
+  The StatefulSet mounts the Secret and sets `args: ["redis-server", "<mounted>/redis.conf"]`. The
+  shipped image (`eyelevel/redis:1.0.0`, a UBI redis-6 whose `ENTRYPOINT ["container-entrypoint"]`
+  is `exec "$@"` with `CMD ["redis-server", "/etc/redis.conf"]`) does not re-inject `redis-server`
+  the way the stock `redis` image does, so the `redis-server` token must be explicit in `args` —
+  passing only the conf path would make the container exec the config file and crash-loop. This was
+  verified end-to-end against `eyelevel/redis:1.0.0` itself (not a stock redis): the chart-rendered
+  conf + args start the server and a client authenticates, for password-only and ACL, including a
+  space-containing password, and a wrong password is rejected. Default-off (no credential
+  configured) renders no conf Secret, mount, or args, byte-identical to the prior render.

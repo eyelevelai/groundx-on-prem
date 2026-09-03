@@ -229,3 +229,193 @@ tests:
       - matchRegex:
           path: stringData["config.py"]
           pattern: 'celery_result_backend="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+
+  - it: "chart-created main cache (password-only) gets a requirepass conf Secret mounted and started with it"
+    templates:
+      - ../templates/resources/cache-conf.yaml
+      - ../templates/services/cache.yaml
+    values:
+      - ../values.yaml
+    set:
+      cache.password: "main-conf-p@ss"
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: ../templates/resources/cache-conf.yaml
+      - equal:
+          path: metadata.name
+          value: cache-conf
+        template: ../templates/resources/cache-conf.yaml
+      - matchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'include /etc/redis\.conf'
+        template: ../templates/resources/cache-conf.yaml
+      - matchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'requirepass "main-conf-p@ss"'
+        template: ../templates/resources/cache-conf.yaml
+      - notMatchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'requirepass main-conf-p@ss'
+        template: ../templates/resources/cache-conf.yaml
+      - notMatchRegex:
+          path: stringData["redis.conf"]
+          pattern: "user default off"
+        template: ../templates/resources/cache-conf.yaml
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value:
+            - redis-server
+            - /etc/redis/redis.conf
+        template: ../templates/services/cache.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: cache-conf
+            mountPath: /etc/redis
+            readOnly: true
+        template: ../templates/services/cache.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: cache-conf
+            secret:
+              secretName: cache-conf
+        template: ../templates/services/cache.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - isNotNullOrEmpty:
+          path: spec.template.metadata.annotations["config-hash"]
+        template: ../templates/services/cache.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+
+  - it: "chart-created metrics cache (ACL username+password) gets a user-ACL conf Secret mounted and started with it"
+    templates:
+      - ../templates/resources/cache-metrics-conf.yaml
+      - ../templates/services/cache-metrics.yaml
+    values:
+      - ../values.yaml
+    set:
+      cache.metrics.username: metrics-acl-user
+      cache.metrics.password: "metrics-conf-p@ss"
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: ../templates/resources/cache-metrics-conf.yaml
+      - equal:
+          path: metadata.name
+          value: cache-metrics-conf
+        template: ../templates/resources/cache-metrics-conf.yaml
+      - matchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'include /etc/redis\.conf'
+        template: ../templates/resources/cache-metrics-conf.yaml
+      - matchRegex:
+          path: stringData["redis.conf"]
+          pattern: "user default off"
+        template: ../templates/resources/cache-metrics-conf.yaml
+      - matchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'user metrics-acl-user on ">metrics-conf-p@ss" ~\* &\* \+@all'
+        template: ../templates/resources/cache-metrics-conf.yaml
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value:
+            - redis-server
+            - /etc/redis/redis.conf
+        template: ../templates/services/cache-metrics.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: cache-metrics-conf
+            mountPath: /etc/redis
+            readOnly: true
+        template: ../templates/services/cache-metrics.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: cache-metrics-conf
+            secret:
+              secretName: cache-metrics-conf
+        template: ../templates/services/cache-metrics.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - isNotNullOrEmpty:
+          path: spec.template.metadata.annotations["config-hash"]
+        template: ../templates/services/cache-metrics.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+
+  - it: "default-off: with no credential, chart-created caches render no conf Secret, no conf mount/args, no config-hash annotation"
+    templates:
+      - ../templates/resources/cache-conf.yaml
+      - ../templates/resources/cache-metrics-conf.yaml
+      - ../templates/services/cache.yaml
+      - ../templates/services/cache-metrics.yaml
+    values:
+      - ../values.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: ../templates/resources/cache-conf.yaml
+      - hasDocuments:
+          count: 0
+        template: ../templates/resources/cache-metrics-conf.yaml
+      - notExists:
+          path: spec.template.spec.containers[0].args
+        template: ../templates/services/cache.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - notExists:
+          path: spec.template.metadata.annotations
+        template: ../templates/services/cache.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - notExists:
+          path: spec.template.spec.containers[0].args
+        template: ../templates/services/cache-metrics.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - notExists:
+          path: spec.template.metadata.annotations
+        template: ../templates/services/cache-metrics.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+
+  - it: "a space-containing chart-created cache password renders a quoted requirepass so redis-server does not treat the words as extra arguments"
+    templates:
+      - ../templates/resources/cache-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      cache.password: "pw with space"
+    asserts:
+      - matchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'requirepass "pw with space"'
+        template: ../templates/resources/cache-conf.yaml
+      - notMatchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'requirepass pw with space'
+        template: ../templates/resources/cache-conf.yaml

@@ -109,10 +109,13 @@ changes, tracked in their own OpenSpec changes; this proposal covers only the ch
   and rolls back exactly like any other config-hash-triggered pod restart (`helm rollback`
   reverts the values, the config-hash annotation forces the affected pods to roll back to the
   prior rendered config on the next apply).
-- **Stateful-resource impact**: none. No new Secret/ConfigMap resource, no schema/migration, no
-  change to any deployed Redis's own `requirepass`/ACL configuration (this chart does not manage
-  the customer's external Redis) — only the values it renders into the six already-`Secret`
-  config resources listed above.
+- **Stateful-resource impact**: no schema/migration and no change to a customer's *external* Redis
+  (`cache.existing.addr`), whose own `requirepass`/ACL config the customer owns. For a *chart-created*
+  (in-cluster) `cache`/`cache.metrics` with a credential set, the change renders one new
+  per-identity `redis.conf` Secret (`cache-conf` / `cache-metrics-conf`) and configures that
+  in-cluster server to require the credential; with no credential set nothing new renders (default-off
+  byte-identical). The client-side credential goes into the values rendered into the six
+  already-`Secret` config resources listed above.
 - **Cross-service dependency**: cashbot-go already reads a shared `config.Redis.Pass`, so the
   password-only path (case 1) works against 0.2.7 cashbot-go with no app change; the ACL-username
   path (case 2) needs cashbot-go's own `Username` field addition (tracked separately) before it

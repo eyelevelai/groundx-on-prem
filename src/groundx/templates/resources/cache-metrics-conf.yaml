@@ -1,0 +1,15 @@
+{{- if eq (include "groundx.metrics.cache.confEnabled" . | trim) "true" -}}
+{{- $s := include "groundx.cache.serviceName" . -}}
+{{- $ms := include "groundx.metrics.cache.serviceName" . -}}
+{{- $svc := printf "%s-%s" $s $ms }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "groundx.metrics.cache.confSecretName" . | quote }}
+  namespace: {{ include "groundx.ns" . | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
+stringData:
+  redis.conf: |
+    {{ include "groundx.metrics.cache.confContent" . | nindent 4 }}
+{{- end }}
