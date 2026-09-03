@@ -27,6 +27,29 @@ helm install groundx-kafka-cluster groundx/groundx-strimzi-kafka-cluster --versi
   -n <ns>
 ```
 
+## Upgrading an existing 0.1.x install
+
+A 0.1.x install predates this chart's move to the stable Strimzi v1 API and the release-namespace
+CR placement below. Upgrading in place — not a drop-in `helm upgrade` — needs all three of the
+following together:
+
+1. **CRD API move.** The `Kafka`/`KafkaNodePool` CRs move from `kafka.strimzi.io/v1beta2` to
+   `kafka.strimzi.io/v1`. Upgrade the Strimzi operator to a release that serves `v1` **and** this
+   chart together — an operator that only serves `v1beta2` cannot reconcile the CRs this chart
+   renders.
+2. **Version pin.** Set `cluster.version` and `cluster.metaVersion` to the currently-running Kafka
+   version before upgrading. Left unset, the unpinned operator can roll the running cluster to a
+   newer default version on reconcile.
+3. **Namespace match.** Install into a Helm release namespace (`-n <ns>`) equal to the old
+   `.Values.namespace` value. Since 0.2.0 the `Kafka`/`KafkaNodePool` CRs land in `.Release.Namespace`
+   (see "Namespace pairing" above); installing under a different release namespace moves the CRs
+   there, orphaning the original running cluster (or creating an unreachable duplicate) rather than
+   upgrading it in place.
+
+A fresh/greenfield install needs none of this — leave `cluster.version`/`cluster.metaVersion` unset
+so Strimzi picks a supported default, and the CRs land directly in the release namespace with no
+prior state to move.
+
 ## Values
 
 | Key | Default | Notes |
@@ -35,7 +58,7 @@ helm install groundx-kafka-cluster groundx/groundx-strimzi-kafka-cluster --versi
 | `node` | `eyelevel-cpu-only` | Node-affinity/toleration selector for the Kafka pods. |
 | `cluster.port` | `9092` | Internal Kafka listener port. |
 | `cluster.replicas` | `1` | Drives the replication-factor config block (`default.replication.factor` etc). Must not exceed `nodepool.replicas` — the render fails otherwise. |
-| `cluster.version` | unset | Optional Kafka version passthrough. Leave unset only for a fresh/greenfield install so Strimzi picks a supported default; an existing cluster upgrading this chart in place must set this to its currently-running Kafka version (and `cluster.metaVersion` alongside it) or the unpinned operator can roll it to a newer default version. |
+| `cluster.version` | unset | Optional Kafka version passthrough. See "Upgrading an existing 0.1.x install" above for when this must be pinned. |
 | `cluster.metaVersion` | unset | Optional Kafka metadata version passthrough, same rule as `cluster.version`. |
 | `nodepool.replicas` | `1` | Broker/controller pool size (KRaft dual-role nodes). |
 | `nodepool.storage` | `5Gi` | Per-broker persistent volume size. |
