@@ -95,7 +95,7 @@ design and the ticket's own Out-of-scope section):**
 
 - **GX-17 gate-unblocking fix (recorded, pre-existing, unrelated to GX-24's own scope): `tests/resources_test.yaml`'s two `path: data["config.yaml"]` assertions are corrected to `path: stringData["config.yaml"]`.** GX-17 converted `config-yaml.yaml` to `kind: Secret` (`stringData`), but left these two assertions reading the old `ConfigMap`-shaped `data` path, so they fail on 0.2.7 independent of this change (confirmed: `helm unittest -f 'tests/resources_test.yaml' src/groundx` fails on this branch's base commit with `unknown path data["config.yaml"]`). Fixed here only because it blocks the full-suite green gate this change's acceptance criterion requires; no other line in that file is touched. `helm/tests/` does not exist in this repo (the published mirror ships with `tests/` removed, per this repo's own `AGENTS.md`), so there is no matching `helm/tests/resources_test.yaml` to fix — the fix applies to `src/groundx/` only.
 
-- **R2 refinement (pinned against the committed acceptance test, `tests/redis-auth_test.yaml`'s "workspace's operator-supplied Celery URL is never rewritten with an injected credential" case): workspace credential injection is suppressed on BOTH `celeryBrokerUrl` and `celeryResultBackend` fallbacks whenever EITHER field is operator-supplied, not independently per field.** The paragraph below states the mechanism as originally scoped (inject only into the `$fallback` branch, never rewrite a user-supplied value); the acceptance test additionally requires that when only one of the two fields is overridden, the sibling field's fallback must not carry the credential either — a plain per-field-independent injection renders `celery_result_backend` with the main cache's credential even though the operator only overrode `celeryBrokerUrl`, which the test's `notMatchRegex` (no `cache-acl-user` anywhere in the rendered output) rejects. A shared `groundx.workspace.celeryUserManaged` helper (`true` when either `celeryBrokerUrl` or `celeryResultBackend` is non-empty) gates the `userinfo` fragment in both fallbacks: neither field's fallback is credentialed once the operator has taken control of either one, since a mixed managed/chart-cache pairing for what Celery treats as one logical broker configuration is exactly the "chart cannot know" case R2 already declines to guess at.
+- **R2 refinement — per-field credential injection for the two workspace Celery URLs.** Each of `celeryBrokerUrl` and `celeryResultBackend` is gated independently: its own fallback branch carries the main-cache credential unless that specific field is operator-supplied. Two helpers, `groundx.workspace.celeryBrokerUrlManaged` and `groundx.workspace.celeryResultBackendManaged`, each true only when its own field is non-empty, gate the `userinfo` fragment for its own fallback. So an operator who overrides only `celeryBrokerUrl` keeps the credentialed chart-built `celeryResultBackend` fallback (the result backend still authenticates against the AUTH-protected main cache), while a full operator-supplied URL on either field is never rewritten. This replaces the earlier all-or-nothing gate (a single shared `celeryUserManaged` helper that suppressed both fallbacks whenever either field was set), which dropped the credential from a defaulted sibling URL on a partial override. The acceptance test `tests/redis-auth_test.yaml` covers both the full-override (never-rewritten) case and the partial-override (sibling fallback still credentialed) case.
 
 - **R2 — workspace credential injection is confined to the existing fallback branch.**
   `groundx.workspace.celeryBrokerUrl`/`celeryResultBackend` already `coalesce` a user-supplied
@@ -177,10 +177,15 @@ design and the ticket's own Out-of-scope section):**
   the `redis-auth_test.yaml` case "a credential containing a space percent-encodes to %20 (never
   urlquery's literal '+'), for every identity", which asserts the `%20` form and asserts the
   literal-`+` form is absent, across the main cache, metrics cache, and the ranker's own instance.
-- 2026-09-03: a fourth decision, orthogonal to the client-URL userinfo work above — the two
-  chart-created Redis identities (main `cache` and `cache.metrics`; ranker/workspace are
-  external-only and out of scope) are now themselves configured to require the same credential
-  their clients send, via a Secret-mounted `redis.conf` (`requirepass` for password-only,
-  `user default off` / `user <name> on >...` ACL lines for username+password), started with
-  `redis-server <path>/redis.conf`; default-off (no credential configured) renders no conf Secret,
-  mount, or args, byte-identical to the prior render.
+- 2026-09-03: configuring the two chart-created Redis identities (main `cache`, `cache.metrics`) to
+  require the same credential their clients send was considered and **deferred to a follow-up**. This
+  change's scope is authenticated **external/managed** Redis, where the operator runs the
+  authenticated server and the chart only needs to render the credential correctly (covered above).
+  Server-side auth for the chart-created in-cluster Redis is a distinct feature: the shipped image
+  (`eyelevel/redis:1.0.0`, a UBI redis-6 with `ENTRYPOINT ["container-entrypoint"]` = `exec "$@"` and
+  `CMD ["redis-server", "/etc/redis.conf"]`) needs its launch command and default-config inheritance
+  handled deliberately, and cannot be runtime-verified without a live canary against that image, so
+  it belongs in its own spiked change rather than riding this one. Until then, setting a credential
+  against a chart-created (not `existing:`) Redis leaves the server unauthenticated while clients send
+  the credential — the pre-existing limitation noted in the Risks above stands; the `values.yaml`
+  credential comments point operators at external/managed Redis.

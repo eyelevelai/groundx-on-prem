@@ -20,9 +20,6 @@
 {{- $sct := dig "securityContext" dict $in -}}
 {{- $san := include "groundx.cache.serviceAccountName" . -}}
 {{- $tl := dig "tolerations" list $in -}}
-{{- $confEnabled := eq (include "groundx.cache.confEnabled" . | trim) "true" -}}
-{{- $confVolumeName := include "groundx.cache.confVolumeName" . -}}
-{{- $confMountPath := include "groundx.cache.confMountPath" . | trim -}}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -43,14 +40,9 @@ spec:
 {{- if gt (len $lbls) 0 }}
 {{ toYaml $lbls | nindent 8 }}
 {{- end }}
-{{- if or (gt (len $anns) 0) $confEnabled }}
-      annotations:
 {{- if gt (len $anns) 0 }}
+      annotations:
 {{ toYaml $anns | nindent 8 }}
-{{- end }}
-{{- if $confEnabled }}
-        config-hash: {{ include (print $.Template.BasePath "/resources/cache-conf.yaml") $ | sha256sum }}
-{{- end }}
 {{- end }}
     spec:
 {{- if and ($san) (ne $san "") }}
@@ -70,10 +62,6 @@ spec:
         - name: {{ $svc | quote }}
           image: {{ include "groundx.cache.image" . | quote }}
           imagePullPolicy: {{ include "groundx.cache.imagePullPolicy" . | quote }}
-{{- if $confEnabled }}
-          args:
-            - {{ printf "%s/redis.conf" $confMountPath | quote }}
-{{- end }}
           ports:
             - containerPort: {{ $cport}}
               protocol: TCP
@@ -82,18 +70,7 @@ spec:
           volumeMounts:
             - name: {{ $mountName | quote }}
               mountPath: {{ include "groundx.cache.mountPath" . | quote }}
-{{- if $confEnabled }}
-            - name: {{ $confVolumeName | quote }}
-              mountPath: {{ $confMountPath | quote }}
-              readOnly: true
-{{- end }}
 {{- if eq (include "groundx.cache.persistence.enabled" . | trim) "true" }}
-{{- if $confEnabled }}
-      volumes:
-        - name: {{ $confVolumeName | quote }}
-          secret:
-            secretName: {{ include "groundx.cache.confSecretName" . | quote }}
-{{- end }}
   volumeClaimTemplates:
     - metadata:
         name: {{ $mountName | quote }}
@@ -108,11 +85,6 @@ spec:
       volumes:
         - name: {{ $mountName | quote }}
           emptyDir: {}
-{{- if $confEnabled }}
-        - name: {{ $confVolumeName | quote }}
-          secret:
-            secretName: {{ include "groundx.cache.confSecretName" . | quote }}
-{{- end }}
 {{- end }}
 
 {{ include "groundx.renderInterface" (dict "name" $svc "lb" $int "root" $) }}
