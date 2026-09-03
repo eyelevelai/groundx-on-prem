@@ -1,0 +1,71 @@
+name: kafka-strimzi-kind
+
+on:
+  pull_request:
+  release:
+    types: [published, created]
+
+jobs:
+  live-strimzi-kind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      KIND_NAMESPACE: groundx-kind-validation
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.19.0
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.10.0
+        with:
+          cluster_name: groundx-strimzi-kind
+
+      - name: Create validation namespace
+        run: kubectl create namespace "${KIND_NAMESPACE}"
+
+      - name: Install Strimzi operator (latest, unpinned)
+        run: |
+          helm install strimzi-operator oci://quay.io/strimzi-helm/strimzi-kafka-operator \
+            -n "${KIND_NAMESPACE}" \
+            --set watchNamespaces="{${KIND_NAMESPACE}}" \
+            --wait --timeout 5m
+
+      - name: Install groundx-strimzi-kafka-cluster subchart
+        run: |
+          helm install groundx-kafka-cluster src/groundx/prereqs/kafka-cluster \
+            -n "${KIND_NAMESPACE}"
+
+      - name: Apply main-chart KafkaTopic resources
+        run: |
+          helm template groundx src/groundx \
+            -f src/groundx/values/minikube/values.yaml \
+            --set namespace="${KIND_NAMESPACE}" \
+            --show-only templates/services/stream-topics.yaml \
+            | kubectl apply -n "${KIND_NAMESPACE}" -f -
+
+      - name: Wait for the Kafka cluster to become Ready
+        run: |
+          kubectl wait kafka.kafka.strimzi.io/stream-cluster -n "${KIND_NAMESPACE}" \
+            --for=condition=Ready --timeout=10m
+
+      - name: Wait for all KafkaTopics to become Ready
+        run: |
+          for topic in file-pre-process file-process file-summary file-update file-upload; do
+            kubectl wait "kafkatopic.kafka.strimzi.io/${topic}" -n "${KIND_NAMESPACE}" \
+              --for=condition=Ready --timeout=5m
+          done
+
+      - name: Dump diagnostics on failure
+        if: failure()
+        run: |
+          kubectl get all -n "${KIND_NAMESPACE}"
+          kubectl describe kafka.kafka.strimzi.io -n "${KIND_NAMESPACE}"
+          kubectl describe kafkanodepool.kafka.strimzi.io -n "${KIND_NAMESPACE}"
+          kubectl describe kafkatopic.kafka.strimzi.io -n "${KIND_NAMESPACE}"
