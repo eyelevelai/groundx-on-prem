@@ -49,6 +49,28 @@ tests:
       - notMatchRegex:
           path: 'data["config.py"]'
           pattern: 'rds_admin_connection_dev="mysql'
+  - it: "groundx receives only the workspace runner token"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.workspace-managed-data.yaml
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: groundx
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WORKSPACE_RUNNER_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: workspace-managed-data
+                key: WORKSPACE_RUNNER_TOKEN
+      - notContains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: workspace-managed-data
   - it: "disabled: workspace metrics config"
     templates:
       - ../templates/resources/config-yaml.yaml
