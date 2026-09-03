@@ -1,16 +1,22 @@
-apiVersion: kafka.strimzi.io/v1beta2
+{{- if gt (int .Values.cluster.replicas) (int .Values.nodepool.replicas) -}}
+{{ fail (printf "cluster.replicas (%d) must not exceed nodepool.replicas (%d)" (int .Values.cluster.replicas) (int .Values.nodepool.replicas)) }}
+{{- end -}}
+apiVersion: kafka.strimzi.io/v1
 kind: Kafka
 metadata:
   name: {{ .Values.serviceName }}-cluster
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Release.Namespace }}
   annotations:
     strimzi.io/node-pools: enabled
     strimzi.io/kraft: enabled
 spec:
   kafka:
-    version: {{ .Values.cluster.version }}
-    metadataVersion: {{ .Values.cluster.metaVersion | quote }}
-    replicas: {{ .Values.cluster.replicas }}
+    {{- with .Values.cluster.version }}
+    version: {{ . }}
+    {{- end }}
+    {{- with .Values.cluster.metaVersion }}
+    metadataVersion: {{ . | quote }}
+    {{- end }}
     listeners:
       - name: kafka
         port: {{ .Values.cluster.port }}
@@ -41,10 +47,6 @@ spec:
           - key: "node"
             value: "{{ .Values.node }}"
             effect: "NoSchedule"
-    storage:
-      type: persistent-claim
-      size: {{ .Values.cluster.storage }}
-      deleteClaim: true
   entityOperator:
     topicOperator: {}
     userOperator: {}
