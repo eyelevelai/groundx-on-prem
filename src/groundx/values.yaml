@@ -12,7 +12,7 @@ cluster:
 cache:
   enabled: true
 
-  # set to authenticate to Redis (AUTH password / ACL username); clients use it, and a chart-created (in-cluster) Redis is configured to require it
+  # set to authenticate to Redis (AUTH password / ACL username)
   password: ""
   username: ""
 
@@ -20,7 +20,7 @@ cache:
     enabled: true
     existing: {}
 
-    # credential for the metrics Redis; inherited from cache.password/username only when metrics proxies to the main cache (disabled/no own addr), otherwise set your own
+    # metrics Redis credential; defaults to the main cache credential
     password: ""
     username: ""
 
