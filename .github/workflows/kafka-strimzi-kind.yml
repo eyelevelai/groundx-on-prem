@@ -40,7 +40,7 @@ jobs:
             --set watchNamespaces="{${KIND_NAMESPACE}}" \
             --wait --timeout 5m
 
-      - name: Reject a stale-API-version Kafka CR (adversarial probe — proves the operator rejects, not just accepts)
+      - name: Reject a stale-API-version Kafka CR (adversarial probe: proves the operator rejects, not just accepts)
         run: |
           cat <<EOF > /tmp/kafka-cr-invalid.yaml
           apiVersion: kafka.strimzi.io/v1beta2

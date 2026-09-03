@@ -125,4 +125,3 @@ Polarity: reject before state — no `Kafka`/`KafkaNodePool` manifest is emitted
   (`cluster.replicas: 1`, `nodepool.replicas: 1`)
 - **THEN** the render succeeds and the `Kafka` manifest's `spec.kafka.config` replication-factor
   keys all equal `1`
-
