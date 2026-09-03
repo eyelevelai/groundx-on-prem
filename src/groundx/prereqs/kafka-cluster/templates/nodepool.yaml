@@ -1,8 +1,8 @@
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaNodePool
 metadata:
   name: {{ .Values.serviceName }}-dual-role
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Release.Namespace }}
   labels:
     strimzi.io/cluster: {{ .Values.serviceName }}-cluster
 spec:
