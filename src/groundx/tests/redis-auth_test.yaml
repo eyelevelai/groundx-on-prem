@@ -1,0 +1,502 @@
+suite: "authenticated Redis credentials render per identity (GX-24)"
+chart:
+  appVersion: 0.1.0
+  version: 0.1.0
+
+tests:
+  - it: "no credential configured: config-yaml.yaml session blocks are unchanged from 0.2.7"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "session:\\n    addr: cache\\.eyelevel\\.svc\\.cluster\\.local:6379\\n    notCluster: true\\n    ssl: false\\n\\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "session:\\n    addr: cache-metrics\\.eyelevel\\.svc\\.cluster\\.local:6379\\n    notCluster: true\\n    ssl: false\\n  summaryRequest:"
+
+  - it: "cashbot-go rec.session and metrics.session render their own credential (ACL user+password vs password-only)"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/values.existing.yaml
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "session:\\n    addr: cache\\.existing\\.com:6379\\n    notCluster: true\\n    ssl: true\\n    username: \"cache-acl-user\"\\n    password: \"cache-p@ss:w0rd\"\\n\\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "session:\\n    addr: metrics-cache\\.existing\\.com:6379\\n    notCluster: true\\n    ssl: true\\n    password: \"metrics-p@ss:w0rd\"\\n  summaryRequest:"
+
+  - it: "layout/summary/extract Celery broker and result URLs embed the main and metrics credentials, percent-encoded"
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+      - ../templates/resources/summary-config-py.yaml
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ../values/values.existing.yaml
+    set:
+      summary.existing.serviceType: ""
+      extract.enabled: true
+      extract.api.enabled: true
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'layoutBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+        template: ../templates/resources/layout-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'layoutResultBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+        template: ../templates/resources/layout-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="rediss://:metrics-p%40ss%3Aw0rd@metrics-cache\.existing\.com:6379/0"'
+        template: ../templates/resources/layout-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="rediss://metrics-p%40ss%3Aw0rd@'
+        template: ../templates/resources/layout-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'summaryBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+        template: ../templates/resources/summary-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'summaryResultBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+        template: ../templates/resources/summary-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="rediss://:metrics-p%40ss%3Aw0rd@metrics-cache\.existing\.com:6379/0"'
+        template: ../templates/resources/summary-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="rediss://metrics-p%40ss%3Aw0rd@'
+        template: ../templates/resources/summary-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'broker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+        template: ../templates/resources/extract-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'metrics_broker="rediss://:metrics-p%40ss%3Aw0rd@metrics-cache\.existing\.com:6379/0"'
+        template: ../templates/resources/extract-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'metrics_broker="rediss://metrics-p%40ss%3Aw0rd@'
+        template: ../templates/resources/extract-config-py.yaml
+
+  - it: "ranker with no own instance inherits the main cache's credential"
+    templates:
+      - ../templates/resources/ranker-config-py.yaml
+    values:
+      - ../values/values.existing.yaml
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'searchBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'searchResultBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="rediss://:metrics-p%40ss%3Aw0rd@metrics-cache\.existing\.com:6379/0"'
+
+  - it: "ranker with its own instance gets its own credential, never the main cache's (mechanical-sweep counterexample)"
+    templates:
+      - ../templates/resources/ranker-config-py.yaml
+    values:
+      - ../values/values.existing.yaml
+    set:
+      ranker.cache.addr: ranker-cache.other.net
+      ranker.cache.port: 6380
+      ranker.cache.password: ranker-only-p@ss
+      ranker.cache.username: ranker-only-user
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'searchBroker="redis://ranker-only-user:ranker-only-p%40ss@ranker-cache\.other\.net:6380/0"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'searchResultBroker="redis://ranker-only-user:ranker-only-p%40ss@ranker-cache\.other\.net:6380/0"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="rediss://:metrics-p%40ss%3Aw0rd@metrics-cache\.existing\.com:6379/0"'
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: "cache-acl-user"
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: "cache-p%40ss%3Aw0rd"
+
+  - it: "workspace's fallback Celery URL carries the main cache credential"
+    templates:
+      - ../templates/resources/workspace-config-py.yaml
+    values:
+      - ../values/values.existing.yaml
+    set:
+      workspace.enabled: true
+      workspace.token: test-runner-token
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'celery_broker_url="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'celery_result_backend="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+
+  - it: "a credential containing a space percent-encodes to %20 (never urlquery's literal '+'), for every identity"
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+      - ../templates/resources/ranker-config-py.yaml
+    values:
+      - ../values.yaml
+    set:
+      cache.password: "has space"
+      cache.metrics.password: "metrics has space"
+      ranker.cache.addr: ranker-cache.other.net
+      ranker.cache.username: ranker-user
+      ranker.cache.password: "ranker has space"
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'layoutBroker="redis://:has%20space@cache\.eyelevel\.svc\.cluster\.local:6379/0"'
+        template: ../templates/resources/layout-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: "has\\+space"
+        template: ../templates/resources/layout-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'layoutBroker="redis://has%20space@'
+        template: ../templates/resources/layout-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="redis://:metrics%20has%20space@cache-metrics\.eyelevel\.svc\.cluster\.local:6379/0"'
+        template: ../templates/resources/layout-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: "metrics\\+has\\+space"
+        template: ../templates/resources/layout-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="redis://metrics%20has%20space@'
+        template: ../templates/resources/layout-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'searchBroker="redis://ranker-user:ranker%20has%20space@ranker-cache\.other\.net:6379/0"'
+        template: ../templates/resources/ranker-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: "ranker\\+has\\+space"
+        template: ../templates/resources/ranker-config-py.yaml
+
+  - it: "workspace's operator-supplied Celery URLs are never rewritten with an injected credential"
+    templates:
+      - ../templates/resources/workspace-config-py.yaml
+    values:
+      - ../values/values.existing.yaml
+    set:
+      workspace.enabled: true
+      workspace.token: test-runner-token
+      workspace.celeryBrokerUrl: "rediss://custom-op:custom-secret@other-redis.mycorp.net:6379/2"
+      workspace.celeryResultBackend: "rediss://custom-op:custom-secret@other-redis.mycorp.net:6379/3"
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'celery_broker_url="rediss://custom-op:custom-secret@other-redis\.mycorp\.net:6379/2"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'celery_result_backend="rediss://custom-op:custom-secret@other-redis\.mycorp\.net:6379/3"'
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: "cache-acl-user"
+
+  - it: "workspace's partial override (broker only) still injects the main cache credential into the result-backend fallback"
+    templates:
+      - ../templates/resources/workspace-config-py.yaml
+    values:
+      - ../values/values.existing.yaml
+    set:
+      workspace.enabled: true
+      workspace.token: test-runner-token
+      workspace.celeryBrokerUrl: "rediss://custom-op:custom-secret@other-redis.mycorp.net:6379/2"
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'celery_broker_url="rediss://custom-op:custom-secret@other-redis\.mycorp\.net:6379/2"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'celery_result_backend="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+
+  - it: "chart-created main cache (password-only) gets a requirepass conf Secret mounted and started with it"
+    templates:
+      - ../templates/resources/cache-conf.yaml
+      - ../templates/services/cache.yaml
+    values:
+      - ../values.yaml
+    set:
+      cache.password: "main-conf-p@ss"
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: ../templates/resources/cache-conf.yaml
+      - equal:
+          path: metadata.name
+          value: cache-conf
+        template: ../templates/resources/cache-conf.yaml
+      - matchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'include /etc/redis\.conf'
+        template: ../templates/resources/cache-conf.yaml
+      - matchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'requirepass "main-conf-p@ss"'
+        template: ../templates/resources/cache-conf.yaml
+      - notMatchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'requirepass main-conf-p@ss'
+        template: ../templates/resources/cache-conf.yaml
+      - notMatchRegex:
+          path: stringData["redis.conf"]
+          pattern: "user default off"
+        template: ../templates/resources/cache-conf.yaml
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value:
+            - redis-server
+            - /etc/redis/redis.conf
+        template: ../templates/services/cache.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: cache-conf
+            mountPath: /etc/redis
+            readOnly: true
+        template: ../templates/services/cache.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: cache-conf
+            secret:
+              secretName: cache-conf
+        template: ../templates/services/cache.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - isNotNullOrEmpty:
+          path: spec.template.metadata.annotations["config-hash"]
+        template: ../templates/services/cache.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+
+  - it: "chart-created metrics cache (ACL username+password) gets a user-ACL conf Secret mounted and started with it"
+    templates:
+      - ../templates/resources/cache-metrics-conf.yaml
+      - ../templates/services/cache-metrics.yaml
+    values:
+      - ../values.yaml
+    set:
+      cache.metrics.username: metrics-acl-user
+      cache.metrics.password: "metrics-conf-p@ss"
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: ../templates/resources/cache-metrics-conf.yaml
+      - equal:
+          path: metadata.name
+          value: cache-metrics-conf
+        template: ../templates/resources/cache-metrics-conf.yaml
+      - matchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'include /etc/redis\.conf'
+        template: ../templates/resources/cache-metrics-conf.yaml
+      - matchRegex:
+          path: stringData["redis.conf"]
+          pattern: "user default off"
+        template: ../templates/resources/cache-metrics-conf.yaml
+      - matchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'user "metrics-acl-user" on ">metrics-conf-p@ss" ~\* &\* \+@all'
+        template: ../templates/resources/cache-metrics-conf.yaml
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value:
+            - redis-server
+            - /etc/redis/redis.conf
+        template: ../templates/services/cache-metrics.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: cache-metrics-conf
+            mountPath: /etc/redis
+            readOnly: true
+        template: ../templates/services/cache-metrics.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: cache-metrics-conf
+            secret:
+              secretName: cache-metrics-conf
+        template: ../templates/services/cache-metrics.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - isNotNullOrEmpty:
+          path: spec.template.metadata.annotations["config-hash"]
+        template: ../templates/services/cache-metrics.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+
+  - it: "default-off: with no credential, chart-created caches render no conf Secret, no conf mount/args, no config-hash annotation"
+    templates:
+      - ../templates/resources/cache-conf.yaml
+      - ../templates/resources/cache-metrics-conf.yaml
+      - ../templates/services/cache.yaml
+      - ../templates/services/cache-metrics.yaml
+    values:
+      - ../values.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: ../templates/resources/cache-conf.yaml
+      - hasDocuments:
+          count: 0
+        template: ../templates/resources/cache-metrics-conf.yaml
+      - notExists:
+          path: spec.template.spec.containers[0].args
+        template: ../templates/services/cache.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - notExists:
+          path: spec.template.metadata.annotations
+        template: ../templates/services/cache.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - notExists:
+          path: spec.template.spec.containers[0].args
+        template: ../templates/services/cache-metrics.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+      - notExists:
+          path: spec.template.metadata.annotations
+        template: ../templates/services/cache-metrics.yaml
+        documentSelector:
+          path: kind
+          value: StatefulSet
+
+  - it: "a space-containing chart-created cache password renders a quoted requirepass so redis-server does not treat the words as extra arguments"
+    templates:
+      - ../templates/resources/cache-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      cache.password: "pw with space"
+    asserts:
+      - matchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'requirepass "pw with space"'
+        template: ../templates/resources/cache-conf.yaml
+      - notMatchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'requirepass pw with space'
+        template: ../templates/resources/cache-conf.yaml
+
+  - it: "a chart-created cache password containing a double-quote and backslash is escaped so it cannot terminate the quoted requirepass string early"
+    templates:
+      - ../templates/resources/cache-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      cache.password: 'a"b\c'
+    asserts:
+      - matchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'requirepass "a\\"b\\\\c"'
+        template: ../templates/resources/cache-conf.yaml
+      - notMatchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'requirepass "a"'
+        template: ../templates/resources/cache-conf.yaml
+
+  - it: "a chart-created cache ACL username containing a double-quote is quoted and escaped so it cannot unbalance the redis.conf user line"
+    templates:
+      - ../templates/resources/cache-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      cache.username: 'ac"l'
+      cache.password: "pw"
+    asserts:
+      - matchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'user "ac\\"l" on ">pw" ~\* &\* \+@all'
+        template: ../templates/resources/cache-conf.yaml
+      - notMatchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'user ac"l on'
+        template: ../templates/resources/cache-conf.yaml
+
+  - it: "a chart-created cache password containing a newline is escaped to a backslash-n so it cannot inject a second redis.conf directive"
+    templates:
+      - ../templates/resources/cache-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      cache.password: "line1\nline2"
+    asserts:
+      - matchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'requirepass "line1\\nline2"'
+        template: ../templates/resources/cache-conf.yaml
+
+  - it: "a whitespace ACL username is rejected by the schema before it can produce an invalid redis.conf"
+    templates:
+      - ../templates/resources/cache-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      cache.username: "alice bob"
+      cache.password: "pw"
+    asserts:
+      - failedTemplate:
+          errorPattern: "cache/username.*does not match pattern"
+        template: ../templates/resources/cache-conf.yaml
+
+  - it: "a separately hosted TLS metrics Redis uses its own ssl setting for the scheme, not the main cache's"
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+    values:
+      - ../values.yaml
+    set:
+      cache.metrics.existing.addr: metrics-redis.mycorp.net
+      cache.metrics.existing.ssl: true
+      cache.metrics.username: muser
+      cache.metrics.password: mpass
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="rediss://muser:mpass@metrics-redis\.mycorp\.net:6379/0"'
+        template: ../templates/resources/layout-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="redis://muser'
+        template: ../templates/resources/layout-config-py.yaml

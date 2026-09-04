@@ -4356,6 +4356,7 @@
             addr: metrics-cache.existing.com:6379
             notCluster: true
             ssl: true
+            password: "metrics-p@ss:w0rd"
           summaryRequest:
             tokensPerMinute: 625
           task:
@@ -4485,6 +4486,8 @@
             addr: cache.existing.com:6379
             notCluster: true
             ssl: true
+            username: "cache-acl-user"
+            password: "cache-p@ss:w0rd"
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
@@ -4530,10 +4533,10 @@
             deviceType="cuda",
             env="prod",
             includeLS=False,
-            layoutBroker="rediss://cache.existing.com:6379/0",
+            layoutBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache.existing.com:6379/0",
             layoutLogger="layout",
-            layoutResultBroker="rediss://cache.existing.com:6379/0",
-            metricsBroker="rediss://metrics-cache.existing.com:6379/0",
+            layoutResultBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache.existing.com:6379/0",
+            metricsBroker="rediss://:metrics-p%40ss%3Aw0rd@metrics-cache.existing.com:6379/0",
             minBatchSize=40,
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
@@ -4822,12 +4825,12 @@
         env = dict(
             deviceType="cuda",
             brokerType="redis",
-            metricsBroker="rediss://metrics-cache.existing.com:6379/0",
+            metricsBroker="rediss://:metrics-p%40ss%3Aw0rd@metrics-cache.existing.com:6379/0",
             metricsBusyWindowSeconds=60,
             rankerBatchSize=3,
-            searchBroker="rediss://cache.existing.com:6379/0",
+            searchBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache.existing.com:6379/0",
             searchLog="ranker",
-            searchResultBroker="rediss://cache.existing.com:6379/0",
+            searchResultBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache.existing.com:6379/0",
             service="ranker",
             validAPIKeys=[
               "00000000-0000-0000-0000-000000000000",
