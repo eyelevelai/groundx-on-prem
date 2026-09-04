@@ -47,7 +47,7 @@ Values: `cache.username: <user>` and `cache.password: <pw>`. The username must b
 
 ## Per-identity notes
 
-- **metrics cache**: set `cache.metrics.username`/`password` (and `cache.metrics.existing.addr`/`ssl` for a separate external instance) only when metrics runs on its own Redis; otherwise it inherits the main cache credential and scheme. A separately hosted TLS metrics Redis renders `rediss://`.
+- **metrics cache**: with the default `cache.metrics.enabled: true`, the metrics cache is a *separate* Redis, so in Modes B and C setting only `cache.password` leaves it unauthenticated. Set `cache.metrics.password` (and `cache.metrics.username` for ACL, plus `cache.metrics.existing.addr`/`ssl` for a separate external instance) as well. It inherits the main cache credential and scheme only when `cache.metrics.enabled: false` (proxying to the main cache). A separately hosted TLS metrics Redis renders `rediss://`.
 - **ranker cache**: set `ranker.cache.username`/`password` (+ `ranker.cache.addr`/`ssl`) only for a ranker-only Redis; otherwise it inherits the main cache credential.
 - **workspace**: an operator-supplied full `workspace.celeryBrokerUrl`/`celeryResultBackend` is never rewritten; only a defaulted (main-cache-derived) URL receives the credential, each independently.
 
