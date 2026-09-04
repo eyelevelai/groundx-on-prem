@@ -248,7 +248,7 @@ false
 {{- $lines = append $lines (printf "requirepass \"%s\"" (include "groundx.redisConfEscape" $p)) -}}
 {{- else -}}
 {{- $lines = append $lines "user default off" -}}
-{{- $lines = append $lines (printf "user %s on \">%s\" ~* &* +@all" $u (include "groundx.redisConfEscape" $p)) -}}
+{{- $lines = append $lines (printf "user \"%s\" on \">%s\" ~* &* +@all" (include "groundx.redisConfEscape" $u) (include "groundx.redisConfEscape" $p)) -}}
 {{- end -}}
 {{- join "\n" $lines -}}
 {{- end }}
@@ -409,7 +409,7 @@ false
 {{- $lines = append $lines (printf "requirepass \"%s\"" (include "groundx.redisConfEscape" $p)) -}}
 {{- else -}}
 {{- $lines = append $lines "user default off" -}}
-{{- $lines = append $lines (printf "user %s on \">%s\" ~* &* +@all" $u (include "groundx.redisConfEscape" $p)) -}}
+{{- $lines = append $lines (printf "user \"%s\" on \">%s\" ~* &* +@all" (include "groundx.redisConfEscape" $u) (include "groundx.redisConfEscape" $p)) -}}
 {{- end -}}
 {{- join "\n" $lines -}}
 {{- end }}

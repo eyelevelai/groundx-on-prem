@@ -325,7 +325,7 @@ tests:
         template: ../templates/resources/cache-metrics-conf.yaml
       - matchRegex:
           path: stringData["redis.conf"]
-          pattern: 'user metrics-acl-user on ">metrics-conf-p@ss" ~\* &\* \+@all'
+          pattern: 'user "metrics-acl-user" on ">metrics-conf-p@ss" ~\* &\* \+@all'
         template: ../templates/resources/cache-metrics-conf.yaml
       - equal:
           path: spec.template.spec.containers[0].args
@@ -435,6 +435,24 @@ tests:
       - notMatchRegex:
           path: stringData["redis.conf"]
           pattern: 'requirepass "a"'
+        template: ../templates/resources/cache-conf.yaml
+
+  - it: "a chart-created cache ACL username containing a double-quote is quoted and escaped so it cannot unbalance the redis.conf user line"
+    templates:
+      - ../templates/resources/cache-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      cache.username: 'ac"l'
+      cache.password: "pw"
+    asserts:
+      - matchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'user "ac\\"l" on ">pw" ~\* &\* \+@all'
+        template: ../templates/resources/cache-conf.yaml
+      - notMatchRegex:
+          path: stringData["redis.conf"]
+          pattern: 'user ac"l on'
         template: ../templates/resources/cache-conf.yaml
 
   - it: "a chart-created cache password containing a newline is escaped to a backslash-n so it cannot inject a second redis.conf directive"
