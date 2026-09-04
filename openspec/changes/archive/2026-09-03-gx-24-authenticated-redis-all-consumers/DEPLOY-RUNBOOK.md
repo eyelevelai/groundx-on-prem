@@ -54,3 +54,17 @@ Values: `cache.username: <user>` and `cache.password: <pw>`. The username must b
 ## Credential rotation
 
 Changing a credential changes the `config-hash` annotation on every affected Deployment/StatefulSet, forcing a rolling restart so the new credential takes effect.
+
+## Validation status (near-real Docker, 2026-09-04)
+
+The credential flow was validated against the shipped `eyelevel/redis:1.0.0` image and the real client libraries (`redis-py`, `kombu`/`celery`) in Docker, in all three modes. Full live-cluster (EKS) rollout remains a separate step.
+
+Proven:
+
+- Chart-created Redis enforces auth on the real image: Mode A connects with no credential (baseline); Mode B `requirepass` rejects no-credential (`NOAUTH`) and wrong-credential (`WRONGPASS`); Mode C ACL (`user default off` + named user) rejects the disabled default user.
+- Every credential shape authenticates through its real client: the password-only (`scheme://:pw@`, colon prefix) and username (`scheme://user:pw@`) URLs, percent-encoded (space `%20`, `@` `%40`, `/` `%2F`, `#` `%23`), via `redis-py` `from_url` and `kombu` connect; the discrete `username`/`password` fields via the RESP `AUTH` path cashbot-go's go-redis uses. Bad or absent credentials are rejected in every case.
+- cashbot-go config contract: the rendered `config.yaml` `rec.session` `username`/`password` keys map to the `Redis` struct tags and reach both the simple and cluster go-redis options.
+- Per-identity isolation (Mode C, distinct main vs metrics credentials): neither credential appears in the other instance's `redis.conf`, and at runtime each Redis instance rejects the other's credential.
+- extract and workspace `rediss://` URL transforms preserve the embedded credential (query-string append; the authority is untouched).
+
+Not covered (low residual risk): a full EKS rollout; booting the real cashbot-go `golang` image to its Redis-connect point (its discrete auth is proven at the RESP level and its wiring is code-verified); `rediss://` TLS transport rendered from the chart (credential flow is scheme-independent, and the transforms were verified on the exact `rediss://` shape).
