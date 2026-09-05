@@ -152,3 +152,27 @@ tests:
             name: credentials-volume
             secret:
               secretName: layout-ocr-credentials-map
+  - it: "extract workers replace the shell with supervisord"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values/extract/values.yaml
+    documentSelector:
+      path: metadata.name
+      value: extract-download
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command[2]
+          value: "export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf\n"
+  - it: "non-extract workers keep their existing startup command"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-correct
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command[2]
+          value: "export PYTHONPATH=/app && supervisord -c /app/supervisord.conf\n"
