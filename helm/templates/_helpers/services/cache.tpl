@@ -225,15 +225,11 @@ false
 {{- end }}
 
 {{- define "groundx.cache.confSecretName" -}}
-{{- printf "%s-conf" (include "groundx.cache.serviceName" .) -}}
+{{- printf "%s-conf-map" (include "groundx.cache.serviceName" .) -}}
 {{- end }}
 
 {{- define "groundx.cache.confVolumeName" -}}
 {{- printf "%s-conf" (include "groundx.cache.serviceName" .) -}}
-{{- end }}
-
-{{- define "groundx.cache.confMountPath" -}}
-/etc/redis
 {{- end }}
 
 {{- define "groundx.redisConfEscape" -}}
@@ -390,15 +386,11 @@ false
 {{- end }}
 
 {{- define "groundx.metrics.cache.confSecretName" -}}
-{{- printf "%s-%s-conf" (include "groundx.cache.serviceName" .) (include "groundx.metrics.cache.serviceName" .) -}}
+{{- printf "%s-%s-conf-map" (include "groundx.cache.serviceName" .) (include "groundx.metrics.cache.serviceName" .) -}}
 {{- end }}
 
 {{- define "groundx.metrics.cache.confVolumeName" -}}
 {{- printf "%s-%s-conf" (include "groundx.cache.serviceName" .) (include "groundx.metrics.cache.serviceName" .) -}}
-{{- end }}
-
-{{- define "groundx.metrics.cache.confMountPath" -}}
-/etc/redis
 {{- end }}
 
 {{- define "groundx.metrics.cache.confContent" -}}

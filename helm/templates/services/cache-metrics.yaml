@@ -25,7 +25,7 @@
 {{- $tl := dig "tolerations" list $in -}}
 {{- $confEnabled := eq (include "groundx.metrics.cache.confEnabled" . | trim) "true" -}}
 {{- $confVolumeName := include "groundx.metrics.cache.confVolumeName" . -}}
-{{- $confMountPath := include "groundx.metrics.cache.confMountPath" . | trim -}}
+{{- $confMountPath := "/etc/redis" -}}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:

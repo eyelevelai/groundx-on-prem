@@ -31,30 +31,9 @@ false
 {{ dig "allowedCommands" "go,npm,pytest,python,node,git" $in }}
 {{- end }}
 
-{{- define "groundx.workspace.celeryBrokerUrlManaged" -}}
-{{- $in := include "groundx.workspace.values" . | fromYaml -}}
-{{- if ne (dig "celeryBrokerUrl" "" $in) "" -}}
-true
-{{- else -}}
-false
-{{- end -}}
-{{- end }}
-
-{{- define "groundx.workspace.celeryResultBackendManaged" -}}
-{{- $in := include "groundx.workspace.values" . | fromYaml -}}
-{{- if ne (dig "celeryResultBackend" "" $in) "" -}}
-true
-{{- else -}}
-false
-{{- end -}}
-{{- end }}
-
 {{- define "groundx.workspace.celeryBrokerUrl" -}}
 {{- $in := include "groundx.workspace.values" . | fromYaml -}}
-{{- $userinfo := "" -}}
-{{- if ne (include "groundx.workspace.celeryBrokerUrlManaged" .) "true" -}}
-{{- $userinfo = include "groundx.cache.userinfo" . -}}
-{{- end -}}
+{{- $userinfo := include "groundx.cache.userinfo" . -}}
 {{- $fallback := printf "%s://%s%s:%v/0" (include "groundx.cache.scheme" .) $userinfo (include "groundx.cache.addr" .) (include "groundx.cache.port" .) -}}
 {{ coalesce (dig "celeryBrokerUrl" "" $in) $fallback }}
 {{- end }}
@@ -66,10 +45,7 @@ false
 
 {{- define "groundx.workspace.celeryResultBackend" -}}
 {{- $in := include "groundx.workspace.values" . | fromYaml -}}
-{{- $userinfo := "" -}}
-{{- if ne (include "groundx.workspace.celeryResultBackendManaged" .) "true" -}}
-{{- $userinfo = include "groundx.cache.userinfo" . -}}
-{{- end -}}
+{{- $userinfo := include "groundx.cache.userinfo" . -}}
 {{- $fallback := printf "%s://%s%s:%v/0" (include "groundx.cache.scheme" .) $userinfo (include "groundx.cache.addr" .) (include "groundx.cache.port" .) -}}
 {{ coalesce (dig "celeryResultBackend" "" $in) $fallback }}
 {{- end }}
