@@ -10,9 +10,9 @@
   mirrors — currently `additionalProperties: false`). Add one concise one-line comment plus the two
   `password`/`username` keys (empty string) to `cache:` in `values.yaml` (both mirrors). Set
   `cache.password`/`cache.username` on the `cache:` block of `values/values.existing.yaml` (both
-  mirrors) to the ACL user+password fixture values `redis-auth_test.yaml` already asserts on
+  mirrors) to the ACL user+password fixture values `resources_test.yaml` already asserts on
   (`cache-acl-user` / `cache-p@ss:w0rd`).
-  check: helm unittest -f 'tests/redis-auth_test.yaml' src/groundx
+  check: helm unittest -f 'tests/resources_test.yaml' src/groundx
 
 ## 2. Metrics identity (R1 fallback, same consumer)
 
@@ -25,7 +25,7 @@
   (with a one-line comment) to `cache.metrics:` in `values.yaml` (both mirrors). Set
   `cache.metrics.password` (password-only case, no username) on `values/values.existing.yaml`'s
   `cache.metrics:` block (both mirrors) to `metrics-p@ss:w0rd`.
-  check: helm unittest -f 'tests/redis-auth_test.yaml' src/groundx
+  check: helm unittest -f 'tests/resources_test.yaml' src/groundx
 
 ## 3. URL-embedded consumers: layout, summary, extract (main + metrics identity)
 
@@ -38,7 +38,7 @@
   (`groundx.cache.userinfo` for the main-cache-derived URLs, `groundx.metrics.cache.userinfo` for
   every `metricsBroker`/`metrics_broker`) — never a different identity's helper at that call site
   (see design.md's invariant).
-  check: helm unittest -f 'tests/redis-auth_test.yaml' src/groundx
+  check: helm unittest -f 'tests/resources_test.yaml' src/groundx
 
 ## 4. Ranker identity (R1 own-instance fallback)
 
@@ -55,7 +55,7 @@
   examples (`# password: ...`, `# username: ...`) to the existing commented `ranker.cache: {}`
   block in `values.yaml` (both mirrors), matching its existing `# addr:`/`# isCluster:`/etc. style
   — no new active default value (ranker has no own instance by default).
-  check: helm unittest -f 'tests/redis-auth_test.yaml' src/groundx
+  check: helm unittest -f 'tests/resources_test.yaml' src/groundx
 
 ## 5. Workspace identity (R2 — fallback-only injection)
 
@@ -63,7 +63,7 @@
   `templates/_helpers/app/workspace.tpl` (both mirrors): embed `groundx.cache.userinfo` into the
   `$fallback` URL's `printf` only; the `coalesce (dig "celeryBrokerUrl"/"celeryResultBackend" "" $in)
   $fallback` line itself is unchanged, so a value the operator sets explicitly is never rewritten.
-  check: helm unittest -f 'tests/redis-auth_test.yaml' src/groundx
+  check: helm unittest -f 'tests/resources_test.yaml' src/groundx
 
 ## 6. Cross-cutting gates
 
@@ -91,7 +91,7 @@
   mirrors), set `args: ["redis-server", "<mounted>/redis.conf"]` (the image entrypoint is
   `exec "$@"` and does not re-inject `redis-server`), and annotate `config-hash` for a rolling
   restart. Default-off renders no conf Secret, mount, or args.
-  check: helm unittest -f 'tests/redis-auth_test.yaml' src/groundx
+  check: helm unittest -f 'tests/cache_test.yaml' -f 'tests/metrics_test.yaml' src/groundx
 
 Cross-service coordination (cashbot-go's `Username` field, ai-server's `status.py` credential
 parse, the internal-arcadia-agents/groundx-workspace-runner broker-URL spikes, and the rollout
