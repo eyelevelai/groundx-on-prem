@@ -69,17 +69,16 @@ a delete-and-recreate; must not block the documented in-order runbook) encode th
    phase — mechanical, not template-derived — so their acceptance check is direct file content
    comparison (see tasks.md), not a `helm template` render.
 
-6. **Chainguard operator image tag: `0.51.0`, no `v`-prefix, replacing `v0.48.0`.** The values
-   file's existing convention pins `tag`/`tagPrefix` with a `v`-prefix (`v0.48.0`), but the
-   Chainguard mirror's confirmed listing for the target release (`proposal.md`: "0.50.1/0.51.0,
-   both APIs") and this change's own scope instruction both name the bare `0.51.0` string as the
-   target — so this design pins the literal string `0.51.0` (dropping the `v`), matching the
-   confirmed-to-exist tag rather than guessing at a prefix convention. **This is a claim I could
-   not independently re-verify against the live `cgr.dev` registry from this environment** — the
-   registry requires the `chainguard-pull-secret` credential, which this session does not hold (a
-   read-only, unauthenticated request to `cgr.dev` returned no tag data). The claim traces to
-   `proposal.md`'s own text, which is itself the approved, gated artifact this design builds on;
-   flagged as a Risk below rather than silently treated as independently confirmed.
+6. **Chainguard operator image tag: `v0.51.0`, keeping the existing `v`-prefix, replacing
+   `v0.48.0`.** The values file's existing convention pins every `tag`/`tagPrefix` with a
+   `v`-prefix (`v0.48.0`); the apply-phase task instruction states both `0.51.0` and `v0.51.0` are
+   published Chainguard mirror tags for this release, so this design keeps the file's established
+   `v`-prefixed format rather than introducing a one-off unprefixed exception. (Supersedes this
+   decision's original text, which pinned the bare `0.51.0` string on an unverified assumption — see
+   the Risks entry below.) **This builder still could not independently read the live `cgr.dev`
+   registry in this session** (no `chainguard-pull-secret` credential); the tag-existence fact is
+   relayed from the instructing orchestrator, not independently re-verified against the registry by
+   this builder.
 7. **`cluster.version` becomes fully absent from the Chainguard cluster values file, not an empty
    string.** The subchart's own `values.yaml` already defaults `cluster.version: ""` (unset); the
    Chainguard cluster values file's only content is the `node:` key plus the `cluster.version:
@@ -107,15 +106,17 @@ a delete-and-recreate; must not block the documented in-order runbook) encode th
 
 ## Risks / Trade-offs
 
-- **[Risk] The Chainguard operator image tag string (`0.51.0`, no `v`-prefix) is asserted from
-  `proposal.md`'s prior confirmation, not independently re-verified against the live `cgr.dev`
-  registry in this session** (decision 6) — this environment has no `chainguard-pull-secret`
-  credential, so an anonymous read against the private mirror returns no tag data. →
-  **Mitigation:** the exact literal is pinned consistently everywhere it appears (values file,
-  design, README runbook, CI job), so a wrong prefix is a single, easy, everywhere-consistent fix
-  rather than a silent three-way drift; a human with registry access should spot-check `crane ls
-  cgr.dev/eyelevel.ai/strimzi-kafka-operator` (or the equivalent authenticated pull) resolves
-  `0.51.0` before this PR merges.
+- **[Risk, narrowed] The Chainguard operator image tag string.** Decision 6 originally pinned the
+  bare `0.51.0` string (no `v`-prefix) on an unverified assumption. At apply time the instructing
+  orchestrator stated both `0.51.0` and `v0.51.0` are published tags for the target release, so the
+  values file keeps its established `v`-prefixed convention (`v0.51.0`) rather than introducing a
+  one-off unprefixed exception — narrower risk than before (a wrong prefix, not a wrong version).
+  This builder still has no `chainguard-pull-secret` credential and did not independently read the
+  live `cgr.dev` registry in this session. **Mitigation (unchanged):** the literal is pinned
+  consistently everywhere it appears (values file, this design doc, the README runbook, and the CI
+  job), so a wrong prefix is a single, easy, everywhere-consistent fix; a human with registry
+  access should still spot-check `crane ls cgr.dev/eyelevel.ai/strimzi-kafka-operator` before this
+  PR merges.
 - **[Risk] The new kind upgrade-test CI job adds real runtime to an already-Docker-dependent
   workflow** (a second `kind`-cluster job, on top of the existing `live-strimzi-kind` job, each
   performing at least one full Strimzi operator install and a multi-step upgrade) — total workflow

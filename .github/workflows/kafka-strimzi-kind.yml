@@ -109,3 +109,218 @@ jobs:
           kubectl describe kafka.kafka.strimzi.io -n "${KIND_NAMESPACE}"
           kubectl describe kafkanodepool.kafka.strimzi.io -n "${KIND_NAMESPACE}"
           kubectl describe kafkatopic.kafka.strimzi.io -n "${KIND_NAMESPACE}"
+
+  strimzi-migration-kind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      KIND_NAMESPACE: groundx-kind-migration
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.19.0
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.10.0
+        with:
+          cluster_name: groundx-strimzi-migration-kind
+
+      - name: Label kind node for the chart's default nodeAffinity
+        run: kubectl label node --all node=eyelevel-cpu-only --overwrite
+
+      - name: Create validation namespace
+        run: kubectl create namespace "${KIND_NAMESPACE}"
+
+      - name: Install Strimzi operator 0.47.0 (pre-migration baseline, v1beta2-only)
+        run: |
+          helm install strimzi-operator oci://quay.io/strimzi-helm/strimzi-kafka-operator \
+            --version 0.47.0 \
+            -n "${KIND_NAMESPACE}" \
+            --set watchNamespaces="{${KIND_NAMESPACE}}" \
+            --wait --timeout 5m
+
+      - name: Install the vendored old subchart package groundx-strimzi-kafka-cluster-0.1.1.tgz
+        run: |
+          helm install groundx-kafka-cluster helm-releases/groundx-strimzi-kafka-cluster-0.1.1.tgz \
+            -n "${KIND_NAMESPACE}" \
+            --set namespace="${KIND_NAMESPACE}"
+
+      - name: Apply main-chart KafkaTopic resources in the pre-migration v1beta2 shape
+        run: |
+          helm template groundx src/groundx \
+            -f src/groundx/values/minikube/values.yaml \
+            --set namespace="${KIND_NAMESPACE}" \
+            --show-only templates/services/stream-topics.yaml \
+            | sed 's#^apiVersion: kafka.strimzi.io/v1$#apiVersion: kafka.strimzi.io/v1beta2#' \
+            | kubectl apply -n "${KIND_NAMESPACE}" -f -
+
+      - name: Wait for the Kafka cluster to become Ready (checkpoint 1, pre-migration baseline)
+        run: |
+          kubectl wait kafka.kafka.strimzi.io/stream-cluster -n "${KIND_NAMESPACE}" \
+            --for=condition=Ready --timeout=10m
+
+      - name: Wait for all KafkaTopics to become Ready (checkpoint 1, pre-migration baseline)
+        run: |
+          for topic in file-pre-process file-process file-summary file-update file-upload; do
+            kubectl wait "kafkatopic.kafka.strimzi.io/${topic}" -n "${KIND_NAMESPACE}" \
+              --for=condition=Ready --timeout=5m
+          done
+
+      - name: Upgrade the Strimzi operator in place to 0.51.0 (dual-serving stepping-stone)
+        run: |
+          helm upgrade strimzi-operator oci://quay.io/strimzi-helm/strimzi-kafka-operator \
+            --version 0.51.0 \
+            -n "${KIND_NAMESPACE}" \
+            --set watchNamespaces="{${KIND_NAMESPACE}}" \
+            --wait --timeout 5m
+
+      - name: Run the strimzi-v1-api-conversion tool (convert-resource)
+        run: |
+          cat <<EOF > /tmp/strimzi-v1-api-conversion-rbac.yaml
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: strimzi-v1-api-conversion
+            namespace: ${KIND_NAMESPACE}
+          ---
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRole
+          metadata:
+            name: strimzi-v1-api-conversion
+          rules:
+            - apiGroups:
+                - kafka.strimzi.io
+              resources:
+                - kafkas
+                - kafkanodepools
+                - kafkatopics
+              verbs:
+                - get
+                - list
+                - patch
+                - update
+            - apiGroups:
+                - apiextensions.k8s.io
+              resources:
+                - customresourcedefinitions
+                - customresourcedefinitions/status
+              resourceNames:
+                - kafkas.kafka.strimzi.io
+                - kafkanodepools.kafka.strimzi.io
+                - kafkatopics.kafka.strimzi.io
+              verbs:
+                - get
+                - list
+                - patch
+                - update
+          ---
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRoleBinding
+          metadata:
+            name: strimzi-v1-api-conversion
+          subjects:
+            - kind: ServiceAccount
+              name: strimzi-v1-api-conversion
+              namespace: ${KIND_NAMESPACE}
+          roleRef:
+            kind: ClusterRole
+            name: strimzi-v1-api-conversion
+            apiGroup: rbac.authorization.k8s.io
+          EOF
+          kubectl apply -f /tmp/strimzi-v1-api-conversion-rbac.yaml
+
+          cat <<EOF > /tmp/strimzi-v1-api-conversion-convert-job.yaml
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: strimzi-v1-api-conversion-convert
+            namespace: ${KIND_NAMESPACE}
+          spec:
+            template:
+              spec:
+                serviceAccountName: strimzi-v1-api-conversion
+                containers:
+                  - name: strimzi-v1-api-conversion
+                    image: quay.io/strimzi/operator:0.51.0
+                    command:
+                      - /opt/v1-api-conversion/bin/v1-api-conversion.sh
+                      - convert-resource
+                      - --namespace
+                      - ${KIND_NAMESPACE}
+                restartPolicy: OnFailure
+          EOF
+          kubectl apply -f /tmp/strimzi-v1-api-conversion-convert-job.yaml
+          kubectl wait job/strimzi-v1-api-conversion-convert -n "${KIND_NAMESPACE}" \
+            --for=condition=complete --timeout=5m
+          kubectl logs job/strimzi-v1-api-conversion-convert -n "${KIND_NAMESPACE}"
+
+      - name: Run the strimzi-v1-api-conversion tool (crd-upgrade)
+        run: |
+          cat <<EOF > /tmp/strimzi-v1-api-conversion-crdupgrade-job.yaml
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: strimzi-v1-api-conversion-crdupgrade
+            namespace: ${KIND_NAMESPACE}
+          spec:
+            template:
+              spec:
+                serviceAccountName: strimzi-v1-api-conversion
+                containers:
+                  - name: strimzi-v1-api-conversion
+                    image: quay.io/strimzi/operator:0.51.0
+                    command:
+                      - /opt/v1-api-conversion/bin/v1-api-conversion.sh
+                      - crd-upgrade
+                restartPolicy: OnFailure
+          EOF
+          kubectl apply -f /tmp/strimzi-v1-api-conversion-crdupgrade-job.yaml
+          kubectl wait job/strimzi-v1-api-conversion-crdupgrade -n "${KIND_NAMESPACE}" \
+            --for=condition=complete --timeout=5m
+          kubectl logs job/strimzi-v1-api-conversion-crdupgrade -n "${KIND_NAMESPACE}"
+
+      - name: Wait for the Kafka cluster to become Ready (checkpoint 2, after conversion)
+        run: |
+          kubectl wait kafka.kafka.strimzi.io/stream-cluster -n "${KIND_NAMESPACE}" \
+            --for=condition=Ready --timeout=10m
+
+      - name: Wait for all KafkaTopics to become Ready (checkpoint 2, after conversion)
+        run: |
+          for topic in file-pre-process file-process file-summary file-update file-upload; do
+            kubectl wait "kafkatopic.kafka.strimzi.io/${topic}" -n "${KIND_NAMESPACE}" \
+              --for=condition=Ready --timeout=5m
+          done
+
+      - name: helm upgrade the subchart release to the current v1-shaped chart
+        run: |
+          helm upgrade groundx-kafka-cluster src/groundx/prereqs/kafka-cluster \
+            -n "${KIND_NAMESPACE}"
+
+      - name: Wait for the Kafka cluster to become Ready (checkpoint 3, final)
+        run: |
+          kubectl wait kafka.kafka.strimzi.io/stream-cluster -n "${KIND_NAMESPACE}" \
+            --for=condition=Ready --timeout=10m
+
+      - name: Wait for all KafkaTopics to become Ready (checkpoint 3, final)
+        run: |
+          for topic in file-pre-process file-process file-summary file-update file-upload; do
+            kubectl wait "kafkatopic.kafka.strimzi.io/${topic}" -n "${KIND_NAMESPACE}" \
+              --for=condition=Ready --timeout=5m
+          done
+
+      - name: Dump diagnostics on failure
+        if: failure()
+        run: |
+          kubectl get all -n "${KIND_NAMESPACE}"
+          kubectl describe kafka.kafka.strimzi.io -n "${KIND_NAMESPACE}"
+          kubectl describe kafkanodepool.kafka.strimzi.io -n "${KIND_NAMESPACE}"
+          kubectl describe kafkatopic.kafka.strimzi.io -n "${KIND_NAMESPACE}"
+          kubectl get jobs -n "${KIND_NAMESPACE}"
+          kubectl logs job/strimzi-v1-api-conversion-convert -n "${KIND_NAMESPACE}" --tail=200 || true
+          kubectl logs job/strimzi-v1-api-conversion-crdupgrade -n "${KIND_NAMESPACE}" --tail=200 || true

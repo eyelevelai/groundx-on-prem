@@ -68,13 +68,13 @@ Polarity: this is a gate-class requirement — it must catch the adversarial cou
   known past failure mode for this file) does not break the document
 
 ### Requirement: the air-gapped Chainguard Strimzi values carry a supported operator image and Kafka cluster version
-`src/groundx/values/chainguard/values.strimzi.operator.yaml` and its `helm/` mirror SHALL pin every Strimzi image `tag`/`tagPrefix` to `0.51.0` (a release confirmed to exist in the Chainguard mirror and to serve both `kafka.strimzi.io/v1beta2` and `kafka.strimzi.io/v1`), replacing the prior `v0.48.0`. `src/groundx/values/chainguard/values.strimzi.cluster.yaml` and its `helm/` mirror SHALL leave `cluster.version` unset, replacing the prior `4.1.0` (a Kafka version no current Strimzi release supports), matching the main v1 chart's greenfield default of leaving `cluster.version`/`cluster.metaVersion` unset.
+`src/groundx/values/chainguard/values.strimzi.operator.yaml` and its `helm/` mirror SHALL pin every Strimzi image `tag`/`tagPrefix` to `v0.51.0` (a release confirmed to exist in the Chainguard mirror under both the `0.51.0` and `v0.51.0` tags, and to serve both `kafka.strimzi.io/v1beta2` and `kafka.strimzi.io/v1`), replacing the prior `v0.48.0` and keeping the values file's established `v`-prefixed tag convention. `src/groundx/values/chainguard/values.strimzi.cluster.yaml` and its `helm/` mirror SHALL leave `cluster.version` unset, replacing the prior `4.1.0` (a Kafka version no current Strimzi release supports), matching the main v1 chart's greenfield default of leaving `cluster.version`/`cluster.metaVersion` unset.
 
 Polarity: reject the unsupported pinned values (`v0.48.0` operator image, `cluster.version: 4.1.0`) / accept the air-gapped path matching the already-shipped greenfield default (an unset cluster version, a `v1`-capable operator image).
 
-#### Scenario: the Chainguard operator image is pinned to 0.51.0 in both the source and the mirror
+#### Scenario: the Chainguard operator image is pinned to v0.51.0 in both the source and the mirror
 - **WHEN** `src/groundx/values/chainguard/values.strimzi.operator.yaml` and its `helm/` mirror are read
-- **THEN** every image `tag`/`tagPrefix` key equals `0.51.0`, and `v0.48.0` does not appear anywhere
+- **THEN** every image `tag`/`tagPrefix` key equals `v0.51.0`, and `v0.48.0` does not appear anywhere
   in either file
 
 #### Scenario: the Chainguard cluster version is unset, matching the greenfield default, in both the source and the mirror

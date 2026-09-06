@@ -23,28 +23,42 @@ When installing this subchart standalone, always pass `-n <ns>` where `<ns>` equ
 chart's `.Values.namespace`:
 
 ```bash
-helm install groundx-kafka-cluster groundx/groundx-strimzi-kafka-cluster --version 0.2.0 \
+helm install groundx-kafka-cluster groundx/groundx-strimzi-kafka-cluster --version 0.2.7 \
   -n <ns>
 ```
 
 ## Upgrading an existing 0.1.x install
 
 A 0.1.x install predates this chart's move to the stable Strimzi v1 API and the release-namespace
-CR placement below. Upgrading in place — not a drop-in `helm upgrade` — needs all three of the
-following together:
+CR placement below. Upgrading in place is **not** a drop-in `helm upgrade` — it requires the
+following ordered procedure. Follow the steps in order; skipping the operator stepping-stone or
+converting the CRDs out of order can destroy the running cluster's control-plane object.
 
-1. **CRD API move.** The `Kafka`/`KafkaNodePool` CRs move from `kafka.strimzi.io/v1beta2` to
-   `kafka.strimzi.io/v1`. Upgrade the Strimzi operator to a release that serves `v1` **and** this
-   chart together — an operator that only serves `v1beta2` cannot reconcile the CRs this chart
-   renders.
-2. **Version pin.** Set `cluster.version` and `cluster.metaVersion` to the currently-running Kafka
-   version before upgrading. Left unset, the unpinned operator can roll the running cluster to a
-   newer default version on reconcile.
-3. **Namespace match.** Install into a Helm release namespace (`-n <ns>`) equal to the old
-   `.Values.namespace` value. Since 0.2.0 the `Kafka`/`KafkaNodePool` CRs land in `.Release.Namespace`
-   (see "Namespace pairing" above); installing under a different release namespace moves the CRs
-   there, orphaning the original running cluster (or creating an unreachable duplicate) rather than
+1. **Upgrade the Strimzi operator in place to `0.51.0`.** This is the last Strimzi release that
+   serves **both** `kafka.strimzi.io/v1beta2` and `kafka.strimzi.io/v1` at once, so it is the only
+   safe stepping-stone between an old `v1beta2`-only operator and a `v1`-only one. Do not upgrade
+   straight to a `v1`-only operator release from a `v1beta2`-only one.
+2. **Run Strimzi's `strimzi-v1-api-conversion` tool, then the CRD upgrade, against the existing
+   `Kafka`/`KafkaNodePool` resources, while the `0.51.0` operator from step 1 is still running.**
+   This converts the stored CRD version to `v1` in place. **CRDs are converted, never deleted and
+   recreated.** Deleting a Strimzi CRD deletes the `Kafka`/`KafkaNodePool` objects Kubernetes
+   tracks under it, which destroys the running cluster's control-plane object (not the topic data
+   itself, but the object Strimzi reconciles against) — never run a manual `kubectl delete`
+   followed by `kubectl apply` of the CRD as a substitute for the conversion tool.
+3. **Only then run `helm upgrade` to chart `0.2.7`** (the `v1`-only template shape). Running the
+   `helm upgrade` before steps 1 and 2 complete points the still-`v1beta2`-serving operator at CRs
+   the `0.2.7` chart renders as `v1`, which the pre-migration operator cannot reconcile.
+4. **Pin `cluster.version` and `cluster.metaVersion` to the currently-running Kafka version across
+   the whole hop** (steps 1 through 3). Left unset, an operator upgrade can roll the running
+   cluster to a newer default version on reconcile.
+5. **Keep the `helm upgrade` release namespace equal to the old install's `.Values.namespace`
+   value.** Since 0.2.0 the `Kafka`/`KafkaNodePool` CRs land in `.Release.Namespace` (see
+   "Namespace pairing" above); installing under a different release namespace moves the CRs there,
+   orphaning the original running cluster (or creating an unreachable duplicate) rather than
    upgrading it in place.
+6. **Before upgrading, confirm `cluster.replicas <= nodepool.replicas`.** The subchart's
+   render-time guard rejects the upgrade outright if this doesn't already hold, so check it ahead
+   of time rather than discovering it mid-upgrade.
 
 A fresh/greenfield install needs none of this — leave `cluster.version`/`cluster.metaVersion` unset
 so Strimzi picks a supported default, and the CRs land directly in the release namespace with no
