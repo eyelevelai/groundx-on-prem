@@ -16,8 +16,8 @@
   check: grep -q '0.47.0' .github/workflows/kafka-strimzi-kind.yml && grep -q 'groundx-strimzi-kafka-cluster-0.1.1.tgz' .github/workflows/kafka-strimzi-kind.yml
 - [ ] 3.2 In the same job, run the conversion tool + CRD upgrade (never a manual delete/recreate of the CRD) against the running resources and wait for `Ready` again (second checkpoint), then upgrade the operator in place to `0.51.0`, then `helm upgrade` the subchart release to the current `v1`-shaped chart under `src/groundx/prereqs/kafka-cluster`, then wait for `Ready` a third time (final checkpoint) for the `Kafka` custom resource and all five `KafkaTopic` custom resources
   check: grep -q 'strimzi-v1-api-conversion' .github/workflows/kafka-strimzi-kind.yml && grep -q '0.51.0' .github/workflows/kafka-strimzi-kind.yml
-- [ ] 3.3 Confirm the updated workflow file is still valid YAML (guards the known unquoted-colon/em-dash break in a step name or value — see this repo's own prior fix for this exact failure mode on this file)
-  check: python3 -c "import yaml; yaml.safe_load(open('.github/workflows/kafka-strimzi-kind.yml'))"
+- [ ] 3.3 Keep the updated workflow file valid YAML (guards the known unquoted-colon break in a step name or value; see this repo's prior fix for this exact failure mode on this file). Verified as part of implementing 3.1/3.2 (author the new job, then parse the file before committing).
+  check: n/a — regression guard, not a feature-proving check. The workflow already parses on the unchanged tree (the increment-1 em-dash break is fixed), so a standalone parse check cannot fail as a RED baseline. YAML validity is enforced by the CI job's own run (a malformed workflow fails to start) and re-checked at implement time via the .venv python parse before commit.
 
 ## 4. Air-gapped/Chainguard Strimzi values match a currently-supported release (design.md decisions 6-7)
 
