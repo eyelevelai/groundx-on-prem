@@ -145,11 +145,13 @@ jobs:
             --set watchNamespaces="{${KIND_NAMESPACE}}" \
             --wait --timeout 5m
 
-      - name: Install the vendored old subchart package groundx-strimzi-kafka-cluster-0.1.1.tgz
+      - name: Install the vendored old subchart package groundx-strimzi-kafka-cluster-0.1.1.tgz, pinned to the operator-0.47.0-supported Kafka version
         run: |
           helm install groundx-kafka-cluster helm-releases/groundx-strimzi-kafka-cluster-0.1.1.tgz \
             -n "${KIND_NAMESPACE}" \
-            --set namespace="${KIND_NAMESPACE}"
+            --set namespace="${KIND_NAMESPACE}" \
+            --set cluster.version=4.0.0 \
+            --set cluster.metaVersion=4.0
 
       - name: Apply main-chart KafkaTopic resources in the pre-migration v1beta2 shape
         run: |
@@ -197,9 +199,16 @@ jobs:
             - apiGroups:
                 - kafka.strimzi.io
               resources:
-                - kafkas
-                - kafkanodepools
-                - kafkatopics
+                - "*"
+              verbs:
+                - get
+                - list
+                - patch
+                - update
+            - apiGroups:
+                - core.strimzi.io
+              resources:
+                - "*"
               verbs:
                 - get
                 - list
@@ -210,10 +219,6 @@ jobs:
               resources:
                 - customresourcedefinitions
                 - customresourcedefinitions/status
-              resourceNames:
-                - kafkas.kafka.strimzi.io
-                - kafkanodepools.kafka.strimzi.io
-                - kafkatopics.kafka.strimzi.io
               verbs:
                 - get
                 - list
@@ -297,10 +302,12 @@ jobs:
               --for=condition=Ready --timeout=5m
           done
 
-      - name: helm upgrade the subchart release to the current v1-shaped chart
+      - name: helm upgrade the subchart release to the current v1-shaped chart, carrying the same Kafka version pin
         run: |
           helm upgrade groundx-kafka-cluster src/groundx/prereqs/kafka-cluster \
-            -n "${KIND_NAMESPACE}"
+            -n "${KIND_NAMESPACE}" \
+            --set cluster.version=4.0.0 \
+            --set cluster.metaVersion=4.0
 
       - name: Wait for the Kafka cluster to become Ready (checkpoint 3, final)
         run: |
@@ -313,6 +320,24 @@ jobs:
             kubectl wait "kafkatopic.kafka.strimzi.io/${topic}" -n "${KIND_NAMESPACE}" \
               --for=condition=Ready --timeout=5m
           done
+
+      - name: Assert the pinned Kafka version did not roll across the operator hop and conversion
+        run: |
+          actual_version=$(kubectl get kafka.kafka.strimzi.io/stream-cluster -n "${KIND_NAMESPACE}" -o jsonpath='{.spec.kafka.version}')
+          if [ "${actual_version}" != "4.0.0" ]; then
+            echo "FAIL: expected spec.kafka.version to still be 4.0.0 after the operator hop, conversion, and helm upgrade to 0.2.7; got '${actual_version}'" >&2
+            exit 1
+          fi
+          echo "OK: Kafka version stayed pinned at 4.0.0 through the operator 0.47.0 -> 0.51.0 hop, the v1 conversion, and the helm upgrade to 0.2.7"
+
+      - name: "Negative control: a deleted KafkaTopic must FAIL the readiness-wait checkpoint, proving the checkpoint mechanism is non-vacuous"
+        run: |
+          kubectl delete kafkatopic.kafka.strimzi.io/file-upload -n "${KIND_NAMESPACE}" --wait=false
+          if kubectl wait kafkatopic.kafka.strimzi.io/file-upload -n "${KIND_NAMESPACE}" --for=condition=Ready --timeout=30s; then
+            echo "ERROR: readiness wait passed on a deleted resource" >&2
+            exit 1
+          fi
+          echo "OK: readiness wait correctly failed on a deleted KafkaTopic"
 
       - name: Dump diagnostics on failure
         if: failure()
