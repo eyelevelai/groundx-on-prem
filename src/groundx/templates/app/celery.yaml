@@ -145,7 +145,7 @@ spec:
             - /bin/sh
             - -c
             - |
-              export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              export PYTHONPATH=/app &&{{ if eq $mapPrefix "extract" }} exec{{ end }} supervisord -c /app/supervisord.conf
 {{- if gt (len $lifecycle) 0 }}
           lifecycle:
 {{- toYaml $lifecycle | nindent 12 }}
