@@ -30,7 +30,7 @@
 ## 3. URL-embedded consumers: layout, summary, extract (main + metrics identity)
 
 - [x] 3.1 Add `groundx.cache.userinfo` and `groundx.metrics.cache.userinfo` helpers to `cache.tpl`
-  (both mirrors): return `""` when no password is set, `"<urlquery(password)>@"` when only a
+  (both mirrors): return `""` when no password is set, `":<urlquery(password)>@"` when only a
   password is set, and `"<urlquery(username)>:<urlquery(password)>@"` when both are set (Sprig
   `urlquery` for percent-encoding). Update every `printf "%s://%s:%v/0" scheme addr port` call site
   in `layout-config-py.yaml`, `summary-config-py.yaml`, and `extract-config-py.yaml` (both mirrors)

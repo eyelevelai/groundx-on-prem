@@ -29,19 +29,19 @@ Values: no `cache.password`/`cache.username` (default).
 
 ## Mode B: password-only (AUTH `requirepass`)
 
-Values: `cache.password: <pw>` (leave `cache.username` unset). For a chart-created Redis this also configures the server; for an external Redis, set the same `requirepass` on that server.
+Values: `cache.password: <pw>` (leave `cache.username` unset). With the default `cache.metrics.enabled: true` the metrics cache is a separate Redis, so to authenticate it as well set `cache.metrics.password: <metrics-pw>` (setting only `cache.password` leaves metrics unauthenticated). To exercise a separate ranker cache, also set `ranker.cache.addr` + `ranker.cache.password`. For a chart-created Redis this also configures each server; for an external Redis, set the same `requirepass` on each server.
 
-1. Rendered URLs carry `scheme://:<pw>@host:port/0` (colon prefix — the password is in the password position, not the username position). Reserved characters are percent-encoded; a space renders as `%20`.
-2. Rendered `config.yaml` `rec.session`/`metrics.session` carry `password: "<pw>"` and no `username`.
+1. Rendered URLs carry `scheme://:<pw>@host:port/0` (colon prefix, the password is in the password position, not the username position). Reserved characters are percent-encoded; a space renders as `%20`.
+2. Rendered `config.yaml` `rec.session` carries `password: "<pw>"` and no `username`; `metrics.session` carries `password: "<metrics-pw>"` from its own `cache.metrics.password` (it does not inherit `cache.password` while `cache.metrics.enabled: true`).
 3. Chart-created server: the `cache-conf` Secret's `redis.conf` contains `include /etc/redis.conf` then `requirepass "<pw>"`; the StatefulSet launches `redis-server <mounted>/redis.conf`.
 4. Deploy: the cache pod reaches Ready; cashbot-go, ai-server (status + Celery), arcadia, and workspace-runner all authenticate. Confirm a client with the wrong password is rejected.
 
 ## Mode C: username + password (ACL user)
 
-Values: `cache.username: <user>` and `cache.password: <pw>`. The username must be a bare token (no whitespace — the schema rejects whitespace with a clear error). For an external Redis, create the matching ACL user on that server.
+Values: `cache.username: <user>` and `cache.password: <pw>`. With the default separate metrics cache, also set `cache.metrics.username: <metrics-user>` and `cache.metrics.password: <metrics-pw>` to authenticate it (setting only the main-cache credential leaves metrics unauthenticated). For a separate ranker cache, set `ranker.cache.addr` + `ranker.cache.username`/`password`. The username must be a bare token (no whitespace, which the schema rejects with a clear error). For an external Redis, create the matching ACL user on each server.
 
 1. Rendered URLs carry `scheme://<user>:<pw>@host:port/0`, percent-encoded.
-2. Rendered `config.yaml` session blocks carry both `username: "<user>"` and `password: "<pw>"`.
+2. Rendered `config.yaml` `rec.session` carries both `username: "<user>"` and `password: "<pw>"`; `metrics.session` carries the metrics identity's own `username: "<metrics-user>"`/`password: "<metrics-pw>"`, never the main cache's.
 3. Chart-created server: the `redis.conf` contains `include /etc/redis.conf`, then `user default off` and `user <user> on ">pw" ~* &* +@all`.
 4. Deploy: every consumer authenticates as the ACL user. cashbot-go picks up the ACL user only with its `Username` field change (shipped in the cashbot-go PR); an old cashbot-go image ignores the ACL username (password-only still works).
 

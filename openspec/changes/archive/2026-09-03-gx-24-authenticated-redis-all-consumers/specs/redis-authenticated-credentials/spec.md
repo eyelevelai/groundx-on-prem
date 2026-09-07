@@ -24,7 +24,7 @@ SHALL render `username`/`password` fields on the `rec.session` block (main `cach
 
 ### Requirement: Every Celery broker/result URL carries its own identity's credential, percent-encoded
 
-SHALL embed `[username:]password@` into every broker/result-backend URL that `templates/resources/{layout,summary,extract,ranker}-config-py.yaml` and `templates/_helpers/app/workspace.tpl`'s `celeryBrokerUrl`/`celeryResultBackend` helpers (and their `helm/` mirrors) build from a cache identity's `scheme`/`addr`/`port`, using that call site's **own** identity (main `cache`, `cache.metrics`, or `ranker.cache`) — never a different identity's credential — with the username and password percent-encoded (Sprig `urlquery`) so a URL-reserved character survives.
+SHALL embed `[username]:password@` into every broker/result-backend URL that `templates/resources/{layout,summary,extract,ranker}-config-py.yaml` and `templates/_helpers/app/workspace.tpl`'s `celeryBrokerUrl`/`celeryResultBackend` helpers (and their `helm/` mirrors) build from a cache identity's `scheme`/`addr`/`port`, using that call site's **own** identity (main `cache`, `cache.metrics`, or `ranker.cache`) — never a different identity's credential — with the username and password percent-encoded (Sprig `urlquery`) so a URL-reserved character survives.
 
 #### Scenario: Layout/summary/extract broker URLs embed the main and metrics credentials (polarity: finalize success)
 
@@ -36,8 +36,8 @@ SHALL embed `[username:]password@` into every broker/result-backend URL that `te
   `summaryBroker`, `summaryResultBroker`, `broker`) contains the literal encoded fragment
   `cache-acl-user:cache-p%40ss%3Aw0rd@` immediately after `scheme://`
 - **AND THEN** every URL built from the `cache.metrics` identity (`metricsBroker` in all three
-  files) contains `metrics-p%40ss%3Aw0rd@` immediately after `scheme://`, with no `username:`
-  prefix (metrics has no username configured)
+  files) contains `:metrics-p%40ss%3Aw0rd@` immediately after `scheme://` (a leading colon and no
+  username, since metrics has no username configured)
 
 #### Scenario: Ranker's own instance gets its own credential, never the main cache's (polarity: finalize success — catches the mechanical-sweep counterexample)
 

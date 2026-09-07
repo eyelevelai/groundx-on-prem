@@ -50,7 +50,7 @@ breaking change").
     (`metrics.session`), each guarded independently (`{{- if ne (password) "" }}`, mirroring the
     existing `db.password` / upload-credential guard pattern already in this file).
   - `templates/resources/{layout,ranker,summary,workspace}-config-py.yaml` and
-    `extract-config-py.yaml` — embed `[username:]password@` into the broker/result-backend URLs
+    `extract-config-py.yaml` — embed `[username]:password@` into the broker/result-backend URLs
     those files already build from `groundx.cache.*` / `groundx.metrics.cache.*` /
     `groundx.ranker.cache.*`, with the username/password percent-encoded (Sprig `urlquery`) so a
     URL-reserved character in the credential survives.
