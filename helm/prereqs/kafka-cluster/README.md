@@ -42,25 +42,31 @@ converting the CRDs out of order can destroy the running cluster's control-plane
    Kafka `4.0.0` (the version an operator-`0.47.0`-era 0.1.x install runs), so upgrading straight to
    it would reject such a cluster. Do not upgrade straight to a `v1`-only operator release from a
    `v1beta2`-only one.
-2. **Run Strimzi's `strimzi-v1-api-conversion` tool, then the CRD upgrade, against the existing
-   `Kafka`/`KafkaNodePool` resources, while the `0.50.1` operator from step 1 is still running.**
-   This converts the stored CRD version to `v1` in place. **CRDs are converted, never deleted and
-   recreated.** Deleting a Strimzi CRD deletes the `Kafka`/`KafkaNodePool` objects Kubernetes
-   tracks under it, which destroys the running cluster's control-plane object (not the topic data
-   itself, but the object Strimzi reconciles against) — never run a manual `kubectl delete`
-   followed by `kubectl apply` of the CRD as a substitute for the conversion tool.
-3. **Only then run `helm upgrade` to chart `0.2.7`** (the `v1`-only template shape). Running the
-   `helm upgrade` before steps 1 and 2 complete points the still-`v1beta2`-serving operator at CRs
-   the `0.2.7` chart renders as `v1`, which the pre-migration operator cannot reconcile.
-4. **Pin `cluster.version` and `cluster.metaVersion` to the currently-running Kafka version across
-   the whole hop** (steps 1 through 3). Left unset, an operator upgrade can roll the running
+2. **Apply the new Strimzi CRDs.** `helm upgrade` of the operator does **not** upgrade CRDs, so
+   after step 1 the cluster's Strimzi CRDs still serve only `v1beta2`. Apply the operator release's
+   CRD bundle so every Strimzi CRD serves both `v1beta2` and `v1`
+   (`kubectl apply --server-side --force-conflicts -f https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.50.1/strimzi-crds-0.50.1.yaml`).
+   The conversion tool in the next step refuses to run until every CRD offers both versions.
+3. **Run Strimzi's `strimzi-v1-api-conversion` tool (`convert-resource`), then the CRD upgrade
+   (`crd-upgrade`), against the existing `Kafka`/`KafkaNodePool` resources, while the `0.50.1`
+   operator from step 1 is still running.** This converts the custom resources and then makes `v1`
+   the stored CRD version, in place. **CRDs are converted, never deleted and recreated.** Deleting
+   a Strimzi CRD deletes the `Kafka`/`KafkaNodePool` objects Kubernetes tracks under it, which
+   destroys the running cluster's control-plane object (not the topic data itself, but the object
+   Strimzi reconciles against) — never run a manual `kubectl delete` followed by `kubectl apply` of
+   the CRD as a substitute for the conversion tool.
+4. **Only then run `helm upgrade` to chart `0.2.7`** (the `v1`-only template shape). Running the
+   `helm upgrade` before steps 1 through 3 complete points the still-`v1beta2`-serving operator at
+   CRs the `0.2.7` chart renders as `v1`, which the pre-migration operator cannot reconcile.
+5. **Pin `cluster.version` and `cluster.metaVersion` to the currently-running Kafka version across
+   the whole hop** (steps 1 through 4). Left unset, an operator upgrade can roll the running
    cluster to a newer default version on reconcile.
-5. **Keep the `helm upgrade` release namespace equal to the old install's `.Values.namespace`
+6. **Keep the `helm upgrade` release namespace equal to the old install's `.Values.namespace`
    value.** Since 0.2.0 the `Kafka`/`KafkaNodePool` CRs land in `.Release.Namespace` (see
    "Namespace pairing" above); installing under a different release namespace moves the CRs there,
    orphaning the original running cluster (or creating an unreachable duplicate) rather than
    upgrading it in place.
-6. **Before upgrading, confirm `cluster.replicas <= nodepool.replicas`.** The subchart's
+7. **Before upgrading, confirm `cluster.replicas <= nodepool.replicas`.** The subchart's
    render-time guard rejects the upgrade outright if this doesn't already hold, so check it ahead
    of time rather than discovering it mid-upgrade.
 
