@@ -63,8 +63,9 @@ increment 1 could not attempt.
   confirmed to exist in the Chainguard mirror (serves both APIs, so it is also usable as the
   air-gapped operator's own upgrade stepping-stone). Fix
   `src/groundx/values/chainguard/values.strimzi.cluster.yaml` (mirrored into
-  `helm/values/chainguard/values.strimzi.cluster.yaml`) `cluster.version: 4.1.0` — a Kafka version no
-  current Strimzi release supports — to match the main v1 chart's greenfield behavior. The
+  `helm/values/chainguard/values.strimzi.cluster.yaml`) `cluster.version: 4.1.0` override, to match the main v1 chart's greenfield behavior. 0.50.1
+  supports Apache Kafka 4.0.0 through 4.1.1, so 4.1.0 is itself supported; the override is dropped
+  for consistency with the greenfield default, not because the version is unsupported. The
   greenfield (non-air-gapped) subchart leaves `cluster.version`/`cluster.metaVersion` **unset** so
   Strimzi picks its own supported default; this proposal's chosen default is to leave the
   air-gapped/Chainguard values **unset** as well rather than pin an explicit version, on the

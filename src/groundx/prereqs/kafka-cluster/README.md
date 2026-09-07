@@ -147,11 +147,31 @@ converting the CRDs out of order can destroy the running cluster's control-plane
 5. **Pin `cluster.version` and `cluster.metaVersion` to the currently-running Kafka version across
    the whole hop** (steps 1 through 4). Left unset, an operator upgrade can roll the running
    cluster to a newer default version on reconcile.
-6. **Keep the `helm upgrade` release namespace equal to the old install's `.Values.namespace`
-   value.** Since 0.2.0 the `Kafka`/`KafkaNodePool` CRs land in `.Release.Namespace` (see
-   "Namespace pairing" above); installing under a different release namespace moves the CRs there,
-   orphaning the original running cluster (or creating an unreachable duplicate) rather than
-   upgrading it in place.
+6. **Confirm the Helm release namespace and the running-cluster namespace are the same before
+   upgrading, and stop if they differ.** A 0.1.x install stored its `Kafka`/`KafkaNodePool` CRs in
+   `.Values.namespace` (default `eyelevel`), which is independent of the namespace the Helm release
+   itself was installed into. Since 0.2.0 the CRs render into `.Release.Namespace`, so an in-place
+   `helm upgrade` preserves the running cluster only when the release's own namespace already equals
+   the namespace the CRs run in. Check both:
+
+   ```bash
+   # namespace the Helm release lives in
+   helm list -A -f '^groundx-kafka-cluster$' -o json | jq -r '.[0].namespace'
+   # namespace(s) the running Kafka CR lives in
+   kubectl get kafka.kafka.strimzi.io -A \
+     -o jsonpath='{range .items[*]}{.metadata.namespace}{"\n"}{end}'
+   ```
+
+   - **Same namespace:** run `helm upgrade -n <that-namespace>` (step 4); the v1 CRs render into the
+     same namespace and the upgrade is in place. This is the path the migration CI leg exercises.
+   - **Different namespaces:** STOP. A plain `helm upgrade` cannot both find the release (stored in
+     its own namespace) and keep the CRs where they run: upgrading in the CR namespace fails to find
+     the release, and upgrading in the release namespace renders the v1 CRs there, orphaning the
+     running cluster. This case needs an explicit, separately planned release adoption (bring the
+     release under the CR namespace before upgrading, for example by reinstalling/adopting the
+     already-converted v1 CRs into a release in the CR namespace with
+     `helm upgrade --install -n <cr-namespace> --take-ownership`), validated on a copy first. Do not
+     use this in-place runbook when the namespaces differ.
 7. **Before upgrading, confirm `cluster.replicas <= nodepool.replicas`.** The subchart's
    render-time guard rejects the upgrade outright if this doesn't already hold, so check it ahead
    of time rather than discovering it mid-upgrade.
