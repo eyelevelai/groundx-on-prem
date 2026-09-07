@@ -89,15 +89,15 @@ helm unittest src/groundx
 
 echo "==> Verifying Google OCR credentials rendering for both chart surfaces"
 for chart in src/groundx helm; do
-  # Enabled: the credentials ConfigMap resource must actually render. --show-only isolates
+  # Enabled: the credentials Secret resource must actually render. --show-only isolates
   # that one resource, so this cannot be satisfied by the volume's mere reference to the
   # same name (both carry the -ocr-credentials-map token in a full render).
   ocr_configmap="$(helm template ocr-google "${chart}" -f src/groundx/tests/files/values.ocr-google.yaml --show-only templates/resources/layout-ocr-credentials.yaml 2>/dev/null || true)"
-  if ! grep -q 'kind: ConfigMap' <<<"${ocr_configmap}" || ! grep -q -- '-ocr-credentials-map' <<<"${ocr_configmap}"; then
-    echo "${chart}: google OCR enabled render must create the -ocr-credentials-map ConfigMap resource." >&2
+  if ! grep -q 'kind: Secret' <<<"${ocr_configmap}" || ! grep -q -- '-ocr-credentials-map' <<<"${ocr_configmap}"; then
+    echo "${chart}: google OCR enabled render must create the -ocr-credentials-map Secret resource." >&2
     exit 1
   fi
-  # ...and the celery Deployment must mount that ConfigMap and hash it.
+  # ...and the celery Deployment must mount that Secret and hash it.
   ocr_enabled_render="$(helm template ocr-google "${chart}" -f src/groundx/tests/files/values.ocr-google.yaml)"
   for expected in "ocr-credentials-hash" "credentials-volume"; do
     if ! grep -q -- "${expected}" <<<"${ocr_enabled_render}"; then
@@ -105,16 +105,16 @@ for chart in src/groundx helm; do
       exit 1
     fi
   done
-  # Disabled (credentials set, layout.ocr.enabled=false): the ConfigMap resource must NOT
+  # Disabled (credentials set, layout.ocr.enabled=false): the Secret resource must NOT
   # render (--show-only fails when the guard drops it to an empty document), and the
-  # Deployment must NOT mount a ConfigMap that is never created (the F5 must-not-mount case).
+  # Deployment must NOT mount a Secret that is never created (the F5 must-not-mount case).
   if helm template ocr-google-disabled "${chart}" -f src/groundx/tests/files/values.ocr-google-disabled.yaml --show-only templates/resources/layout-ocr-credentials.yaml >/dev/null 2>&1; then
-    echo "${chart}: google OCR disabled render must not create the -ocr-credentials-map ConfigMap." >&2
+    echo "${chart}: google OCR disabled render must not create the -ocr-credentials-map Secret." >&2
     exit 1
   fi
   ocr_disabled_render="$(helm template ocr-google-disabled "${chart}" -f src/groundx/tests/files/values.ocr-google-disabled.yaml)"
   if grep -q -- "credentials-volume" <<<"${ocr_disabled_render}"; then
-    echo "${chart}: google OCR disabled render must not mount a ConfigMap that is never created." >&2
+    echo "${chart}: google OCR disabled render must not mount a Secret that is never created." >&2
     exit 1
   fi
 done

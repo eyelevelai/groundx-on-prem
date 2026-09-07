@@ -160,8 +160,8 @@ spec:
               subPath: config.yaml
       volumes:
         - name: config-volume
-          configMap:
-            name: config-yaml-map
+          secret:
+            secretName: config-yaml-map
 
 {{- if $int }}
 {{ include "groundx.renderInterface" (dict "name" $svc "lb" $int "root" $) }}

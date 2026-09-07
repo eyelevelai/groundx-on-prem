@@ -201,8 +201,8 @@ spec:
               readOnly: true
       volumes:
         - name: config-volume
-          configMap:
-            name: config-yaml-map
+          secret:
+            secretName: config-yaml-map
         - name: tls-volume
           secret:
             secretName: {{ $tlsSecretName }}

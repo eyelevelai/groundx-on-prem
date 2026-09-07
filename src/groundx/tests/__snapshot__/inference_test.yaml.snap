@@ -19,7 +19,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0e62c00d3b122115c882493823cdaa38d82aed94891faac8b29b80d6b1a32960
+            config-hash: 27319637c17dae4a9a05683d0e2c16fb2a2f3428ed8ee62f15295009a659fa99
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
@@ -223,9 +223,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -287,7 +287,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 733e45adac5787e4ffd55a434b154abb5bc0550a965d20c621344e406bd14e52
+            config-hash: 80984f2c4c5a566db5f4dd7a3c86abb0733bb079165671ca808e888a3cd8f9af
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
@@ -483,9 +483,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
@@ -547,7 +547,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 17ef124814867fcbb6212c1851edc76e6acdb7802e42c7fef134a2fb6f3ec938
+            config-hash: ea698157e5a248cb307974eaf0b410f6b3b67dfa9c1de3ee0df957acbe0d63f9
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: a48af0c98c4a6d0aafa9d919d204e9d8b1c51e416a36f766644a6c8d11e48a90
@@ -740,9 +740,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-inference-supervisord-conf-map
               name: supervisord-volume
@@ -805,7 +805,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 049c37fdbe18201176cad7589519f0abedd3f900a382056ce812fbb34445447f
+            config-hash: ac64ede8ede164dcea7675a7bc1abe41d057a51a4ab9eebbebdd705b70bc81ce
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
@@ -1008,9 +1008,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -1072,7 +1072,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 24aff6348b1fea7073493e71f63a6fbf3f1656e86a2cfc90c360ac0be2745d4b
+            config-hash: ac9291d84ab87466fb7f0b6f351533f5e84e0af9b65a4917346adef6cdd66621
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
@@ -1267,9 +1267,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
@@ -1331,7 +1331,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9b550f83fe615008fd7a3bd4fb324f3a3b8607943a72f3da1da21a0b31921ebc
+            config-hash: f19515bd35dbbf61aa32bae04e98da83bcb133856d7d855eed7f3c170e247b5f
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: a48af0c98c4a6d0aafa9d919d204e9d8b1c51e416a36f766644a6c8d11e48a90
@@ -1523,9 +1523,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-inference-supervisord-conf-map
               name: supervisord-volume
@@ -1588,7 +1588,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2f8a61a500bc77e4c1e128cb58c29295ae9d683661b44342c038609ac387352
+            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
@@ -1791,9 +1791,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -1855,7 +1855,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c6c50f072a3a410ffff2319cc26c1f7772989921b79ba752c875ac36a51d3be7
+            config-hash: 90d8d3d124b674c0682da50361feded1ac99639c608b03372420c8d6942bc5cc
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
@@ -2050,9 +2050,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
@@ -2114,7 +2114,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 98ce5b024876419328628261ed1d43fb288560dba6cfc74a959b79cf197491ab
+            config-hash: 99f41ef2cfafc8c53d00c72d079fe6433f24db2e19f2e5ce76160425923f03b9
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: a48af0c98c4a6d0aafa9d919d204e9d8b1c51e416a36f766644a6c8d11e48a90
@@ -2306,9 +2306,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-inference-supervisord-conf-map
               name: supervisord-volume
@@ -2372,7 +2372,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2f8a61a500bc77e4c1e128cb58c29295ae9d683661b44342c038609ac387352
+            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
@@ -2575,9 +2575,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -2639,7 +2639,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c6c50f072a3a410ffff2319cc26c1f7772989921b79ba752c875ac36a51d3be7
+            config-hash: 90d8d3d124b674c0682da50361feded1ac99639c608b03372420c8d6942bc5cc
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
@@ -2834,9 +2834,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
@@ -2898,7 +2898,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 98ce5b024876419328628261ed1d43fb288560dba6cfc74a959b79cf197491ab
+            config-hash: 99f41ef2cfafc8c53d00c72d079fe6433f24db2e19f2e5ce76160425923f03b9
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: a48af0c98c4a6d0aafa9d919d204e9d8b1c51e416a36f766644a6c8d11e48a90
@@ -3090,9 +3090,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-inference-supervisord-conf-map
               name: supervisord-volume
@@ -3155,7 +3155,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b06b20f2d0b0544c43eca2ac371f76b5837528a388f92d53a07c20e32c9a9d5b
+            config-hash: adf484b64913429b71d5d179fc3045f2df5c48110f935e02bb6e95268a741789
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
@@ -3358,9 +3358,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -3422,7 +3422,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5ebad025767c6f3e527aea8e90214814fdfd2922ab2e71fb562d66657cba8c30
+            config-hash: 7b60f1b2132310ead672f894395f75bc3e4db6b2d3dd7900ac2bf51d99ea9023
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
@@ -3617,9 +3617,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
@@ -3682,7 +3682,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cd27bb81927f5164f824cd11d7ddc53bf1ae2d7ca47d4608dfdd0eb9c5ad1637
+            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
@@ -3889,9 +3889,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -3953,7 +3953,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c5a4ab40a805fc0aa3b879f0ed57468d4bb5b0b2c86fa0b31307bd5302c51742
+            config-hash: 3992bea0a7ef8e1b59fcda5335ce3098aab0d90eda669eefc4e300628fef8eec
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
@@ -4152,9 +4152,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
@@ -4216,7 +4216,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4219e04ff7ea14faa1eb8b710e1d62388ae5cc16d802bb65bd902a646bdcbcb4
+            config-hash: 1fe84656d42aeaadd42f108c33efed189e6cbe10a886b815e2733c0de6d3653e
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: a48af0c98c4a6d0aafa9d919d204e9d8b1c51e416a36f766644a6c8d11e48a90
@@ -4412,9 +4412,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-inference-supervisord-conf-map
               name: supervisord-volume
@@ -4477,7 +4477,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5c76b67f2bc7e2de68d10d8d00ba8610e5397db2016a1ef5398f139b3f716062
+            config-hash: e836b26fff276f9e1ebed3b1eef5c3003c1fd50adcb280c94fda20becddcceb4
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
@@ -4680,9 +4680,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -4744,7 +4744,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 11e34bf411b790fb053c5f7d87095f3df68fed7c523323f4ce14ab1c731b001a
+            config-hash: 7e376485c604c89cfabc614b42d2e378da2fab7f6ad0dd09c5cb30af313477b2
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
@@ -4939,9 +4939,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
@@ -5003,7 +5003,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e059715cac78edb91cf35e9d601b544d69549ff9efa79b4ca64efeb88b19f652
+            config-hash: 58a2df1961226517dde68430c4cde9ff29487e1dae3dcbf8c7027af93a9fd243
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: a48af0c98c4a6d0aafa9d919d204e9d8b1c51e416a36f766644a6c8d11e48a90
@@ -5195,9 +5195,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-inference-supervisord-conf-map
               name: supervisord-volume
@@ -5260,7 +5260,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cd27bb81927f5164f824cd11d7ddc53bf1ae2d7ca47d4608dfdd0eb9c5ad1637
+            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
@@ -5467,9 +5467,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -5531,7 +5531,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c5a4ab40a805fc0aa3b879f0ed57468d4bb5b0b2c86fa0b31307bd5302c51742
+            config-hash: 3992bea0a7ef8e1b59fcda5335ce3098aab0d90eda669eefc4e300628fef8eec
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
@@ -5730,9 +5730,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
@@ -5795,7 +5795,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 24b8fbd2f36aa9f97623483c8c28954253e4d7a331f1ddf9bb0e9bd38d415521
+            config-hash: 9b1da618fb9cb28d7e067e866353abe6fc6b6f7ccdd5938ae44029cd78062e34
             config-models-hash: 06ba464c30a765382364510ccee1e65088f7d2acbc11a746b7d14d84c220dd3b
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             prometheus.io/port: "8081"
@@ -5974,9 +5974,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: myapp-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: myapp-config-py-map
             - configMap:
                 name: myapp-inference-supervisord-conf-map
               name: supervisord-volume
@@ -6038,7 +6038,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d99d002053b8144d0eb5345347e371fdc962fc6fb03b6e017d485b0c86149b70
+            config-hash: 341d44e61c7b48386a4bc1cb6bb40ea2b700340e1c5d76472f7c18777811f057
             config-models-hash: 06ba464c30a765382364510ccee1e65088f7d2acbc11a746b7d14d84c220dd3b
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: 8464ec25dcc7b52084949079db8004277a72b0c6d49235247cb01f7d8fde7595
@@ -6232,9 +6232,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: myapp-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: myapp-config-py-map
             - configMap:
                 name: myapp-inference-supervisord-conf-map
               name: supervisord-volume
@@ -6296,7 +6296,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 56c8f18fe0eff2755753436654dc07e20e637e6c2706f1c53014edcfd7ee498c
+            config-hash: e3e55899a2ad709cb04aae6178d9d39ba8089f3a82339d4541992a330e7d0246
             config-models-hash: 06ba464c30a765382364510ccee1e65088f7d2acbc11a746b7d14d84c220dd3b
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             prometheus.io/port: "8081"
@@ -6458,9 +6458,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: myapp-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: myapp-config-py-map
             - configMap:
                 name: myapp-inference-supervisord-conf-map
               name: supervisord-volume
@@ -6523,7 +6523,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ebaefc6af0f1c9c3731fb790ce2235c0a0ed6224f8265c625fc8bb28f856298a
+            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
@@ -6698,9 +6698,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -6742,7 +6742,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 24aff6348b1fea7073493e71f63a6fbf3f1656e86a2cfc90c360ac0be2745d4b
+            config-hash: ac9291d84ab87466fb7f0b6f351533f5e84e0af9b65a4917346adef6cdd66621
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
           labels:
@@ -6909,9 +6909,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
@@ -6953,7 +6953,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9b550f83fe615008fd7a3bd4fb324f3a3b8607943a72f3da1da21a0b31921ebc
+            config-hash: f19515bd35dbbf61aa32bae04e98da83bcb133856d7d855eed7f3c170e247b5f
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             supervisord-hash: a48af0c98c4a6d0aafa9d919d204e9d8b1c51e416a36f766644a6c8d11e48a90
           labels:
@@ -7117,9 +7117,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-inference-supervisord-conf-map
               name: supervisord-volume
@@ -7162,7 +7162,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ebaefc6af0f1c9c3731fb790ce2235c0a0ed6224f8265c625fc8bb28f856298a
+            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
@@ -7329,9 +7329,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -7373,7 +7373,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 24aff6348b1fea7073493e71f63a6fbf3f1656e86a2cfc90c360ac0be2745d4b
+            config-hash: ac9291d84ab87466fb7f0b6f351533f5e84e0af9b65a4917346adef6cdd66621
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
           labels:
@@ -7532,9 +7532,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
@@ -7576,7 +7576,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9b550f83fe615008fd7a3bd4fb324f3a3b8607943a72f3da1da21a0b31921ebc
+            config-hash: f19515bd35dbbf61aa32bae04e98da83bcb133856d7d855eed7f3c170e247b5f
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             supervisord-hash: a48af0c98c4a6d0aafa9d919d204e9d8b1c51e416a36f766644a6c8d11e48a90
           labels:
@@ -7732,9 +7732,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-inference-supervisord-conf-map
               name: supervisord-volume
@@ -7777,7 +7777,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9cb086224bcbefcd195a92ba8c0903e63036900c20fb5797d656ce5dffe4bc0c
+            config-hash: c46fd29f427efea3f2e374c353f6d3ad42ae56b2936cafdb64187b5c5f0d8d03
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
@@ -7946,9 +7946,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -7990,7 +7990,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6eeb52486112983f5073bc799ec53c2d265bd90e6ad2af31f577505b5e67e3ff
+            config-hash: 42531a5b3e71b2717e16ee81e69bd953744e418bbd246e89b45e1bc763d22bfb
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
           labels:
@@ -8151,9 +8151,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
@@ -8195,7 +8195,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 1b1aead3ca98c3ddee0f7bd5b82db625856ebb4bd9fe5fe1cef654c9499d87fb
+            config-hash: 303137171c8c7bb69bfb0c4c4d1f73d31384a1fd40a4cf2ac410b059b2f270da
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             supervisord-hash: a48af0c98c4a6d0aafa9d919d204e9d8b1c51e416a36f766644a6c8d11e48a90
           labels:
@@ -8356,9 +8356,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-inference-supervisord-conf-map
               name: supervisord-volume

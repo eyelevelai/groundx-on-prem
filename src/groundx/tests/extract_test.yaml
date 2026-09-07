@@ -141,22 +141,22 @@ tests:
       file.existing.url: https://account-storage.example.com
     asserts:
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: 'bucket="extract-bucket"'
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: 'region="us-east-1"'
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: 'type="minio"'
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: 'url="https://account-storage.example.com/extract-bucket/"'
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: 'key="account-user"'
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: 'secret="account-secret"'
   - it: "empty extract credentials preserve platform credential injection"
     templates:
@@ -179,22 +179,22 @@ tests:
       file.existing.url: https://account-bucket.s3.us-west-2.amazonaws.com
     asserts:
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: 'bucket="account-bucket"'
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: 'region="us-west-2"'
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: 'type="s3"'
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: 'url="https://account-bucket.s3.us-west-2.amazonaws.com/"'
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: 'key=""'
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: 'secret=""'
   - it: "extract pods inherit the account-wide service account"
     templates:
@@ -493,7 +493,7 @@ tests:
       - ../values/extract/values.yaml
     asserts:
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: "image_transport=\"data_url\""
   - it: "bedrock extract config renders service and preserves configured transport"
     templates:
@@ -511,16 +511,16 @@ tests:
       extract.file.url: https://configured-bucket.s3.us-west-2.amazonaws.com
     asserts:
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: 'service="bedrock"'
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: 'image_transport="pil"'
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: 'bucket="configured-bucket"'
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: 'type="s3"'
   - it: "bedrock extract config rejects non-S3 storage"
     templates:
@@ -708,13 +708,13 @@ tests:
       extract.save.queue: custom_save_queue
     asserts:
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: 'agent_queue = "custom_agent_queue"'
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: 'download_queue = "custom_download_queue"'
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: 'save_queue = "custom_save_queue"'
   - it: "extract config renders nested model kwargs as Python objects"
     templates:
@@ -726,10 +726,10 @@ tests:
       extract.agent.model.kwargs.client_kwargs.timeout: 180
     asserts:
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: '"client_kwargs": \{[^}]*"max_retries": 1'
       - matchRegex:
-          path: data["config.py"]
+          path: stringData["config.py"]
           pattern: '"client_kwargs": \{[^}]*"timeout": 180'
   - it: "extract-agent hpa keeps a safer default minimum"
     templates:
