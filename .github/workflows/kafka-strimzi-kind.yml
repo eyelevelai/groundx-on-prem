@@ -174,6 +174,18 @@ jobs:
               --for=condition=Ready --timeout=5m
           done
 
+      - name: Capture pre-migration resource UIDs (continuity baseline for the convert-in-place assertion)
+        run: |
+          mkdir -p /tmp/premigrate
+          kubectl get kafka.kafka.strimzi.io/stream-cluster -n "${KIND_NAMESPACE}" -o jsonpath='{.metadata.uid}' > /tmp/premigrate/kafka.uid
+          kubectl get kafkanodepool.kafka.strimzi.io/stream-dual-role -n "${KIND_NAMESPACE}" -o jsonpath='{.metadata.uid}' > /tmp/premigrate/nodepool.uid
+          for topic in file-pre-process file-process file-summary file-update file-upload; do
+            kubectl get "kafkatopic.kafka.strimzi.io/${topic}" -n "${KIND_NAMESPACE}" -o jsonpath='{.metadata.uid}' > "/tmp/premigrate/topic-${topic}.uid"
+          done
+          kubectl get pvc -n "${KIND_NAMESPACE}" -l strimzi.io/cluster=stream-cluster \
+            -o jsonpath='{range .items[*]}{.metadata.name}={.metadata.uid}{"\n"}{end}' | sort > /tmp/premigrate/pvc.uids
+          echo "pre-migration UIDs:"; head -100 /tmp/premigrate/*.uid /tmp/premigrate/pvc.uids
+
       - name: Upgrade the Strimzi operator in place to 0.50.1 (dual-serving stepping-stone)
         run: |
           helm upgrade strimzi-operator oci://quay.io/strimzi-helm/strimzi-kafka-operator \
@@ -326,14 +338,40 @@ jobs:
               --for=condition=Ready --timeout=5m
           done
 
-      - name: Assert the pinned Kafka version did not roll across the operator hop and conversion
+      - name: Assert resource continuity (converted in place, not recreated) and that the running Kafka version did not roll
         run: |
-          actual_version=$(kubectl get kafka.kafka.strimzi.io/stream-cluster -n "${KIND_NAMESPACE}" -o jsonpath='{.spec.kafka.version}')
-          if [ "${actual_version}" != "4.0.0" ]; then
-            echo "FAIL: expected spec.kafka.version to still be 4.0.0 after the operator hop, conversion, and helm upgrade to 0.2.7; got '${actual_version}'" >&2
-            exit 1
+          fail=0
+          check_uid() {
+            local ref="$1" file="$2"
+            local before after
+            before=$(cat "/tmp/premigrate/${file}.uid")
+            after=$(kubectl get "$ref" -n "${KIND_NAMESPACE}" -o jsonpath='{.metadata.uid}')
+            if [ "$before" != "$after" ]; then
+              echo "FAIL: ${ref} UID changed (${before} -> ${after}): resource was deleted and recreated, not converted in place" >&2
+              fail=1
+            fi
+          }
+          check_uid kafka.kafka.strimzi.io/stream-cluster kafka
+          check_uid kafkanodepool.kafka.strimzi.io/stream-dual-role nodepool
+          for topic in file-pre-process file-process file-summary file-update file-upload; do
+            check_uid "kafkatopic.kafka.strimzi.io/${topic}" "topic-${topic}"
+          done
+          after_pvc=$(kubectl get pvc -n "${KIND_NAMESPACE}" -l strimzi.io/cluster=stream-cluster \
+            -o jsonpath='{range .items[*]}{.metadata.name}={.metadata.uid}{"\n"}{end}' | sort)
+          if [ "$(cat /tmp/premigrate/pvc.uids)" != "${after_pvc}" ]; then
+            echo "FAIL: broker PVC set/UIDs changed across the migration (data volume was recreated)" >&2
+            echo "before:"; cat /tmp/premigrate/pvc.uids; echo "after:"; echo "${after_pvc}"
+            fail=1
           fi
-          echo "OK: Kafka version stayed pinned at 4.0.0 through the operator 0.47.0 -> 0.50.1 hop, the v1 conversion, and the helm upgrade to 0.2.7"
+          running=$(kubectl get kafka.kafka.strimzi.io/stream-cluster -n "${KIND_NAMESPACE}" -o jsonpath='{.status.kafkaVersion}')
+          if [ "${running}" != "4.0.0" ]; then
+            echo "FAIL: status.kafkaVersion (the running broker version) is '${running}', expected 4.0.0 -- the broker rolled across the hop" >&2
+            fail=1
+          fi
+          if [ "${fail}" = 0 ]; then
+            echo "OK: the same Kafka/KafkaNodePool/KafkaTopic/PVC objects survived (converted in place, not recreated) and the broker still runs Kafka 4.0.0"
+          fi
+          exit "${fail}"
 
       - name: "Negative control: a deleted KafkaTopic must FAIL the readiness-wait checkpoint, proving the checkpoint mechanism is non-vacuous"
         run: |

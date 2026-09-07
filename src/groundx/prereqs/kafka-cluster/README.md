@@ -47,14 +47,52 @@ converting the CRDs out of order can destroy the running cluster's control-plane
    CRD bundle so every Strimzi CRD serves both `v1beta2` and `v1`
    (`kubectl apply --server-side --force-conflicts -f https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.50.1/strimzi-crds-0.50.1.yaml`).
    The conversion tool in the next step refuses to run until every CRD offers both versions.
-3. **Run Strimzi's `strimzi-v1-api-conversion` tool (`convert-resource`), then the CRD upgrade
-   (`crd-upgrade`), against the existing `Kafka`/`KafkaNodePool` resources, while the `0.50.1`
-   operator from step 1 is still running.** This converts the custom resources and then makes `v1`
-   the stored CRD version, in place. **CRDs are converted, never deleted and recreated.** Deleting
-   a Strimzi CRD deletes the `Kafka`/`KafkaNodePool` objects Kubernetes tracks under it, which
-   destroys the running cluster's control-plane object (not the topic data itself, but the object
-   Strimzi reconciles against) — never run a manual `kubectl delete` followed by `kubectl apply` of
-   the CRD as a substitute for the conversion tool.
+3. **Convert the custom resources to `v1`, then upgrade the CRD stored version, using Strimzi's
+   `strimzi-v1-api-conversion` tool while the `0.50.1` operator from step 1 is still running.** The
+   tool converts every Strimzi custom resource in place (`Kafka`, `KafkaNodePool`, `KafkaTopic`, and
+   the `StrimziPodSet`), then makes `v1` the stored CRD version. **CRDs are converted, never deleted
+   and recreated** — deleting a Strimzi CRD deletes the objects Kubernetes tracks under it and
+   destroys the running cluster's control-plane object, so never substitute a manual `kubectl
+   delete` + `kubectl apply` of the CRD for the tool. The tool ships inside the operator image;
+   run it as two short pods (replace `<namespace>` with the release namespace; on an air-gapped
+   install use the `cgr.dev/eyelevel.ai/strimzi-kafka-operator:v0.50.1` image in place of the
+   `quay.io` one):
+
+   ```bash
+   # RBAC the conversion tool needs (it reads/patches all Strimzi CRs and the CRDs)
+   kubectl apply -f - <<'EOF'
+   apiVersion: v1
+   kind: ServiceAccount
+   metadata: { name: strimzi-v1-api-conversion, namespace: <namespace> }
+   ---
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: ClusterRole
+   metadata: { name: strimzi-v1-api-conversion }
+   rules:
+     - { apiGroups: [kafka.strimzi.io], resources: ["*"], verbs: [get, list, patch, update] }
+     - { apiGroups: [core.strimzi.io], resources: ["*"], verbs: [get, list, patch, update] }
+     - { apiGroups: [apiextensions.k8s.io], resources: [customresourcedefinitions, customresourcedefinitions/status], verbs: [get, list, patch, update] }
+   ---
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: ClusterRoleBinding
+   metadata: { name: strimzi-v1-api-conversion }
+   roleRef: { apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: strimzi-v1-api-conversion }
+   subjects:
+     - { kind: ServiceAccount, name: strimzi-v1-api-conversion, namespace: <namespace> }
+   EOF
+
+   # 1) convert the custom resources (Kafka, KafkaNodePool, KafkaTopic, StrimziPodSet) to v1
+   kubectl run strimzi-convert -n <namespace> --restart=Never --attach --rm \
+     --image=quay.io/strimzi/operator:0.50.1 \
+     --overrides='{"spec":{"serviceAccountName":"strimzi-v1-api-conversion"}}' \
+     --command -- /opt/v1-api-conversion/bin/v1-api-conversion.sh convert-resource
+
+   # 2) make v1 the stored CRD version
+   kubectl run strimzi-crd-upgrade -n <namespace> --restart=Never --attach --rm \
+     --image=quay.io/strimzi/operator:0.50.1 \
+     --overrides='{"spec":{"serviceAccountName":"strimzi-v1-api-conversion"}}' \
+     --command -- /opt/v1-api-conversion/bin/v1-api-conversion.sh crd-upgrade
+   ```
 4. **Only then run `helm upgrade` to chart `0.2.7`** (the `v1`-only template shape). Running the
    `helm upgrade` before steps 1 through 3 complete points the still-`v1beta2`-serving operator at
    CRs the `0.2.7` chart renders as `v1`, which the pre-migration operator cannot reconcile.
