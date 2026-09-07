@@ -142,7 +142,7 @@ jobs:
           helm install strimzi-operator oci://quay.io/strimzi-helm/strimzi-kafka-operator \
             --version 0.47.0 \
             -n "${KIND_NAMESPACE}" \
-            --set watchNamespaces="{${KIND_NAMESPACE}}" \
+            --set watchAnyNamespace=true \
             --wait --timeout 5m
 
       - name: Install the vendored old subchart package groundx-strimzi-kafka-cluster-0.1.1.tgz, pinned to the operator-0.47.0-supported Kafka version
@@ -179,7 +179,7 @@ jobs:
           helm upgrade strimzi-operator oci://quay.io/strimzi-helm/strimzi-kafka-operator \
             --version 0.50.1 \
             -n "${KIND_NAMESPACE}" \
-            --set watchNamespaces="{${KIND_NAMESPACE}}" \
+            --set watchAnyNamespace=true \
             --wait --timeout 5m
 
       - name: Run the strimzi-v1-api-conversion tool (convert-resource)
