@@ -51,18 +51,27 @@ converting the CRDs out of order can destroy the running cluster's control-plane
    `strimzi-v1-api-conversion` tool while the `0.50.1` operator from step 1 is still running.** The
    tool converts every Strimzi custom resource in place (`Kafka`, `KafkaNodePool`, `KafkaTopic`, and
    the `StrimziPodSet`), then makes `v1` the stored CRD version. **CRDs are converted, never deleted
-   and recreated** — deleting a Strimzi CRD deletes the objects Kubernetes tracks under it and
+   and recreated:** deleting a Strimzi CRD deletes the objects Kubernetes tracks under it and
    destroys the running cluster's control-plane object, so never substitute a manual `kubectl
-   delete` + `kubectl apply` of the CRD for the tool. The tool ships inside the operator image;
-   run it as two short pods (replace `<namespace>` with the release namespace; on an air-gapped
-   install use the `cgr.dev/eyelevel.ai/strimzi-kafka-operator:v0.50.1` image in place of the
-   `quay.io` one). **`crd-upgrade` acts cluster-wide** — it removes the `v1beta2` stored API from
-   the shared Strimzi CRDs, so every Strimzi custom resource in the cluster must be converted first,
-   not only the ones in this release's namespace. `convert-resource --all-namespaces` does that; if
-   the cluster runs other Strimzi workloads you do not own, coordinate before running `crd-upgrade`.
+   delete` + `kubectl apply` of the CRD for the tool. The tool ships inside the operator image; run
+   it as short pods (replace `<namespace>` with the release namespace; on an air-gapped install use
+   the `cgr.dev/eyelevel.ai/strimzi-kafka-operator:v0.50.1` image in place of the `quay.io` one).
+
+   **Before converting, complete Strimzi's documented prerequisites:** back up every Strimzi custom
+   resource in the cluster (step 1 below), and review the
+   [v1 API field changes](https://strimzi.io/docs/operators/0.50.1/deploying#assembly-api-conversion-tool-str)
+   for any deprecated or unsupported field that needs a manual edit before conversion.
+
+   **`crd-upgrade` acts cluster-wide:** it removes the `v1beta2` stored API from the shared Strimzi
+   CRDs, so every Strimzi custom resource in the cluster must already be converted, not only the
+   ones in this release's namespace. `convert-resource --all-namespaces` does that. Run `crd-upgrade`
+   only after confirming every resource converted successfully, and if the cluster runs other
+   Strimzi workloads you do not own, coordinate before finalizing the shared CRDs. The RBAC below is
+   Strimzi's official `0.50.1` conversion-job manifest: scoped to the Strimzi CRDs by name, with the
+   `configmaps` access the tool needs to convert `KafkaBridge` metrics configuration.
 
    ```bash
-   # RBAC the conversion tool needs (it reads/patches all Strimzi CRs and the CRDs, cluster-wide)
+   # RBAC the conversion tool needs — Strimzi's official 0.50.1 conversion-job permissions
    kubectl apply -f - <<'EOF'
    apiVersion: v1
    kind: ServiceAccount
@@ -72,9 +81,29 @@ converting the CRDs out of order can destroy the running cluster's control-plane
    kind: ClusterRole
    metadata: { name: strimzi-v1-api-conversion }
    rules:
-     - { apiGroups: [kafka.strimzi.io], resources: ["*"], verbs: [get, list, patch, update] }
-     - { apiGroups: [core.strimzi.io], resources: ["*"], verbs: [get, list, patch, update] }
-     - { apiGroups: [apiextensions.k8s.io], resources: [customresourcedefinitions, customresourcedefinitions/status], verbs: [get, list, patch, update] }
+     - apiGroups: [kafka.strimzi.io]
+       resources: [kafkas, kafkanodepools, kafkaconnects, kafkaconnectors, kafkabridges, kafkamirrormaker2s, kafkarebalances, kafkatopics, kafkausers]
+       verbs: [get, list, patch, update]
+     - apiGroups: [core.strimzi.io]
+       resources: [strimzipodsets]
+       verbs: [get, list, patch, update]
+     - apiGroups: [apiextensions.k8s.io]
+       resources: [customresourcedefinitions, customresourcedefinitions/status]
+       resourceNames:
+         - kafkabridges.kafka.strimzi.io
+         - kafkaconnectors.kafka.strimzi.io
+         - kafkaconnects.kafka.strimzi.io
+         - kafkamirrormaker2s.kafka.strimzi.io
+         - kafkanodepools.kafka.strimzi.io
+         - kafkarebalances.kafka.strimzi.io
+         - kafkas.kafka.strimzi.io
+         - kafkatopics.kafka.strimzi.io
+         - kafkausers.kafka.strimzi.io
+         - strimzipodsets.core.strimzi.io
+       verbs: [get, list, patch, update]
+     - apiGroups: [""]           # configmaps: required when converting KafkaBridge metrics config
+       resources: [configmaps]
+       verbs: [get, list, create, patch, update]
    ---
    apiVersion: rbac.authorization.k8s.io/v1
    kind: ClusterRoleBinding
@@ -84,20 +113,29 @@ converting the CRDs out of order can destroy the running cluster's control-plane
      - { kind: ServiceAccount, name: strimzi-v1-api-conversion, namespace: <namespace> }
    EOF
 
-   # 1) convert EVERY Strimzi custom resource in the cluster to v1 (all namespaces), before the
-   #    cluster-wide crd-upgrade below finalizes the CRDs
+   # 1) back up every Strimzi custom resource in the cluster before touching anything
+   kubectl get kafkas,kafkanodepools,kafkatopics,kafkausers,kafkaconnects,kafkaconnectors,kafkabridges,kafkamirrormaker2s,kafkarebalances -A -o yaml > strimzi-cr-backup.yaml
+   kubectl get strimzipodsets.core.strimzi.io -A -o yaml > strimzi-podset-backup.yaml
+
+   # 2) convert EVERY Strimzi custom resource in the cluster to v1 (all namespaces). --attach prints
+   #    the tool output; it converts every resource or exits non-zero. Do not proceed on a failure.
    kubectl run strimzi-convert -n <namespace> --restart=Never --attach --rm \
      --image=quay.io/strimzi/operator:0.50.1 \
      --overrides='{"spec":{"serviceAccountName":"strimzi-v1-api-conversion"}}' \
      --command -- /opt/v1-api-conversion/bin/v1-api-conversion.sh convert-resource --all-namespaces
 
-   # 2) make v1 the stored CRD version (cluster-wide)
+   # 3) make v1 the stored CRD version (cluster-wide) — ONLY after the convert step above succeeded
    kubectl run strimzi-crd-upgrade -n <namespace> --restart=Never --attach --rm \
      --image=quay.io/strimzi/operator:0.50.1 \
      --overrides='{"spec":{"serviceAccountName":"strimzi-v1-api-conversion"}}' \
      --command -- /opt/v1-api-conversion/bin/v1-api-conversion.sh crd-upgrade
 
-   # 3) remove the temporary cluster-wide conversion RBAC (run whether or not the steps above
+   # 4) verify every Strimzi CRD now stores ONLY v1 (each line must print ["v1"])
+   kubectl get crd -o name | grep kafka.strimzi.io | while read -r crd; do
+     echo -n "$crd  "; kubectl get "$crd" -o jsonpath='{.status.storedVersions}{"\n"}'
+   done
+
+   # 5) remove the temporary cluster-wide conversion RBAC (run whether or not the steps above
    #    succeeded, so the privileged binding never lingers)
    kubectl delete clusterrolebinding strimzi-v1-api-conversion --ignore-not-found
    kubectl delete clusterrole strimzi-v1-api-conversion --ignore-not-found

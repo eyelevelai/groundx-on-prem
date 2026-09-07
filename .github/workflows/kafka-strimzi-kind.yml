@@ -216,7 +216,15 @@ jobs:
             - apiGroups:
                 - kafka.strimzi.io
               resources:
-                - "*"
+                - kafkas
+                - kafkanodepools
+                - kafkaconnects
+                - kafkaconnectors
+                - kafkabridges
+                - kafkamirrormaker2s
+                - kafkarebalances
+                - kafkatopics
+                - kafkausers
               verbs:
                 - get
                 - list
@@ -225,7 +233,7 @@ jobs:
             - apiGroups:
                 - core.strimzi.io
               resources:
-                - "*"
+                - strimzipodsets
               verbs:
                 - get
                 - list
@@ -236,9 +244,30 @@ jobs:
               resources:
                 - customresourcedefinitions
                 - customresourcedefinitions/status
+              resourceNames:
+                - kafkabridges.kafka.strimzi.io
+                - kafkaconnectors.kafka.strimzi.io
+                - kafkaconnects.kafka.strimzi.io
+                - kafkamirrormaker2s.kafka.strimzi.io
+                - kafkanodepools.kafka.strimzi.io
+                - kafkarebalances.kafka.strimzi.io
+                - kafkas.kafka.strimzi.io
+                - kafkatopics.kafka.strimzi.io
+                - kafkausers.kafka.strimzi.io
+                - strimzipodsets.core.strimzi.io
               verbs:
                 - get
                 - list
+                - patch
+                - update
+            - apiGroups:
+                - ""
+              resources:
+                - configmaps
+              verbs:
+                - get
+                - list
+                - create
                 - patch
                 - update
           ---
@@ -305,6 +334,19 @@ jobs:
           kubectl wait job/strimzi-v1-api-conversion-crdupgrade -n "${KIND_NAMESPACE}" \
             --for=condition=complete --timeout=5m
           kubectl logs job/strimzi-v1-api-conversion-crdupgrade -n "${KIND_NAMESPACE}"
+
+      - name: Assert every Strimzi CRD now stores only the v1 API version
+        run: |
+          fail=0
+          while read -r crd; do
+            stored=$(kubectl get "$crd" -o jsonpath='{.status.storedVersions}')
+            echo "${crd} storedVersions=${stored}"
+            if [ "$stored" != '["v1"]' ]; then
+              echo "FAIL: ${crd} still stores ${stored}, expected [\"v1\"]" >&2
+              fail=1
+            fi
+          done < <(kubectl get crd -o name | grep kafka.strimzi.io)
+          exit "$fail"
 
       - name: Remove the temporary cluster-wide conversion RBAC
         if: always()
