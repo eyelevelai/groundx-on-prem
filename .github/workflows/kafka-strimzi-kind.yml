@@ -174,10 +174,10 @@ jobs:
               --for=condition=Ready --timeout=5m
           done
 
-      - name: Upgrade the Strimzi operator in place to 0.51.0 (dual-serving stepping-stone)
+      - name: Upgrade the Strimzi operator in place to 0.50.1 (dual-serving stepping-stone)
         run: |
           helm upgrade strimzi-operator oci://quay.io/strimzi-helm/strimzi-kafka-operator \
-            --version 0.51.0 \
+            --version 0.50.1 \
             -n "${KIND_NAMESPACE}" \
             --set watchNamespaces="{${KIND_NAMESPACE}}" \
             --wait --timeout 5m
@@ -252,7 +252,7 @@ jobs:
                 serviceAccountName: strimzi-v1-api-conversion
                 containers:
                   - name: strimzi-v1-api-conversion
-                    image: quay.io/strimzi/operator:0.51.0
+                    image: quay.io/strimzi/operator:0.50.1
                     command:
                       - /opt/v1-api-conversion/bin/v1-api-conversion.sh
                       - convert-resource
@@ -279,7 +279,7 @@ jobs:
                 serviceAccountName: strimzi-v1-api-conversion
                 containers:
                   - name: strimzi-v1-api-conversion
-                    image: quay.io/strimzi/operator:0.51.0
+                    image: quay.io/strimzi/operator:0.50.1
                     command:
                       - /opt/v1-api-conversion/bin/v1-api-conversion.sh
                       - crd-upgrade
@@ -328,7 +328,7 @@ jobs:
             echo "FAIL: expected spec.kafka.version to still be 4.0.0 after the operator hop, conversion, and helm upgrade to 0.2.7; got '${actual_version}'" >&2
             exit 1
           fi
-          echo "OK: Kafka version stayed pinned at 4.0.0 through the operator 0.47.0 -> 0.51.0 hop, the v1 conversion, and the helm upgrade to 0.2.7"
+          echo "OK: Kafka version stayed pinned at 4.0.0 through the operator 0.47.0 -> 0.50.1 hop, the v1 conversion, and the helm upgrade to 0.2.7"
 
       - name: "Negative control: a deleted KafkaTopic must FAIL the readiness-wait checkpoint, proving the checkpoint mechanism is non-vacuous"
         run: |

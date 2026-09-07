@@ -50,10 +50,12 @@ a delete-and-recreate; must not block the documented in-order runbook) encode th
    name so the workflow file itself is evidence the documented procedure is what actually runs, not
    a paraphrase.
 
-3. **The stepping-stone operator version is `0.51.0`, pinned exactly (not "any 0.49.x-0.51.x
+3. **The stepping-stone operator version is `0.50.1`, pinned exactly (not "any 0.49.x-0.51.x
    release").** `contract.md`'s corrected fact and `source-of-truth.md` establish 0.49.0-0.51.x as
-   the window where Strimzi serves both `v1beta2` and `v1`; `0.51.0` is the newest release in that
-   window and is the version this design pins everywhere (README runbook, CI job, and — per
+   the window where Strimzi serves both `v1beta2` and `v1`; `0.50.1` is the newest release in that
+   window that still supports Apache Kafka `4.0.x` (`0.51.0` drops it), so it carries an existing
+   cluster's pinned Kafka version across the hop, and it is the version this design pins everywhere
+   (README runbook, CI job, and — per
    decision 6 below — the Chainguard operator image), so the runbook, the CI proof, and the
    air-gapped image path all name the identical stepping-stone rather than three independently
    "close enough" versions that could drift apart.
@@ -69,12 +71,12 @@ a delete-and-recreate; must not block the documented in-order runbook) encode th
    phase — mechanical, not template-derived — so their acceptance check is direct file content
    comparison (see tasks.md), not a `helm template` render.
 
-6. **Chainguard operator image tag: `v0.51.0`, keeping the existing `v`-prefix, replacing
+6. **Chainguard operator image tag: `v0.50.1`, keeping the existing `v`-prefix, replacing
    `v0.48.0`.** The values file's existing convention pins every `tag`/`tagPrefix` with a
-   `v`-prefix (`v0.48.0`); the apply-phase task instruction states both `0.51.0` and `v0.51.0` are
+   `v`-prefix (`v0.48.0`); the apply-phase task instruction states both `0.50.1` and `v0.50.1` are
    published Chainguard mirror tags for this release, so this design keeps the file's established
    `v`-prefixed format rather than introducing a one-off unprefixed exception. (Supersedes this
-   decision's original text, which pinned the bare `0.51.0` string on an unverified assumption — see
+   decision's original text, which pinned the bare `0.50.1` string on an unverified assumption — see
    the Risks entry below.) **This builder still could not independently read the live `cgr.dev`
    registry in this session** (no `chainguard-pull-secret` credential); the tag-existence fact is
    relayed from the instructing orchestrator, not independently re-verified against the registry by
@@ -107,9 +109,9 @@ a delete-and-recreate; must not block the documented in-order runbook) encode th
 ## Risks / Trade-offs
 
 - **[Risk, narrowed] The Chainguard operator image tag string.** Decision 6 originally pinned the
-  bare `0.51.0` string (no `v`-prefix) on an unverified assumption. At apply time the instructing
-  orchestrator stated both `0.51.0` and `v0.51.0` are published tags for the target release, so the
-  values file keeps its established `v`-prefixed convention (`v0.51.0`) rather than introducing a
+  bare `0.50.1` string (no `v`-prefix) on an unverified assumption. At apply time the instructing
+  orchestrator stated both `0.50.1` and `v0.50.1` are published tags for the target release, so the
+  values file keeps its established `v`-prefixed convention (`v0.50.1`) rather than introducing a
   one-off unprefixed exception — narrower risk than before (a wrong prefix, not a wrong version).
   This builder still has no `chainguard-pull-secret` credential and did not independently read the
   live `cgr.dev` registry in this session. **Mitigation (unchanged):** the literal is pinned
@@ -141,7 +143,7 @@ a delete-and-recreate; must not block the documented in-order runbook) encode th
 3. Add the new upgrade-test job to `.github/workflows/kafka-strimzi-kind.yml`, alongside the
    existing `live-strimzi-kind` job (unchanged).
 4. Bump `src/groundx/values/chainguard/values.strimzi.operator.yaml` (mirrored to `helm/`) every
-   `tag`/`tagPrefix` from `v0.48.0` to `0.51.0`.
+   `tag`/`tagPrefix` from `v0.48.0` to `0.50.1`.
 5. Remove the `cluster.version: 4.1.0` override from
    `src/groundx/values/chainguard/values.strimzi.cluster.yaml` (mirrored to `helm/`).
 6. **Publish is out of pipeline scope** — a human runs the `PRIVILEGED` `src/build.sh` after this

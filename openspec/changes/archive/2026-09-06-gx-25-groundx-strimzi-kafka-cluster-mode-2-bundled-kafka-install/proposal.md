@@ -10,7 +10,7 @@ increment closes: (1) the increment-1 proposal explicitly deferred the 0.1.x-ins
 and the air-gapped/Chainguard image bump as out of scope — but the charts are public, so an existing
 0.1.x customer install is a real, unowned upgrade risk, not a hypothetical; Ben now requires a
 **tested** migration runbook before release. (2) A v1-serving Strimzi image is confirmed to exist in
-the Chainguard mirror (`cgr.dev`, 0.50.1/0.51.0, both APIs), which un-blocks the air-gapped path that
+the Chainguard mirror (`cgr.dev`, 0.50.1/0.50.1, both APIs), which un-blocks the air-gapped path that
 increment 1 could not attempt.
 
 ## What Changes
@@ -24,12 +24,14 @@ increment 1 could not attempt.
 - **Tested 0.1.x -> 0.2.7 migration path (release blocker)**: expand the subchart README's existing
   "Upgrading an existing 0.1.x install" section (added in increment 1, currently a 3-point
   requirements list with no procedure) into the exact, ordered conversion runbook:
-  1. Upgrade the Strimzi operator in place to `0.51.0` — the last release that serves **both**
-     `kafka.strimzi.io/v1beta2` and `kafka.strimzi.io/v1`, so it is the only safe stepping-stone
-     between an old v1beta2-only operator and a v1-only one.
+  1. Upgrade the Strimzi operator in place to `0.50.1` — the newest dual-serving release (0.49
+     through 0.51 all serve **both** `kafka.strimzi.io/v1beta2` and `kafka.strimzi.io/v1`) that
+     still supports Apache Kafka `4.0.x`, so it carries the running cluster's pinned Kafka version
+     across the hop; `0.51.0` drops Kafka `4.0.x` and cannot. Do not upgrade straight from a
+     v1beta2-only operator to a v1-only one.
   2. Run Strimzi's `strimzi-v1-api-conversion` tool plus the CRD upgrade against the existing
      `Kafka`/`KafkaNodePool` custom resources, so the stored CR version becomes `v1` while the
-     operator is still the 0.51.0 stepping-stone. **Convert the CRDs in place — never delete and
+     operator is still the 0.50.1 stepping-stone. **Convert the CRDs in place — never delete and
      recreate them**; deleting a Strimzi CRD deletes the managed `Kafka`/`KafkaNodePool` resources
      Kubernetes tracks under it, which destroys the running cluster's control-plane object (not the
      topic data, but the object Strimzi reconciles against).
@@ -49,7 +51,7 @@ increment 1 could not attempt.
     job, which stays unchanged) that: installs the old Strimzi operator `0.47.0` and the vendored old
     subchart package `helm-releases/groundx-strimzi-kafka-cluster-0.1.1.tgz` (both v1beta2-shaped),
     waits for the Kafka cluster to reach `Ready`, then drives the exact runbook above — the
-    conversion tool + CRD upgrade, the operator upgrade to `0.51.0`, and the `helm upgrade` to the
+    conversion tool + CRD upgrade, the operator upgrade to `0.50.1`, and the `helm upgrade` to the
     current (post-increment-1, v1-shaped) chart under `src/groundx/prereqs/kafka-cluster` — and
     asserts the `Kafka` custom resource and every `KafkaTopic` stay `Ready` through the whole
     conversion (not just at the end). This is the empirical proof Ben's ask requires; per the
@@ -57,7 +59,7 @@ increment 1 could not attempt.
     job itself is the validating artifact, not a separate spike.
 - **Air-gapped/Chainguard v1 image**: bump every Strimzi image `tag`/`tagPrefix` in
   `src/groundx/values/chainguard/values.strimzi.operator.yaml` (mirrored into
-  `helm/values/chainguard/values.strimzi.operator.yaml`) from `v0.48.0` to the `0.51.0` release
+  `helm/values/chainguard/values.strimzi.operator.yaml`) from `v0.48.0` to the `0.50.1` release
   confirmed to exist in the Chainguard mirror (serves both APIs, so it is also usable as the
   air-gapped operator's own upgrade stepping-stone). Fix
   `src/groundx/values/chainguard/values.strimzi.cluster.yaml` (mirrored into
@@ -69,8 +71,8 @@ increment 1 could not attempt.
   reasoning that there is no stated requirement for the air-gapped path to behave differently from
   the already-shipped greenfield default, and an explicit pin would need its own re-justification
   every time Strimzi's supported-version floor moves. This is a reversible, in-scope default; design
-  will confirm the exact Chainguard image tag string (e.g. whether the registry publishes `0.51.0` or
-  `v0.51.0` — the current values file uses a `v`-prefixed tag) against the live `cgr.dev` mirror
+  will confirm the exact Chainguard image tag string (e.g. whether the registry publishes `0.50.1` or
+  `v0.50.1` — the current values file uses a `v`-prefixed tag) against the live `cgr.dev` mirror
   before implementation.
 
 Out of scope for this increment: the harness docs update (subchart version reference,
@@ -99,7 +101,7 @@ documentation plus a new CI job — it does not change the subchart's rendered o
 install.
 
 **Roll-forward:** a field/customer install already running 0.1.x should follow the new runbook in
-order (operator to 0.51.0 first, convert, then `helm upgrade` to 0.2.7) rather than jumping straight
+order (operator to 0.50.1 first, convert, then `helm upgrade` to 0.2.7) rather than jumping straight
 to an unpinned latest operator, which increment 1's original (pre-runbook) guidance would have left
 ambiguous for an existing install.
 
@@ -140,7 +142,7 @@ string format) is a design/apply-time registry read, not a design ambiguity requ
   procedure. No other repo doc changes ship from this PR — the harness doc/version-reference update
   is the separate, contract-coordinated consumer PR (unchanged from increment 1's arrangement).
 - **Dependencies:** none in-repo; external dependency is the specific Strimzi operator releases named
-  in the runbook (0.47.0 old / 0.51.0 stepping-stone) and the Chainguard-mirrored Strimzi image
+  in the runbook (0.47.0 old / 0.50.1 stepping-stone) and the Chainguard-mirrored Strimzi image
   version, both already verified to exist (see `source-of-truth.md`).
 - **No API/schema contract change** to `src/groundx/values.schema.json` — the Chainguard values files
   touched here are plain values overrides, not schema-governed keys.
