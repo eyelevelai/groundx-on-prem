@@ -56,10 +56,13 @@ converting the CRDs out of order can destroy the running cluster's control-plane
    delete` + `kubectl apply` of the CRD for the tool. The tool ships inside the operator image;
    run it as two short pods (replace `<namespace>` with the release namespace; on an air-gapped
    install use the `cgr.dev/eyelevel.ai/strimzi-kafka-operator:v0.50.1` image in place of the
-   `quay.io` one):
+   `quay.io` one). **`crd-upgrade` acts cluster-wide** — it removes the `v1beta2` stored API from
+   the shared Strimzi CRDs, so every Strimzi custom resource in the cluster must be converted first,
+   not only the ones in this release's namespace. `convert-resource --all-namespaces` does that; if
+   the cluster runs other Strimzi workloads you do not own, coordinate before running `crd-upgrade`.
 
    ```bash
-   # RBAC the conversion tool needs (it reads/patches all Strimzi CRs and the CRDs)
+   # RBAC the conversion tool needs (it reads/patches all Strimzi CRs and the CRDs, cluster-wide)
    kubectl apply -f - <<'EOF'
    apiVersion: v1
    kind: ServiceAccount
@@ -81,17 +84,24 @@ converting the CRDs out of order can destroy the running cluster's control-plane
      - { kind: ServiceAccount, name: strimzi-v1-api-conversion, namespace: <namespace> }
    EOF
 
-   # 1) convert the custom resources (Kafka, KafkaNodePool, KafkaTopic, StrimziPodSet) to v1
+   # 1) convert EVERY Strimzi custom resource in the cluster to v1 (all namespaces), before the
+   #    cluster-wide crd-upgrade below finalizes the CRDs
    kubectl run strimzi-convert -n <namespace> --restart=Never --attach --rm \
      --image=quay.io/strimzi/operator:0.50.1 \
      --overrides='{"spec":{"serviceAccountName":"strimzi-v1-api-conversion"}}' \
-     --command -- /opt/v1-api-conversion/bin/v1-api-conversion.sh convert-resource
+     --command -- /opt/v1-api-conversion/bin/v1-api-conversion.sh convert-resource --all-namespaces
 
-   # 2) make v1 the stored CRD version
+   # 2) make v1 the stored CRD version (cluster-wide)
    kubectl run strimzi-crd-upgrade -n <namespace> --restart=Never --attach --rm \
      --image=quay.io/strimzi/operator:0.50.1 \
      --overrides='{"spec":{"serviceAccountName":"strimzi-v1-api-conversion"}}' \
      --command -- /opt/v1-api-conversion/bin/v1-api-conversion.sh crd-upgrade
+
+   # 3) remove the temporary cluster-wide conversion RBAC (run whether or not the steps above
+   #    succeeded, so the privileged binding never lingers)
+   kubectl delete clusterrolebinding strimzi-v1-api-conversion --ignore-not-found
+   kubectl delete clusterrole strimzi-v1-api-conversion --ignore-not-found
+   kubectl delete serviceaccount strimzi-v1-api-conversion -n <namespace> --ignore-not-found
    ```
 4. **Only then run `helm upgrade` to chart `0.2.7`** (the `v1`-only template shape). Running the
    `helm upgrade` before steps 1 through 3 complete points the still-`v1beta2`-serving operator at
