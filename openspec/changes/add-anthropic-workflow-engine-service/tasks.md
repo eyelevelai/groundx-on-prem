@@ -42,6 +42,8 @@
   summary rendering, local workload selection, and inherited extraction settings.
 - [x] 2.10 Resolve the effective extraction engine once, then make extraction field
   helpers and local workload selection read that resolved map.
+- [x] 2.11 Use the chart's settings, existing, and create helper conventions; share
+  the engine format and local-pod decision, and validate engines in their builder.
 
 ## 3. Synchronize generated and published surfaces
 

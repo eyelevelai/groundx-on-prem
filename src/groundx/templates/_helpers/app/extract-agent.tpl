@@ -26,7 +26,7 @@ false
 {{- end }}
 
 {{- define "groundx.extract.agent.apiKey" -}}
-{{- get (include "groundx.extract.agent.effectiveSettings" . | fromYaml) "apiKey" | default "" -}}
+{{- get (include "groundx.extract.agent.engine" . | fromYaml) "apiKey" | default "" -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.apiKeyEnv" -}}
@@ -34,7 +34,7 @@ GROUNDX_AGENT_API_KEY
 {{- end }}
 
 {{- define "groundx.extract.agent.baseUrl" -}}
-{{- get (include "groundx.extract.agent.effectiveSettings" . | fromYaml) "apiBaseUrl" | default "" -}}
+{{- get (include "groundx.extract.agent.engine" . | fromYaml) "baseUrl" | default "" -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.existingSecret" -}}
@@ -115,18 +115,16 @@ GROUNDX_AGENT_API_KEY
 {{- end }}
 
 {{- define "groundx.extract.agent.modelId" -}}
-{{- get (include "groundx.extract.agent.effectiveSettings" . | fromYaml) "modelId" | default "" -}}
+{{- get (include "groundx.extract.agent.engine" . | fromYaml) "engineId" | default "" -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.kwargs" -}}
-{{- $settings := include "groundx.extract.agent.effectiveSettings" . | fromYaml -}}
-{{- dig "kwargs" dict (dig "model" dict $settings) | toYaml -}}
+{{- dig "kwargs" dict (include "groundx.extract.agent.engine" . | fromYaml) | toYaml -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.reasoningEffort" -}}
-{{- $settings := include "groundx.extract.agent.effectiveSettings" . | fromYaml -}}
-{{- $model := dig "model" dict $settings -}}
-{{- if hasKey $model "reasoningEffort" -}}{{ get $model "reasoningEffort" | toJson }}{{- end -}}
+{{- $engine := include "groundx.extract.agent.engine" . | fromYaml -}}
+{{- if hasKey $engine "reasoningEffort" -}}{{ get $engine "reasoningEffort" | toJson }}{{- end -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.queue" -}}
@@ -192,19 +190,7 @@ GROUNDX_AGENT_API_KEY
 {{- end }}
 
 {{- define "groundx.extract.agent.serviceType" -}}
-{{- get (include "groundx.extract.agent.effectiveSettings" . | fromYaml) "serviceType" | default "" -}}
-{{- end }}
-
-{{- define "groundx.extract.agent.localModel" -}}
-{{- if ne (include "groundx.extract.agent.create" .) "true" -}}
-false
-{{- else -}}
-{{- $settings := include "groundx.extract.agent.effectiveSettings" . | fromYaml -}}
-{{- $service := get $settings "serviceType" | default "" -}}
-{{- $baseUrl := get $settings "apiBaseUrl" | default "" | trim -}}
-{{- $localUrl := include "groundx.summary.api.serviceUrl" . | trim -}}
-{{- if and (eq $service "eyelevel") (eq $baseUrl $localUrl) -}}true{{- else -}}false{{- end -}}
-{{- end -}}
+{{- get (include "groundx.extract.agent.engine" . | fromYaml) "service" | default "" -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.threads" -}}

@@ -32,12 +32,23 @@ EyeLevel defaults. The generated default engine is therefore already a complete
 self-hosted engine. Summary rendering, local workload selection, and extraction all
 consume this same resolved map.
 
-Resolve extraction settings once in `groundx.extract.agent.effectiveSettings`, using
-the same effective-settings pattern as extraction file storage. If extraction does not
-select a service, start with the resolved `default` engine. If it does, start with the
-explicit extraction service and its applicable local defaults. Overlay explicit
-extraction fields once. `AgentSettings`, its Secret, and local workload selection read
-that resolved extraction map without repeating precedence rules.
+Use the chart's `settings`, `existing`, and `create` helper conventions.
+`groundx.engine.settings` builds a configured engine for either summary or extraction.
+`groundx.engines` validates and builds the summary engine map.
+`groundx.summary.existing` identifies the existing summary-service configuration.
+
+`groundx.extract.agent.engine` translates extraction input names into the same engine
+map used by summaries. Without an extraction service selection, it inherits the default
+summary engine and applies explicit extraction fields. With a selection, it uses the
+shared engine settings helper. Field readers consume that map directly, without
+converting it back to a second settings format.
+
+`groundx.engine.create` owns the check for the chart-managed local endpoint.
+`groundx.summary.create` applies it to summary engines for summary-client scaling.
+`groundx.summary.model.create` also accounts for enabled extraction when deciding
+whether to deploy local model pods. An extraction-only local model must not change
+external-summary queue scaling. Model selection validation belongs in the engine
+builder, not in a separate workload helper.
 
 If `extract.agent.serviceType` is set, extraction uses its own supplied key, URL,
 model, kwargs, and reasoning value instead. Do not fill missing settings from the

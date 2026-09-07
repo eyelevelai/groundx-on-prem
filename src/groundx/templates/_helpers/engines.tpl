@@ -1,15 +1,15 @@
-{{- define "groundx.engine.resolve" -}}
+{{- define "groundx.engine.settings" -}}
 {{- $root := .root -}}
 {{- $name := .name -}}
 {{- $engine := deepCopy (.engine | default dict) -}}
 {{- $summary := $root.Values.summary | default dict -}}
 {{- $existing := dig "existing" dict $summary -}}
-{{- $existingConfigured := eq (include "groundx.summary.existingConfigured" $root) "true" -}}
+{{- $hasExisting := eq (include "groundx.summary.existing" $root) "true" -}}
 {{- $explicitService := coalesce (get $engine "service") (get $engine "serviceType") "" | default "" | toString | lower | trim -}}
 {{- $service := coalesce $explicitService (include "groundx.summary.serviceType" $root) | default "eyelevel" | toString | lower | trim -}}
 {{- $engineBaseUrl := get $engine "baseUrl" | default "" | toString | trim -}}
 {{- $localUrl := include "groundx.summary.api.serviceUrl" $root | trim -}}
-{{- $local := and (eq $service "eyelevel") (or (eq $engineBaseUrl $localUrl) (and (eq $engineBaseUrl "") (or (not $existingConfigured) (eq $explicitService "eyelevel")))) -}}
+{{- $local := and (eq $service "eyelevel") (or (eq $engineBaseUrl $localUrl) (and (eq $engineBaseUrl "") (or (not $hasExisting) (eq $explicitService "eyelevel")))) -}}
 {{- $inheritsExisting := or (eq $name "default") (eq $explicitService "") -}}
 {{- $_ := set $engine "service" $service -}}
 {{- if ne $engineBaseUrl "" -}}
@@ -35,6 +35,14 @@
 {{- define "groundx.engines" -}}
 {{- $root := . -}}
 {{- $in := .Values.engines | default dict -}}
+{{- if and (eq (include "groundx.summary.existing" .) "true") (eq (len $in) 0) -}}
+  {{- fail "explicit summary configuration requires engines.<name>.engineId" -}}
+{{- end -}}
+{{- range $name, $engine := $in -}}
+  {{- if eq (get $engine "engineId" | default "" | toString | trim) "" -}}
+    {{- fail (printf "summary engine %s requires engines.%s.engineId" $name $name) -}}
+  {{- end -}}
+{{- end -}}
 {{- if eq (len $in) 0 -}}
 {{- $replicas := (include "groundx.summary.inference.replicas" . | fromYaml) -}}
 {{- $desired := get $replicas "desired" -}}
@@ -52,9 +60,15 @@
 {{- end -}}
 {{- $resolved := dict -}}
 {{- range $name, $engine := $in -}}
-  {{- $_ := set $resolved $name (include "groundx.engine.resolve" (dict "root" $root "name" $name "engine" $engine) | fromYaml) -}}
+  {{- $_ := set $resolved $name (include "groundx.engine.settings" (dict "root" $root "name" $name "engine" $engine) | fromYaml) -}}
 {{- end -}}
 {{- $resolved | toYaml -}}
+{{- end }}
+
+{{- define "groundx.engine.create" -}}
+{{- $localUrl := include "groundx.summary.api.serviceUrl" .root | trim -}}
+{{- $engine := .engine -}}
+{{- and (eq (get $engine "service") "eyelevel") (eq (get $engine "baseUrl" | default "" | toString | trim) $localUrl) -}}
 {{- end }}
 
 {{- define "groundx.hasCustomEngines" -}}
