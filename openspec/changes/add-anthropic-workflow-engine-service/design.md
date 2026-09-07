@@ -83,6 +83,19 @@ self-hosted service requires authentication.
 Templates and tests must not print credential values. This change adds no secret data,
 secret name, or environment variable.
 
+## File settings
+
+Extraction storage uses `groundx.extract.file.settings` directly. It starts with
+account-wide file settings and applies non-empty bucket, region, storage-type, and URL
+overrides. Explicit empty credentials remain empty for runtime credential injection.
+`groundx.file.url.settings` shares URL, TLS, and port parsing with account-wide file
+helpers. Local MinIO wait addresses and custom download domains retain their existing
+roles. No storage values or runtime configuration fields are added. The schema does
+not support `extract.file.port`; extraction ports come from its URL or account settings.
+
+Gate this refactor on unchanged existing snapshots and focused render coverage for
+HTTP/HTTPS overrides, embedded ports, inherited storage, and local wait addresses.
+
 ## Source and mirror
 
 Base the plan and implementation on current pushed `origin/0.2.7`, the active chart

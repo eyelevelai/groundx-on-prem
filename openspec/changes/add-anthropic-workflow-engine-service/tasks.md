@@ -44,6 +44,9 @@
   helpers and local workload selection read that resolved map.
 - [x] 2.11 Use the chart's settings, existing, and create helper conventions; share
   the engine format and local-pod decision, and validate engines in their builder.
+- [x] 2.12 Remove the extraction file settings forwarding layer and share file URL,
+  TLS, and port parsing. Preserve account inheritance, explicit empty credentials,
+  upload configuration, and local storage wait addresses without adding schema fields.
 
 ## 3. Synchronize generated and published surfaces
 
