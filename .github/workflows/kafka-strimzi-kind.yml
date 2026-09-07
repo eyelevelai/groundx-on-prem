@@ -182,6 +182,11 @@ jobs:
             --set watchAnyNamespace=true \
             --wait --timeout 5m
 
+      - name: Apply the Strimzi 0.50.1 CRDs (helm upgrade does not upgrade CRDs)
+        run: |
+          kubectl apply --server-side --force-conflicts \
+            -f https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.50.1/strimzi-crds-0.50.1.yaml
+
       - name: Run the strimzi-v1-api-conversion tool (convert-resource)
         run: |
           cat <<EOF > /tmp/strimzi-v1-api-conversion-rbac.yaml
