@@ -273,8 +273,7 @@ jobs:
                     command:
                       - /opt/v1-api-conversion/bin/v1-api-conversion.sh
                       - convert-resource
-                      - --namespace
-                      - ${KIND_NAMESPACE}
+                      - --all-namespaces
                 restartPolicy: OnFailure
           EOF
           kubectl apply -f /tmp/strimzi-v1-api-conversion-convert-job.yaml
@@ -306,6 +305,13 @@ jobs:
           kubectl wait job/strimzi-v1-api-conversion-crdupgrade -n "${KIND_NAMESPACE}" \
             --for=condition=complete --timeout=5m
           kubectl logs job/strimzi-v1-api-conversion-crdupgrade -n "${KIND_NAMESPACE}"
+
+      - name: Remove the temporary cluster-wide conversion RBAC
+        if: always()
+        run: |
+          kubectl delete clusterrolebinding strimzi-v1-api-conversion --ignore-not-found
+          kubectl delete clusterrole strimzi-v1-api-conversion --ignore-not-found
+          kubectl delete serviceaccount strimzi-v1-api-conversion -n "${KIND_NAMESPACE}" --ignore-not-found
 
       - name: Wait for the Kafka cluster to become Ready (checkpoint 2, after conversion)
         run: |
