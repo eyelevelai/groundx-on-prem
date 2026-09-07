@@ -333,11 +333,12 @@ jobs:
       - name: "Negative control: a deleted KafkaTopic must FAIL the readiness-wait checkpoint, proving the checkpoint mechanism is non-vacuous"
         run: |
           kubectl delete kafkatopic.kafka.strimzi.io/file-upload -n "${KIND_NAMESPACE}" --wait=false
-          if kubectl wait kafkatopic.kafka.strimzi.io/file-upload -n "${KIND_NAMESPACE}" --for=condition=Ready --timeout=30s; then
-            echo "ERROR: readiness wait passed on a deleted resource" >&2
+          kubectl wait kafkatopic.kafka.strimzi.io/file-upload -n "${KIND_NAMESPACE}" --for=delete --timeout=60s
+          if kubectl wait kafkatopic.kafka.strimzi.io/file-upload -n "${KIND_NAMESPACE}" --for=condition=Ready --timeout=30s 2>/dev/null; then
+            echo "ERROR: readiness wait passed on a resource that no longer exists" >&2
             exit 1
           fi
-          echo "OK: readiness wait correctly failed on a deleted KafkaTopic"
+          echo "OK: readiness wait correctly failed once the KafkaTopic was fully deleted"
 
       - name: Dump diagnostics on failure
         if: failure()

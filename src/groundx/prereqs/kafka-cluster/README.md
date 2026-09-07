@@ -37,10 +37,11 @@ converting the CRDs out of order can destroy the running cluster's control-plane
 1. **Upgrade the Strimzi operator in place to `0.50.1`.** Strimzi 0.49 through 0.51 serve **both**
    `kafka.strimzi.io/v1beta2` and `kafka.strimzi.io/v1` at once (v1beta2 is removed in 1.0.0 /
    0.52.0), so any of them can bridge a `v1beta2`-only operator to a `v1`-only one. Use `0.50.1`
-   specifically: it is the newest dual-serving release that still supports Apache Kafka `4.0.x`,
-   so it can carry the running cluster's pinned Kafka version across the hop. `0.51.0` drops Kafka
-   `4.0.x`, so an operator upgrade to it would reject a cluster still pinned to `4.0.x`. Do not
-   upgrade straight to a `v1`-only operator release from a `v1beta2`-only one.
+   specifically: it ships Apache Kafka `4.0.0` through `4.1.1`, so it still supports `4.0.0` and can
+   carry across the hop whatever Kafka version the existing cluster is pinned to. `0.51.0` drops
+   Kafka `4.0.0` (the version an operator-`0.47.0`-era 0.1.x install runs), so upgrading straight to
+   it would reject such a cluster. Do not upgrade straight to a `v1`-only operator release from a
+   `v1beta2`-only one.
 2. **Run Strimzi's `strimzi-v1-api-conversion` tool, then the CRD upgrade, against the existing
    `Kafka`/`KafkaNodePool` resources, while the `0.50.1` operator from step 1 is still running.**
    This converts the stored CRD version to `v1` in place. **CRDs are converted, never deleted and
