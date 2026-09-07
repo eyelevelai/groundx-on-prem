@@ -45,6 +45,68 @@ settings without using a provider-name allowlist.
 - **Given** no summary or extraction service is explicitly configured
 - **When** the chart renders application configuration
 - **Then** the existing in-cluster EyeLevel defaults remain unchanged
+- **And** local summary workloads are deployed for both consumers
+
+#### Scenario: Summary and extraction select different services
+
+- **Given** a summary engine explicitly selects one service
+- **And** the extraction agent explicitly selects a different service
+- **When** the chart renders application configuration
+- **Then** each consumer receives only its own configured model settings
+- **And** neither consumer inherits the other consumer's service, key, URL, model, or
+  options
+
+#### Scenario: External summary and default extraction coexist
+
+- **Given** all summary engines explicitly select external services
+- **And** extraction is enabled without an explicit extraction service
+- **When** the chart renders workloads and application configuration
+- **Then** extraction receives the existing local EyeLevel defaults
+- **And** the local summary API and inference workloads remain deployed for extraction
+
+### Requirement: Model settings resolve once
+
+The chart MUST use one presence-aware model-resolution contract for summary and
+extraction, with separate adapters for their existing output formats. Workload creation,
+validation, and rendered configuration MUST consume the same resolved result.
+
+#### Scenario: Engine ID is set without a service
+
+- **Given** a named summary engine has an engine ID but no `service` or `serviceType`
+- **And** `summary.existing` is not configured
+- **When** the chart renders
+- **Then** the engine receives the chart-managed EyeLevel service, key, and URL
+- **And** the local summary workloads remain deployed
+
+#### Scenario: Explicit empty value is preserved
+
+- **Given** a model key, URL, model, option, or reasoning property is explicitly set to
+  an empty value
+- **When** model settings resolve
+- **Then** that property remains empty
+- **And** no local or global default replaces it
+
+#### Scenario: Empty service retains legacy omission behavior
+
+- **Given** `service` or `serviceType` is empty
+- **When** model settings resolve
+- **Then** service selection treats that value as omitted
+
+#### Scenario: EyeLevel-compatible external endpoint is supplied
+
+- **Given** a model resolves to `eyelevel`
+- **And** its URL was explicitly supplied or inherited
+- **When** the chart renders
+- **Then** that URL is preserved
+- **And** that model does not require chart-managed summary workloads
+
+#### Scenario: Mixed local and external engines
+
+- **Given** one summary engine resolves to the chart-managed EyeLevel service
+- **And** another engine explicitly selects an external service
+- **When** the chart renders
+- **Then** local credentials and endpoints are assigned only to the local engine
+- **And** local summary workloads remain deployed
 
 ### Requirement: Explicit credentials pass through without chart policy
 
@@ -65,6 +127,15 @@ name and MUST NOT require or invent one for an explicitly configured service.
 - **When** the chart renders
 - **Then** rendering succeeds without a provider key
 - **And** the GroundX admin API key is not substituted
+
+#### Scenario: Cashbot loads a keyless external engine
+
+- **Given** the rendered configuration contains a keyless engine with an explicit
+  external service
+- **And** a global or local GroundX key exists
+- **When** Cashbot loads and initializes the engine
+- **Then** the external engine remains keyless
+- **And** the GroundX key is not sent to that provider
 
 ### Requirement: Existing defaults remain stable
 
