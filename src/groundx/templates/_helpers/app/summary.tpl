@@ -23,56 +23,13 @@
 {{- end -}}
 {{- end }}
 
-{{- define "groundx.summary.defaultEngine.resolved" -}}
-{{- $engines := include "groundx.engines" . | fromYaml -}}
-{{- $engine := get $engines "default" | default dict -}}
-{{- $summary := .Values.summary | default dict -}}
-{{- $existing := dig "existing" dict $summary -}}
-{{- $existingConfigured := eq (include "groundx.summary.existingConfigured" .) "true" -}}
-{{- $explicitService := coalesce (get $engine "service") (get $engine "serviceType") "" | default "" | toString | lower | trim -}}
-{{- $service := coalesce $explicitService (include "groundx.summary.serviceType" .) | default "eyelevel" | toString | lower | trim -}}
-{{- $engineBaseUrl := get $engine "baseUrl" | default "" | toString | trim -}}
-{{- $local := and (eq $service "eyelevel") (eq $engineBaseUrl "") (or (not $existingConfigured) (eq $explicitService "eyelevel")) -}}
-{{- $baseUrl := "" -}}
-{{- if ne $engineBaseUrl "" -}}
-  {{- $baseUrl = get $engine "baseUrl" -}}
-{{- else if $local -}}
-  {{- $baseUrl = include "groundx.summary.api.serviceUrl" . | trim -}}
-{{- else if ne (dig "url" "" $existing | toString | trim) "" -}}
-  {{- $baseUrl = get $existing "url" -}}
-{{- end -}}
-{{- $resolved := dict
-  "baseUrl" $baseUrl
-  "local" $local
-  "modelId" (get $engine "engineId" | default "")
-  "service" $service
--}}
-{{- if hasKey $engine "apiKey" -}}
-  {{- $_ := set $resolved "apiKey" (get $engine "apiKey") -}}
-{{- else if hasKey $existing "apiKey" -}}
-  {{- $_ := set $resolved "apiKey" (get $existing "apiKey") -}}
-{{- else if $local -}}
-  {{- $_ := set $resolved "apiKey" (include "groundx.admin.apiKey" .) -}}
-{{- end -}}
-{{- if hasKey $engine "reasoningEffort" -}}
-  {{- $_ := set $resolved "reasoningEffort" (get $engine "reasoningEffort") -}}
-{{- end -}}
-{{- $resolved | toYaml -}}
-{{- end }}
-
 {{- define "groundx.summary.create" -}}
 {{- include "groundx.summary.validateEngines" . -}}
-{{- $in := .Values.summary | default dict -}}
-{{- $ex := dig "existing" dict $in -}}
-{{- $stype := lower (coalesce (dig "serviceType" "" $ex) "eyelevel") | trim -}}
-{{- $existingConfigured := eq (include "groundx.summary.existingConfigured" .) "true" -}}
-{{- $engines := .Values.engines | default dict -}}
-{{- $localNeeded := and (eq (len $engines) 0) (not $existingConfigured) -}}
+{{- $engines := include "groundx.engines" . | fromYaml -}}
+{{- $localUrl := include "groundx.summary.api.serviceUrl" . | trim -}}
+{{- $localNeeded := false -}}
 {{- range $engine := $engines -}}
-  {{- $explicitService := coalesce (get $engine "service") (get $engine "serviceType") "" | default "" | toString | lower | trim -}}
-  {{- $service := coalesce $explicitService $stype | default "eyelevel" | toString | lower | trim -}}
-  {{- $hasBaseUrl := and (hasKey $engine "baseUrl") (ne (get $engine "baseUrl" | toString | trim) "") -}}
-  {{- if and (eq $service "eyelevel") (not $hasBaseUrl) (or (not $existingConfigured) (eq $explicitService "eyelevel")) -}}
+  {{- if and (eq (get $engine "service") "eyelevel") (eq (get $engine "baseUrl" | default "" | toString | trim) $localUrl) -}}
     {{- $localNeeded = true -}}
   {{- end -}}
 {{- end -}}
@@ -86,12 +43,14 @@
 {{- end }}
 
 {{- define "groundx.summary.apiKey" -}}
-{{- $engine := include "groundx.summary.defaultEngine.resolved" . | fromYaml -}}
+{{- $engines := include "groundx.engines" . | fromYaml -}}
+{{- $engine := get $engines "default" | default dict -}}
 {{- get $engine "apiKey" | default "" -}}
 {{- end }}
 
 {{- define "groundx.summary.baseUrl" -}}
-{{- $engine := include "groundx.summary.defaultEngine.resolved" . | fromYaml -}}
+{{- $engines := include "groundx.engines" . | fromYaml -}}
+{{- $engine := get $engines "default" | default dict -}}
 {{- get $engine "baseUrl" | default "" -}}
 {{- end }}
 

@@ -25,9 +25,14 @@ Messages paths.
 
 ## Explicit configuration and defaults
 
-Provider names do not determine generic chart behavior. Resolve the default summary
-engine once from `engines.default`, then `summary.existing`, then the in-cluster
-EyeLevel defaults. If extraction does not select a service, render that resolved
+Provider names do not determine generic chart behavior. Resolve every configured
+engine once in `groundx.engines`. Each engine uses its own explicit values first, then
+the shared `summary.existing` values where it inherits them, then the in-cluster
+EyeLevel defaults. The generated default engine is therefore already a complete
+self-hosted engine. Summary rendering, local workload selection, and extraction all
+consume this same resolved map.
+
+If extraction does not select a service, render the resolved `default` engine's
 service, key, URL, model, and reasoning value into `AgentSettings` and its existing
 Secret.
 
@@ -38,10 +43,10 @@ local endpoint, model, and credential unless those fields are explicitly overrid
 Keep provider-specific branches only where the chart has a real infrastructure
 requirement, such as Bedrock image transport requiring S3.
 
-Summary workload creation must use the same existing service precedence as rendered
-summary configuration: non-empty `service`, then non-empty legacy `serviceType`, then
-`summary.existing`, then the in-cluster EyeLevel default. String conversion must happen
-after omission has been resolved so an absent value cannot become a non-empty sentinel.
+Engine resolution uses non-empty `service`, then non-empty legacy `serviceType`, then
+`summary.existing`, then the in-cluster EyeLevel default. String conversion happens
+after omission is resolved so an absent value cannot become a non-empty sentinel.
+Consumers do not repeat that precedence or infer local settings independently.
 
 Do not replace the existing runtime configuration hierarchy. Cashbot keeps its global
 summary defaults and per-engine overrides. The extraction runtime receives the same

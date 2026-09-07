@@ -31,7 +31,8 @@ false
 {{- if hasKey $in "apiKey" -}}
 {{ get $in "apiKey" }}
 {{- else if eq (include "groundx.extract.agent.serviceConfigured" .) "false" -}}
-{{- $engine := include "groundx.summary.defaultEngine.resolved" . | fromYaml -}}
+{{- $engines := include "groundx.engines" . | fromYaml -}}
+{{- $engine := get $engines "default" | default dict -}}
 {{ get $engine "apiKey" | default "" }}
 {{- else if and (eq (include "groundx.extract.agent.serviceType" .) "eyelevel") (eq (include "groundx.extract.agent.baseUrl" . | trim) (include "groundx.summary.api.serviceUrl" . | trim)) -}}
 {{ include "groundx.admin.apiKey" . }}
@@ -51,7 +52,8 @@ GROUNDX_AGENT_API_KEY
 {{- if hasKey $in "apiBaseUrl" -}}
 {{ get $in "apiBaseUrl" }}
 {{- else if eq $serviceConfigured "false" -}}
-{{- $engine := include "groundx.summary.defaultEngine.resolved" . | fromYaml -}}
+{{- $engines := include "groundx.engines" . | fromYaml -}}
+{{- $engine := get $engines "default" | default dict -}}
 {{ get $engine "baseUrl" | default "" }}
 {{- else if eq (include "groundx.extract.agent.serviceType" .) "eyelevel" -}}
 {{ include "groundx.summary.api.serviceUrl" . }}
@@ -142,8 +144,9 @@ GROUNDX_AGENT_API_KEY
 {{- if hasKey $in "modelId" -}}
 {{ get $in "modelId" }}
 {{- else if eq $serviceConfigured "false" -}}
-{{- $engine := include "groundx.summary.defaultEngine.resolved" . | fromYaml -}}
-{{ get $engine "modelId" | default "" }}
+{{- $engines := include "groundx.engines" . | fromYaml -}}
+{{- $engine := get $engines "default" | default dict -}}
+{{ get $engine "engineId" | default "" }}
 {{- else if eq (include "groundx.extract.agent.serviceType" .) "eyelevel" -}}
 {{ include "groundx.summary.inference.model.name" . }}
 {{- end -}}
@@ -177,7 +180,8 @@ GROUNDX_AGENT_API_KEY
 {{- if $has -}}
   {{- toJson $val -}}
 {{- else if eq $serviceConfigured "false" -}}
-  {{- $engine := include "groundx.summary.defaultEngine.resolved" . | fromYaml -}}
+  {{- $engines := include "groundx.engines" . | fromYaml -}}
+  {{- $engine := get $engines "default" | default dict -}}
   {{- if hasKey $engine "reasoningEffort" -}}{{ get $engine "reasoningEffort" | toJson }}{{- end -}}
 {{- else if eq (include "groundx.extract.agent.serviceType" .) "eyelevel" -}}
   {{- include "groundx.summary.inference.model.reasoningEffort" . -}}
@@ -254,7 +258,8 @@ GROUNDX_AGENT_API_KEY
 {{- if eq (include "groundx.extract.agent.serviceConfigured" .) "true" -}}
 {{ lower (get $in "serviceType" | toString) | trim }}
 {{- else -}}
-{{- $engine := include "groundx.summary.defaultEngine.resolved" . | fromYaml -}}
+{{- $engines := include "groundx.engines" . | fromYaml -}}
+{{- $engine := get $engines "default" | default dict -}}
 {{ get $engine "service" }}
 {{- end -}}
 {{- end }}

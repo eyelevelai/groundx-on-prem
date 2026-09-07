@@ -147,6 +147,21 @@ tests:
           count: 2
         template: ../templates/app/inference.yaml
 
+  - it: "the generated default engine contains the resolved local settings"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      admin.apiKey: groundx-admin-test-key
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'engineID: "google/gemma-3-4b-it"\n\s+service: eyelevel\n\s+apiKey: groundx-admin-test-key\n\s+baseURL: http://summary-api.eyelevel.svc.cluster.local'
+
   - it: "mixed local and Anthropic engines keep local summary workloads"
     templates:
       - ../templates/app/api.yaml
@@ -238,7 +253,7 @@ tests:
           pattern: "openai:\\n\\s+apiKey: anthropic-provider-test-key\\n\\s+baseURL: https://api.anthropic.test/v1"
       - matchRegex:
           path: stringData["config.yaml"]
-          pattern: 'engineID: "claude-sonnet-4-20250514"\n\s+service: anthropic\n\s+baseURL: https://api.anthropic.test/v1'
+          pattern: 'engineID: "claude-sonnet-4-20250514"\n\s+service: anthropic\n\s+apiKey: anthropic-provider-test-key\n\s+baseURL: https://api.anthropic.test/v1'
       - matchRegex:
           path: stringData["config.yaml"]
           pattern: 'vision: true\n\s+google/gemma-3-4b-it:'

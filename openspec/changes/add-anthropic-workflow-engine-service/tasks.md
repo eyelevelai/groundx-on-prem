@@ -38,6 +38,8 @@
   extraction service is selected.
 - [x] 2.8 Keep explicit extraction settings authoritative and deploy local model
   workloads when an explicit local extraction engine needs them.
+- [x] 2.9 Resolve configured and generated engines once, then use that resolved map for
+  summary rendering, local workload selection, and inherited extraction settings.
 
 ## 3. Synchronize generated and published surfaces
 
