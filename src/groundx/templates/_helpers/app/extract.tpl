@@ -58,6 +58,49 @@ false
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.extract.agent.effectiveSettings" -}}
+{{- $extract := .Values.extract | default dict -}}
+{{- $agent := dig "agent" dict $extract -}}
+{{- $model := dig "model" dict $agent -}}
+{{- $service := dig "serviceType" "" $agent | toString | lower | trim -}}
+{{- $engine := dict -}}
+{{- if ne $service "" -}}
+  {{- $configured := dict "service" $service -}}
+  {{- if hasKey $agent "apiKey" -}}{{- $_ := set $configured "apiKey" (get $agent "apiKey") -}}{{- end -}}
+  {{- if hasKey $agent "apiBaseUrl" -}}{{- $_ := set $configured "baseUrl" (get $agent "apiBaseUrl") -}}{{- end -}}
+  {{- if hasKey $agent "modelId" -}}
+    {{- $_ := set $configured "engineId" (get $agent "modelId") -}}
+  {{- else if eq $service "eyelevel" -}}
+    {{- $_ := set $configured "engineId" (include "groundx.summary.inference.model.name" . | trim) -}}
+  {{- end -}}
+  {{- $engine = include "groundx.engine.resolve" (dict "root" . "name" "extract" "engine" $configured) | fromYaml -}}
+{{- else -}}
+  {{- $engines := include "groundx.engines" . | fromYaml -}}
+  {{- $engine = get $engines "default" | default dict | deepCopy -}}
+  {{- if hasKey $agent "apiKey" -}}{{- $_ := set $engine "apiKey" (get $agent "apiKey") -}}{{- end -}}
+  {{- if hasKey $agent "apiBaseUrl" -}}{{- $_ := set $engine "baseUrl" (get $agent "apiBaseUrl") -}}{{- end -}}
+  {{- if hasKey $agent "modelId" -}}{{- $_ := set $engine "engineId" (get $agent "modelId") -}}{{- end -}}
+{{- end -}}
+{{- $settings := dict "serviceType" (get $engine "service" | default "") -}}
+{{- if hasKey $engine "apiKey" -}}{{- $_ := set $settings "apiKey" (get $engine "apiKey") -}}{{- end -}}
+{{- if hasKey $engine "baseUrl" -}}{{- $_ := set $settings "apiBaseUrl" (get $engine "baseUrl") -}}{{- end -}}
+{{- if hasKey $engine "engineId" -}}{{- $_ := set $settings "modelId" (get $engine "engineId") -}}{{- end -}}
+{{- $modelSettings := dict -}}
+{{- if and (eq $service "") (hasKey $engine "reasoningEffort") -}}{{- $_ := set $modelSettings "reasoningEffort" (get $engine "reasoningEffort") -}}{{- end -}}
+{{- $localUrl := include "groundx.summary.api.serviceUrl" . | trim -}}
+{{- if and (eq (get $settings "serviceType") "eyelevel") (or (ne $service "") (eq (get $settings "apiBaseUrl" | default "" | trim) $localUrl)) -}}
+  {{- $_ := set $modelSettings "kwargs" (include "groundx.summary.inference.model.kwargs" . | fromYaml | default dict) -}}
+  {{- if ne $service "" -}}
+    {{- $reasoningEffort := include "groundx.summary.inference.model.reasoningEffort" . | trim -}}
+    {{- if ne $reasoningEffort "" -}}{{- $_ := set $modelSettings "reasoningEffort" $reasoningEffort -}}{{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if hasKey $model "kwargs" -}}{{- $_ := set $modelSettings "kwargs" (get $model "kwargs") -}}{{- end -}}
+{{- if hasKey $model "reasoningEffort" -}}{{- $_ := set $modelSettings "reasoningEffort" (get $model "reasoningEffort") -}}{{- end -}}
+{{- $_ := set $settings "model" $modelSettings -}}
+{{- $settings | toYaml -}}
+{{- end }}
+
 {{- define "groundx.extract.file.effectiveSettings" -}}
 {{- $settings := include "groundx.file.settings" . | fromYaml | deepCopy -}}
 {{- $in := .Values.extract | default dict -}}

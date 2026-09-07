@@ -453,6 +453,39 @@ tests:
           path: stringData["config.py"]
           pattern: 'service="anthropic"'
 
+  - it: "explicit extraction fields override inherited engine fields"
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      engines.default.apiKey: summary-provider-key
+      engines.default.baseUrl: https://api.anthropic.test/v1
+      engines.default.engineId: claude-sonnet-4-20250514
+      engines.default.reasoningEffort: low
+      engines.default.service: anthropic
+      extract.enabled: true
+      extract.agent.apiBaseUrl: ""
+      extract.agent.enabled: true
+      extract.agent.modelId: ""
+      extract.agent.model.reasoningEffort: null
+    documentSelector:
+      path: metadata.name
+      value: extract-config-py-map
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'service="anthropic"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: "reasoning_effort=None"
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: "api_base="
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: "model_id="
+
   - it: "extraction inherits the resolved default summary credential"
     templates:
       - ../templates/resources/secret.yaml
@@ -677,6 +710,27 @@ tests:
       - equal:
           path: data.GROUNDX_AGENT_API_KEY
           value: YWRtaW4tb25seS1zZW50aW5lbA==
+
+  - it: "an explicit EyeLevel extraction endpoint does not inherit the chart-managed credential"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      admin.apiKey: admin-only-sentinel
+      extract.enabled: true
+      extract.agent.apiBaseUrl: https://extract.example.test/v1
+      extract.agent.enabled: true
+      extract.agent.serviceType: eyelevel
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: extract-agent-secret
 
   - it: "extract Anthropic may omit an endpoint without inheriting the local endpoint"
     templates:

@@ -32,9 +32,12 @@ EyeLevel defaults. The generated default engine is therefore already a complete
 self-hosted engine. Summary rendering, local workload selection, and extraction all
 consume this same resolved map.
 
-If extraction does not select a service, render the resolved `default` engine's
-service, key, URL, model, and reasoning value into `AgentSettings` and its existing
-Secret.
+Resolve extraction settings once in `groundx.extract.agent.effectiveSettings`, using
+the same effective-settings pattern as extraction file storage. If extraction does not
+select a service, start with the resolved `default` engine. If it does, start with the
+explicit extraction service and its applicable local defaults. Overlay explicit
+extraction fields once. `AgentSettings`, its Secret, and local workload selection read
+that resolved extraction map without repeating precedence rules.
 
 If `extract.agent.serviceType` is set, extraction uses its own supplied key, URL,
 model, kwargs, and reasoning value instead. Do not fill missing settings from the

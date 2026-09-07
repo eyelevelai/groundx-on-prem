@@ -40,6 +40,8 @@
   workloads when an explicit local extraction engine needs them.
 - [x] 2.9 Resolve configured and generated engines once, then use that resolved map for
   summary rendering, local workload selection, and inherited extraction settings.
+- [x] 2.10 Resolve the effective extraction engine once, then make extraction field
+  helpers and local workload selection read that resolved map.
 
 ## 3. Synchronize generated and published surfaces
 

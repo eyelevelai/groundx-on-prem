@@ -26,19 +26,7 @@ false
 {{- end }}
 
 {{- define "groundx.extract.agent.apiKey" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $in := dig "agent" dict $b -}}
-{{- if hasKey $in "apiKey" -}}
-{{ get $in "apiKey" }}
-{{- else if eq (include "groundx.extract.agent.serviceConfigured" .) "false" -}}
-{{- $engines := include "groundx.engines" . | fromYaml -}}
-{{- $engine := get $engines "default" | default dict -}}
-{{ get $engine "apiKey" | default "" }}
-{{- else if and (eq (include "groundx.extract.agent.serviceType" .) "eyelevel") (eq (include "groundx.extract.agent.baseUrl" . | trim) (include "groundx.summary.api.serviceUrl" . | trim)) -}}
-{{ include "groundx.admin.apiKey" . }}
-{{- else -}}
-{{ "" }}
-{{- end -}}
+{{- get (include "groundx.extract.agent.effectiveSettings" . | fromYaml) "apiKey" | default "" -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.apiKeyEnv" -}}
@@ -46,18 +34,7 @@ GROUNDX_AGENT_API_KEY
 {{- end }}
 
 {{- define "groundx.extract.agent.baseUrl" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $in := dig "agent" dict $b -}}
-{{- $serviceConfigured := include "groundx.extract.agent.serviceConfigured" . -}}
-{{- if hasKey $in "apiBaseUrl" -}}
-{{ get $in "apiBaseUrl" }}
-{{- else if eq $serviceConfigured "false" -}}
-{{- $engines := include "groundx.engines" . | fromYaml -}}
-{{- $engine := get $engines "default" | default dict -}}
-{{ get $engine "baseUrl" | default "" }}
-{{- else if eq (include "groundx.extract.agent.serviceType" .) "eyelevel" -}}
-{{ include "groundx.summary.api.serviceUrl" . }}
-{{- end -}}
+{{- get (include "groundx.extract.agent.effectiveSettings" . | fromYaml) "apiBaseUrl" | default "" -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.existingSecret" -}}
@@ -138,56 +115,18 @@ GROUNDX_AGENT_API_KEY
 {{- end }}
 
 {{- define "groundx.extract.agent.modelId" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $in := dig "agent" dict $b -}}
-{{- $serviceConfigured := include "groundx.extract.agent.serviceConfigured" . -}}
-{{- if hasKey $in "modelId" -}}
-{{ get $in "modelId" }}
-{{- else if eq $serviceConfigured "false" -}}
-{{- $engines := include "groundx.engines" . | fromYaml -}}
-{{- $engine := get $engines "default" | default dict -}}
-{{ get $engine "engineId" | default "" }}
-{{- else if eq (include "groundx.extract.agent.serviceType" .) "eyelevel" -}}
-{{ include "groundx.summary.inference.model.name" . }}
-{{- end -}}
+{{- get (include "groundx.extract.agent.effectiveSettings" . | fromYaml) "modelId" | default "" -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.kwargs" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $a := dig "agent" dict $b -}}
-{{- $in := dig "model" dict $a -}}
-{{- $has := hasKey $in "kwargs" -}}
-{{- $val := dig "kwargs" dict $in -}}
-{{- $serviceConfigured := include "groundx.extract.agent.serviceConfigured" . -}}
-{{- if $has -}}
-  {{- toYaml $val -}}
-{{- else if and (eq $serviceConfigured "false") (eq (include "groundx.extract.agent.localModel" .) "true") -}}
-  {{- include "groundx.summary.inference.model.kwargs" . -}}
-{{- else if eq (include "groundx.extract.agent.serviceType" .) "eyelevel" -}}
-  {{- include "groundx.summary.inference.model.kwargs" . -}}
-{{- else -}}
-  {{- toYaml dict -}}
-{{- end -}}
+{{- $settings := include "groundx.extract.agent.effectiveSettings" . | fromYaml -}}
+{{- dig "kwargs" dict (dig "model" dict $settings) | toYaml -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.reasoningEffort" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $a := dig "agent" dict $b -}}
-{{- $in := dig "model" dict $a -}}
-{{- $has := hasKey $in "reasoningEffort" -}}
-{{- $val := dig "reasoningEffort" nil $in -}}
-{{- $serviceConfigured := include "groundx.extract.agent.serviceConfigured" . -}}
-{{- if $has -}}
-  {{- toJson $val -}}
-{{- else if eq $serviceConfigured "false" -}}
-  {{- $engines := include "groundx.engines" . | fromYaml -}}
-  {{- $engine := get $engines "default" | default dict -}}
-  {{- if hasKey $engine "reasoningEffort" -}}{{ get $engine "reasoningEffort" | toJson }}{{- end -}}
-{{- else if eq (include "groundx.extract.agent.serviceType" .) "eyelevel" -}}
-  {{- include "groundx.summary.inference.model.reasoningEffort" . -}}
-{{- else -}}
-  {{- "" -}}
-{{- end -}}
+{{- $settings := include "groundx.extract.agent.effectiveSettings" . | fromYaml -}}
+{{- $model := dig "model" dict $settings -}}
+{{- if hasKey $model "reasoningEffort" -}}{{ get $model "reasoningEffort" | toJson }}{{- end -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.queue" -}}
@@ -253,29 +192,16 @@ GROUNDX_AGENT_API_KEY
 {{- end }}
 
 {{- define "groundx.extract.agent.serviceType" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $in := dig "agent" dict $b -}}
-{{- if eq (include "groundx.extract.agent.serviceConfigured" .) "true" -}}
-{{ lower (get $in "serviceType" | toString) | trim }}
-{{- else -}}
-{{- $engines := include "groundx.engines" . | fromYaml -}}
-{{- $engine := get $engines "default" | default dict -}}
-{{ get $engine "service" }}
-{{- end -}}
-{{- end }}
-
-{{- define "groundx.extract.agent.serviceConfigured" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $in := dig "agent" dict $b -}}
-{{- if and (hasKey $in "serviceType") (ne (get $in "serviceType" | toString | trim) "") -}}true{{- else -}}false{{- end -}}
+{{- get (include "groundx.extract.agent.effectiveSettings" . | fromYaml) "serviceType" | default "" -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.localModel" -}}
 {{- if ne (include "groundx.extract.agent.create" .) "true" -}}
 false
 {{- else -}}
-{{- $service := include "groundx.extract.agent.serviceType" . -}}
-{{- $baseUrl := include "groundx.extract.agent.baseUrl" . | trim -}}
+{{- $settings := include "groundx.extract.agent.effectiveSettings" . | fromYaml -}}
+{{- $service := get $settings "serviceType" | default "" -}}
+{{- $baseUrl := get $settings "apiBaseUrl" | default "" | trim -}}
 {{- $localUrl := include "groundx.summary.api.serviceUrl" . | trim -}}
 {{- if and (eq $service "eyelevel") (eq $baseUrl $localUrl) -}}true{{- else -}}false{{- end -}}
 {{- end -}}
