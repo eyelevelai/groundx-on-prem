@@ -34,6 +34,38 @@ CR placement below. Upgrading in place is **not** a drop-in `helm upgrade` — i
 following ordered procedure. Follow the steps in order; skipping the operator stepping-stone or
 converting the CRDs out of order can destroy the running cluster's control-plane object.
 
+**Preconditions: confirm all three BEFORE step 1. If any fails, stop; do not start the operator
+upgrade or the chart upgrade.**
+
+- **Namespaces match.** A 0.1.x install stored its `Kafka`/`KafkaNodePool` CRs in `.Values.namespace`
+  (default `eyelevel`), independent of the namespace the Helm release itself was installed into.
+  Since 0.2.0 the CRs render into `.Release.Namespace`, so an in-place `helm upgrade` preserves the
+  running cluster only when the release's own namespace already equals the namespace the CRs run in.
+  Check both:
+
+  ```bash
+  # namespace the Helm release lives in
+  helm list -A -f '^groundx-kafka-cluster$' -o json | jq -r '.[0].namespace'
+  # namespace(s) the running Kafka CR lives in
+  kubectl get kafka.kafka.strimzi.io -A \
+    -o jsonpath='{range .items[*]}{.metadata.namespace}{"\n"}{end}'
+  ```
+
+  If they are the **same**, use that namespace for the `helm upgrade` in step 4 (the v1 CRs render
+  into the same namespace and the upgrade is in place; this is the path the migration CI leg
+  exercises). If they **differ**, STOP: a plain `helm upgrade` cannot both find the release (stored
+  in its own namespace) and keep the CRs where they run. That case needs an explicit, separately
+  planned release adoption (bring the release under the CR namespace before upgrading, for example
+  with `helm upgrade --install -n <cr-namespace> --take-ownership`), validated on a copy first. Do
+  not use this in-place runbook when the namespaces differ.
+- **`cluster.replicas <= nodepool.replicas`.** The subchart's render-time guard rejects the upgrade
+  outright otherwise, so confirm it now rather than discovering it mid-upgrade.
+- **Version pin ready.** Pin `cluster.version` and `cluster.metaVersion` to the currently-running
+  Kafka version, and keep them pinned across the whole hop (steps 1 through 4). Left unset, an
+  operator upgrade can roll the running cluster to a newer default version on reconcile.
+
+Then run the ordered procedure:
+
 1. **Upgrade the Strimzi operator in place to `0.50.1`.** Strimzi 0.49 through 0.51 serve **both**
    `kafka.strimzi.io/v1beta2` and `kafka.strimzi.io/v1` at once (v1beta2 is removed in 1.0.0 /
    0.52.0), so any of them can bridge a `v1beta2`-only operator to a `v1`-only one. Use `0.50.1`
@@ -143,38 +175,9 @@ converting the CRDs out of order can destroy the running cluster's control-plane
    ```
 4. **Only then run `helm upgrade` to chart `0.2.7`** (the `v1`-only template shape). Running the
    `helm upgrade` before steps 1 through 3 complete points the still-`v1beta2`-serving operator at
-   CRs the `0.2.7` chart renders as `v1`, which the pre-migration operator cannot reconcile.
-5. **Pin `cluster.version` and `cluster.metaVersion` to the currently-running Kafka version across
-   the whole hop** (steps 1 through 4). Left unset, an operator upgrade can roll the running
-   cluster to a newer default version on reconcile.
-6. **Confirm the Helm release namespace and the running-cluster namespace are the same before
-   upgrading, and stop if they differ.** A 0.1.x install stored its `Kafka`/`KafkaNodePool` CRs in
-   `.Values.namespace` (default `eyelevel`), which is independent of the namespace the Helm release
-   itself was installed into. Since 0.2.0 the CRs render into `.Release.Namespace`, so an in-place
-   `helm upgrade` preserves the running cluster only when the release's own namespace already equals
-   the namespace the CRs run in. Check both:
-
-   ```bash
-   # namespace the Helm release lives in
-   helm list -A -f '^groundx-kafka-cluster$' -o json | jq -r '.[0].namespace'
-   # namespace(s) the running Kafka CR lives in
-   kubectl get kafka.kafka.strimzi.io -A \
-     -o jsonpath='{range .items[*]}{.metadata.namespace}{"\n"}{end}'
-   ```
-
-   - **Same namespace:** run `helm upgrade -n <that-namespace>` (step 4); the v1 CRs render into the
-     same namespace and the upgrade is in place. This is the path the migration CI leg exercises.
-   - **Different namespaces:** STOP. A plain `helm upgrade` cannot both find the release (stored in
-     its own namespace) and keep the CRs where they run: upgrading in the CR namespace fails to find
-     the release, and upgrading in the release namespace renders the v1 CRs there, orphaning the
-     running cluster. This case needs an explicit, separately planned release adoption (bring the
-     release under the CR namespace before upgrading, for example by reinstalling/adopting the
-     already-converted v1 CRs into a release in the CR namespace with
-     `helm upgrade --install -n <cr-namespace> --take-ownership`), validated on a copy first. Do not
-     use this in-place runbook when the namespaces differ.
-7. **Before upgrading, confirm `cluster.replicas <= nodepool.replicas`.** The subchart's
-   render-time guard rejects the upgrade outright if this doesn't already hold, so check it ahead
-   of time rather than discovering it mid-upgrade.
+   CRs the `0.2.7` chart renders as `v1`, which the pre-migration operator cannot reconcile. Apply
+   the `cluster.version`/`cluster.metaVersion` pin from the Preconditions here, and use the
+   namespace the Preconditions confirmed.
 
 A fresh/greenfield install needs none of this — leave `cluster.version`/`cluster.metaVersion` unset
 so Strimzi picks a supported default, and the CRs land directly in the release namespace with no
