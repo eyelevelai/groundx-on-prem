@@ -8,27 +8,30 @@
 
 ## 1. Lock current failure with render tests
 
-- [x] 1.1 Add failing summary tests showing `anthropic` is currently classified as
-  in-cluster and can inherit the wrong endpoint or credential.
+- [x] 1.1 Add failing summary tests showing an explicit service can inherit the wrong
+  in-cluster endpoint or credential.
 - [x] 1.2 Add a failing render test proving the schema-supported
   `engines.<name>.service` field is currently ignored, plus one custom non-default
   engine case proving legacy `serviceType` currently wins when both values disagree.
-- [x] 1.3 Add failing extraction-agent tests for endpoint, model, kwargs, reasoning,
-  exact service value, and credential selection.
-- [x] 1.4 Add failure cases for missing effective Anthropic endpoint, engine ID or
-  model, and credential.
+- [x] 1.3 Add failing extraction-agent tests for explicit endpoint, model, kwargs,
+  reasoning, service value, and credential pass-through.
+- [x] 1.4 Add cases proving a missing provider key does not fail Helm rendering or
+  inherit the GroundX admin key.
 
-## 2. Extend the existing service selectors
+## 2. Replace provider allowlists with explicit configuration
 
-- [x] 2.1 Add exact `anthropic` to the external-service checks in the authoritative
-  `src/groundx` summary and extraction-agent helpers.
+- [x] 2.1 Use explicit service presence, rather than a provider-name allowlist, to
+  choose between supplied configuration and local defaults.
 - [x] 2.2 Render the existing `engines.<name>.service` schema field, retaining
   `serviceType` only as a compatibility fallback. Prove documented `service` wins when
   a custom engine supplies both values; add no separate `serviceType`-only fixture.
 - [x] 2.3 Reuse existing URL, endpoint, engine, model, and credential fields. Add no
   values or schema properties.
-- [x] 2.4 Require effective Anthropic credentials and prevent `admin.apiKey` fallback.
-- [x] 2.5 Preserve every existing provider branch and unknown-service behavior.
+- [x] 2.4 Render any explicitly supplied key and never substitute `admin.apiKey` for an
+  explicit service. Do not require provider authentication in Helm.
+- [x] 2.5 Render any explicit extraction service into `AgentSettings`, including custom
+  hosted and self-hosted values.
+- [x] 2.6 Preserve omitted-service defaults and Bedrock's S3 infrastructure check.
 
 ## 3. Synchronize generated and published surfaces
 

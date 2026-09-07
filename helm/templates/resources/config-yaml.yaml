@@ -72,14 +72,7 @@
 {{- $captureAccounts := get $integration "extractionCaptureAccounts" | default list -}}
 {{- $summary := .Values.summary | default dict -}}
 {{- $summaryExisting := dig "existing" dict $summary -}}
-{{- $summaryUrl := dig "url" "" $summaryExisting | trim -}}
-{{- $anthropicSelected := eq (include "groundx.summary.serviceType" . | lower | trim) "anthropic" -}}
-{{- range $engine := $engs -}}
-  {{- $service := coalesce (get $engine "service") (get $engine "serviceType") (include "groundx.summary.serviceType" $) | default "" | toString | lower | trim -}}
-  {{- if eq $service "anthropic" -}}
-    {{- $anthropicSelected = true -}}
-  {{- end -}}
-{{- end -}}
+{{- $summaryConfigured := eq (include "groundx.summary.existingConfigured" .) "true" -}}
 {{- if gt (len $svcs) 0 }}
 apiVersion: v1
 kind: Secret
@@ -182,12 +175,12 @@ stringData:
         service: {{ $engineService }}
         {{- if hasKey $e "apiKey" }}
         apiKey: {{ get $e "apiKey" }}
-        {{- else if and $anthropicSelected (eq ($engineService | toString | lower | trim) "eyelevel") }}
+        {{- else if and $summaryConfigured (eq $sce "true") (eq ($engineService | toString | lower | trim) "eyelevel") }}
         apiKey: {{ include "groundx.admin.apiKey" $ }}
         {{- end }}
         {{- if hasKey $e "baseUrl" }}
         baseURL: {{ get $e "baseUrl" }}
-        {{- else if and (eq ($engineService | toString | trim) "eyelevel") (ne $summaryUrl "") (eq $sce "true") }}
+        {{- else if and $summaryConfigured (eq $sce "true") (eq ($engineService | toString | lower | trim) "eyelevel") }}
         baseURL: {{ include "groundx.summary.api.serviceUrl" $ }}
         {{- end }}
         {{- if and (hasKey $e "maxImages") (ne (get $e "maxImages") nil) }}

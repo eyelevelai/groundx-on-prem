@@ -22,27 +22,26 @@ Anthropic URL values are API roots such as `https://api.anthropic.com/v1`, not t
 `/v1/messages` operation endpoint. Cashbot and Internal Arcadia append their native
 Messages paths.
 
-## Provider classification
+## Explicit configuration and defaults
 
-Add exact `anthropic` wherever summary or extraction-agent templates distinguish an
-external model service from the in-cluster EyeLevel service. For Anthropic:
+Provider names do not determine generic chart behavior. If a summary engine or
+extraction agent explicitly sets a service, render that exact service and every
+supplied key, URL, model, kwarg, and reasoning value. Do not add in-cluster endpoint,
+model, key, kwargs, or reasoning defaults. This applies equally to Anthropic, Bedrock,
+OpenAI-compatible, custom hosted, and custom self-hosted services.
 
-- render the operator-supplied summary URL or per-engine base URL and engine ID, and
-  the extraction-agent endpoint and model;
-- do not synthesize the in-cluster summary endpoint or model;
-- do not inject local-model kwargs or reasoning defaults; and
-- preserve the exact lowercase service value in generated application configuration.
-
-Other service values keep their current behavior except for the explicit per-engine
-`service` precedence correction above.
+Only an omitted service selects the in-cluster EyeLevel default and its GroundX admin
+key, endpoint, model, kwargs, and reasoning settings. Keep provider-specific branches
+only where the chart has a real infrastructure requirement, such as Bedrock image
+transport requiring S3.
 
 ## Credentials
 
-Anthropic must use the existing provider credential paths. Summary accepts
-`summary.existing.apiKey` as its baseline or an `engines.<name>.apiKey` override.
-Extraction accepts its existing `apiKey`, `existingSecret`, or `cluster.secrets`
-source. Missing effective Anthropic credentials fail chart validation instead of using
-`admin.apiKey`.
+Summary and extraction use their existing credential fields. Any explicitly supplied
+API key is rendered, regardless of service name. An explicit service without a key is
+also rendered without a key. Helm does not decide whether that provider or self-hosted
+service requires authentication. It never substitutes `admin.apiKey` for an explicitly
+configured service.
 
 Templates and tests must not print credential values. This change adds no secret data,
 secret name, or environment variable.
@@ -71,8 +70,9 @@ leaving stored `anthropic` values readable upstream.
 
 ## Validation
 
-Add render and failure tests for both summary and extraction-agent paths, including
-credential sources and absent required configuration. Add one custom-engine case with
-conflicting `service` and `serviceType` values and prove documented `service` wins; do
-not add a separate legacy-only fixture. Run the full Helm gate, a normal minikube
-render, strict OpenSpec validation, mirror comparison, and `git diff --check`.
+Add render tests for summary and extraction-agent paths covering Anthropic, Bedrock,
+OpenAI, custom hosted, custom self-hosted, and omitted-service defaults. Prove explicit
+values pass through, local defaults do not leak into explicit services, missing keys do
+not fail chart rendering, and documented `service` wins over legacy `serviceType`.
+Run the full Helm gate, a normal minikube render, strict OpenSpec validation, mirror
+comparison, and `git diff --check`.

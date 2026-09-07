@@ -20,9 +20,11 @@ The following table lists the configurable parameters of the GroundX chart and t
 | `extract.terminalAgentTraceEnabled`         | Enables terminal-only private diagnostics for every extract pod                  | `false`                               |
 | `extract.<pod>.terminalAgentTraceEnabled`   | Overrides the shared diagnostic value for api, agent, download, or save           | inherited                             |
 
-## Anthropic workflow engines
+## Explicit workflow engines
 
-Use the existing engine and extraction-agent fields:
+Set the service and only the values required by that provider or self-hosted endpoint.
+The chart passes explicit values through without applying provider-specific defaults.
+This Anthropic example uses the existing engine and extraction-agent fields:
 
 ```yaml
 engines:
@@ -38,9 +40,11 @@ extract:
     modelId: claude-sonnet-4-20250514
 ```
 
-Supply the summary provider key through `engines.<name>.apiKey` or
-`summary.existing.apiKey`. Supply the extraction provider key through
-`extract.agent.apiKey`, `extract.agent.existingSecret`, or `cluster.secrets`. Do not
+When authentication is required, supply the summary key through
+`engines.<name>.apiKey` or `summary.existing.apiKey`, and the extraction key through
+`extract.agent.apiKey`, `extract.agent.existingSecret`, or `cluster.secrets`. Helm does
+not require a key or substitute the GroundX admin key for an explicitly configured
+service. If the service is omitted, the existing local GroundX defaults apply. Do not
 commit credentials to a values file.
 
 Upgrade note: per-engine `engines.<name>.service` now takes effect and wins over the

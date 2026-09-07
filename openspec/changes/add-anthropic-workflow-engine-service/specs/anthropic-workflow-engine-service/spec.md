@@ -2,10 +2,10 @@
 
 ## ADDED Requirements
 
-### Requirement: Anthropic is an external model service
+### Requirement: Explicit model services are rendered without provider policy
 
-The chart MUST preserve exact `serviceType: anthropic` and configure it as an external
-provider for summary and extraction-agent workloads.
+The chart MUST preserve any explicitly configured model service and its supplied
+settings without using a provider-name allowlist.
 
 #### Scenario: Summary selects Anthropic
 
@@ -32,10 +32,24 @@ provider for summary and extraction-agent workloads.
   endpoint
 - **And** no in-cluster endpoint, model, kwargs, or reasoning default is substituted
 
-### Requirement: Anthropic uses explicit provider credentials
+#### Scenario: Custom extraction service is selected
 
-The chart MUST require an existing supported provider-credential source for Anthropic
-and MUST NOT fall back to the GroundX admin API key.
+- **Given** `extract.agent.serviceType` contains a custom service value
+- **When** the chart renders extraction-agent configuration
+- **Then** that exact service value is rendered
+- **And** no in-cluster key, endpoint, model, kwargs, or reasoning default is
+  substituted
+
+#### Scenario: Service is omitted
+
+- **Given** no summary or extraction service is explicitly configured
+- **When** the chart renders application configuration
+- **Then** the existing in-cluster EyeLevel defaults remain unchanged
+
+### Requirement: Explicit credentials pass through without chart policy
+
+The chart MUST render any explicitly supplied provider credential regardless of service
+name and MUST NOT require or invent one for an explicitly configured service.
 
 #### Scenario: Existing credential sources work
 
@@ -47,16 +61,16 @@ and MUST NOT fall back to the GroundX admin API key.
 
 #### Scenario: Credential is missing
 
-- **Given** Anthropic is selected without a supported provider credential
+- **Given** any service is explicitly selected without a provider credential
 - **When** the chart renders
-- **Then** rendering fails with a configuration error
-- **And** the admin API key is not used
+- **Then** rendering succeeds without a provider key
+- **And** the GroundX admin API key is not substituted
 
-### Requirement: Existing providers remain stable outside the documented precedence correction
+### Requirement: Existing defaults remain stable
 
-The chart MUST retain the current rendered behavior for every existing service value
-and for deployments that do not select Anthropic, except that documented per-engine
-`service` becomes effective and takes precedence over legacy `serviceType`.
+The chart MUST retain current local behavior when no service is explicitly configured.
+Explicit services use the provider-neutral pass-through behavior and documented
+per-engine `service` takes precedence over legacy `serviceType`.
 
 #### Scenario: Documented per-engine service wins
 
@@ -66,12 +80,11 @@ and for deployments that do not select Anthropic, except that documented per-eng
 - **Then** the documented `service` value is rendered
 - **And** the chart release notes identify the upgrade behavior change.
 
-#### Scenario: Existing service regression suite
+#### Scenario: Omitted-service regression suite
 
-- **Given** the existing service fixtures and default values
+- **Given** the existing fixtures that omit a model service
 - **When** the full Helm validation gate runs
-- **Then** their provider routing and credential behavior remain unchanged outside the
-  explicit per-engine precedence correction
+- **Then** their local routing and credential defaults remain unchanged
 
 ### Requirement: Chart and runtime support are released together
 

@@ -3,70 +3,54 @@
 {{ dig "serviceName" "summary" $in }}
 {{- end }}
 
-{{- define "groundx.summary.validateAnthropic" -}}
+{{- define "groundx.summary.existingConfigured" -}}
 {{- $in := .Values.summary | default dict -}}
 {{- $ex := dig "existing" dict $in -}}
-{{- $summaryService := lower (coalesce (dig "serviceType" "" $ex) "eyelevel") | trim -}}
-{{- $summaryUrl := dig "url" "" $ex | trim -}}
-{{- $summaryApiKey := dig "apiKey" "" $ex | trim -}}
+{{- $hasService := and (hasKey $ex "serviceType") (ne (get $ex "serviceType" | toString | trim) "") -}}
+{{- $hasUrl := and (hasKey $ex "url") (ne (get $ex "url" | toString | trim) "") -}}
+{{- if or $hasService $hasUrl -}}true{{- else -}}false{{- end -}}
+{{- end }}
+
+{{- define "groundx.summary.validateEngines" -}}
 {{- $engines := .Values.engines | default dict -}}
-{{- if and (eq $summaryService "anthropic") (eq (len $engines) 0) -}}
-  {{- fail "summary Anthropic requires engines.<name>.engineId" -}}
+{{- if and (eq (include "groundx.summary.existingConfigured" .) "true") (eq (len $engines) 0) -}}
+  {{- fail "explicit summary configuration requires engines.<name>.engineId" -}}
 {{- end -}}
 {{- range $name, $engine := $engines -}}
-  {{- $service := coalesce (get $engine "service") (get $engine "serviceType") $summaryService | default "" | toString | trim -}}
-  {{- if eq $service "anthropic" -}}
-    {{- if eq (get $engine "engineId" | default "" | toString | trim) "" -}}
-      {{- fail (printf "summary Anthropic engine %s requires engines.%s.engineId" $name $name) -}}
-    {{- end -}}
-    {{- if eq (coalesce (get $engine "baseUrl") $summaryUrl | default "" | toString | trim) "" -}}
-      {{- fail (printf "summary Anthropic engine %s requires engines.%s.baseUrl or summary.existing.url" $name $name) -}}
-    {{- end -}}
-    {{- if eq (coalesce (get $engine "apiKey") $summaryApiKey | default "" | toString | trim) "" -}}
-      {{- fail (printf "summary Anthropic engine %s requires engines.%s.apiKey or summary.existing.apiKey" $name $name) -}}
-    {{- end -}}
+  {{- if eq (get $engine "engineId" | default "" | toString | trim) "" -}}
+    {{- fail (printf "summary engine %s requires engines.%s.engineId" $name $name) -}}
   {{- end -}}
 {{- end -}}
 {{- end }}
 
 {{- define "groundx.summary.create" -}}
-{{- include "groundx.summary.validateAnthropic" . -}}
+{{- include "groundx.summary.validateEngines" . -}}
 {{- $in := .Values.summary | default dict -}}
 {{- $ex := dig "existing" dict $in -}}
-{{- $urlEmpty := eq (dig "url" "" $ex) "" -}}
 {{- $stype := lower (coalesce (dig "serviceType" "" $ex) "eyelevel") | trim -}}
-{{- $svcAllowed := has $stype (list "openai" "openai-base64" "azure" "anthropic") -}}
+{{- $existingConfigured := eq (include "groundx.summary.existingConfigured" .) "true" -}}
 {{- $engines := .Values.engines | default dict -}}
-{{- $anthropicOnly := gt (len $engines) 0 -}}
-{{- $anthropicSelected := eq $stype "anthropic" -}}
-{{- $localNeeded := false -}}
+{{- $localNeeded := and (eq (len $engines) 0) (not $existingConfigured) -}}
 {{- range $engine := $engines -}}
-  {{- $service := coalesce (get $engine "service") (get $engine "serviceType") $stype | default "" | toString | trim -}}
-  {{- if eq $service "anthropic" -}}
-    {{- $anthropicSelected = true -}}
-  {{- end -}}
-  {{- if eq $service "eyelevel" -}}
+  {{- $explicitService := coalesce (get $engine "service") (get $engine "serviceType") "" | toString | lower | trim -}}
+  {{- $service := coalesce $explicitService $stype | default "eyelevel" | toString | lower | trim -}}
+  {{- $hasBaseUrl := and (hasKey $engine "baseUrl") (ne (get $engine "baseUrl" | toString | trim) "") -}}
+  {{- if and (eq $service "eyelevel") (not $hasBaseUrl) (or (not $existingConfigured) (eq $explicitService "eyelevel")) -}}
     {{- $localNeeded = true -}}
   {{- end -}}
-  {{- if ne $service "anthropic" -}}
-    {{- $anthropicOnly = false -}}
-  {{- end -}}
 {{- end -}}
-{{- if and $anthropicSelected $localNeeded -}}
-true
-{{- else -}}
-{{- and $urlEmpty (not $svcAllowed) (not $anthropicOnly) -}}
-{{- end -}}
+{{- $localNeeded -}}
 {{- end }}
 
 {{- define "groundx.summary.apiKey" -}}
 {{- $in := .Values.summary | default dict -}}
 {{- $ex := dig "existing" dict $in -}}
-{{- $stype := lower (coalesce (dig "serviceType" "" $ex) "eyelevel") | trim -}}
-{{- if eq $stype "anthropic" -}}
-{{ dig "apiKey" "" $ex }}
+{{- if hasKey $ex "apiKey" -}}
+{{ get $ex "apiKey" }}
+{{- else if eq (include "groundx.summary.existingConfigured" .) "false" -}}
+{{ include "groundx.admin.apiKey" . }}
 {{- else -}}
-{{- coalesce (dig "apiKey" "" $ex) (include "groundx.admin.apiKey" .) | default "" -}}
+{{ "" }}
 {{- end -}}
 {{- end }}
 
