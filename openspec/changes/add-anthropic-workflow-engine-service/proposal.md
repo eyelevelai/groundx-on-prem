@@ -10,19 +10,19 @@ be passed through without provider-specific chart policy.
 
 ## Blast Radius
 
-Any explicitly configured summary or extraction service now keeps its supplied
-service, key, URL, model, kwargs, and reasoning values without inheriting local
-GroundX settings. The documented per-engine `service` becomes authoritative over
-legacy `serviceType`. Configurations that omit the service retain existing local
-defaults.
+Any explicitly configured summary or extraction service keeps its supplied service,
+key, URL, model, kwargs, and reasoning values. Extraction inherits the resolved
+default summary engine unless `extract.agent` explicitly selects its own service. The
+documented per-engine `service` becomes authoritative over legacy `serviceType`.
 
 ## What Changes
 
 - Render any explicitly configured service and its existing settings unchanged.
-- Use in-cluster endpoint, model, key, kwargs, and reasoning defaults only when the
-  service is omitted.
-- Do not make provider authentication policy in Helm. Render an explicit key when
-  supplied and otherwise leave it unset.
+- Use the resolved default summary engine for extraction when no extraction service is
+  selected.
+- Keep `extract.agent` as the explicit extraction override.
+- For an explicitly selected external service, render its key when supplied and leave
+  it unset otherwise. Keep the existing local service credential default.
 - Keep only infrastructure-specific validation, such as Bedrock requiring S3.
 - Render the schema's existing per-engine `service` field instead of silently ignoring
   it. Add no chart value.
@@ -44,8 +44,8 @@ None.
 - Branch: base the plan and implementation on current pushed `origin/0.2.7`, the active
   chart release line. Do not carry `origin/main` history or validate against its older
   chart and CI surfaces.
-- Templates: summary and extraction-agent default selection, per-engine service
-  rendering, and credential pass-through.
+- Templates: shared default-engine selection, extraction-agent override selection,
+  per-engine service rendering, and credential pass-through.
 - Values contract: no new or renamed field.
 - Images: no application image is built here. A chart release is blocked until its
   referenced runtime images support native Anthropic.

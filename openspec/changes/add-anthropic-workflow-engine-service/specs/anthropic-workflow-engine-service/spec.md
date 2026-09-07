@@ -42,9 +42,34 @@ settings without using a provider-name allowlist.
 
 #### Scenario: Service is omitted
 
-- **Given** no summary or extraction service is explicitly configured
+- **Given** no summary service is explicitly configured
 - **When** the chart renders application configuration
 - **Then** the existing in-cluster EyeLevel defaults remain unchanged
+
+#### Scenario: Extraction inherits the default summary engine
+
+- **Given** a default summary engine resolves to a configured service, key, URL, model,
+  and reasoning value
+- **And** `extract.agent.serviceType` is omitted
+- **When** the chart renders extraction configuration
+- **Then** extraction receives those resolved default engine settings
+- **And** it does not receive unrelated local defaults
+
+#### Scenario: Extraction explicitly selects another engine
+
+- **Given** a default summary engine is configured
+- **And** `extract.agent.serviceType` explicitly selects another service
+- **When** the chart renders extraction configuration
+- **Then** extraction receives only its own configured engine settings
+- **And** the default summary engine remains unchanged
+
+#### Scenario: Extraction explicitly selects the local engine
+
+- **Given** the default summary engine is external
+- **And** `extract.agent.serviceType` selects the chart-managed EyeLevel service
+- **When** the chart renders extraction configuration and workloads
+- **Then** extraction receives the local endpoint, model, and credential
+- **And** the local summary API and inference workloads remain deployed
 
 ### Requirement: Explicit credentials pass through without chart policy
 
@@ -84,7 +109,8 @@ per-engine `service` takes precedence over legacy `serviceType`.
 
 - **Given** the existing fixtures that omit a model service
 - **When** the full Helm validation gate runs
-- **Then** their local routing and credential defaults remain unchanged
+- **Then** summary retains its current defaults
+- **And** extraction inherits the resolved default summary engine
 
 #### Scenario: Engine ID is set without a service
 

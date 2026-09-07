@@ -34,6 +34,10 @@
 - [x] 2.5 Render any explicit extraction service into `AgentSettings`, including custom
   hosted and self-hosted values.
 - [x] 2.6 Preserve omitted-service defaults and Bedrock's S3 infrastructure check.
+- [x] 2.7 Make extraction inherit the resolved default summary engine when no
+  extraction service is selected.
+- [x] 2.8 Keep explicit extraction settings authoritative and deploy local model
+  workloads when an explicit local extraction engine needs them.
 
 ## 3. Synchronize generated and published surfaces
 

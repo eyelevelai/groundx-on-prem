@@ -70,9 +70,9 @@
 {{- $wrwt := include "groundx.workspace.workspace.throughput" . | trim -}}
 {{- $integration := .Values.integration | default dict -}}
 {{- $captureAccounts := get $integration "extractionCaptureAccounts" | default list -}}
-{{- $summary := .Values.summary | default dict -}}
-{{- $summaryExisting := dig "existing" dict $summary -}}
 {{- $summaryConfigured := eq (include "groundx.summary.existingConfigured" .) "true" -}}
+{{- $defaultEngine := include "groundx.summary.defaultEngine.resolved" . | fromYaml -}}
+{{- $defaultLocal := get $defaultEngine "local" | default false -}}
 {{- if gt (len $svcs) 0 }}
 apiVersion: v1
 kind: Secret
@@ -169,18 +169,22 @@ stringData:
     engines:
       {{- range $i, $e := $engs }}
       {{- $engineID := get $e "engineId" -}}
-      {{- $engineService := coalesce (get $e "service") (get $e "serviceType") (include "groundx.summary.serviceType" $) -}}
+      {{- $explicitService := coalesce (get $e "service") (get $e "serviceType") "" | default "" | toString | lower | trim -}}
+      {{- $engineService := coalesce $explicitService (include "groundx.summary.serviceType" $) | default "eyelevel" | toString | lower | trim -}}
+      {{- $engineBaseUrl := get $e "baseUrl" | default "" | toString | trim -}}
+      {{- $localUrl := include "groundx.summary.api.serviceUrl" $ | trim -}}
+      {{- $engineLocal := and (eq $engineService "eyelevel") (or (eq $engineBaseUrl $localUrl) (and (eq $engineBaseUrl "") (or (not $summaryConfigured) (eq $explicitService "eyelevel")))) -}}
 {{ printf "\n      %s:" $engineID }}
         engineID: {{ $engineID | quote }}
         service: {{ $engineService }}
         {{- if hasKey $e "apiKey" }}
         apiKey: {{ get $e "apiKey" }}
-        {{- else if and $summaryConfigured (eq $sce "true") (eq ($engineService | toString | lower | trim) "eyelevel") }}
+        {{- else if and (not $defaultLocal) $engineLocal }}
         apiKey: {{ include "groundx.admin.apiKey" $ }}
         {{- end }}
         {{- if hasKey $e "baseUrl" }}
         baseURL: {{ get $e "baseUrl" }}
-        {{- else if and $summaryConfigured (eq $sce "true") (eq ($engineService | toString | lower | trim) "eyelevel") }}
+        {{- else if and (not $defaultLocal) $engineLocal }}
         baseURL: {{ include "groundx.summary.api.serviceUrl" $ }}
         {{- end }}
         {{- if and (hasKey $e "maxImages") (ne (get $e "maxImages") nil) }}

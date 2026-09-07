@@ -24,7 +24,6 @@
 {{- $re := include "groundx.extract.agent.reasoningEffort" . -}}
 {{- $it := include "groundx.extract.agent.imageTransport" . -}}
 {{- $ast := include "groundx.extract.agent.serviceType" . -}}
-{{- $asc := include "groundx.extract.agent.serviceConfigured" . -}}
 {{- $did := include "groundx.extract.save.driveId" . -}}
 {{- $tid := include "groundx.extract.save.templateId" . -}}
 {{- $kw := include "groundx.extract.agent.kwargs" . | fromYaml -}}
@@ -60,7 +59,7 @@ stringData:
         model_id={{ $mid | quote }},
         {{- end }}
         image_transport={{ $it | quote }},
-        {{- if eq $asc "true" }}
+        {{- if ne $ast "" }}
         service={{ $ast | quote }},
         {{- end }}
         {{- if eq $re "null" }}
