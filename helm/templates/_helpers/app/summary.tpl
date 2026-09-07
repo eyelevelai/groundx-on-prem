@@ -32,7 +32,7 @@
 {{- $engines := .Values.engines | default dict -}}
 {{- $localNeeded := and (eq (len $engines) 0) (not $existingConfigured) -}}
 {{- range $engine := $engines -}}
-  {{- $explicitService := coalesce (get $engine "service") (get $engine "serviceType") "" | toString | lower | trim -}}
+  {{- $explicitService := coalesce (get $engine "service") (get $engine "serviceType") "" | default "" | toString | lower | trim -}}
   {{- $service := coalesce $explicitService $stype | default "eyelevel" | toString | lower | trim -}}
   {{- $hasBaseUrl := and (hasKey $engine "baseUrl") (ne (get $engine "baseUrl" | toString | trim) "") -}}
   {{- if and (eq $service "eyelevel") (not $hasBaseUrl) (or (not $existingConfigured) (eq $explicitService "eyelevel")) -}}

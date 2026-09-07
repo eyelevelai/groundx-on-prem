@@ -86,6 +86,14 @@ per-engine `service` takes precedence over legacy `serviceType`.
 - **When** the full Helm validation gate runs
 - **Then** their local routing and credential defaults remain unchanged
 
+#### Scenario: Engine ID is set without a service
+
+- **Given** a summary engine has an engine ID but no `service` or `serviceType`
+- **And** `summary.existing` is not configured
+- **When** the chart renders
+- **Then** the engine uses the in-cluster EyeLevel defaults
+- **And** the local summary API and inference workloads remain deployed
+
 ### Requirement: Chart and runtime support are released together
 
 The chart MUST NOT advertise or release Anthropic configuration with an application

@@ -17,6 +17,8 @@
   reasoning, service value, and credential pass-through.
 - [x] 1.4 Add cases proving a missing provider key does not fail Helm rendering or
   inherit the GroundX admin key.
+- [x] 1.5 Add a regression case proving an engine ID without a service keeps the local
+  summary API and inference workloads.
 
 ## 2. Replace provider allowlists with explicit configuration
 

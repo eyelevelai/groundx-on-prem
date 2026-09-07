@@ -129,6 +129,24 @@ tests:
           count: 0
         template: ../templates/app/inference.yaml
 
+  - it: "an engine without a service keeps local summary workloads"
+    templates:
+      - ../templates/app/api.yaml
+      - ../templates/app/inference.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      engines.default.engineId: local-model
+      summary.api.enabled: true
+      summary.inference.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+        template: ../templates/app/api.yaml
+      - hasDocuments:
+          count: 2
+        template: ../templates/app/inference.yaml
+
   - it: "mixed local and Anthropic engines keep local summary workloads"
     templates:
       - ../templates/app/api.yaml

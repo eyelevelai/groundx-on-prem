@@ -35,6 +35,17 @@ key, endpoint, model, kwargs, and reasoning settings. Keep provider-specific bra
 only where the chart has a real infrastructure requirement, such as Bedrock image
 transport requiring S3.
 
+Summary workload creation must use the same existing service precedence as rendered
+summary configuration: non-empty `service`, then non-empty legacy `serviceType`, then
+`summary.existing`, then the in-cluster EyeLevel default. String conversion must happen
+after omission has been resolved so an absent value cannot become a non-empty sentinel.
+
+Do not replace the existing runtime configuration hierarchy. Cashbot keeps its global
+summary defaults and per-engine overrides. `extract.agent` remains the extraction
+deployment default, and the extraction runtime continues to overlay workflow engine
+settings when a workflow supplies them. No Cashbot or `config.yaml` contract change is
+required.
+
 ## Credentials
 
 Summary and extraction use their existing credential fields. Any explicitly supplied
@@ -72,7 +83,8 @@ leaving stored `anthropic` values readable upstream.
 
 Add render tests for summary and extraction-agent paths covering Anthropic, Bedrock,
 OpenAI, custom hosted, custom self-hosted, and omitted-service defaults. Prove explicit
-values pass through, local defaults do not leak into explicit services, missing keys do
-not fail chart rendering, and documented `service` wins over legacy `serviceType`.
+values pass through, local defaults do not leak into explicit services, an engine ID
+without a service keeps local summary workloads, missing keys do not fail chart
+rendering, and documented `service` wins over legacy `serviceType`.
 Run the full Helm gate, a normal minikube render, strict OpenSpec validation, mirror
 comparison, and `git diff --check`.
