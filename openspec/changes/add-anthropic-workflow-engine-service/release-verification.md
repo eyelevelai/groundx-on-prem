@@ -1,9 +1,11 @@
 # Anthropic release verification
 
-Status as of 2026-09-08 UTC: native text and multimodal provider canaries pass
-with the reloaded bash-profile credential. Full deployment validation remains gated.
-No production deployment, workflow assignment, credential change, or customer-data
-mutation occurred.
+Status as of 2026-09-08 UTC: production `PreProcessTrainFile` now runs Cashbot
+`d8c8e69`. Both synthetic workflow dispatches preserve Anthropic and include the
+required metadata. The image document completes through QA and final retrieval.
+The TXT document reaches QA but fails because it has no derived page images.
+Kubernetes remains at restored Helm revision 350. No customer defaults or
+credentials were changed.
 
 ## Source prerequisites
 
@@ -24,7 +26,7 @@ matrix in [CI run 34175126227](https://github.com/eyelevelai/internal-arcadia-ag
   clean commit `589d4c9fddbf2b0bb066b8cdf6bab9e80822887f`, which contains the Cashbot
   native-provider prerequisite. The native adapter bytes match current master.
 - Kubernetes context `gxprod`, namespace `eyelevel`, Helm release `groundx`, revision
-  `348`: all four extraction workloads use
+  `350` (restored from `348`): all four extraction workloads use
   `public.ecr.aws/c9r4x6y5/eyelevel/extract@sha256:2224f3a650514596d27279de7373229b9b8f7e6b7ad9be67c291b1952bf58a8f`.
   This is `pr164-dbccfa8-adp-v45`, built before the configured-provider default fix.
 - The deployed extraction image contains GroundX `4.0.3` and Pydantic AI `2.36.0`.
@@ -93,12 +95,118 @@ service tests.
 
 Earlier attempts were rejected for insufficient credit. A separate temporary
 organization-scoped key required a workspace header; it was not used for the
-successful calls and has not been revoked. The empty workspace listing omitted
+successful calls and its owner reports it revoked. The empty workspace listing omitted
 Default; its ID was subsequently found through API-key scope metadata.
 
 Before release:
 
 1. Verify the complete chart deployment's application-version compatibility and review
    the custom-engine precedence change for each intended deployment target.
-2. Use the approved deployment procedure and recorded rollback state before assigning
-   Anthropic in production. The current production image and provider remain unchanged.
+2. Test explicit Anthropic workflow configuration on the existing production services.
+   The default-inheritance fix does not change the explicit workflow-engine path and
+   is not required for these canaries. A later chart deployment requires its own
+   target-specific compatibility checks and rollback state.
+
+## Production rollback
+
+Helm revision 349 changed only the four extraction Deployment image references to
+the candidate digest. Revision 350 successfully restored revision 348. Parsed Helm
+values and every manifest document matched revision 348 after rollback; all four
+Deployments were ready on the original image. Hosted summary binaries were not
+changed. This test requires new isolated workflows and buckets, not deployment
+changes or account-level provider changes.
+
+## Workflow-only production results
+
+Two synthetic documents ran on the restored production services. Each isolated
+workflow supplied native Anthropic `claude-sonnet-4-6`, the existing provider key,
+and `maxImages: 5`. Saved workflow readbacks confirmed the engine. The text case
+used a custom text-summary field; it did not exercise every built-in summary step.
+
+| Case | Bucket | Workflow | Process | Document |
+| --- | --- | --- | --- | --- |
+| Text | 33447 | `a8500c47-5388-4ef5-9645-d0073fd07200` | `65bf9c1a-7a45-4d2e-ac85-16866a771953` | `5bb39344-dffe-40b8-a682-19621a40f5c3` |
+| Image | 33448 | `478ae621-c59b-484f-8ab6-c8871a3e19bc` | `db64332e-31c2-418e-9cf8-c9ba501ef81d` | `3b78ef59-7321-4db3-9969-dad78d334509` |
+
+Cashbot's retained successful provider responses were:
+
+- Text, `msg_011CeqEM6mRLgF9RWXTFe4Dv`: `Delivery report reference code CANARY-742:
+  The delivery arrived on time and was accepted.` (1007 input tokens, 30 output).
+- Image, `msg_011CeqEMBrGPoWL1Xnwzauyi`: `{"account_code":"CHECK-93B71F"}`
+  (1768 input tokens, 16 output). The prepared request contained one HTTPS image,
+  within the five-image cap. This was native Anthropic, not Bedrock S3 transport.
+
+Both then failed in Internal Arcadia's download/load-X-Ray stage with
+`canonical v1 workflow reassembly metadata is required`. The captured task payloads
+omit `extraction_workflow_metadata_v1`, which the deployed `dbccfa8` loader requires.
+The captured persisted workflow and summary input also lack that metadata packet.
+The candidate `1ebb149` image has the same loader and would not fix this failure.
+The first-run metadata failure is explained by the outdated dispatch Lambda below.
+Neither reconciliation nor QA ran in that first attempt, and neither document
+produced a verified final extraction.
+
+Private requests, provider responses, and failure traces remain under
+`openspec/work/add-anthropic-workflow-engine-service/prod-20260908/` and each
+document's authenticated `layout/processed/<process>/<document>-extract-trace/`
+prefix. Retain the two test resources for this unresolved handoff issue. Workflow
+capture expires on 2026-09-09 at 06:00 UTC. No customer workflow was changed.
+
+## Dispatch Lambda update and production retest
+
+The API saved valid workflow artifacts. The deployed `PreProcessTrainFile` binary,
+source `711ec9398b042663e51beae91be365b677a053b8`, did not recognize `anthropic`.
+Its service parser silently changed it to `hosted`. Recomputing the workflow hash
+after that change selected a nonexistent S3 artifact path. The metadata loader
+allowed missing artifacts, and dispatch sent an incomplete task to Arcadia.
+Production-function replay against both database records reproduced exactly one
+changed path, `engines.all.service`. The old parser found zero artifacts; the
+Anthropic-aware parser preserved the stored hash and found all three artifacts.
+
+[Build 34183930309](https://github.com/EyeLevel-ai/cashbot-go/actions/runs/34183930309)
+built only `pre-process-lambda` from pushed source
+`d8c8e69b565c81e9c943cff65154afc5458b5960`. The deployed immutable image is:
+
+`903713046261.dkr.ecr.us-west-2.amazonaws.com/pre-process-lambda@sha256:2866bb3de85807d22f81a57a5f34366b13ec26193fcb19b5f8faf8f1ca5d21b9`
+
+The release script completed successfully. Lambda is Active with a Successful
+update. AWS runtime configuration and event-source mapping hashes are unchanged;
+the enabled SQS mapping retains `ReportBatchItemFailures`. The build bundles the
+current production config. Its only differences from the previous bundled config
+are the API-only compiled-JSON write gate and extraction-capture account allowlist;
+neither changes the dispatcher provider or storage settings. The previous image,
+available for rollback through the same release script, is:
+
+`903713046261.dkr.ecr.us-west-2.amazonaws.com/pre-process-lambda@sha256:e46187b21c39f3ac268cb44c1c54c8d9b4f0775f4f31b625b6394fe1b2c059e3`
+
+Both test sources, workflows, buckets, and provider settings were reused unchanged.
+New document submissions preserve the first-run failures and their evidence.
+
+| Case | New process | New document | Result |
+| --- | --- | --- | --- |
+| Text | `bda771fd-d952-4ac2-99d7-060cf634e4ec` | `4ae2b199-8067-4db5-b998-b0c6642e7a16` | Correct summary; metadata and reconciliation pass; QA fails before model invocation because no derived images exist |
+| Image | `27475459-a0e2-4414-92b6-3223178fdc85` | `651c2e18-f08b-453a-963f-ed208890f8b1` | Complete; authoritative extraction is `{"account":{"account_code":"CHECK-93B71F"}}` |
+
+Both dispatch and API-ingress packets contain reassembly metadata. Both Cashbot
+provider calls succeed using `claude-sonnet-4-6`. Reconciliation runs the no-conflict
+path without a model call in both cases; these tests do not certify a reconciliation
+provider request. Image QA makes one Anthropic call with one image, below the
+configured five-image cap, and returns the correct code. Provider response ID is
+`msg_011CeqGyJS8jVAobJFvTbZay`. Final save, callback, and `get_extract` agree.
+
+Text QA receives `page_images: []` and raises
+`ImageEvidenceError: remote_url transport requires derived page image URLs` during
+agent setup. The extracted summary and metadata are present. This is a separate
+image-evidence requirement in the unchanged extraction runtime, not a missing
+metadata failure or a rejected Anthropic request. The document has no final extract.
+
+The update fixes compatibility with Anthropic. Provider parsing remains unchanged.
+The separate Cashbot `require-extraction-workflow-metadata` change rejects missing
+metadata before dispatch. Internal Arcadia's `review-source-text` change supplies
+original source text when page images are absent. Neither fix is deployed in this
+record; a fresh text canary remains required after deployment.
+
+Retest evidence is retained beneath the existing private root in `dispatch-retest/`:
+68 text and 146 image trace objects, with indexed SHA-256 filenames to avoid the
+macOS filename-length failure. It includes dispatch inputs, API ingress, stage
+inputs/outputs, provider requests/responses, terminal diagnostics, and final output.
+Owner remains release coordinator; expiry remains 2026-09-15 pending disposition.
