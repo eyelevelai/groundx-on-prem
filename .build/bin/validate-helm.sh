@@ -86,6 +86,7 @@ helm lint helm
 
 echo "==> Running Helm unit tests"
 helm unittest src/groundx
+helm unittest src/groundx/prereqs/kafka-cluster
 
 echo "==> Verifying Google OCR credentials rendering for both chart surfaces"
 for chart in src/groundx helm; do
