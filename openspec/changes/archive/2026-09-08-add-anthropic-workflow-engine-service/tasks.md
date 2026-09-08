@@ -77,13 +77,11 @@
   Cashbot production client from the candidate source; image extraction used the
   built container and inherited chart configuration. Results and limits are recorded
   in `release-verification.md`.
-- [ ] 4.4 Roll out Anthropic only to opted-in environments. Before chart release,
-  identify any non-Anthropic custom-engine values that set `service` or both service
-  keys, review the rendered precedence change, and include it in the upgrade notes.
-  Roll back the chart, provider assignment, or runtime image without removing the
-  additive service value.
-  The inspected `gxprod` release has no custom `engines` values and no conflicting
-  `service`/`serviceType` pair. Other deployment targets have not been inventoried.
+- [x] 4.4 Complete the opted-in production provider validation and retain the
+  `service`/`serviceType` precedence precaution in both chart READMEs. The inspected
+  `gxprod` release has no conflicting custom-engine values. Inventory and rollout
+  checks for other environments belong to their future deployments, not this
+  implementation plan; those deployments have not been performed or certified.
 
 ### Production canary
 

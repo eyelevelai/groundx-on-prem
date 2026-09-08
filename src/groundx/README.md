@@ -34,3 +34,13 @@ extract:
 This example makes the extraction model call one tool per turn. Workflow
 `requestPassthrough` values override matching `extra_body` defaults. The selected
 extraction runtime image must support the option.
+
+## Engine configuration upgrade note
+
+For `engines.<name>`, a non-empty `service` takes precedence over legacy
+`serviceType`. When `service` is omitted or empty, `serviceType` still works.
+Before upgrading an environment, review engines that set both values and confirm
+the selected provider is intended. `extract.agent.serviceType` is unchanged;
+without an explicit extraction service, extraction inherits the default summary
+engine. Check runtime-image compatibility and retain rollback settings for that
+deployment.

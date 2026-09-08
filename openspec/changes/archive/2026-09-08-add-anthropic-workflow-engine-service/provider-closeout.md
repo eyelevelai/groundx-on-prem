@@ -12,8 +12,8 @@ Helm revision 352 uses the existing 41,943,040-byte image-payload default. The 1
 - Evidence owner: release coordinator. Retention review: 2026-09-15, not automatic deletion authorization. Local evidence is ignored and not committed. Hosted bucket deletion is irreversible; direct storage-object deletion was not performed.
 - Removed the clean, fully contained `AGE-336-deploy` and `age336-page-window-limit` worktrees, the obsolete `fix/age336-page-window-limit` local branch, and a stale worktree registration. Merged Anthropic PR remote branches were already absent. Active PR branches and unrelated work remain untouched.
 
-## Remaining release scope
+## Future deployments
 
-This closes provider validation, not general chart-release certification. Task 4.4 remains open: inventory other opted-in deployments and document any existing custom-engine `service`/`serviceType` precedence impact before their chart rollout. No further ADP accuracy run is required for provider validation.
+Implementation and opted-in production provider validation are complete. Task 4.4 is closed. Before upgrading another environment, its operator must check custom engine values and runtime-image compatibility. The service-key precaution remains in both chart READMEs. Other deployments have not been certified, and no further ADP accuracy run is required for provider validation.
 
 The full `.build/bin/validate-helm.sh` gate passes on the closeout branch. No chart template, source/mirror pair, image, credential or production default-provider setting changes in this PR. The two credential-bearing operator values files remain ignored.

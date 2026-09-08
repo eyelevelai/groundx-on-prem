@@ -67,8 +67,10 @@ report complete capture with no missing artifacts. Earlier runs remain unchanged
 These canaries prove image-free statement QA and unchanged image-backed statement QA.
 They do not prove live conflict reconciliation, meter or charge model calls, deliberate
 missing-metadata rejection, or a complete on-prem chart release. Those are not outcomes
-of the two synthetic workflows. The broader chart rollout task remains open.
+of the two synthetic workflows. Future chart rollouts require target-specific
+compatibility checks described in the chart upgrade notes.
 
-Retain the isolated resources and private boundary evidence pending cleanup approval.
-The existing evidence retention date is 2026-09-15. Temporary secret-bearing Helm
-snapshots are not durable evidence; Helm retains the rollback revision.
+The isolated resources were deleted during provider closeout. Successful private
+boundary evidence remains retained for debugging, with retention review due
+2026-09-15. Temporary secret-bearing Helm snapshots are not durable evidence;
+Helm retains the rollback revision. See `provider-closeout.md` for disposition.

@@ -64,6 +64,12 @@ not require a key or substitute the GroundX admin key for an explicitly configur
 service. If the service is omitted, the existing local GroundX defaults apply. Do not
 commit credentials to a values file.
 
-Upgrade note: per-engine `engines.<name>.service` now takes effect and wins over the
-legacy `serviceType` field when both are set. Review custom engine values containing
-either field before upgrading.
+## Engine configuration upgrade note
+
+For `engines.<name>`, a non-empty `service` takes precedence over legacy
+`serviceType`. When `service` is omitted or empty, `serviceType` still works.
+Before upgrading an environment, review engines that set both values and confirm
+the selected provider is intended. `extract.agent.serviceType` is unchanged;
+without an explicit extraction service, extraction inherits the default summary
+engine. Check runtime-image compatibility and retain rollback settings for that
+deployment.
