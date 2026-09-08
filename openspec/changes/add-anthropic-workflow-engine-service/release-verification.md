@@ -81,6 +81,10 @@ request `req_011Ceq7d9JrFHXw3hAQqhvJA`. This proves provider reachability and er
 propagation, not successful summarization. No further provider calls were made
 after the account error was identified. The image canary was not run.
 
+A subsequent retry returned the same HTTP 400 insufficient-credit error, request
+`req_011CeqB8wyeyiK4NWASvUj71`. The configured account remains blocked; no image
+canary or production change followed the retry.
+
 Before release:
 
 1. Fund the Anthropic account and pass text and multimodal extraction-agent canaries.
