@@ -1,7 +1,8 @@
 # Anthropic release verification
 
 Status as of 2026-09-08 UTC: release remains gated. Native text canary execution
-reached Anthropic, which rejected the request for insufficient account credit.
+reached Anthropic. The configured key was rejected for insufficient account credit;
+a temporary key requires an explicit Anthropic workspace ID that is unavailable.
 No successful text or multimodal canary is claimed. No production deployment,
 workflow assignment, credential change, or customer-data mutation occurred.
 
@@ -85,9 +86,17 @@ A subsequent retry returned the same HTTP 400 insufficient-credit error, request
 `req_011CeqB8wyeyiK4NWASvUj71`. The configured account remains blocked; no image
 canary or production change followed the retry.
 
+A temporary credential reached the native Messages endpoint but returned HTTP 400:
+the key is not workspace-scoped and requires an `anthropic-workspace-id` header.
+Read-only `GET /v1/organizations/workspaces?limit=20` returned an empty list with
+`has_more: false`, so no workspace ID could be selected. No image request was made.
+The credential was supplied only to an ephemeral process and was not written to
+repository files, profiles, or diagnostic files. It has not been revoked.
+
 Before release:
 
-1. Fund the Anthropic account and pass text and multimodal extraction-agent canaries.
+1. Supply a funded workspace-scoped Anthropic credential, or its required workspace
+   ID, and pass text and multimodal extraction-agent canaries.
 2. Verify the complete chart deployment's application-version compatibility and review
    the custom-engine precedence change for each intended deployment target.
 3. Use the approved deployment procedure and recorded rollback state before assigning
