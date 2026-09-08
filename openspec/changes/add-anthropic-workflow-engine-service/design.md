@@ -3,10 +3,11 @@
 ## Reuse the existing service shape
 
 `anthropic` is another value of the current service selectors. Summary continues to use
-`summary.existing` and `engines.<name>`; extraction agents continue to use
-`extract.agent`. Existing URL, endpoint, engine ID, API-key, existing-secret, and
-cluster-secret inputs carry its configuration. No Anthropic-specific values object,
-secret kind, workload, or network path is added.
+`summary.existing` and `engines.<name>`. Extraction inherits the resolved `default`
+summary engine unless `extract.agent.serviceType` explicitly selects another service.
+Existing URL, endpoint, engine ID, API-key, existing-secret, and cluster-secret inputs
+carry its configuration. No Anthropic-specific values object, secret kind, workload,
+or network path is added.
 
 The schema defines `engines.default.service`, while custom engine names are not
 property-validated. `config-yaml.yaml` currently reads `serviceType` for every engine.
@@ -18,30 +19,82 @@ notes. This makes the documented field effective without adding a value.
 The chart selects configuration only. The matching application image owns native
 Messages API transport and response handling.
 
-## Provider classification
+Anthropic URL values are API roots such as `https://api.anthropic.com/v1`, not the
+`/v1/messages` operation endpoint. Cashbot and Internal Arcadia append their native
+Messages paths.
 
-Add exact `anthropic` wherever summary or extraction-agent templates distinguish an
-external model service from the in-cluster EyeLevel service. For Anthropic:
+## Explicit configuration and defaults
 
-- render the operator-supplied summary URL or per-engine base URL and engine ID, and
-  the extraction-agent endpoint and model;
-- do not synthesize the in-cluster summary endpoint or model;
-- do not inject local-model kwargs or reasoning defaults; and
-- preserve the exact lowercase service value in generated application configuration.
+Provider names do not determine generic chart behavior. Resolve every configured
+engine once in `groundx.engines`. Each engine uses its own explicit values first, then
+the shared `summary.existing` values where it inherits them, then the in-cluster
+EyeLevel defaults. The generated default engine is therefore already a complete
+self-hosted engine. Summary rendering, local workload selection, and extraction all
+consume this same resolved map.
 
-Other service values keep their current behavior except for the explicit per-engine
-`service` precedence correction above.
+Use the chart's `settings`, `existing`, and `create` helper conventions.
+`groundx.engine.settings` builds a configured engine for either summary or extraction.
+`groundx.engines` validates and builds the summary engine map.
+`groundx.summary.existing` identifies the existing summary-service configuration.
+
+`groundx.extract.agent.engine` translates extraction input names into the same engine
+map used by summaries. Without an extraction service selection, it inherits the default
+summary engine and applies explicit extraction fields. With a selection, it uses the
+shared engine settings helper. Field readers consume that map directly, without
+converting it back to a second settings format.
+
+`groundx.engine.create` owns the check for the chart-managed local endpoint.
+`groundx.summary.create` applies it to summary engines for summary-client scaling.
+`groundx.summary.model.create` also accounts for enabled extraction when deciding
+whether to deploy local model pods. An extraction-only local model must not change
+external-summary queue scaling. Model selection validation belongs in the engine
+builder, not in a separate workload helper.
+
+If `extract.agent.serviceType` is set, extraction uses its own supplied key, URL,
+model, kwargs, and reasoning value instead. Do not fill missing settings from the
+summary engine. An explicit local EyeLevel extraction service uses the chart-managed
+local endpoint, model, and credential unless those fields are explicitly overridden.
+Keep provider-specific branches only where the chart has a real infrastructure
+requirement, such as Bedrock image transport requiring S3.
+
+Engine resolution uses non-empty `service`, then non-empty legacy `serviceType`, then
+`summary.existing`, then the in-cluster EyeLevel default. String conversion happens
+after omission is resolved so an absent value cannot become a non-empty sentinel.
+Consumers do not repeat that precedence or infer local settings independently.
+
+Do not replace the existing runtime configuration hierarchy. Cashbot keeps its global
+summary defaults and per-engine overrides. The extraction runtime receives the same
+resolved default engine at deployment and continues to overlay a workflow engine when
+one is supplied. No Cashbot or `config.yaml` contract change is required.
+
+Summary routing and local workload creation are separate decisions. External summary
+and inherited extraction use the same external engine and do not require local model
+pods. Deploy local summary API and inference pods when a summary engine needs them or
+when `extract.agent` explicitly selects the chart-managed local EyeLevel service.
 
 ## Credentials
 
-Anthropic must use the existing provider credential paths. Summary accepts
-`summary.existing.apiKey` as its baseline or an `engines.<name>.apiKey` override.
-Extraction accepts its existing `apiKey`, `existingSecret`, or `cluster.secrets`
-source. Missing effective Anthropic credentials fail chart validation instead of using
-`admin.apiKey`.
+Summary and extraction use their existing credential fields. Inherited extraction uses
+the resolved default summary credential. Any explicitly supplied extraction API key is
+rendered regardless of service name. An explicit external extraction service without a
+key is rendered without a key. Helm does not decide whether that provider or
+self-hosted service requires authentication.
 
 Templates and tests must not print credential values. This change adds no secret data,
 secret name, or environment variable.
+
+## File settings
+
+Extraction storage uses `groundx.extract.file.settings` directly. It starts with
+account-wide file settings and applies non-empty bucket, region, storage-type, and URL
+overrides. Explicit empty credentials remain empty for runtime credential injection.
+`groundx.file.url.settings` shares URL, TLS, and port parsing with account-wide file
+helpers. Local MinIO wait addresses and custom download domains retain their existing
+roles. No storage values or runtime configuration fields are added. The schema does
+not support `extract.file.port`; extraction ports come from its URL or account settings.
+
+Gate this refactor on unchanged existing snapshots and focused render coverage for
+HTTP/HTTPS overrides, embedded ports, inherited storage, and local wait addresses.
 
 ## Source and mirror
 
@@ -67,8 +120,11 @@ leaving stored `anthropic` values readable upstream.
 
 ## Validation
 
-Add render and failure tests for both summary and extraction-agent paths, including
-credential sources and absent required configuration. Add one custom-engine case with
-conflicting `service` and `serviceType` values and prove documented `service` wins; do
-not add a separate legacy-only fixture. Run the full Helm gate, a normal minikube
-render, strict OpenSpec validation, mirror comparison, and `git diff --check`.
+Add render tests for summary and extraction-agent paths covering Anthropic, Bedrock,
+OpenAI, custom hosted, custom self-hosted, and omitted-service defaults. Prove
+extraction inherits the resolved default summary engine, an explicit extraction engine
+wins, local defaults do not leak into explicit external services, required local
+workloads remain available, missing keys do not fail chart rendering, and documented
+`service` wins over legacy `serviceType`.
+Run the full Helm gate, a normal minikube render, strict OpenSpec validation, mirror
+comparison, and `git diff --check`.
