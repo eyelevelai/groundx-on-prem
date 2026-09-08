@@ -1,11 +1,11 @@
 # Anthropic release verification
 
-Status as of 2026-09-08 UTC: production `PreProcessTrainFile` now runs Cashbot
-`d8c8e69`. Both synthetic workflow dispatches preserve Anthropic and include the
-required metadata. The image document completes through QA and final retrieval.
-The TXT document reaches QA but fails because it has no derived page images.
-Kubernetes remains at restored Helm revision 350. No customer defaults or
-credentials were changed.
+Status as of 2026-09-08 12:20 UTC: the merged metadata guard and source-text fixes
+are deployed. Both synthetic text and image workflows pass through QA, callback,
+and authoritative final retrieval. See [source-text-release.md](source-text-release.md)
+for current images, resource IDs, and boundary evidence. The sections below retain
+the earlier deployment and failed-canary history. No customer defaults or credentials
+were changed.
 
 ## Source prerequisites
 
@@ -20,7 +20,7 @@ credentials were changed.
 Internal Arcadia's current main passed its container-import smoke and Python test
 matrix in [CI run 34175126227](https://github.com/eyelevelai/internal-arcadia-agents/actions/runs/34175126227).
 
-## Current runtime inventory
+## Runtime inventory before the source-text release
 
 - Both hosted summary servers expose healthy endpoints. Their running binaries embed
   clean commit `589d4c9fddbf2b0bb066b8cdf6bab9e80822887f`, which contains the Cashbot

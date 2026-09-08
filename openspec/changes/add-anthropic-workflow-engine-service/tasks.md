@@ -87,6 +87,30 @@
 
 ### Production canary
 
+### Merged metadata guard and source-text release
+
+- [x] Build Cashbot `2137e1a2603abeb405a7c52223cdaf8806729749` preprocessing Lambda
+  and Arcadia `a9fef08328fa0809e8785aa28dbe3b7988663c5a` extract image through
+  their owning GitHub Actions workflows. Verify both build source SHAs and digests.
+- [x] Snapshot the production Lambda, SQS mapping, Helm revision, and four extract
+  workloads. Deploy only those images in account `903713046261`, `us-west-2`,
+  context `gxprod`, namespace `eyelevel`. Preserve the existing chart, configuration,
+  credentials, and customer workflows. Verify the rendered changes contain only the
+  four extraction image replacements. Preserve worker graceful termination.
+- [x] Verify runtime identity and readiness. Restore the prior Lambda image through
+  the release script and Helm revision 350 if deployment verification fails.
+- [x] Resubmit the existing synthetic text and image sources to buckets 33447 and
+  33448 with unchanged workflows. Save new evidence in `source-text-retest/` under
+  the existing private runtime root. Verify metadata, original text in image-free QA,
+  unchanged image evidence, final callback, and authoritative `get_extract` output.
+  Distinguish no-conflict reconciliation from a reconciliation provider call.
+- [x] Record build/deployment provenance and canary results. Retain prior evidence
+  and isolated resources pending cleanup approval. No chart release or customer
+  default provider assignment is included.
+  Both canaries pass. Current deployment and evidence are recorded in
+  `source-text-release.md`. Reconciliation used the no-conflict path; QA made one
+  Anthropic call per document, using original text for TXT and one image for PNG.
+
 ### Dispatch Lambda compatibility and retest
 
 - [x] Identify the failed boundary. Production `PreProcessTrainFile` source
