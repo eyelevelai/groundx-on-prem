@@ -64,12 +64,71 @@
 - [x] 4.1 Run `.build/bin/validate-helm.sh`, `helm template src/groundx -f
   src/groundx/values/minikube/values.yaml`, strict OpenSpec validation, and `git diff
   --check`.
-- [ ] 4.2 Record the Fern and Cashbot prerequisite versions and the immutable application
+- [x] 4.2 Record the Fern and Cashbot prerequisite versions and the immutable application
   images that support native Anthropic.
-- [ ] 4.3 Canary one text summary and one multimodal extraction-agent request with no
+  Source prerequisites, current deployments, and the extraction-image candidate are
+  recorded in `release-verification.md`, including the matching summary-client image.
+  Candidate images are not currently deployed. The extraction candidate was briefly
+  deployed at revision 349, then reverted at revision 350. Provider canary scope is
+  recorded separately below.
+- [x] 4.3 Canary one text summary and one multimodal extraction-agent request with no
   credential values in evidence.
+  Both passed on 2026-09-08 with the reloaded bash-profile credential. Text used the
+  Cashbot production client from the candidate source; image extraction used the
+  built container and inherited chart configuration. Results and limits are recorded
+  in `release-verification.md`.
 - [ ] 4.4 Roll out Anthropic only to opted-in environments. Before chart release,
   identify any non-Anthropic custom-engine values that set `service` or both service
   keys, review the rendered precedence change, and include it in the upgrade notes.
   Roll back the chart, provider assignment, or runtime image without removing the
   additive service value.
+  The inspected `gxprod` release has no custom `engines` values and no conflicting
+  `service`/`serviceType` pair. Other deployment targets have not been inventoried.
+
+### Production canary
+
+### Dispatch Lambda compatibility and retest
+
+- [x] Identify the failed boundary. Production `PreProcessTrainFile` source
+  `711ec939` converts unknown `anthropic` to `hosted`, changes the workflow artifact
+  hash, and sends extraction without the saved reassembly metadata. Reproduction
+  against both saved workflow records confirms current Anthropic-aware source
+  preserves the hash and finds all three artifacts.
+- [x] Build only `pre-process-lambda` from pushed Cashbot `d8c8e69` through GitHub
+  Actions. Retain the prior immutable Lambda digest and event-source settings.
+- [x] Deploy the built digest through `.build/bin/release.sh -prod --image-uri`.
+  Verify successful update, unchanged runtime configuration and SQS mapping, and
+  correct source provenance. Roll back through the same script if deployment
+  verification fails.
+- [x] Rerun the two synthetic canaries with unchanged schema and provider settings.
+  Preserve previous evidence. Verify metadata in dispatch and ingress, successful
+  reconciliation and QA, and authoritative final extraction values. Leave customer
+  workflows, Kubernetes images, defaults, and credentials unchanged.
+  Both dispatch and ingress packets now contain metadata. Image extraction, QA,
+  save, and final retrieval pass. Reconciliation passes without a model call because
+  there are no conflicts. Text extraction and reconciliation pass, but text QA stops
+  before its model call because the TXT source has no derived page images. This
+  remaining limit is recorded in `release-verification.md`; it is not a complete
+  text-workflow pass.
+
+### Original production canary
+
+- Target: `gxprod`, namespace `eyelevel`, release `groundx`.
+- Use the existing deployed services. An explicitly configured workflow engine
+  already supports native Anthropic; the inherited-default image fix is not needed
+  for this test. Do not change deployment images, chart values, or customer defaults.
+- Image-only release revision 349 was unnecessary for this workflow test. Rollback
+  completed at revision 350. The original images are ready, and the deployed values
+  and manifest exactly match revision 348.
+- Validate one synthetic text-summary job and one synthetic image-extraction job
+  through isolated production resources using the existing Anthropic credential.
+  Verify final output and provider/stage evidence, including reconciliation and QA.
+  Both Cashbot provider calls returned correct values. Both jobs failed before
+  reconciliation because the dispatched task lacked required reassembly metadata.
+  Retain the exact-ID evidence; final extraction and reconcile/QA validation remain
+  incomplete. The candidate extraction image does not change that metadata loader.
+- Owner: release coordinator. Private runtime root:
+  `openspec/work/add-anthropic-workflow-engine-service/prod-20260908/`.
+  Retain pending verification until 2026-09-15; delete settled raw runtime evidence
+  after recording sanitized results. Private Helm rollback copies were removed
+  after confirming revision 350 matches revision 348; Helm retains the release history.
