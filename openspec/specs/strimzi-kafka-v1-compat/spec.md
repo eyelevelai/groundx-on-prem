@@ -169,7 +169,7 @@ Polarity: reject before state — a runbook missing the stepping-stone version, 
   `helm upgrade` to chart `0.2.7` step — never after
 
 ### Requirement: an automated kind CI job proves the v1beta2 -> v1 migration runbook keeps the running cluster and its topics Ready throughout
-The `.github/workflows/kafka-strimzi-kind.yml` workflow SHALL carry a job, additive alongside the existing `live-strimzi-kind` job (which stays unchanged), that installs the old Strimzi operator `0.47.0` and the vendored old subchart package `helm-releases/groundx-strimzi-kafka-cluster-0.1.1.tgz` (both `v1beta2`-shaped), waits for the `Kafka` cluster and its `KafkaTopic`s to reach `Ready`, then drives the documented runbook — the conversion tool, the CRD upgrade, the operator upgrade to `0.50.1`, and the `helm upgrade` to the current (post-increment-1, `v1`-shaped) chart — and asserts the `Kafka` custom resource and every `KafkaTopic` custom resource stay `Ready` through the whole conversion, not merely at the end. This is a gate-class change (a new CI job that decides pass/fail on the migration path) and it must catch the adversarial counterexample below while never blocking the legitimate one.
+The `.github/workflows/helm-tests.yml` workflow SHALL carry a job, additive alongside the existing `live-strimzi-kind` job (which stays unchanged), that installs the old Strimzi operator `0.47.0` and the vendored old subchart package `helm-releases/groundx-strimzi-kafka-cluster-0.1.1.tgz` (both `v1beta2`-shaped), waits for the `Kafka` cluster and its `KafkaTopic`s to reach `Ready`, then drives the documented runbook — the conversion tool, the CRD upgrade, the operator upgrade to `0.50.1`, and the `helm upgrade` to the current (post-increment-1, `v1`-shaped) chart — and asserts the `Kafka` custom resource and every `KafkaTopic` custom resource stay `Ready` through the whole conversion, not merely at the end. This is a gate-class change (a new CI job that decides pass/fail on the migration path) and it must catch the adversarial counterexample below while never blocking the legitimate one.
 
 Polarity: this is a gate-class requirement — it must catch the adversarial counterexample below and must not block the legitimate one.
 
@@ -189,7 +189,7 @@ Polarity: this is a gate-class requirement — it must catch the adversarial cou
   throughout the conversion, and the job passes
 
 #### Scenario: the workflow file is valid YAML
-- **WHEN** `.github/workflows/kafka-strimzi-kind.yml` is parsed by a YAML parser
+- **WHEN** `.github/workflows/helm-tests.yml` is parsed by a YAML parser
 - **THEN** parsing succeeds with no error — a step name or value containing an unquoted `:` (the
   known past failure mode for this file) does not break the document
 
@@ -206,4 +206,3 @@ Polarity: reject the unsupported pinned values (`v0.48.0` operator image, `clust
 #### Scenario: the Chainguard cluster version is unset, matching the greenfield default, in both the source and the mirror
 - **WHEN** `src/groundx/values/chainguard/values.strimzi.cluster.yaml` and its `helm/` mirror are read
 - **THEN** neither file sets a `cluster.version` value, and `4.1.0` does not appear in either file
-
