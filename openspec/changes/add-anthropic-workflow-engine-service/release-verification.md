@@ -1,10 +1,9 @@
 # Anthropic release verification
 
-Status as of 2026-09-08 UTC: release remains gated. Native text canary execution
-reached Anthropic. The configured key was rejected for insufficient account credit;
-a temporary key requires an explicit Anthropic workspace ID that is unavailable.
-No successful text or multimodal canary is claimed. No production deployment,
-workflow assignment, credential change, or customer-data mutation occurred.
+Status as of 2026-09-08 UTC: native text and multimodal provider canaries pass
+with the reloaded bash-profile credential. Full deployment validation remains gated.
+No production deployment, workflow assignment, credential change, or customer-data
+mutation occurred.
 
 ## Source prerequisites
 
@@ -68,36 +67,38 @@ and published tag `anthropic-canary-d8c8e69`. Its matching Golang base was built
 Both architectures and the multi-architecture manifest passed. The immutable image is
 `public.ecr.aws/c9r4x6y5/eyelevel/summary-client@sha256:f510aba3203a4f9768b934b1ef8630f79cc73d21452a085190f20bcce83b1997`.
 
-This is a build and source-provenance check, not a successful provider canary or a
-complete on-prem installation test. The chart defaults and production workloads
+This image has build and source-provenance evidence. The text canary below used its
+source commit, not the summary-client container or a complete on-prem installation.
+The chart defaults and production workloads
 remain unchanged. Chart validation passed all 254 unit tests, 815 snapshots, and
 the full render gate. Strict OpenSpec validation and `git diff --check` passed.
 
 ## Canary result and remaining gates
 
-The real Cashbot `ratelimit.Client.CreateChat` dispatch and native Messages adapter
-ran locally from current master with synthetic text and `claude-sonnet-4-6`.
-Anthropic returned HTTP 400, `invalid_request_error`, for insufficient credit,
-request `req_011Ceq7d9JrFHXw3hAQqhvJA`. This proves provider reachability and error
-propagation, not successful summarization. No further provider calls were made
-after the account error was identified. The image canary was not run.
+Both successful calls used `claude-sonnet-4-6` through Anthropic's native Messages
+API, with the credential reloaded from the existing bash profile. Neither required
+an explicit workspace header. No credentials were written to evidence.
 
-A subsequent retry returned the same HTTP 400 insufficient-credit error, request
-`req_011CeqB8wyeyiK4NWASvUj71`. The configured account remains blocked; no image
-canary or production change followed the retry.
+| Canary | Runtime and assertion | Result |
+| --- | --- | --- |
+| Text summary | Cashbot `ratelimit.Client.CreateChat` and native adapter, source `d8c8e69b565c81e9c943cff65154afc5458b5960`; summary retained the synthetic reference and delivery facts | Pass; response `msg_011CeqCZNLeXikbnHhZ6V4HT`; 46 input tokens, 19 output tokens |
+| Image extraction | Built ARM64 extraction image above, real `provider_config_for_engine` and `PydanticAIDocumentReviewAgent.request_turn`; one generated image, random code supplied only in pixels, parsed JSON matched exactly | Pass; response `msg_011CeqCbkwkLGy8wm6dDhkgc`; 434 input tokens, 21 output tokens |
 
-A temporary credential reached the native Messages endpoint but returned HTTP 400:
-the key is not workspace-scoped and requires an `anthropic-workspace-id` header.
-Read-only `GET /v1/organizations/workspaces?limit=20` returned an empty list with
-`has_more: false`, so no workspace ID could be selected. No image request was made.
-The credential was supplied only to an ephemeral process and was not written to
-repository files, profiles, or diagnostic files. It has not been revoked.
+The image request inherited the chart-rendered summary engine, without a workflow
+override, and retained `parallel_tool_calls: false`. Embedded source commit was
+`1ebb14967c9ccf6f8dc113d58a358bc23dac6fdb`. Synthetic image SHA-256:
+`16a120c7c88e012082a05f4da81b0f61480f119732db45eb5da661a776ca90c3`.
+These are live provider-boundary checks, not full ingestion, queue, or deployed
+service tests.
+
+Earlier attempts were rejected for insufficient credit. A separate temporary
+organization-scoped key required a workspace header; it was not used for the
+successful calls and has not been revoked. The empty workspace listing omitted
+Default; its ID was subsequently found through API-key scope metadata.
 
 Before release:
 
-1. Supply a funded workspace-scoped Anthropic credential, or its required workspace
-   ID, and pass text and multimodal extraction-agent canaries.
-2. Verify the complete chart deployment's application-version compatibility and review
+1. Verify the complete chart deployment's application-version compatibility and review
    the custom-engine precedence change for each intended deployment target.
-3. Use the approved deployment procedure and recorded rollback state before assigning
+2. Use the approved deployment procedure and recorded rollback state before assigning
    Anthropic in production. The current production image and provider remain unchanged.

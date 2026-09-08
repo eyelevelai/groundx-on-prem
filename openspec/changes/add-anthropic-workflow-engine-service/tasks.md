@@ -68,11 +68,14 @@
   images that support native Anthropic.
   Source prerequisites, current deployments, and the extraction-image candidate are
   recorded in `release-verification.md`, including the matching summary-client image.
-  These candidate images are built, not deployed or live-canary certified.
-- [ ] 4.3 Canary one text summary and one multimodal extraction-agent request with no
+  These candidate images are built, not deployed. Provider canary scope is recorded
+  separately below.
+- [x] 4.3 Canary one text summary and one multimodal extraction-agent request with no
   credential values in evidence.
-  The 2026-09-08 native text attempt reached Anthropic but was rejected for insufficient
-  account credit. Successful text and image canaries remain required.
+  Both passed on 2026-09-08 with the reloaded bash-profile credential. Text used the
+  Cashbot production client from the candidate source; image extraction used the
+  built container and inherited chart configuration. Results and limits are recorded
+  in `release-verification.md`.
 - [ ] 4.4 Roll out Anthropic only to opted-in environments. Before chart release,
   identify any non-Anthropic custom-engine values that set `service` or both service
   keys, review the rendered precedence change, and include it in the upgrade notes.
