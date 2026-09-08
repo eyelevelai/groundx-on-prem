@@ -64,12 +64,19 @@
 - [x] 4.1 Run `.build/bin/validate-helm.sh`, `helm template src/groundx -f
   src/groundx/values/minikube/values.yaml`, strict OpenSpec validation, and `git diff
   --check`.
-- [ ] 4.2 Record the Fern and Cashbot prerequisite versions and the immutable application
+- [x] 4.2 Record the Fern and Cashbot prerequisite versions and the immutable application
   images that support native Anthropic.
+  Source prerequisites, current deployments, and the extraction-image candidate are
+  recorded in `release-verification.md`, including the matching summary-client image.
+  These candidate images are built, not deployed or live-canary certified.
 - [ ] 4.3 Canary one text summary and one multimodal extraction-agent request with no
   credential values in evidence.
+  The 2026-09-08 native text attempt reached Anthropic but was rejected for insufficient
+  account credit. Successful text and image canaries remain required.
 - [ ] 4.4 Roll out Anthropic only to opted-in environments. Before chart release,
   identify any non-Anthropic custom-engine values that set `service` or both service
   keys, review the rendered precedence change, and include it in the upgrade notes.
   Roll back the chart, provider assignment, or runtime image without removing the
   additive service value.
+  The inspected `gxprod` release has no custom `engines` values and no conflicting
+  `service`/`serviceType` pair. Other deployment targets have not been inventoried.
