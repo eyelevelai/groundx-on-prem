@@ -58,64 +58,52 @@ false
 {{- end -}}
 {{- end }}
 
-{{- define "groundx.extract.file.effectiveSettings" -}}
-{{- $settings := include "groundx.file.settings" . | fromYaml | deepCopy -}}
-{{- $in := .Values.extract | default dict -}}
-{{- $efs := dig "file" dict $in -}}
-{{- $bucketName := dig "bucketName" "" $efs -}}
-{{- if not (empty $bucketName) -}}{{- $_ := set $settings "bucketName" $bucketName -}}{{- end -}}
-{{- $region := dig "region" "" $efs -}}
-{{- if not (empty $region) -}}{{- $_ := set $settings "region" $region -}}{{- end -}}
-{{- $storageType := dig "serviceType" "" $efs -}}
-{{- if not (empty $storageType) -}}{{- $_ := set $settings "storageType" $storageType -}}{{- end -}}
-{{- if hasKey $efs "username" -}}{{- $_ := set $settings "username" (get $efs "username") -}}{{- end -}}
-{{- if hasKey $efs "password" -}}{{- $_ := set $settings "password" (get $efs "password") -}}{{- end -}}
-{{- $url := dig "url" "" $efs -}}
-{{- if not (empty $url) -}}
-  {{- $parts := splitList "://" $url -}}
-  {{- $domain := $url -}}
-  {{- $scheme := "http" -}}
-  {{- if and (kindIs "slice" $parts) (eq (len $parts) 2) -}}
-    {{- $scheme = index $parts 0 -}}
-    {{- $domain = index $parts 1 -}}
+{{- define "groundx.extract.agent.engine" -}}
+{{- $extract := .Values.extract | default dict -}}
+{{- $agent := dig "agent" dict $extract -}}
+{{- $model := dig "model" dict $agent -}}
+{{- $service := dig "serviceType" "" $agent | toString | lower | trim -}}
+{{- $configured := deepCopy $model -}}
+{{- range $input, $output := dict "apiKey" "apiKey" "apiBaseUrl" "baseUrl" "modelId" "engineId" -}}
+  {{- if hasKey $agent $input -}}{{- $_ := set $configured $output (get $agent $input) -}}{{- end -}}
+{{- end -}}
+{{- $engine := dict -}}
+{{- if ne $service "" -}}
+  {{- $_ := set $configured "service" $service -}}
+  {{- if eq $service "eyelevel" -}}
+    {{- if not (hasKey $configured "engineId") -}}
+      {{- $_ := set $configured "engineId" (include "groundx.summary.inference.model.name" . | trim) -}}
+    {{- end -}}
+    {{- $reasoning := include "groundx.summary.inference.model.reasoningEffort" . | trim -}}
+    {{- if and (not (hasKey $configured "reasoningEffort")) (ne $reasoning "") -}}
+      {{- $_ := set $configured "reasoningEffort" $reasoning -}}
+    {{- end -}}
   {{- end -}}
-  {{- $ssl := eq $scheme "https" -}}
-  {{- $_ := set $settings "baseDomain" $domain -}}
-  {{- $_ := set $settings "bucketDomain" $domain -}}
-  {{- $_ := set $settings "bucketSSL" $ssl -}}
-  {{- $_ := set $settings "scheme" $scheme -}}
-  {{- $_ := set $settings "ssl" $ssl -}}
-  {{- $dependencyParts := splitList ":" $domain -}}
-  {{- if and (kindIs "slice" $dependencyParts) (eq (len $dependencyParts) 2) -}}
-    {{- $_ := set $settings "dependency" (index $dependencyParts 0) -}}
-  {{- else -}}
-    {{- $_ := set $settings "dependency" $domain -}}
-  {{- end -}}
-  {{- $rawPort := dig "port" "" $efs -}}
-  {{- $port := -1 -}}
-  {{- if kindIs "string" $rawPort -}}
-    {{- $port = int $rawPort -}}
-  {{- else if kindIs "int" $rawPort -}}
-    {{- $port = $rawPort -}}
-  {{- end -}}
-  {{- if gt $port 0 -}}
-    {{- $_ := set $settings "port" $port -}}
-  {{- else if and (kindIs "slice" $dependencyParts) (eq (len $dependencyParts) 2) -}}
-    {{- $_ := set $settings "port" (index $dependencyParts 1) -}}
-  {{- else if $ssl -}}
-    {{- $_ := set $settings "port" 443 -}}
-  {{- else -}}
-    {{- $_ := set $settings "port" 80 -}}
-  {{- end -}}
+  {{- $engine = include "groundx.engine.settings" (dict "root" . "name" "extract" "engine" $configured) | fromYaml -}}
 {{- else -}}
-  {{- $rawPort := dig "port" "" $efs -}}
-  {{- $port := -1 -}}
-  {{- if kindIs "string" $rawPort -}}
-    {{- $port = int $rawPort -}}
-  {{- else if kindIs "int" $rawPort -}}
-    {{- $port = $rawPort -}}
+  {{- $engines := include "groundx.engines" . | fromYaml -}}
+  {{- $engine = get $engines "default" | default dict | deepCopy -}}
+  {{- range $key, $value := $configured -}}
+    {{- $_ := set $engine $key $value -}}
   {{- end -}}
-  {{- if gt $port 0 -}}{{- $_ := set $settings "port" $port -}}{{- end -}}
+{{- end -}}
+{{- $engine | toYaml -}}
+{{- end }}
+
+{{- define "groundx.extract.file.settings" -}}
+{{- $settings := include "groundx.file.settings" . | fromYaml | deepCopy -}}
+{{- $extract := .Values.extract | default dict -}}
+{{- $file := dig "file" dict $extract -}}
+{{- range $input, $output := dict "bucketName" "bucketName" "region" "region" "serviceType" "storageType" -}}
+  {{- $value := get $file $input -}}
+  {{- if not (empty $value) -}}{{- $_ := set $settings $output $value -}}{{- end -}}
+{{- end -}}
+{{- range $key := list "username" "password" -}}
+  {{- if hasKey $file $key -}}{{- $_ := set $settings $key (get $file $key) -}}{{- end -}}
+{{- end -}}
+{{- if not (empty (get $file "url")) -}}
+  {{- $url := include "groundx.file.url.settings" $file | fromYaml -}}
+  {{- range $key, $value := $url -}}{{- $_ := set $settings $key $value -}}{{- end -}}
 {{- end -}}
 {{- $_ := set $settings "serviceType" (get $settings "storageType") -}}
 {{- $settings | toYaml -}}
@@ -130,43 +118,39 @@ false
 {{- end }}
 
 {{- define "groundx.extract.file.bucketName" -}}
-{{- get (include "groundx.extract.file.effectiveSettings" . | fromYaml) "bucketName" -}}
+{{- get (include "groundx.extract.file.settings" . | fromYaml) "bucketName" -}}
 {{- end }}
 
 {{- define "groundx.extract.file.domain" -}}
-{{- get (include "groundx.extract.file.effectiveSettings" . | fromYaml) "baseDomain" -}}
+{{- get (include "groundx.extract.file.settings" . | fromYaml) "baseDomain" -}}
 {{- end }}
 
 {{- define "groundx.extract.file.serviceDependency" -}}
-{{- get (include "groundx.extract.file.effectiveSettings" . | fromYaml) "dependency" -}}
+{{- get (include "groundx.extract.file.settings" . | fromYaml) "dependency" -}}
 {{- end }}
 
 {{- define "groundx.extract.file.password" -}}
-{{- get (include "groundx.extract.file.effectiveSettings" . | fromYaml) "password" -}}
+{{- get (include "groundx.extract.file.settings" . | fromYaml) "password" -}}
 {{- end }}
 
 {{- define "groundx.extract.file.port" -}}
-{{- get (include "groundx.extract.file.effectiveSettings" . | fromYaml) "port" -}}
+{{- get (include "groundx.extract.file.settings" . | fromYaml) "port" -}}
 {{- end }}
 
 {{- define "groundx.extract.file.region" -}}
-{{- get (include "groundx.extract.file.effectiveSettings" . | fromYaml) "region" -}}
+{{- get (include "groundx.extract.file.settings" . | fromYaml) "region" -}}
 {{- end }}
 
 {{- define "groundx.extract.file.storageType" -}}
-{{- get (include "groundx.extract.file.effectiveSettings" . | fromYaml) "storageType" -}}
+{{- get (include "groundx.extract.file.settings" . | fromYaml) "storageType" -}}
 {{- end }}
 
 {{- define "groundx.extract.file.ssl" -}}
-{{- get (include "groundx.extract.file.effectiveSettings" . | fromYaml) "bucketSSL" -}}
+{{- get (include "groundx.extract.file.settings" . | fromYaml) "bucketSSL" -}}
 {{- end }}
 
 {{- define "groundx.extract.file.username" -}}
-{{- get (include "groundx.extract.file.effectiveSettings" . | fromYaml) "username" -}}
-{{- end }}
-
-{{- define "groundx.extract.file.settings" -}}
-{{- include "groundx.extract.file.effectiveSettings" . -}}
+{{- get (include "groundx.extract.file.settings" . | fromYaml) "username" -}}
 {{- end }}
 
 {{- define "groundx.extract.services" -}}

@@ -534,9 +534,9 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "extract.agent.serviceType bedrock requires AWS S3 file storage"
-  - it: "bedrock extract config requires an endpoint"
+  - it: "bedrock extract config may omit an endpoint without inheriting the local endpoint"
     templates:
-      - ../templates/resources/extract-supervisord-conf.yaml
+      - ../templates/resources/extract-config-py.yaml
     values:
       - ./files/values.disabled.yaml
     set:
@@ -549,12 +549,19 @@ tests:
       extract.file.region: us-west-2
       extract.file.serviceType: s3
       extract.file.url: https://configured-bucket.s3.us-west-2.amazonaws.com
+    documentSelector:
+      path: metadata.name
+      value: extract-config-py-map
     asserts:
-      - failedTemplate:
-          errorMessage: "extract.agent.serviceType bedrock requires extract.agent.apiBaseUrl"
-  - it: "bedrock extract config requires a model"
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'service="bedrock"'
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'api_base="http://summary-api.eyelevel.svc.cluster.local"'
+  - it: "bedrock extract config may omit a model without inheriting the local model"
     templates:
-      - ../templates/resources/extract-supervisord-conf.yaml
+      - ../templates/resources/extract-config-py.yaml
     values:
       - ./files/values.disabled.yaml
     set:
@@ -567,12 +574,19 @@ tests:
       extract.file.region: us-west-2
       extract.file.serviceType: s3
       extract.file.url: https://configured-bucket.s3.us-west-2.amazonaws.com
+    documentSelector:
+      path: metadata.name
+      value: extract-config-py-map
     asserts:
-      - failedTemplate:
-          errorMessage: "extract.agent.serviceType bedrock requires extract.agent.modelId"
-  - it: "bedrock extract config requires a Bedrock credential source"
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'service="bedrock"'
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'model_id="google/gemma-3-4b-it"'
+  - it: "bedrock extract config without a provider key does not inherit the GroundX admin key"
     templates:
-      - ../templates/resources/extract-supervisord-conf.yaml
+      - ../templates/app/celery.yaml
     values:
       - ./files/values.disabled.yaml
     set:
@@ -586,9 +600,15 @@ tests:
       extract.file.region: us-west-2
       extract.file.serviceType: s3
       extract.file.url: https://configured-bucket.s3.us-west-2.amazonaws.com
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
     asserts:
-      - failedTemplate:
-          errorMessage: "extract.agent.serviceType bedrock requires extract.agent.apiKey, extract.agent.existingSecret, or cluster.secrets"
+      - notContains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: extract-agent-secret
   - it: "bedrock uses the configured cluster secret instead of the admin API key"
     templates:
       - ../templates/app/celery.yaml

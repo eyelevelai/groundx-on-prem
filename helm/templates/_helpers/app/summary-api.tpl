@@ -11,7 +11,7 @@
 {{- end }}
 
 {{- define "groundx.summary.api.create" -}}
-{{- $is := include "groundx.summary.create" . -}}
+{{- $is := include "groundx.summary.model.create" . -}}
 {{- if eq $is "false" -}}
 false
 {{- else -}}

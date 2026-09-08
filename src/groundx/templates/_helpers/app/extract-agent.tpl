@@ -26,13 +26,7 @@ false
 {{- end }}
 
 {{- define "groundx.extract.agent.apiKey" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $in := dig "agent" dict $b -}}
-{{- if eq (include "groundx.extract.agent.serviceType" .) "bedrock" -}}
-{{ dig "apiKey" "" $in }}
-{{- else -}}
-{{ dig "apiKey" (include "groundx.admin.apiKey" .) $in }}
-{{- end -}}
+{{- get (include "groundx.extract.agent.engine" . | fromYaml) "apiKey" | default "" -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.apiKeyEnv" -}}
@@ -40,16 +34,7 @@ GROUNDX_AGENT_API_KEY
 {{- end }}
 
 {{- define "groundx.extract.agent.baseUrl" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $in := dig "agent" dict $b -}}
-{{- $dflt := "" -}}
-{{- $ic := include "groundx.summary.create" . -}}
-{{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") (eq $st "bedrock") -}}
-{{- if and (eq $ic "true") (not $svcAllowed) -}}
-{{- $dflt = (include "groundx.summary.api.serviceUrl" .) -}}
-{{- end -}}
-{{ dig "apiBaseUrl" $dflt $in }}
+{{- get (include "groundx.extract.agent.engine" . | fromYaml) "baseUrl" | default "" -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.existingSecret" -}}
@@ -130,52 +115,16 @@ GROUNDX_AGENT_API_KEY
 {{- end }}
 
 {{- define "groundx.extract.agent.modelId" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $in := dig "agent" dict $b -}}
-{{- $dflt := lower (dig "modelId" "" $in) | trim -}}
-{{- $ic := include "groundx.summary.create" . -}}
-{{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") (eq $st "bedrock") -}}
-{{- if and (eq $ic "true") (not $svcAllowed) (eq $dflt "") -}}
-{{- $dflt = (include "groundx.summary.inference.model.name" .) -}}
-{{- end -}}
-{{ dig "modelId" $dflt $in }}
+{{- get (include "groundx.extract.agent.engine" . | fromYaml) "engineId" | default "" -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.kwargs" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $a := dig "agent" dict $b -}}
-{{- $in := dig "model" dict $a -}}
-{{- $has := hasKey $in "kwargs" -}}
-{{- $val := dig "kwargs" dict $in -}}
-{{- $ic := include "groundx.summary.create" . -}}
-{{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") (eq $st "bedrock") -}}
-{{- if $has -}}
-  {{- toYaml $val -}}
-{{- else if and (eq $ic "true") (not $svcAllowed) -}}
-  {{- include "groundx.summary.inference.model.kwargs" . -}}
-{{- else -}}
-  {{- toYaml dict -}}
-{{- end -}}
+{{- dig "kwargs" dict (include "groundx.extract.agent.engine" . | fromYaml) | toYaml -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.reasoningEffort" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $a := dig "agent" dict $b -}}
-{{- $in := dig "model" dict $a -}}
-{{- $has := hasKey $in "reasoningEffort" -}}
-{{- $val := dig "reasoningEffort" nil $in -}}
-{{- $ic := include "groundx.summary.create" . -}}
-{{- $st := include "groundx.extract.agent.serviceType" . -}}
-{{- $svcAllowed := or (eq $st "openai") (eq $st "openai-base64") (eq $st "bedrock") -}}
-{{- if $has -}}
-  {{- toJson $val -}}
-{{- else if and (eq $ic "true") (not $svcAllowed) -}}
-  {{- include "groundx.summary.inference.model.reasoningEffort" . -}}
-{{- else -}}
-  {{- "" -}}
-{{- end -}}
+{{- $engine := include "groundx.extract.agent.engine" . | fromYaml -}}
+{{- if hasKey $engine "reasoningEffort" -}}{{ get $engine "reasoningEffort" | toJson }}{{- end -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.queue" -}}
@@ -241,9 +190,7 @@ GROUNDX_AGENT_API_KEY
 {{- end }}
 
 {{- define "groundx.extract.agent.serviceType" -}}
-{{- $b := .Values.extract | default dict -}}
-{{- $in := dig "agent" dict $b -}}
-{{ lower (coalesce (dig "serviceType" "" $in) "eyelevel") | trim }}
+{{- get (include "groundx.extract.agent.engine" . | fromYaml) "service" | default "" -}}
 {{- end }}
 
 {{- define "groundx.extract.agent.threads" -}}
@@ -323,22 +270,9 @@ GROUNDX_AGENT_API_KEY
 {{- if lt $maxRequestImages 1 -}}
   {{- fail "extract.agent.maxRequestImages must be positive" -}}
 {{- end -}}
-{{- if eq (include "groundx.extract.agent.serviceType" .) "bedrock" -}}
-  {{- if ne (include "groundx.extract.file.storageType" .) "s3" -}}
-    {{- fail "extract.agent.serviceType bedrock requires AWS S3 file storage" -}}
-  {{- end -}}
-  {{- if eq (include "groundx.extract.agent.baseUrl" . | trim) "" -}}
-    {{- fail "extract.agent.serviceType bedrock requires extract.agent.apiBaseUrl" -}}
-  {{- end -}}
-  {{- if eq (include "groundx.extract.agent.modelId" . | trim) "" -}}
-    {{- fail "extract.agent.serviceType bedrock requires extract.agent.modelId" -}}
-  {{- end -}}
-  {{- $apiKey := include "groundx.extract.agent.apiKey" . | trim -}}
-  {{- $existingSecret := include "groundx.extract.agent.existingSecret" . -}}
-  {{- $clusterSecrets := include "groundx.secrets" . | fromYaml | default dict -}}
-  {{- if and (eq $apiKey "") (eq $existingSecret "false") (eq (len $clusterSecrets) 0) -}}
-    {{- fail "extract.agent.serviceType bedrock requires extract.agent.apiKey, extract.agent.existingSecret, or cluster.secrets" -}}
-  {{- end -}}
+{{- $serviceType := include "groundx.extract.agent.serviceType" . -}}
+{{- if and (eq $serviceType "bedrock") (ne (include "groundx.extract.file.storageType" .) "s3") -}}
+  {{- fail "extract.agent.serviceType bedrock requires AWS S3 file storage" -}}
 {{- end -}}
 {{- range $quality := splitList "," (include "groundx.extract.agent.imageJpegQualities" .) -}}
   {{- $qualityInt := $quality | int -}}

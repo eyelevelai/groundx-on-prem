@@ -164,11 +164,11 @@ stringData:
           {{- end }}
 
     engines:
-      {{ range $i, $e := $engs }}
+      {{- range $i, $e := $engs }}
       {{- $engineID := get $e "engineId" -}}
-      {{ $engineID }}:
+{{ printf "\n      %s:" $engineID }}
         engineID: {{ $engineID | quote }}
-        service: {{ coalesce (get $e "serviceType") (include "groundx.summary.serviceType" $) }}
+        service: {{ get $e "service" }}
         {{- if hasKey $e "apiKey" }}
         apiKey: {{ get $e "apiKey" }}
         {{- end }}
@@ -198,9 +198,7 @@ stringData:
         {{- else }}
         vision: true
         {{- end }}
-      {{- end }}
-
-    environment: {{ include "groundx.environment" . }}
+      {{- end }}{{ "\n\n" }}    environment: {{ include "groundx.environment" . }}
 
     groundxServer:
       baseURL: {{ include "groundx.groundx.serviceUrl" . }}

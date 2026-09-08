@@ -36,3 +36,34 @@ extract:
 This example makes the extraction model call one tool per turn. Workflow
 `requestPassthrough` values override matching `extra_body` defaults. The selected
 extraction runtime image must support the option.
+
+## Explicit workflow engines
+
+Set the service and only the values required by that provider or self-hosted endpoint.
+The chart passes explicit values through without applying provider-specific defaults.
+This Anthropic example uses the existing engine and extraction-agent fields:
+
+```yaml
+engines:
+  default:
+    engineId: claude-sonnet-4-20250514
+    service: anthropic
+    baseUrl: https://api.anthropic.com/v1
+
+extract:
+  agent:
+    serviceType: anthropic
+    apiBaseUrl: https://api.anthropic.com/v1
+    modelId: claude-sonnet-4-20250514
+```
+
+When authentication is required, supply the summary key through
+`engines.<name>.apiKey` or `summary.existing.apiKey`, and the extraction key through
+`extract.agent.apiKey`, `extract.agent.existingSecret`, or `cluster.secrets`. Helm does
+not require a key or substitute the GroundX admin key for an explicitly configured
+service. If the service is omitted, the existing local GroundX defaults apply. Do not
+commit credentials to a values file.
+
+Upgrade note: per-engine `engines.<name>.service` now takes effect and wins over the
+legacy `serviceType` field when both are set. Review custom engine values containing
+either field before upgrading.
