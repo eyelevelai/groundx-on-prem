@@ -11,7 +11,7 @@
 {{- end }}
 
 {{- define "groundx.summary.inference.create" -}}
-{{- $is := include "groundx.summary.create" . -}}
+{{- $is := include "groundx.summary.model.create" . -}}
 {{- if eq $is "false" -}}
 false
 {{- else -}}
@@ -119,10 +119,6 @@ true
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}
-{{- end }}
-
-{{- define "groundx.summary.inference.model.kwargs" -}}
-{{- toYaml dict -}}
 {{- end }}
 
 {{- define "groundx.summary.inference.model.maxInputTokens" -}}
