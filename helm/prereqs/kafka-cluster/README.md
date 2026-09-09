@@ -88,13 +88,23 @@ Then run the ordered procedure:
      --wait
    ```
 
-   To carry other custom operator values without re-listing them, export them and re-apply them on
-   the upgrade (works on the supported Helm `3.8+`): run `helm get values <operator-release> -n
-   <namespace> -o yaml > operator-values.yaml`, then add `-f operator-values.yaml` to the
-   `helm upgrade` above. That re-supplies only your overrides against the new chart, so new keys like
-   `operatorNetworkPolicy` still take the new chart's default. On Helm `3.14+` you can instead pass
-   `--reset-then-reuse-values` as a shorthand. Do not use `--reuse-values` (it keeps the old chart's
-   defaults and fails on `0.50.1`).
+   To carry other custom operator values without re-listing them: on Helm `3.14+`, pass
+   `--reset-then-reuse-values` (credential-safe, nothing written to disk; it picks up the new chart's
+   defaults, including `operatorNetworkPolicy`). On the supported older clients (Helm `3.8`-`3.13`),
+   export and re-apply your values through a private temporary file and delete it afterward, because
+   the export can contain secrets (for example a token in `extraEnvs`):
+
+   ```bash
+   umask 077; f=$(mktemp)
+   helm get values <operator-release> -n <namespace> -o yaml > "$f"
+   helm upgrade <operator-release> oci://quay.io/strimzi-helm/strimzi-kafka-operator \
+     --version 0.50.1 -n <namespace> -f "$f" --wait
+   rm -f "$f"
+   ```
+
+   Re-applying your overrides this way still lets new keys like `operatorNetworkPolicy` take the new
+   chart's default. Do not use `--reuse-values` (it keeps the old chart's defaults and fails on
+   `0.50.1`).
 2. **Apply the new Strimzi CRDs.** `helm upgrade` of the operator does **not** upgrade CRDs, so
    after step 1 the cluster's Strimzi CRDs still serve only `v1beta2`. Apply the operator release's
    CRD bundle so every Strimzi CRD serves both `v1beta2` and `v1`
