@@ -74,6 +74,23 @@ Then run the ordered procedure:
    Kafka `4.0.0` (the version an operator-`0.47.0`-era 0.1.x install runs), so upgrading straight to
    it would reject such a cluster. Do not upgrade straight to a `v1`-only operator release from a
    `v1beta2`-only one.
+
+   Run the upgrade with an **explicit** command and do not use `helm upgrade --reuse-values`. `0.50.1`
+   adds a new `operatorNetworkPolicy` value the older operator chart lacks, so `--reuse-values` keeps
+   the old chart's defaults, fails at render (`nil pointer evaluating interface {}.enabled` on
+   `operatorNetworkPolicy.enabled`), and applies nothing. It is safe (nothing changes) but the
+   operator never upgrades. Re-supply the values instead, reusing the existing operator release name:
+
+   ```bash
+   helm upgrade <operator-release> oci://quay.io/strimzi-helm/strimzi-kafka-operator \
+     --version 0.50.1 -n <namespace> \
+     --set replicas=1 --set nodeSelector.node=eyelevel-cpu-only \
+     --wait
+   ```
+
+   To carry other custom operator values without re-listing them, use `--reset-then-reuse-values`
+   (which picks up the new chart's defaults, including `operatorNetworkPolicy`) rather than
+   `--reuse-values`.
 2. **Apply the new Strimzi CRDs.** `helm upgrade` of the operator does **not** upgrade CRDs, so
    after step 1 the cluster's Strimzi CRDs still serve only `v1beta2`. Apply the operator release's
    CRD bundle so every Strimzi CRD serves both `v1beta2` and `v1`
