@@ -67,4 +67,17 @@ Proven:
 - Per-identity isolation (Mode C, distinct main vs metrics credentials): neither credential appears in the other instance's `redis.conf`, and at runtime each Redis instance rejects the other's credential.
 - extract and workspace `rediss://` URL transforms preserve the embedded credential (query-string append; the authority is untouched).
 
-Not covered (low residual risk): a full EKS rollout; booting the real cashbot-go `golang` image to its Redis-connect point (its discrete auth is proven at the RESP level and its wiring is code-verified); `rediss://` TLS transport rendered from the chart (credential flow is scheme-independent, and the transforms were verified on the exact `rediss://` shape).
+## Live EKS validation (2026-09-09)
+
+The full live-cluster rollout below (deferred as "not covered" in the Docker pass above) has now been run on a fresh EKS cluster (ap-south-1), all five node groups incl. GPU, with chart-created authenticated main and metrics Redis (separate instances, each its own credential).
+
+Proven live, all three modes, every consumer authenticating with the real deployed images:
+
+- **Mode B (password-only):** both Redis servers reject unauthenticated clients (`NOAUTH`) and accept the credential (`PONG`), booting from their mounted `redis.conf` Secrets. cashbot-go session client + celery brokers, ai-server layout/ranker/summary inference and api, and the extract `Status` client (on `groundx==4.0.4`, the GX-33 fix) all authenticate. A document ran ingest → complete → search. 284 authenticated connections on the main cache, 44 on metrics.
+- **Mode C (ACL, `user default off` + named user):** the default user is rejected; every consumer authenticates as its ACL user, zero auth errors — the metrics-status clients (extract `Status`, ai-server `InferenceStatus`/`Status`) as the metrics ACL user (43 connections, none as `default`), and the main-cache consumers (cashbot-go on its ACL `Username` image, groundx-workspace-runner celery broker) as the main ACL user (250 + 40 connections).
+- **Credential rotation (config-hash):** rotating a password re-applied changed the `config-hash` annotation on the Redis StatefulSet and every consumer of that credential, rolled them, and after the roll the new credential worked, the old was rejected (`WRONGPASS`), and all consumers reconnected under the new credential.
+- **Workspace under auth:** all groundx-workspace-runner components reached Ready and authenticated to the main cache via the credential-bearing fallback URL (kombu, no code change).
+
+The GX-33 fix (extract `Status` credential-parse) is the reason the extract image must be built on `groundx==4.0.4`; it was the one consumer the Docker pass missed. ai-server inference/api images must also carry the `status.py` fix.
+
+Not exercised live (low residual risk, render + code-path covered): a separate ranker-own cache credential (`ranker.cache.addr`), the metrics-inherit case (`cache.metrics.enabled: false`), and `rediss://` TLS transport rendered from the chart (credential flow is scheme-independent; the chart-created Redis is plain, and the transforms were verified on the exact `rediss://` shape).
