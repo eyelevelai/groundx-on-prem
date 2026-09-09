@@ -88,9 +88,13 @@ Then run the ordered procedure:
      --wait
    ```
 
-   To carry other custom operator values without re-listing them, use `--reset-then-reuse-values`
-   (which picks up the new chart's defaults, including `operatorNetworkPolicy`) rather than
-   `--reuse-values`.
+   To carry other custom operator values without re-listing them, export them and re-apply them on
+   the upgrade (works on the supported Helm `3.8+`): run `helm get values <operator-release> -n
+   <namespace> -o yaml > operator-values.yaml`, then add `-f operator-values.yaml` to the
+   `helm upgrade` above. That re-supplies only your overrides against the new chart, so new keys like
+   `operatorNetworkPolicy` still take the new chart's default. On Helm `3.14+` you can instead pass
+   `--reset-then-reuse-values` as a shorthand. Do not use `--reuse-values` (it keeps the old chart's
+   defaults and fails on `0.50.1`).
 2. **Apply the new Strimzi CRDs.** `helm upgrade` of the operator does **not** upgrade CRDs, so
    after step 1 the cluster's Strimzi CRDs still serve only `v1beta2`. Apply the operator release's
    CRD bundle so every Strimzi CRD serves both `v1beta2` and `v1`
