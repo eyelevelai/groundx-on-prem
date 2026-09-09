@@ -95,12 +95,17 @@ Then run the ordered procedure:
    the export can contain secrets (for example a token in `extraEnvs`):
 
    ```bash
-   umask 077; f=$(mktemp)
-   helm get values <operator-release> -n <namespace> -o yaml > "$f"
-   helm upgrade <operator-release> oci://quay.io/strimzi-helm/strimzi-kafka-operator \
-     --version 0.50.1 -n <namespace> -f "$f" --wait
-   rm -f "$f"
+   (
+     umask 077
+     f=$(mktemp)
+     trap 'rm -f "$f"' EXIT INT TERM
+     helm get values <operator-release> -n <namespace> -o yaml > "$f"
+     helm upgrade <operator-release> oci://quay.io/strimzi-helm/strimzi-kafka-operator \
+       --version 0.50.1 -n <namespace> -f "$f" --wait
+   )
    ```
+   The subshell keeps `umask` out of your shell session, and the `trap` deletes the values file on
+   success, on a failed command, or on interrupt.
 
    Re-applying your overrides this way still lets new keys like `operatorNetworkPolicy` take the new
    chart's default. Do not use `--reuse-values` (it keeps the old chart's defaults and fails on
