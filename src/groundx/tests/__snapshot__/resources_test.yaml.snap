@@ -1158,7 +1158,7 @@
             - name: extract-api
               tokensPerMinute: 200000
             - name: extract-download
-              tokensPerMinute: 180000
+              tokensPerMinute: 90000
             - name: extract-save
               tokensPerMinute: 100000
             - name: groundx
@@ -1429,7 +1429,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -5135,7 +5135,7 @@
             - name: extract-api
               tokensPerMinute: 200000
             - name: extract-download
-              tokensPerMinute: 180000
+              tokensPerMinute: 90000
             - name: extract-save
               tokensPerMinute: 100000
             - name: groundx
@@ -5393,7 +5393,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -6307,7 +6307,7 @@
             - name: extract-api
               tokensPerMinute: 200000
             - name: extract-download
-              tokensPerMinute: 180000
+              tokensPerMinute: 90000
             - name: extract-save
               tokensPerMinute: 100000
             - name: groundx
@@ -6594,7 +6594,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -7478,7 +7478,7 @@
             - name: extract-api
               tokensPerMinute: 200000
             - name: extract-download
-              tokensPerMinute: 180000
+              tokensPerMinute: 90000
             - name: extract-save
               tokensPerMinute: 100000
             - name: groundx
@@ -7731,7 +7731,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -11378,7 +11378,7 @@
             - name: extract-api
               tokensPerMinute: 200000
             - name: extract-download
-              tokensPerMinute: 180000
+              tokensPerMinute: 90000
             - name: extract-save
               tokensPerMinute: 100000
             - name: groundx-service
@@ -11649,7 +11649,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
