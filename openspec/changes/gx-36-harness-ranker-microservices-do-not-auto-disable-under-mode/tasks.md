@@ -8,14 +8,14 @@ pass and proves the fix end-to-end on the source-of-truth chart surface.
       lines 13-24) to test `groundx.ingestOnly` **before** `hasKey $in "enabled"`, matching
       `groundx.search.create` (`src/groundx/templates/_helpers/services/search.tpl:12-16`). Do
       not touch `helm/` in this task (task 2).
-  check: ${GX_ON_PREM_HELM:-helm} unittest -f 'tests/ranker_test.yaml' src/groundx
+  check: H="${GX_ON_PREM_HELM:-helm}"; case "$("$H" version --short 2>/dev/null)" in v3.19.0|v3.19.0+*) ;; *) echo "helm ($H) is not v3.19.0 -- set GX_ON_PREM_HELM to a v3.19.0 binary" >&2; exit 1 ;; esac; "$H" unittest -f 'tests/ranker_test.yaml' src/groundx
 
 ## 2. Mirror the fix into `helm/`
 
 - [x] 2.1 Apply the identical hunk to `helm/templates/_helpers/app/ranker-api.tpl` and
       `ranker-inference.tpl`. `helm/` has no `tests/` tree (`.helmignore:15` excludes it from the
       package), so this is verified by rendering the mirror directly rather than `helm unittest`.
-  check: ${GX_ON_PREM_HELM:-helm} template g helm --set mode=ingest | python3 -c "import re,sys; t=sys.stdin.read(); docs=re.split(r'(?m)^---$',t); names={m.group(1) for d in docs if re.search(r'(?m)^kind:\s*(Deployment|Service)\s*$',d) for m in [re.search(r'(?m)^  name:\s*\"?([A-Za-z0-9._-]+)\"?\s*$',d)] if m}; sys.exit(1 if names & {'ranker-api','ranker-inference'} else 0)"
+  check: H="${GX_ON_PREM_HELM:-helm}"; case "$("$H" version --short 2>/dev/null)" in v3.19.0|v3.19.0+*) ;; *) echo "helm ($H) is not v3.19.0 -- set GX_ON_PREM_HELM to a v3.19.0 binary" >&2; exit 1 ;; esac; "$H" template g helm --set mode=ingest | python3 -c "import re,sys; t=sys.stdin.read(); docs=re.split(r'(?m)^---$',t); names={m.group(1) for d in docs if re.search(r'(?m)^kind:\s*(Deployment|Service)\s*$',d) for m in [re.search(r'(?m)^  name:\s*\"?([A-Za-z0-9._-]+)\"?\s*$',d)] if m}; sys.exit(1 if names & {'ranker-api','ranker-inference'} else 0)"
 
 ## 3. Regenerate the affected snapshots (scoped)
 
@@ -24,7 +24,7 @@ pass and proves the fix end-to-end on the source-of-truth chart surface.
       it churns 9-10 unrelated files even with zero template changes). Five for the mode-first-
       ordering fix, plus `ranker_test.yaml.snap` for the round-2 `busyWindowSeconds` `.create`-
       gating correction (task 3.2):
-      `${GX_ON_PREM_HELM:-helm} unittest -u -f 'tests/api_test.yaml' -f 'tests/inference_test.yaml' -f 'tests/resources_test.yaml' -f 'tests/golang_test.yaml' -f 'tests/metrics_test.yaml' -f 'tests/ranker_test.yaml' src/groundx`.
+      `H="${GX_ON_PREM_HELM:-helm}"; case "$("$H" version --short 2>/dev/null)" in v3.19.0|v3.19.0+*) ;; *) echo "helm ($H) is not v3.19.0 -- set GX_ON_PREM_HELM to a v3.19.0 binary" >&2; exit 1 ;; esac; "$H" unittest -u -f 'tests/api_test.yaml' -f 'tests/inference_test.yaml' -f 'tests/resources_test.yaml' -f 'tests/golang_test.yaml' -f 'tests/metrics_test.yaml' -f 'tests/ranker_test.yaml' src/groundx`.
       This drops the pre-existing empty-render snapshot labels
       (`'disabled: api'`, `'disabled: inference'`, `'workspace-enabled: inference'`,
       `'disabled: resources'`, `'disabled: golang'`, `'workspace-enabled: golang'` — the same set
@@ -53,7 +53,7 @@ pass and proves the fix end-to-end on the source-of-truth chart surface.
       `mode: ingest` + `cluster.hpa: true` already exists in `ranker_test.yaml` (`extract.ingest:
       ranker-inference busyWindowSeconds is omitted from metrics.inference even with cluster.hpa
       enabled`).
-  check: ${GX_ON_PREM_HELM:-helm} unittest -f 'tests/ranker_test.yaml' src/groundx
+  check: H="${GX_ON_PREM_HELM:-helm}"; case "$("$H" version --short 2>/dev/null)" in v3.19.0|v3.19.0+*) ;; *) echo "helm ($H) is not v3.19.0 -- set GX_ON_PREM_HELM to a v3.19.0 binary" >&2; exit 1 ;; esac; "$H" unittest -f 'tests/ranker_test.yaml' src/groundx
 
 ## 4. Confirm the dual-surface ingest render guard end-to-end
 
@@ -68,7 +68,7 @@ pattern as the existing snapshot guard) — provenance only, behavior re-verifie
 land.
 
 - [x] 4.1 Run the full local gate with the tasks 1-3 changes in place.
-  check: mkdir -p /tmp/gx36-helm-shim && ln -sf "${GX_ON_PREM_HELM:-$(command -v helm)}" /tmp/gx36-helm-shim/helm && PATH="/tmp/gx36-helm-shim:$PATH" .build/bin/validate-helm.sh
+  check: H="${GX_ON_PREM_HELM:-$(command -v helm)}"; case "$("$H" version --short 2>/dev/null)" in v3.19.0|v3.19.0+*) ;; *) echo "helm ($H) is not v3.19.0 -- set GX_ON_PREM_HELM to a v3.19.0 binary" >&2; exit 1 ;; esac; mkdir -p /tmp/gx36-helm-shim && ln -sf "$H" /tmp/gx36-helm-shim/helm && PATH="/tmp/gx36-helm-shim:$PATH" .build/bin/validate-helm.sh
 
 ## 5. Annotate the now-unused `cluster.nodeLabels.gpuRanker` entry
 
@@ -90,7 +90,7 @@ communicate the same fact. `values.schema.json` is left untouched on both surfac
 - [x] 5.1 Append the explanatory comment to the `gpuRanker: eyelevel-gpu-ranker` line in
       `src/groundx/values/chainguard/values.yaml` and its `helm/values/chainguard/values.yaml`
       mirror, keeping the two files byte-identical. Do not edit either `values.schema.json`.
-  check: HELM="${GX_ON_PREM_HELM:-helm}"; grep -q 'gpuRanker: eyelevel-gpu-ranker  # unused under mode: ingest' src/groundx/values/chainguard/values.yaml && grep -q 'gpuRanker: eyelevel-gpu-ranker  # unused under mode: ingest' helm/values/chainguard/values.yaml && diff -q src/groundx/values/chainguard/values.yaml helm/values/chainguard/values.yaml >/dev/null && git diff --quiet -- src/groundx/values.schema.json helm/values.schema.json && "$HELM" lint src/groundx -f src/groundx/values/chainguard/values.yaml >/dev/null && "$HELM" lint helm -f helm/values/chainguard/values.yaml >/dev/null
+  check: HELM="${GX_ON_PREM_HELM:-helm}"; case "$("$HELM" version --short 2>/dev/null)" in v3.19.0|v3.19.0+*) ;; *) echo "helm ($HELM) is not v3.19.0 -- set GX_ON_PREM_HELM to a v3.19.0 binary" >&2; exit 1 ;; esac; grep -q 'gpuRanker: eyelevel-gpu-ranker  # unused under mode: ingest' src/groundx/values/chainguard/values.yaml && grep -q 'gpuRanker: eyelevel-gpu-ranker  # unused under mode: ingest' helm/values/chainguard/values.yaml && diff -q src/groundx/values/chainguard/values.yaml helm/values/chainguard/values.yaml >/dev/null && git diff --quiet -- src/groundx/values.schema.json helm/values.schema.json && "$HELM" lint src/groundx -f src/groundx/values/chainguard/values.yaml >/dev/null && "$HELM" lint helm -f helm/values/chainguard/values.yaml >/dev/null
 
 ## Hand-off
 

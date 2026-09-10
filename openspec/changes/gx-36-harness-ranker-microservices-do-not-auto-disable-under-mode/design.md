@@ -35,14 +35,17 @@ the PATH `helm` in this workspace is v4.2.2 and unusable for this chart).
 ## Decisions
 
 **Invariant** (this change modifies a CI gate — `.build/bin/validate-helm.sh` — so states the
-property it must hold, not the token that stands in for it): *under `mode: ingest`, no
-`ranker-api` / `ranker-inference` Deployment or Service document, and no `eyelevel-gpu-ranker`
-node-affinity/toleration reference, may render from either chart surface, regardless of an
-explicit `ranker.*.enabled: true` — while every other workload that mode leaves enabled still
-renders.* A gate that only checks "`ranker.*.enabled: false` is set" would pass the pre-`e4319321`
-regression itself (the dead-code branch never reads that field once `hasKey` wins); a gate that
-zeroes the whole `api.yaml`/`inference.yaml` render would falsely block `extract`/`layout`/`summary`
-workloads that must keep rendering under `mode: ingest`. Both failure shapes are asserted below.
+property it must hold, not the token that stands in for it): *under `mode: ingest`, none of the
+seven ranker objects — the `ranker-api` / `ranker-inference` Deployments, the `ranker-api`
+Service, the `ranker-model` PersistentVolumeClaim, the `ranker-config-py-map` Secret, and the
+`ranker-gunicorn-conf-py-map` / `ranker-inference-supervisord-conf-map` ConfigMaps — and no
+`eyelevel-gpu-ranker` node-affinity/toleration reference, may render from either chart surface,
+regardless of an explicit `ranker.*.enabled: true` — while every other workload that mode leaves
+enabled still renders.* A gate that only checks "`ranker.*.enabled: false` is set" would pass the
+pre-`e4319321` regression itself (the dead-code branch never reads that field once `hasKey` wins);
+a gate that zeroes the whole `api.yaml`/`inference.yaml` render would falsely block
+`extract`/`layout`/`summary` workloads that must keep rendering under `mode: ingest`. Both failure
+shapes are asserted below.
 
 - **Fix shape: mode-first ordering.** Test `groundx.ingestOnly` before `hasKey $in "enabled"` in
   both `.create` helpers, matching the chart's own convention preserved in
@@ -131,7 +134,9 @@ workloads that must keep rendering under `mode: ingest`. Both failure shapes are
   for this one check. **Verified all four required guard properties** (Guard change class, fail
   closed / structural / fixtures):
   - **catches** — run against the unfixed templates: `src/groundx: mode=ingest must not render
-    ['ranker-api', 'ranker-inference'].`, exit 1.
+    Deployment=['ranker-api'].`, exit 1 (this is the shipped guard's kind-qualified output, run
+    against a single-Deployment probe; a render carrying multiple forbidden documents reports one
+    `<Kind>=[...]` segment per violated kind, joined with `; `).
   - **dual-surface** — fixed only `src/groundx`, left `helm/` unfixed: guard passed `src/groundx`
     and failed on `helm` with the same message, proving both surfaces are independently checked
     (catches a mirror-sync omission, the repo's own named hazard).
@@ -141,19 +146,32 @@ workloads that must keep rendering under `mode: ingest`. Both failure shapes are
     ['layout-api']; a guard that also drops these is over-blocking, not fixed.`, exit 1 — a
     distinct message from the forbidden-render case, proving the guard would catch the
     `hasDocuments: count: 0`-style over-block the orchestrator's brief warned against.
-  - **green** — both surfaces fixed, siblings intact: `GUARD PASSED`, exit 0.
+  - **green** — both surfaces fixed, siblings intact: the section prints only its own header
+    (`==> Verifying ranker microservices do not render under ingest-only mode`) and exits 0 with
+    no further output — `verify-ingest-render.py` prints nothing on success, so there is no
+    literal "pass" string to quote.
 - **Round-2: the guard's classification logic is extracted into `.build/bin/verify-ingest-render.py`
   with committed fixtures at `.build/tests/test_verify_ingest_render.py`, mirroring the existing
   `.build/bin/verify-helm-snapshots.py` / `.build/tests/test_verify_helm_snapshots.py` pattern
   already in this gate.** The guard was push-gating with its must-reject behavior proven only by
   ad-hoc render, not a committed counterexample. `validate-helm.sh` now runs the fixture test ahead
   of the guard, same as the snapshot-guard section. Fixtures use small synthetic multi-document YAML,
-  not full chart renders: a forbidden `Deployment`, a forbidden `PersistentVolumeClaim` alone (the
-  case the pre-widening guard missed), an over-blocking render missing a required sibling, and an
-  empty render (fails closed on missing siblings rather than passing silently). Provenance only —
-  the classification logic and its per-category short-circuit behavior are unchanged; re-verified
-  against a reconstructed pre-fix render (`b8e57f2d`) on both chart surfaces (exit 1, same messages)
-  and against head on both surfaces (exit 0).
+  not full chart renders. Provenance only — the classification logic and its per-category
+  short-circuit behavior are unchanged; re-verified against a reconstructed pre-fix render
+  (`b8e57f2d`) on both chart surfaces (exit 1, same messages) and against head on both surfaces
+  (exit 0).
+- **Round-3: mutation testing showed the round-2 fixture set proved only 3 of the 7 forbidden
+  names — one fixture per name is now required, not one per kind.** Deleting a whole
+  `FORBIDDEN_BY_KIND` entry (`Service`, `Secret`, or `ConfigMap`) or dropping `ranker-inference`
+  from the `Deployment` set left all committed fixtures green, because the round-2 set covered
+  only `Deployment=['ranker-api']` and `PersistentVolumeClaim=['ranker-model']` plus the
+  over-block and node-label arms. Added one fixture per previously-uncovered name —
+  `Deployment=['ranker-inference']`, `Service=['ranker-api']`,
+  `Secret=['ranker-config-py-map']`, `ConfigMap=['ranker-gunicorn-conf-py-map']`, and
+  `ConfigMap=['ranker-inference-supervisord-conf-map']` — each asserting the exact per-kind
+  violation message. Re-verified by mutation: deleting any of the five `FORBIDDEN_BY_KIND`
+  entries, or removing `ranker-inference` from the `Deployment` set alone, now fails the suite;
+  restoring the entry returns it to green.
 - **`cluster.nodeLabels.gpuRanker` is annotated in place, not removed; `values.schema.json` is
   untouched.** `values/chainguard/values.yaml` sets `cluster.nodeLabels.gpuRanker:
   eyelevel-gpu-ranker` alongside four still-needed labels (the file also sets `mode: ingest`, so

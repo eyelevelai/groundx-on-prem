@@ -91,16 +91,19 @@ ordering fix; its own snapshot diff is scoped to that one label.
   `ranker_test.yaml` snapshot label named above
 
 ### Requirement: A CI gate rejects ranker rendering under ingest mode on both chart surfaces
-The system SHALL provide a `.build/bin/validate-helm.sh` check that fails when `ranker-api` or
-`ranker-inference` renders (as a Deployment or Service document, or via an
-`eyelevel-gpu-ranker` node-label reference) under `mode: ingest`, on **both** `src/groundx` and
-`helm`, and that does not fail when the sibling non-ranker workloads that `mode: ingest` still
-needs render normally. This requirement exists because `helm/` has no `tests/` tree
-(`.helmignore` excludes it from the package) and CI runs `helm unittest` against `src/groundx`
-alone — this gate is the only mechanism that ever exercises the `helm/` mirror's ingest-mode
-behavior. **Gate-class change — invariant:** under `mode: ingest`, no ranker Deployment/Service
-document and no `eyelevel-gpu-ranker` reference may render on either chart surface, regardless of
-an explicit `enabled: true`, while every other workload that mode leaves enabled still renders.
+The system SHALL provide a `.build/bin/validate-helm.sh` check that fails when any of the seven
+ranker objects — the `ranker-api` / `ranker-inference` Deployments, the `ranker-api` Service, the
+`ranker-model` PersistentVolumeClaim, the `ranker-config-py-map` Secret, or the
+`ranker-gunicorn-conf-py-map` / `ranker-inference-supervisord-conf-map` ConfigMaps — renders, or
+an `eyelevel-gpu-ranker` node-label reference appears, under `mode: ingest`, on **both**
+`src/groundx` and `helm`, and that does not fail when the sibling non-ranker workloads that
+`mode: ingest` still needs render normally. This requirement exists because `helm/` has no
+`tests/` tree (`.helmignore` excludes it from the package) and CI runs `helm unittest` against
+`src/groundx` alone — this gate is the only mechanism that ever exercises the `helm/` mirror's
+ingest-mode behavior. **Gate-class change — invariant:** under `mode: ingest`, none of the seven
+ranker objects named above and no `eyelevel-gpu-ranker` reference may render on either chart
+surface, regardless of an explicit `enabled: true`, while every other workload that mode leaves
+enabled still renders.
 
 #### Scenario: catches — ranker renders under ingest mode on either chart surface
 - **WHEN** `helm template <chart> --set mode=ingest` is run against a chart surface where the
