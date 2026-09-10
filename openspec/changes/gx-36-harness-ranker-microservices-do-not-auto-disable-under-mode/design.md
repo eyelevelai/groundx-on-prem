@@ -17,8 +17,8 @@ the PATH `helm` in this workspace is v4.2.2 and unusable for this chart).
   the mode-`ingest` fixture blocks.
 - Add permanent `mode: ingest` resource-name assertions to `src/groundx/tests/ranker_test.yaml`.
 - Add a dual-surface ingest render guard to `.build/bin/validate-helm.sh`.
-- Remove the dead `cluster.nodeLabels.gpuRanker` entry from `values/chainguard/values.yaml` (+
-  mirror), resolving the schema conflict this creates.
+- Annotate the now-inert `cluster.nodeLabels.gpuRanker` entry in `values/chainguard/values.yaml`
+  (+ mirror) rather than removing it, leaving `values.schema.json` untouched.
 
 **Non-Goals:**
 - `origin/main` (chart 0.2.6 line) — not touched, per explicit direction (decomposition A2).
@@ -124,29 +124,34 @@ workloads that must keep rendering under `mode: ingest`. Both failure shapes are
     distinct message from the forbidden-render case, proving the guard would catch the
     `hasDocuments: count: 0`-style over-block the orchestrator's brief warned against.
   - **green** — both surfaces fixed, siblings intact: `GUARD PASSED`, exit 0.
-- **`cluster.nodeLabels.gpuRanker` removal requires a schema change — resolved, not deferred.**
-  `values/chainguard/values.yaml:55` sets `cluster.nodeLabels.gpuRanker: eyelevel-gpu-ranker`
-  alongside three still-needed labels (`cpuMemory`, `cpuOnly`, `gpuLayout`, `gpuSummary` — the file
-  also sets `mode: ingest`, so `layout`/`summary`/`extract`/`workspace` still render and still need
-  their node labels). `values.schema.json:48` marks all five `nodeLabels` keys
-  `"required"` with `additionalProperties: false` on the object. Verified: deleting only the
-  `gpuRanker` line and running `helm lint src/groundx -f <that file>` fails —
+- **`cluster.nodeLabels.gpuRanker` is annotated in place, not removed; `values.schema.json` is
+  untouched.** `values/chainguard/values.yaml` sets `cluster.nodeLabels.gpuRanker:
+  eyelevel-gpu-ranker` alongside four still-needed labels (the file also sets `mode: ingest`, so
+  `layout`/`summary`/`extract`/`workspace` still render and still need their node labels).
+  `groundx.node.gpuRanker` has exactly one consumer in the chart,
+  `_helpers/app/ranker-inference.tpl:4`, which stops evaluating once this change lands, so the
+  value is genuinely inert in this preset.
+
+  Deleting it is not possible on its own. `values.schema.json` marks all five `nodeLabels` keys
+  `"required"` with `additionalProperties: false`; verified that removing only the `gpuRanker`
+  line makes `helm lint` fail with
   `[ERROR] values.yaml: - at '/cluster/nodeLabels': missing property 'gpuRanker'`. Removing the
   whole `nodeLabels:` block instead is not viable either: the other four labels differ from their
-  schema defaults (e.g. `cpuMemory: eyelevel-cpu` vs. default `eyelevel-cpu-memory`), so dropping
-  the block would silently retarget node selectors for the still-rendering `layout`/`summary`/
-  `extract` workloads in that example file — an unrelated behavior change. The extract-values
-  precedent (a fully-commented example `nodeLabels:` block) doesn't apply here because this block
-  is active, not illustrative.
-  **Resolution:** drop `"gpuRanker"` from the `required` array at `values.schema.json:48` (and its
-  byte-identical `helm/values.schema.json` mirror), in both files, alongside removing the
-  chainguard values entry. This is a minimal, backward-compatible relaxation — every values file
-  that already sets `gpuRanker` (including every other example in this repo) stays valid; it only
-  starts accepting `nodeLabels` blocks that omit it. `AGENTS.md` calls `values.schema.json`
-  high-blast-radius, so this is called out explicitly here for the human gate to veto if a
-  different resolution is preferred (e.g. leaving the now-inert `gpuRanker` key with an explanatory
-  comment instead of removing it) — the proposal's approved instruction is literally infeasible
-  without touching one of these two files, and this is the smaller, non-breaking one.
+  schema defaults (`cpuMemory: eyelevel-cpu` vs. default `eyelevel-cpu-memory`), so dropping the
+  block would silently retarget node selectors for the still-rendering workloads in that file.
+
+  That leaves two options: relax the schema so the key may be omitted, or keep the key and say
+  why it is inert. **Resolution: keep it and annotate it.** Relaxing a validation rule to enable a
+  cosmetic cleanup is the worse trade, and it buys less: a deletion leaves a reader nothing, while
+  the comment states the reason the key is present but unused. It also matches how
+  `values/extract/values.yaml:18` and `values.oai.yaml:18` already communicate the identical fact
+  about this same label. Verified that the annotated file lints clean on both chart surfaces and
+  that `values.schema.json` is byte-unchanged.
+
+  The relaxation alternative was implemented first and reverted at the human gate. It was proven
+  safe (strictly widening, every values file that sets `gpuRanker` stays valid, and
+  `groundx.node.gpuRanker` carries an `eyelevel-gpu-ranker` fallback so no render changes), so it
+  remains available if the inert key is later judged worse than the schema change.
 
 ## Risks / Trade-offs
 
@@ -154,10 +159,10 @@ workloads that must keep rendering under `mode: ingest`. Both failure shapes are
   Deployments/Services/ConfigMaps/PVC on the first upgrade past published 0.2.6) →
   **Mitigation:** already covered in `proposal.md` Blast Radius; carried into the PR body and
   0.2.7 release notes per `tasks.md` hand-off. Not restated here.
-- **[Risk] Schema relaxation on `values.schema.json`** (see nodeLabels decision above) →
-  **Mitigation:** relaxation only (required → optional), so no previously-valid values file is
-  invalidated; flagged explicitly for human review at the artifact gate rather than silently
-  applied.
+- **[Risk] An inert `gpuRanker` key remains in the chainguard preset** (see nodeLabels decision
+  above) → **Mitigation:** annotated in place so a reader is told it is unused under
+  `mode: ingest` and why it cannot simply be deleted. `values.schema.json` is untouched, so no
+  validation rule was weakened to accommodate a cosmetic cleanup.
 - **[Risk] A future full-suite `helm unittest -u` regen (by a human, outside this change) could
   re-introduce the dropped-empty-label / reordering churn** on files this change didn't touch →
   **Mitigation:** none added by this change beyond documenting the hazard here; the existing

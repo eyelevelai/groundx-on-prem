@@ -3,7 +3,7 @@
 This group alone makes the acceptance stubs already added to `src/groundx/tests/ranker_test.yaml`
 pass and proves the fix end-to-end on the source-of-truth chart surface.
 
-- [ ] 1.1 In `src/groundx/templates/_helpers/app/ranker-api.tpl` and `ranker-inference.tpl`,
+- [x] 1.1 In `src/groundx/templates/_helpers/app/ranker-api.tpl` and `ranker-inference.tpl`,
       reorder `groundx.ranker.api.create` / `groundx.ranker.inference.create` (both currently
       lines 13-24) to test `groundx.ingestOnly` **before** `hasKey $in "enabled"`, matching
       `groundx.search.create` (`src/groundx/templates/_helpers/services/search.tpl:12-16`). Do
@@ -12,14 +12,14 @@ pass and proves the fix end-to-end on the source-of-truth chart surface.
 
 ## 2. Mirror the fix into `helm/`
 
-- [ ] 2.1 Apply the identical hunk to `helm/templates/_helpers/app/ranker-api.tpl` and
+- [x] 2.1 Apply the identical hunk to `helm/templates/_helpers/app/ranker-api.tpl` and
       `ranker-inference.tpl`. `helm/` has no `tests/` tree (`.helmignore:15` excludes it from the
       package), so this is verified by rendering the mirror directly rather than `helm unittest`.
   check: /Users/nitin/.local/bin/helm-v3.19.0 template g helm --set mode=ingest | python3 -c "import re,sys; t=sys.stdin.read(); docs=re.split(r'(?m)^---$',t); names={m.group(1) for d in docs if re.search(r'(?m)^kind:\s*(Deployment|Service)\s*$',d) for m in [re.search(r'(?m)^  name:\s*\"?([A-Za-z0-9._-]+)\"?\s*$',d)] if m}; sys.exit(1 if names & {'ranker-api','ranker-inference'} else 0)"
 
 ## 3. Regenerate the affected snapshots (scoped)
 
-- [ ] 3.1 Regenerate exactly these five snapshot files, scoped by `-f` (a bare
+- [x] 3.1 Regenerate exactly these five snapshot files, scoped by `-f` (a bare
       `helm unittest -u src/groundx` is unsafe — see `design.md`'s "full-suite regen" decision;
       it churns 9-10 unrelated files even with zero template changes):
       `/Users/nitin/.local/bin/helm-v3.19.0 unittest -u -f 'tests/api_test.yaml' -f 'tests/inference_test.yaml' -f 'tests/resources_test.yaml' -f 'tests/golang_test.yaml' -f 'tests/metrics_test.yaml' src/groundx`.
@@ -47,25 +47,30 @@ RED against the unfixed templates, dual-surface (catches an unfixed `helm/` mirr
 of a fixed `src/groundx`), and with a synthetic over-block control (see `design.md`). This task
 confirms it — and the rest of the chart gate — stays green once tasks 1-3 land.
 
-- [ ] 4.1 Run the full local gate with the tasks 1-3 changes in place.
+- [x] 4.1 Run the full local gate with the tasks 1-3 changes in place.
   check: mkdir -p /tmp/gx36-helm-shim && ln -sf /Users/nitin/.local/bin/helm-v3.19.0 /tmp/gx36-helm-shim/helm && PATH="/tmp/gx36-helm-shim:$PATH" .build/bin/validate-helm.sh
 
-## 5. Remove the dead `cluster.nodeLabels.gpuRanker` entry
+## 5. Annotate the now-unused `cluster.nodeLabels.gpuRanker` entry
 
-Requires a paired schema relaxation — see `design.md`'s nodeLabels decision for why a bare
-deletion fails `helm lint` (`values.schema.json` marks all five `nodeLabels` keys `required` with
-`additionalProperties: false`) and why removing the whole block instead is not viable (the other
-four labels differ from their schema defaults and are still needed by `layout`/`summary`/`extract`
-under this file's `mode: ingest`).
+`values/chainguard/values.yaml` sets `mode: ingest`, and `groundx.node.gpuRanker` has exactly one
+consumer in the chart (`_helpers/app/ranker-inference.tpl:4`), which no longer evaluates once
+tasks 1-2 land. The value is therefore inert in this preset and, left bare, tells an operator to
+provision a GPU node group nothing schedules to.
 
-- [ ] 5.1 Remove the `gpuRanker: eyelevel-gpu-ranker` line from
-      `src/groundx/values/chainguard/values.yaml:55` and its `helm/values/chainguard/values.yaml`
-      mirror. Drop `"gpuRanker"` from the `required` array at `src/groundx/values.schema.json:48`
-      and its byte-identical `helm/values.schema.json` mirror (edit the array in place — do not
-      run a JSON pretty-printer/re-serializer over either file; that reformats the whole
-      1693-line file and turns a 2-line diff into a 4000+-line one, verified while authoring this
-      task).
-  check: HELM=/Users/nitin/.local/bin/helm-v3.19.0; ! grep -q gpuRanker src/groundx/values/chainguard/values.yaml && ! grep -q gpuRanker helm/values/chainguard/values.yaml && "$HELM" lint src/groundx -f src/groundx/values/chainguard/values.yaml >/dev/null && "$HELM" lint helm -f helm/values/chainguard/values.yaml >/dev/null
+Annotate it rather than delete it. A bare deletion fails `helm lint` because
+`values.schema.json` marks all five `nodeLabels` keys `required` with `additionalProperties:
+false`, and the only ways around that are to relax the published schema or to comment out the
+whole block, which is not viable here (the other four labels differ from their schema defaults
+and are still needed by `layout`/`summary`/`extract` under this file's `mode: ingest`). Relaxing
+a validation rule to enable a cosmetic cleanup is a worse trade than annotating, and the comment
+carries strictly more information than a deletion does: it says *why* the key is present but
+unused. This mirrors how `values/extract/values.yaml:18` and `values.oai.yaml:18` already
+communicate the same fact. `values.schema.json` is left untouched on both surfaces.
+
+- [x] 5.1 Append the explanatory comment to the `gpuRanker: eyelevel-gpu-ranker` line in
+      `src/groundx/values/chainguard/values.yaml` and its `helm/values/chainguard/values.yaml`
+      mirror, keeping the two files byte-identical. Do not edit either `values.schema.json`.
+  check: HELM=/Users/nitin/.local/bin/helm-v3.19.0; grep -q 'gpuRanker: eyelevel-gpu-ranker  # unused under mode: ingest' src/groundx/values/chainguard/values.yaml && grep -q 'gpuRanker: eyelevel-gpu-ranker  # unused under mode: ingest' helm/values/chainguard/values.yaml && diff -q src/groundx/values/chainguard/values.yaml helm/values/chainguard/values.yaml >/dev/null && git diff --quiet -- src/groundx/values.schema.json helm/values.schema.json && "$HELM" lint src/groundx -f src/groundx/values/chainguard/values.yaml >/dev/null && "$HELM" lint helm -f helm/values/chainguard/values.yaml >/dev/null
 
 ## Hand-off
 
