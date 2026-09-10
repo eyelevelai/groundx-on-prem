@@ -196,3 +196,98 @@ tests:
       ranker.cache.ssl: true
     asserts:
       - matchSnapshot: {}
+  - it: "extract.ingest: ranker api and inference do not render while sibling services do"
+    templates:
+      - ../templates/app/api.yaml
+      - ../templates/app/inference.yaml
+    values:
+      - ./files/values.extract.ingest.yaml
+    asserts:
+      - containsDocument:
+          kind: Deployment
+          apiVersion: apps/v1
+          name: ranker-api
+          any: true
+        not: true
+        template: ../templates/app/api.yaml
+      - containsDocument:
+          kind: Deployment
+          apiVersion: apps/v1
+          name: extract-api
+          any: true
+        template: ../templates/app/api.yaml
+      - containsDocument:
+          kind: Deployment
+          apiVersion: apps/v1
+          name: layout-api
+          any: true
+        template: ../templates/app/api.yaml
+      - containsDocument:
+          kind: Deployment
+          apiVersion: apps/v1
+          name: summary-api
+          any: true
+        template: ../templates/app/api.yaml
+      - containsDocument:
+          kind: Deployment
+          apiVersion: apps/v1
+          name: ranker-inference
+          any: true
+        not: true
+        template: ../templates/app/inference.yaml
+      - containsDocument:
+          kind: Deployment
+          apiVersion: apps/v1
+          name: layout-inference
+          any: true
+        template: ../templates/app/inference.yaml
+      - containsDocument:
+          kind: Deployment
+          apiVersion: apps/v1
+          name: summary-inference
+          any: true
+        template: ../templates/app/inference.yaml
+  - it: "extract.ingest: explicit ranker enabled true is overridden by ingest-only mode"
+    templates:
+      - ../templates/app/api.yaml
+      - ../templates/app/inference.yaml
+    values:
+      - ./files/values.extract.ingest.yaml
+    set:
+      ranker.api.enabled: true
+      ranker.inference.enabled: true
+    asserts:
+      - containsDocument:
+          kind: Deployment
+          apiVersion: apps/v1
+          name: ranker-api
+          any: true
+        not: true
+        template: ../templates/app/api.yaml
+      - containsDocument:
+          kind: Deployment
+          apiVersion: apps/v1
+          name: ranker-inference
+          any: true
+        not: true
+        template: ../templates/app/inference.yaml
+  - it: "extract.ingest: no ranker HPA renders even with cluster.hpa enabled"
+    templates:
+      - ../templates/resources/hpa.yaml
+    values:
+      - ./files/values.extract.ingest.yaml
+    set:
+      cluster.hpa: true
+    asserts:
+      - containsDocument:
+          kind: HorizontalPodAutoscaler
+          apiVersion: autoscaling/v2
+          name: ranker-api-hpa
+          any: true
+        not: true
+      - containsDocument:
+          kind: HorizontalPodAutoscaler
+          apiVersion: autoscaling/v2
+          name: ranker-inference-hpa
+          any: true
+        not: true

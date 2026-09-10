@@ -219,6 +219,53 @@ for chart in src/groundx helm; do
   done
 done
 
+echo "==> Verifying ranker microservices do not render under ingest-only mode"
+ingest_render_file="$(mktemp)"
+for chart in src/groundx helm; do
+  helm template ranker-ingest-guard "${chart}" --set mode=ingest > "${ingest_render_file}"
+  python3 - "${chart}" "${ingest_render_file}" <<'PY'
+import re
+import sys
+
+chart, render_path = sys.argv[1], sys.argv[2]
+with open(render_path, encoding="utf-8") as fh:
+    text = fh.read()
+documents = re.split(r"(?m)^---$", text)
+
+def document_names(kind):
+    names = set()
+    for doc in documents:
+        if not re.search(rf"(?m)^kind:\s*{kind}\s*$", doc):
+            continue
+        match = re.search(r'(?m)^  name:\s*"?([A-Za-z0-9._-]+)"?\s*$', doc)
+        if match:
+            names.add(match.group(1))
+    return names
+
+forbidden = {"ranker-api", "ranker-inference"}
+rendered = document_names("Deployment") | document_names("Service")
+present = rendered & forbidden
+if present:
+    print(f"{chart}: mode=ingest must not render {sorted(present)}.", file=sys.stderr)
+    sys.exit(1)
+
+required_siblings = {"layout-api", "summary-api", "layout-inference"}
+missing = required_siblings - document_names("Deployment")
+if missing:
+    print(
+        f"{chart}: mode=ingest must still render sibling services {sorted(missing)}; "
+        "a guard that also drops these is over-blocking, not fixed.",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+if "eyelevel-gpu-ranker" in text:
+    print(f"{chart}: mode=ingest must not reference the eyelevel-gpu-ranker node label.", file=sys.stderr)
+    sys.exit(1)
+PY
+done
+rm -f "${ingest_render_file}"
+
 echo "==> Verifying deprecated compatibility values contract"
 python - <<'PY'
 import json
