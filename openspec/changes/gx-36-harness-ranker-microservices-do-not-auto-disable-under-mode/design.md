@@ -16,9 +16,13 @@ the PATH `helm` in this workspace is v4.2.2 and unusable for this chart).
   proven below to be five files, not the three the proposal named — with the diff scoped to only
   the mode-`ingest` fixture blocks.
 - Add permanent `mode: ingest` resource-name assertions to `src/groundx/tests/ranker_test.yaml`.
-- Add a dual-surface ingest render guard to `.build/bin/validate-helm.sh`.
+- Add a dual-surface ingest render guard to `.build/bin/validate-helm.sh`, with its classification
+  logic extracted to `.build/bin/verify-ingest-render.py` and committed known-bad/known-good
+  fixtures at `.build/tests/test_verify_ingest_render.py` (round-2).
 - Annotate the now-inert `cluster.nodeLabels.gpuRanker` entry in `values/chainguard/values.yaml`
   (+ mirror) rather than removing it, leaving `values.schema.json` untouched.
+- Round-2: gate `groundx.ranker.inference.busyWindowSeconds` on `.create` — the one sibling in its
+  family that ignored it — regenerating a sixth snapshot file (`ranker_test.yaml.snap`).
 
 **Non-Goals:**
 - `origin/main` (chart 0.2.6 line) — not touched, per explicit direction (decomposition A2).
@@ -85,6 +89,20 @@ workloads that must keep rendering under `mode: ingest`. Both failure shapes are
   `mode: all` byte-identical intent is unchanged, only the enumeration of which fixture families
   set `mode: ingest` was incomplete (`values/extract/values.yaml` and `values.oai.yaml` also do,
   and both feed `api`/`inference`/`resources`/`golang`/`metrics` suites).
+- **Round-2: `groundx.ranker.inference.busyWindowSeconds` was the one sibling in its family not
+  gated on `.create` — a sixth snapshot file, not a widening of the five above.**
+  `.threshold` and `.throughput` both derive their rendered value from `groundx.ranker.inference.create`
+  (they collapse when the workload doesn't render); `busyWindowSeconds` gated only on the HPA flag
+  (`cluster.hpa`) and never checked `.create`, so under `mode: ingest` + `cluster.hpa: true` it kept
+  emitting a `ranker-inference` entry into `metrics.inference`'s `config-yaml.yaml` even though no
+  `ranker-inference` Deployment rendered — a metrics component pointed at a workload this change
+  removes. Fixed by gating `busyWindowSeconds` on `.create` too, matching its siblings. This is a
+  distinct **correctness** fix independent of `mode` (it also corrects a `mode: all` render where
+  `ranker.inference` is individually disabled — `ranker_test.yaml`'s `cache override: ranker api`
+  case), not a widening of the mode-first-ordering fix, so its `ranker_test.yaml.snap` diff is
+  scoped to that one label rather than falling under the `extract:`/`extract.ingest:`/`extract.oai:`
+  constraint above (see `spec.md`'s "Exception, independent of `mode`" note and task 3.2's own
+  check). Task 3.1's snapshot count is six files, not five, once this is included.
 - **A full-suite `helm unittest -u src/groundx` is unsafe and must not be used.** Verified: even
   with zero template changes, a bare full-suite `-u` regen churns 9-10 snapshot files (drops
   `matchSnapshot` labels for empty renders — e.g. `'disabled: api':` — and reorders unrelated
@@ -124,6 +142,18 @@ workloads that must keep rendering under `mode: ingest`. Both failure shapes are
     distinct message from the forbidden-render case, proving the guard would catch the
     `hasDocuments: count: 0`-style over-block the orchestrator's brief warned against.
   - **green** — both surfaces fixed, siblings intact: `GUARD PASSED`, exit 0.
+- **Round-2: the guard's classification logic is extracted into `.build/bin/verify-ingest-render.py`
+  with committed fixtures at `.build/tests/test_verify_ingest_render.py`, mirroring the existing
+  `.build/bin/verify-helm-snapshots.py` / `.build/tests/test_verify_helm_snapshots.py` pattern
+  already in this gate.** The guard was push-gating with its must-reject behavior proven only by
+  ad-hoc render, not a committed counterexample. `validate-helm.sh` now runs the fixture test ahead
+  of the guard, same as the snapshot-guard section. Fixtures use small synthetic multi-document YAML,
+  not full chart renders: a forbidden `Deployment`, a forbidden `PersistentVolumeClaim` alone (the
+  case the pre-widening guard missed), an over-blocking render missing a required sibling, and an
+  empty render (fails closed on missing siblings rather than passing silently). Provenance only —
+  the classification logic and its per-category short-circuit behavior are unchanged; re-verified
+  against a reconstructed pre-fix render (`b8e57f2d`) on both chart surfaces (exit 1, same messages)
+  and against head on both surfaces (exit 0).
 - **`cluster.nodeLabels.gpuRanker` is annotated in place, not removed; `values.schema.json` is
   untouched.** `values/chainguard/values.yaml` sets `cluster.nodeLabels.gpuRanker:
   eyelevel-gpu-ranker` alongside four still-needed labels (the file also sets `mode: ingest`, so
@@ -155,8 +185,9 @@ workloads that must keep rendering under `mode: ingest`. Both failure shapes are
 
 ## Risks / Trade-offs
 
-- **[Risk] The destructive-upgrade impact on existing `mode: ingest` installs** (deletes ranker
-  Deployments/Services/ConfigMaps/PVC on the first upgrade past published 0.2.6) →
+- **[Risk] The destructive-upgrade impact on existing `mode: ingest` installs** (deletes the seven
+  ranker objects — see `proposal.md` Blast radius for the full inventory and the volume-reclaim
+  qualification — on the first upgrade past published 0.2.6) →
   **Mitigation:** already covered in `proposal.md` Blast Radius; carried into the PR body and
   0.2.7 release notes per `tasks.md` hand-off. Not restated here.
 - **[Risk] An inert `gpuRanker` key remains in the chainguard preset** (see nodeLabels decision

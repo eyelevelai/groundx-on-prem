@@ -92,6 +92,15 @@ regressed output as golden, which is why the reorder shipped and stayed undetect
   those five files. The regenerated diff must touch **only** labels prefixed `extract:`,
   `extract.ingest:`, or `extract.oai:` (the three fixture families that set `mode: ingest`) — any
   other label changing is itself a defect (the `mode: all` byte-identical constraint).
+- **Round-2 correction:** `groundx.ranker.inference.busyWindowSeconds` gated only on the HPA flag,
+  never on `.create`, unlike its `.threshold`/`.throughput` siblings — an asymmetry that survived
+  the fix above. Under `mode: ingest` with `cluster.hpa: true` it still emitted a `ranker-inference`
+  entry into `metrics.inference` while no `ranker-inference` Deployment rendered. Gate
+  `busyWindowSeconds` on `.create` too, which also corrects a `mode: all` case where
+  `ranker.inference` is individually disabled (`ranker_test.yaml`'s `cache override: ranker api`
+  case). This regenerates a **sixth** snapshot file, `ranker_test.yaml.snap`, in addition to the
+  five above — six total, not five — and adds a `notMatchRegex` case to `ranker_test.yaml`
+  asserting the entry is omitted even with `cluster.hpa: true`.
 - Add permanent `mode: ingest` coverage to `src/groundx/tests/ranker_test.yaml`: assert by
   **resource name**, not document count (a zero-document assertion on `templates/app/api.yaml` /
   `inference.yaml` is unsatisfiable — those templates also render extract/layout/summary
@@ -100,10 +109,12 @@ regressed output as golden, which is why the reorder shipped and stayed undetect
   overridden by the mode; and an HPA case (`cluster.hpa: true` + `mode: ingest` → no ranker HPA).
 - Add a dual-surface ingest render guard to `.build/bin/validate-helm.sh`, following its existing
   `for chart in src/groundx helm; do` pattern: assert `helm template <chart> --set mode=ingest`
-  renders no `ranker-api` / `ranker-inference` document and zero `eyelevel-gpu-ranker` occurrences,
-  for **both** `src/groundx` and `helm`. This is the only mechanism that ever exercises the
-  `helm/` mirror — it has no `tests/` tree (`.helmignore` excludes it from the package) and CI
-  runs `helm unittest` against `src/groundx` alone.
+  renders none of the seven forbidden objects (see Blast radius) and zero `eyelevel-gpu-ranker`
+  occurrences, for **both** `src/groundx` and `helm`. This is the only mechanism that ever
+  exercises the `helm/` mirror — it has no `tests/` tree (`.helmignore` excludes it from the
+  package) and CI runs `helm unittest` against `src/groundx` alone. Round-2: the guard's
+  classification logic is extracted to `.build/bin/verify-ingest-render.py` with committed
+  known-bad/known-good fixtures at `.build/tests/test_verify_ingest_render.py` (see `design.md`).
 - Annotate the now-inert `cluster.nodeLabels.gpuRanker: eyelevel-gpu-ranker` entry in place in
   `src/groundx/values/chainguard/values.yaml:55` and its `helm/` mirror (a bare deletion fails
   `helm lint`: `values.schema.json` marks all five `nodeLabels` keys `required` with
@@ -129,9 +140,10 @@ once this ships), and the out-of-scope items above were all resolved during deco
 ### New Capabilities
 
 - `ranker-ingest-mode-gating`: the ranker microservices (`ranker.api`, `ranker.inference`) and
-  their generated resources (Deployment, Service, ConfigMaps, HPA, node affinity/tolerations) do
-  not render under `mode: ingest`, regardless of an explicit `ranker.*.enabled: true`, on both the
-  `src/groundx` source chart and the `helm` publication mirror.
+  their generated resources (the Deployments, the `ranker-api` Service, two ConfigMaps, a Secret,
+  the `ranker-model` PVC, HPA, node affinity/tolerations — see Blast radius for the full inventory)
+  do not render under `mode: ingest`, regardless of an explicit `ranker.*.enabled: true`, on both
+  the `src/groundx` source chart and the `helm` publication mirror.
 
 ### Modified Capabilities
 
@@ -143,11 +155,14 @@ none of it asserts (or contradicts) mode-gating behavior, so no existing require
 
 - **Code:** `src/groundx/templates/_helpers/app/ranker-api.tpl`,
   `.../ranker-inference.tpl`, and their byte-identical `helm/templates/_helpers/app/` mirrors;
-  `src/groundx/tests/ranker_test.yaml`; the five
-  `src/groundx/tests/__snapshot__/{api,inference,resources,golang,metrics}_test.yaml.snap` files
-  (regenerated, never hand-edited — see "Snapshot regen scope" in `design.md`);
-  `.build/bin/validate-helm.sh`; `src/groundx/values/chainguard/values.yaml` (annotated, not
-  edited elsewhere — `values.schema.json` untouched) and its `helm/` mirror.
+  `src/groundx/tests/ranker_test.yaml`; six
+  `src/groundx/tests/__snapshot__/{api,inference,resources,golang,metrics,ranker}_test.yaml.snap`
+  files (regenerated, never hand-edited — see "Snapshot regen scope" in `design.md`; `ranker` is
+  the round-2 addition for the `busyWindowSeconds` `.create`-gating correction);
+  `.build/bin/validate-helm.sh`; `.build/bin/verify-ingest-render.py` (round-2: extracted guard
+  logic) and its fixtures at `.build/tests/test_verify_ingest_render.py`;
+  `src/groundx/values/chainguard/values.yaml` (annotated, not edited elsewhere —
+  `values.schema.json` untouched) and its `helm/` mirror.
 - **Dependencies / cross-repo:** none. `groundx-on-prem` has no in-tree code dependency on any
   other workspace repo; this ticket deliberately excludes the harness repos (`AGENTS.md`
   §Resolve-from-docs; decomposition A2).

@@ -6,8 +6,9 @@ The system SHALL NOT render the `ranker-api` Deployment or Service from
 (`src/groundx` and `helm`), regardless of an explicit `ranker.api.enabled: true` — while the
 sibling `extract-api`, `layout-api`, and `summary-api` workloads that `mode: ingest` still needs
 continue to render unchanged. **Polarity: reject before state** — the ranker-api Deployment,
-Service, and ConfigMaps (which key off the same `groundx.ranker.api.create` helper) must not be
-created at all under this mode; this is not a "created then hidden" behavior.
+Service, the `ranker-config-py-map` Secret, and the `ranker-gunicorn-conf-py-map` ConfigMap
+(which key off the same `groundx.ranker.api.create` helper) must not be created at all under this
+mode; this is not a "created then hidden" behavior.
 
 #### Scenario: Ranker API absent while sibling API services still render
 - **WHEN** the chart renders `templates/app/api.yaml` with `mode: ingest` and the chart's own
