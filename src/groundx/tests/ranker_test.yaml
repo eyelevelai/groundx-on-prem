@@ -291,3 +291,14 @@ tests:
           name: ranker-inference-hpa
           any: true
         not: true
+  - it: "extract.ingest: ranker-inference busyWindowSeconds is omitted from metrics.inference even with cluster.hpa enabled"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.extract.ingest.yaml
+    set:
+      cluster.hpa: true
+    asserts:
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "(?s)inference:\\n(?:\\s+.*\\n)*\\s+- name: ranker-inference\\n\\s+busyWindowSeconds:"

@@ -22,12 +22,14 @@ created at all under this mode; this is not a "created then hidden" behavior.
   wins unconditionally over the explicit `enabled: true`, and no `ranker-api` state is created
 
 ### Requirement: The ranker inference workload does not render under ingest-only mode
-The system SHALL NOT render the `ranker-inference` Deployment, Service, or `ranker-model`
+The system SHALL NOT render the `ranker-inference` Deployment or the `ranker-model`
 PersistentVolumeClaim from `templates/app/inference.yaml` when `mode: ingest`, on both chart
 surfaces, regardless of an explicit `ranker.inference.enabled: true` — while the sibling
 `layout-inference` and `summary-inference` workloads continue to render unchanged, and no
-rendered document references the `eyelevel-gpu-ranker` node label (affinity or toleration).
-**Polarity: reject before state.**
+rendered document references the `eyelevel-gpu-ranker` node label (affinity or toleration). There
+is no `ranker-inference` `Service` — `templates/app/inference.yaml` never calls
+`groundx.renderInterface` (only `ranker-api` does, via `templates/app/api.yaml`). **Polarity:
+reject before state.**
 
 #### Scenario: Ranker inference absent while sibling inference services still render
 - **WHEN** the chart renders `templates/app/inference.yaml` with `mode: ingest` and the chart's
@@ -55,24 +57,37 @@ helpers, not a separate gate, and disabling it must require no additional templa
 - **THEN** no document with `kind: HorizontalPodAutoscaler` and `metadata.name: ranker-api-hpa`
   or `metadata.name: ranker-inference-hpa` renders
 
-### Requirement: Non-ingest chart renders are unaffected by the ingest-only fix
-The system SHALL render byte-identical output for `mode: all` (the default) before and after this
-change, on both chart surfaces. **Polarity: skip unrelated repair path** — the fix must not widen
-into rendering behavior outside the `mode: ingest` case; a regenerated snapshot diff that touches
-any label outside the `extract:`, `extract.ingest:`, or `extract.oai:` prefixes (the only fixture
-families that set `mode: ingest`) is itself a defect in the fix, not an acceptable side effect.
+### Requirement: Non-ingest chart renders are unaffected by the mode-first-ordering fix
+The system SHALL render byte-identical output for `mode: all` (the default) before and after the
+`groundx.ranker.{api,inference}.create` mode-first-ordering fix, on both chart surfaces.
+**Polarity: skip unrelated repair path** — the ordering fix must not widen into rendering behavior
+outside the `mode: ingest` case; a regenerated snapshot diff (from that fix) that touches any label
+outside the `extract:`, `extract.ingest:`, or `extract.oai:` prefixes (the only fixture families
+that set `mode: ingest`) is itself a defect in the fix, not an acceptable side effect.
+
+**Exception, independent of `mode`:** `groundx.ranker.inference.busyWindowSeconds` gating on
+`.create` (matching its `.threshold`/`.throughput` siblings — the review-round fix for the
+asymmetry where it alone ignored `.create`) also corrects `ranker-config-py.yaml`'s
+`metricsBusyWindowSeconds` line for any render where `ranker.inference.create` is `false`
+regardless of `mode` — including a `mode: all` render where `ranker.inference` is individually
+disabled (`ranker_test.yaml`'s `cache override: ranker api` case). That is a distinct, correctness
+fix to a helper that was always wrong under this condition, not a widening of the mode-first
+ordering fix; its own snapshot diff is scoped to that one label.
 
 #### Scenario: mode: all rendering is unchanged
 - **WHEN** the chart renders any template with `mode: all` (or `mode` left unset, the default)
-- **THEN** the rendered output is identical to the pre-fix output, and the ranker-api and
-  ranker-inference workloads still render as before
+- **THEN** the rendered output is identical to the pre-fix output for the mode-first-ordering fix,
+  and the ranker-api and ranker-inference workloads still render as before — except for the
+  `busyWindowSeconds` `.create`-gating correction named above, which is independent of `mode`
 
-#### Scenario: The regenerated snapshot diff touches only ingest-mode-fixture blocks
+#### Scenario: The regenerated snapshot diff touches only ingest-mode-fixture blocks (mode-first-ordering fix)
 - **WHEN** `src/groundx/tests/__snapshot__/{api,inference,resources,golang,metrics}_test.yaml.snap`
-  are regenerated via `helm unittest -u` scoped to those five test files
+  are regenerated via `helm unittest -u` scoped to those five test files for the mode-first-ordering
+  fix
 - **THEN** every changed snapshot label is prefixed `extract:`, `extract.ingest:`, or
   `extract.oai:` — no `disabled:`, `cloud:`, `metadata:`, cache-override, or other non-ingest
-  label changes
+  label changes, other than the separate `busyWindowSeconds` `.create`-gating fix's own
+  `ranker_test.yaml` snapshot label named above
 
 ### Requirement: A CI gate rejects ranker rendering under ingest mode on both chart surfaces
 The system SHALL provide a `.build/bin/validate-helm.sh` check that fails when `ranker-api` or

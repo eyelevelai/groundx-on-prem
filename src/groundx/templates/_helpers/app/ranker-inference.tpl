@@ -138,7 +138,8 @@ true
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "inference" dict $b -}}
 {{- $rep := (include "groundx.ranker.inference.replicas" . | fromYaml) -}}
-{{- if dig "hpa" false $rep -}}
+{{- $ic := include "groundx.ranker.inference.create" . -}}
+{{- if and (eq $ic "true") (dig "hpa" false $rep) -}}
 {{ dig "busyWindowSeconds" 60 $in }}
 {{- else -}}
 0

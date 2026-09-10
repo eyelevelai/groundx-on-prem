@@ -242,11 +242,20 @@ def document_names(kind):
             names.add(match.group(1))
     return names
 
-forbidden = {"ranker-api", "ranker-inference"}
-rendered = document_names("Deployment") | document_names("Service")
-present = rendered & forbidden
-if present:
-    print(f"{chart}: mode=ingest must not render {sorted(present)}.", file=sys.stderr)
+forbidden_by_kind = {
+    "Deployment": {"ranker-api", "ranker-inference"},
+    "Service": {"ranker-api"},
+    "PersistentVolumeClaim": {"ranker-model"},
+    "Secret": {"ranker-config-py-map"},
+    "ConfigMap": {"ranker-gunicorn-conf-py-map", "ranker-inference-supervisord-conf-map"},
+}
+violations = []
+for kind, names in forbidden_by_kind.items():
+    present = document_names(kind) & names
+    if present:
+        violations.append(f"{kind}={sorted(present)}")
+if violations:
+    print(f"{chart}: mode=ingest must not render {'; '.join(violations)}.", file=sys.stderr)
     sys.exit(1)
 
 required_siblings = {"layout-api", "summary-api", "layout-inference"}

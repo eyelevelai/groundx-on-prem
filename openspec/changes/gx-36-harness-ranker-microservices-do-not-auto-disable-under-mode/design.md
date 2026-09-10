@@ -171,9 +171,11 @@ workloads that must keep rendering under `mode: ingest`. Both failure shapes are
 ## Migration Plan
 
 Single repo (`groundx-on-prem`), single level, no coordinated rollout — see `proposal.md` for the
-full blast radius and the destructive-upgrade disclosure. No schema or seed-data migration; the
-`values.schema.json` relaxation above is a chart-contract change, not a database migration, and is
-not gated by the pipeline's DB-migration gates. Rollback is `helm rollback` to the prior chart
+full blast radius and the destructive-upgrade disclosure. No schema or seed-data migration and no
+chart-contract change: the `values.schema.json` relaxation considered during authoring (see the
+`nodeLabels`/schema decision above) was implemented then reverted at the human gate in favor of
+annotating `cluster.nodeLabels.gpuRanker` in place, so `values.schema.json` ships byte-unchanged on
+both chart surfaces. Rollback is `helm rollback` to the prior chart
 version (re-creates the deleted ranker objects from the previous release's manifest; no state was
 preserved to restore, matching `proposal.md`).
 
@@ -181,5 +183,7 @@ preserved to restore, matching `proposal.md`).
 
 None outstanding — the fix shape, assertion mechanism, corrected snapshot-regen scope, guard
 design, and the `nodeLabels`/schema resolution above were all resolved with direct empirical
-evidence during this authoring pass. The `nodeLabels` schema relaxation is a decision, not an open
-question, but is flagged for explicit human review given `values.schema.json`'s blast radius.
+evidence during this authoring pass. The `nodeLabels` schema relaxation was reviewed by a human at
+the plan gate and rejected in favor of the annotate-in-place resolution (see the `nodeLabels`/schema
+decision above); `values.schema.json` is byte-unchanged on both chart surfaces. Nothing remains
+open.
