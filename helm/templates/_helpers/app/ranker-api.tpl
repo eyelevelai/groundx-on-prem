@@ -11,15 +11,17 @@
 {{- end }}
 
 {{- define "groundx.ranker.api.create" -}}
-{{- $b := .Values.ranker | default dict -}}
-{{- $in := dig "api" dict $b -}}
 {{- $io := include "groundx.ingestOnly" . -}}
-{{- if hasKey $in "enabled" -}}
-  {{- if (dig "enabled" false $in) -}}true{{- else -}}false{{- end -}}
-{{- else if eq $io "true" -}}
+{{- if eq $io "true" -}}
 false
 {{- else -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- if hasKey $in "enabled" -}}
+  {{- if (dig "enabled" false $in) -}}true{{- else -}}false{{- end -}}
+{{- else -}}
 true
+{{- end -}}
 {{- end -}}
 {{- end }}
 
