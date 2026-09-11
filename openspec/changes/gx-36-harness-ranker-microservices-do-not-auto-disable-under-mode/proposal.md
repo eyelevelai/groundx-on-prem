@@ -76,7 +76,7 @@ ingest-only-mode check. Because the chart ships `ranker.api.enabled: true` /
 `ranker.inference.enabled: true` as defaults, the `hasKey $in "enabled"` branch is always true and
 the ingest-only branch is unreachable dead code. The chart's own convention for this exact
 tradeoff survives intact in a sibling helper, `groundx.search.create`
-(`src/groundx/templates/_helpers/services/search.tpl:12-16`), which still tests mode before the
+(`src/groundx/templates/_helpers/services/search.tpl:12-27`), which still tests mode before the
 explicit key. Benjamin Fletcher confirmed (Linear comment, 2026-09-10, severity raised to High):
 "Please restore previous logic/functionality. This was a regression added on May 27" — selecting
 the chart fix over the alternative docs-only patch.

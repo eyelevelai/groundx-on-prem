@@ -6,7 +6,7 @@ pass and proves the fix end-to-end on the source-of-truth chart surface.
 - [x] 1.1 In `src/groundx/templates/_helpers/app/ranker-api.tpl` and `ranker-inference.tpl`,
       reorder `groundx.ranker.api.create` / `groundx.ranker.inference.create` (both currently
       lines 13-24) to test `groundx.ingestOnly` **before** `hasKey $in "enabled"`, matching
-      `groundx.search.create` (`src/groundx/templates/_helpers/services/search.tpl:12-16`). Do
+      `groundx.search.create` (`src/groundx/templates/_helpers/services/search.tpl:12-27`). Do
       not touch `helm/` in this task (task 2).
   check: H="${GX_ON_PREM_HELM:-helm}"; case "$("$H" version --short 2>/dev/null)" in v3.19.0|v3.19.0+*) ;; *) echo "helm ($H) is not v3.19.0 -- set GX_ON_PREM_HELM to a v3.19.0 binary" >&2; exit 1 ;; esac; "$H" unittest -f 'tests/ranker_test.yaml' src/groundx
 

@@ -49,7 +49,7 @@ shapes are asserted below.
 
 - **Fix shape: mode-first ordering.** Test `groundx.ingestOnly` before `hasKey $in "enabled"` in
   both `.create` helpers, matching the chart's own convention preserved in
-  `groundx.search.create` (`src/groundx/templates/_helpers/services/search.tpl:12-16`). The
+  `groundx.search.create` (`src/groundx/templates/_helpers/services/search.tpl:12-27`). The
   ticket's alternative (delete the `enabled: true` defaults) is not viable:
   `values.schema.json` marks `ranker.api`/`ranker.inference` `"required": ["enabled"]` with
   `additionalProperties: false` — removing the default fails schema validation. Under `mode:
@@ -178,6 +178,13 @@ shapes are asserted below.
   set must update this list, which is the intended behavior for a gate. The opt-in `extract-api`
   stays excluded: `extract.enabled` defaults false, so it does not render at the defaults the gate
   uses and requiring it would fail a correct render.
+  **Consequence for anyone extending the gate:** the sibling list is pinned to that one default
+  render, so pointing the guard at a different values file will report missing siblings for any
+  workload that file legitimately disables — the chainguard preset, for example, sets
+  `mode: ingest` and disables the summary stack, so a run against it reports `summary-api` and
+  `summary-inference` missing. That input never reaches the guard today (`validate-helm.sh`
+  renders default values only), and the ranker suppression itself still holds there: no
+  `eyelevel-gpu-ranker` reference appears in a chainguard + ingest render on either surface.
 - **Mutation testing showed the first extracted fixture set proved only 3 of the 7 forbidden
   names — one fixture per name is required, not one per kind.** Deleting a whole
   `FORBIDDEN_BY_KIND` entry (`Service`, `Secret`, or `ConfigMap`) or dropping `ranker-inference`
