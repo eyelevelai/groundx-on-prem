@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import contextlib
 import importlib.util
+import io
 import tempfile
 from pathlib import Path
 
@@ -203,7 +205,8 @@ def test_main_exits_1_on_known_bad_render():
     with tempfile.TemporaryDirectory() as directory:
         render_path = Path(directory) / "render.yaml"
         render_path.write_text(FORBIDDEN_DEPLOYMENT_DOC + "---" + REQUIRED_SIBLING_DOCS, encoding="utf-8")
-        assert guard.main(["verify-ingest-render.py", "src/groundx", str(render_path)]) == 1
+        with contextlib.redirect_stderr(io.StringIO()):
+            assert guard.main(["verify-ingest-render.py", "src/groundx", str(render_path)]) == 1
 
 
 def test_main_exits_0_on_known_good_render():
@@ -211,7 +214,8 @@ def test_main_exits_0_on_known_good_render():
     with tempfile.TemporaryDirectory() as directory:
         render_path = Path(directory) / "render.yaml"
         render_path.write_text(REQUIRED_SIBLING_DOCS, encoding="utf-8")
-        assert guard.main(["verify-ingest-render.py", "src/groundx", str(render_path)]) == 0
+        with contextlib.redirect_stderr(io.StringIO()):
+            assert guard.main(["verify-ingest-render.py", "src/groundx", str(render_path)]) == 0
 
 
 def main() -> int:

@@ -18,10 +18,10 @@ the PATH `helm` in this workspace is v4.2.2 and unusable for this chart).
 - Add permanent `mode: ingest` resource-name assertions to `src/groundx/tests/ranker_test.yaml`.
 - Add a dual-surface ingest render guard to `.build/bin/validate-helm.sh`, with its classification
   logic extracted to `.build/bin/verify-ingest-render.py` and committed known-bad/known-good
-  fixtures at `.build/tests/test_verify_ingest_render.py` (round-2).
+  fixtures at `.build/tests/test_verify_ingest_render.py`.
 - Annotate the now-inert `cluster.nodeLabels.gpuRanker` entry in `values/chainguard/values.yaml`
   (+ mirror) rather than removing it, leaving `values.schema.json` untouched.
-- Round-2: gate `groundx.ranker.inference.busyWindowSeconds` on `.create` — the one sibling in its
+- Gate `groundx.ranker.inference.busyWindowSeconds` on `.create` — the one sibling in its
   family that ignored it — regenerating a sixth snapshot file (`ranker_test.yaml.snap`).
 
 **Non-Goals:**
@@ -92,7 +92,7 @@ shapes are asserted below.
   `mode: all` byte-identical intent is unchanged, only the enumeration of which fixture families
   set `mode: ingest` was incomplete (`values/extract/values.yaml` and `values.oai.yaml` also do,
   and both feed `api`/`inference`/`resources`/`golang`/`metrics` suites).
-- **Round-2: `groundx.ranker.inference.busyWindowSeconds` was the one sibling in its family not
+- **`groundx.ranker.inference.busyWindowSeconds` was the one sibling in its family not
   gated on `.create` — a sixth snapshot file, not a widening of the five above.**
   `.threshold` and `.throughput` both derive their rendered value from `groundx.ranker.inference.create`
   (they collapse when the workload doesn't render); `busyWindowSeconds` gated only on the HPA flag
@@ -133,10 +133,12 @@ shapes are asserted below.
   structural per-document regex split was used instead of introducing a new toolchain dependency
   for this one check. **Verified all four required guard properties** (Guard change class, fail
   closed / structural / fixtures):
-  - **catches** — run against the unfixed templates: `src/groundx: mode=ingest must not render
-    Deployment=['ranker-api'].`, exit 1 (this is the shipped guard's kind-qualified output, run
-    against a single-Deployment probe; a render carrying multiple forbidden documents reports one
-    `<Kind>=[...]` segment per violated kind, joined with `; `).
+  - **catches** — run against the real unfixed render at `origin/0.2.7` tip `b8e57f2d`:
+    `src/groundx: mode=ingest must not render Deployment=['ranker-api', 'ranker-inference'];
+    Service=['ranker-api']; PersistentVolumeClaim=['ranker-model'];
+    Secret=['ranker-config-py-map']; ConfigMap=['ranker-gunicorn-conf-py-map',
+    'ranker-inference-supervisord-conf-map'].`, exit 1 — the guard's kind-qualified output reports
+    one `<Kind>=[...]` segment per violated kind, joined with `; `.
   - **dual-surface** — fixed only `src/groundx`, left `helm/` unfixed: guard passed `src/groundx`
     and failed on `helm` with the same message, proving both surfaces are independently checked
     (catches a mirror-sync omission, the repo's own named hazard).
@@ -144,13 +146,14 @@ shapes are asserted below.
     `groundx.layout.api.create` to always return `false` (simulating an over-blocking
     implementation): guard reported `src/groundx: mode=ingest must still render sibling services
     ['layout-api']; a guard that also drops these is over-blocking, not fixed.`, exit 1 — a
-    distinct message from the forbidden-render case, proving the guard would catch the
-    `hasDocuments: count: 0`-style over-block the orchestrator's brief warned against.
+    distinct message from the forbidden-render case, proving the guard would catch a
+    `hasDocuments: count: 0`-style over-block — the failure mode a document-count-only assertion
+    would miss (see A3 in `proposal.md`).
   - **green** — both surfaces fixed, siblings intact: the section prints only its own header
     (`==> Verifying ranker microservices do not render under ingest-only mode`) and exits 0 with
     no further output — `verify-ingest-render.py` prints nothing on success, so there is no
     literal "pass" string to quote.
-- **Round-2: the guard's classification logic is extracted into `.build/bin/verify-ingest-render.py`
+- **The guard's classification logic is extracted into `.build/bin/verify-ingest-render.py`
   with committed fixtures at `.build/tests/test_verify_ingest_render.py`, mirroring the existing
   `.build/bin/verify-helm-snapshots.py` / `.build/tests/test_verify_helm_snapshots.py` pattern
   already in this gate.** The guard was push-gating with its must-reject behavior proven only by
@@ -160,10 +163,10 @@ shapes are asserted below.
   short-circuit behavior are unchanged; re-verified against a reconstructed pre-fix render
   (`b8e57f2d`) on both chart surfaces (exit 1, same messages) and against head on both surfaces
   (exit 0).
-- **Round-3: mutation testing showed the round-2 fixture set proved only 3 of the 7 forbidden
-  names — one fixture per name is now required, not one per kind.** Deleting a whole
+- **Mutation testing showed the first extracted fixture set proved only 3 of the 7 forbidden
+  names — one fixture per name is required, not one per kind.** Deleting a whole
   `FORBIDDEN_BY_KIND` entry (`Service`, `Secret`, or `ConfigMap`) or dropping `ranker-inference`
-  from the `Deployment` set left all committed fixtures green, because the round-2 set covered
+  from the `Deployment` set left all committed fixtures green, because that first set covered
   only `Deployment=['ranker-api']` and `PersistentVolumeClaim=['ranker-model']` plus the
   over-block and node-label arms. Added one fixture per previously-uncovered name —
   `Deployment=['ranker-inference']`, `Service=['ranker-api']`,
@@ -196,8 +199,8 @@ shapes are asserted below.
   about this same label. Verified that the annotated file lints clean on both chart surfaces and
   that `values.schema.json` is byte-unchanged.
 
-  The relaxation alternative was implemented first and reverted at the human gate. It was proven
-  safe (strictly widening, every values file that sets `gpuRanker` stays valid, and
+  The relaxation alternative was implemented first, then rejected in favor of annotation. It was
+  proven safe (strictly widening, every values file that sets `gpuRanker` stays valid, and
   `groundx.node.gpuRanker` carries an `eyelevel-gpu-ranker` fallback so no render changes), so it
   remains available if the inert key is later judged worse than the schema change.
 
@@ -222,7 +225,7 @@ shapes are asserted below.
 Single repo (`groundx-on-prem`), single level, no coordinated rollout — see `proposal.md` for the
 full blast radius and the destructive-upgrade disclosure. No schema or seed-data migration and no
 chart-contract change: the `values.schema.json` relaxation considered during authoring (see the
-`nodeLabels`/schema decision above) was implemented then reverted at the human gate in favor of
+`nodeLabels`/schema decision above) was implemented then rejected in favor of
 annotating `cluster.nodeLabels.gpuRanker` in place, so `values.schema.json` ships byte-unchanged on
 both chart surfaces. Rollback is `helm rollback` to the prior chart
 version (re-creates the deleted ranker objects from the previous release's manifest; no state was

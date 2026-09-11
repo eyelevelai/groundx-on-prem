@@ -30,9 +30,18 @@ has `mode: ingest` set.
   is a real deletion an operator must be told about before they upgrade — **this needs a release
   note**, not just a changelog line, and the note must cover the `Retain`-reclaim orphaned-PV case
   above. The hand-off task list already carries this into the PR body and the 0.2.7 release notes.
-- `mode: all` (the default) is unaffected: rendered output is byte-identical before and after,
-  verified 2026-09-10 against the pre-fix and reference (`groundx.search.create`) branch shapes.
-  Installs on `mode: all` see no behavior change and no destructive upgrade.
+- `mode: all` (the default) is unaffected by the mode-first-ordering fix itself: rendered output
+  is byte-identical before and after, verified 2026-09-10 against the pre-fix and reference
+  (`groundx.search.create`) branch shapes, and there is no destructive upgrade on that fix alone.
+  **Exception, independent of `mode`:** the separate `busyWindowSeconds` `.create`-gating
+  correction (see `spec.md`) changes the render for the specific `mode: all` +
+  `ranker.inference.enabled: false` combination — `metricsBusyWindowSeconds` drops from
+  `ranker-config-py.yaml` and the whole `ranker-inference` entry drops from `config-yaml.yaml`'s
+  `metrics.inference` list, changing that Deployment's `config-hash` and rolling its pods on the
+  next upgrade for any `mode: all` operator running with ranker inference individually disabled.
+  Measured: rendering `templates/app/api.yaml` with `tests/files/values.disabled.yaml` and
+  `--set ranker.api.enabled=true` gives `config-hash: fa8bdec4...` at `b8e57f2d` vs
+  `config-hash: e5e1c6e3...` at this change's head — see `design.md` for the full hashes.
 
 **Rollback/rollforward.** This is a template-only fix with no schema or migration step. Rollback
 is `helm rollback` to the prior chart version, which re-creates the deleted ranker objects from
@@ -92,7 +101,7 @@ regressed output as golden, which is why the reorder shipped and stayed undetect
   those five files. The regenerated diff must touch **only** labels prefixed `extract:`,
   `extract.ingest:`, or `extract.oai:` (the three fixture families that set `mode: ingest`) — any
   other label changing is itself a defect (the `mode: all` byte-identical constraint).
-- **Round-2 correction:** `groundx.ranker.inference.busyWindowSeconds` gated only on the HPA flag,
+- **Correctness fix, independent of `mode`:** `groundx.ranker.inference.busyWindowSeconds` gated only on the HPA flag,
   never on `.create`, unlike its `.threshold`/`.throughput` siblings — an asymmetry that survived
   the fix above. Under `mode: ingest` with `cluster.hpa: true` it still emitted a `ranker-inference`
   entry into `metrics.inference` while no `ranker-inference` Deployment rendered. Gate
@@ -112,9 +121,9 @@ regressed output as golden, which is why the reorder shipped and stayed undetect
   renders none of the seven forbidden objects (see Blast radius) and zero `eyelevel-gpu-ranker`
   occurrences, for **both** `src/groundx` and `helm`. This is the only mechanism that ever
   exercises the `helm/` mirror — it has no `tests/` tree (`.helmignore` excludes it from the
-  package) and CI runs `helm unittest` against `src/groundx` alone. Round-2: the guard's
-  classification logic is extracted to `.build/bin/verify-ingest-render.py` with committed
-  known-bad/known-good fixtures at `.build/tests/test_verify_ingest_render.py` (see `design.md`).
+  package) and CI runs `helm unittest` against `src/groundx` alone. The guard's classification
+  logic is extracted to `.build/bin/verify-ingest-render.py` with committed known-bad/known-good
+  fixtures at `.build/tests/test_verify_ingest_render.py` (see `design.md`).
 - Annotate the now-inert `cluster.nodeLabels.gpuRanker: eyelevel-gpu-ranker` entry in place in
   `src/groundx/values/chainguard/values.yaml:55` and its `helm/` mirror (a bare deletion fails
   `helm lint`: `values.schema.json` marks all five `nodeLabels` keys `required` with
@@ -158,8 +167,8 @@ none of it asserts (or contradicts) mode-gating behavior, so no existing require
   `src/groundx/tests/ranker_test.yaml`; six
   `src/groundx/tests/__snapshot__/{api,inference,resources,golang,metrics,ranker}_test.yaml.snap`
   files (regenerated, never hand-edited — see "Snapshot regen scope" in `design.md`; `ranker` is
-  the round-2 addition for the `busyWindowSeconds` `.create`-gating correction);
-  `.build/bin/validate-helm.sh`; `.build/bin/verify-ingest-render.py` (round-2: extracted guard
+  the addition for the `busyWindowSeconds` `.create`-gating correction);
+  `.build/bin/validate-helm.sh`; `.build/bin/verify-ingest-render.py` (extracted guard
   logic) and its fixtures at `.build/tests/test_verify_ingest_render.py`;
   `src/groundx/values/chainguard/values.yaml` (annotated, not edited elsewhere —
   `values.schema.json` untouched) and its `helm/` mirror.

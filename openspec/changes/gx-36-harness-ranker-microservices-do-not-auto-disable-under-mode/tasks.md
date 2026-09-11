@@ -15,14 +15,14 @@ pass and proves the fix end-to-end on the source-of-truth chart surface.
 - [x] 2.1 Apply the identical hunk to `helm/templates/_helpers/app/ranker-api.tpl` and
       `ranker-inference.tpl`. `helm/` has no `tests/` tree (`.helmignore:15` excludes it from the
       package), so this is verified by rendering the mirror directly rather than `helm unittest`.
-  check: H="${GX_ON_PREM_HELM:-helm}"; case "$("$H" version --short 2>/dev/null)" in v3.19.0|v3.19.0+*) ;; *) echo "helm ($H) is not v3.19.0 -- set GX_ON_PREM_HELM to a v3.19.0 binary" >&2; exit 1 ;; esac; "$H" template g helm --set mode=ingest | python3 -c "import re,sys; t=sys.stdin.read(); docs=re.split(r'(?m)^---$',t); names={m.group(1) for d in docs if re.search(r'(?m)^kind:\s*(Deployment|Service)\s*$',d) for m in [re.search(r'(?m)^  name:\s*\"?([A-Za-z0-9._-]+)\"?\s*$',d)] if m}; sys.exit(1 if names & {'ranker-api','ranker-inference'} else 0)"
+  check: H="${GX_ON_PREM_HELM:-helm}"; case "$("$H" version --short 2>/dev/null)" in v3.19.0|v3.19.0+*) ;; *) echo "helm ($H) is not v3.19.0 -- set GX_ON_PREM_HELM to a v3.19.0 binary" >&2; exit 1 ;; esac; f="$(mktemp)"; "$H" template g helm --set mode=ingest > "$f" && python3 .build/bin/verify-ingest-render.py helm "$f"; rc=$?; rm -f "$f"; exit $rc
 
 ## 3. Regenerate the affected snapshots (scoped)
 
 - [x] 3.1 Regenerate exactly these six snapshot files, scoped by `-f` (a bare
       `helm unittest -u src/groundx` is unsafe — see `design.md`'s "full-suite regen" decision;
       it churns 9-10 unrelated files even with zero template changes). Five for the mode-first-
-      ordering fix, plus `ranker_test.yaml.snap` for the round-2 `busyWindowSeconds` `.create`-
+      ordering fix, plus `ranker_test.yaml.snap` for the `busyWindowSeconds` `.create`-
       gating correction (task 3.2):
       `H="${GX_ON_PREM_HELM:-helm}"; case "$("$H" version --short 2>/dev/null)" in v3.19.0|v3.19.0+*) ;; *) echo "helm ($H) is not v3.19.0 -- set GX_ON_PREM_HELM to a v3.19.0 binary" >&2; exit 1 ;; esac; "$H" unittest -u -f 'tests/api_test.yaml' -f 'tests/inference_test.yaml' -f 'tests/resources_test.yaml' -f 'tests/golang_test.yaml' -f 'tests/metrics_test.yaml' -f 'tests/ranker_test.yaml' src/groundx`.
       This drops the pre-existing empty-render snapshot labels
@@ -39,7 +39,7 @@ pass and proves the fix end-to-end on the source-of-truth chart surface.
       and sorted) and
       `git diff --unified=0 src/groundx/tests/__snapshot__/{api,inference,resources,golang,metrics,ranker}_test.yaml.snap | grep -E "^[-+]'" | grep -vE "^[-+]'(extract|extract\.ingest|extract\.oai): "`
       (must produce **no** output — any line it prints is a label outside the three ingest-mode
-      fixture families and is itself a defect; the round-2 `ranker_test.yaml.snap` change is a
+      fixture families and is itself a defect; the `ranker_test.yaml.snap` change is a
       content-only diff under the existing `'cache override: ranker api':` label, not a label
       add/remove, so it produces no output here — see task 3.2's own check for that fix).
 
@@ -60,7 +60,7 @@ pass and proves the fix end-to-end on the source-of-truth chart surface.
 The guard itself was already added to `.build/bin/validate-helm.sh` in this authoring pass
 (`==> Verifying ranker microservices do not render under ingest-only mode` section) and verified
 RED against the unfixed templates, dual-surface (catches an unfixed `helm/` mirror independently
-of a fixed `src/groundx`), and with a synthetic over-block control (see `design.md`). Round-2: its
+of a fixed `src/groundx`), and with a synthetic over-block control (see `design.md`). Its
 classification logic was extracted to `.build/bin/verify-ingest-render.py` with committed fixtures
 at `.build/tests/test_verify_ingest_render.py`, wired into the gate ahead of the guard (same
 pattern as the existing snapshot guard) — provenance only, behavior re-verified unchanged (see
@@ -96,7 +96,10 @@ communicate the same fact. `values.schema.json` is left untouched on both surfac
 
 Not a task in this file: see the workspace `openspec/changes/gx-36-harness-ranker-microservices-do-not-auto-disable-under-mode/tasks.md`
 for the hand-off checklist — pushing the branch, opening the PR against `0.2.7` (not `main`), and
-carrying the destructive-upgrade note (existing `mode: ingest` installs lose the seven ranker
-objects — see `proposal.md` Blast radius for the full inventory and the volume-reclaim
-qualification — on the first upgrade past published 0.2.6) into the PR body and the 0.2.7 release
-notes.
+carrying two release-note items into the PR body and the 0.2.7 release notes: (1) the
+destructive-upgrade note (existing `mode: ingest` installs lose the seven ranker objects — see
+`proposal.md` Blast radius for the full inventory and the volume-reclaim qualification — on the
+first upgrade past published 0.2.6), and (2) the `mode: all` + `ranker.inference.enabled: false`
+config-hash change from the `busyWindowSeconds` `.create`-gating correction (see `spec.md`'s
+"Exception, independent of `mode`" note) — that combination's `ranker-inference` Deployment rolls
+its pods on the next upgrade even though it is not the destructive `mode: ingest` case above.
