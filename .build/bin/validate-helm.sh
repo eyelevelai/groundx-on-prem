@@ -52,13 +52,14 @@ done
 OCR_TEST_CREDENTIALS="files/ocr/gcv-test.json"
 layout_pvc_values=""
 layout_pvc_render=""
+ingest_render_file=""
 ocr_generated_files=()
 cleanup() {
   if ((${#ocr_generated_files[@]})); then
     rm -f "${ocr_generated_files[@]}"
   fi
   rmdir src/groundx/files/ocr src/groundx/files helm/files/ocr helm/files 2>/dev/null || true
-  rm -f "${layout_pvc_values}" "${layout_pvc_render}"
+  rm -f "${layout_pvc_values}" "${layout_pvc_render}" "${ingest_render_file}"
 }
 trap cleanup EXIT
 for chart in src/groundx helm; do
@@ -217,6 +218,16 @@ for chart in src/groundx helm; do
       exit 1
     fi
   done
+done
+
+echo "==> Verifying ranker ingest-render guard logic"
+python3 .build/tests/test_verify_ingest_render.py
+
+echo "==> Verifying ranker microservices do not render under ingest-only mode"
+ingest_render_file="$(mktemp)"
+for chart in src/groundx helm; do
+  helm template ranker-ingest-guard "${chart}" --set mode=ingest > "${ingest_render_file}"
+  python3 .build/bin/verify-ingest-render.py "${chart}" "${ingest_render_file}"
 done
 
 echo "==> Verifying deprecated compatibility values contract"
