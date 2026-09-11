@@ -159,10 +159,18 @@ shapes are asserted below.
   already in this gate.** The guard was push-gating with its must-reject behavior proven only by
   ad-hoc render, not a committed counterexample. `validate-helm.sh` now runs the fixture test ahead
   of the guard, same as the snapshot-guard section. Fixtures use small synthetic multi-document YAML,
-  not full chart renders. Provenance only — the classification logic and its per-category
-  short-circuit behavior are unchanged; re-verified against a reconstructed pre-fix render
-  (`b8e57f2d`) on both chart surfaces (exit 1, same messages) and against head on both surfaces
-  (exit 0).
+  not full chart renders. The extraction itself was provenance only — the classification logic and
+  its per-category short-circuit behavior were unchanged, re-verified against a reconstructed
+  pre-fix render (`b8e57f2d`) on both chart surfaces (exit 1, same messages) and against head on
+  both surfaces (exit 0). **Two later review-round fixes did change the classification logic, and
+  they are the guard's current behavior:** (1) a forbidden-kind document whose `metadata.name` the
+  guard cannot read now fails the gate rather than being silently skipped, so an unreadable
+  document can no longer produce a false pass, and the `kind:` match tolerates a quoted value for
+  the same reason; (2) `REQUIRED_SIBLINGS` was widened from three names to five — `groundx`,
+  `layout-api`, `layout-inference`, `summary-api`, `summary-inference` — so an over-blocking change
+  that dropped the orchestration API or the default-on summary inference workload is caught. The
+  opt-in `extract-api` is deliberately excluded: `extract.enabled` defaults false, so it does not
+  render at the defaults the gate uses and requiring it would fail a correct render.
 - **Mutation testing showed the first extracted fixture set proved only 3 of the 7 forbidden
   names — one fixture per name is required, not one per kind.** Deleting a whole
   `FORBIDDEN_BY_KIND` entry (`Service`, `Secret`, or `ConfigMap`) or dropping `ranker-inference`

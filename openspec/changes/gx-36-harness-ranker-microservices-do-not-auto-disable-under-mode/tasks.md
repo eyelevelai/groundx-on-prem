@@ -63,9 +63,11 @@ RED against the unfixed templates, dual-surface (catches an unfixed `helm/` mirr
 of a fixed `src/groundx`), and with a synthetic over-block control (see `design.md`). Its
 classification logic was extracted to `.build/bin/verify-ingest-render.py` with committed fixtures
 at `.build/tests/test_verify_ingest_render.py`, wired into the gate ahead of the guard (same
-pattern as the existing snapshot guard) — provenance only, behavior re-verified unchanged (see
-`design.md`). This task confirms it — and the rest of the chart gate — stays green once tasks 1-3
-land.
+pattern as the existing snapshot guard). The extraction was provenance only; two later
+review-round fixes then changed the guard's behavior deliberately — it now fails closed on a
+forbidden-kind document whose `metadata.name` it cannot read, and its required-sibling set was
+widened to five workloads (see `design.md` and `spec.md`). This task confirms it — and the rest of
+the chart gate — stays green once tasks 1-3 land.
 
 - [x] 4.1 Run the full local gate with the tasks 1-3 changes in place.
   check: H="${GX_ON_PREM_HELM:-$(command -v helm)}"; case "$("$H" version --short 2>/dev/null)" in v3.19.0|v3.19.0+*) ;; *) echo "helm ($H) is not v3.19.0 -- set GX_ON_PREM_HELM to a v3.19.0 binary" >&2; exit 1 ;; esac; mkdir -p /tmp/gx36-helm-shim && ln -sf "$H" /tmp/gx36-helm-shim/helm && PATH="/tmp/gx36-helm-shim:$PATH" .build/bin/validate-helm.sh

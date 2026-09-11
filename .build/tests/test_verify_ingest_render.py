@@ -21,6 +21,16 @@ REQUIRED_SIBLING_DOCS = """
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: groundx
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: summary-inference
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: layout-api
 ---
 apiVersion: apps/v1
@@ -172,6 +182,16 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: summary-inference
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: groundx
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: layout-inference
 """
     failures = guard.check_render("src/groundx", text)
@@ -186,7 +206,8 @@ def test_empty_render_fails_closed_on_missing_siblings():
     failures = guard.check_render("src/groundx", "")
     assert failures == [
         "src/groundx: mode=ingest must still render sibling services "
-        "['layout-api', 'layout-inference', 'summary-api']; "
+        "['groundx', 'layout-api', 'layout-inference', 'summary-api', "
+        "'summary-inference']; "
         "a guard that also drops these is over-blocking, not fixed."
     ]
 
@@ -252,6 +273,29 @@ def test_forbidden_kind_document_with_no_name_fails_closed():
     assert "fails closed" in failures[0], failures
 
 
+QUOTED_KIND_FORBIDDEN_DOC = """
+apiVersion: apps/v1
+kind: "Deployment"
+metadata:
+  name: ranker-api
+"""
+
+
+def test_quoted_kind_on_a_forbidden_document_is_still_seen():
+    guard = load_guard()
+    failures = guard.check_render(
+        "src/groundx", QUOTED_KIND_FORBIDDEN_DOC + "---" + REQUIRED_SIBLING_DOCS
+    )
+    assert failures, "a quoted kind must not hide a forbidden document from the guard"
+    assert "ranker-api" in failures[0], failures
+
+
+def test_required_siblings_covers_every_default_ingest_workload():
+    guard = load_guard()
+    assert {"groundx", "summary-inference"} <= guard.REQUIRED_SIBLINGS
+    assert "extract-api" not in guard.REQUIRED_SIBLINGS
+
+
 def main() -> int:
     test_known_good_render_has_no_failures()
     test_known_bad_render_with_ranker_deployment_and_siblings_fails()
@@ -266,6 +310,8 @@ def main() -> int:
     test_gpu_ranker_node_label_reference_fails_even_off_forbidden_kinds()
     test_unparsable_name_on_a_forbidden_kind_fails_closed()
     test_forbidden_kind_document_with_no_name_fails_closed()
+    test_quoted_kind_on_a_forbidden_document_is_still_seen()
+    test_required_siblings_covers_every_default_ingest_workload()
     test_main_exits_1_on_known_bad_render()
     test_main_exits_0_on_known_good_render()
     print("verify-ingest-render tests passed")

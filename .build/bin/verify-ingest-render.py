@@ -15,7 +15,13 @@ FORBIDDEN_BY_KIND = {
     "ConfigMap": {"ranker-gunicorn-conf-py-map", "ranker-inference-supervisord-conf-map"},
 }
 
-REQUIRED_SIBLINGS = {"layout-api", "summary-api", "layout-inference"}
+REQUIRED_SIBLINGS = {
+    "groundx",
+    "layout-api",
+    "layout-inference",
+    "summary-api",
+    "summary-inference",
+}
 
 FORBIDDEN_NODE_LABEL = "eyelevel-gpu-ranker"
 
@@ -24,7 +30,7 @@ def document_names(documents: list[str], kind: str) -> tuple[set[str], int]:
     names: set[str] = set()
     unnamed = 0
     for doc in documents:
-        if not re.search(rf"(?m)^kind:\s*{kind}\s*$", doc):
+        if not re.search(rf'(?m)^kind:\s*"?{kind}"?\s*$', doc):
             continue
         match = re.search(r'(?m)^  name:\s*"?([A-Za-z0-9._-]+)"?\s*$', doc)
         if match:
