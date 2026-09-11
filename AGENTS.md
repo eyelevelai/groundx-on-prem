@@ -7,6 +7,7 @@ in the linked docs, not in this entrypoint.
 |---|---|
 | [Repo guide](docs/agents/repo-guide.md) | You need the Helm/on-prem model, privileged-operation boundaries, editable paths, OpenSpec rules, or repo gotchas. |
 | [Contributor workflow](CONTRIBUTING.md) | You are preparing a PR, choosing validation, writing PR notes, or deciding what belongs in committed comments. |
+| [Summary bill delivery](docs/agents/summary-bill-delivery.md) | You are configuring the optional delivery worker, credentials, transport, or activation checks. |
 | [`src/groundx/`](src/groundx/) | You are changing the source Helm chart. This is the chart source of truth. |
 | [`helm/`](helm/) | You are checking the published chart mirror. Do not hand-edit it without mirroring the matching `src/groundx/` change. |
 | [`src/groundx/values.schema.json`](src/groundx/values.schema.json) | You are changing the deployment contract. Treat as broad blast radius. |

@@ -577,6 +577,10 @@ data:
       port: {{ include "groundx.queue.containerPort" . }}
       serviceName: {{ include "groundx.queue.serviceName" . }}
 
+    {{- if eq (include "groundx.summaryBillDeliver.create" .) "true" }}
+    {{- include "groundx.summaryBillDeliver.config" . | nindent 4 }}
+    {{- end }}
+
     queues:
       filePreProcess:
         {{- $ppq | toYaml | nindent 8 }}
@@ -590,6 +594,10 @@ data:
         {{- $uq | toYaml | nindent 8 }}
       fileUpload:
         {{- $lq | toYaml | nindent 8 }}
+      {{- if eq (include "groundx.summaryBillDeliver.create" .) "true" }}
+      fileSummaryBill:
+        {{- include "groundx.stream.topic.summaryBill" . | nindent 8 }}
+      {{- end }}
 
     rec:
       mysql: *mysql

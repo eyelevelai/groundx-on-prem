@@ -155,10 +155,16 @@ spec:
             - name: config-volume
               mountPath: /home/{{ include "groundx.golang.home" $ }}/.cashbot/config.yaml
               subPath: config.yaml
+{{- with get $svcData "volumeMounts" }}
+{{ toYaml . | nindent 12 }}
+{{- end }}
       volumes:
         - name: config-volume
           configMap:
             name: config-yaml-map
+{{- with get $svcData "volumes" }}
+{{ toYaml . | nindent 8 }}
+{{- end }}
 
 {{- if $int }}
 {{ include "groundx.renderInterface" (dict "name" $svc "lb" $int "root" $) }}
