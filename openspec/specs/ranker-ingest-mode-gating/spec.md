@@ -138,4 +138,3 @@ enabled still renders.
 - **THEN** the gate exits zero — it does not report the sibling service as a violation, and a
   broken implementation that also stops the sibling from rendering is reported as a distinct
   "must still render" failure rather than passing silently
-
