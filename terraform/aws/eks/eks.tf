@@ -1,5 +1,50 @@
 locals {
-  should_create = var.environment.vpc_id != "" && length(var.environment.subnets) > 0
+  should_create                   = var.environment.vpc_id != "" && length(var.environment.subnets) > 0
+  eks_kms_source_policy_documents = var.eks_kms_source_policy_documents
+
+  cluster_addons = merge(
+    {
+      amazon-cloudwatch-observability = {
+        resolve_conflicts_on_create = "OVERWRITE"
+        resolve_conflicts_on_update = "OVERWRITE"
+      }
+    },
+    var.node_diagnostics.enabled ? {
+      eks-node-monitoring-agent = {
+        addon_version = "v1.7.0-eksbuild.1"
+        preserve      = false
+        configuration_values = jsonencode({
+          nodeAgent = {
+            affinity = {
+              nodeAffinity = {
+                requiredDuringSchedulingIgnoredDuringExecution = {
+                  nodeSelectorTerms = [{
+                    matchExpressions = [{
+                      key      = "eyelevel_node"
+                      operator = "In"
+                      values   = [local.cpu_only_label, local.cpu_memory_label]
+                    }]
+                  }]
+                }
+              }
+            }
+            monitors = {
+              nvidia = {
+                enabled = false
+              }
+            }
+          }
+          dcgmAgent = {
+            nodeSelector = {
+              "diagnostics.groundx.ai/dcgm" = "disabled"
+            }
+          }
+        })
+        resolve_conflicts_on_create = "OVERWRITE"
+        resolve_conflicts_on_update = "OVERWRITE"
+      }
+    } : {}
+  )
 
   access_entries = merge({
     for entry in var.environment.cluster_role_arns : entry.name => {
@@ -199,6 +244,14 @@ locals {
           "eyelevel_node"                                   = local.gpu_layout_label
         }
 
+        taints                                              = {
+          eyelevel_node                                      = {
+            key                                             = "eyelevel_node"
+            value                                           = local.gpu_layout_label
+            effect                                          = "NO_SCHEDULE"
+          }
+        }
+
         tags                                                = {
           Environment                                       = var.environment.stage
           Name                                              = local.gpu_layout_label
@@ -238,6 +291,14 @@ locals {
 
         labels                                              = {
           "eyelevel_node"                                   = local.gpu_summary_label
+        }
+
+        taints                                              = {
+          eyelevel_node                                      = {
+            key                                             = "eyelevel_node"
+            value                                           = local.gpu_summary_label
+            effect                                          = "NO_SCHEDULE"
+          }
         }
 
         tags                                                = {
@@ -283,6 +344,14 @@ locals {
           "eyelevel_node"                                   = local.gpu_ranker_label
         }
 
+        taints                                              = {
+          eyelevel_node                                      = {
+            key                                             = "eyelevel_node"
+            value                                           = local.gpu_ranker_label
+            effect                                          = "NO_SCHEDULE"
+          }
+        }
+
         tags                                                = {
           Environment                                       = var.environment.stage
           Name                                              = local.gpu_ranker_label
@@ -298,7 +367,7 @@ module "eyelevel_eks" {
   count = local.should_create ? 1 : 0
 
   source                                   = "terraform-aws-modules/eks/aws"
-  version                                  = "~> 20.0"
+  version                                  = "20.37.2"
 
   enable_irsa                              = true
 
@@ -322,12 +391,8 @@ module "eyelevel_eks" {
 
   eks_managed_node_groups                  = local.node_groups
 
-  cluster_addons = {
-    amazon-cloudwatch-observability = {
-      resolve_conflicts_on_create = "OVERWRITE"
-      resolve_conflicts_on_update = "OVERWRITE"
-    }
-  }
+  cluster_addons                           = local.cluster_addons
+  kms_key_source_policy_documents          = local.eks_kms_source_policy_documents
 }
 
 resource "null_resource" "wait_for_eks" {

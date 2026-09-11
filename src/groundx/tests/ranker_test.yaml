@@ -4,6 +4,160 @@ chart:
   version: 0.1.0
 
 tests:
+  - it: "ranker inference uses worker-aware HTTP probes"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      ranker.inference.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: ranker-inference
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /alive
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+          value: 8080
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /health
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: 8080
+      - notExists:
+          path: spec.template.spec.containers[0].readinessProbe.exec
+  - it: "ranker inference HPA uses windowed busy metric"
+    templates:
+      - ../templates/resources/hpa.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      ranker.inference.enabled: true
+      ranker.inference.replicas.hpa: true
+      ranker.inference.replicas.desired: 1
+      ranker.inference.replicas.min: 1
+      ranker.inference.replicas.max: 4
+      ranker.inference.replicas.target: 0.7
+      ranker.inference.replicas.throughput: 60000
+      ranker.inference.replicas.cooldown: 450
+    documentSelector:
+      path: metadata.name
+      value: ranker-inference-hpa
+    asserts:
+      - equal:
+          path: spec.minReplicas
+          value: 1
+      - equal:
+          path: spec.maxReplicas
+          value: 4
+      - equal:
+          path: spec.metrics[0].external.target.value
+          value: 0.7
+      - equal:
+          path: spec.metrics[1].external.target.value
+          value: 0.7
+      - equal:
+          path: spec.metrics[0].external.metric.name
+          value: ranker-inference:throughput
+      - equal:
+          path: spec.metrics[1].external.metric.name
+          value: ranker-inference:inference
+      - equal:
+          path: spec.behavior.scaleUp.stabilizationWindowSeconds
+          value: 450
+      - equal:
+          path: spec.behavior.scaleUp.policies[0].periodSeconds
+          value: 450
+      - equal:
+          path: spec.behavior.scaleUp.policies[1].periodSeconds
+          value: 450
+      - equal:
+          path: spec.behavior.scaleDown.stabilizationWindowSeconds
+          value: 900
+  - it: "ranker inference config uses windowed inference busy metric"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      ranker.inference.enabled: true
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "(?s)inference:\\n(?:\\s+.*\\n)*\\s+- name: ranker-inference\\n\\s+busyWindowSeconds: 60"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "(?s)sessions:\\n(?:\\s+.*\\n)*\\s+ranker-inference:"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "\\s+session: ranker-inference"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "(?m)^  task:\\n(?:^    .*\\n)*^    - name: ranker-inference$"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "rankerSession:"
+  - it: "ranker API batch size renders into ranker config"
+    templates:
+      - ../templates/resources/ranker-config-py.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      ranker.api.enabled: true
+      ranker.api.batchSize: 4
+      ranker.inference.enabled: true
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: "rankerBatchSize=4"
+  - it: "ranker inference busy metric is omitted when HPA is disabled"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/ranker-config-py.yaml
+      - ../templates/resources/hpa.yaml
+    values:
+      - ./files/values.metadata.yaml
+    set:
+      cluster.hpa: false
+      metrics.enabled: true
+      ranker.inference.replicas.desired: 1
+      ranker.inference.replicas.hpa: false
+    asserts:
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "(?s)inference:\\n(?:\\s+.*\\n)*\\s+- name: myapp-inference\\n\\s+busyWindowSeconds:"
+        template: ../templates/resources/config-yaml.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: "metricsBusyWindowSeconds=60"
+        template: ../templates/resources/ranker-config-py.yaml
+      - hasDocuments:
+          count: 0
+        template: ../templates/resources/hpa.yaml
+  - it: "ranker cache override keeps ranker busy metric on metrics session"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      ranker.inference.enabled: true
+      ranker.cache.addr: ranker-cache.existing.com
+      ranker.cache.isCluster: false
+      ranker.cache.port: 6380
+      ranker.cache.ssl: true
+    asserts:
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "(?s)sessions:\\n\\s+ranker-inference:\\n\\s+addr: ranker-cache\\.existing\\.com:6380\\n\\s+notCluster: true\\n\\s+ssl: true"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "(?s)task:\\n(?:\\s+.*\\n)*\\s+- name: ranker-inference\\n\\s+session: ranker-inference\\n\\s+target: inference_queue\\n\\s+threshold: 10"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "(?s)inference:\\n(?:\\s+.*\\n)*\\s+- name: ranker-inference\\n\\s+busyWindowSeconds: 60"
   - it: "cache override: ranker config"
     templates:
       - ../templates/resources/ranker-config-py.yaml

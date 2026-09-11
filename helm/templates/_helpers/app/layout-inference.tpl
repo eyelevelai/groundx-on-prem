@@ -236,7 +236,21 @@ true
   {{- $_ := set $cfg "nodeSelector" (get $in "nodeSelector") -}}
 {{- end -}}
 {{- if and (hasKey $in "resources") (not (empty (get $in "resources"))) -}}
-  {{- $_ := set $cfg "resources" (get $in "resources") -}}
+  {{- $resources := deepCopy (get $in "resources") -}}
+  {{- if eq (include "groundx.layout.inference.deviceType" .) "cpu" -}}
+    {{- range $kind := list "limits" "requests" -}}
+      {{- $resourceSet := get $resources $kind -}}
+      {{- if kindIs "map" $resourceSet -}}
+        {{- $_ := unset $resourceSet "nvidia.com/gpu" -}}
+        {{- if empty $resourceSet -}}
+          {{- $_ := unset $resources $kind -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if not (empty $resources) -}}
+    {{- $_ := set $cfg "resources" $resources -}}
+  {{- end -}}
 {{- end -}}
 {{- if and (hasKey $in "securityContext") (not (empty (get $in "securityContext"))) -}}
   {{- $_ := set $cfg "securityContext" (get $in "securityContext") -}}

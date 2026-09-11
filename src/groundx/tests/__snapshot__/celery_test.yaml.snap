@@ -19,7 +19,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0e62c00d3b122115c882493823cdaa38d82aed94891faac8b29b80d6b1a32960
+            config-hash: 27319637c17dae4a9a05683d0e2c16fb2a2f3428ed8ee62f15295009a659fa99
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-correct
@@ -122,9 +122,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-correct-supervisord-conf-map
               name: supervisord-volume
@@ -148,7 +148,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0e62c00d3b122115c882493823cdaa38d82aed94891faac8b29b80d6b1a32960
+            config-hash: 27319637c17dae4a9a05683d0e2c16fb2a2f3428ed8ee62f15295009a659fa99
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-map
@@ -251,9 +251,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-map-supervisord-conf-map
               name: supervisord-volume
@@ -277,7 +277,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0e62c00d3b122115c882493823cdaa38d82aed94891faac8b29b80d6b1a32960
+            config-hash: 27319637c17dae4a9a05683d0e2c16fb2a2f3428ed8ee62f15295009a659fa99
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-ocr
@@ -380,9 +380,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-ocr-supervisord-conf-map
               name: supervisord-volume
@@ -406,7 +406,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0e62c00d3b122115c882493823cdaa38d82aed94891faac8b29b80d6b1a32960
+            config-hash: 27319637c17dae4a9a05683d0e2c16fb2a2f3428ed8ee62f15295009a659fa99
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-process
@@ -509,9 +509,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
@@ -535,7 +535,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0e62c00d3b122115c882493823cdaa38d82aed94891faac8b29b80d6b1a32960
+            config-hash: 27319637c17dae4a9a05683d0e2c16fb2a2f3428ed8ee62f15295009a659fa99
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-save
@@ -638,9 +638,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
@@ -665,8 +665,8 @@
       template:
         metadata:
           annotations:
-            config-hash: fee66106f5e1140dc1362d0d602dcaa285dc96d1d656da9bd9caa21eaf197f87
-            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
+            config-hash: c1973ea15bd9ac85e885f12ece25ff6cbda66e125632e817e4fda068309d5cde
+            supervisord-hash: 5bf4af831d996041a205cc3f1a10d245d88add89c850b940c5b44e0c423df98f
           labels:
             app: extract-agent
         spec:
@@ -689,12 +689,14 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+                  value: "false"
                 - name: EXTRACT_AGENT_IMAGE_JPEG_QUALITIES
                   value: "20"
                 - name: EXTRACT_AGENT_IMAGE_MIN_LONG_EDGE_PX
@@ -792,6 +794,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -800,9 +803,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-agent-supervisord-conf-map
               name: supervisord-volume
@@ -826,8 +829,8 @@
       template:
         metadata:
           annotations:
-            config-hash: fee66106f5e1140dc1362d0d602dcaa285dc96d1d656da9bd9caa21eaf197f87
-            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
+            config-hash: c1973ea15bd9ac85e885f12ece25ff6cbda66e125632e817e4fda068309d5cde
+            supervisord-hash: 5bf4af831d996041a205cc3f1a10d245d88add89c850b940c5b44e0c423df98f
           labels:
             app: extract-download
         spec:
@@ -850,12 +853,14 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+                  value: "false"
               envFrom:
                 - secretRef:
                     name: extract-agent-secret
@@ -935,6 +940,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -943,9 +949,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-download-supervisord-conf-map
               name: supervisord-volume
@@ -969,8 +975,8 @@
       template:
         metadata:
           annotations:
-            config-hash: fee66106f5e1140dc1362d0d602dcaa285dc96d1d656da9bd9caa21eaf197f87
-            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
+            config-hash: c1973ea15bd9ac85e885f12ece25ff6cbda66e125632e817e4fda068309d5cde
+            supervisord-hash: 5bf4af831d996041a205cc3f1a10d245d88add89c850b940c5b44e0c423df98f
           labels:
             app: extract-save
         spec:
@@ -993,12 +999,14 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+                  value: "false"
               envFrom:
                 - secretRef:
                     name: extract-agent-secret
@@ -1026,7 +1034,7 @@
               resources:
                 limits:
                   cpu: 1
-                  memory: 1Gi
+                  memory: 2Gi
                 requests:
                   cpu: 100m
                   memory: 512Mi
@@ -1078,6 +1086,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1086,9 +1095,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-save-supervisord-conf-map
               name: supervisord-volume
@@ -1112,7 +1121,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 049c37fdbe18201176cad7589519f0abedd3f900a382056ce812fbb34445447f
+            config-hash: ac64ede8ede164dcea7675a7bc1abe41d057a51a4ab9eebbebdd705b70bc81ce
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-correct
@@ -1214,9 +1223,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-correct-supervisord-conf-map
               name: supervisord-volume
@@ -1240,7 +1249,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 049c37fdbe18201176cad7589519f0abedd3f900a382056ce812fbb34445447f
+            config-hash: ac64ede8ede164dcea7675a7bc1abe41d057a51a4ab9eebbebdd705b70bc81ce
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-map
@@ -1342,9 +1351,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-map-supervisord-conf-map
               name: supervisord-volume
@@ -1368,7 +1377,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 049c37fdbe18201176cad7589519f0abedd3f900a382056ce812fbb34445447f
+            config-hash: ac64ede8ede164dcea7675a7bc1abe41d057a51a4ab9eebbebdd705b70bc81ce
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-ocr
@@ -1470,9 +1479,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-ocr-supervisord-conf-map
               name: supervisord-volume
@@ -1496,7 +1505,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 049c37fdbe18201176cad7589519f0abedd3f900a382056ce812fbb34445447f
+            config-hash: ac64ede8ede164dcea7675a7bc1abe41d057a51a4ab9eebbebdd705b70bc81ce
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-process
@@ -1598,9 +1607,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
@@ -1624,7 +1633,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 049c37fdbe18201176cad7589519f0abedd3f900a382056ce812fbb34445447f
+            config-hash: ac64ede8ede164dcea7675a7bc1abe41d057a51a4ab9eebbebdd705b70bc81ce
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-save
@@ -1726,9 +1735,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
@@ -1753,7 +1762,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2f8a61a500bc77e4c1e128cb58c29295ae9d683661b44342c038609ac387352
+            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-correct
@@ -1855,9 +1864,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-correct-supervisord-conf-map
               name: supervisord-volume
@@ -1881,7 +1890,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2f8a61a500bc77e4c1e128cb58c29295ae9d683661b44342c038609ac387352
+            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-map
@@ -1983,9 +1992,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-map-supervisord-conf-map
               name: supervisord-volume
@@ -2009,7 +2018,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2f8a61a500bc77e4c1e128cb58c29295ae9d683661b44342c038609ac387352
+            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-ocr
@@ -2111,9 +2120,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-ocr-supervisord-conf-map
               name: supervisord-volume
@@ -2137,7 +2146,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2f8a61a500bc77e4c1e128cb58c29295ae9d683661b44342c038609ac387352
+            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-process
@@ -2239,9 +2248,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
@@ -2265,7 +2274,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2f8a61a500bc77e4c1e128cb58c29295ae9d683661b44342c038609ac387352
+            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-save
@@ -2367,9 +2376,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
@@ -2395,7 +2404,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2f8a61a500bc77e4c1e128cb58c29295ae9d683661b44342c038609ac387352
+            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-correct
@@ -2497,9 +2506,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-correct-supervisord-conf-map
               name: supervisord-volume
@@ -2523,7 +2532,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2f8a61a500bc77e4c1e128cb58c29295ae9d683661b44342c038609ac387352
+            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-map
@@ -2625,9 +2634,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-map-supervisord-conf-map
               name: supervisord-volume
@@ -2651,7 +2660,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2f8a61a500bc77e4c1e128cb58c29295ae9d683661b44342c038609ac387352
+            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-ocr
@@ -2753,9 +2762,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-ocr-supervisord-conf-map
               name: supervisord-volume
@@ -2779,7 +2788,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2f8a61a500bc77e4c1e128cb58c29295ae9d683661b44342c038609ac387352
+            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-process
@@ -2881,9 +2890,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
@@ -2907,7 +2916,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d2f8a61a500bc77e4c1e128cb58c29295ae9d683661b44342c038609ac387352
+            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-save
@@ -3009,9 +3018,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
@@ -3036,7 +3045,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b06b20f2d0b0544c43eca2ac371f76b5837528a388f92d53a07c20e32c9a9d5b
+            config-hash: 0657d45173ddea52f3f0e63b880df20c943f8f62c848b986d374f03758e08135
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-correct
@@ -3138,9 +3147,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-correct-supervisord-conf-map
               name: supervisord-volume
@@ -3164,7 +3173,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b06b20f2d0b0544c43eca2ac371f76b5837528a388f92d53a07c20e32c9a9d5b
+            config-hash: 0657d45173ddea52f3f0e63b880df20c943f8f62c848b986d374f03758e08135
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-map
@@ -3266,9 +3275,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-map-supervisord-conf-map
               name: supervisord-volume
@@ -3292,7 +3301,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b06b20f2d0b0544c43eca2ac371f76b5837528a388f92d53a07c20e32c9a9d5b
+            config-hash: 0657d45173ddea52f3f0e63b880df20c943f8f62c848b986d374f03758e08135
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-ocr
@@ -3394,9 +3403,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-ocr-supervisord-conf-map
               name: supervisord-volume
@@ -3420,7 +3429,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b06b20f2d0b0544c43eca2ac371f76b5837528a388f92d53a07c20e32c9a9d5b
+            config-hash: 0657d45173ddea52f3f0e63b880df20c943f8f62c848b986d374f03758e08135
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-process
@@ -3522,9 +3531,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
@@ -3548,7 +3557,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b06b20f2d0b0544c43eca2ac371f76b5837528a388f92d53a07c20e32c9a9d5b
+            config-hash: 0657d45173ddea52f3f0e63b880df20c943f8f62c848b986d374f03758e08135
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-save
@@ -3650,9 +3659,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
@@ -3677,8 +3686,8 @@
       template:
         metadata:
           annotations:
-            config-hash: d72d210a23c67cfabc982558327e5a1c5d313e2231220a0330e1cebec6ba7a4b
-            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
+            config-hash: 78308f99e67dfe2320ee3a82e39e9abed4d74a01b6cfe8fc665bec0b8ee197be
+            supervisord-hash: 5bf4af831d996041a205cc3f1a10d245d88add89c850b940c5b44e0c423df98f
           labels:
             app: extract-agent
         spec:
@@ -3701,12 +3710,14 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+                  value: "false"
                 - name: EXTRACT_AGENT_IMAGE_JPEG_QUALITIES
                   value: "20"
                 - name: EXTRACT_AGENT_IMAGE_MIN_LONG_EDGE_PX
@@ -3805,6 +3816,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3813,9 +3825,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-agent-supervisord-conf-map
               name: supervisord-volume
@@ -3839,8 +3851,8 @@
       template:
         metadata:
           annotations:
-            config-hash: d72d210a23c67cfabc982558327e5a1c5d313e2231220a0330e1cebec6ba7a4b
-            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
+            config-hash: 78308f99e67dfe2320ee3a82e39e9abed4d74a01b6cfe8fc665bec0b8ee197be
+            supervisord-hash: 5bf4af831d996041a205cc3f1a10d245d88add89c850b940c5b44e0c423df98f
           labels:
             app: extract-download
         spec:
@@ -3863,12 +3875,14 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+                  value: "false"
               envFrom:
                 - secretRef:
                     name: extract-save-secret
@@ -3949,6 +3963,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3957,9 +3972,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-download-supervisord-conf-map
               name: supervisord-volume
@@ -3983,8 +3998,8 @@
       template:
         metadata:
           annotations:
-            config-hash: d72d210a23c67cfabc982558327e5a1c5d313e2231220a0330e1cebec6ba7a4b
-            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
+            config-hash: 78308f99e67dfe2320ee3a82e39e9abed4d74a01b6cfe8fc665bec0b8ee197be
+            supervisord-hash: 5bf4af831d996041a205cc3f1a10d245d88add89c850b940c5b44e0c423df98f
           labels:
             app: extract-save
         spec:
@@ -4007,12 +4022,14 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+                  value: "false"
               envFrom:
                 - secretRef:
                     name: extract-save-secret
@@ -4040,7 +4057,7 @@
               resources:
                 limits:
                   cpu: 1
-                  memory: 1Gi
+                  memory: 2Gi
                 requests:
                   cpu: 1
                   memory: 2Gi
@@ -4093,6 +4110,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4101,9 +4119,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-save-supervisord-conf-map
               name: supervisord-volume
@@ -4127,7 +4145,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cd27bb81927f5164f824cd11d7ddc53bf1ae2d7ca47d4608dfdd0eb9c5ad1637
+            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-correct
@@ -4233,9 +4251,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-correct-supervisord-conf-map
               name: supervisord-volume
@@ -4259,7 +4277,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cd27bb81927f5164f824cd11d7ddc53bf1ae2d7ca47d4608dfdd0eb9c5ad1637
+            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-map
@@ -4365,9 +4383,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-map-supervisord-conf-map
               name: supervisord-volume
@@ -4391,7 +4409,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cd27bb81927f5164f824cd11d7ddc53bf1ae2d7ca47d4608dfdd0eb9c5ad1637
+            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-ocr
@@ -4497,9 +4515,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-ocr-supervisord-conf-map
               name: supervisord-volume
@@ -4523,7 +4541,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cd27bb81927f5164f824cd11d7ddc53bf1ae2d7ca47d4608dfdd0eb9c5ad1637
+            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-process
@@ -4629,9 +4647,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
@@ -4655,7 +4673,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cd27bb81927f5164f824cd11d7ddc53bf1ae2d7ca47d4608dfdd0eb9c5ad1637
+            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-save
@@ -4761,9 +4779,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
@@ -4788,8 +4806,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 00dd76424f0d58456a83c47a71aaf19e7d3362691a1f902bcb7091772b6e82a7
-            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
+            config-hash: 7a2eea711ddd4ae8eafd493aa4115b03bc79d4bca6c7518aa16a273f6c275beb
+            supervisord-hash: 5bf4af831d996041a205cc3f1a10d245d88add89c850b940c5b44e0c423df98f
           labels:
             app: extract-agent
         spec:
@@ -4812,12 +4830,14 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+                  value: "false"
                 - name: EXTRACT_AGENT_IMAGE_JPEG_QUALITIES
                   value: "20"
                 - name: EXTRACT_AGENT_IMAGE_MIN_LONG_EDGE_PX
@@ -4915,6 +4935,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4923,9 +4944,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-agent-supervisord-conf-map
               name: supervisord-volume
@@ -4949,8 +4970,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 00dd76424f0d58456a83c47a71aaf19e7d3362691a1f902bcb7091772b6e82a7
-            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
+            config-hash: 7a2eea711ddd4ae8eafd493aa4115b03bc79d4bca6c7518aa16a273f6c275beb
+            supervisord-hash: 5bf4af831d996041a205cc3f1a10d245d88add89c850b940c5b44e0c423df98f
           labels:
             app: extract-download
         spec:
@@ -4973,12 +4994,14 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+                  value: "false"
               envFrom:
                 - secretRef:
                     name: extract-agent-secret
@@ -5058,6 +5081,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -5066,9 +5090,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-download-supervisord-conf-map
               name: supervisord-volume
@@ -5092,8 +5116,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 00dd76424f0d58456a83c47a71aaf19e7d3362691a1f902bcb7091772b6e82a7
-            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
+            config-hash: 7a2eea711ddd4ae8eafd493aa4115b03bc79d4bca6c7518aa16a273f6c275beb
+            supervisord-hash: 5bf4af831d996041a205cc3f1a10d245d88add89c850b940c5b44e0c423df98f
           labels:
             app: extract-save
         spec:
@@ -5116,12 +5140,14 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+                  value: "false"
               envFrom:
                 - secretRef:
                     name: extract-agent-secret
@@ -5149,7 +5175,7 @@
               resources:
                 limits:
                   cpu: 1
-                  memory: 1Gi
+                  memory: 2Gi
                 requests:
                   cpu: 100m
                   memory: 512Mi
@@ -5201,6 +5227,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -5209,9 +5236,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-save-supervisord-conf-map
               name: supervisord-volume
@@ -5235,7 +5262,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5c76b67f2bc7e2de68d10d8d00ba8610e5397db2016a1ef5398f139b3f716062
+            config-hash: e836b26fff276f9e1ebed3b1eef5c3003c1fd50adcb280c94fda20becddcceb4
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-correct
@@ -5337,9 +5364,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-correct-supervisord-conf-map
               name: supervisord-volume
@@ -5363,7 +5390,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5c76b67f2bc7e2de68d10d8d00ba8610e5397db2016a1ef5398f139b3f716062
+            config-hash: e836b26fff276f9e1ebed3b1eef5c3003c1fd50adcb280c94fda20becddcceb4
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-map
@@ -5465,9 +5492,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-map-supervisord-conf-map
               name: supervisord-volume
@@ -5491,7 +5518,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5c76b67f2bc7e2de68d10d8d00ba8610e5397db2016a1ef5398f139b3f716062
+            config-hash: e836b26fff276f9e1ebed3b1eef5c3003c1fd50adcb280c94fda20becddcceb4
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-ocr
@@ -5593,9 +5620,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-ocr-supervisord-conf-map
               name: supervisord-volume
@@ -5619,7 +5646,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5c76b67f2bc7e2de68d10d8d00ba8610e5397db2016a1ef5398f139b3f716062
+            config-hash: e836b26fff276f9e1ebed3b1eef5c3003c1fd50adcb280c94fda20becddcceb4
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-process
@@ -5721,9 +5748,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
@@ -5747,7 +5774,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5c76b67f2bc7e2de68d10d8d00ba8610e5397db2016a1ef5398f139b3f716062
+            config-hash: e836b26fff276f9e1ebed3b1eef5c3003c1fd50adcb280c94fda20becddcceb4
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-save
@@ -5849,9 +5876,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
@@ -5876,8 +5903,8 @@
       template:
         metadata:
           annotations:
-            config-hash: cf265528b5a8552aeae0bd6dc7db4bed7506f6e22f7cd148d584cccd1b09bc56
-            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
+            config-hash: a087924ef41f7340ac7005068d14bfca82943de3029968013f59d50e5eb97270
+            supervisord-hash: 5bf4af831d996041a205cc3f1a10d245d88add89c850b940c5b44e0c423df98f
           labels:
             app: extract-agent
         spec:
@@ -5900,12 +5927,14 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+                  value: "false"
                 - name: EXTRACT_AGENT_IMAGE_JPEG_QUALITIES
                   value: "20"
                 - name: EXTRACT_AGENT_IMAGE_MIN_LONG_EDGE_PX
@@ -6004,6 +6033,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -6012,9 +6042,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-agent-supervisord-conf-map
               name: supervisord-volume
@@ -6038,8 +6068,8 @@
       template:
         metadata:
           annotations:
-            config-hash: cf265528b5a8552aeae0bd6dc7db4bed7506f6e22f7cd148d584cccd1b09bc56
-            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
+            config-hash: a087924ef41f7340ac7005068d14bfca82943de3029968013f59d50e5eb97270
+            supervisord-hash: 5bf4af831d996041a205cc3f1a10d245d88add89c850b940c5b44e0c423df98f
           labels:
             app: extract-download
         spec:
@@ -6062,12 +6092,14 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+                  value: "false"
               envFrom:
                 - secretRef:
                     name: extract-save-secret
@@ -6148,6 +6180,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -6156,9 +6189,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-download-supervisord-conf-map
               name: supervisord-volume
@@ -6182,8 +6215,8 @@
       template:
         metadata:
           annotations:
-            config-hash: cf265528b5a8552aeae0bd6dc7db4bed7506f6e22f7cd148d584cccd1b09bc56
-            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
+            config-hash: a087924ef41f7340ac7005068d14bfca82943de3029968013f59d50e5eb97270
+            supervisord-hash: 5bf4af831d996041a205cc3f1a10d245d88add89c850b940c5b44e0c423df98f
           labels:
             app: extract-save
         spec:
@@ -6206,12 +6239,14 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+                  value: "false"
               envFrom:
                 - secretRef:
                     name: extract-save-secret
@@ -6239,7 +6274,7 @@
               resources:
                 limits:
                   cpu: 1
-                  memory: 1Gi
+                  memory: 2Gi
                 requests:
                   cpu: 1
                   memory: 2Gi
@@ -6292,6 +6327,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -6300,9 +6336,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-save-supervisord-conf-map
               name: supervisord-volume
@@ -6326,7 +6362,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cd27bb81927f5164f824cd11d7ddc53bf1ae2d7ca47d4608dfdd0eb9c5ad1637
+            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-correct
@@ -6432,9 +6468,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-correct-supervisord-conf-map
               name: supervisord-volume
@@ -6458,7 +6494,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cd27bb81927f5164f824cd11d7ddc53bf1ae2d7ca47d4608dfdd0eb9c5ad1637
+            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-map
@@ -6564,9 +6600,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-map-supervisord-conf-map
               name: supervisord-volume
@@ -6590,7 +6626,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cd27bb81927f5164f824cd11d7ddc53bf1ae2d7ca47d4608dfdd0eb9c5ad1637
+            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-ocr
@@ -6696,9 +6732,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-ocr-supervisord-conf-map
               name: supervisord-volume
@@ -6722,7 +6758,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cd27bb81927f5164f824cd11d7ddc53bf1ae2d7ca47d4608dfdd0eb9c5ad1637
+            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-process
@@ -6828,9 +6864,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
@@ -6854,7 +6890,7 @@
       template:
         metadata:
           annotations:
-            config-hash: cd27bb81927f5164f824cd11d7ddc53bf1ae2d7ca47d4608dfdd0eb9c5ad1637
+            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-save
@@ -6960,9 +6996,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
@@ -6987,7 +7023,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 24b8fbd2f36aa9f97623483c8c28954253e4d7a331f1ddf9bb0e9bd38d415521
+            config-hash: 9b1da618fb9cb28d7e067e866353abe6fc6b6f7ccdd5938ae44029cd78062e34
             supervisord-hash: b39bd7d75862c4a85780b4e3d76fe459b3beaa52f391376e7c95cb26ef6068ec
           labels:
             app: myapp-correct
@@ -7090,9 +7126,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: myapp-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: myapp-config-py-map
             - configMap:
                 name: myapp-correct-supervisord-conf-map
               name: supervisord-volume
@@ -7116,7 +7152,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 24b8fbd2f36aa9f97623483c8c28954253e4d7a331f1ddf9bb0e9bd38d415521
+            config-hash: 9b1da618fb9cb28d7e067e866353abe6fc6b6f7ccdd5938ae44029cd78062e34
             prometheus.io/port: "8081"
             supervisord-hash: b39bd7d75862c4a85780b4e3d76fe459b3beaa52f391376e7c95cb26ef6068ec
           labels:
@@ -7195,9 +7231,9 @@
             fsGroup: 2000
           serviceAccountName: other-service-account
           volumes:
-            - configMap:
-                name: myapp-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: myapp-config-py-map
             - configMap:
                 name: myapp-map-supervisord-conf-map
               name: supervisord-volume
@@ -7221,7 +7257,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 24b8fbd2f36aa9f97623483c8c28954253e4d7a331f1ddf9bb0e9bd38d415521
+            config-hash: 9b1da618fb9cb28d7e067e866353abe6fc6b6f7ccdd5938ae44029cd78062e34
             supervisord-hash: b39bd7d75862c4a85780b4e3d76fe459b3beaa52f391376e7c95cb26ef6068ec
           labels:
             app: myapp-ocr
@@ -7305,9 +7341,9 @@
               type: RuntimeDefault
           serviceAccountName: other-service-account
           volumes:
-            - configMap:
-                name: myapp-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: myapp-config-py-map
             - configMap:
                 name: myapp-ocr-supervisord-conf-map
               name: supervisord-volume
@@ -7331,7 +7367,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 24b8fbd2f36aa9f97623483c8c28954253e4d7a331f1ddf9bb0e9bd38d415521
+            config-hash: 9b1da618fb9cb28d7e067e866353abe6fc6b6f7ccdd5938ae44029cd78062e34
             supervisord-hash: b39bd7d75862c4a85780b4e3d76fe459b3beaa52f391376e7c95cb26ef6068ec
           labels:
             app: myapp-process
@@ -7418,9 +7454,9 @@
               operator: Equal
               value: batch
           volumes:
-            - configMap:
-                name: myapp-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: myapp-config-py-map
             - configMap:
                 name: myapp-process-supervisord-conf-map
               name: supervisord-volume
@@ -7444,7 +7480,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 24b8fbd2f36aa9f97623483c8c28954253e4d7a331f1ddf9bb0e9bd38d415521
+            config-hash: 9b1da618fb9cb28d7e067e866353abe6fc6b6f7ccdd5938ae44029cd78062e34
             supervisord-hash: b39bd7d75862c4a85780b4e3d76fe459b3beaa52f391376e7c95cb26ef6068ec
           labels:
             app: myapp-save
@@ -7547,9 +7583,9 @@
               key: eyelevel_node
               value: test-label-1
           volumes:
-            - configMap:
-                name: myapp-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: myapp-config-py-map
             - configMap:
                 name: myapp-save-supervisord-conf-map
               name: supervisord-volume
@@ -7574,7 +7610,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ebaefc6af0f1c9c3731fb790ce2235c0a0ed6224f8265c625fc8bb28f856298a
+            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-correct
@@ -7676,9 +7712,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-correct-supervisord-conf-map
               name: supervisord-volume
@@ -7702,7 +7738,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ebaefc6af0f1c9c3731fb790ce2235c0a0ed6224f8265c625fc8bb28f856298a
+            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-map
@@ -7804,9 +7840,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-map-supervisord-conf-map
               name: supervisord-volume
@@ -7830,7 +7866,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ebaefc6af0f1c9c3731fb790ce2235c0a0ed6224f8265c625fc8bb28f856298a
+            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-ocr
@@ -7932,9 +7968,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-ocr-supervisord-conf-map
               name: supervisord-volume
@@ -7958,7 +7994,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ebaefc6af0f1c9c3731fb790ce2235c0a0ed6224f8265c625fc8bb28f856298a
+            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-process
@@ -8060,9 +8096,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
@@ -8086,7 +8122,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ebaefc6af0f1c9c3731fb790ce2235c0a0ed6224f8265c625fc8bb28f856298a
+            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-save
@@ -8188,9 +8224,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
@@ -8215,7 +8251,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ebaefc6af0f1c9c3731fb790ce2235c0a0ed6224f8265c625fc8bb28f856298a
+            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-correct
@@ -8311,9 +8347,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-correct-supervisord-conf-map
               name: supervisord-volume
@@ -8337,7 +8373,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ebaefc6af0f1c9c3731fb790ce2235c0a0ed6224f8265c625fc8bb28f856298a
+            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-map
@@ -8433,9 +8469,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-map-supervisord-conf-map
               name: supervisord-volume
@@ -8459,7 +8495,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ebaefc6af0f1c9c3731fb790ce2235c0a0ed6224f8265c625fc8bb28f856298a
+            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-ocr
@@ -8555,9 +8591,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-ocr-supervisord-conf-map
               name: supervisord-volume
@@ -8581,7 +8617,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ebaefc6af0f1c9c3731fb790ce2235c0a0ed6224f8265c625fc8bb28f856298a
+            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-process
@@ -8677,9 +8713,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
@@ -8703,7 +8739,7 @@
       template:
         metadata:
           annotations:
-            config-hash: ebaefc6af0f1c9c3731fb790ce2235c0a0ed6224f8265c625fc8bb28f856298a
+            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-save
@@ -8799,9 +8835,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
@@ -8826,8 +8862,8 @@
       template:
         metadata:
           annotations:
-            config-hash: e33d1c49768c465e79e5e28a088291b561515cde84cefa29100814485bd30a1c
-            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
+            config-hash: 5a986c3ed73e7e9e46ac528ae84cd6853e7ec85233207e9c3983106c0d547de3
+            supervisord-hash: 5bf4af831d996041a205cc3f1a10d245d88add89c850b940c5b44e0c423df98f
           labels:
             app: extract-agent
         spec:
@@ -8850,12 +8886,14 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+                  value: "false"
                 - name: EXTRACT_AGENT_IMAGE_JPEG_QUALITIES
                   value: "20"
                 - name: EXTRACT_AGENT_IMAGE_MIN_LONG_EDGE_PX
@@ -8949,6 +8987,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -8957,9 +8996,9 @@
               key: eyelevel_node
               value: eyelevel-cpu
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-agent-supervisord-conf-map
               name: supervisord-volume
@@ -8983,8 +9022,8 @@
       template:
         metadata:
           annotations:
-            config-hash: e33d1c49768c465e79e5e28a088291b561515cde84cefa29100814485bd30a1c
-            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
+            config-hash: 5a986c3ed73e7e9e46ac528ae84cd6853e7ec85233207e9c3983106c0d547de3
+            supervisord-hash: 5bf4af831d996041a205cc3f1a10d245d88add89c850b940c5b44e0c423df98f
           labels:
             app: extract-download
         spec:
@@ -9007,12 +9046,14 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+                  value: "false"
               envFrom:
                 - secretRef:
                     name: extract-agent-secret
@@ -9088,6 +9129,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -9096,9 +9138,9 @@
               key: eyelevel_node
               value: eyelevel-cpu
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-download-supervisord-conf-map
               name: supervisord-volume
@@ -9122,8 +9164,8 @@
       template:
         metadata:
           annotations:
-            config-hash: e33d1c49768c465e79e5e28a088291b561515cde84cefa29100814485bd30a1c
-            supervisord-hash: a08a9897d41232df318545e5cafad66a1599dc0fe12a6c036a038f72b5b41346
+            config-hash: 5a986c3ed73e7e9e46ac528ae84cd6853e7ec85233207e9c3983106c0d547de3
+            supervisord-hash: 5bf4af831d996041a205cc3f1a10d245d88add89c850b940c5b44e0c423df98f
           labels:
             app: extract-save
         spec:
@@ -9146,12 +9188,14 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED
+                  value: "false"
               envFrom:
                 - secretRef:
                     name: extract-agent-secret
@@ -9179,7 +9223,7 @@
               resources:
                 limits:
                   cpu: 1
-                  memory: 1Gi
+                  memory: 2Gi
                 requests:
                   cpu: 1
                   memory: 2Gi
@@ -9227,6 +9271,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -9235,9 +9280,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: extract-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: extract-config-py-map
             - configMap:
                 name: extract-save-supervisord-conf-map
               name: supervisord-volume
@@ -9261,7 +9306,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9cb086224bcbefcd195a92ba8c0903e63036900c20fb5797d656ce5dffe4bc0c
+            config-hash: c46fd29f427efea3f2e374c353f6d3ad42ae56b2936cafdb64187b5c5f0d8d03
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-correct
@@ -9359,9 +9404,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-correct-supervisord-conf-map
               name: supervisord-volume
@@ -9385,7 +9430,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9cb086224bcbefcd195a92ba8c0903e63036900c20fb5797d656ce5dffe4bc0c
+            config-hash: c46fd29f427efea3f2e374c353f6d3ad42ae56b2936cafdb64187b5c5f0d8d03
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-map
@@ -9483,9 +9528,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-map-supervisord-conf-map
               name: supervisord-volume
@@ -9509,7 +9554,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9cb086224bcbefcd195a92ba8c0903e63036900c20fb5797d656ce5dffe4bc0c
+            config-hash: c46fd29f427efea3f2e374c353f6d3ad42ae56b2936cafdb64187b5c5f0d8d03
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-ocr
@@ -9607,9 +9652,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-ocr-supervisord-conf-map
               name: supervisord-volume
@@ -9633,7 +9678,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9cb086224bcbefcd195a92ba8c0903e63036900c20fb5797d656ce5dffe4bc0c
+            config-hash: c46fd29f427efea3f2e374c353f6d3ad42ae56b2936cafdb64187b5c5f0d8d03
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-process
@@ -9731,9 +9776,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
@@ -9757,7 +9802,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9cb086224bcbefcd195a92ba8c0903e63036900c20fb5797d656ce5dffe4bc0c
+            config-hash: c46fd29f427efea3f2e374c353f6d3ad42ae56b2936cafdb64187b5c5f0d8d03
             supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
           labels:
             app: layout-save
@@ -9855,9 +9900,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-save-supervisord-conf-map
               name: supervisord-volume
@@ -9882,7 +9927,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 7c425129290206aabcc7c36198493ce597a798a66030573a261ded9a311680b9
+            config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-cleanup
@@ -9985,9 +10030,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-cleanup-supervisord-conf-map
               name: supervisord-volume
@@ -10014,7 +10059,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 7c425129290206aabcc7c36198493ce597a798a66030573a261ded9a311680b9
+            config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-command
@@ -10117,9 +10162,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-command-supervisord-conf-map
               name: supervisord-volume
@@ -10146,7 +10191,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 7c425129290206aabcc7c36198493ce597a798a66030573a261ded9a311680b9
+            config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-provision
@@ -10249,9 +10294,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-provision-supervisord-conf-map
               name: supervisord-volume
@@ -10278,7 +10323,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 7c425129290206aabcc7c36198493ce597a798a66030573a261ded9a311680b9
+            config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-publish
@@ -10381,9 +10426,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-publish-supervisord-conf-map
               name: supervisord-volume
@@ -10410,7 +10455,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 7c425129290206aabcc7c36198493ce597a798a66030573a261ded9a311680b9
+            config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
             supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
           labels:
             app: workspace-workspace
@@ -10513,9 +10558,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: workspace-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: workspace-config-py-map
             - configMap:
                 name: workspace-workspace-supervisord-conf-map
               name: supervisord-volume

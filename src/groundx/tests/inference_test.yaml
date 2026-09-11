@@ -103,3 +103,110 @@ tests:
       - ./files/values.workspace.enabled.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "layout cpu mode omits default gpu resources"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.layout-inference.cpu.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-inference
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].resources.requests["nvidia.com/gpu"]
+      - notExists:
+          path: spec.template.spec.containers[0].resources.limits["nvidia.com/gpu"]
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 500m
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 2Gi
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 12Gi
+  - it: "layout cpu mode omits zero gpu override"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.layout-inference.cpu-zero-gpu.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-inference
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].resources.requests["nvidia.com/gpu"]
+      - notExists:
+          path: spec.template.spec.containers[0].resources.limits["nvidia.com/gpu"]
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 500m
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 2Gi
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 12Gi
+  - it: "layout cpu mode omits gpu after partial non-gpu override"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.layout-inference.cpu-non-gpu-resources.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-inference
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].resources.requests["nvidia.com/gpu"]
+      - notExists:
+          path: spec.template.spec.containers[0].resources.limits["nvidia.com/gpu"]
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 750m
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 3Gi
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 10Gi
+  - it: "layout cpu mode preserves explicit node placement"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.layout-inference.cpu-placement.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-inference
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector.workload
+          value: layout-cpu
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].values[0]
+          value: custom-layout-node
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: workload
+            operator: Equal
+            value: layout-cpu
+            effect: NoSchedule
+  - it: "default layout inference keeps gpu resources"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-inference
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests["nvidia.com/gpu"]
+          value: 1
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits["nvidia.com/gpu"]
+          value: 1

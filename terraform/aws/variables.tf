@@ -26,6 +26,20 @@ variable "environment_internal" {
   }
 }
 
+variable "node_diagnostics" {
+  description = "Optional EKS node diagnostics. Disabled unless explicitly enabled."
+  type = object({
+    enabled = optional(bool, false)
+  })
+  default = {}
+}
+
+variable "eks_kms_source_policy_documents" {
+  description = "Optional existing policy documents to merge into the EKS cluster KMS key policy."
+  type        = list(string)
+  default     = []
+}
+
 variable "autoscaler_internal" {
   type           = object({
     chart        = object({
@@ -279,7 +293,7 @@ variable "nodes" {
           volume_size           = 75
           volume_type           = "gp2"
         }
-        instance_types          = ["g4dn.2xlarge"]
+        instance_types          = ["g6e.xlarge"]
         max_size                = 10
         min_size                = 1
       }

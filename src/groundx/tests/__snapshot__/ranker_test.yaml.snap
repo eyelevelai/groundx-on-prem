@@ -19,7 +19,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9e90962567931cc0f6532dd90edf2830e7b83094c61024b09c3152278b67f4ba
+            config-hash: fa275ef26120644c26a9aa638b6abec26ae980d9c12a46b009261588f24a312c
             gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
           labels:
             app: ranker-api
@@ -114,9 +114,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-gunicorn-conf-py-map
               name: gunicorn-conf-volume
@@ -139,21 +139,7 @@
 'cache override: ranker config':
   1: |
     apiVersion: v1
-    data:
-      config.py: |
-        env = dict(
-            deviceType="cuda",
-            brokerType="valkey",
-            metricsBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
-            searchBroker="rediss://ranker-cache.existing.com:6380/0",
-            searchLog="ranker",
-            searchResultBroker="rediss://ranker-cache.existing.com:6380/0",
-            service="ranker",
-            validAPIKeys=[
-            ],
-            workers=14,
-        )
-    kind: ConfigMap
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
@@ -162,6 +148,22 @@
         version: 0.1.0
       name: ranker-config-py-map
       namespace: eyelevel
+    stringData:
+      config.py: |
+        env = dict(
+            deviceType="cuda",
+            brokerType="valkey",
+            metricsBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
+            searchBroker="rediss://ranker-cache.existing.com:6380/0",
+            searchLog="ranker",
+            searchResultBroker="rediss://ranker-cache.existing.com:6380/0",
+            service="ranker",
+            validAPIKeys=[
+            ],
+            workers=14,
+        )
 'cache override: ranker inference':
   1: |
     apiVersion: apps/v1
@@ -183,10 +185,10 @@
       template:
         metadata:
           annotations:
-            config-hash: 9e90962567931cc0f6532dd90edf2830e7b83094c61024b09c3152278b67f4ba
+            config-hash: fa275ef26120644c26a9aa638b6abec26ae980d9c12a46b009261588f24a312c
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: c3de8d835a18146d0f59120a18513f20056efbb1cda896213ca789277d88a71b
+            supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
           labels:
             app: ranker-inference
         spec:
@@ -218,23 +220,23 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                failureThreshold: 10
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 8
+                httpGet:
+                  path: /alive
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               name: ranker-inference
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
               readinessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 30
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               resources:
                 limits:
                   nvidia.com/gpu: 1
@@ -378,9 +380,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume

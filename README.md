@@ -62,6 +62,7 @@
 
 **[Legacy Terraform Deployment](#legacy-terraform-deployment)**
 - [Accessing Legacy Scripts](#accessing-legacy-scripts)
+- [Optional EKS Node Diagnostics](#optional-eks-node-diagnostics)
 
 # What is GroundX On-Prem?
 
@@ -384,9 +385,11 @@ The `workspace` service family is optional and disabled by default. Enable it wh
 
 Set `workspace.enabled: true` and provide either `workspace.token` or `workspace.existingSecret`. When `workspace.token` is provided, the chart renders it into the generated GroundX `config.yaml` as `workspace.token`, renders it into the runner `config.py` as `runner_token`, and creates a `workspace-secret` containing `WORKSPACE_RUNNER_TOKEN` as the environment fallback. When `workspace.existingSecret` is provided, that secret must contain `WORKSPACE_RUNNER_TOKEN`; both the Partner API and workspace runner fall back to that environment value because the config files intentionally render the token empty. The internal runner URL is derived into GroundX `config.yaml` as `workspace.baseURL`, not stored as a secret.
 
-The runner follows the standard Python microservice deployment pattern. The API uses the shared Gunicorn deployment template and the workers use the shared supervisord Celery deployment template. Workspace-specific ConfigMaps provide `/app/config.py`, `/app/gunicorn_conf.py`, and one supervisord config per queue: provision, workspace, command, publish, and cleanup. API knobs such as `threads`, `workers`, `timeout`, `timeoutKeepAlive`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under `workspace.api`, matching the other Python API services. Worker knobs such as `queue`, `threads`, `workers`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under each worker section: `provision`, `workspace`, `command`, `publish`, and `cleanup`.
+The runner follows the standard Python microservice deployment pattern. The API uses the shared Gunicorn deployment template and the workers use the shared supervisord Celery deployment template. Workspace-specific resources provide `/app/config.py` (a `Secret`, since it carries credentials — see GX-17), `/app/gunicorn_conf.py` (a `ConfigMap`), and one supervisord config per queue (ConfigMaps): provision, workspace, command, publish, and cleanup. API knobs such as `threads`, `workers`, `timeout`, `timeoutKeepAlive`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under `workspace.api`, matching the other Python API services. Worker knobs such as `queue`, `threads`, `workers`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under each worker section: `provision`, `workspace`, `command`, `publish`, and `cleanup`.
 
 Workspace project metadata and operation state are stored in MySQL. The primary path creates a managed GitHub or GitLab repository from the scaffold, returns a short-lived repo-scoped git session, and expects agents to clone, edit, commit, and push locally. The optional secondary file API uses `/tmp/workspaces` only as a disposable checkout cache for server-side reads, writes, patches, commands, and diffs; Git remains the source of truth and cache loss is recoverable. By default the chart renders this cache as `emptyDir`. Set `workspace.pvc.enabled: true` only when you want a persistent cache for repeated secondary file API work. When enabled, the PVC follows the same helper pattern as inference services: `cluster.pvClass` sets the storage class and `cluster.pvAccessMode` sets the access mode. Prefer `ReadWriteMany` when multiple workspace pods need to share the cache. The runner waits on Redis/Valkey and MySQL but does not wait on file storage because workspace artifacts are not part of the GroundX document file store. Runtime config rendered into `/app/config.py` uses chart helpers for MySQL, Redis/Valkey, command, and workspace defaults, with `workspace.publishDryRun` exposed as the normal safety toggle.
+
+`workspace.ownershipChecksEnabled` defaults to `true`. Setting it to `false` skips runner ownership comparisons and project-list filtering, but leaves runner authentication and operation safety checks active. The shared ConfigMap change rolls the workspace API and every worker. Deploy a compatible workspace-runner image before using a chart version that renders this setting. Restore `true` before offering Workspace outside internal use.
 
 Publish is dry-run by default. To enable real publish, set `workspace.publishDryRun: false`, configure the provider credentials owned by the runner service, and set the workflow or pipeline to trigger. For GitHub Actions:
 
@@ -606,6 +609,16 @@ For AWS EKS, `terraform/aws/setup-eks` generates `src/groundx/prereqs/storagecla
 
 ### Helm Installation
 
+When deploying from this checkout with an environment-specific values file, use the local source chart:
+
+```bash
+helm upgrade --install groundx src/groundx -n eyelevel -f values.ranker-only-eks.yaml
+```
+
+Replace `values.ranker-only-eks.yaml` with the values file for your target cluster. Do not set image
+tags manually for a normal release; workloads that do not override their image tag use the chart
+`appVersion` from `src/groundx/Chart.yaml`.
+
 To install GroundX, add the chart repo to helm by running the following commands:
 
 ```bash
@@ -683,6 +696,10 @@ Every autoscaled pod scales on **two metrics**:
    - **task**: Celery task backlog (default target **10**)
    - **inference**: model request throughput (scales when requests exceed per-replica capacity)
 
+For GPU inference, HPA scale-up also depends on node readiness. If each inference
+pod uses a full GPU node, every additional replica needs both a new pod and a new
+GPU node before it can absorb traffic.
+
 ## Enabling the Custom Metrics Server
 
 The custom metrics server exposes:
@@ -728,6 +745,28 @@ extract:
 ```
 
 When set, pods use simulated LLM responses instead of external model providers.
+
+## Terminal Extract Diagnostics
+
+Terminal extract diagnostics are disabled by default. Enable the same value on
+the extract API, agent, download, and save pods with:
+
+```yaml
+extract:
+  terminalAgentTraceEnabled: true
+```
+
+Override one pod by setting `extract.api.terminalAgentTraceEnabled`,
+`extract.agent.terminalAgentTraceEnabled`,
+`extract.download.terminalAgentTraceEnabled`, or
+`extract.save.terminalAgentTraceEnabled`. An explicit pod value wins over the
+shared value, including `false`.
+
+Use this only with an Internal Arcadia image that implements the
+[AGE-272 terminal diagnostics contract](https://github.com/eyelevelai/internal-arcadia-agents/pull/101).
+The runtime keeps successful work unchanged, publishes Celery failure callbacks
+before terminal persistence, and applies the rollout's storage, access,
+lifecycle, and failure-budget gates.
 
 # Using GroundX On-Prem
 
@@ -786,3 +825,9 @@ As of November 4, 2025, we have migrated to a pure helm release deployment. The 
 
 ## Accessing Legacy Scripts
 If you would like to access the legacy terraform scripts, they can be pulled from [legacy-terraform-deployment](https://github.com/eyelevelai/groundx-on-prem/releases/tag/legacy-terraform-deployment).
+
+## Optional EKS Node Diagnostics
+
+Existing AWS EKS deployments still managed by the bundled Terraform can enable
+default-off diagnostics with one setting. See
+[EKS Node Diagnostics](docs/eks-node-diagnostics.md).

@@ -48,6 +48,12 @@ true
 80
 {{- end }}
 
+{{- define "groundx.ranker.api.batchSize" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{ dig "batchSize" 1 $in }}
+{{- end }}
+
 {{- define "groundx.ranker.api.serviceAccountName" -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "api" dict $b -}}

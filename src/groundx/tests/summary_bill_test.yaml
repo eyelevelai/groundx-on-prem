@@ -37,13 +37,13 @@ tests:
       - ./files/values.summary-bill.yaml
     asserts:
       - matchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: 'fileSummaryBill:\n\s+broker:.*\n\s+groupId: file-summary-bill\n\s+topic: file-summary-bill\n\s+type: kafka'
       - matchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: 'credentialsFile: /var/run/groundx/summary-bill/operations-drive/credentials.json'
       - matchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: 'summaryBillDeliveryServer:'
   - it: omits optional delivery configuration when explicitly disabled
     templates:
@@ -52,7 +52,7 @@ tests:
       summaryBillDeliver.enabled: false
     asserts:
       - notMatchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: 'summaryBill|file-summary-bill'
   - it: creates a Kafka delivery topic with the requested worker partition count
     templates:
@@ -81,7 +81,7 @@ tests:
       stream.topics.summaryBill.region: us-west-2
     asserts:
       - matchRegex:
-          path: data["config.yaml"]
+          path: stringData["config.yaml"]
           pattern: 'fileSummaryBill:\n\s+region: us-west-2\n\s+type: sqs\n\s+url: https://sqs.us-west-2.amazonaws.com/123456789012/summary-bill'
   - it: creates no additional Kafka topic for SQS delivery
     templates:

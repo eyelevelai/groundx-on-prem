@@ -1,15 +1,159 @@
-# AGENTS.md
+# AGENTS.md — groundx-on-prem
 
-Table of contents. Read the route that matches the change; keep durable rules
-in the linked docs, not in this entrypoint.
+## What this repo is
 
-| Topic | Read when |
-|---|---|
-| [Repo guide](docs/agents/repo-guide.md) | You need the Helm/on-prem model, privileged-operation boundaries, editable paths, OpenSpec rules, or repo gotchas. |
-| [Contributor workflow](CONTRIBUTING.md) | You are preparing a PR, choosing validation, writing PR notes, or deciding what belongs in committed comments. |
-| [Summary bill delivery](docs/agents/summary-bill-delivery.md) | You are configuring the optional delivery worker, credentials, transport, or activation checks. |
-| [`src/groundx/`](src/groundx/) | You are changing the source Helm chart. This is the chart source of truth. |
-| [`helm/`](helm/) | You are checking the published chart mirror. Do not hand-edit it without mirroring the matching `src/groundx/` change. |
-| [`src/groundx/values.schema.json`](src/groundx/values.schema.json) | You are changing the deployment contract. Treat as broad blast radius. |
-| [`src/groundx/tests/`](src/groundx/tests/) | You are updating or verifying Helm unit-test snapshots. |
-| [`bin/`](bin/) | You are inspecting operator tooling. Do not run destructive or deploy/publish commands without explicit human authorization. |
+`groundx-on-prem` is the **infra** repo of the GroundX workspace: a **Helm chart** (version and
+image app version come from `src/groundx/Chart.yaml`, Helm 3.8+ / Go templating) plus a Bash operator CLI and a **legacy, deprecated** Terraform
+path that package the commercial **GroundX RAG platform** (document ingestion + hybrid text/vector
+search + re-ranking + LLM summarization) for **self-hosted / air-gapped Kubernetes**. There is **no
+application source code here** — the product ships as **pre-built private container images**
+(`public.ecr.aws/c9r4x6y5` by default); this repo only contains the chart, example configs, operator
+tooling, and legacy Terraform that install and scale those images. The contract this repo exposes is
+its **deployment surface** (`values.yaml` + `values.schema.json`), not an app API. K8s targets:
+`eks`, `aks`, `gke`, `openshift`, `minikube` (selected via `cluster.type`). It has **no in-tree code
+dependency on any other `groundx-*` repo** (verified).
+
+## How to run and test
+
+- **Lint / render:** `helm lint src/groundx` · `helm template src/groundx -f src/groundx/values/minikube/values.yaml`
+- **Test:** `.build/bin/validate-helm.sh` runs the full local gate (lint + `helm unittest` +
+  dual-surface render checks) and is the entrypoint to prefer. It generates the throwaway
+  Google-OCR credentials fixture the OCR unit tests need; a bare `helm unittest src/groundx`
+  (and `helm unittest -u src/groundx` for snapshot regen) fails the `celery` OCR case with
+  `layout.ocr.credentials file not found` unless that fixture exists, so generate it first or run
+  the gate. Both require the `helm-unittest` plugin:
+  `helm plugin install https://github.com/helm-unittest/helm-unittest.git`.
+- **Helpers:** `bin/uuid` generates the UUIDs needed for `admin.apiKey` / `admin.username`
+- **Real install from this checkout** (needs a cluster + license and a complete env values file):
+  `helm upgrade --install groundx src/groundx -n eyelevel -f values.ranker-only-eks.yaml`
+  Use the environment-specific values file for the target cluster. Do not set extract image tags
+  manually for a normal release; the extract workloads default to the chart `appVersion`.
+- **Published chart install** (customer/released chart path):
+  `helm repo add groundx https://registry.groundx.ai/helm && helm repo update`
+  then `helm install groundx groundx/groundx -n eyelevel -f values.yaml`
+- **Temporary app-image canaries:** this repo does not build `ai-server` images. Build deployable
+  `python-api`, `ranker-inference`, and related image tags from the owning repo's GitHub Actions
+  `Build Containers` workflow on the exact branch/SHA under test, then deploy them with explicit
+  Helm image overrides. Do not rely on local Docker as the primary deployable-image path. If an
+  API/worker contract changes, override all affected images together and verify every consumer on
+  the Celery queue is compatible. Hosted prod can have external `inf*@ip-*` workers on the same
+  ranker `inference_queue`; the chart only controls the Kubernetes workers. Isolate the queue before
+  a Kubernetes-only payload-contract canary.
+- **Quality gates that MUST pass before any PR merges:**
+  - `.build/bin/validate-helm.sh` — lint + `helm unittest` snapshot tests + dual-surface render checks; **this is the CI gate** (`.github/workflows/helm-tests.yml` runs it on every push/PR/release) and the **only** check that guards template changes. It generates the OCR credentials fixture first (see Test above).
+  - `helm template src/groundx -f src/groundx/values/minikube/values.yaml` — render check (must render cleanly).
+
+## Privileged operations — Tier 3 ⚠️ DO NOT RUN UNPROMPTED
+
+This repo is marked **`privileged: true`** in `workspaces/groundx/repos.yml`. Its tooling holds broad
+cluster- and cloud-control authority. **Read these scripts freely; never execute the destructive ones
+without explicit human authorization.**
+
+- **`bin/operator`** deploys **and DESTROYS** (`-c` clear mode) Helm releases and Terraform stacks for
+  any component — **including stateful data stores (`db`, `file`, `search`)**. It can delete stateful
+  infrastructure.
+- **`bin/environment`** creates/destroys **AWS VPCs and EKS clusters** via `terraform apply
+  --auto-approve` / `terraform destroy` (`bin/shared/util:deploy()`). Full cloud teardown, **no
+  confirmation gate**.
+- **`src/build.sh`** runs `aws s3 cp … s3://eyelevel-upload/helm/ --recursive` — **publish rights to
+  the PUBLIC Helm chart bucket** (`registry.groundx.ai/helm`). Maintainer-only.
+- Charts request **GPU resources, PersistentVolumes, LoadBalancer Services/Ingress** (ALB, OpenShift
+  Routes), **RBAC** (`rbac.authorization.k8s.io`, `apiregistration.k8s.io`, `external.metrics.k8s.io`),
+  and a **custom APIService / metrics server**.
+- Init containers run **arbitrary `wget | tar` from `upload.groundx.ai`** — a supply-chain surface for
+  GPU model weights.
+
+## Agent boundaries — READ BEFORE EDITING
+
+- **You MAY edit:** `src/groundx/` (the **source of truth** — all chart changes go here), `src/opensearch/`,
+  `src/containers/`, `monitoring/`, `bin/` logic (with the privileged caveats above), docs.
+- **You MUST NOT edit these as source-of-truth artifacts:**
+  - **`helm/` as an independent source** — **do not edit it independently.** It is a near-identical
+    published mirror of `src/groundx` (tests/ removed, `Chart.yaml` reordered). Edit `src/groundx/`
+    first, then sync the matching changed files into `helm/` when the change needs to ship through
+    the published chart. Reason: **mirror**. ⚠️ **Enforcement: NONE** — there is no in-repo script
+    that regenerates `helm/` from `src/` and no check that asserts they match. Manual sync, latent
+    drift; a prime cleanup target (logged in `service.yaml` `known_gaps`).
+  - **`src/groundx/tests/__snapshot__/*.snap`** — generated golden files. Do not hand-edit; regenerate
+    with `helm unittest -u src/groundx`. Reason: **generated**. Enforcement: `helm-tests.yml` CI asserts
+    rendered output matches these snapshots.
+  - **`helm-releases/*.tgz`** — build outputs of `src/build.sh` (`helm package`). Never edit.
+  - **`terraform/**/.terraform.lock.hcl`** — generated lockfiles. Never edit.
+- **`terraform/`** is **legacy / deprecated** (2025-11-04). Don't build on it; prefer the Helm path.
+
+## Where specs live
+
+- OpenSpec: `openspec/changes/` (active), `openspec/changes/archive/` (shipped).
+- Workflow: `/opsx:propose <change>` → `/opsx:apply` → `/opsx:archive`. Default driver `/opsx:continue`.
+- Superpowers methodology is active in the harness and triggers automatically.
+
+## Repo-specific gotchas
+
+- **`helm/` ↔ `src/groundx/` duplication has no regen script and no drift check** — the single most
+  important hazard. A change to `src/groundx/` that isn't mirrored into `helm/` silently ships stale
+  templates. Sync both, every time.
+- **`upload.groundx.ai` model-weight download is HARDCODED** in inference init-containers — an
+  **air-gap blocker**; weights must be mirrored for offline installs (mechanism not documented in-repo).
+- **Hosted ranker-only EKS is migration-state, not generic chart truth.** As of 2026-07-23,
+  hosted search inference is two EC2 `search-inference-*.groundx.ai` servers plus one EKS
+  `ranker-inference` pod. One EKS replica can mean one GPU node; judge HPA behavior with
+  GPU node-group scale-up and model readiness, not just pod count.
+- **The `groundx.extract` config binding is UNSCHEMATIZED.** `extract-config-py.yaml` generates Python
+  that does `from groundx.extract import (AgentSettings, ContainerSettings, ContainerUploadSettings,
+  GroundXSettings)` — binding to constructor signatures in the `eyelevel/extract` **image**, not this
+  repo. A field rename in the image **silently breaks rendering**; nothing validates it.
+- **The `api.groundx.ai` callback is opt-in and air-gap-safe by default** — `extract.callbackUrl`
+  defaults to the in-cluster `groundx` `/api`; it only leaves the cluster if a user sets it explicitly.
+  It is the **only** edge that can phone home to hosted GroundX.
+- **Plaintext secret defaults in example values** (OpenSearch password, MinIO `minio123`) — example
+  only, but a footgun if copied to prod.
+- **Credential-bearing config maps render as `Secret`s, not `ConfigMap`s** (GX-17): `config-yaml-map`,
+  the `*-config-py-map`s (extract/ranker/summary/layout/workspace), and `*-ocr-credentials-map` are
+  `kind: Secret` (mounted as file volumes exactly as before) so workload credentials never sit in a
+  plaintext ConfigMap. Non-secret maps (`*-supervisord-conf-map`, `*-gunicorn-conf-py-map`,
+  `config-models-map`, `ldconfig-symlink-map`) stay `ConfigMap`. The consuming apps are unaffected —
+  they read the same mounted file regardless of source.
+- **Data-driven templating:** there are only ~5 workload templates
+  (`templates/app/{api,celery,inference,golang,metrics}.yaml`); each `range`s over a list of service
+  names and resolves per-service config via `include (printf "groundx.%s.settings" $name)`. **All
+  per-pod detail lives in `_helpers/*.tpl`** — to understand any pod, read its `.settings` helper.
+- **Config-hash restart pattern:** Deployments annotate `config-hash: {{ …sha256sum }}` of their
+  config maps (now a mix of `Secret` and `ConfigMap` — see the credential-map note above), so editing
+  `config.py`/`gunicorn_conf.py`/`supervisord.conf` forces a rollout.
+- **`existing: {}` swap-out:** every backing service (`cache`, `db`, `file`, `search`, `stream`) is
+  either deployed by the chart or attached to external infra via `existing:` + `serviceType`.
+- **Neo4j (`graph`)** is wired in legacy `bin/`/Terraform but absent from the current `src/groundx`
+  chart — treat as legacy-Terraform-only / likely dead in the Helm path (unconfirmed).
+- The strict deployment contract is **`src/groundx/values.schema.json`** (1693 lines,
+  `additionalProperties: false` on most blocks). Changes there have broad blast radius.
+
+## OpenSpec
+
+OpenSpec manages the **documentation lifecycle** for this repo (proposal → specs → design →
+tasks). **Implementation** is done with **Superpowers** (brainstorm → plan → TDD → review →
+finish), which is ambient in the harness and triggers automatically. All spec work runs inside
+this repo on the feature branch.
+
+**Schema:** `spec-driven` (official)   **Role:** `infra`   **Profile:** `custom`   **Default command:** `/opsx:continue`
+
+Per-artifact content rules live in `openspec/config.yaml`. Inspect templates and runtime
+guidance with `openspec instructions <artifact>`.
+
+### Default slash command
+
+`/opsx:continue` — the recommended driver for this repo.
+- `/opsx:ff` — small, low-risk changes; all artifacts at once.
+- `/opsx:continue` — large or correctness-sensitive flows; one gated artifact at a time.
+- `/opsx:explore` — think first; useful when the approach is unclear.
+
+### Skills used by the artifacts
+
+- Open design questions in a proposal → `superpowers:brainstorming`.
+- Given/When/Then scenarios in specs → `superpowers:test-driven-development`.
+- Architectural decisions → `architectural-decision-records` skill; write ADRs to
+  `docs/adr/<LINEAR-TICKET>-<kebab>.md` (Linear ticket prefix mandatory). Cross-service
+  decisions live in the **producing** repo and are referenced from consumers' `design.md`.
+
+## Summary bill delivery
+
+See [the operator guide](docs/agents/summary-bill-delivery.md) for the optional worker, credentials, transport and activation checks.

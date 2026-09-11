@@ -25,7 +25,11 @@
     "cluster": {
       "type": "object",
       "properties": {
-        "hasMig": { "type": "boolean" },
+        "hasMig": {
+          "type": "boolean",
+          "deprecated": true,
+          "description": "Accepted for compatibility in chart 0.2.7; this field does not change rendered resources. Configure GPU resources through each workload's resources field."
+        },
         "hpa": { "type": "boolean" },
         "imagePullPolicy": { "type": "string" },
         "imagePullSecrets": {
@@ -65,7 +69,11 @@
         "tls": {
           "type": "object",
           "properties": {
-            "existingSecret": { "type": "string" }
+            "existingSecret": {
+              "type": "string",
+              "deprecated": true,
+              "description": "Accepted for compatibility in chart 0.2.7; this field does not change rendered resources or mount a Secret. Use each service's supported ingress.tls list for ingress TLS."
+            }
           },
           "additionalProperties": false
         },
@@ -96,6 +104,7 @@
             "baseUrl": { "type": "string" },
             "dataType": { "type": "string" },
             "engineId": { "type": "string" },
+            "maxImages": { "type": ["integer", "null"], "minimum": 1 },
             "maxInputTokens": { "type": "integer" },
             "maxOutputTokens": { "type": "integer" },
             "maxRequests": { "type": "integer" },
@@ -142,6 +151,7 @@
         "imagePullPolicy": { "type": "string" },
         "labels": { "type": "object" },
         "mountPath": { "type": "string" },
+        "password": { "type": "string" },
                 "persistence": {
                   "type": "object",
                   "properties": {
@@ -168,6 +178,7 @@
         "serviceAccountName": { "type": "string" },
         "serviceName": { "type": "string" },
         "tolerations": { "type": "array" },
+        "username": { "type": "string", "pattern": "^\\S*$" },
         "metrics": {
           "type": "object",
           "properties": {
@@ -192,6 +203,7 @@
             "mountPath": { "type": "string" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
+            "password": { "type": "string" },
             "port": { "type": "integer" },
             "replicas": {
               "type": "object",
@@ -207,7 +219,8 @@
             "securityContext": { "type": "object" },
             "serviceAccountName": { "type": "string" },
             "serviceName": { "type": "string" },
-            "tolerations": { "type": "array" }
+            "tolerations": { "type": "array" },
+            "username": { "type": "string", "pattern": "^\\S*$" }
           },
           "required": ["existing"],
           "additionalProperties": false
@@ -794,6 +807,16 @@
             "labels": { "type": "object" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
+            "pvc": {
+              "type": "object",
+              "properties": {
+                "access": { "type": "string" },
+                "capacity": { "type": "string" },
+                "class": { "type": "string" },
+                "name": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
             "queue": { "type": "string" },
             "replicas": {
               "type": "object",
@@ -1115,6 +1138,7 @@
           "type": "object",
           "properties": {
             "desired": { "type": "integer" },
+            "gracePeriod": { "type": "integer", "minimum": 1 },
             "max": { "type": "integer" },
             "min": { "type": "integer" }
           },
@@ -1155,6 +1179,7 @@
           "type": "object",
           "properties": {
             "desired": { "type": "integer" },
+            "gracePeriod": { "type": "integer", "minimum": 1 },
             "max": { "type": "integer" },
             "min": { "type": "integer" }
           },
@@ -1402,6 +1427,7 @@
           "type": "object",
           "properties": {
             "desired": { "type": "integer" },
+            "gracePeriod": { "type": "integer", "minimum": 1 },
             "max": { "type": "integer" },
             "min": { "type": "integer" }
           },
@@ -1431,17 +1457,22 @@
           "type": "object",
           "properties": {
             "addr": { "type": "string" },
+            "isCluster": { "type": "boolean" },
+            "password": { "type": "string" },
             "port": { "type": "integer" },
             "ssl": { "type": "boolean" },
-            "type": { "type": "string" }
+            "type": { "type": "string" },
+            "username": { "type": "string", "pattern": "^\\S*$" }
           },
           "additionalProperties": false
         },
+        "performance": { "type": ["string", "integer", "boolean"] },
         "api": {
           "type": "object",
           "properties": {
             "affinity": { "type": "object" },
             "annotations": { "type": "object" },
+            "batchSize": { "type": "integer", "minimum": 1 },
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
@@ -1469,7 +1500,8 @@
               "properties": {
                 "desired": { "type": "integer" },
                 "max": { "type": "integer" },
-                "min": { "type": "integer" }
+                "min": { "type": "integer" },
+                "target": { "type": "number" }
               },
               "required": ["desired"],
               "additionalProperties": false
@@ -1498,6 +1530,7 @@
           "properties": {
             "affinity": { "type": "object" },
             "annotations": { "type": "object" },
+            "busyWindowSeconds": { "type": "integer", "minimum": 1 },
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
             "deviceType": { "type": "string" },
@@ -1521,9 +1554,15 @@
             "replicas": {
               "type": "object",
               "properties": {
+                "cooldown": { "type": "integer" },
                 "desired": { "type": "integer" },
+                "hpa": { "type": "boolean" },
                 "max": { "type": "integer" },
-                "min": { "type": "integer" }
+                "min": { "type": "integer" },
+                "target": { "type": "number" },
+                "threshold": { "type": "number" },
+                "throughput": { "type": "number" },
+                "upCooldown": { "type": "integer" }
               },
               "required": ["desired"],
               "additionalProperties": false
@@ -1569,6 +1608,7 @@
           "type": "object",
           "properties": {
             "desired": { "type": "integer" },
+            "gracePeriod": { "type": "integer", "minimum": 1 },
             "max": { "type": "integer" },
             "min": { "type": "integer" }
           },
@@ -1609,6 +1649,7 @@
           "type": "object",
           "properties": {
             "desired": { "type": "integer" },
+            "gracePeriod": { "type": "integer", "minimum": 1 },
             "max": { "type": "integer" },
             "min": { "type": "integer" }
           },
@@ -1752,6 +1793,7 @@
         "managedRepoVisibility": { "type": "string" },
         "mysqlConnectTimeoutSeconds": { "type": "integer" },
         "node": { "type": "string" },
+        "ownershipChecksEnabled": { "type": "boolean" },
         "publishGithubWorkflowId": { "type": "string" },
         "pvc": {
           "type": "object",
@@ -1910,6 +1952,7 @@
               "minimum": 1
             },
             "threads": { "type": "integer" },
+            "terminalAgentTraceEnabled": { "type": "boolean" },
             "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
           },
@@ -1970,6 +2013,7 @@
             },
             "serviceType": { "type": "string" },
             "threads": { "type": "integer" },
+            "terminalAgentTraceEnabled": { "type": "boolean" },
             "timeout": { "type": "integer" },
             "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
@@ -2019,6 +2063,7 @@
               "additionalProperties": false
             },
             "threads": { "type": "integer" },
+            "terminalAgentTraceEnabled": { "type": "boolean" },
             "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
           },
@@ -2026,6 +2071,7 @@
           "additionalProperties": false
         },
         "enabled": { "type": "boolean" },
+        "terminalAgentTraceEnabled": { "type": "boolean" },
         "file": {
           "type": "object",
           "properties": {
@@ -2081,6 +2127,7 @@
               "additionalProperties": false
             },
             "threads": { "type": "integer" },
+            "terminalAgentTraceEnabled": { "type": "boolean" },
             "templateId": { "type": "string" },
             "tolerations": { "type": "array" },
             "workers": { "type": "integer" }
@@ -2096,6 +2143,11 @@
     "integration": {
       "type": "object",
       "properties": {
+        "extractionCaptureAccounts": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
         "search": {
           "type": "object",
           "properties": {

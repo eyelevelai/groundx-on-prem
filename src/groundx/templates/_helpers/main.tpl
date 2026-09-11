@@ -66,11 +66,6 @@
 {{ .Values.licenseKey | default "" }}
 {{- end }}
 
-{{- define "groundx.hasMig" -}}
-{{- $b := .Values.cluster | default dict -}}
-{{- dig "hasMig" false $b -}}
-{{- end }}
-
 {{- define "groundx.imagePullPolicy" -}}
 {{- $b := .Values.cluster | default dict -}}
 {{- dig "imagePullPolicy" "IfNotPresent" $b -}}

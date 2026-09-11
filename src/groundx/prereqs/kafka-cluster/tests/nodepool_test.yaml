@@ -1,0 +1,35 @@
+suite: "kafka-cluster KafkaNodePool CR renders the Strimzi v1 shape"
+templates:
+  - ../templates/nodepool.yaml
+
+tests:
+  - it: "default: KafkaNodePool renders on v1 with broker count and 5Gi storage from nodepool values"
+    asserts:
+      - equal:
+          path: apiVersion
+          value: kafka.strimzi.io/v1
+      - equal:
+          path: spec.replicas
+          value: 1
+      - equal:
+          path: spec.storage.volumes[0].size
+          value: 5Gi
+
+  - it: "default namespace install lands the KafkaNodePool in the Helm release namespace"
+    release:
+      namespace: groundx-default-ns
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: groundx-default-ns
+
+  - it: "non-default namespace install lands the KafkaNodePool in that namespace, not eyelevel"
+    release:
+      namespace: groundx-validation
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: groundx-validation
+      - notEqual:
+          path: metadata.namespace
+          value: eyelevel

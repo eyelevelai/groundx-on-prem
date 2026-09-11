@@ -1,7 +1,7 @@
 # Implementation evidence
 
-The implementation uses pushed baseline `origin/main` at
-`80f55ce7b1ff0491b2e7bc4262d99a20fe49813f`. The matching cashbot-go worker is
+The implementation uses pushed baseline `origin/0.2.7` at
+`b8e57f2dd44f96e5486c1537d3c243e5fb47d087`. The matching cashbot-go worker is
 implemented in `f3f89529f`, with the shared queue/server config in `57d83de4c`.
 The delivery container build is `server/SummaryBillDeliver/Dockerfile.summary-bill-delivery`.
 The producer container includes `/app/summary-bill-pdf-count`.
@@ -16,27 +16,31 @@ chart; enabling the worker does not enable any account.
 
 Verified on 2026-09-11:
 
-- `helm unittest src/groundx`: 12 suites, 143 tests and 813 snapshots passed.
+- `.build/bin/validate-helm.sh`: passed the full `0.2.7` production gate,
+  including 14 suites, 282 tests and 815 snapshots, plus the additional nine
+  selected checks. The gate prepares and removes its required OCR fixture,
+  validates both chart surfaces, workspace/storage contracts and render checks.
   Seven new assertions/scenarios cover the delivery worker, mounted secrets,
   shared config, disabled behavior, Kafka partitions, SQS selection and
   producer credential isolation. Existing snapshots were not regenerated.
 - `helm lint src/groundx`: passed; only the existing optional icon suggestion.
 - `helm template local src/groundx -f src/groundx/values/minikube/values.yaml`: passed.
-- Disabled source rendering compared byte-for-byte with a render captured before
-  the change, including workload configuration hashes: identical.
-- Enabled and disabled source renders compared byte-for-byte with the published
-  mirror for the same release and values: identical.
+- Disabled and explicitly disabled source rendering compared byte-for-byte with
+  pushed `0.2.7`, including workload configuration hashes: identical.
+- Enabled and disabled source/mirror renders match with identical chart metadata
+  and values. The target branch already has different source/mirror chart versions
+  and one extract-download memory default; those unrelated defaults are unchanged.
 - `git diff --no-index src/groundx/templates helm/templates`: identical.
 - `git diff --check`: passed.
 - In the matching cashbot-go worktree:
   `SUMMARY_BILL_CHART_PATH=<absolute-src/groundx> go test -tags groundx_chart_integration ./pkg/config -run '^TestSummaryBillChartConfiguration$' -count=1`
-  passed. It decodes actual Kafka/SQS renders using runtime configuration types,
-  verifies the shared queue, credentials and budgets, tests disablement, and
+  passed in 3.008s. It decodes actual Kafka/SQS renders using runtime configuration types,
+  reads the `0.2.7` Secret `stringData` configuration, verifies the shared queue,
+  credentials and budgets, tests disablement, and
   rejects invalid image, concurrency, byte/time budgets, secret bindings and
   missing resource limits through the chart schema.
 
-The new Helm test initially failed because the chart had no summaryBillDeliver
-contract. The enabled fixture contains a test image, synthetic budgets and Secret
+The enabled fixture contains a test image, synthetic budgets and Secret
 names; it is not an operational configuration.
 
 ## Activation boundary
@@ -46,4 +50,6 @@ Drive upload was performed. Live worker capacity, Shared drive authorization,
 queue visibility/retention, image availability, deployed schema compatibility,
 replacement of old producers and customer completion semantics remain governed
 by the cashbot-go activation record. These checks gate activation, not local
-implementation. Independent combined worker, transport and chart review found no unresolved major findings. The reviewer reran the Helm suite, lint, renders and cross-repo runtime configuration test.
+implementation. Independent review of the feature found no unresolved major
+findings. Release-branch integration preserves its Secret-based config and
+volume mounts; validation above covers the resulting `0.2.7` candidate.

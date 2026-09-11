@@ -3,13 +3,13 @@
 {{- $svc := include "groundx.workspace.serviceName" . -}}
 
 apiVersion: v1
-kind: ConfigMap
+kind: Secret
 metadata:
   name: {{ $svc }}-config-py-map
   namespace: {{ include "groundx.ns" . }}
   labels:
 {{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
-data:
+stringData:
   config.py: |
     from pathlib import Path
 
@@ -43,6 +43,7 @@ data:
         mysql_password={{ include "groundx.db.password" . | quote }},
         mysql_port={{ include "groundx.db.port" . }},
         mysql_username={{ include "groundx.db.username" . | quote }},
+        workspace_ownership_checks_enabled={{ if eq (printf "%v" (include "groundx.workspace.ownershipChecksEnabled" .)) "true" }}True{{ else }}False{{ end }},
         publish_dry_run={{ if eq (printf "%v" (include "groundx.workspace.publishDryRun" .)) "true" }}True{{ else }}False{{ end }},
         publish_github_workflow_id={{ include "groundx.workspace.publishGithubWorkflowId" . | quote }},
         runner_token={{ include "groundx.workspace.token" . | quote }},

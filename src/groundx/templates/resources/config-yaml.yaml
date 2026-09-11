@@ -7,7 +7,6 @@
 {{- $sq := (include "groundx.stream.topic.summary" . | fromYaml) -}}
 {{- $uq := (include "groundx.stream.topic.update" . | fromYaml) -}}
 {{- $lq := (include "groundx.stream.topic.upload" . | fromYaml) -}}
-
 {{- $eac := include "groundx.extract.agent.threshold" . | trim -}}
 {{- $edc := include "groundx.extract.download.threshold" . | trim -}}
 {{- $esc := include "groundx.extract.save.threshold" . | trim -}}
@@ -25,7 +24,7 @@
 {{- $wrac := include "groundx.workspace.api.threshold" . | trim -}}
 
 {{- $lic := include "groundx.layout.inference.threshold" . | trim -}}
-{{- $ric := include "groundx.ranker.inference.threshold" . | trim -}}
+{{- $ribw := include "groundx.ranker.inference.busyWindowSeconds" . | trim -}}
 {{- $sac := include "groundx.summary.api.threshold" . | trim -}}
 {{- $sic := include "groundx.summary.inference.threshold" . | trim -}}
 {{- $scc := include "groundx.summaryClient.threshold" . | trim -}}
@@ -69,15 +68,17 @@
 {{- $wrpt := include "groundx.workspace.provision.throughput" . | trim -}}
 {{- $wrpubt := include "groundx.workspace.publish.throughput" . | trim -}}
 {{- $wrwt := include "groundx.workspace.workspace.throughput" . | trim -}}
+{{- $integration := .Values.integration | default dict -}}
+{{- $captureAccounts := get $integration "extractionCaptureAccounts" | default list -}}
 {{- if gt (len $svcs) 0 }}
 apiVersion: v1
-kind: ConfigMap
+kind: Secret
 metadata:
   name: config-yaml-map
   namespace: {{ include "groundx.ns" . }}
   labels:
 {{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
-data:
+stringData:
   config.yaml: |
     _mysql: &mysql
       ro_addr: {{ include "groundx.db.ro" . }}
@@ -163,16 +164,19 @@ data:
           {{- end }}
 
     engines:
-      {{ range $i, $e := $engs }}
+      {{- range $i, $e := $engs }}
       {{- $engineID := get $e "engineId" -}}
-      {{ $engineID }}:
+{{ printf "\n      %s:" $engineID }}
         engineID: {{ $engineID | quote }}
-        service: {{ coalesce (get $e "serviceType") (include "groundx.summary.serviceType" $) }}
+        service: {{ get $e "service" }}
         {{- if hasKey $e "apiKey" }}
         apiKey: {{ get $e "apiKey" }}
         {{- end }}
         {{- if hasKey $e "baseUrl" }}
         baseURL: {{ get $e "baseUrl" }}
+        {{- end }}
+        {{- if and (hasKey $e "maxImages") (ne (get $e "maxImages") nil) }}
+        maxImages: {{ get $e "maxImages" }}
         {{- end }}
         {{- if hasKey $e "maxInputTokens" }}
         maxInputTokens: {{ get $e "maxInputTokens" }}
@@ -194,9 +198,7 @@ data:
         {{- else }}
         vision: true
         {{- end }}
-      {{- end }}
-
-    environment: {{ include "groundx.environment" . }}
+      {{- end }}{{ "\n\n" }}    environment: {{ include "groundx.environment" . }}
 
     groundxServer:
       baseURL: {{ include "groundx.groundx.serviceUrl" . }}
@@ -228,6 +230,10 @@ data:
         username: {{ include "groundx.search.privilegedUsername" . | quote }}
 
     integrationTests:
+{{- if gt (len $captureAccounts) 0 }}
+      extractionCaptureAccounts:
+{{ toYaml $captureAccounts | nindent 8 }}
+{{- end }}
       search:
         duration: {{ include "groundx.integration.search.duration" . }}
         fileId: {{ include "groundx.integration.search.fileId" . | quote }}
@@ -271,15 +277,15 @@ data:
         tokensPerMinute: {{ include "groundx.throughput.tpm.document" . }}
       extractRequest:
         tokensPerMinute: {{ include "groundx.throughput.tpm.extractRequest" . }}
-      {{- if or (ne $lic "0") (ne $ric "0") (ne $sac "0") (ne $sic "0") (and (eq $sce "true") (ne $scc "0")) }}
+      {{- if or (ne $lic "0") (ne $ribw "0") (ne $sac "0") (ne $sic "0") (and (eq $sce "true") (ne $scc "0")) }}
       inference:
         {{- if ne $lic "0" }}
         - name: {{ include "groundx.layout.serviceName" . }}-inference
           tokensPerMinute: {{ $lic }}
         {{- end }}
-        {{- if ne $ric "0" }}
-        - name: {{ include "groundx.ranker.serviceName" . }}-inference
-          tokensPerMinute: {{ $ric }}
+        {{- if ne $ribw "0" }}
+        - name: {{ include "groundx.ranker.inference.serviceName" . }}
+          busyWindowSeconds: {{ $ribw }}
         {{- end }}
         {{- if ne $sac "0" }}
         - name: {{ include "groundx.summary.api.serviceName" . }}
@@ -329,6 +335,12 @@ data:
         addr: {{ printf "%s:%v" (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) }}
         notCluster: {{ include "groundx.metrics.cache.notCluster" . }}
         ssl: {{ include "groundx.metrics.cache.ssl" . }}
+        {{- if ne (include "groundx.metrics.cache.username" .) "" }}
+        username: {{ include "groundx.metrics.cache.username" . | quote }}
+        {{- end }}
+        {{- if ne (include "groundx.metrics.cache.password" .) "" }}
+        password: {{ include "groundx.metrics.cache.password" . | quote }}
+        {{- end }}
       summaryRequest:
         tokensPerMinute: {{ include "groundx.throughput.tpm.summaryRequest" . }}
       {{- if or (ne $eac "0") (ne $edc "0") (ne $esc "0") (ne $lcc "0") (ne $lmc "0") (ne $loc "0") (ne $lpc "0") (ne $lsc "0") (ne $wrcuc "0") (ne $wrcc "0") (ne $wrpc "0") (ne $wrpubc "0") (ne $wrwc "0") }}
@@ -537,12 +549,20 @@ data:
 
     preProcessFileServer:
       baseURL: {{ include "groundx.preProcess.serviceUrl" . }}
+      {{- $ppRep := (include "groundx.preProcess.replicas" . | fromYaml) }}
+      {{- if hasKey $ppRep "gracePeriod" }}
+      drainSeconds: {{ int (max 1 (sub (int (get $ppRep "gracePeriod")) 30)) }}
+      {{- end }}
       maxConcurrent: {{ include "groundx.preProcess.queueSize" . }}
       port: {{ include "groundx.preProcess.containerPort" . }}
       serviceName: {{ include "groundx.preProcess.serviceName" . }}
 
     processFileServer:
       baseURL: {{ include "groundx.process.serviceUrl" . }}
+      {{- $pRep := (include "groundx.process.replicas" . | fromYaml) }}
+      {{- if hasKey $pRep "gracePeriod" }}
+      drainSeconds: {{ int (max 1 (sub (int (get $pRep "gracePeriod")) 30)) }}
+      {{- end }}
       maxConcurrent: {{ include "groundx.process.queueSize" . }}
       port: {{ include "groundx.process.containerPort" . }}
       serviceName: {{ include "groundx.process.serviceName" . }}
@@ -572,6 +592,10 @@ data:
 
     queueFileServer:
       baseURL: {{ include "groundx.queue.serviceUrl" . }}
+      {{- $qRep := (include "groundx.queue.replicas" . | fromYaml) }}
+      {{- if hasKey $qRep "gracePeriod" }}
+      drainSeconds: {{ int (max 1 (sub (int (get $qRep "gracePeriod")) 30)) }}
+      {{- end }}
       maxConcurrent: {{ include "groundx.queue.queueSize" . }}
       pollTime: 1
       port: {{ include "groundx.queue.containerPort" . }}
@@ -605,6 +629,12 @@ data:
         addr: {{ printf "%s:%v" (include "groundx.cache.addr" .) (include "groundx.cache.port" .) }}
         notCluster: {{ include "groundx.cache.notCluster" . }}
         ssl: {{ include "groundx.cache.ssl" . }}
+        {{- if ne (include "groundx.cache.username" .) "" }}
+        username: {{ include "groundx.cache.username" . | quote }}
+        {{- end }}
+        {{- if ne (include "groundx.cache.password" .) "" }}
+        password: {{ include "groundx.cache.password" . | quote }}
+        {{- end }}
 
     {{- if .Values.dashboard }}
     ssp:
@@ -614,6 +644,10 @@ data:
 
     summaryServer:
       baseURL: {{ include "groundx.summaryClient.serviceUrl" . }}
+      {{- $scRep := (include "groundx.summaryClient.replicas" . | fromYaml) }}
+      {{- if hasKey $scRep "gracePeriod" }}
+      drainSeconds: {{ int (max 1 (sub (int (get $scRep "gracePeriod")) 30)) }}
+      {{- end }}
       maxConcurrent: {{ include "groundx.summaryClient.queueSize" . }}
       port: {{ include "groundx.summaryClient.containerPort" . }}
       serviceName: {{ include "groundx.summaryClient.serviceName" . }}
@@ -640,6 +674,10 @@ data:
 
     uploadFileServer:
       baseURL: {{ include "groundx.upload.serviceUrl" . }}
+      {{- $upRep := (include "groundx.upload.replicas" . | fromYaml) }}
+      {{- if hasKey $upRep "gracePeriod" }}
+      drainSeconds: {{ int (max 1 (sub (int (get $upRep "gracePeriod")) 30)) }}
+      {{- end }}
       maxConcurrent: {{ include "groundx.upload.queueSize" . }}
       port: {{ include "groundx.upload.containerPort" . }}
       serviceName: {{ include "groundx.upload.serviceName" . }}

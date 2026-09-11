@@ -71,9 +71,13 @@ There is no runtime "main" in this repo. The operational entry points are:
 # Lint/render the chart
 helm template src/groundx -f src/groundx/values/minikube/values.yaml
 
-# Unit tests (exactly what CI runs — .github/workflows/helm-tests.yml)
+# Full local gate (what CI runs — .github/workflows/helm-tests.yml)
 helm plugin install https://github.com/helm-unittest/helm-unittest.git
-helm unittest src/groundx                       # snapshot tests in src/groundx/tests/
+.build/bin/validate-helm.sh                      # lint + unittest + dual-surface render checks
+# Bare unittest also works, but the Google-OCR case needs the throwaway credentials
+# fixture the gate generates; without it `helm unittest src/groundx` fails the celery
+# suite with "layout.ocr.credentials file not found".
+helm unittest src/groundx                        # snapshot tests in src/groundx/tests/
 
 # Generate UUIDs required for admin.apiKey / admin.username
 bin/uuid
@@ -133,7 +137,9 @@ groundx (main API/LB)  → OpenSearch hybrid query → ranker-api → ranker-inf
   a latent drift risk and a prime AI-first cleanup target.**
 - **`helm-releases/*.tgz`** are build outputs of `src/build.sh` (`helm package`). Never edit.
 - **`src/groundx/tests/__snapshot__/*.snap`** are **generated golden files** from `helm-unittest`.
-  Do not hand-edit; regenerate with `helm unittest -u src/groundx`. CI (`helm-tests.yml`) enforces
+  Do not hand-edit; regenerate with `helm unittest -u src/groundx` (generate the throwaway OCR
+  credentials fixture first, or the celery suite errors — run `.build/bin/validate-helm.sh` to see
+  the gate wiring). CI (`helm-tests.yml`) enforces
   that rendered output matches these snapshots — **this is the check that guards template changes.**
 - **`terraform/**/.terraform.lock.hcl`** are generated lockfiles.
 - No codegen of *other* repos happens here (no OpenAPI/SDK generation, no submodules).

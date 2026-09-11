@@ -5,23 +5,23 @@
 {{- $svc := include "groundx.summary.serviceName" . -}}
 
 apiVersion: v1
-kind: ConfigMap
+kind: Secret
 metadata:
   name: {{ $svc }}-config-py-map
   namespace: {{ include "groundx.ns" . }}
   labels:
 {{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
-data:
+stringData:
   config.py: |
     env = dict(
         deviceType={{ include "groundx.summary.inference.deviceType" . | quote }},
         deviceUtilize={{ include "groundx.summary.inference.deviceUtilize" . }},
         brokerType={{ include "groundx.cache.type" . | quote }},
-        metricsBroker={{ printf "%s://%s:%v/0" (include "groundx.metrics.cache.scheme" .) (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) | quote }},
+        metricsBroker={{ printf "%s://%s%s:%v/0" (include "groundx.metrics.cache.scheme" .) (include "groundx.metrics.cache.userinfo" .) (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) | quote }},
         service={{ include "groundx.summary.serviceName" . | quote }},
-        summaryBroker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
+        summaryBroker={{ printf "%s://%s%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.userinfo" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
         summaryLog={{ include "groundx.summary.serviceName" . | quote }},
-        summaryResultBroker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
+        summaryResultBroker={{ printf "%s://%s%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.userinfo" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
         validAPIKeys=[
         {{- $apiKey := include "groundx.admin.apiKey" . -}}
         {{- if ne $apiKey "" }}

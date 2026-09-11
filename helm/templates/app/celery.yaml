@@ -1,5 +1,6 @@
 {{- $svcs := (include "groundx.celery.process.services" . | fromYaml) -}}
 {{- $hasOCR := include "groundx.layout.hasOCRCredentials" . -}}
+{{- $ocrCreate := include "groundx.layout.ocr.create" . -}}
 {{- $username := include "groundx.container.username" . -}}
 
 {{- range $idx, $entry := $svcs }}
@@ -63,7 +64,7 @@ spec:
       annotations:
         config-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-config-py.yaml") $ | sha256sum }}
         supervisord-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-supervisord-conf.yaml") $ | sha256sum }}
-{{- if eq $hasOCR "true" -}}
+{{- if and (eq $ocrCreate "true") (eq $hasOCR "true") }}
         ocr-credentials-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-ocr-credentials.yaml") $ | sha256sum }}
 {{- end }}
 {{- if gt (len $anns) 0 }}
@@ -72,6 +73,8 @@ spec:
     spec:
 {{- if and $rp (hasKey $rp "gracePeriod") }}
       terminationGracePeriodSeconds: {{ get $rp "gracePeriod" }}
+{{- else if eq $mapPrefix "extract" }}
+      terminationGracePeriodSeconds: 900
 {{- end }}
 {{- if $san }}
       serviceAccountName: {{ $san }}
@@ -142,7 +145,7 @@ spec:
             - /bin/sh
             - -c
             - |
-              export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+              export PYTHONPATH=/app &&{{ if eq $mapPrefix "extract" }} exec{{ end }} supervisord -c /app/supervisord.conf
 {{- if gt (len $lifecycle) 0 }}
           lifecycle:
 {{- toYaml $lifecycle | nindent 12 }}
@@ -169,7 +172,7 @@ spec:
             - name: config-volume
               mountPath: /app/config.py
               subPath: config.py
-{{- if eq $hasOCR "true" -}}
+{{- if and (eq $ocrCreate "true") (eq $hasOCR "true") }}
             - name: credentials-volume
               mountPath: /app/credentials.json
               subPath: credentials.json
@@ -182,12 +185,12 @@ spec:
 {{- end }}
       volumes:
         - name: config-volume
-          configMap:
-            name: {{ $svc }}-config-py-map
-{{- if eq $hasOCR "true" -}}
+          secret:
+            secretName: {{ $svc }}-config-py-map
+{{- if and (eq $ocrCreate "true") (eq $hasOCR "true") }}
         - name: credentials-volume
-          configMap:
-            name: {{ $svc }}-ocr-credentials-map
+          secret:
+            secretName: {{ $svc }}-ocr-credentials-map
 {{- end }}
         - name: supervisord-volume
           configMap:

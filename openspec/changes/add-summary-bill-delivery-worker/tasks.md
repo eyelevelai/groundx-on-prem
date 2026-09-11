@@ -11,5 +11,5 @@ Evidence: [Implementation and local checks](implementation-evidence.md). Live ca
 ## 3. Verification
 - [x] 3.1 Add Helm tests proving absent and explicitly disabled settings preserve the current manifests, while enabled Kafka creates the worker and delivery topic and emits matching config. Cover externally managed SQS without an unwanted Kafka topic.
 - [x] 3.2 Check enabled credential references and resource limits, schema rejection of invalid settings, and Go decoding of the emitted config against the dependent cashbot-go build.
-- [x] 3.3 Run helm unittest src/groundx, helm lint src/groundx, helm template src/groundx -f src/groundx/values/minikube/values.yaml, and mirror comparison. Regenerate changed snapshots through helm unittest -u only when a reviewed behavior requires them.
+- [x] 3.3 Run .build/bin/validate-helm.sh for the required OCR fixture, lint, unit tests and dual-surface render checks, plus minikube and mirror comparisons. Regenerate changed snapshots through helm unittest -u only when a reviewed behavior requires them.
 - [x] 3.4 Document image/config readiness, measured capacity, secret provisioning and drain-before-removal requirements. Leave deployment and account activation to the separately authorized cashbot-go activation record.

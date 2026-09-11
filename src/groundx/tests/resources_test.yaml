@@ -4,6 +4,31 @@ chart:
   version: 0.1.0
 
 tests:
+  - it: "extraction capture accounts default to none"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "extractionCaptureAccounts"
+  - it: "configured extraction capture accounts render exactly"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.extraction-capture-accounts.yaml
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "integrationTests:\\n  extractionCaptureAccounts:\\n\\n    - internal-certification-account\\n    - second-internal-account\\n  search:"
   - it: "default: resources"
     templates:
       - ../templates/resources/config-models.yaml
@@ -134,6 +159,26 @@ tests:
       - ../values/minikube/values.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "engine maxImages renders when positive"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.engine-max-images-valid.yaml
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "maxImages: 30"
+  - it: "engine maxImages null is omitted"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.engine-max-images-null.yaml
+    asserts:
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "maxImages:"
   - it: "existing: resources"
     templates:
       - ../templates/resources/config-models.yaml
@@ -342,6 +387,141 @@ tests:
       - ./files/values.phoenix.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "summaryClient gracePeriod: resources"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      summaryClient.replicas.gracePeriod: 900
+    asserts:
+      - matchSnapshot: {}
+  - it: "summaryClient gracePeriod renders drainSeconds only in the summaryServer block"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      summaryClient.replicas.gracePeriod: 900
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds: 870\n"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "preProcessFileServer:\n  baseURL: .*\n  drainSeconds"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "processFileServer:\n  baseURL: .*\n  drainSeconds"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "queueFileServer:\n  baseURL: .*\n  drainSeconds"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds"
+  - it: "preProcess gracePeriod renders drainSeconds only in the preProcessFileServer block"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      preProcess.replicas.gracePeriod: 120
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "preProcessFileServer:\n  baseURL: .*\n  drainSeconds: 90\n"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "processFileServer:\n  baseURL: .*\n  drainSeconds"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "queueFileServer:\n  baseURL: .*\n  drainSeconds"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds"
+  - it: "process gracePeriod renders drainSeconds in the processFileServer block"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      process.replicas.gracePeriod: 300
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "processFileServer:\n  baseURL: .*\n  drainSeconds: 270\n"
+  - it: "upload gracePeriod renders drainSeconds in the uploadFileServer block"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      upload.replicas.gracePeriod: 180
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds: 150\n"
+  - it: "queue gracePeriod renders drainSeconds in the queueFileServer block"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      queue.replicas.gracePeriod: 60
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "queueFileServer:\n  baseURL: .*\n  drainSeconds: 30\n"
+  - it: "all five Go queue services set distinct gracePeriod values independently"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      preProcess.replicas.gracePeriod: 120
+      process.replicas.gracePeriod: 300
+      queue.replicas.gracePeriod: 60
+      summaryClient.replicas.gracePeriod: 900
+      upload.replicas.gracePeriod: 180
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "preProcessFileServer:\n  baseURL: .*\n  drainSeconds: 90\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "processFileServer:\n  baseURL: .*\n  drainSeconds: 270\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "queueFileServer:\n  baseURL: .*\n  drainSeconds: 30\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds: 870\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds: 150\n"
+  - it: "gracePeriod below the 30-second margin floors drainSeconds at 1"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      summaryClient.replicas.gracePeriod: 10
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds: 1\n"
+  - it: "no gracePeriod set anywhere - config-yaml renders with no drainSeconds key"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    asserts:
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "drainSeconds"
   - it: "workspace-enabled: resources"
     templates:
       - ../templates/resources/config-models.yaml
@@ -369,3 +549,245 @@ tests:
       - ./files/values.workspace.enabled.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "no credential configured: config-yaml.yaml session blocks are unchanged from 0.2.7"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "session:\\n    addr: cache\\.eyelevel\\.svc\\.cluster\\.local:6379\\n    notCluster: true\\n    ssl: false\\n\\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "session:\\n    addr: cache-metrics\\.eyelevel\\.svc\\.cluster\\.local:6379\\n    notCluster: true\\n    ssl: false\\n  summaryRequest:"
+  - it: "cashbot-go rec.session and metrics.session render their own credential (ACL user+password vs password-only)"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/values.existing.yaml
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "session:\\n    addr: cache\\.existing\\.com:6379\\n    notCluster: true\\n    ssl: true\\n    username: \"cache-acl-user\"\\n    password: \"cache-p@ss:w0rd\"\\n\\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "session:\\n    addr: metrics-cache\\.existing\\.com:6379\\n    notCluster: true\\n    ssl: true\\n    password: \"metrics-p@ss:w0rd\"\\n  summaryRequest:"
+  - it: "layout/summary/extract Celery broker and result URLs embed the main and metrics credentials, percent-encoded"
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+      - ../templates/resources/summary-config-py.yaml
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ../values/values.existing.yaml
+    set:
+      summary.existing.serviceType: ""
+      extract.enabled: true
+      extract.api.enabled: true
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'layoutBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+        template: ../templates/resources/layout-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'layoutResultBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+        template: ../templates/resources/layout-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="rediss://:metrics-p%40ss%3Aw0rd@metrics-cache\.existing\.com:6379/0"'
+        template: ../templates/resources/layout-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="rediss://metrics-p%40ss%3Aw0rd@'
+        template: ../templates/resources/layout-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'summaryBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+        template: ../templates/resources/summary-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'summaryResultBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+        template: ../templates/resources/summary-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="rediss://:metrics-p%40ss%3Aw0rd@metrics-cache\.existing\.com:6379/0"'
+        template: ../templates/resources/summary-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="rediss://metrics-p%40ss%3Aw0rd@'
+        template: ../templates/resources/summary-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'broker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+        template: ../templates/resources/extract-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'metrics_broker="rediss://:metrics-p%40ss%3Aw0rd@metrics-cache\.existing\.com:6379/0"'
+        template: ../templates/resources/extract-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'metrics_broker="rediss://metrics-p%40ss%3Aw0rd@'
+        template: ../templates/resources/extract-config-py.yaml
+  - it: "ranker with no own instance inherits the main cache's credential"
+    templates:
+      - ../templates/resources/ranker-config-py.yaml
+    values:
+      - ../values/values.existing.yaml
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'searchBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'searchResultBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="rediss://:metrics-p%40ss%3Aw0rd@metrics-cache\.existing\.com:6379/0"'
+  - it: "ranker with its own instance gets its own credential, never the main cache's (mechanical-sweep counterexample)"
+    templates:
+      - ../templates/resources/ranker-config-py.yaml
+    values:
+      - ../values/values.existing.yaml
+    set:
+      ranker.cache.addr: ranker-cache.other.net
+      ranker.cache.port: 6380
+      ranker.cache.password: ranker-only-p@ss
+      ranker.cache.username: ranker-only-user
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'searchBroker="redis://ranker-only-user:ranker-only-p%40ss@ranker-cache\.other\.net:6380/0"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'searchResultBroker="redis://ranker-only-user:ranker-only-p%40ss@ranker-cache\.other\.net:6380/0"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="rediss://:metrics-p%40ss%3Aw0rd@metrics-cache\.existing\.com:6379/0"'
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: "cache-acl-user"
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: "cache-p%40ss%3Aw0rd"
+  - it: "workspace's fallback Celery URL carries the main cache credential"
+    templates:
+      - ../templates/resources/workspace-config-py.yaml
+    values:
+      - ../values/values.existing.yaml
+    set:
+      workspace.enabled: true
+      workspace.token: test-runner-token
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'celery_broker_url="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'celery_result_backend="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+  - it: "a credential containing a space percent-encodes to %20 (never urlquery's literal '+'), for every identity"
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+      - ../templates/resources/ranker-config-py.yaml
+    values:
+      - ../values.yaml
+    set:
+      cache.password: "has space"
+      cache.metrics.password: "metrics has space"
+      ranker.cache.addr: ranker-cache.other.net
+      ranker.cache.username: ranker-user
+      ranker.cache.password: "ranker has space"
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'layoutBroker="redis://:has%20space@cache\.eyelevel\.svc\.cluster\.local:6379/0"'
+        template: ../templates/resources/layout-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: "has\\+space"
+        template: ../templates/resources/layout-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'layoutBroker="redis://has%20space@'
+        template: ../templates/resources/layout-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="redis://:metrics%20has%20space@cache-metrics\.eyelevel\.svc\.cluster\.local:6379/0"'
+        template: ../templates/resources/layout-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: "metrics\\+has\\+space"
+        template: ../templates/resources/layout-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="redis://metrics%20has%20space@'
+        template: ../templates/resources/layout-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'searchBroker="redis://ranker-user:ranker%20has%20space@ranker-cache\.other\.net:6379/0"'
+        template: ../templates/resources/ranker-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: "ranker\\+has\\+space"
+        template: ../templates/resources/ranker-config-py.yaml
+  - it: "workspace's operator-supplied Celery URLs are never rewritten with an injected credential"
+    templates:
+      - ../templates/resources/workspace-config-py.yaml
+    values:
+      - ../values/values.existing.yaml
+    set:
+      workspace.enabled: true
+      workspace.token: test-runner-token
+      workspace.celeryBrokerUrl: "rediss://custom-op:custom-secret@other-redis.mycorp.net:6379/2"
+      workspace.celeryResultBackend: "rediss://custom-op:custom-secret@other-redis.mycorp.net:6379/3"
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'celery_broker_url="rediss://custom-op:custom-secret@other-redis\.mycorp\.net:6379/2"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'celery_result_backend="rediss://custom-op:custom-secret@other-redis\.mycorp\.net:6379/3"'
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: "cache-acl-user"
+  - it: "workspace's partial override (broker only) still injects the main cache credential into the result-backend fallback"
+    templates:
+      - ../templates/resources/workspace-config-py.yaml
+    values:
+      - ../values/values.existing.yaml
+    set:
+      workspace.enabled: true
+      workspace.token: test-runner-token
+      workspace.celeryBrokerUrl: "rediss://custom-op:custom-secret@other-redis.mycorp.net:6379/2"
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'celery_broker_url="rediss://custom-op:custom-secret@other-redis\.mycorp\.net:6379/2"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'celery_result_backend="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache\.existing\.com:6379/0"'
+  - it: "a separately hosted TLS metrics Redis uses its own ssl setting for the scheme, not the main cache's"
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+    values:
+      - ../values.yaml
+    set:
+      cache.metrics.existing.addr: metrics-redis.mycorp.net
+      cache.metrics.existing.ssl: true
+      cache.metrics.username: muser
+      cache.metrics.password: mpass
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="rediss://muser:mpass@metrics-redis\.mycorp\.net:6379/0"'
+        template: ../templates/resources/layout-config-py.yaml
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'metricsBroker="redis://muser'
+        template: ../templates/resources/layout-config-py.yaml

@@ -14,6 +14,7 @@
 {{- $ic := include "groundx.extract.create" . -}}
 
 {{- if eq $ic "true" }}
+{{- include "groundx.extract.agent.validateImageSettings" . -}}
 {{- $fs := (include "groundx.extract.file.settings" . | fromYaml) -}}
 {{- $svc := include "groundx.extract.serviceName" . -}}
 {{- $bucketSuffix := printf "%s/" (get $fs "bucketName") -}}
@@ -22,6 +23,7 @@
 {{- $mid := include "groundx.extract.agent.modelId" . -}}
 {{- $re := include "groundx.extract.agent.reasoningEffort" . -}}
 {{- $it := include "groundx.extract.agent.imageTransport" . -}}
+{{- $ast := include "groundx.extract.agent.serviceType" . -}}
 {{- $did := include "groundx.extract.save.driveId" . -}}
 {{- $tid := include "groundx.extract.save.templateId" . -}}
 {{- $kw := include "groundx.extract.agent.kwargs" . | fromYaml -}}
@@ -30,13 +32,13 @@
 {{- end }}
 
 apiVersion: v1
-kind: ConfigMap
+kind: Secret
 metadata:
   name: {{ $svc }}-config-py-map
   namespace: {{ include "groundx.ns" . }}
   labels:
 {{ include "groundx.renderDefaultLabels" (dict "name" "" "indent" 4 "root" $) }}
-data:
+stringData:
   config.py: |
     from groundx.extract import (
         AgentSettings,
@@ -44,6 +46,10 @@ data:
         ContainerUploadSettings,
         GroundXSettings,
     )
+
+    agent_queue = {{ include "groundx.extract.agent.queue" . | quote }}
+    download_queue = {{ include "groundx.extract.download.queue" . | quote }}
+    save_queue = {{ include "groundx.extract.save.queue" . | quote }}
 
     agent_settings = AgentSettings(
         {{- if ne $bu "" }}
@@ -53,6 +59,9 @@ data:
         model_id={{ $mid | quote }},
         {{- end }}
         image_transport={{ $it | quote }},
+        {{- if ne $ast "" }}
+        service={{ $ast | quote }},
+        {{- end }}
         {{- if eq $re "null" }}
         reasoning_effort=None,
         {{- else if ne $re "" }}
@@ -77,7 +86,7 @@ data:
     )
 
     container_settings = ContainerSettings(
-        broker={{ printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
+        broker={{ printf "%s://%s%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.userinfo" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) | quote }},
         broker_type={{ include "groundx.cache.type" . | quote }},
         cache_dir={{ include "groundx.extract.cacheDirectory" . | quote }},
         callback_api_key={{ include "groundx.extract.callbackApiKey" . | quote }},
@@ -87,7 +96,7 @@ data:
         {{- if ne $tid "" }}
         google_sheets_template_id={{ $tid | quote }},
         {{- end }}
-        metrics_broker={{ printf "%s://%s:%v/0" (include "groundx.metrics.cache.scheme" .) (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) | quote }},
+        metrics_broker={{ printf "%s://%s%s:%v/0" (include "groundx.metrics.cache.scheme" .) (include "groundx.metrics.cache.userinfo" .) (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) | quote }},
         service={{ $svc | quote }},
         upload=ContainerUploadSettings(
             base_domain={{ get $fs "bucketDomain" | quote }},

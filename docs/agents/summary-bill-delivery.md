@@ -87,7 +87,7 @@ rollback or document deletion does not delete the delivered Drive copy.
 Run from the repository root. No command below deploys or uploads files.
 
 ```sh
-helm unittest src/groundx
+.build/bin/validate-helm.sh
 helm lint src/groundx
 helm template local src/groundx -f src/groundx/values/minikube/values.yaml
 helm template local src/groundx -f src/groundx/tests/files/values.summary-bill.yaml

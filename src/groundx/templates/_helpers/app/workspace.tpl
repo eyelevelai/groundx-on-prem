@@ -33,7 +33,8 @@ false
 
 {{- define "groundx.workspace.celeryBrokerUrl" -}}
 {{- $in := include "groundx.workspace.values" . | fromYaml -}}
-{{- $fallback := printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) -}}
+{{- $userinfo := include "groundx.cache.userinfo" . -}}
+{{- $fallback := printf "%s://%s%s:%v/0" (include "groundx.cache.scheme" .) $userinfo (include "groundx.cache.addr" .) (include "groundx.cache.port" .) -}}
 {{ coalesce (dig "celeryBrokerUrl" "" $in) $fallback }}
 {{- end }}
 
@@ -44,7 +45,8 @@ false
 
 {{- define "groundx.workspace.celeryResultBackend" -}}
 {{- $in := include "groundx.workspace.values" . | fromYaml -}}
-{{- $fallback := printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) -}}
+{{- $userinfo := include "groundx.cache.userinfo" . -}}
+{{- $fallback := printf "%s://%s%s:%v/0" (include "groundx.cache.scheme" .) $userinfo (include "groundx.cache.addr" .) (include "groundx.cache.port" .) -}}
 {{ coalesce (dig "celeryResultBackend" "" $in) $fallback }}
 {{- end }}
 
@@ -66,6 +68,11 @@ false
 {{- define "groundx.workspace.mysqlConnectTimeoutSeconds" -}}
 {{- $in := include "groundx.workspace.values" . | fromYaml -}}
 {{ dig "mysqlConnectTimeoutSeconds" 10 $in }}
+{{- end }}
+
+{{- define "groundx.workspace.ownershipChecksEnabled" -}}
+{{- $in := include "groundx.workspace.values" . | fromYaml -}}
+{{ dig "ownershipChecksEnabled" true $in }}
 {{- end }}
 
 {{- define "groundx.workspace.publishDryRun" -}}
