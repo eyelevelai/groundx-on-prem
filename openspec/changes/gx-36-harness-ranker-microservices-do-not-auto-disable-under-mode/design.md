@@ -27,8 +27,13 @@ the PATH `helm` in this workspace is v4.2.2 and unusable for this chart).
 **Non-Goals:**
 - `origin/main` (chart 0.2.6 line) — not touched, per explicit direction (decomposition A2).
 - `_helpers/app/ingress.tpl:16` not gating on `.create` — pre-existing, shared with
-  extract/layout/summary api ingress, out of scope.
+  extract/layout/summary api ingress, out of scope here; tracked as GX-44.
+- `ai.eyelevelSearch.baseURL` emitted unconditionally in `resources/config-yaml.yaml` — points at
+  a `ranker-api` Service that does not render under `mode: ingest` once this ships. Inert, only
+  the retrieval path reads it; tracked as GX-44.
 - Harness docs (`deployment-modes.md`) — no edit needed; its claims become true once this ships.
+  Separately, `what-it-is.md:15` ("Ranker (always on)") becomes false under `mode: ingest`;
+  tracked as GX-27 gap P2-5.
 - `values/extract/values.yaml` / `values.oai.yaml` — already correct (fully commented-out
   `nodeLabels:` example block); not touched.
 

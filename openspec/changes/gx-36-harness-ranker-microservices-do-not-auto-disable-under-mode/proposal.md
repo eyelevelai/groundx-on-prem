@@ -146,7 +146,10 @@ first"): `origin/main` (chart 0.2.6 release line) carries the identical regressi
 touched here, per explicit direction; `_helpers/app/ingress.tpl:16` gates the ranker-api ingress
 entry on `ranker.api.ingress.enabled` rather than on `groundx.ranker.api.create`, so an unusual
 `mode: ingest` + ingress opt-in still renders a backend-less Ingress — a pre-existing shape shared
-with `extract.api`/`layout.api`/`summary.api`, not introduced or widened by this change.
+with `extract.api`/`layout.api`/`summary.api`, not introduced or widened by this change, and now
+tracked as GX-44; and `resources/config-yaml.yaml` emits `ai.eyelevelSearch.baseURL`
+unconditionally, so a `mode: ingest` install carries a URL for a `ranker-api` Service that does not
+render — inert, because only the retrieval path reads it, and also tracked as GX-44.
 
 **Open design questions:** none — the fix shape, the assertion mechanism, the destructive-upgrade
 disclosure, the harness-docs scope decision (no change needed; the harness statements become true
