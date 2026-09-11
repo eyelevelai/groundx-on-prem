@@ -26,12 +26,57 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: summary-inference
+  name: layout-api
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: layout-api
+  name: layout-correct
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: layout-inference
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: layout-map
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: layout-ocr
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: layout-process
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: layout-save
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: layout-webhook
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pre-process
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: process
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: queue
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -41,7 +86,17 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: layout-inference
+  name: summary-client
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: summary-inference
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: upload
 """
 
 FORBIDDEN_DEPLOYMENT_DOC = """
@@ -173,27 +228,16 @@ def test_forbidden_configmap_supervisord_conf_alone_fails():
 
 def test_over_blocking_render_missing_a_required_sibling_fails():
     guard = load_guard()
-    text = """
+    text = REQUIRED_SIBLING_DOCS.replace(
+        """---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: summary-api
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: summary-inference
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: groundx
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: layout-inference
-"""
+  name: layout-api
+""",
+        "",
+    )
+    assert "name: layout-api" not in text
     failures = guard.check_render("src/groundx", text)
     assert failures == [
         "src/groundx: mode=ingest must still render sibling services ['layout-api']; "
@@ -206,8 +250,7 @@ def test_empty_render_fails_closed_on_missing_siblings():
     failures = guard.check_render("src/groundx", "")
     assert failures == [
         "src/groundx: mode=ingest must still render sibling services "
-        "['groundx', 'layout-api', 'layout-inference', 'summary-api', "
-        "'summary-inference']; "
+        "[\'groundx\', \'layout-api\', \'layout-correct\', \'layout-inference\', \'layout-map\', \'layout-ocr\', \'layout-process\', \'layout-save\', \'layout-webhook\', \'pre-process\', \'process\', \'queue\', \'summary-api\', \'summary-client\', \'summary-inference\', \'upload\']; "
         "a guard that also drops these is over-blocking, not fixed."
     ]
 
@@ -290,12 +333,6 @@ def test_quoted_kind_on_a_forbidden_document_is_still_seen():
     assert "ranker-api" in failures[0], failures
 
 
-def test_required_siblings_covers_every_default_ingest_workload():
-    guard = load_guard()
-    assert {"groundx", "summary-inference"} <= guard.REQUIRED_SIBLINGS
-    assert "extract-api" not in guard.REQUIRED_SIBLINGS
-
-
 def main() -> int:
     test_known_good_render_has_no_failures()
     test_known_bad_render_with_ranker_deployment_and_siblings_fails()
@@ -311,7 +348,6 @@ def main() -> int:
     test_unparsable_name_on_a_forbidden_kind_fails_closed()
     test_forbidden_kind_document_with_no_name_fails_closed()
     test_quoted_kind_on_a_forbidden_document_is_still_seen()
-    test_required_siblings_covers_every_default_ingest_workload()
     test_main_exits_1_on_known_bad_render()
     test_main_exits_0_on_known_good_render()
     print("verify-ingest-render tests passed")

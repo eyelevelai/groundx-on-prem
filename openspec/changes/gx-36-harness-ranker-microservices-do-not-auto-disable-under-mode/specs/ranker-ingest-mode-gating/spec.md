@@ -99,10 +99,14 @@ an `eyelevel-gpu-ranker` node-label reference appears, under `mode: ingest`, on 
 `src/groundx` and `helm`, and that does not fail when the sibling non-ranker workloads that
 `mode: ingest` still needs render normally. The gate SHALL fail closed rather than pass when it
 cannot read a forbidden-kind document's `metadata.name`, so an unparsed document is never mistaken
-for an absent one. Its required-sibling positive control SHALL cover `groundx`, `layout-api`,
-`layout-inference`, `summary-api` and `summary-inference` — the workloads that render at the
-default values the gate uses; the opt-in `extract-api` is excluded because `extract.enabled`
-defaults false. The ranker HPA unit-test case SHALL carry a positive control (`layout-inference-hpa`)
+for an absent one. Its required-sibling positive control SHALL cover every Deployment that renders at
+the gate's default values — all sixteen: `groundx`, `layout-api`, `layout-correct`,
+`layout-inference`, `layout-map`, `layout-ocr`, `layout-process`, `layout-save`, `layout-webhook`,
+`pre-process`, `process`, `queue`, `summary-api`, `summary-client`, `summary-inference` and
+`upload` — so an over-blocking change that drops any of them fails the gate. The gate renders one
+fixed values set, so pinning the full inventory cannot fail a correct render; a deliberate change
+to the ingest workload set is expected to update this list. The opt-in `extract-api` is excluded
+because `extract.enabled` defaults false and it does not render there. The ranker HPA unit-test case SHALL carry a positive control (`layout-inference-hpa`)
 so it cannot pass against an empty render. This requirement exists because `helm/` has no
 `tests/` tree (`.helmignore` excludes it from the package) and CI runs `helm unittest` against
 `src/groundx` alone — this gate is the only mechanism that ever exercises the `helm/` mirror's

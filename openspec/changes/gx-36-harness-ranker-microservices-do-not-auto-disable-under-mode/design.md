@@ -164,13 +164,20 @@ shapes are asserted below.
   pre-fix render (`b8e57f2d`) on both chart surfaces (exit 1, same messages) and against head on
   both surfaces (exit 0). **Two later review-round fixes did change the classification logic, and
   they are the guard's current behavior:** (1) a forbidden-kind document whose `metadata.name` the
-  guard cannot read now fails the gate rather than being silently skipped, so an unreadable
-  document can no longer produce a false pass, and the `kind:` match tolerates a quoted value for
-  the same reason; (2) `REQUIRED_SIBLINGS` was widened from three names to five — `groundx`,
-  `layout-api`, `layout-inference`, `summary-api`, `summary-inference` — so an over-blocking change
-  that dropped the orchestration API or the default-on summary inference workload is caught. The
-  opt-in `extract-api` is deliberately excluded: `extract.enabled` defaults false, so it does not
-  render at the defaults the gate uses and requiring it would fail a correct render.
+  guard cannot read now fails the gate rather than being silently skipped, and the `kind:` match
+  tolerates a double-quoted value. The fail-closed branch is scoped to documents whose `kind:` line
+  the guard already matched: a document whose `kind:` line it cannot parse at all (single-quoted, or
+  carrying a trailing comment) is still skipped silently. No template on either surface emits such a
+  line — every `kind:` in `src/groundx/templates` is a literal — so this has no caller today, but
+  the guard is not fail-closed on every unparsable document and should not be described as such; (2) `REQUIRED_SIBLINGS` was widened from three names to all sixteen
+  Deployments the gate's default render contains, so an over-blocking change that drops any of them
+  fails the gate. A narrower sample was tried first and rejected on review: the gate renders one
+  fixed values set, so every one of the sixteen is present unconditionally and pinning the full
+  inventory cannot fail a correct render — the same evidence that justifies excluding `extract-api`
+  proves the rest are safe to require. The cost is that a deliberate change to the ingest workload
+  set must update this list, which is the intended behavior for a gate. The opt-in `extract-api`
+  stays excluded: `extract.enabled` defaults false, so it does not render at the defaults the gate
+  uses and requiring it would fail a correct render.
 - **Mutation testing showed the first extracted fixture set proved only 3 of the 7 forbidden
   names — one fixture per name is required, not one per kind.** Deleting a whole
   `FORBIDDEN_BY_KIND` entry (`Service`, `Secret`, or `ConfigMap`) or dropping `ranker-inference`

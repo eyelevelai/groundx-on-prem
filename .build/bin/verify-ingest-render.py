@@ -18,9 +18,20 @@ FORBIDDEN_BY_KIND = {
 REQUIRED_SIBLINGS = {
     "groundx",
     "layout-api",
+    "layout-correct",
     "layout-inference",
+    "layout-map",
+    "layout-ocr",
+    "layout-process",
+    "layout-save",
+    "layout-webhook",
+    "pre-process",
+    "process",
+    "queue",
     "summary-api",
+    "summary-client",
     "summary-inference",
+    "upload",
 }
 
 FORBIDDEN_NODE_LABEL = "eyelevel-gpu-ranker"

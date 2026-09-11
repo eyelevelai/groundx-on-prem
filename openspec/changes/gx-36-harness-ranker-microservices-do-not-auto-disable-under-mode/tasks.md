@@ -65,8 +65,9 @@ classification logic was extracted to `.build/bin/verify-ingest-render.py` with 
 at `.build/tests/test_verify_ingest_render.py`, wired into the gate ahead of the guard (same
 pattern as the existing snapshot guard). The extraction was provenance only; two later
 review-round fixes then changed the guard's behavior deliberately — it now fails closed on a
-forbidden-kind document whose `metadata.name` it cannot read, and its required-sibling set was
-widened to five workloads (see `design.md` and `spec.md`). This task confirms it — and the rest of
+forbidden-kind document whose `metadata.name` it cannot read (not on one whose `kind:` line it
+cannot parse; see `design.md`), and its required-sibling set was widened from three workloads to
+all sixteen that the gate's default render contains. This task confirms it — and the rest of
 the chart gate — stays green once tasks 1-3 land.
 
 - [x] 4.1 Run the full local gate with the tasks 1-3 changes in place.
