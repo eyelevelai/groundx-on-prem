@@ -291,6 +291,11 @@ tests:
           name: ranker-inference-hpa
           any: true
         not: true
+      - containsDocument:
+          kind: HorizontalPodAutoscaler
+          apiVersion: autoscaling/v2
+          name: layout-inference-hpa
+          any: true
   - it: "extract.ingest: ranker-inference busyWindowSeconds is omitted from metrics.inference even with cluster.hpa enabled"
     templates:
       - ../templates/resources/config-yaml.yaml

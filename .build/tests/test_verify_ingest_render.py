@@ -218,6 +218,40 @@ def test_main_exits_0_on_known_good_render():
             assert guard.main(["verify-ingest-render.py", "src/groundx", str(render_path)]) == 0
 
 
+QUOTED_NAME_FORBIDDEN_DOC = """
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: 'ranker-api'
+"""
+
+UNNAMED_FORBIDDEN_KIND_DOC = """
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: ranker-api
+"""
+
+
+def test_unparsable_name_on_a_forbidden_kind_fails_closed():
+    guard = load_guard()
+    failures = guard.check_render(
+        "src/groundx", QUOTED_NAME_FORBIDDEN_DOC + "---" + REQUIRED_SIBLING_DOCS
+    )
+    assert failures, "a forbidden-kind document whose name cannot be read must fail the guard"
+    assert "fails closed" in failures[0], failures
+
+
+def test_forbidden_kind_document_with_no_name_fails_closed():
+    guard = load_guard()
+    failures = guard.check_render(
+        "src/groundx", UNNAMED_FORBIDDEN_KIND_DOC + "---" + REQUIRED_SIBLING_DOCS
+    )
+    assert failures, "a forbidden-kind document with no metadata.name must fail the guard"
+    assert "fails closed" in failures[0], failures
+
+
 def main() -> int:
     test_known_good_render_has_no_failures()
     test_known_bad_render_with_ranker_deployment_and_siblings_fails()
@@ -230,6 +264,8 @@ def main() -> int:
     test_over_blocking_render_missing_a_required_sibling_fails()
     test_empty_render_fails_closed_on_missing_siblings()
     test_gpu_ranker_node_label_reference_fails_even_off_forbidden_kinds()
+    test_unparsable_name_on_a_forbidden_kind_fails_closed()
+    test_forbidden_kind_document_with_no_name_fails_closed()
     test_main_exits_1_on_known_bad_render()
     test_main_exits_0_on_known_good_render()
     print("verify-ingest-render tests passed")

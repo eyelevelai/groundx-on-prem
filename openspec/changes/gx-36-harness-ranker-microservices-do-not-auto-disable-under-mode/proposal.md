@@ -11,13 +11,15 @@ has `mode: ingest` set.
   unfixed `0.2.7` tip both carry the regression: under `mode: ingest`, `ranker-api` and
   `ranker-inference` render today even though the chart's own defaults (`ranker.api.enabled:
   true`, `ranker.inference.enabled: true`) were meant to be overridden by ingest-only mode.
-- The first `helm upgrade` from either of those onto this fix **deletes** exactly these seven live
+- The first `helm upgrade` from either of those onto this fix **deletes** these seven live
   objects in any existing `mode: ingest` install: `Deployment/ranker-api`,
   `Deployment/ranker-inference`, `Service/ranker-api` (there is no `ranker-inference` Service —
   `templates/app/inference.yaml` never calls `groundx.renderInterface`),
   `Secret/ranker-config-py-map` (renders `kind: Secret`, not `ConfigMap` — GX-17), and the two
   `ConfigMap`s `ranker-gunicorn-conf-py-map` and `ranker-inference-supervisord-conf-map`, plus the
-  `PersistentVolumeClaim/ranker-model`. No `helm.sh/resource-policy: keep` exists on any of these
+  `PersistentVolumeClaim/ranker-model`. An install running `cluster.hpa: true` additionally loses
+  the `ranker-api-hpa` and `ranker-inference-hpa` HorizontalPodAutoscalers, for nine objects in
+  that case. No `helm.sh/resource-policy: keep` exists on any of these
   objects.
 - Deleting the `ranker-model` PVC deletes the PVC object itself; whether the **backing volume** is
   also reclaimed depends on the install's StorageClass `reclaimPolicy`
@@ -37,11 +39,18 @@ has `mode: ingest` set.
   correction (see `spec.md`) changes the render for the specific `mode: all` +
   `ranker.inference.enabled: false` combination — `metricsBusyWindowSeconds` drops from
   `ranker-config-py.yaml` and the whole `ranker-inference` entry drops from `config-yaml.yaml`'s
-  `metrics.inference` list, changing that Deployment's `config-hash` and rolling its pods on the
-  next upgrade for any `mode: all` operator running with ranker inference individually disabled.
-  Measured: rendering `templates/app/api.yaml` with `tests/files/values.disabled.yaml` and
-  `--set ranker.api.enabled=true` gives `config-hash: fa8bdec4...` at `b8e57f2d` vs
-  `config-hash: e5e1c6e3...` at this change's head — see `design.md` for the full hashes.
+  `metrics.inference` list. No `ranker-inference` Deployment exists in this combination — it is
+  the disabled one — so what rolls is the **`ranker-api`** Deployment plus every workload that
+  hashes the shared `resources/config-yaml.yaml`. Measured two ways. On the minimal
+  `tests/files/values.disabled.yaml` fixture with `--set ranker.api.enabled=true`, where
+  `ranker-api` is the only Deployment that renders at all, its `config-hash` goes from
+  `fa8bdec4...` at `b8e57f2d` to `e5e1c6e3...` at this change's head (see `design.md` for the
+  full hashes). On a realistic `mode: all` install with `--set ranker.inference.enabled=false`,
+  **eight** Deployments get a new `config-hash` and roll on the next upgrade: `ranker-api`
+  (`0c7fefcf...` to `875ee959...`) plus `groundx`, `layout-webhook`, `pre-process`, `process`,
+  `queue`, `summary-client` and `upload` (all `20f34855...` to `de6265bc...`), because
+  `templates/app/golang.yaml` and `templates/app/metrics.yaml` hash the shared
+  `resources/config-yaml.yaml` whose `metrics.inference` list loses the `ranker-inference` entry.
 
 **Rollback/rollforward.** This is a template-only fix with no schema or migration step. Rollback
 is `helm rollback` to the prior chart version, which re-creates the deleted ranker objects from
@@ -176,7 +185,8 @@ none of it asserts (or contradicts) mode-gating behavior, so no existing require
   other workspace repo; this ticket deliberately excludes the harness repos (`AGENTS.md`
   §Resolve-from-docs; decomposition A2).
 - **Systems / data:** no schema or seed-data migration. The destructive-upgrade impact on a live
-  `mode: ingest` install (the seven objects enumerated above under Blast radius, plus the
+  `mode: ingest` install (the seven objects enumerated above under Blast radius, the two ranker
+  HorizontalPodAutoscalers where `cluster.hpa: true`, plus the
   `ranker-model` PVC's backing volume where the install's StorageClass reclaim policy is
   `Delete`) is a chart-render consequence surfaced above under Blast radius, not a database
   change — nothing here requires the pipeline's DB-migration gates.

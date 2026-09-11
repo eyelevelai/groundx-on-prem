@@ -97,9 +97,13 @@ communicate the same fact. `values.schema.json` is left untouched on both surfac
 Not a task in this file: see the workspace `openspec/changes/gx-36-harness-ranker-microservices-do-not-auto-disable-under-mode/tasks.md`
 for the hand-off checklist — pushing the branch, opening the PR against `0.2.7` (not `main`), and
 carrying two release-note items into the PR body and the 0.2.7 release notes: (1) the
-destructive-upgrade note (existing `mode: ingest` installs lose the seven ranker objects — see
+destructive-upgrade note (existing `mode: ingest` installs lose the seven ranker objects, and the
+two ranker HorizontalPodAutoscalers where `cluster.hpa: true` — see
 `proposal.md` Blast radius for the full inventory and the volume-reclaim qualification — on the
 first upgrade past published 0.2.6), and (2) the `mode: all` + `ranker.inference.enabled: false`
 config-hash change from the `busyWindowSeconds` `.create`-gating correction (see `spec.md`'s
-"Exception, independent of `mode`" note) — that combination's `ranker-inference` Deployment rolls
-its pods on the next upgrade even though it is not the destructive `mode: ingest` case above.
+"Exception, independent of `mode`" note) — on a realistic `mode: all` install that combination
+rolls eight Deployments on the next upgrade (`ranker-api` plus `groundx`, `layout-webhook`,
+`pre-process`, `process`, `queue`, `summary-client` and `upload`, which hash the shared
+`resources/config-yaml.yaml`), even though it is not the destructive `mode: ingest` case above.
+There is no `ranker-inference` Deployment in this combination — it is the disabled one.

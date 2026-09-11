@@ -20,29 +20,42 @@ REQUIRED_SIBLINGS = {"layout-api", "summary-api", "layout-inference"}
 FORBIDDEN_NODE_LABEL = "eyelevel-gpu-ranker"
 
 
-def document_names(documents: list[str], kind: str) -> set[str]:
+def document_names(documents: list[str], kind: str) -> tuple[set[str], int]:
     names: set[str] = set()
+    unnamed = 0
     for doc in documents:
         if not re.search(rf"(?m)^kind:\s*{kind}\s*$", doc):
             continue
         match = re.search(r'(?m)^  name:\s*"?([A-Za-z0-9._-]+)"?\s*$', doc)
         if match:
             names.add(match.group(1))
-    return names
+        else:
+            unnamed += 1
+    return names, unnamed
 
 
 def check_render(chart: str, text: str) -> list[str]:
     documents = re.split(r"(?m)^---$", text)
 
     violations = []
+    unnamed_kinds = []
     for kind, names in FORBIDDEN_BY_KIND.items():
-        present = document_names(documents, kind) & names
+        found, unnamed = document_names(documents, kind)
+        if unnamed:
+            unnamed_kinds.append(f"{kind}={unnamed}")
+        present = found & names
         if present:
             violations.append(f"{kind}={sorted(present)}")
+    if unnamed_kinds:
+        return [
+            f"{chart}: could not read metadata.name from {'; '.join(unnamed_kinds)} document(s); "
+            "the guard cannot prove the ranker is absent, so it fails closed."
+        ]
     if violations:
         return [f"{chart}: mode=ingest must not render {'; '.join(violations)}."]
 
-    missing = REQUIRED_SIBLINGS - document_names(documents, "Deployment")
+    deployments, _ = document_names(documents, "Deployment")
+    missing = REQUIRED_SIBLINGS - deployments
     if missing:
         return [
             f"{chart}: mode=ingest must still render sibling services {sorted(missing)}; "

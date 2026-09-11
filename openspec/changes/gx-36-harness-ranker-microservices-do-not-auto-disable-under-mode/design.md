@@ -207,8 +207,9 @@ shapes are asserted below.
 ## Risks / Trade-offs
 
 - **[Risk] The destructive-upgrade impact on existing `mode: ingest` installs** (deletes the seven
-  ranker objects — see `proposal.md` Blast radius for the full inventory and the volume-reclaim
-  qualification — on the first upgrade past published 0.2.6) →
+  ranker objects, and the two ranker HorizontalPodAutoscalers where the install runs
+  `cluster.hpa: true` — see `proposal.md` Blast radius for the full inventory and the
+  volume-reclaim qualification — on the first upgrade past published 0.2.6) →
   **Mitigation:** already covered in `proposal.md` Blast Radius; carried into the PR body and
   0.2.7 release notes per `tasks.md` hand-off. Not restated here.
 - **[Risk] An inert `gpuRanker` key remains in the chainguard preset** (see nodeLabels decision
