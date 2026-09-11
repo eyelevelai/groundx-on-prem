@@ -98,8 +98,11 @@ ranker objects — the `ranker-api` / `ranker-inference` Deployments, the `ranke
 an `eyelevel-gpu-ranker` node-label reference appears, under `mode: ingest`, on **both**
 `src/groundx` and `helm`, and that does not fail when the sibling non-ranker workloads that
 `mode: ingest` still needs render normally. The gate SHALL fail closed rather than pass when it
-cannot read a forbidden-kind document's `metadata.name`, so an unparsed document is never mistaken
-for an absent one. Its required-sibling positive control SHALL cover every Deployment that renders at
+cannot read a forbidden-kind document's `metadata.name`, so such a document is never mistaken for
+an absent one. This is scoped to documents whose `kind:` line the gate already matched: one whose
+`kind:` line it cannot parse at all is still skipped silently. No template on either surface emits
+such a line today, so the class has no caller, but the gate is not fail-closed on every unparsable
+document. Its required-sibling positive control SHALL cover every Deployment that renders at
 the gate's default values — all sixteen: `groundx`, `layout-api`, `layout-correct`,
 `layout-inference`, `layout-map`, `layout-ocr`, `layout-process`, `layout-save`, `layout-webhook`,
 `pre-process`, `process`, `queue`, `summary-api`, `summary-client`, `summary-inference` and
