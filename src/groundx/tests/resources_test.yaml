@@ -791,3 +791,58 @@ tests:
           path: stringData["config.py"]
           pattern: 'metricsBroker="redis://muser'
         template: ../templates/resources/layout-config-py.yaml
+  - it: "large-file kafka: resources"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.large-file.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "large-file sqs: resources"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.large-file.yaml
+    set:
+      stream.topics.largeFile.type: sqs
+      stream.topics.largeFile.url: https://sqs.us-west-2.amazonaws.com/123456789012/large-file
+      stream.topics.largeFile.region: us-west-2
+    asserts:
+      - matchSnapshot: {}
+  - it: emits the same delivery topic and credential path for Go workers
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.large-file.yaml
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'largeFile:\n\s+broker:.*\n\s+groupId: large-file\n\s+topic: large-file\n\s+type: kafka'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'credentialsFile: /var/run/groundx/large-file/operations-drive/credentials.json'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'largeFileDeliveryServer:'
+  - it: omits optional delivery configuration when explicitly disabled
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      largeFileDeliver.enabled: false
+    asserts:
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'largeFile|large-file'
+  - it: uses the external SQS queue
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.large-file.yaml
+    set:
+      stream.topics.largeFile.type: sqs
+      stream.topics.largeFile.url: https://sqs.us-west-2.amazonaws.com/123456789012/large-file
+      stream.topics.largeFile.region: us-west-2
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'largeFile:\n\s+region: us-west-2\n\s+type: sqs\n\s+url: https://sqs.us-west-2.amazonaws.com/123456789012/large-file'
