@@ -14,6 +14,10 @@
     {{- if and (eq (dig "token" "" $in) "") (eq (dig "existingSecret" "" $in) "") -}}
       {{- fail "workspace requires workspace.token or workspace.existingSecret when enabled" -}}
     {{- end -}}
+    {{- $managedData := dig "managedData" dict $in -}}
+    {{- if and (dig "enabled" false $managedData) (eq (dig "existingSecret" "" $in) "") -}}
+      {{- fail "workspace managed data requires workspace.existingSecret" -}}
+    {{- end -}}
 true
   {{- else -}}false{{- end -}}
 {{- else -}}
@@ -181,6 +185,41 @@ false
 {{- define "groundx.workspace.managedRepoVisibility" -}}
 {{- $in := include "groundx.workspace.values" . | fromYaml -}}
 {{ dig "managedRepoVisibility" "private" $in }}
+{{- end }}
+
+{{- define "groundx.workspace.managedData" -}}
+{{- $in := include "groundx.workspace.values" . | fromYaml -}}
+{{ dig "managedData" dict $in | toYaml }}
+{{- end }}
+
+{{- define "groundx.workspace.managedData.enabled" -}}
+{{- $in := include "groundx.workspace.managedData" . | fromYaml -}}
+{{ dig "enabled" false $in }}
+{{- end }}
+
+{{- define "groundx.workspace.managedData.awsRegion" -}}
+{{- $in := include "groundx.workspace.managedData" . | fromYaml -}}
+{{ dig "awsRegion" "" $in }}
+{{- end }}
+
+{{- define "groundx.workspace.managedData.environment" -}}
+{{- $managed := include "groundx.workspace.managedData" .root | fromYaml -}}
+{{ dig .environment dict $managed | toYaml }}
+{{- end }}
+
+{{- define "groundx.workspace.managedData.s3Bucket" -}}
+{{- $in := include "groundx.workspace.managedData.environment" . | fromYaml -}}
+{{ dig "s3Bucket" "" $in }}
+{{- end }}
+
+{{- define "groundx.workspace.managedData.redisEndpoint" -}}
+{{- $in := include "groundx.workspace.managedData.environment" . | fromYaml -}}
+{{ dig "redisEndpoint" "" $in }}
+{{- end }}
+
+{{- define "groundx.workspace.managedData.redisUserGroup" -}}
+{{- $in := include "groundx.workspace.managedData.environment" . | fromYaml -}}
+{{ dig "redisUserGroup" "" $in }}
 {{- end }}
 
 {{- define "groundx.workspace.token" -}}

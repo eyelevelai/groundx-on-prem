@@ -1,0 +1,14 @@
+workspace:
+  enabled: true
+  existingSecret: workspace-managed-data
+  managedData:
+    enabled: true
+    awsRegion: us-east-1
+    dev:
+      s3Bucket: managed-dev
+      redisEndpoint: rediss://cache-dev.example:6379/0
+      redisUserGroup: managed-dev
+    prod:
+      s3Bucket: managed-prod
+      redisEndpoint: rediss://cache-prod.example:6379/0
+      redisUserGroup: managed-prod

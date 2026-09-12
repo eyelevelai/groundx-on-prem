@@ -1481,6 +1481,33 @@
         "managedRepoNamePrefix": { "type": "string" },
         "managedRepoOwner": { "type": "string" },
         "managedRepoVisibility": { "type": "string" },
+        "managedData": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "awsRegion": { "type": "string" },
+            "dev": {
+              "type": "object",
+              "properties": {
+                "s3Bucket": { "type": "string" },
+                "redisEndpoint": { "type": "string" },
+                "redisUserGroup": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "prod": {
+              "type": "object",
+              "properties": {
+                "s3Bucket": { "type": "string" },
+                "redisEndpoint": { "type": "string" },
+                "redisUserGroup": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        },
         "mysqlConnectTimeoutSeconds": { "type": "integer" },
         "node": { "type": "string" },
         "publishGithubWorkflowId": { "type": "string" },

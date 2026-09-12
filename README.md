@@ -390,6 +390,8 @@ Workspace project metadata and operation state are stored in MySQL. The primary 
 
 Publish is dry-run by default. To enable real publish, set `workspace.publishDryRun: false`, configure the provider credentials owned by the runner service, and set the workflow or pipeline to trigger. For GitHub Actions:
 
+Managed project data is also disabled by default. For the hosted AWS path, set `workspace.managedData.enabled: true`, its AWS region, and the dev and prod S3 bucket, Redis endpoint, and Redis user-group values. Use `workspace.existingSecret`; it must contain `WORKSPACE_RUNNER_TOKEN`, `MANAGED_DATA_RDS_ADMIN_CONNECTION_DEV`, and `MANAGED_DATA_RDS_ADMIN_CONNECTION_PROD`. Keep the RDS administrator URLs out of values files. Grant every Workspace component service account the least-privilege AWS permissions needed to manage the configured S3 prefixes, IAM users, and ElastiCache users. Enable dev first and verify allocation, republish, isolation, and confirmed deletion before enabling prod. Disabling the setting stops new reconciliation but does not delete existing app data.
+
 ```yaml
 workspace:
   enabled: true

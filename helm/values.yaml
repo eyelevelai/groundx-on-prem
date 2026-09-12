@@ -357,6 +357,20 @@ workspace:
   gitProvider: github
   publishGithubWorkflowId: deploy.yml
 
+  # Hosted AWS logical allocation. RDS administrator URLs must be supplied by
+  # existingSecret as MANAGED_DATA_RDS_ADMIN_CONNECTION_DEV and _PROD.
+  managedData:
+    enabled: false
+    awsRegion: ""
+    dev:
+      s3Bucket: ""
+      redisEndpoint: ""
+      redisUserGroup: ""
+    prod:
+      s3Bucket: ""
+      redisEndpoint: ""
+      redisUserGroup: ""
+
   github:
     apiBaseUrl: https://api.github.com
     appId: ""
