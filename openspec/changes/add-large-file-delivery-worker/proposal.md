@@ -1,18 +1,18 @@
 ## Why
 
-The current chart enumerates its Go workloads and stream topics. A cashbot-go image containing SummaryBillDeliver alone cannot deploy the worker or provision its topic. This change supplies the Kubernetes dependency of cashbot-go's `route-summary-bills-before-preprocess` change.
+The current chart enumerates its Go workloads and stream topics. A cashbot-go image containing LargeFileDeliver alone cannot deploy the worker or provision its topic. This change supplies the Kubernetes dependency of cashbot-go's `route-large-files-before-preprocess` change.
 
 ## What Changes
 
-- Add an optional `summaryBillDeliver` Go workload, disabled by default, using the existing generic Go deployment template.
-- Add the optional `file-summary-bill` stream topic and producer/consumer config, matching the implemented cashbot-go configuration contract.
+- Add an optional `largeFileDeliver` Go workload, disabled by default, using the existing generic Go deployment template.
+- Add the optional `large-file` stream topic and producer/consumer config, matching the implemented cashbot-go configuration contract.
 - Extend values/schema, service helpers, required resource/credential bindings, and render tests. Edit `src/groundx/` first and mirror the shipping changes to `helm/`.
 - Preserve the rendered default installation when this feature is disabled.
 
 ## Capabilities
 
 ### New Capabilities
-- `summary-bill-deployment`: opt-in delivery worker and transport configuration.
+- `large-file-deployment`: opt-in delivery worker and transport configuration.
 
 ### Modified Capabilities
 None.

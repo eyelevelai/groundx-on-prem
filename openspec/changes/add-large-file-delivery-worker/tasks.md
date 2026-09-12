@@ -1,11 +1,13 @@
 Evidence: [Implementation and local checks](implementation-evidence.md). Live capacity and activation remain pending.
 
+- [x] Use `largeFileDeliver`, `stream.topics.largeFile`, `queues.largeFile`, and the large-file helper/image names consistently with cashbot-go before activation. Preserve disabled chart output and existing delivery behavior.
+
 ## 1. Lock the shared contract
-- [x] 1.1 Read the implemented cashbot-go `route-summary-bills-before-preprocess` config, server entrypoint, helper packaging and resource record. Record the required image and exact YAML bindings; do not enable accounts with an incomplete producer/consumer build.
+- [x] 1.1 Read the implemented cashbot-go `route-large-files-before-preprocess` config, server entrypoint, helper packaging and resource record. Record the required image and exact YAML bindings; do not enable accounts with an incomplete producer/consumer build.
 
 ## 2. Optional worker and transport
-- [x] 2.1 Add the disabled-by-default summaryBillDeliver values/schema and service helpers, register it in the Go service list, and use the existing generic deployment rendering.
-- [x] 2.2 Add the optional file-summary-bill topic and Go producer/consumer config. Follow existing Kafka/external-queue overrides and credential references, without adding secret values to ConfigMaps.
+- [x] 2.1 Add the disabled-by-default largeFileDeliver values/schema and service helpers, register it in the Go service list, and use the existing generic deployment rendering.
+- [x] 2.2 Add the optional large-file topic and Go producer/consumer config. Follow existing Kafka/external-queue overrides and credential references, without adding secret values to ConfigMaps.
 - [x] 2.3 Mirror the changed chart sources to helm/ without hand-authoring divergent templates.
 
 ## 3. Verification

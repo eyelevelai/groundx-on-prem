@@ -5,8 +5,8 @@
 {{- $t4 := (include "groundx.stream.topic.update" . | fromYaml) -}}
 {{- $t5 := (include "groundx.stream.topic.upload" . | fromYaml) -}}
 {{- $t6 := dict -}}
-{{- if eq (include "groundx.summaryBillDeliver.create" .) "true" -}}
-{{- $t6 = (include "groundx.stream.topic.summaryBill" . | fromYaml) -}}
+{{- if eq (include "groundx.largeFileDeliver.create" .) "true" -}}
+{{- $t6 = (include "groundx.stream.topic.largeFile" . | fromYaml) -}}
 {{- end -}}
 {{- if or (eq (dig "type" "" $t6) "kafka") (eq (dig "type" "" $t1) "kafka") (eq (dig "type" "" $t2) "kafka") (eq (dig "type" "" $t3) "kafka") (eq (dig "type" "" $t4) "kafka") (eq (dig "type" "" $t5) "kafka") -}}
 true
@@ -240,10 +240,10 @@ false
 {{- $cfg | toYaml -}}
 {{- end }}
 
-{{- define "groundx.stream.topic.summaryBill" -}}
+{{- define "groundx.stream.topic.largeFile" -}}
 {{- $in := .Values.stream | default dict -}}
 {{- $topics := dig "topics" dict $in -}}
-{{- $topic := dig "summaryBill" dict $topics -}}
+{{- $topic := dig "largeFile" dict $topics -}}
 {{- $broker := printf "%s:%v" (include "groundx.stream.domain" .) (include "groundx.stream.port" .) -}}
 {{- $key := coalesce (dig "key" "" $topic | trim) (include "groundx.stream.key" .) -}}
 {{- $region := coalesce (dig "region" "" $topic | trim) (include "groundx.stream.region" .) -}}
@@ -256,7 +256,7 @@ false
 -}}
 
 {{- if eq $ty "kafka" -}}
-  {{- $name := dig "topic" "file-summary-bill" $topic -}}
+  {{- $name := dig "topic" "large-file" $topic -}}
   {{- $_ := set $cfg "broker" (dig "broker" $broker $topic) -}}
   {{- $_ := set $cfg "groupId" (dig "groupId" $name $topic) -}}
   {{- $_ := set $cfg "topic" $name -}}
@@ -323,10 +323,10 @@ false
   {{- $_ := set $cfg (index $pp "topic") ($desired) -}}
 {{- end -}}
 
-{{- if eq (include "groundx.summaryBillDeliver.create" .) "true" -}}
-{{- $pp := (include "groundx.stream.topic.summaryBill" . | fromYaml) -}}
+{{- if eq (include "groundx.largeFileDeliver.create" .) "true" -}}
+{{- $pp := (include "groundx.stream.topic.largeFile" . | fromYaml) -}}
 {{- if eq (dig "type" "" $pp) "kafka" -}}
-  {{- $rep := (include "groundx.summaryBillDeliver.replicas" . | fromYaml) -}}
+  {{- $rep := (include "groundx.largeFileDeliver.replicas" . | fromYaml) -}}
   {{- $_ := set $cfg (index $pp "topic") (int (dig "desired" 1 $rep)) -}}
 {{- end -}}
 {{- end -}}

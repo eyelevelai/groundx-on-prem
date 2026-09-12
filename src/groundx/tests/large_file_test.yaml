@@ -1,4 +1,4 @@
-suite: summary bill delivery
+suite: large file delivery
 chart:
   appVersion: 0.1.0
   version: 0.1.0
@@ -7,26 +7,26 @@ tests:
     templates:
       - ../templates/app/golang.yaml
     values:
-      - ./files/values.summary-bill.yaml
+      - ./files/values.large-file.yaml
     documentSelector:
       path: metadata.name
-      value: summary-bill-delivery
+      value: large-file-delivery
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: test.invalid/summary-bill-delivery:local
+          value: test.invalid/large-file-delivery:local
       - contains:
           path: spec.template.spec.containers[0].volumeMounts
           content:
-            name: summary-bill-credential-0
-            mountPath: /var/run/groundx/summary-bill/operations-drive
+            name: large-file-credential-0
+            mountPath: /var/run/groundx/large-file/operations-drive
             readOnly: true
       - contains:
           path: spec.template.spec.volumes
           content:
-            name: summary-bill-credential-0
+            name: large-file-credential-0
             secret:
-              secretName: summary-bill-drive
+              secretName: large-file-drive
               items:
                 - key: service-account.json
                   path: credentials.json
@@ -34,36 +34,36 @@ tests:
     templates:
       - ../templates/resources/config-yaml.yaml
     values:
-      - ./files/values.summary-bill.yaml
+      - ./files/values.large-file.yaml
     asserts:
       - matchRegex:
           path: stringData["config.yaml"]
-          pattern: 'fileSummaryBill:\n\s+broker:.*\n\s+groupId: file-summary-bill\n\s+topic: file-summary-bill\n\s+type: kafka'
+          pattern: 'largeFile:\n\s+broker:.*\n\s+groupId: large-file\n\s+topic: large-file\n\s+type: kafka'
       - matchRegex:
           path: stringData["config.yaml"]
-          pattern: 'credentialsFile: /var/run/groundx/summary-bill/operations-drive/credentials.json'
+          pattern: 'credentialsFile: /var/run/groundx/large-file/operations-drive/credentials.json'
       - matchRegex:
           path: stringData["config.yaml"]
-          pattern: 'summaryBillDeliveryServer:'
+          pattern: 'largeFileDeliveryServer:'
   - it: omits optional delivery configuration when explicitly disabled
     templates:
       - ../templates/resources/config-yaml.yaml
     set:
-      summaryBillDeliver.enabled: false
+      largeFileDeliver.enabled: false
     asserts:
       - notMatchRegex:
           path: stringData["config.yaml"]
-          pattern: 'summaryBill|file-summary-bill'
+          pattern: 'largeFile|large-file'
   - it: creates a Kafka delivery topic with the requested worker partition count
     templates:
       - ../templates/services/stream-topics.yaml
     values:
-      - ./files/values.summary-bill.yaml
+      - ./files/values.large-file.yaml
     set:
-      summaryBillDeliver.replicas.desired: 3
+      largeFileDeliver.replicas.desired: 3
     documentSelector:
       path: metadata.name
-      value: file-summary-bill
+      value: large-file
     asserts:
       - isKind:
           of: KafkaTopic
@@ -74,23 +74,23 @@ tests:
     templates:
       - ../templates/resources/config-yaml.yaml
     values:
-      - ./files/values.summary-bill.yaml
+      - ./files/values.large-file.yaml
     set:
-      stream.topics.summaryBill.type: sqs
-      stream.topics.summaryBill.url: https://sqs.us-west-2.amazonaws.com/123456789012/summary-bill
-      stream.topics.summaryBill.region: us-west-2
+      stream.topics.largeFile.type: sqs
+      stream.topics.largeFile.url: https://sqs.us-west-2.amazonaws.com/123456789012/large-file
+      stream.topics.largeFile.region: us-west-2
     asserts:
       - matchRegex:
           path: stringData["config.yaml"]
-          pattern: 'fileSummaryBill:\n\s+region: us-west-2\n\s+type: sqs\n\s+url: https://sqs.us-west-2.amazonaws.com/123456789012/summary-bill'
+          pattern: 'largeFile:\n\s+region: us-west-2\n\s+type: sqs\n\s+url: https://sqs.us-west-2.amazonaws.com/123456789012/large-file'
   - it: creates no additional Kafka topic for SQS delivery
     templates:
       - ../templates/services/stream-topics.yaml
     values:
-      - ./files/values.summary-bill.yaml
+      - ./files/values.large-file.yaml
     set:
-      stream.topics.summaryBill.type: sqs
-      stream.topics.summaryBill.url: https://sqs.us-west-2.amazonaws.com/123456789012/summary-bill
+      stream.topics.largeFile.type: sqs
+      stream.topics.largeFile.url: https://sqs.us-west-2.amazonaws.com/123456789012/large-file
     asserts:
       - hasDocuments:
           count: 5
@@ -98,7 +98,7 @@ tests:
     templates:
       - ../templates/app/golang.yaml
     values:
-      - ./files/values.summary-bill.yaml
+      - ./files/values.large-file.yaml
     documentSelector:
       path: metadata.name
       value: queue

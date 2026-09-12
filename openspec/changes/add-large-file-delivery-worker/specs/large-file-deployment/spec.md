@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
-### Requirement: Summary bill delivery is optional
-The chart SHALL support an opt-in summaryBillDeliver Go worker and its transport configuration. Absent or disabled settings SHALL preserve existing rendered workloads, topics, credentials and Go configuration.
+### Requirement: Large file delivery is optional
+The chart SHALL support an opt-in largeFileDeliver Go worker and its transport configuration. Absent or disabled settings SHALL preserve existing rendered workloads, topics, credentials and Go configuration.
 
 #### Scenario: Existing installation remains unchanged
 - **WHEN** the feature is absent or explicitly disabled
@@ -12,8 +12,8 @@ The chart SHALL support an opt-in summaryBillDeliver Go worker and its transport
 The chart SHALL render the enabled worker and producer/consumer configuration matching cashbot-go, with its required image, measured resource settings and server-managed credential references. It SHALL support the existing Kafka and external-queue deployment conventions.
 
 #### Scenario: Kafka delivery is enabled
-- **WHEN** summaryBillDeliver is enabled with Kafka
-- **THEN** the worker deployment and file-summary-bill topic are rendered through existing chart mechanisms
+- **WHEN** largeFileDeliver is enabled with Kafka
+- **THEN** the worker deployment and large-file topic are rendered through existing chart mechanisms
 - **AND** producer and consumer configuration refer to the same topic
 
 #### Scenario: Existing SQS queue is selected
@@ -31,7 +31,7 @@ Kubernetes routing SHALL remain disabled until compatible images, schema, delive
 
 #### Scenario: Worker is not ready
 - **WHEN** the required delivery image or transport is unavailable
-- **THEN** no account is enabled for summary bill routing
+- **THEN** no account is enabled for large file routing
 
 #### Scenario: Pending delivery during rollback
 - **WHEN** new claims are disabled while delivery or callback finalization is pending

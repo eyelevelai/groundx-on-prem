@@ -1,6 +1,6 @@
-summaryBillDeliver:
+largeFileDeliver:
   enabled: true
-  image: test.invalid/summary-bill-delivery:local
+  image: test.invalid/large-file-delivery:local
   concurrency: 2
   maxUploadDuration: 30s
   resources:
@@ -13,9 +13,9 @@ summaryBillDeliver:
   counting:
     maxPDFBytes: 1048576
     maxCountDuration: 10s
-    helperPath: /app/summary-bill-pdf-count
+    helperPath: /app/large-file-pdf-count
     tempDir: /tmp
   credentials:
     operations-drive:
-      secretName: summary-bill-drive
+      secretName: large-file-drive
       secretKey: service-account.json
