@@ -223,3 +223,63 @@ tests:
       summaryClient.replicas.gracePeriod: 0
     asserts:
       - failedTemplate: {}
+  - it: "large-file kafka: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.large-file.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "large-file sqs: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.large-file.yaml
+    set:
+      stream.topics.largeFile.type: sqs
+      stream.topics.largeFile.url: https://sqs.us-west-2.amazonaws.com/123456789012/large-file
+      stream.topics.largeFile.region: us-west-2
+    asserts:
+      - matchSnapshot: {}
+  - it: creates the enabled worker with bounded concurrency and mounted credentials
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.large-file.yaml
+    documentSelector:
+      path: metadata.name
+      value: large-file-delivery
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: test.invalid/large-file-delivery:local
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: large-file-credential-0
+            mountPath: /var/run/groundx/large-file/operations-drive
+            readOnly: true
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: large-file-credential-0
+            secret:
+              secretName: large-file-drive
+              items:
+                - key: service-account.json
+                  path: credentials.json
+  - it: mounts no Drive credentials in the producer
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.large-file.yaml
+    documentSelector:
+      path: metadata.name
+      value: queue
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.volumes
+          count: 1
+      - lengthEqual:
+          path: spec.template.spec.containers[0].volumeMounts
+          count: 1

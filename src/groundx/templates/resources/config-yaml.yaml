@@ -601,6 +601,10 @@ stringData:
       port: {{ include "groundx.queue.containerPort" . }}
       serviceName: {{ include "groundx.queue.serviceName" . }}
 
+    {{- if eq (include "groundx.largeFileDeliver.create" .) "true" }}
+    {{- include "groundx.largeFileDeliver.config" . | nindent 4 }}
+    {{- end }}
+
     queues:
       filePreProcess:
         {{- $ppq | toYaml | nindent 8 }}
@@ -614,6 +618,10 @@ stringData:
         {{- $uq | toYaml | nindent 8 }}
       fileUpload:
         {{- $lq | toYaml | nindent 8 }}
+      {{- if eq (include "groundx.largeFileDeliver.create" .) "true" }}
+      largeFile:
+        {{- include "groundx.stream.topic.largeFile" . | nindent 8 }}
+      {{- end }}
 
     rec:
       mysql: *mysql

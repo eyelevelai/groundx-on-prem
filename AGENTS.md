@@ -153,3 +153,7 @@ guidance with `openspec instructions <artifact>`.
 - Architectural decisions → `architectural-decision-records` skill; write ADRs to
   `docs/adr/<LINEAR-TICKET>-<kebab>.md` (Linear ticket prefix mandatory). Cross-service
   decisions live in the **producing** repo and are referenced from consumers' `design.md`.
+
+## Large file delivery
+
+See [the operator guide](docs/agents/large-file-delivery.md) for the optional worker, credentials, transport and activation checks.

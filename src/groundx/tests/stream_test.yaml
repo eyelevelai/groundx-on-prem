@@ -129,3 +129,48 @@ tests:
       - equal:
           path: metadata.namespace
           value: custom-ns
+  - it: "large-file kafka: stream"
+    templates:
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ./files/values.large-file.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "large-file sqs: stream"
+    templates:
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ./files/values.large-file.yaml
+    set:
+      stream.topics.largeFile.type: sqs
+      stream.topics.largeFile.url: https://sqs.us-west-2.amazonaws.com/123456789012/large-file
+      stream.topics.largeFile.region: us-west-2
+    asserts:
+      - matchSnapshot: {}
+  - it: creates a Kafka delivery topic with the requested worker partition count
+    templates:
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ./files/values.large-file.yaml
+    set:
+      largeFileDeliver.replicas.desired: 3
+    documentSelector:
+      path: metadata.name
+      value: large-file
+    asserts:
+      - isKind:
+          of: KafkaTopic
+      - equal:
+          path: spec.partitions
+          value: 3
+  - it: creates no additional Kafka topic for SQS delivery
+    templates:
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ./files/values.large-file.yaml
+    set:
+      stream.topics.largeFile.type: sqs
+      stream.topics.largeFile.url: https://sqs.us-west-2.amazonaws.com/123456789012/large-file
+    asserts:
+      - hasDocuments:
+          count: 5
