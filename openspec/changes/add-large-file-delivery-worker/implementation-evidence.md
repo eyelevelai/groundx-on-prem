@@ -1,5 +1,22 @@
 # Implementation evidence
 
+## Service snapshot coverage, 2026-09-12
+
+The existing `golang_test.yaml`, `resources_test.yaml`, and `stream_test.yaml`
+suites each include enabled Kafka and SQS snapshots using
+`files/values.large-file.yaml`. Their snapshot files contain the rendered Go
+workloads, shared configuration, and Kafka topics. All prior snapshot entries,
+including disabled renders, are byte-identical. The seven field-assertion cases
+are preserved in those suites; there is no separate large-file suite.
+
+`helm unittest -u` generated the six new snapshot cases. The three suites pass
+90 tests and 412 snapshots. An isolated chart copy with a changed worker image
+fails the new Kafka workload snapshot at the rendered image field.
+
+The full chart suite passes 13 suites, 288 tests and 848 snapshots, plus nine
+Kafka prerequisite tests. Chart templates, values, schema, the published mirror,
+and the shared values fixture are unchanged.
+
 ## Large-file naming contract, 2026-09-12
 
 The optional service uses `largeFileDeliver`, the stream override uses

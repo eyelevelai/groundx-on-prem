@@ -93,8 +93,13 @@ helm template local src/groundx -f src/groundx/values/minikube/values.yaml
 helm template local src/groundx -f src/groundx/tests/files/values.large-file.yaml
 ```
 
-The enabled fixture uses test-only image, limits and Secret names. Validate the
-actual Go configuration from the cashbot-go worktree with:
+The enabled fixture uses test-only image, limits and Secret names. The existing
+`golang_test.yaml`, `resources_test.yaml`, and `stream_test.yaml` suites each
+snapshot enabled Kafka and SQS renders using this fixture. Their original
+disabled snapshots remain unchanged. Field assertions in those same suites
+check credential isolation and transport settings.
+
+Validate the actual Go configuration from the cashbot-go worktree with:
 
 ```sh
 LARGE_FILE_CHART_PATH=/absolute/path/to/groundx-on-prem/src/groundx \
