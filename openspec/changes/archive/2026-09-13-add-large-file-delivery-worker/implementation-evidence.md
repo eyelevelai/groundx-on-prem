@@ -1,5 +1,13 @@
 # Implementation evidence
 
+## Merge and activation boundary
+
+Chart PR #97 merged into `0.2.7` at
+`facdbc5849221cae38c2e97a24ba2b86de737d91`. Chart engineering work is complete.
+The backend remains tracked by cashbot-go PR #1726 and its active
+`route-large-files-before-preprocess` plan. Archiving the chart plan does not
+authorize deployment or satisfy the backend's live activation gates.
+
 ## Service snapshot coverage, 2026-09-12
 
 The existing `golang_test.yaml`, `resources_test.yaml`, and `stream_test.yaml`
@@ -42,7 +50,7 @@ The producer container includes `/app/large-file-pdf-count`.
 
 The optional service, explicit image/resources, credential mounts, and Kafka/SQS
 transport are implemented in canonical `src/groundx` and mirrored to `helm`.
-The [operator guide](../../../docs/agents/large-file-delivery.md) describes the
+The [operator guide](../../../../docs/agents/large-file-delivery.md) describes the
 exact configuration and activation boundary. Account policy remains outside the
 chart; enabling the worker does not enable any account.
 
