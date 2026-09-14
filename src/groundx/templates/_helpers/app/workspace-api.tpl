@@ -172,6 +172,20 @@ true
 false
 {{- end }}
 
+{{- define "groundx.workspace.api.probe" -}}
+{{- $in := include "groundx.workspace.api.values" . | fromYaml -}}
+{{- $pb := dig "probe" dict $in -}}
+{{- $lv := dig "liveness" dict $pb -}}
+{{- $rd := dig "readiness" dict $pb -}}
+{{- dict
+    "liveness"  (dict "timeoutSeconds" (dig "timeoutSeconds" 3 $lv))
+    "readiness" (dict
+      "failureThreshold" (dig "failureThreshold" 3 $rd)
+      "timeoutSeconds"   (dig "timeoutSeconds" 3 $rd)
+    )
+  | toYaml -}}
+{{- end }}
+
 {{- define "groundx.workspace.api.threads" -}}
 {{- $in := include "groundx.workspace.api.values" . | fromYaml -}}
 {{ dig "threads" 2 $in }}
@@ -247,6 +261,7 @@ false
   "name" $apiSvc
   "node" (include "groundx.workspace.api.node" .)
   "port" (include "groundx.workspace.api.containerPort" .)
+  "probe" (include "groundx.workspace.api.probe" . | fromYaml)
   "pull" (include "groundx.workspace.api.imagePullPolicy" .)
   "replicas" $rep
   "volumeMounts" (include "groundx.workspace.volumeMounts" . | fromYamlArray)
