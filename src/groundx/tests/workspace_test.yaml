@@ -40,23 +40,23 @@ tests:
       - ./files/values.workspace-managed-data.yaml
     asserts:
       - matchRegex:
-          path: 'data["config.py"]'
+          path: 'stringData["config.py"]'
           pattern: 'managed_data_enabled=True'
         template: ../templates/resources/workspace-config-py.yaml
       - matchRegex:
-          path: 'data["config.py"]'
+          path: 'stringData["config.py"]'
           pattern: 'managed_data_s3_bucket_dev="managed-dev"'
         template: ../templates/resources/workspace-config-py.yaml
       - matchRegex:
-          path: 'data["config.py"]'
+          path: 'stringData["config.py"]'
           pattern: 'managed_data_redis_user_group_prod="managed-prod"'
         template: ../templates/resources/workspace-config-py.yaml
       - notMatchRegex:
-          path: 'data["config.py"]'
+          path: 'stringData["config.py"]'
           pattern: 'rds_admin_connection_dev="mysql'
         template: ../templates/resources/workspace-config-py.yaml
       - notMatchRegex:
-          path: 'data["config.py"]'
+          path: 'stringData["config.py"]'
           pattern: 'managed_data_mysql_ssl_ca_file='
         template: ../templates/resources/workspace-config-py.yaml
       - notContains:
@@ -101,7 +101,7 @@ tests:
       - ./files/values.workspace-managed-data-ca.yaml
     asserts:
       - matchRegex:
-          path: 'data["config.py"]'
+          path: 'stringData["config.py"]'
           pattern: 'managed_data_mysql_ssl_ca_file="/var/run/config/workspace/mysql/ca.pem"'
         template: ../templates/resources/workspace-config-py.yaml
       - contains:
