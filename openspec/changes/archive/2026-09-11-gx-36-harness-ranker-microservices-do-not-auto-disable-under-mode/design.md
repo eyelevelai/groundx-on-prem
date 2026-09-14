@@ -190,6 +190,16 @@ shapes are asserted below.
   `summary-inference` missing. That input never reaches the guard today (`validate-helm.sh`
   renders default values only), and the ranker suppression itself still holds there: no
   `eyelevel-gpu-ranker` reference appears in a chainguard + ingest render on either surface.
+- **Fixture boilerplate compacted after review feedback; coverage held constant.** The reviewer
+  asked whether the test surface was proportionate to a roughly 12-line fix. The per-name
+  fixtures stay (the decision below shows why one per name is required), but the sixteen literal
+  sibling documents and the seven literal forbidden documents are now built from a name list and
+  a `(apiVersion, kind, name)` table by a four-line `doc()` helper, taking
+  `.build/tests/test_verify_ingest_render.py` from 358 lines to 267. The name list is a literal
+  in the test file, never imported from the guard, so the oracle stays independent. Re-verified
+  by the same mutation battery after the change: dropping any of the sixteen required siblings,
+  any of the seven forbidden names, the fail-closed branch, or the quote-tolerant `kind` match
+  still fails the suite.
 - **Mutation testing showed the first extracted fixture set proved only 3 of the 7 forbidden
   names — one fixture per name is required, not one per kind.** Deleting a whole
   `FORBIDDEN_BY_KIND` entry (`Service`, `Secret`, or `ConfigMap`) or dropping `ranker-inference`

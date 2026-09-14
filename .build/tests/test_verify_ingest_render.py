@@ -17,136 +17,53 @@ def load_guard():
     return module
 
 
-REQUIRED_SIBLING_DOCS = """
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: groundx
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: layout-api
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: layout-correct
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: layout-inference
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: layout-map
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: layout-ocr
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: layout-process
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: layout-save
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: layout-webhook
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: pre-process
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: process
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: queue
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: summary-api
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: summary-client
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: summary-inference
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: upload
-"""
+REQUIRED_SIBLING_NAMES = [
+    "groundx",
+    "layout-api",
+    "layout-correct",
+    "layout-inference",
+    "layout-map",
+    "layout-ocr",
+    "layout-process",
+    "layout-save",
+    "layout-webhook",
+    "pre-process",
+    "process",
+    "queue",
+    "summary-api",
+    "summary-client",
+    "summary-inference",
+    "upload",
+]
 
-FORBIDDEN_DEPLOYMENT_DOC = """
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ranker-api
-"""
+FORBIDDEN = {
+    "deployment_api": ("apps/v1", "Deployment", "ranker-api"),
+    "deployment_inference": ("apps/v1", "Deployment", "ranker-inference"),
+    "service": ("v1", "Service", "ranker-api"),
+    "pvc": ("v1", "PersistentVolumeClaim", "ranker-model"),
+    "secret": ("v1", "Secret", "ranker-config-py-map"),
+    "configmap_gunicorn": ("v1", "ConfigMap", "ranker-gunicorn-conf-py-map"),
+    "configmap_supervisord": ("v1", "ConfigMap", "ranker-inference-supervisord-conf-map"),
+}
 
-FORBIDDEN_PVC_DOC = """
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: ranker-model
-"""
 
-FORBIDDEN_DEPLOYMENT_INFERENCE_DOC = """
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ranker-inference
-"""
+def doc(api_version: str, kind: str, name: str) -> str:
+    return f"\napiVersion: {api_version}\nkind: {kind}\nmetadata:\n  name: {name}\n"
 
-FORBIDDEN_SERVICE_DOC = """
-apiVersion: v1
-kind: Service
-metadata:
-  name: ranker-api
-"""
 
-FORBIDDEN_SECRET_DOC = """
-apiVersion: v1
-kind: Secret
-metadata:
-  name: ranker-config-py-map
-"""
+def sibling_docs(*, omit: str | None = None) -> str:
+    names = [n for n in REQUIRED_SIBLING_NAMES if n != omit]
+    return "---".join(doc("apps/v1", "Deployment", n) for n in names)
 
-FORBIDDEN_CONFIGMAP_GUNICORN_DOC = """
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ranker-gunicorn-conf-py-map
-"""
 
-FORBIDDEN_CONFIGMAP_SUPERVISORD_DOC = """
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ranker-inference-supervisord-conf-map
-"""
+REQUIRED_SIBLING_DOCS = sibling_docs()
+FORBIDDEN_DEPLOYMENT_DOC = doc(*FORBIDDEN["deployment_api"])
+FORBIDDEN_DEPLOYMENT_INFERENCE_DOC = doc(*FORBIDDEN["deployment_inference"])
+FORBIDDEN_SERVICE_DOC = doc(*FORBIDDEN["service"])
+FORBIDDEN_PVC_DOC = doc(*FORBIDDEN["pvc"])
+FORBIDDEN_SECRET_DOC = doc(*FORBIDDEN["secret"])
+FORBIDDEN_CONFIGMAP_GUNICORN_DOC = doc(*FORBIDDEN["configmap_gunicorn"])
+FORBIDDEN_CONFIGMAP_SUPERVISORD_DOC = doc(*FORBIDDEN["configmap_supervisord"])
 
 GPU_LABEL_DOC = """
 apiVersion: apps/v1
@@ -228,15 +145,7 @@ def test_forbidden_configmap_supervisord_conf_alone_fails():
 
 def test_over_blocking_render_missing_a_required_sibling_fails():
     guard = load_guard()
-    text = REQUIRED_SIBLING_DOCS.replace(
-        """---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: layout-api
-""",
-        "",
-    )
+    text = sibling_docs(omit="layout-api")
     assert "name: layout-api" not in text
     failures = guard.check_render("src/groundx", text)
     assert failures == [
