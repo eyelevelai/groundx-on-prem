@@ -40,6 +40,9 @@ stringData:
 {{- if eq (printf "%v" (include "groundx.workspace.managedData.enabled" .)) "true" }}
         managed_data_enabled={{ if eq (printf "%v" (include "groundx.workspace.managedData.enabled" .)) "true" }}True{{ else }}False{{ end }},
         managed_data_aws_region={{ include "groundx.workspace.managedData.awsRegion" . | quote }},
+{{- if ne (include "groundx.workspace.managedData.mysqlSslCaConfigMap" .) "" }}
+        managed_data_mysql_ssl_ca_file={{ include "groundx.workspace.managedData.mysqlSslCaFile" . | quote }},
+{{- end }}
         managed_data_rds_admin_connection_dev="",
         managed_data_rds_admin_connection_prod="",
         managed_data_s3_bucket_dev={{ include "groundx.workspace.managedData.s3Bucket" (dict "root" . "environment" "dev") | quote }},

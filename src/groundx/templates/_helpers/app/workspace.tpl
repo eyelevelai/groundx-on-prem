@@ -209,6 +209,15 @@ false
 {{ dig "awsRegion" "" $in }}
 {{- end }}
 
+{{- define "groundx.workspace.managedData.mysqlSslCaConfigMap" -}}
+{{- $in := include "groundx.workspace.managedData" . | fromYaml -}}
+{{ dig "mysqlSslCaConfigMap" "" $in }}
+{{- end }}
+
+{{- define "groundx.workspace.managedData.mysqlSslCaFile" -}}
+/var/run/config/workspace/mysql/ca.pem
+{{- end }}
+
 {{- define "groundx.workspace.managedData.environment" -}}
 {{- $managed := include "groundx.workspace.managedData" .root | fromYaml -}}
 {{ dig .environment dict $managed | toYaml }}
@@ -333,6 +342,31 @@ workspace-data
 workspace-github-private-key
 {{- end }}
 
+{{- define "groundx.workspace.managedData.mysqlSslCaVolumeName" -}}
+workspace-managed-data-mysql-ca
+{{- end }}
+
+{{- define "groundx.workspace.managedData.mysqlSslCaVolume" -}}
+{{- $configMap := include "groundx.workspace.managedData.mysqlSslCaConfigMap" . -}}
+{{- if and (eq (include "groundx.workspace.managedData.enabled" .) "true") (ne $configMap "") -}}
+- name: {{ include "groundx.workspace.managedData.mysqlSslCaVolumeName" . }}
+  configMap:
+    name: {{ $configMap }}
+    items:
+      - key: ca.pem
+        path: ca.pem
+{{- end }}
+{{- end }}
+
+{{- define "groundx.workspace.managedData.mysqlSslCaVolumeMount" -}}
+{{- $configMap := include "groundx.workspace.managedData.mysqlSslCaConfigMap" . -}}
+{{- if and (eq (include "groundx.workspace.managedData.enabled" .) "true") (ne $configMap "") -}}
+- name: {{ include "groundx.workspace.managedData.mysqlSslCaVolumeName" . }}
+  mountPath: /var/run/config/workspace/mysql
+  readOnly: true
+{{- end }}
+{{- end }}
+
 {{- define "groundx.workspace.githubPrivateKeyVolume" -}}
 {{- $secretName := include "groundx.workspace.github.privateKeySecretName" . -}}
 {{- if ne $secretName "" -}}
@@ -379,12 +413,14 @@ workspace-gitlab-token
 
 {{- define "groundx.workspace.volumeMounts" -}}
 {{ include "groundx.workspace.workspaceVolumeMount" . }}
+{{ include "groundx.workspace.managedData.mysqlSslCaVolumeMount" . }}
 {{ include "groundx.workspace.githubPrivateKeyVolumeMount" . }}
 {{ include "groundx.workspace.gitlabTokenVolumeMount" . }}
 {{- end }}
 
 {{- define "groundx.workspace.volumes" -}}
 {{ include "groundx.workspace.workspaceVolume" . }}
+{{ include "groundx.workspace.managedData.mysqlSslCaVolume" . }}
 {{ include "groundx.workspace.githubPrivateKeyVolume" . }}
 {{ include "groundx.workspace.gitlabTokenVolume" . }}
 {{- end }}
