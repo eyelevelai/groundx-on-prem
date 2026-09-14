@@ -1,0 +1,50 @@
+suite: "api probe timing overrides take effect per service"
+chart:
+  appVersion: 0.1.0
+  version: 0.1.0
+
+tests:
+  - it: "override: layout api probe timing takes effect"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.api.probe.liveness.timeoutSeconds: 7
+      layout.api.probe.readiness.timeoutSeconds: 9
+      layout.api.probe.readiness.failureThreshold: 5
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: layout-api
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.timeoutSeconds
+          value: 7
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.timeoutSeconds
+          value: 9
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.failureThreshold
+          value: 5
+  - it: "override: layout api probe timing does not leak into the ranker api sibling"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.api.probe.liveness.timeoutSeconds: 7
+      layout.api.probe.readiness.timeoutSeconds: 9
+      layout.api.probe.readiness.failureThreshold: 5
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: ranker-api
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.timeoutSeconds
+          value: 3
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.timeoutSeconds
+          value: 3
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.failureThreshold
+          value: 3

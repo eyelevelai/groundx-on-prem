@@ -1,0 +1,108 @@
+suite: "api probe timing values schema rejects bad input"
+chart:
+  appVersion: 0.1.0
+  version: 0.1.0
+
+tests:
+  - it: "schema rejects an unknown key on the layout api probe block"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.api.probe.liveness.retries: 5
+    asserts:
+      - failedTemplate:
+          errorPattern: "layout/api/probe/liveness.*retries.*not allowed"
+  - it: "schema rejects a non-integer readiness timeoutSeconds on the layout api probe block"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.api.probe.readiness.timeoutSeconds: "soon"
+    asserts:
+      - failedTemplate:
+          errorPattern: "layout/api/probe/readiness/timeoutSeconds.*want integer"
+  - it: "schema rejects an unknown key on the ranker api probe block"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+    set:
+      ranker.api.probe.liveness.retries: 5
+    asserts:
+      - failedTemplate:
+          errorPattern: "ranker/api/probe/liveness.*retries.*not allowed"
+  - it: "schema rejects a non-integer readiness timeoutSeconds on the ranker api probe block"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+    set:
+      ranker.api.probe.readiness.timeoutSeconds: "soon"
+    asserts:
+      - failedTemplate:
+          errorPattern: "ranker/api/probe/readiness/timeoutSeconds.*want integer"
+  - it: "schema rejects an unknown key on the summary api probe block"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+    set:
+      summary.api.probe.liveness.retries: 5
+    asserts:
+      - failedTemplate:
+          errorPattern: "summary/api/probe/liveness.*retries.*not allowed"
+  - it: "schema rejects a non-integer readiness timeoutSeconds on the summary api probe block"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+    set:
+      summary.api.probe.readiness.timeoutSeconds: "soon"
+    asserts:
+      - failedTemplate:
+          errorPattern: "summary/api/probe/readiness/timeoutSeconds.*want integer"
+  - it: "schema rejects an unknown key on the extract api probe block"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values/extract/values.yaml
+    set:
+      extract.api.probe.liveness.retries: 5
+    asserts:
+      - failedTemplate:
+          errorPattern: "extract/api/probe/liveness.*retries.*not allowed"
+  - it: "schema rejects a non-integer readiness timeoutSeconds on the extract api probe block"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values/extract/values.yaml
+    set:
+      extract.api.probe.readiness.timeoutSeconds: "soon"
+    asserts:
+      - failedTemplate:
+          errorPattern: "extract/api/probe/readiness/timeoutSeconds.*want integer"
+  - it: "schema rejects an unknown key on the workspace api probe block"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.workspace.yaml
+    set:
+      workspace.api.probe.liveness.retries: 5
+    asserts:
+      - failedTemplate:
+          errorPattern: "workspace/api/probe/liveness.*retries.*not allowed"
+  - it: "schema rejects a non-integer readiness timeoutSeconds on the workspace api probe block"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.workspace.yaml
+    set:
+      workspace.api.probe.readiness.timeoutSeconds: "soon"
+    asserts:
+      - failedTemplate:
+          errorPattern: "workspace/api/probe/readiness/timeoutSeconds.*want integer"

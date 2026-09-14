@@ -61,6 +61,11 @@ context: |
     - No edges to cashbot-go, groundx-studio-harness, ai-server, eyelevel-fern-config, or any frontend repo.
   
   - QUALITY GATES:
+    - .build/bin/validate-helm.sh is the single canonical entrypoint (per AGENTS.md "How to run
+      and test") — lint for both chart surfaces, the full helm unittest suite, the throwaway
+      Google-OCR credentials fixture the OCR tests need (a bare `helm unittest src/groundx`
+      fails without it), and this repo's other chart contract verifiers. This IS what
+      .github/workflows/helm-tests.yml runs; prefer it over hand-assembling the steps below.
     - helm unittest src/groundx (snapshot tests — the CI gate, enforced in helm-tests.yml)
     - helm template src/groundx -f values/minikube/values.yaml (render check)
     - helm lint (declared in repos.yml run.lint)
