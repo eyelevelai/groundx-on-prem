@@ -247,30 +247,6 @@ tests:
           name: summary-inference
           any: true
         template: ../templates/app/inference.yaml
-  - it: "extract.ingest: explicit ranker enabled true is overridden by ingest-only mode"
-    templates:
-      - ../templates/app/api.yaml
-      - ../templates/app/inference.yaml
-    values:
-      - ./files/values.extract.ingest.yaml
-    set:
-      ranker.api.enabled: true
-      ranker.inference.enabled: true
-    asserts:
-      - containsDocument:
-          kind: Deployment
-          apiVersion: apps/v1
-          name: ranker-api
-          any: true
-        not: true
-        template: ../templates/app/api.yaml
-      - containsDocument:
-          kind: Deployment
-          apiVersion: apps/v1
-          name: ranker-inference
-          any: true
-        not: true
-        template: ../templates/app/inference.yaml
   - it: "extract.ingest: no ranker HPA renders even with cluster.hpa enabled"
     templates:
       - ../templates/resources/hpa.yaml

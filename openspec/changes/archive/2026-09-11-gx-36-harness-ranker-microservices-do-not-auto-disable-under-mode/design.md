@@ -200,6 +200,12 @@ shapes are asserted below.
   by the same mutation battery after the change: dropping any of the sixteen required siblings,
   any of the seven forbidden names, the fail-closed branch, or the quote-tolerant `kind` match
   still fails the suite.
+- **One unit case was removed after PR review as provably redundant.** The case asserting that
+  an explicit `ranker.*.enabled: true` is overridden by ingest-only mode set values the chart
+  already ships (`values.yaml:326` / `:334`), so its render is byte-identical to the case above
+  it — verified by hashing both renders. It exercised the same branch with the same inputs and
+  could not fail independently. The three remaining cases still catch the regression: disabling
+  the ingest branch in both helpers fails 3 of them.
 - **Mutation testing showed the first extracted fixture set proved only 3 of the 7 forbidden
   names — one fixture per name is required, not one per kind.** Deleting a whole
   `FORBIDDEN_BY_KIND` entry (`Service`, `Secret`, or `ConfigMap`) or dropping `ranker-inference`
@@ -219,6 +225,12 @@ shapes are asserted below.
   `groundx.node.gpuRanker` has exactly one consumer in the chart,
   `_helpers/app/ranker-inference.tpl:4`, which stops evaluating once this change lands, so the
   value is genuinely inert in this preset.
+
+  The annotation was trimmed after PR review to its load-bearing half, `# schema requires all
+  five nodeLabels keys`. The dropped clause restated what the change already makes true and
+  what the render guard already asserts, which is the narration-comment class this project
+  bans. The `tasks.md` acceptance check that greps for the annotation was re-pinned to the new
+  text in the same change, since it had pinned the literal wording of a comment.
 
   Deleting it is not possible on its own. `values.schema.json` marks all five `nodeLabels` keys
   `"required"` with `additionalProperties: false`; verified that removing only the `gpuRanker`
