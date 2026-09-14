@@ -4,6 +4,52 @@ chart:
   version: 0.1.0
 
 tests:
+  - it: "shared Google credentials: celery"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.google-shared.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "OCR mounts the external shared Secret and selected key"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.google-shared.yaml
+    set:
+      google.credentials: null
+      google.existingSecret: "123"
+      google.secretKey: "true"
+    documentSelector:
+      path: metadata.name
+      value: layout-ocr
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: credentials-volume
+            secret:
+              secretName: "123"
+              items:
+                - key: "true"
+                  path: credentials.json
+  - it: "legacy OCR credentials override the shared source"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.google-shared.yaml
+    set:
+      layout.ocr.credentials: files/ocr/gcv-test.json
+    documentSelector:
+      path: metadata.name
+      value: layout-ocr
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: credentials-volume
+            secret:
+              secretName: layout-ocr-credentials-map
   - it: "default: celery"
     templates:
       - ../templates/app/celery.yaml

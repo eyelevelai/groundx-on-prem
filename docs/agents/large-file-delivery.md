@@ -35,6 +35,68 @@ the new binaries. Choose counting bytes/time, producer concurrency, temporary
 disk and memory together; choose delivery time, concurrency and memory together.
 Real-environment capacity and Drive checks gate account activation.
 
+## Shared Google credentials
+
+OCR and large-file delivery can share one service-account credential. Supply the
+chart-relative JSON file once, using the same packaged-file pattern as OCR:
+
+```yaml
+google:
+  credentials: files/google/service-account.json
+
+layout:
+  ocr:
+    enabled: true
+    type: google
+    project: example-project
+
+largeFileDeliver:
+  credentials:
+    operations-drive:
+      sharedGoogle: true
+```
+
+The delivery worker still needs the other enabled-worker settings above. Its
+account policy selects `credentialRef: operations-drive`. Google OCR inherits
+the shared source only when enabled with `type: google` and no
+`layout.ocr.credentials` override. Delivery must explicitly select
+`sharedGoogle: true`; existing per-reference Secret settings do not switch.
+
+Alternatively, supply a pre-existing Secret without packaging any credential:
+
+```yaml
+google:
+  existingSecret: company-google-credentials
+  secretKey: credentials.json
+```
+
+`secretKey` defaults to `credentials.json`. Do not specify both
+`google.credentials` and `google.existingSecret`. When replacing layered values,
+set the unused source to `null`. A delivery entry accepts either
+`sharedGoogle: true` or the existing `secretName`/`secretKey` pair, never both.
+
+The managed file becomes one `google-credentials` Secret, created only while
+at least one consumer uses it. Disabling OCR does not remove it while delivery
+still uses it. An existing Secret is neither created nor deleted by this chart.
+Layout consumers retain `/app/credentials.json`; delivery retains its registered
+credential-file path. Credential bytes never enter the common Go config or
+unrelated Go, extraction, or workspace pods.
+
+Changing the packaged file changes credential hashes and rolls its consuming
+layout and delivery pods. With an existing Secret, update the Secret and restart
+consuming layout pods: their existing `subPath` mount does not receive live Secret
+updates. Delivery mounts a directory; new delivery clients read updated files
+after Kubernetes propagates the Secret. Keep the old Google key active until
+consumers have picked up the replacement and pending work is reconciled.
+
+Keep real files, rendered Secrets, and private chart packages outside version
+control and public registries. Helm release storage also contains managed Secret
+contents. A shared service account grants both consumers its Google permissions;
+retain separate per-service credentials where that access must be isolated.
+Before removing the shared source during rollback, restore each active consumer's
+per-service credential configuration. Do not remove delivery access while work is
+pending. Existing legacy-only values retain their rendered behavior.
+
 ## Credentials and transport
 
 Provision the service-account JSON in an existing Kubernetes Secret. Set each

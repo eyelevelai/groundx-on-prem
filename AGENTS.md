@@ -156,4 +156,4 @@ guidance with `openspec instructions <artifact>`.
 
 ## Large file delivery
 
-See [the operator guide](docs/agents/large-file-delivery.md) for the optional worker, credentials, transport and activation checks.
+See [the operator guide](docs/agents/large-file-delivery.md) for the optional worker, shared Google credentials with OCR, transport and activation checks.
