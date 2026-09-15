@@ -52,7 +52,7 @@ def document_names(documents: list[str], kind: str) -> tuple[set[str], int]:
 
 
 def check_render(chart: str, text: str) -> list[str]:
-    documents = re.split(r"(?m)^---$", text)
+    documents = re.split(r"(?m)^---$(?=\s*\n(?:#|apiVersion:))", text)
 
     violations = []
     unnamed_kinds = []

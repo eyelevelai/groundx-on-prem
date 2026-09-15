@@ -206,6 +206,27 @@ shapes are asserted below.
   it — verified by hashing both renders. It exercised the same branch with the same inputs and
   could not fail independently. The three remaining cases still catch the regression: disabling
   the ingest branch in both helpers fails 3 of them.
+- **The HPA half of the `busyWindowSeconds` gate is inert, and was inert before this change.**
+  `groundx.ranker.inference.replicas` builds its `hpa` key from `include "groundx.cluster.hpa"`,
+  and `include` always returns a string, so the key holds `"false"` rather than boolean false.
+  A non-empty string is truthy in Go templates, so `dig "hpa" false $rep` is always truthy.
+  Verified by render: at chart defaults with `cluster.hpa` off, `kindIs "bool"` is false, the
+  value prints as `"false"`, and `busyWindowSeconds: 60` is still emitted. The practical effect
+  is that `groundx.ranker.inference.create` is the only condition doing work in the shipped
+  `and`, which is what the measured behaviour shows. Describing the old gate as "gated only on
+  the HPA flag" overstates it: that flag never gated anything. The quirk is left in place
+  deliberately — removing it would change behaviour rather than tidy it — and is recorded here
+  so a later reader does not "fix" the conjunct expecting a no-op.
+- **Guard limits, recorded rather than closed.** The document split now requires a `---` to be
+  followed by a comment or `apiVersion:` before it separates documents, so a literal `---` inside
+  a block scalar cannot fragment one. No new fixture covers it, because the fail-closed branch
+  already turns a fragmented forbidden document into a loud failure (verified by driving
+  `check_render` with a kind-only fragment), and a test that passes with and without the change
+  proves nothing. Still open by choice: the guard does not check ranker HorizontalPodAutoscalers
+  (it renders at the default `cluster.hpa: false`, where none exist), does not check mirror-side
+  stale metrics entries, and pins `REQUIRED_SIBLINGS` to today's default render. Widening any of
+  these adds test surface, which the PR review asked us to reduce, so they are limits of the
+  stated invariant rather than defects.
 - **Mutation testing showed the first extracted fixture set proved only 3 of the 7 forbidden
   names — one fixture per name is required, not one per kind.** Deleting a whole
   `FORBIDDEN_BY_KIND` entry (`Service`, `Secret`, or `ConfigMap`) or dropping `ranker-inference`
