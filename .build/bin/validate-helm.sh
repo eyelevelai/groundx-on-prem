@@ -14,6 +14,7 @@ Runs the GroundX Helm production chart gate from one stable entrypoint:
   - helm lint for both chart surfaces
   - helm unittest for src/groundx
   - google OCR credentials render for both chart surfaces
+  - shared Google credential isolation, rotation and schema checks
   - snapshot label guard unit tests
   - snapshot label guard
   - workspace chart contract verifier
@@ -119,6 +120,78 @@ for chart in src/groundx helm; do
     exit 1
   fi
 done
+
+echo "==> Verifying shared Google credential isolation and rotation"
+python - <<'PY'
+import json
+import re
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
+
+fixture = Path("src/groundx/tests/files/values.google-shared.yaml").resolve()
+
+def render(chart, *overrides):
+    command = ["helm", "template", "shared-google", str(chart), "-f", str(fixture)]
+    for override in overrides:
+        command += ["--set", override]
+    result = subprocess.run(command, capture_output=True, text=True)
+    if result.returncode:
+        raise AssertionError(result.stderr)
+    # Split rendered Kubernetes documents, not source templates. Snapshot tests
+    # separately assert structured mounts, Secret keys and configuration paths.
+    documents = {}
+    for document in result.stdout.split("\n---\n"):
+        kind = re.search(r"^kind: (.+)$", document, re.M)
+        name = re.search(r"^metadata:\n  name: (.+)$", document, re.M)
+        if kind and name:
+            key = (kind[1], name[1])
+            assert key not in documents, f"duplicate resource: {key}"
+            documents[key] = document
+    assert documents, "no rendered resources"
+    return documents
+
+for chart in (Path("src/groundx"), Path("helm")):
+    shared = render(chart, "extract.enabled=true", "extract.agent.enabled=true", "extract.api.enabled=true", "extract.download.enabled=true", "extract.save.enabled=true", "workspace.enabled=true", "workspace.token=test-runner-token")
+    assert ("Secret", "google-credentials") in shared
+    assert ("Secret", "layout-ocr-credentials-map") not in shared
+    for name in ("extract-agent", "extract-api", "extract-download", "extract-save"):
+        assert ("Deployment", name) in shared
+    assert ("Deployment", "workspace-workspace") in shared
+    for (kind, name), document in shared.items():
+        if (kind, name) != ("Secret", "google-credentials"):
+            assert "groundx-helm-test" not in document, f"credential bytes leaked to {name}"
+        if kind == "Deployment" and not (name.startswith("layout-") or name == "large-file-delivery"):
+            assert not re.search(r'secretName: "?google-credentials"?(?:\s|$)', document), f"credential mounted in {name}"
+
+    # Rotate only the fake file in a disposable copy; never rewrite operator files.
+    with tempfile.TemporaryDirectory(prefix="groundx-google-rotation-") as temporary:
+        copied = Path(temporary) / "chart"
+        shutil.copytree(chart, copied)
+        before = render(copied)
+        credential = copied / "files/ocr/gcv-test.json"
+        data = json.loads(credential.read_text())
+        data["private_key_id"] = "rotated-test-key"
+        credential.write_text(json.dumps(data))
+        after = render(copied)
+        assert before.keys() == after.keys()
+        changed = {key for key in before if before[key] != after[key]}
+        expected = {("Secret", "google-credentials")}
+        expected.update(key for key in before if key[0] == "Deployment" and (key[1].startswith("layout-") or key[1] == "large-file-delivery") and re.search(r'secretName: "?google-credentials"?(?:\s|$)', before[key]))
+        assert ("Deployment", "layout-ocr") in expected
+        assert ("Deployment", "large-file-delivery") in expected
+        assert changed == expected, f"{chart}: rotation changed {changed}, expected {expected}"
+
+    for invalid in (
+        "google.existingSecret=ambiguous-source",
+        "google.secretKey=key-without-external-secret",
+        "largeFileDeliver.credentials.operations-drive.secretName=ambiguous-source",
+    ):
+        result = subprocess.run(["helm", "template", "invalid-google", str(chart), "-f", str(fixture), "--set", invalid], capture_output=True, text=True)
+        assert result.returncode and "schema" in result.stderr, f"accepted ambiguous credentials: {invalid}"
+print("Shared Google credential isolation, rotation and schema checks passed")
+PY
 
 echo "==> Verifying extract-agent image settings validation"
 expect_helm_template_failure() {

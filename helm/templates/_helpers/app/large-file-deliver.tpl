@@ -39,8 +39,19 @@ desired: {{ dig "replicas" "desired" 1 $in }}
 {{- range $idx, $ref := keys $in.credentials | sortAlpha -}}
   {{- $credential := get $in.credentials $ref -}}
   {{- $name := printf "large-file-credential-%d" $idx -}}
+  {{- $secretName := dig "secretName" "" $credential -}}
+  {{- $secretKey := dig "secretKey" "" $credential -}}
+  {{- if (dig "sharedGoogle" false $credential) -}}
+    {{- $secretName = include "groundx.google.secretName" $ -}}
+    {{- $secretKey = include "groundx.google.secretKey" $ -}}
+  {{- end -}}
   {{- $mounts = append $mounts (dict "name" $name "mountPath" (printf "/var/run/groundx/large-file/%s" $ref) "readOnly" true) -}}
-  {{- $volumes = append $volumes (dict "name" $name "secret" (dict "secretName" $credential.secretName "items" (list (dict "key" $credential.secretKey "path" "credentials.json")))) -}}
+  {{- $volumes = append $volumes (dict "name" $name "secret" (dict "secretName" $secretName "items" (list (dict "key" $secretKey "path" "credentials.json")))) -}}
+{{- end -}}
+{{- if and (eq (include "groundx.largeFileDeliver.sharedGoogle" .) "true") (eq (include "groundx.google.managed" .) "true") -}}
+  {{- $annotations := deepCopy (dig "annotations" dict $in) -}}
+  {{- $_ := set $annotations "google-credentials-hash" (include "groundx.google.credentials" . | sha256sum) -}}
+  {{- $_ := set $cfg "annotations" $annotations -}}
 {{- end -}}
 {{- $_ := set $cfg "volumeMounts" $mounts -}}
 {{- $_ := set $cfg "volumes" $volumes -}}

@@ -4,6 +4,82 @@ chart:
   version: 0.1.0
 
 tests:
+  - it: "shared Google credentials: golang"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.google-shared.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "delivery mounts shared credentials with OCR disabled"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.google-shared.yaml
+    set:
+      layout.ocr.enabled: false
+    documentSelector:
+      path: metadata.name
+      value: large-file-delivery
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: large-file-credential-0
+            secret:
+              secretName: google-credentials
+              items:
+                - key: credentials.json
+                  path: credentials.json
+      - matchRegex:
+          path: spec.template.metadata.annotations["google-credentials-hash"]
+          pattern: "^[0-9a-f]{64}$"
+  - it: "delivery mounts the external shared Secret and selected key"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.google-shared.yaml
+    set:
+      google.credentials: null
+      google.existingSecret: "123"
+      google.secretKey: "true"
+    documentSelector:
+      path: metadata.name
+      value: large-file-delivery
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: large-file-credential-0
+            secret:
+              secretName: "123"
+              items:
+                - key: "true"
+                  path: credentials.json
+      - notExists:
+          path: spec.template.metadata.annotations["google-credentials-hash"]
+  - it: "delivery retains separate credentials when a shared source is configured"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.large-file.yaml
+    set:
+      google.existingSecret: company-google
+    documentSelector:
+      path: metadata.name
+      value: large-file-delivery
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: large-file-credential-0
+            secret:
+              secretName: large-file-drive
+              items:
+                - key: service-account.json
+                  path: credentials.json
+      - notExists:
+          path: spec.template.metadata.annotations["google-credentials-hash"]
   - it: "default: golang"
     templates:
       - ../templates/app/golang.yaml
