@@ -71,8 +71,13 @@ without explicit human authorization.**
   - **`helm/` as an independent source** — **do not edit it independently.** It is a near-identical
     published mirror of `src/groundx` (tests/ removed, `Chart.yaml` reordered). Edit `src/groundx/`
     first, then sync the matching changed files into `helm/` when the change needs to ship through
-    the published chart. Reason: **mirror**. ⚠️ **Enforcement: NONE** — there is no in-repo script
-    that regenerates `helm/` from `src/` and no check that asserts they match. Manual sync, latent
+    the published chart. Reason: **mirror**. ⚠️ **Enforcement: partial** — there is still no in-repo
+    script that regenerates `helm/` from `src/` or a check that asserts the two trees match in
+    general. `.build/bin/validate-helm.sh` does run
+    `src/groundx/tests/files/verify-probe-mirror-drift.sh` (FRA-145), which renders both trees and
+    fails the gate if the five API-pod probe-timing fields (`livenessProbe`/`readinessProbe`
+    `timeoutSeconds`/`failureThreshold`) disagree between them — a narrow, field-scoped guard, not
+    general mirror-sync enforcement. Every other field pair is still manual sync, latent
     drift; a prime cleanup target (logged in `service.yaml` `known_gaps`).
   - **`src/groundx/tests/__snapshot__/*.snap`** — generated golden files. Do not hand-edit; regenerate
     with `helm unittest -u src/groundx`. Reason: **generated**. Enforcement: `helm-tests.yml` CI asserts
@@ -89,9 +94,12 @@ without explicit human authorization.**
 
 ## Repo-specific gotchas
 
-- **`helm/` ↔ `src/groundx/` duplication has no regen script and no drift check** — the single most
-  important hazard. A change to `src/groundx/` that isn't mirrored into `helm/` silently ships stale
-  templates. Sync both, every time.
+- **`helm/` ↔ `src/groundx/` duplication has no regen script and no general drift check** — the
+  single most important hazard. A change to `src/groundx/` that isn't mirrored into `helm/` silently
+  ships stale templates. Sync both, every time. The one exception is the five API-pod probe-timing
+  fields, which `.build/bin/validate-helm.sh` gates via
+  `src/groundx/tests/files/verify-probe-mirror-drift.sh` (FRA-145) — everything else in the mirror
+  is still unchecked.
 - **`upload.groundx.ai` model-weight download is HARDCODED** in inference init-containers — an
   **air-gap blocker**; weights must be mirrored for offline installs (mechanism not documented in-repo).
 - **Hosted ranker-only EKS is migration-state, not generic chart truth.** As of 2026-07-23,
