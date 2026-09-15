@@ -117,6 +117,26 @@ stringData:
       {{- end }}
     {{- end }}
 
+    {{- if or (ne (include "groundx.cognito.mode" .) "") (ne (include "groundx.cognito.clientId" .) "") (ne (include "groundx.cognito.clientSecret" .) "") (ne (include "groundx.cognito.poolId" .) "") (ne (include "groundx.cognito.region" .) "") }}
+
+    cognito:
+      {{- if ne (include "groundx.cognito.mode" .) "" }}
+      mode: {{ include "groundx.cognito.mode" . }}
+      {{- end }}
+      {{- if ne (include "groundx.cognito.clientId" .) "" }}
+      clientId: {{ include "groundx.cognito.clientId" . }}
+      {{- end }}
+      {{- if ne (include "groundx.cognito.clientSecret" .) "" }}
+      clientSecret: {{ include "groundx.cognito.clientSecret" . }}
+      {{- end }}
+      {{- if ne (include "groundx.cognito.poolId" .) "" }}
+      poolId: {{ include "groundx.cognito.poolId" . }}
+      {{- end }}
+      {{- if ne (include "groundx.cognito.region" .) "" }}
+      region: {{ include "groundx.cognito.region" . }}
+      {{- end }}
+    {{- end }}
+
     ai:
       aws:
         search:
