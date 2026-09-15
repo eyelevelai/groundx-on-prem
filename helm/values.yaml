@@ -388,6 +388,22 @@ workspace:
   gitProvider: github
   publishGithubWorkflowId: deploy.yml
 
+  # Hosted AWS logical allocation. RDS administrator URLs must be supplied by
+  # existingSecret as MANAGED_DATA_RDS_ADMIN_CONNECTION_DEV and _PROD.
+  managedData:
+    enabled: false
+    awsRegion: ""
+    # Existing ConfigMap name. The ConfigMap must contain key ca.pem.
+    mysqlSslCaConfigMap: ""
+    dev:
+      s3Bucket: ""
+      redisEndpoint: ""
+      redisUserGroup: ""
+    prod:
+      s3Bucket: ""
+      redisEndpoint: ""
+      redisUserGroup: ""
+
   github:
     apiBaseUrl: https://api.github.com
     appId: ""
