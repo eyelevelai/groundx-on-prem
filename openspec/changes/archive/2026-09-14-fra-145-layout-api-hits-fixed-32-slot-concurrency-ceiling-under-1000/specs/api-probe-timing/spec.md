@@ -129,6 +129,36 @@ reintroducing the drift this repo already flags as a known gap) SHALL NOT occur.
 - **THEN** the two renders carry identical liveness `timeoutSeconds`, readiness `timeoutSeconds`,
   and readiness `failureThreshold` values for every service
 
+#### Scenario: Both chart trees agree under an operator override
+
+- **GIVEN** an operator's values file that sets a non-default `timeoutSeconds` (liveness and
+  readiness) and readiness `failureThreshold` on every one of the five services' `api.probe`
+  blocks
+- **WHEN** each of the five services' Deployment manifests is rendered from `src/groundx` and
+  separately from `helm/`
+- **THEN** the two renders carry identical liveness `timeoutSeconds`, readiness `timeoutSeconds`,
+  and readiness `failureThreshold` values for every service, matching the operator's override
+- **AND** neither tree silently falls back to the chart default in place of the override
+
+#### Scenario: catches — a mirror render that diverges on a probe field, or resolves to no value, is rejected
+
+- **GIVEN** two renders of the same service being compared for probe-timing drift, where either
+  render's liveness `timeoutSeconds`, readiness `timeoutSeconds`, or readiness `failureThreshold`
+  differs from the other, or where either render has no Deployment by that service's name, or is
+  missing one of those three fields on the Deployment it does have
+- **WHEN** the probe-mirror-drift guard compares the two renders
+- **THEN** the guard reports drift and fails
+- **AND** an unresolved value (the Deployment absent, or the field absent) is treated as drift, not
+  silently treated as agreeing with the other render
+
+#### Scenario: must not block — a mirror render that differs only in a non-probe field is accepted
+
+- **GIVEN** two renders of the same service whose liveness `timeoutSeconds`, readiness
+  `timeoutSeconds`, and readiness `failureThreshold` are identical, but which differ in an
+  unrelated field (for example, container image tag)
+- **WHEN** the probe-mirror-drift guard compares the two renders
+- **THEN** the guard reports no drift and passes
+
 ### Requirement: Probe-timing changes do not alter the `/health` contract during a mixed rollout
 
 Changing probe timing SHALL NOT change the path, method, or expected response of the `GET /health`

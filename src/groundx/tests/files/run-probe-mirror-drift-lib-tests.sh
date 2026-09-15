@@ -38,14 +38,34 @@ expect_fail() {
   fi
 }
 
-expect_pass "must-not-block: identical src/mirror renders are not flagged as drift" \
+expect_pass "must-not-block: src/mirror renders that differ only in a non-probe field (image tag) are not flagged as drift" \
   probe_mirror_drift_compare \
   "${fixtures_dir}/matching-src.yaml" "${fixtures_dir}/matching-mirror.yaml" \
   layout-api ranker-api
 
-expect_fail "must-detect: a diverging mirror render is flagged as drift" \
+expect_fail "must-detect: a diverging readiness timeoutSeconds is flagged as drift" \
   probe_mirror_drift_compare \
-  "${fixtures_dir}/diverging-src.yaml" "${fixtures_dir}/diverging-mirror.yaml" \
+  "${fixtures_dir}/diverging-readiness-timeout-src.yaml" "${fixtures_dir}/diverging-readiness-timeout-mirror.yaml" \
+  layout-api ranker-api
+
+expect_fail "must-detect: a diverging liveness timeoutSeconds is flagged as drift" \
+  probe_mirror_drift_compare \
+  "${fixtures_dir}/diverging-liveness-timeout-src.yaml" "${fixtures_dir}/diverging-liveness-timeout-mirror.yaml" \
+  layout-api ranker-api
+
+expect_fail "must-detect: a diverging readiness failureThreshold is flagged as drift" \
+  probe_mirror_drift_compare \
+  "${fixtures_dir}/diverging-readiness-threshold-src.yaml" "${fixtures_dir}/diverging-readiness-threshold-mirror.yaml" \
+  layout-api ranker-api
+
+expect_fail "must-detect: a Deployment absent from the mirror render fails closed rather than comparing empty to empty" \
+  probe_mirror_drift_compare \
+  "${fixtures_dir}/absent-document-src.yaml" "${fixtures_dir}/absent-document-mirror.yaml" \
+  layout-api ranker-api
+
+expect_fail "must-detect: a probe field absent from the mirror render fails closed rather than comparing null to null" \
+  probe_mirror_drift_compare \
+  "${fixtures_dir}/absent-field-src.yaml" "${fixtures_dir}/absent-field-mirror.yaml" \
   layout-api ranker-api
 
 echo "probe-mirror-drift-lib tests: ${pass} passed, ${fail} failed"

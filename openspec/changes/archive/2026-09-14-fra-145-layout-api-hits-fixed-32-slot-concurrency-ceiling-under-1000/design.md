@@ -28,6 +28,12 @@ that are at least as forgiving as today's implicit behavior.
 
 ## Decisions
 
+**Invariant (probe-mirror-drift guard):** the `helm/` mirror may render a value for
+liveness/readiness `timeoutSeconds` or readiness `failureThreshold` on any of the five API
+services only when that value is byte-identical to what `src/groundx` renders for the same
+service and field, under both chart defaults and any operator override — an absent Deployment or
+an absent field on either side is treated as a violation of this invariant, never as agreement.
+
 ### Shipped defaults, and which ones change effective behavior on `helm upgrade`
 
 | Value | Shipped default | Changes existing deployments on upgrade? |
@@ -116,8 +122,10 @@ unrelated probe-timing default once production's values are updated to consume i
   no scenario in which raising a timeout newly fails a probe that was passing before, and an
   environment that wants the old numbers back can set them explicitly via the new override.
 - [Risk] `helm/` and `src/groundx` drift on these new fields, since this repo has no regen script
-  or automated drift guard (`CLAUDE.md` context, "KNOWN GAPS"). → Mitigation: `tasks.md` includes a
-  dedicated drift-check task comparing rendered output between the two trees for these fields, and
+  or automated drift guard (`CLAUDE.md` context, "KNOWN GAPS"). → Mitigation: the probe-mirror-drift
+  guard enforces the invariant stated above (`src/groundx/tests/files/probe-mirror-drift-lib.sh` +
+  `verify-probe-mirror-drift.sh`, wired into `.build/bin/validate-helm.sh`), and `tasks.md` includes
+  a dedicated drift-check task comparing rendered output between the two trees for these fields, so
   the manual sync is done in the same change rather than deferred.
 - [Risk] A future edit to one service's `*.api` schema block could copy the `probe` sub-schema
   without also copying its `additionalProperties: false` boundaries, silently reopening the

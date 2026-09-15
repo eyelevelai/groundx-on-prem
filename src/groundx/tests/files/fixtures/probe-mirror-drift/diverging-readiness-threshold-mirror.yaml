@@ -7,7 +7,6 @@ spec:
     spec:
       containers:
         - name: layout-api
-          image: eyelevel/python-api:0.2.7-helm-mirror-build
           livenessProbe:
             timeoutSeconds: 3
           readinessProbe:
@@ -23,9 +22,8 @@ spec:
     spec:
       containers:
         - name: ranker-api
-          image: eyelevel/ranker-api:0.2.7-helm-mirror-build
           livenessProbe:
             timeoutSeconds: 3
           readinessProbe:
             timeoutSeconds: 3
-            failureThreshold: 3
+            failureThreshold: 5
