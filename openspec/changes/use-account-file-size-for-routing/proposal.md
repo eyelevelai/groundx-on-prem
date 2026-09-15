@@ -5,6 +5,7 @@ The delivery chart requires a second PDF byte limit even though account maxFileS
 ## What Changes
 
 - Remove largeFileDeliver.counting.maxPDFBytes from the values schema and existing fixtures.
+- Remove counting.helperPath; compatible producers find the helper beside their executable.
 - Require the compatible Cashbot producer that snapshots effective account maxFileSize for counting and delivery.
 - Regenerate existing resource snapshots and mirror the source schema to helm.
 

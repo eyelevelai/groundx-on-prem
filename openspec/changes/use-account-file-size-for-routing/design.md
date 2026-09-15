@@ -8,7 +8,9 @@ Remove the schema property and requirement rather than leaving an ignored public
 
 ## Rollout
 
-Use compatible Cashbot QueueTrainFile images when applying this chart change. Remove the old field from operator values. Older producers still require the field, so restore it and the prior chart before reverting a producer. Disabled installations retain their manifests. No live Kubernetes rollout is included.
+Remove counting.helperPath from the schema and fixtures as well. Compatible producers locate large-file-pdf-count beside their executable, not relative to the working directory. The standard image already packages both in /app; no build layout changes are required.
+
+Use compatible Cashbot QueueTrainFile images when applying this chart change. Remove the old fields from operator values. Older producers still require the fields, so restore them and the prior chart before reverting a producer. Disabled installations retain their manifests. No live Kubernetes rollout is included.
 
 ## Validation
 

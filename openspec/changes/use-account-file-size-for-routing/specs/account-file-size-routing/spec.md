@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Account file size owns the byte limit
-The chart SHALL render enabled routing configuration without maxPDFBytes and SHALL require compatible producer images that use account maxFileSize. Time budgets, helper paths, credentials and transports SHALL retain their existing configuration.
+The chart SHALL render enabled routing configuration without maxPDFBytes or helperPath and SHALL require compatible producer images that use account maxFileSize and locate the page-count helper beside their executable. Time budgets, credentials and transports SHALL retain their existing configuration.
 
 #### Scenario: Enabled delivery uses account size
 - **WHEN** the existing large-file delivery configuration is rendered without counting.maxPDFBytes
@@ -12,5 +12,5 @@ The chart SHALL render enabled routing configuration without maxPDFBytes and SHA
 - **THEN** existing manifests and configuration hashes remain unchanged
 
 #### Scenario: Obsolete override is supplied
-- **WHEN** counting.maxPDFBytes appears in operator values
+- **WHEN** counting.maxPDFBytes or counting.helperPath appears in operator values
 - **THEN** schema validation rejects the obsolete setting
