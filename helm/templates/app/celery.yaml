@@ -19,6 +19,8 @@
 {{- $lbls := get $svcData "labels" -}}
 {{- $lifecycle := get $svcData "lifecycle" | default dict -}}
 {{- $mapPrefix := get $svcData "mapPrefix" -}}
+{{- $sharedGoogle := and (eq $mapPrefix "layout") (eq (include "groundx.layout.ocr.sharedGoogle" $) "true") -}}
+{{- $mountOCR := and (eq $ocrCreate "true") (or (eq $hasOCR "true") $sharedGoogle) -}}
 {{- $name := get $svcData "name" -}}
 {{- $node := get $svcData "node" -}}
 {{- $nsl := get $svcData "nodeSelector" -}}
@@ -64,7 +66,11 @@ spec:
       annotations:
         config-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-config-py.yaml") $ | sha256sum }}
         supervisord-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-supervisord-conf.yaml") $ | sha256sum }}
-{{- if and (eq $ocrCreate "true") (eq $hasOCR "true") }}
+{{- if $sharedGoogle }}
+{{- if eq (include "groundx.google.managed" $) "true" }}
+        ocr-credentials-hash: {{ include "groundx.google.credentials" $ | sha256sum }}
+{{- end }}
+{{- else if $mountOCR }}
         ocr-credentials-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-ocr-credentials.yaml") $ | sha256sum }}
 {{- end }}
 {{- if gt (len $anns) 0 }}
@@ -172,10 +178,13 @@ spec:
             - name: config-volume
               mountPath: /app/config.py
               subPath: config.py
-{{- if and (eq $ocrCreate "true") (eq $hasOCR "true") }}
+{{- if $mountOCR }}
             - name: credentials-volume
               mountPath: /app/credentials.json
               subPath: credentials.json
+{{- if $sharedGoogle }}
+              readOnly: true
+{{- end }}
 {{- end }}
             - name: supervisord-volume
               mountPath: /app/supervisord.conf
@@ -187,10 +196,17 @@ spec:
         - name: config-volume
           secret:
             secretName: {{ $svc }}-config-py-map
-{{- if and (eq $ocrCreate "true") (eq $hasOCR "true") }}
+{{- if $mountOCR }}
         - name: credentials-volume
           secret:
+{{- if $sharedGoogle }}
+            secretName: {{ include "groundx.google.secretName" $ | quote }}
+            items:
+              - key: {{ include "groundx.google.secretKey" $ | quote }}
+                path: credentials.json
+{{- else }}
             secretName: {{ $svc }}-ocr-credentials-map
+{{- end }}
 {{- end }}
         - name: supervisord-volume
           configMap:
