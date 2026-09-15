@@ -75,11 +75,11 @@ any deferred follow-up items; none of that coordination is a checkbox in this fi
 ### 2026-09-15 — correction to task 6.1's method
 
 Task 6.1 above states the snapshots were regenerated via `helm unittest -u src/groundx`. That is
-not what happened. Per commit `4af60f3d`'s own message, the installed `helm-unittest` plugin
-(v1.1.2) drops empty-render snapshot labels on regeneration — running `-u` would have lost the
-`disabled-api`, `disabled-workspace`, and `workspace-metrics-config` labels and reordered the
-`extract` ones, a regression this repo's own `verify-helm-snapshots.py` guard would have caught.
-The snapshot files were instead hand-patched with the new probe fields, then verified byte-exact
-by running `helm unittest` **without** `-u` (which compares against the committed snapshot rather
-than rewriting it). A future snapshot regeneration on this chart under an unchanged plugin version
-should expect the same limitation and hand-patch rather than blindly re-run `-u`.
+not what happened. Per commit `4af60f3d`'s own message (quoted here, not just cited by SHA, since
+a branch commit SHA does not survive a squash-merge): "Patched by hand rather than with helm
+unittest -u: the installed plugin (v1.1.2) drops empty-render snapshot labels on regeneration,
+which would have lost the disabled-api, disabled-workspace and workspace-metrics-config labels and
+reordered the extract ones. The repo's own verify-helm-snapshots.py guard catches that. Verified
+byte-exact by running helm unittest without -u, which compares rather than rewrites." A future
+snapshot regeneration on this chart under an unchanged plugin version should expect the same
+limitation and hand-patch rather than blindly re-run `-u`.

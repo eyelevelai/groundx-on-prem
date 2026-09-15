@@ -8,6 +8,7 @@ fi
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${script_dir}/probe-mirror-drift-lib.sh"
+set +e
 
 fixtures_dir="${script_dir}/fixtures/probe-mirror-drift"
 
@@ -66,6 +67,16 @@ expect_fail "must-detect: a Deployment absent from the mirror render fails close
 expect_fail "must-detect: a probe field absent from the mirror render fails closed rather than comparing null to null" \
   probe_mirror_drift_compare \
   "${fixtures_dir}/absent-field-src.yaml" "${fixtures_dir}/absent-field-mirror.yaml" \
+  layout-api ranker-api
+
+expect_fail "must-detect: a Deployment absent from BOTH renders fails closed rather than comparing empty to empty" \
+  probe_mirror_drift_compare \
+  "${fixtures_dir}/both-absent-document-src.yaml" "${fixtures_dir}/both-absent-document-mirror.yaml" \
+  layout-api ranker-api
+
+expect_fail "must-detect: a probe field absent from BOTH renders fails closed rather than comparing null to null" \
+  probe_mirror_drift_compare \
+  "${fixtures_dir}/both-absent-field-src.yaml" "${fixtures_dir}/both-absent-field-mirror.yaml" \
   layout-api ranker-api
 
 echo "probe-mirror-drift-lib tests: ${pass} passed, ${fail} failed"

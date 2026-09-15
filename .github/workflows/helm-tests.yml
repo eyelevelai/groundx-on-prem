@@ -24,6 +24,12 @@ jobs:
             - name: Install helm-unittest plugin
               run: helm plugin install https://github.com/helm-unittest/helm-unittest.git
 
+            - name: Install yq (mikefarah v4, pinned)
+              run: |
+                  sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.53.2/yq_linux_amd64
+                  sudo chmod +x /usr/local/bin/yq
+                  yq --version
+
             - name: Run Helm production gate
               run: .build/bin/validate-helm.sh --junit
 
