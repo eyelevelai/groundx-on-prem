@@ -46,7 +46,7 @@ default) SHALL NOT occur.
 - **THEN** `spec.template.spec.containers[0].readinessProbe.failureThreshold` is present and equal to `3`
 - **AND** the field is not absent from the rendered manifest
 
-### Requirement: Default probe values preserve today's effective behavior
+### Requirement: Default probe values loosen both timeouts and preserve the readiness failure threshold
 
 With no operator overrides, the rendered probe-timing values SHALL be: liveness `timeoutSeconds: 3`,
 readiness `timeoutSeconds: 3`, readiness `failureThreshold: 3`. The liveness `failureThreshold`
