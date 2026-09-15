@@ -170,12 +170,18 @@ change on either side.
 Contract polarity: **finalize success**, with a backward-compatibility scenario for the two
 same-level, either-may-ship-first changes named in `proposal.md`.
 
-#### Scenario: Old probe timing continues to work against either ai-server version
+#### Scenario: The endpoint shape is unchanged, and the pair completes the fix only together
 
 - **GIVEN** an API pod deployed with this chart's new probe-timing defaults
 - **WHEN** its liveness and readiness probes call `GET /health` on the paired `ai-server` image,
   whether or not that image has picked up the paired FRA-145 `ai-server` fix
 - **THEN** the probe still targets the same path (`/health`), the same method (`GET`), and the
   same port as before this change
-- **AND** rollout order between this change and the paired `ai-server` change does not affect
-  which one is safe to deploy first
+- **AND** neither deployment order regresses against today's behaviour, since this change only
+  widens the two probe timeouts and the paired change only removes Redis work behind `/health`
+- **AND** the fix is complete only once BOTH are deployed: with the paired `ai-server` change
+  alone, its remaining per-request latency write can block the event loop for up to about two
+  seconds (its connect and read budgets are independent), which exceeds the one-second Kubernetes
+  default this change replaces, so a concurrent probe can still miss its budget
+- **AND** deploying this chart change first, or both together, is therefore preferred over
+  deploying the paired change first

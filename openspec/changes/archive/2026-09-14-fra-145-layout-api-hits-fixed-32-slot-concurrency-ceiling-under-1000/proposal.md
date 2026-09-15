@@ -41,4 +41,8 @@ No stateful or data resource is touched — this is probe-timing configuration o
 
 **Open design questions**: none — the shipped defaults, the two upgrade-behavior determinations, and the affected-file list are fully specified by the accepted plan; no `superpowers:brainstorming` session is needed.
 
-**Dependencies**: none upstream. `ai-server` is the same-level producer of the `GET /health` endpoint this template's probes call; per the contract outline the touchpoint is additive (address, method, and 200-shape unchanged), so the two repos collapse to one dependency level and either may ship first.
+**Dependencies**: none upstream. `ai-server` is the same-level producer of the `GET /health` endpoint this template's probes call; per the contract outline the touchpoint is additive (address, method, and 200-shape unchanged), so the two repos collapse to one dependency level. Ordering, corrected 2026-09-15: neither
+deployment order regresses, but an unchanged endpoint shape does not make them independent. The fix
+is complete only once both are deployed, and this chart change should land first or alongside the
+paired one, because that change leaves one per-request Redis write bounded at about two seconds
+against the one-second probe default this change replaces.

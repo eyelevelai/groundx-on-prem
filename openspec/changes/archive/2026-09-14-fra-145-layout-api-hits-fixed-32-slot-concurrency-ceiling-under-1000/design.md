@@ -138,10 +138,11 @@ unrelated probe-timing default once production's values are updated to consume i
 - No stateful or data resource is touched; this is probe-timing configuration only.
 - Deploy: a normal `helm upgrade` picks up the new defaults immediately for every environment on
   this chart version, whether or not that environment's values file mentions the new keys (they
-  are chart defaults, not opt-in flags). No ordering constraint against the paired `ai-server`
-  change — the `/health` touchpoint (path, method, response shape) is unchanged on both sides, so
-  either may deploy first (see `specs/api-probe-timing/spec.md`'s backward-compatibility
-  requirement).
+  are chart defaults, not opt-in flags). The `/health` touchpoint (path, method, response shape) is
+  unchanged on both sides, so neither order regresses, but an unchanged endpoint shape does not
+  make the two independent: the fix is complete only once both are deployed, and this chart change
+  should land first or alongside the paired one (see `specs/api-probe-timing/spec.md`'s
+  compatibility requirement, amended 2026-09-15).
 - Rollback: a `helm rollback` to the prior release, or, without a full chart rollback, an explicit
   `timeoutSeconds`/`failureThreshold` override in the environment's own values file restoring the
   prior effective numbers (`1`/implicit for `timeoutSeconds`, `3` for readiness
