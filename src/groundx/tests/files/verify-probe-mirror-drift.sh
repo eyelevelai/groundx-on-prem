@@ -43,11 +43,12 @@ helm template "${mirror_chart}" -f "${mirror_minikube_values}" \
   > "${render_ws_mirror}"
 
 nondefault_override_set_args=()
-for svc in layout ranker summary extract; do
+for svc_spec in "layout:7:9:5" "ranker:11:13:6" "summary:15:17:8" "extract:19:21:10"; do
+  IFS=':' read -r svc lv rt rf <<< "${svc_spec}"
   nondefault_override_set_args+=(
-    "--set" "${svc}.api.probe.liveness.timeoutSeconds=7"
-    "--set" "${svc}.api.probe.readiness.timeoutSeconds=9"
-    "--set" "${svc}.api.probe.readiness.failureThreshold=5"
+    "--set" "${svc}.api.probe.liveness.timeoutSeconds=${lv}"
+    "--set" "${svc}.api.probe.readiness.timeoutSeconds=${rt}"
+    "--set" "${svc}.api.probe.readiness.failureThreshold=${rf}"
   )
 done
 
@@ -61,15 +62,15 @@ helm template "${mirror_chart}" -f "${mirror_minikube_values}" \
   > "${render_nondefault_override_mirror}"
 helm template "${src_chart}" -f "${src_minikube_values}" \
   --set workspace.enabled=true --set workspace.token=drift-check-token \
-  --set workspace.api.probe.liveness.timeoutSeconds=7 \
-  --set workspace.api.probe.readiness.timeoutSeconds=9 \
-  --set workspace.api.probe.readiness.failureThreshold=5 \
+  --set workspace.api.probe.liveness.timeoutSeconds=23 \
+  --set workspace.api.probe.readiness.timeoutSeconds=25 \
+  --set workspace.api.probe.readiness.failureThreshold=12 \
   > "${render_nondefault_override_ws_src}"
 helm template "${mirror_chart}" -f "${mirror_minikube_values}" \
   --set workspace.enabled=true --set workspace.token=drift-check-token \
-  --set workspace.api.probe.liveness.timeoutSeconds=7 \
-  --set workspace.api.probe.readiness.timeoutSeconds=9 \
-  --set workspace.api.probe.readiness.failureThreshold=5 \
+  --set workspace.api.probe.liveness.timeoutSeconds=23 \
+  --set workspace.api.probe.readiness.timeoutSeconds=25 \
+  --set workspace.api.probe.readiness.failureThreshold=12 \
   > "${render_nondefault_override_ws_mirror}"
 
 fail=0
