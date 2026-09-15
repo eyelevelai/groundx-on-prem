@@ -18,6 +18,12 @@ fixture, on Cashbot commit `60d4ecf8de2253bfefaf1c1f4033a262da3a36dc`.
 Only generated fake credentials were used. No live OCR or Drive run is claimed.
 
 ## Deployment boundary
+Chart PR [#100](https://github.com/eyelevelai/groundx-on-prem/pull/100) merged
+into `0.2.7` at `39f9b1d4697004ceada4268ff3db155a3652877f`.
+The chart implementation is complete. Live routing and capacity checks remain
+in cashbot-go's active `route-large-files-before-preprocess` plan; archiving
+this chart plan does not complete those checks.
+
 No cluster, account policy or Google credential is changed by this implementation.
 After merge, canary the selected source in dev and verify both OCR and delivery
 before adopting it in other environments. Provision an external Secret before
