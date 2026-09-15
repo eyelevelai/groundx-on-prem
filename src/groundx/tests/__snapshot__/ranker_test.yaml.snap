@@ -58,16 +58,19 @@
                   port: 8080
                 initialDelaySeconds: 10
                 periodSeconds: 30
+                timeoutSeconds: 3
               name: ranker-api
               ports:
                 - containerPort: 8080
                   protocol: TCP
               readinessProbe:
+                failureThreshold: 3
                 httpGet:
                   path: /health
                   port: 8080
                 initialDelaySeconds: 10
                 periodSeconds: 30
+                timeoutSeconds: 3
               resources:
                 requests:
                   cpu: 100m

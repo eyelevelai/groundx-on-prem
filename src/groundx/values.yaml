@@ -120,6 +120,13 @@ summary:
   api:
     enabled: true
 
+    probe:
+      liveness:
+        timeoutSeconds: 3
+      readiness:
+        failureThreshold: 3
+        timeoutSeconds: 3
+
     replicas:
       desired: 1
       max: 32
@@ -168,6 +175,13 @@ groundx:
 layout:
   api:
     enabled: true
+
+    probe:
+      liveness:
+        timeoutSeconds: 3
+      readiness:
+        failureThreshold: 3
+        timeoutSeconds: 3
 
     replicas:
       desired: 1
@@ -332,6 +346,13 @@ ranker:
     enabled: true
     batchSize: 3
 
+    probe:
+      liveness:
+        timeoutSeconds: 3
+      readiness:
+        failureThreshold: 3
+        timeoutSeconds: 3
+
     resources:
       requests:
         cpu: 100m
@@ -426,6 +447,12 @@ workspace:
 
   api:
     enabled: true
+    probe:
+      liveness:
+        timeoutSeconds: 3
+      readiness:
+        failureThreshold: 3
+        timeoutSeconds: 3
     replicas:
       desired: 1
       max: 8
@@ -489,6 +516,13 @@ extract:
 
   api:
     enabled: false
+
+    probe:
+      liveness:
+        timeoutSeconds: 3
+      readiness:
+        failureThreshold: 3
+        timeoutSeconds: 3
 
     replicas:
       desired: 1

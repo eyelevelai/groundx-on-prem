@@ -80,7 +80,7 @@ conversion:
   upstream_to_convert_first: []         # infra; convert when the services it deploys are stable
   known_gaps:
     - "PRIVILEGED: bin/operator can DESTROY Helm releases incl. stateful stores (db/file/search); bin/environment can create/destroy AWS VPCs+EKS via terraform --auto-approve; build.sh has publish rights to the public chart bucket"
-    - "helm/ <-> src/groundx duplication has NO regen script and NO drift check — manual sync, latent drift (good early-win conversion target)"
+    - "helm/ <-> src/groundx duplication has NO regen script and enforcement is only PARTIAL — the five API-pod probe-timing fields (FRA-145) are drift-guarded by validate-helm.sh; every other field pair is still manual sync, latent drift (good early-win conversion target)"
     - "upload.groundx.ai model-weight download is hardcoded + air-gap blocker; wget|tar supply-chain surface"
     - "plaintext secret defaults in example values (OpenSearch pw, minio123) — footgun if copied to prod"
     - "groundx.extract config binding is unschematized — image field rename silently breaks rendering"

@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: layout-api
+spec:
+  template:
+    spec:
+      containers:
+        - name: layout-api
+          livenessProbe:
+            timeoutSeconds: 9
+          readinessProbe:
+            timeoutSeconds: 3
+            failureThreshold: 3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ranker-api
+spec:
+  template:
+    spec:
+      containers:
+        - name: ranker-api
+          livenessProbe:
+            timeoutSeconds: 3
+          readinessProbe:
+            timeoutSeconds: 3
+            failureThreshold: 3

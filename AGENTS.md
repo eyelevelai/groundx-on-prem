@@ -18,11 +18,14 @@ dependency on any other `groundx-*` repo** (verified).
 - **Lint / render:** `helm lint src/groundx` · `helm template src/groundx -f src/groundx/values/minikube/values.yaml`
 - **Test:** `.build/bin/validate-helm.sh` runs the full local gate (lint + `helm unittest` +
   dual-surface render checks) and is the entrypoint to prefer. It generates the throwaway
-  Google-OCR credentials fixture the OCR unit tests need; a bare `helm unittest src/groundx`
-  (and `helm unittest -u src/groundx` for snapshot regen) fails the `celery` OCR case with
-  `layout.ocr.credentials file not found` unless that fixture exists, so generate it first or run
-  the gate. Both require the `helm-unittest` plugin:
-  `helm plugin install https://github.com/helm-unittest/helm-unittest.git`.
+  Google-OCR credentials fixture the OCR unit tests need; a bare `helm unittest src/groundx` fails
+  the `celery` OCR case with `layout.ocr.credentials file not found` unless that fixture exists, so
+  generate it first or run the gate. It requires the `helm-unittest` plugin:
+  `helm plugin install https://github.com/helm-unittest/helm-unittest.git`, and `yq` (mikefarah v4
+  line) for the `probe-mirror-drift` guard's field-level renders
+  (`src/groundx/tests/files/verify-probe-mirror-drift.sh`). Do not regenerate the `__snapshot__`
+  golden files with `helm unittest -u src/groundx` — see the "Agent boundaries" section below for
+  why and for the correct method.
 - **Helpers:** `bin/uuid` generates the UUIDs needed for `admin.apiKey` / `admin.username`
 - **Real install from this checkout** (needs a cluster + license and a complete env values file):
   `helm upgrade --install groundx src/groundx -n eyelevel -f values.ranker-only-eks.yaml`
@@ -71,12 +74,23 @@ without explicit human authorization.**
   - **`helm/` as an independent source** — **do not edit it independently.** It is a near-identical
     published mirror of `src/groundx` (tests/ removed, `Chart.yaml` reordered). Edit `src/groundx/`
     first, then sync the matching changed files into `helm/` when the change needs to ship through
-    the published chart. Reason: **mirror**. ⚠️ **Enforcement: NONE** — there is no in-repo script
-    that regenerates `helm/` from `src/` and no check that asserts they match. Manual sync, latent
+    the published chart. Reason: **mirror**. ⚠️ **Enforcement: partial** — there is still no in-repo
+    script that regenerates `helm/` from `src/` or a check that asserts the two trees match in
+    general. `.build/bin/validate-helm.sh` does run
+    `src/groundx/tests/files/verify-probe-mirror-drift.sh` (FRA-145), which renders both trees and
+    fails the gate if the five API-pod probe-timing fields (`livenessProbe`/`readinessProbe`
+    `timeoutSeconds`/`failureThreshold`) disagree between them — a narrow, field-scoped guard, not
+    general mirror-sync enforcement. Every other field pair is still manual sync, latent
     drift; a prime cleanup target (logged in `service.yaml` `known_gaps`).
-  - **`src/groundx/tests/__snapshot__/*.snap`** — generated golden files. Do not hand-edit; regenerate
-    with `helm unittest -u src/groundx`. Reason: **generated**. Enforcement: `helm-tests.yml` CI asserts
-    rendered output matches these snapshots.
+  - **`src/groundx/tests/__snapshot__/*.snap`** — generated golden files. Do not hand-edit casually.
+    **Do not regenerate with `helm unittest -u src/groundx`**: the installed `helm-unittest` plugin
+    (v1.1.2) drops required empty-render snapshot labels on `-u` regeneration (e.g.
+    `disabled-api`/`disabled-workspace`/`workspace-metrics-config`) and reorders others, which the
+    repo's own `.build/bin/verify-helm-snapshots.py` guard then fails. Instead, hand-patch the
+    affected snapshot(s) for the new/changed fields, then verify byte-exact by running
+    `helm unittest` **without** `-u` (which compares against the committed snapshot rather than
+    rewriting it) followed by `verify-helm-snapshots.py`. Reason: **generated**. Enforcement:
+    `helm-tests.yml` CI asserts rendered output matches these snapshots.
   - **`helm-releases/*.tgz`** — build outputs of `src/build.sh` (`helm package`). Never edit.
   - **`terraform/**/.terraform.lock.hcl`** — generated lockfiles. Never edit.
 - **`terraform/`** is **legacy / deprecated** (2025-11-04). Don't build on it; prefer the Helm path.
@@ -89,9 +103,12 @@ without explicit human authorization.**
 
 ## Repo-specific gotchas
 
-- **`helm/` ↔ `src/groundx/` duplication has no regen script and no drift check** — the single most
-  important hazard. A change to `src/groundx/` that isn't mirrored into `helm/` silently ships stale
-  templates. Sync both, every time.
+- **`helm/` ↔ `src/groundx/` duplication has no regen script and no general drift check** — the
+  single most important hazard. A change to `src/groundx/` that isn't mirrored into `helm/` silently
+  ships stale templates. Sync both, every time. The one exception is the five API-pod probe-timing
+  fields, which `.build/bin/validate-helm.sh` gates via
+  `src/groundx/tests/files/verify-probe-mirror-drift.sh` (FRA-145) — everything else in the mirror
+  is still unchecked.
 - **`upload.groundx.ai` model-weight download is HARDCODED** in inference init-containers — an
   **air-gap blocker**; weights must be mirrored for offline installs (mechanism not documented in-repo).
 - **Hosted ranker-only EKS is migration-state, not generic chart truth.** As of 2026-07-23,
