@@ -22,6 +22,31 @@
 {{- (dig "username" "" $b) | trim -}}
 {{- end }}
 
+{{- define "groundx.cognito.mode" -}}
+{{- $b := .Values.cognito | default dict -}}
+{{- (dig "mode" "" $b) | trim -}}
+{{- end }}
+
+{{- define "groundx.cognito.clientId" -}}
+{{- $b := .Values.cognito | default dict -}}
+{{- (dig "clientId" "" $b) | trim -}}
+{{- end }}
+
+{{- define "groundx.cognito.clientSecret" -}}
+{{- $b := .Values.cognito | default dict -}}
+{{- dig "clientSecret" "" $b -}}
+{{- end }}
+
+{{- define "groundx.cognito.poolId" -}}
+{{- $b := .Values.cognito | default dict -}}
+{{- (dig "poolId" "" $b) | trim -}}
+{{- end }}
+
+{{- define "groundx.cognito.region" -}}
+{{- $b := .Values.cognito | default dict -}}
+{{- (dig "region" "" $b) | trim -}}
+{{- end }}
+
 {{- define "groundx.busybox.image" -}}
 {{- $in := .Values.busybox | default dict -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
