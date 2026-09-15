@@ -1,0 +1,73 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: check-runner-startup-404b2a1
+  namespace: eyelevel
+  labels:
+    rollout: age-344
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 180
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app: check-runner-startup
+      annotations:
+        instrumentation.opentelemetry.io/inject-python: "true"
+        instrumentation.opentelemetry.io/inject-java: "true"
+        instrumentation.opentelemetry.io/inject-nodejs: "true"
+        instrumentation.opentelemetry.io/inject-dotnet: "true"
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      nodeSelector:
+        node.kubernetes.io/instance-type: t3a.medium
+      containers:
+        - name: check
+          image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner@sha256:6609d9512297bdc73be4991fc743a8e4d498eb30b9433a3140819f1f069ead63
+          command: [python, -c]
+          args:
+            - |
+              import json
+              import subprocess
+              import sys
+              import time
+              import urllib.request
+              import typing_extensions
+              from importlib.metadata import version
+
+              assert typing_extensions.__file__.startswith("/otel-auto-instrumentation-python/")
+              print(json.dumps({"monitoringInjected": True, "anyio": version("anyio")}))
+              process = subprocess.Popen([
+                  sys.executable, "-m", "uvicorn", "server:app",
+                  "--host", "127.0.0.1", "--port", "8080",
+              ])
+              try:
+                  for attempt in range(30):
+                      if process.poll() is not None:
+                          raise RuntimeError("API exited before becoming healthy")
+                      try:
+                          with urllib.request.urlopen("http://127.0.0.1:8080/health", timeout=1) as response:
+                              assert response.status == 200
+                              assert json.load(response) == {"message": "OK"}
+                          print(json.dumps({"httpHealth": "passed"}))
+                          break
+                      except OSError:
+                          time.sleep(1)
+                  else:
+                      raise RuntimeError("API did not become healthy")
+              finally:
+                  process.terminate()
+                  process.wait(timeout=10)
+          resources:
+            requests:
+              cpu: 100m
+              memory: 192Mi
+            limits:
+              cpu: 500m
+              memory: 384Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
