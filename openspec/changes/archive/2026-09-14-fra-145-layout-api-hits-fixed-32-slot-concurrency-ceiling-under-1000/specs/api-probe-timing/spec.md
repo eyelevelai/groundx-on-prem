@@ -163,12 +163,15 @@ reintroducing the drift this repo already flags as a known gap) SHALL NOT occur.
 
 Changing probe timing SHALL NOT change the path, method, or expected response of the `GET /health`
 call the probes make. An API pod running the old (unmodified) probe timing and one running the new
-timing SHALL both continue to interoperate correctly with either version of the paired `ai-server`
-`/health` handler, since the touchpoint itself (path, method, 200-shape) is unchanged by this
-change on either side.
+timing SHALL both remain wire-compatible with either version of the paired `ai-server` `/health`
+handler, since the touchpoint itself (path, method, 200-shape) is unchanged by this change on either
+side. Wire compatibility is not the same as the incident being fixed: see the scenario below for the
+deployment-order constraint that shape compatibility does not remove.
 
 Contract polarity: **finalize success**, with a backward-compatibility scenario for the two
-same-level, either-may-ship-first changes named in `proposal.md`.
+same-level changes named in `proposal.md`. They are same-level because neither consumes the other's
+artifact, not because their deployment order is free: this change should land first or alongside the
+paired one (corrected 2026-09-15).
 
 #### Scenario: The endpoint shape is unchanged, and the pair completes the fix only together
 

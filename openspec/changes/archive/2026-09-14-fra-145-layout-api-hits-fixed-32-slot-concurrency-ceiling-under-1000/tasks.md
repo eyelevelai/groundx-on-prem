@@ -65,8 +65,11 @@
       contract checks).
       check: bash .build/bin/validate-helm.sh
 
-Cross-service coordination note: this change is one of two same-level, either-may-ship-first
-changes for FRA-145 (the other is the paired `ai-server` fix for the actual incident root cause).
+Cross-service coordination note: this change is one of two same-level changes for FRA-145 (the other
+is the paired `ai-server` fix for the actual incident root cause). Same-level means neither consumes
+the other's artifact; it does not mean the deployment order is free. Corrected 2026-09-15: this
+change should deploy first or alongside the paired one, because that change leaves a roughly
+two-second per-request Redis write against the one-second probe default this change replaces.
 See the workspace `openspec/changes/<FEATURE_BRANCH>/tasks.md` for cross-service coordination and
 any deferred follow-up items; none of that coordination is a checkbox in this file.
 
