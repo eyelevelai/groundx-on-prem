@@ -1,0 +1,21 @@
+largeFileDeliver:
+  enabled: true
+  image: test.invalid/large-file-delivery:local
+  concurrency: 2
+  maxUploadDuration: 30s
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 1
+      memory: 256Mi
+  counting:
+    maxPDFBytes: 1048576
+    maxCountDuration: 10s
+    helperPath: /app/large-file-pdf-count
+    tempDir: /tmp
+  credentials:
+    operations-drive:
+      secretName: large-file-drive
+      secretKey: service-account.json

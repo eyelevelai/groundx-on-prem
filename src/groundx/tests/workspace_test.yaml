@@ -30,6 +30,240 @@ tests:
       - ./files/values.workspace.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "enabled: workspace managed data"
+    templates:
+      - ../templates/app/api.yaml
+      - ../templates/app/celery.yaml
+      - ../templates/resources/workspace-config-py.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.workspace-managed-data.yaml
+    asserts:
+      - matchRegex:
+          path: 'stringData["config.py"]'
+          pattern: 'managed_data_enabled=True'
+        template: ../templates/resources/workspace-config-py.yaml
+      - matchRegex:
+          path: 'stringData["config.py"]'
+          pattern: 'managed_data_s3_bucket_dev="managed-dev"'
+        template: ../templates/resources/workspace-config-py.yaml
+      - matchRegex:
+          path: 'stringData["config.py"]'
+          pattern: 'managed_data_redis_user_group_prod="managed-prod"'
+        template: ../templates/resources/workspace-config-py.yaml
+      - notMatchRegex:
+          path: 'stringData["config.py"]'
+          pattern: 'rds_admin_connection_dev="mysql'
+        template: ../templates/resources/workspace-config-py.yaml
+      - notMatchRegex:
+          path: 'stringData["config.py"]'
+          pattern: 'managed_data_mysql_ssl_ca_file='
+        template: ../templates/resources/workspace-config-py.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: workspace-managed-data-mysql-ca
+        template: ../templates/app/api.yaml
+        documentSelector:
+          path: kind
+          value: Deployment
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: workspace-managed-data-mysql-ca
+        template: ../templates/app/api.yaml
+        documentSelector:
+          path: kind
+          value: Deployment
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: workspace-managed-data-mysql-ca
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: workspace-cleanup
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: workspace-managed-data-mysql-ca
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: workspace-cleanup
+  - it: "configured managed-data CA mounts the API and every worker"
+    templates:
+      - ../templates/app/api.yaml
+      - ../templates/app/celery.yaml
+      - ../templates/resources/workspace-config-py.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.workspace-managed-data-ca.yaml
+    asserts:
+      - matchRegex:
+          path: 'stringData["config.py"]'
+          pattern: 'managed_data_mysql_ssl_ca_file="/var/run/config/workspace/mysql/ca.pem"'
+        template: ../templates/resources/workspace-config-py.yaml
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: workspace-managed-data-mysql-ca
+            mountPath: /var/run/config/workspace/mysql
+            readOnly: true
+        template: ../templates/app/api.yaml
+        documentSelector:
+          path: kind
+          value: Deployment
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: workspace-managed-data-mysql-ca
+            configMap:
+              name: workspace-db-ca
+              items:
+                - key: ca.pem
+                  path: ca.pem
+        template: ../templates/app/api.yaml
+        documentSelector:
+          path: kind
+          value: Deployment
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: workspace-managed-data-mysql-ca
+            mountPath: /var/run/config/workspace/mysql
+            readOnly: true
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: workspace-cleanup
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: workspace-managed-data-mysql-ca
+            configMap:
+              name: workspace-db-ca
+              items:
+                - key: ca.pem
+                  path: ca.pem
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: workspace-cleanup
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: workspace-managed-data-mysql-ca
+            mountPath: /var/run/config/workspace/mysql
+            readOnly: true
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: workspace-command
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: workspace-managed-data-mysql-ca
+            configMap:
+              name: workspace-db-ca
+              items:
+                - key: ca.pem
+                  path: ca.pem
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: workspace-command
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: workspace-managed-data-mysql-ca
+            mountPath: /var/run/config/workspace/mysql
+            readOnly: true
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: workspace-provision
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: workspace-managed-data-mysql-ca
+            configMap:
+              name: workspace-db-ca
+              items:
+                - key: ca.pem
+                  path: ca.pem
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: workspace-provision
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: workspace-managed-data-mysql-ca
+            mountPath: /var/run/config/workspace/mysql
+            readOnly: true
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: workspace-publish
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: workspace-managed-data-mysql-ca
+            configMap:
+              name: workspace-db-ca
+              items:
+                - key: ca.pem
+                  path: ca.pem
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: workspace-publish
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: workspace-managed-data-mysql-ca
+            mountPath: /var/run/config/workspace/mysql
+            readOnly: true
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: workspace-workspace
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: workspace-managed-data-mysql-ca
+            configMap:
+              name: workspace-db-ca
+              items:
+                - key: ca.pem
+                  path: ca.pem
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: workspace-workspace
+  - it: "groundx receives only the workspace runner token"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.workspace-managed-data.yaml
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: groundx
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WORKSPACE_RUNNER_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: workspace-managed-data
+                key: WORKSPACE_RUNNER_TOKEN
+      - notContains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: workspace-managed-data
   - it: "disabled: workspace metrics config"
     templates:
       - ../templates/resources/config-yaml.yaml

@@ -14,6 +14,10 @@
     {{- if and (eq (dig "token" "" $in) "") (eq (dig "existingSecret" "" $in) "") -}}
       {{- fail "workspace requires workspace.token or workspace.existingSecret when enabled" -}}
     {{- end -}}
+    {{- $managedData := dig "managedData" dict $in -}}
+    {{- if and (dig "enabled" false $managedData) (eq (dig "existingSecret" "" $in) "") -}}
+      {{- fail "workspace managed data requires workspace.existingSecret" -}}
+    {{- end -}}
 true
   {{- else -}}false{{- end -}}
 {{- else -}}
@@ -190,6 +194,50 @@ false
 {{ dig "managedRepoVisibility" "private" $in }}
 {{- end }}
 
+{{- define "groundx.workspace.managedData" -}}
+{{- $in := include "groundx.workspace.values" . | fromYaml -}}
+{{ dig "managedData" dict $in | toYaml }}
+{{- end }}
+
+{{- define "groundx.workspace.managedData.enabled" -}}
+{{- $in := include "groundx.workspace.managedData" . | fromYaml -}}
+{{ dig "enabled" false $in }}
+{{- end }}
+
+{{- define "groundx.workspace.managedData.awsRegion" -}}
+{{- $in := include "groundx.workspace.managedData" . | fromYaml -}}
+{{ dig "awsRegion" "" $in }}
+{{- end }}
+
+{{- define "groundx.workspace.managedData.mysqlSslCaConfigMap" -}}
+{{- $in := include "groundx.workspace.managedData" . | fromYaml -}}
+{{ dig "mysqlSslCaConfigMap" "" $in }}
+{{- end }}
+
+{{- define "groundx.workspace.managedData.mysqlSslCaFile" -}}
+/var/run/config/workspace/mysql/ca.pem
+{{- end }}
+
+{{- define "groundx.workspace.managedData.environment" -}}
+{{- $managed := include "groundx.workspace.managedData" .root | fromYaml -}}
+{{ dig .environment dict $managed | toYaml }}
+{{- end }}
+
+{{- define "groundx.workspace.managedData.s3Bucket" -}}
+{{- $in := include "groundx.workspace.managedData.environment" . | fromYaml -}}
+{{ dig "s3Bucket" "" $in }}
+{{- end }}
+
+{{- define "groundx.workspace.managedData.redisEndpoint" -}}
+{{- $in := include "groundx.workspace.managedData.environment" . | fromYaml -}}
+{{ dig "redisEndpoint" "" $in }}
+{{- end }}
+
+{{- define "groundx.workspace.managedData.redisUserGroup" -}}
+{{- $in := include "groundx.workspace.managedData.environment" . | fromYaml -}}
+{{ dig "redisUserGroup" "" $in }}
+{{- end }}
+
 {{- define "groundx.workspace.token" -}}
 {{- $in := include "groundx.workspace.values" . | fromYaml -}}
 {{ dig "token" "" $in }}
@@ -294,6 +342,31 @@ workspace-data
 workspace-github-private-key
 {{- end }}
 
+{{- define "groundx.workspace.managedData.mysqlSslCaVolumeName" -}}
+workspace-managed-data-mysql-ca
+{{- end }}
+
+{{- define "groundx.workspace.managedData.mysqlSslCaVolume" -}}
+{{- $configMap := include "groundx.workspace.managedData.mysqlSslCaConfigMap" . -}}
+{{- if and (eq (include "groundx.workspace.managedData.enabled" .) "true") (ne $configMap "") -}}
+- name: {{ include "groundx.workspace.managedData.mysqlSslCaVolumeName" . }}
+  configMap:
+    name: {{ $configMap }}
+    items:
+      - key: ca.pem
+        path: ca.pem
+{{- end }}
+{{- end }}
+
+{{- define "groundx.workspace.managedData.mysqlSslCaVolumeMount" -}}
+{{- $configMap := include "groundx.workspace.managedData.mysqlSslCaConfigMap" . -}}
+{{- if and (eq (include "groundx.workspace.managedData.enabled" .) "true") (ne $configMap "") -}}
+- name: {{ include "groundx.workspace.managedData.mysqlSslCaVolumeName" . }}
+  mountPath: /var/run/config/workspace/mysql
+  readOnly: true
+{{- end }}
+{{- end }}
+
 {{- define "groundx.workspace.githubPrivateKeyVolume" -}}
 {{- $secretName := include "groundx.workspace.github.privateKeySecretName" . -}}
 {{- if ne $secretName "" -}}
@@ -340,12 +413,14 @@ workspace-gitlab-token
 
 {{- define "groundx.workspace.volumeMounts" -}}
 {{ include "groundx.workspace.workspaceVolumeMount" . }}
+{{ include "groundx.workspace.managedData.mysqlSslCaVolumeMount" . }}
 {{ include "groundx.workspace.githubPrivateKeyVolumeMount" . }}
 {{ include "groundx.workspace.gitlabTokenVolumeMount" . }}
 {{- end }}
 
 {{- define "groundx.workspace.volumes" -}}
 {{ include "groundx.workspace.workspaceVolume" . }}
+{{ include "groundx.workspace.managedData.mysqlSslCaVolume" . }}
 {{ include "groundx.workspace.githubPrivateKeyVolume" . }}
 {{ include "groundx.workspace.gitlabTokenVolume" . }}
 {{- end }}
