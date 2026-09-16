@@ -121,19 +121,19 @@ stringData:
 
     cognito:
       {{- if ne (include "groundx.cognito.mode" .) "" }}
-      mode: {{ include "groundx.cognito.mode" . }}
+      mode: {{ include "groundx.cognito.mode" . | quote }}
       {{- end }}
       {{- if ne (include "groundx.cognito.clientId" .) "" }}
-      clientId: {{ include "groundx.cognito.clientId" . }}
+      clientId: {{ include "groundx.cognito.clientId" . | quote }}
       {{- end }}
       {{- if ne (include "groundx.cognito.clientSecret" .) "" }}
-      clientSecret: {{ include "groundx.cognito.clientSecret" . }}
+      clientSecret: {{ include "groundx.cognito.clientSecret" . | quote }}
       {{- end }}
       {{- if ne (include "groundx.cognito.poolId" .) "" }}
-      poolId: {{ include "groundx.cognito.poolId" . }}
+      poolId: {{ include "groundx.cognito.poolId" . | quote }}
       {{- end }}
       {{- if ne (include "groundx.cognito.region" .) "" }}
-      region: {{ include "groundx.cognito.region" . }}
+      region: {{ include "groundx.cognito.region" . | quote }}
       {{- end }}
     {{- end }}
 
