@@ -141,6 +141,8 @@ regressed output as golden, which is why the reorder shipped and stayed undetect
   to that node label under `mode: ingest`, so the entry is inert in this preset and the comment
   says why; `values.schema.json` is left untouched on both surfaces.
 
+  *Superseded: the bespoke guard was replaced by `helm/tests/ranker_ingest_test.yaml`, run by the gate's existing `helm unittest` invocation, and its files were deleted. See `design.md`.*
+
 Known, out of scope (recorded, not fixed — see `design.md` and `AGENTS.md` "resolve from the docs
 first"): `origin/main` (chart 0.2.6 release line) carries the identical regression and is not
 touched here, per explicit direction; `_helpers/app/ingress.tpl:16` gates the ranker-api ingress

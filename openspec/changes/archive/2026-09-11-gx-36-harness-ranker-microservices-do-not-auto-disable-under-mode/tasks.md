@@ -13,9 +13,9 @@ pass and proves the fix end-to-end on the source-of-truth chart surface.
 ## 2. Mirror the fix into `helm/`
 
 - [x] 2.1 Apply the identical hunk to `helm/templates/_helpers/app/ranker-api.tpl` and
-      `ranker-inference.tpl`. `helm/` has no `tests/` tree (`.helmignore:15` excludes it from the
-      package), so this is verified by rendering the mirror directly rather than `helm unittest`.
-  check: H="${GX_ON_PREM_HELM:-helm}"; case "$("$H" version --short 2>/dev/null)" in v3.19.0|v3.19.0+*) ;; *) echo "helm ($H) is not v3.19.0 -- set GX_ON_PREM_HELM to a v3.19.0 binary" >&2; exit 1 ;; esac; f="$(mktemp)"; "$H" template g helm --set mode=ingest > "$f" && python3 .build/bin/verify-ingest-render.py helm "$f"; rc=$?; rm -f "$f"; exit $rc
+      `ranker-inference.tpl`. `helm/` now carries its own `tests/` tree; `.helmignore:15` keeps it
+      out of the package, so the mirror is verified by `helm unittest` like `src/groundx`.
+  check: H="${GX_ON_PREM_HELM:-helm}"; case "$("$H" version --short 2>/dev/null)" in v3.19.0|v3.19.0+*) ;; *) echo "helm ($H) is not v3.19.0 -- set GX_ON_PREM_HELM to a v3.19.0 binary" >&2; exit 1 ;; esac; "$H" unittest helm
 
 ## 3. Regenerate the affected snapshots (scoped)
 
@@ -61,8 +61,8 @@ The guard itself was already added to `.build/bin/validate-helm.sh` in this auth
 (`==> Verifying ranker microservices do not render under ingest-only mode` section) and verified
 RED against the unfixed templates, dual-surface (catches an unfixed `helm/` mirror independently
 of a fixed `src/groundx`), and with a synthetic over-block control (see `design.md`). Its
-classification logic was extracted to `.build/bin/verify-ingest-render.py` with committed fixtures
-at `.build/tests/test_verify_ingest_render.py`, wired into the gate ahead of the guard (same
+mirror is covered by `helm/tests/ranker_ingest_test.yaml`, run by the gate's existing
+`helm unittest` invocation. An earlier revision used a bespoke Python render guard (same
 pattern as the existing snapshot guard). The extraction was provenance only; two later
 review-round fixes then changed the guard's behavior deliberately — it now fails closed on a
 forbidden-kind document whose `metadata.name` it cannot read (not on one whose `kind:` line it

@@ -24,6 +24,8 @@ the PATH `helm` in this workspace is v4.2.2 and unusable for this chart).
 - Gate `groundx.ranker.inference.busyWindowSeconds` on `.create` — the one sibling in its
   family that ignored it — regenerating a sixth snapshot file (`ranker_test.yaml.snap`).
 
+  *Superseded: the bespoke guard was replaced by `helm/tests/ranker_ingest_test.yaml`, run by the gate's existing `helm unittest` invocation, and its files were deleted. See `design.md`.*
+
 **Non-Goals:**
 - `origin/main` (chart 0.2.6 line) — not touched, per explicit direction (decomposition A2).
 - `_helpers/app/ingress.tpl:16` not gating on `.create` — pre-existing, shared with
