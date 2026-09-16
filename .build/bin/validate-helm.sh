@@ -122,7 +122,7 @@ for chart in src/groundx helm; do
 done
 
 echo "==> Verifying shared Google credential isolation and rotation"
-python - <<'PY'
+python3 - <<'PY'
 import json
 import re
 import shutil
@@ -293,7 +293,7 @@ for chart in src/groundx helm; do
 done
 
 echo "==> Verifying deprecated compatibility values contract"
-python - <<'PY'
+python3 - <<'PY'
 import json
 from pathlib import Path
 
@@ -341,14 +341,14 @@ if grep -R -q '\.Values\.tls\|cluster\.tls\.existingSecret' \
 fi
 
 echo "==> Verifying Helm snapshots did not silently drop empty renders"
-python .build/tests/test_verify_helm_snapshots.py
-python .build/bin/verify-helm-snapshots.py
+python3 .build/tests/test_verify_helm_snapshots.py
+python3 .build/bin/verify-helm-snapshots.py
 
 echo "==> Verifying workspace chart contract"
-python .build/bin/verify-workspace-chart.py
+python3 .build/bin/verify-workspace-chart.py
 
 echo "==> Verifying storage contract"
-python .build/bin/verify-storage-contract.py
+python3 .build/bin/verify-storage-contract.py
 
 echo "==> Rendering workspace chart fixtures"
 helm template workspace-contract src/groundx \
