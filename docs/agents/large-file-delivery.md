@@ -16,9 +16,7 @@ Set these fields under `largeFileDeliver`:
 | `image` | Explicit image containing the `server/LargeFileDeliver` binary, built with `Dockerfile.large-file-delivery`. |
 | `concurrency` | Positive maximum simultaneous deliveries per worker. |
 | `maxUploadDuration` | Positive duration, expressed in whole milliseconds, seconds, minutes or hours. |
-| `counting.maxPDFBytes` | Positive byte limit for counting. There is no separate diverted-page ceiling. |
 | `counting.maxCountDuration` | Positive counting duration. |
-| `counting.helperPath` | Path in the producer image to the bounded PDF helper, normally `/app/large-file-pdf-count`. |
 | `counting.tempDir` | Optional producer temporary directory with sufficient writable capacity. |
 | `resources.requests` and `resources.limits` | Explicit CPU and memory settings for the delivery container. |
 | `credentials` | Map from trusted credential reference to `secretName` and `secretKey`. At least one binding is required. |
@@ -29,11 +27,21 @@ security context, service account, port and image pull policy settings. Its defa
 service name is `large-file-delivery`, with health probes on port 8080.
 
 Set producer image and resources through the existing `queue` settings. The
-producer image must contain both `QueueTrainFile` and the PDF helper. Neither
+producer image must place `large-file-pdf-count` beside its executable, as the
+standard image does in `/app`. The helper is found relative to that executable,
+not the working directory or a YAML path. Neither
 an existing chart version nor a successful render proves that an image contains
-the new binaries. Choose counting bytes/time, producer concurrency, temporary
+the new binaries. File bytes use the account's existing `maxFileSize`, saved
+for counting and delivery retries. Zero remains unlimited. There is no chart
+byte limit or separate diverted-page ceiling. Size counting time, producer concurrency, temporary
 disk and memory together; choose delivery time, concurrency and memory together.
 Real-environment capacity and Drive checks gate account activation.
+
+Remove `largeFileDeliver.counting.maxPDFBytes` and `counting.helperPath` from
+existing values when upgrading and deploy a producer build that reads the account
+limit and discovers its sibling helper. Old producer builds require those removed
+settings and must not be used with this chart configuration.
+Existing saved runs retain their original byte limits and receipts.
 
 ## Shared Google credentials
 
