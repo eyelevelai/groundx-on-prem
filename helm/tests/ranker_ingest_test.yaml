@@ -1,0 +1,52 @@
+suite: ranker microservices do not render under ingest-only mode
+tests:
+  - it: "no ranker api workload or Service renders, api siblings still do"
+    templates:
+      - ../templates/app/api.yaml
+    set:
+      mode: ingest
+    asserts:
+      - containsDocument: { kind: Deployment, apiVersion: apps/v1, name: ranker-api, any: true }
+        not: true
+      - containsDocument: { kind: Service, apiVersion: v1, name: ranker-api, any: true }
+        not: true
+      - containsDocument: { kind: Deployment, apiVersion: apps/v1, name: layout-api, any: true }
+      - containsDocument: { kind: Deployment, apiVersion: apps/v1, name: summary-api, any: true }
+
+  - it: "no ranker inference workload, model volume, or gpu-ranker node label renders"
+    templates:
+      - ../templates/app/inference.yaml
+    set:
+      mode: ingest
+    asserts:
+      - containsDocument: { kind: Deployment, apiVersion: apps/v1, name: ranker-inference, any: true }
+        not: true
+      - containsDocument: { kind: PersistentVolumeClaim, apiVersion: v1, name: ranker-model, any: true }
+        not: true
+      - notMatchRegexRaw: { pattern: "eyelevel-gpu-ranker" }
+      - containsDocument: { kind: Deployment, apiVersion: apps/v1, name: layout-inference, any: true }
+      - containsDocument: { kind: Deployment, apiVersion: apps/v1, name: summary-inference, any: true }
+
+  - it: "no ranker config objects render"
+    templates:
+      - ../templates/resources/ranker-config-py.yaml
+      - ../templates/resources/ranker-gunicorn-conf-py.yaml
+      - ../templates/resources/ranker-supervisord-conf.yaml
+    set:
+      mode: ingest
+    asserts:
+      - hasDocuments: { count: 0 }
+
+  - it: "an explicit enabled true does not override ingest-only mode"
+    templates:
+      - ../templates/app/api.yaml
+      - ../templates/app/inference.yaml
+    set:
+      mode: ingest
+      ranker.api.enabled: true
+      ranker.inference.enabled: true
+    asserts:
+      - containsDocument: { kind: Deployment, apiVersion: apps/v1, name: ranker-api, any: true }
+        not: true
+      - containsDocument: { kind: Deployment, apiVersion: apps/v1, name: ranker-inference, any: true }
+        not: true
