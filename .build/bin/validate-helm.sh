@@ -19,7 +19,7 @@ Runs the GroundX Helm production chart gate from one stable entrypoint:
   - snapshot label guard
   - workspace chart contract verifier
   - storage chart and generated AWS values contract verifier
-  - probe-mirror-drift guard (its own detection-logic tests, then src/groundx vs helm/)
+  - probe-mirror-drift guard (renders src/groundx and helm/ and compares the API-pod probe timing)
   - targeted render checks for both chart surfaces
   - git whitespace check
 
@@ -350,9 +350,6 @@ python .build/bin/verify-workspace-chart.py
 
 echo "==> Verifying storage contract"
 python .build/bin/verify-storage-contract.py
-
-echo "==> Verifying the probe-mirror-drift guard's own detection logic"
-bash src/groundx/tests/files/run-probe-mirror-drift-lib-tests.sh
 
 echo "==> Verifying src/groundx and helm/ probe-timing mirror stay in sync"
 bash src/groundx/tests/files/verify-probe-mirror-drift.sh

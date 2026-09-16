@@ -123,8 +123,8 @@ unrelated probe-timing default once production's values are updated to consume i
   environment that wants the old numbers back can set them explicitly via the new override.
 - [Risk] `helm/` and `src/groundx` drift on these new fields, since this repo has no regen script
   or automated drift guard (`CLAUDE.md` context, "KNOWN GAPS"). → Mitigation: the probe-mirror-drift
-  guard enforces the invariant stated above (`src/groundx/tests/files/probe-mirror-drift-lib.sh` +
-  `verify-probe-mirror-drift.sh`, wired into `.build/bin/validate-helm.sh`), and `tasks.md` includes
+  guard enforces the invariant stated above (`src/groundx/tests/files/verify-probe-mirror-drift.sh`,
+  which renders both trees and diffs the probe fields, wired into `.build/bin/validate-helm.sh`), and `tasks.md` includes
   a dedicated drift-check task comparing rendered output between the two trees for these fields, so
   the manual sync is done in the same change rather than deferred.
 - [Risk] A future edit to one service's `*.api` schema block could copy the `probe` sub-schema
