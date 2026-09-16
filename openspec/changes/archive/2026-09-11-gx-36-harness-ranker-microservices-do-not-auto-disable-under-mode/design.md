@@ -234,6 +234,23 @@ shapes are asserted below.
   `python` and runs them. That is a repo-wide gate defect unrelated to ranker gating, so it
   ships in its own change rather than widening this one. The two `python3` calls this change
   adds for the ingest-render guard are written as `python3` from the start.
+- **The bespoke render guard was replaced by a `helm unittest` suite on the mirror, and deleted.**
+  Review asked why new CI was added instead of reusing what exists. The answer was that `helm/`
+  has no `tests/` tree and `helm unittest` only ran against `src/groundx` — true, but it does not
+  follow that the mirror cannot be unit-tested. `helm unittest helm` works once the chart has a
+  `tests/` directory, and `helm/.helmignore` already excludes `tests`, so the suite never ships
+  (confirmed by packaging the mirror and listing the tarball: zero entries under `tests/`).
+  The one thing that makes this look impossible on a first attempt is that `templates:` must sit
+  at the test level, not the suite level, or the chart helpers do not load and every render dies
+  with `no template "groundx.api.services" associated`.
+  `helm/tests/ranker_ingest_test.yaml` (52 lines) now covers the mirror and
+  `.build/bin/verify-ingest-render.py` plus its 267-line fixture suite are deleted, removing 373
+  lines and one bespoke mechanism. Proven by mutation: with the mirror's regressed helpers the
+  suite fails 4 of 4; with the fixed helpers it passes 4 of 4. The gate gains one line,
+  `helm unittest helm`, beside the two invocations it already had.
+  **The decisions below about the deleted guard are superseded and kept for history**, as are the
+  reviewer findings about it in `review.md` and the evidence bundle, which record what was true
+  at the time they were written.
 - **Mutation testing showed the first extracted fixture set proved only 3 of the 7 forbidden
   names — one fixture per name is required, not one per kind.** Deleting a whole
   `FORBIDDEN_BY_KIND` entry (`Service`, `Secret`, or `ConfigMap`) or dropping `ranker-inference`

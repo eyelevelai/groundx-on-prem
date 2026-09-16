@@ -98,43 +98,30 @@ ordering fix; its own snapshot diff is scoped to that one label.
   `ranker_test.yaml` snapshot label named above
 
 ### Requirement: A CI gate rejects ranker rendering under ingest mode on both chart surfaces
-The system SHALL provide a `.build/bin/validate-helm.sh` check that fails when any of the seven
-ranker objects — the `ranker-api` / `ranker-inference` Deployments, the `ranker-api` Service, the
-`ranker-model` PersistentVolumeClaim, the `ranker-config-py-map` Secret, or the
-`ranker-gunicorn-conf-py-map` / `ranker-inference-supervisord-conf-map` ConfigMaps — renders, or
-an `eyelevel-gpu-ranker` node-label reference appears, under `mode: ingest`, on **both**
-`src/groundx` and `helm`, and that does not fail when the sibling non-ranker workloads that
-`mode: ingest` still needs render normally. The gate SHALL fail closed rather than pass when it
-cannot read a forbidden-kind document's `metadata.name`, so such a document is never mistaken for
-an absent one. This is scoped to documents whose `kind:` line the gate already matched: one whose
-`kind:` line it cannot parse at all is still skipped silently. No template on either surface emits
-such a line today, so the class has no caller, but the gate is not fail-closed on every unparsable
-document. Its required-sibling positive control SHALL cover every Deployment that renders at
-the gate's default values — all sixteen: `groundx`, `layout-api`, `layout-correct`,
-`layout-inference`, `layout-map`, `layout-ocr`, `layout-process`, `layout-save`, `layout-webhook`,
-`pre-process`, `process`, `queue`, `summary-api`, `summary-client`, `summary-inference` and
-`upload` — so an over-blocking change that drops any of them fails the gate. The gate renders one
-fixed values set, so pinning the full inventory cannot fail a correct render; a deliberate change
-to the ingest workload set is expected to update this list. The opt-in `extract-api` is excluded
-because `extract.enabled` defaults false and it does not render there. The ranker HPA unit-test case SHALL carry a positive control (`layout-inference-hpa`)
-so it cannot pass against an empty render. This requirement exists because `helm/` has no
-`tests/` tree (`.helmignore` excludes it from the package) and CI runs `helm unittest` against
-`src/groundx` alone — this gate is the only mechanism that ever exercises the `helm/` mirror's
-ingest-mode behavior. **Gate-class change — invariant:** under `mode: ingest`, none of the seven
-ranker objects named above and no `eyelevel-gpu-ranker` reference may render on either chart
-surface, regardless of an explicit `enabled: true`, while every other workload that mode leaves
-enabled still renders.
+The system SHALL fail its chart gate when, under `mode: ingest`, any of the seven ranker objects
+renders on either chart surface — the `ranker-api` / `ranker-inference` Deployments, the
+`ranker-api` Service, the `ranker-model` PersistentVolumeClaim, the `ranker-config-py-map` Secret,
+or the `ranker-gunicorn-conf-py-map` / `ranker-inference-supervisord-conf-map` ConfigMaps — or when
+an `eyelevel-gpu-ranker` node-label reference appears. It SHALL NOT fail when the sibling non-ranker
+workloads that `mode: ingest` still needs render normally, so an over-blocking change is caught as
+well as an under-blocking one. An explicit `ranker.*.enabled: true` SHALL NOT override the mode.
+
+`src/groundx` is covered by `tests/ranker_test.yaml`; the published `helm/` mirror is covered by
+`helm/tests/ranker_ingest_test.yaml`. Both run under `helm unittest`, which the gate already
+invokes, so the mirror needs no separate mechanism. `helm/.helmignore` excludes `tests`, so the
+mirror's suite does not ship in the packaged chart — verified by packaging and listing the tarball.
 
 #### Scenario: catches — ranker renders under ingest mode on either chart surface
-- **WHEN** `helm template <chart> --set mode=ingest` is run against a chart surface where the
-  `ranker.api.create` or `ranker.inference.create` helper still returns `true` under
-  `mode: ingest` (the pre-fix regression, or a chart surface whose mirror was left unfixed)
-- **THEN** the gate exits non-zero, naming the chart surface and the forbidden document(s) found
+- **GIVEN** a chart surface whose ranker create helpers still test the explicit `enabled` key before ingest-only mode
+- **WHEN** `helm unittest` runs that surface's ranker ingest suite
+- **THEN** the suite fails, naming the ranker documents that rendered
 
 #### Scenario: must not block — sibling services still render under ingest mode
-- **WHEN** `helm template <chart> --set mode=ingest` is run against a chart surface where the
-  ranker create helpers correctly return `false`, and a sibling service the chart normally
-  renders under `mode: ingest` (e.g. `layout-api`) is present
-- **THEN** the gate exits zero — it does not report the sibling service as a violation, and a
-  broken implementation that also stops the sibling from rendering is reported as a distinct
-  "must still render" failure rather than passing silently
+- **GIVEN** a chart surface with the mode-first ordering in place
+- **WHEN** `helm unittest` runs that surface's ranker ingest suite
+- **THEN** the suite passes, and the sibling API and inference workloads that `mode: ingest` keeps are asserted present rather than treated as violations
+
+#### Scenario: the mirror's suite does not ship in the packaged chart
+- **GIVEN** `helm/tests/ranker_ingest_test.yaml` exists
+- **WHEN** `helm package helm` runs
+- **THEN** the resulting tarball contains no entries under `tests/`, because `helm/.helmignore` excludes them

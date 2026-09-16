@@ -12,7 +12,7 @@ Usage: .build/bin/validate-helm.sh [--junit]
 
 Runs the GroundX Helm production chart gate from one stable entrypoint:
   - helm lint for both chart surfaces
-  - helm unittest for src/groundx
+  - helm unittest for src/groundx and the helm/ mirror
   - google OCR credentials render for both chart surfaces
   - shared Google credential isolation, rotation and schema checks
   - snapshot label guard unit tests
@@ -53,14 +53,13 @@ done
 OCR_TEST_CREDENTIALS="files/ocr/gcv-test.json"
 layout_pvc_values=""
 layout_pvc_render=""
-ingest_render_file=""
 ocr_generated_files=()
 cleanup() {
   if ((${#ocr_generated_files[@]})); then
     rm -f "${ocr_generated_files[@]}"
   fi
   rmdir src/groundx/files/ocr src/groundx/files helm/files/ocr helm/files 2>/dev/null || true
-  rm -f "${layout_pvc_values}" "${layout_pvc_render}" "${ingest_render_file}"
+  rm -f "${layout_pvc_values}" "${layout_pvc_render}"
 }
 trap cleanup EXIT
 for chart in src/groundx helm; do
@@ -88,6 +87,7 @@ helm lint helm
 
 echo "==> Running Helm unit tests"
 helm unittest src/groundx
+helm unittest helm
 helm unittest src/groundx/prereqs/kafka-cluster
 
 echo "==> Verifying Google OCR credentials rendering for both chart surfaces"
@@ -291,16 +291,6 @@ for chart in src/groundx helm; do
       exit 1
     fi
   done
-done
-
-echo "==> Verifying ranker ingest-render guard logic"
-python3 .build/tests/test_verify_ingest_render.py
-
-echo "==> Verifying ranker microservices do not render under ingest-only mode"
-ingest_render_file="$(mktemp)"
-for chart in src/groundx helm; do
-  helm template ranker-ingest-guard "${chart}" --set mode=ingest > "${ingest_render_file}"
-  python3 .build/bin/verify-ingest-render.py "${chart}" "${ingest_render_file}"
 done
 
 echo "==> Verifying deprecated compatibility values contract"
