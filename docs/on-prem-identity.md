@@ -14,6 +14,10 @@ This is the default when the `cognito` section is omitted from `values.yaml` ent
 - Every human-identity route (login, register, password reset/confirm, and every Basic-Auth
   route) is rejected by a code guard in cashbot-go.
 - No route on an `apiKeyOnly` install can return a test/mock token.
+- The seeded admin has superuser/admin authority, not merely elevated API access: cashbot-go
+  creates its `partner_users` row with `status = 'admin'`, the only status for which
+  `AccountType.IsAdmin()` returns `true`, which is what lets it provision durable customers and
+  their API keys.
 
 ## Optional: `cognito`
 
@@ -31,6 +35,14 @@ cognito:
 - `clientId`, `clientSecret`, `poolId`, and `region` are all required once `mode: cognito` is
   set. `clientSecret` is delivered to the workload through the existing `config-yaml-map` Secret,
   not a plaintext ConfigMap.
+- `mode: cognito` also requires AWS credentials reaching the pod so cashbot-go's Cognito API
+  calls succeed — this is **not** a new chart value. Supply them the standard way the chart
+  already supports: either standard AWS environment variables on the pods
+  (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`, as documented for file storage in
+  `values.yaml`) or an IRSA-enabled Kubernetes service account via `serviceAccount.name` (see
+  `values/values.aws.services.yaml`; the golang app pods already render `serviceAccountName`
+  from this value). `cognito.region` must be set either way. Without valid AWS credentials
+  reaching the pod, Cognito calls fail.
 - Missing any of the four keys while `mode: cognito` is set is a cashbot-go **startup fatal
   error** — the chart itself does not validate completeness, and there is no silent fallback to
   `apiKeyOnly` or to a mock client.

@@ -40,3 +40,16 @@
   cashbot-go's own tolerant-reader default. This supersedes `design.md`'s original "no enum
   restriction" decision — see `design.md` Amendments for the rationale and why it does not
   narrow the wire contract with cashbot-go.
+
+### 2026-09-16 — documentation amendment (Ben, 2026-09-15 comment 12)
+
+- **Docs-only, no new task.** Added a paragraph to `docs/on-prem-identity.md`'s Cognito section
+  and a comment line in `sample.values.yaml`'s commented cognito example noting that
+  `mode: cognito` requires AWS credentials reaching the pod via the chart's existing mechanisms
+  (`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` env vars or an IRSA-enabled
+  `serviceAccount.name`) plus `cognito.region`; no schema/template/config-field change. Also
+  added a note to `docs/on-prem-identity.md`'s `apiKeyOnly` section confirming the seeded admin
+  has superuser authority (`partner_users.status = 'admin'`, the only status for which
+  cashbot-go's `AccountType.IsAdmin()` returns `true`). See `design.md` Amendments for the full
+  rationale + code citations. Task 2.1 and 3.1's existing checks are unaffected (still pass
+  unchanged).

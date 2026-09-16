@@ -63,3 +63,22 @@ See `proposal.md` for the current-state analysis (no `cognito:` anywhere in the 
   confirmed unchanged" in substance (still documents all five keys, still leaves `admin:`
   alone) — only the default disposition (active vs. commented) changes, per task 2.1's revision
   in `tasks.md`.
+
+### 2026-09-16 — documentation amendment (Ben, 2026-09-15 comment 12)
+
+- **Ben's comment:** `mode: cognito` also requires AWS credentials for the Cognito API calls,
+  reused via an existing chart mechanism (not a new value); also confirm the seeded admin has
+  superuser access.
+- **No schema, template, or config-field change.** This repo's `cognito` render is additive-only
+  and introduces no AWS-credential handling of its own. Documented, in
+  `docs/on-prem-identity.md` and `sample.values.yaml`, that enabling `mode: cognito` requires
+  AWS credentials reaching the pod via mechanisms the chart already supports — standard
+  `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` env vars (already documented for `file:` storage
+  in `values.yaml:64-67`) or an IRSA-enabled `serviceAccount.name`
+  (`values/values.aws.services.yaml:13-14`; the golang app pods already render
+  `serviceAccountName` from it, `templates/_helpers/main.tpl:207-209`) — and that
+  `cognito.region` must be set either way.
+- **Admin superuser confirmation:** verified in cashbot-go — the seeded admin's `partner_users`
+  row is created with `status = 'admin'` (`pkg/cbdb/mysql.go:92-95`), the only status for which
+  `AccountType.IsAdmin()` returns `true` (`pkg/model/api/account_type.go:23-30`). Noted in
+  `docs/on-prem-identity.md`'s `apiKeyOnly` section.
