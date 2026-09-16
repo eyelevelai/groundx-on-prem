@@ -16,12 +16,14 @@ Usage: .build/bin/validate-helm.sh [--junit]
 
 Runs the GroundX Helm production chart gate from one stable entrypoint:
   - helm lint for both chart surfaces
+  - src/groundx/templates <-> helm/templates mirror-equality guard
   - helm unittest for src/groundx
   - snapshot label guard unit tests
   - snapshot label guard
   - workspace chart contract verifier
   - storage chart and generated AWS values contract verifier
   - targeted render checks for both chart surfaces
+  - repeat-render determinism guard (warn-only; see GX-22)
   - git whitespace check
 
 Options:
@@ -49,6 +51,9 @@ done
 echo "==> Linting Helm chart surfaces"
 helm lint src/groundx
 helm lint helm
+
+echo "==> Verifying src/groundx/templates and helm/templates are mirrored"
+"${PY}" .build/bin/verify-helm-mirror.py
 
 echo "==> Running Helm unit tests"
 helm unittest src/groundx
@@ -103,6 +108,11 @@ helm template workspace-contract helm \
   -f src/groundx/tests/files/values.workspace.yaml \
   -f src/groundx/tests/files/values.workspace-metrics.yaml \
   >/dev/null
+
+echo "==> Checking repeat-render determinism (warn-only, see GX-22)"
+"${PY}" .build/bin/check-render-determinism.py --chart src/groundx --values src/groundx/values.yaml --warn-only
+"${PY}" .build/bin/check-render-determinism.py --chart src/groundx --values src/groundx/values/extract/values.yaml --warn-only
+"${PY}" .build/bin/check-render-determinism.py --chart src/groundx --values src/groundx/values/extract/values.oai.yaml --warn-only
 
 echo "==> Validating workspace smoke/E2E script syntax and wording"
 bash -n .build/bin/smoke-workspace-runner.sh
