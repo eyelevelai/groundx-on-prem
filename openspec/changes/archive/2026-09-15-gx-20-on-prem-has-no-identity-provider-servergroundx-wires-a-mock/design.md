@@ -36,3 +36,30 @@ See `proposal.md` for the current-state analysis (no `cognito:` anywhere in the 
 - **Schema drift between `src/groundx/values.schema.json` and `helm/values.schema.json` is unenforced** (no regen guard exists in this repo for either mirror). Mitigated only by the task-level `diff -q` check at authoring time; a future edit to either file independently would silently reintroduce drift. Out of scope to fix the mirroring mechanism itself (ticket guardrail: "do not fix the mirroring mechanism in this ticket").
 - **The chart cannot validate `mode: cognito` completeness** — an operator who sets `mode: cognito` with only `clientId` will get a render that "looks fine" from `helm template`/`helm lint`, and the failure surfaces only at cashbot-go startup (`Cognito.Validate()`). This is the FINALIZED contract's own design (chart renders, producer validates) — documented in `docs/` so an operator is not surprised.
 - **Cloud rollout dependency** (no baked `poolId` default) is a cashbot-go/production-rollout concern, not a chart-side risk; flagged in the workspace `tasks.md` hand-off section, out of this repo's build scope.
+
+## Amendments
+
+### 2026-09-16 — review-fix round 1
+
+- **Supersedes the Decisions-section item "`cognito.mode` stays `type: string` — no `enum`
+  restriction."** A human reviewer directed (review finding F2) that `cognito.mode` be
+  constrained to `enum: ["cognito", "apiKeyOnly"]` in `values.schema.json` and its
+  `helm/values.schema.json` mirror. This is a chart-schema-layer typo guard, not a change to
+  the wire contract with cashbot-go: the chart already only ever renders whatever literal
+  string an operator puts in `cognito.mode` (or nothing, unset), and cashbot-go's own
+  `Cognito.Validate()`/tolerant-read fallback is unaffected either way — the enum only stops a
+  clearly-mistyped value (e.g. `cognitoo`) from silently rendering and then silently degrading
+  to `apiKeyOnly` at cashbot-go startup with no operator-visible error. `cognito` remains fully
+  optional; the enum constrains the value only when the key is present. Implemented as task 1.3
+  in `tasks.md`, with `src/groundx/tests/files/values.cognito-bad-mode-rejected.yaml` as the
+  committed rejection fixture.
+- **G1 fix: `sample.values.yaml` default changed from an active `cognito:` block to a fully
+  commented-out example.** The original `sample.values.yaml` shipped `cognito.mode: cognito`
+  with four placeholder values as the *active* default — a customer copying the file unmodified
+  would land in `mode: cognito` with placeholder credentials and hit cashbot-go's startup-fatal
+  validation. The block is now commented out in its entirety (all five keys shown, with a note
+  to uncomment and fill them to enable Cognito login); the `admin:` block (including
+  `admin.password`) is unchanged. This does not change §Decisions item "Sample-values scope
+  confirmed unchanged" in substance (still documents all five keys, still leaves `admin:`
+  alone) — only the default disposition (active vs. commented) changes, per task 2.1's revision
+  in `tasks.md`.

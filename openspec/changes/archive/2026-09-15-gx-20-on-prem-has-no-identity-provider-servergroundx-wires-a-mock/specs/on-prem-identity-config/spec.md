@@ -82,3 +82,42 @@ Every change to `templates/_helpers/main.tpl`, `templates/resources/config-yaml.
 - **GIVEN** this change is applied
 - **WHEN** the new `docs/` file is inspected
 - **THEN** it states the `apiKeyOnly` default, documents the `cognito.*` keys required to opt into `mode: cognito`, and explicitly states that air-gapped installs must stay on `apiKeyOnly`
+
+## Amendments
+
+### 2026-09-16 — review-fix round 1
+
+#### Requirement (amended): `cognito.mode` is enum-constrained by the chart schema
+
+`values.schema.json` (and its mirror `helm/values.schema.json`) SHALL declare `cognito.mode` as
+`enum: ["cognito", "apiKeyOnly"]`, so any other value fails schema validation at `helm
+template`/`helm lint` time rather than rendering and then silently falling back to `apiKeyOnly`
+at cashbot-go startup. This supersedes this document's original "`cognito.mode` is `type:
+string`, no enum" position (see `design.md` Amendments for the rationale). `cognito` remains
+fully optional; the enum constrains the value only when the key is present.
+
+##### Scenario: An unrecognized `cognito.mode` value fails schema validation (polarity: reject before state)
+
+- **GIVEN** a `values.yaml` that sets `cognito.mode` to a value that is neither `cognito` nor `apiKeyOnly`
+- **WHEN** `helm template`/`helm lint` is run against `src/groundx` or `helm`
+- **THEN** the command fails with a schema validation error naming `cognito.mode` as the offending property — it does **not** render, and it does **not** silently fall back to any mode
+
+##### Scenario: The two known `cognito.mode` values still render (polarity: must not block)
+
+- **GIVEN** a `values.yaml` that sets `cognito.mode` to `cognito` or to `apiKeyOnly`
+- **WHEN** `helm template` renders `templates/resources/config-yaml.yaml` in either `src/groundx/` or `helm/`
+- **THEN** the command succeeds and renders the configured `mode` value unchanged
+
+#### Requirement (amended): `sample.values.yaml` ships no active `cognito` block by default
+
+The `cognito:` example documented in `sample.values.yaml` SHALL be commented out in its entirety
+(all five keys shown, each prefixed `#`, plus a note stating "Uncomment and fill to enable
+Cognito login; omit to stay on the apiKeyOnly identity default") — supersedes this document's
+original wording, which described an *active* `cognito:` block with placeholder values as the
+default. The `admin:` block, including `admin.password`, is unchanged.
+
+##### Scenario: A default copy of `sample.values.yaml` renders no active `cognito` block (polarity: reject before state)
+
+- **GIVEN** an unmodified copy of `sample.values.yaml`
+- **WHEN** it is rendered with `helm template` (schema-unrelated top-level keys aside)
+- **THEN** the rendered `config.yaml` contains zero `cognito` keys — the opposite outcome (an active `mode: cognito` with placeholder values reaching a customer's rendered output) must not occur
