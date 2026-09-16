@@ -6,8 +6,9 @@ cashbot-go's `config.yaml`; cashbot-go's own startup validation decides what the
 
 ## Default: `apiKeyOnly`
 
-This is the default when the `cognito` section is omitted from `values.yaml` entirely (or its
-`mode` key is anything other than the literal `cognito`).
+This is the default when the `cognito` section is omitted from `values.yaml` entirely, or `mode`
+is set to `apiKeyOnly`. The chart's `values.schema.json` accepts only `cognito` or `apiKeyOnly`
+for `cognito.mode`; any other value is rejected at render time.
 
 - Identity is limited to the seeded admin API key (`admin.apiKey`) plus durable, DB-backed
   customer/API-key rows created by the admin — no password login.
