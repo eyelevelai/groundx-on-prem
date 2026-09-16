@@ -68,6 +68,20 @@ context: |
   
   - COMMIT CONVENTION: standard conventional commits (inferred; no explicit convention in-repo).
   
+  - CONVENTIONS DISCOVERED DURING GX-22 (helm unittest snapshot determinism):
+    - Deep-copy idiom: a helper that `dig`s a submap out of `.Values` and then `set`s defaults onto
+      it must pipe that submap through `| toYaml | fromYaml` first — `dig` returns the actual
+      `.Values` map by reference (Go maps are reference types), so an un-copied `set` mutates shared
+      state and leaks between renders/test cases sharing the helper. The six `workspace-*.tpl`
+      helpers already use this idiom (via `include ... | fromYaml`); apply it to any new
+      `.Values`-derived submap a helper mutates.
+    - Guard/verifier scripts live at `.build/bin/<name>.py` with unit tests at
+      `.build/tests/test_<name>.py` (importlib-loaded, tempdir-based fixtures — see
+      `verify-helm-snapshots.py`/`verify-workspace-chart.py`); wire each into
+      `.build/bin/validate-helm.sh`. This is the established pattern for a new chart-level
+      correctness check — prefer it over embedding check logic inline in the shell script or adding
+      a parallel bash test harness.
+
   - KNOWN GAPS / OPEN QUESTIONS:
     - helm/ <-> src/groundx duplication: no regen script, no drift check — manual sync, latent drift.
     - upload.groundx.ai model-weight download hardcoded in init-containers — air-gap blocker; no documented pre-seeding mechanism.
