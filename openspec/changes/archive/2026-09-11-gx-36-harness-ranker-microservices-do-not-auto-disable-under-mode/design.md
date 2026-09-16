@@ -227,18 +227,13 @@ shapes are asserted below.
   stale metrics entries, and pins `REQUIRED_SIBLINGS` to today's default render. Widening any of
   these adds test surface, which the PR review asked us to reduce, so they are limits of the
   stated invariant rather than defects.
-- **The gate invoked `python`, so four of its checks never ran locally.** `validate-helm.sh`
-  called bare `python` for the two snapshot checks, the workspace-chart contract and the storage
-  contract, while already requiring `python3` for the ingest-render guard. On a machine where
-  `python` is absent or a stub — here it is a two-line script that prints a version and exits 0 —
-  those four checks printed a version string and passed without executing. CI has a real
-  `python`, so they ran there and the gap was invisible. All six bare invocations now use
-  `python3`, matching the two the file already used, which adds no dependency the gate did not
-  already have. Verified with the stub still first on PATH: the gate exits 0, emits no stub
-  version lines, and the snapshot guard now reports `Helm snapshot label verification passed`
-  where it previously printed only the stub's output. This matters for the review question about
-  snapshot churn: `verify-helm-snapshots.py` is the check that detects silently dropped empty
-  renders, and it was the one not running.
+- **The gate's other `python` invocations are fixed separately, not here.** While investigating
+  the review question about snapshot churn it turned out `validate-helm.sh` calls bare `python`
+  for the two snapshot checks, the workspace-chart contract and the storage contract, so on a
+  machine where `python` is absent or a stub those four pass without executing. CI has a real
+  `python` and runs them. That is a repo-wide gate defect unrelated to ranker gating, so it
+  ships in its own change rather than widening this one. The two `python3` calls this change
+  adds for the ingest-render guard are written as `python3` from the start.
 - **Mutation testing showed the first extracted fixture set proved only 3 of the 7 forbidden
   names — one fixture per name is required, not one per kind.** Deleting a whole
   `FORBIDDEN_BY_KIND` entry (`Service`, `Secret`, or `ConfigMap`) or dropping `ranker-inference`
