@@ -71,6 +71,10 @@ run "configured_version_resolves_to_the_configured_value" {
 run "unset_version_resolves_to_null" {
   command = plan
 
+  variables {
+    environment_internal = {}
+  }
+
   assert {
     condition     = var.environment_internal.eks_version == null
     error_message = "An unset version key must resolve to null, not any implicit default."
