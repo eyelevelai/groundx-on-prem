@@ -106,3 +106,73 @@ def test_main_verify_fails_closed_on_missing_hashfile(capsys):
 def test_main_rejects_unknown_command():
     guard = load_guard()
     assert guard.main(["bogus", "x"]) == 2
+
+
+def test_capture_fails_closed_when_snapshot_dir_missing():
+    guard = load_guard()
+    with tempfile.TemporaryDirectory() as directory:
+        snapshot_dir = Path(directory) / "does-not-exist"
+        hashfile = Path(directory) / "hashes.txt"
+
+        try:
+            guard.capture(snapshot_dir, hashfile)
+            raised = False
+        except FileNotFoundError:
+            raised = True
+
+        assert raised
+        assert not hashfile.exists()
+
+
+def test_capture_fails_closed_when_snapshot_dir_empty():
+    guard = load_guard()
+    with tempfile.TemporaryDirectory() as directory:
+        snapshot_dir = Path(directory) / "__snapshot__"
+        snapshot_dir.mkdir()
+        hashfile = Path(directory) / "hashes.txt"
+
+        try:
+            guard.capture(snapshot_dir, hashfile)
+            raised = False
+        except ValueError:
+            raised = True
+
+        assert raised
+        assert not hashfile.exists()
+
+
+def test_main_capture_fails_closed_on_missing_snapshot_dir(capsys):
+    guard = load_guard()
+    with tempfile.TemporaryDirectory() as directory:
+        guard.SNAPSHOT_DIR = Path(directory) / "does-not-exist"
+        hashfile = Path(directory) / "hashes.txt"
+
+        exit_code = guard.main(["capture", str(hashfile)])
+        output = capsys.readouterr()
+
+        assert exit_code == 1
+        assert "snapshot directory not found" in output.err
+        assert not hashfile.exists()
+
+
+def test_main_verify_fails_closed_when_tree_vanishes_after_capture(capsys):
+    guard = load_guard()
+    with tempfile.TemporaryDirectory() as directory:
+        snapshot_dir = Path(directory) / "__snapshot__"
+        snapshot_dir.mkdir()
+        (snapshot_dir / "celery_test.yaml.snap").write_text("'disabled: celery':\n", encoding="utf-8")
+        guard.SNAPSHOT_DIR = snapshot_dir
+
+        hashfile = Path(directory) / "hashes.txt"
+        assert guard.main(["capture", str(hashfile)]) == 0
+
+        for entry in sorted(snapshot_dir.iterdir(), reverse=True):
+            entry.unlink()
+        snapshot_dir.rmdir()
+
+        exit_code = guard.main(["verify", str(hashfile)])
+        output = capsys.readouterr()
+
+        assert exit_code == 1
+        assert "snapshot directory not found" in output.err
+        assert "vanished" in output.err

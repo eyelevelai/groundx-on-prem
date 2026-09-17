@@ -84,6 +84,9 @@ def test_differing_renders_warn_only_exits_zero_with_flip_condition_message(monk
         assert exit_code == 0
         assert "warn-only" in output.out
         assert "GX-22" in output.out
+        assert "permanently" in output.out
+        assert "chart-helper fix" not in output.out
+        assert "remove --warn-only" not in output.out
 
 
 def test_focus_pattern_ignores_unrelated_drift(monkeypatch):

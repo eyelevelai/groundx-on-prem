@@ -13,10 +13,10 @@ SNAPSHOT_DIR = ROOT / "src" / "groundx" / "tests" / "__snapshot__"
 
 
 def compute_hashes(snapshot_dir: Path) -> dict[str, str]:
-    hashes: dict[str, str] = {}
     if not snapshot_dir.is_dir():
-        return hashes
+        raise FileNotFoundError(f"snapshot directory not found: {snapshot_dir}")
 
+    hashes: dict[str, str] = {}
     for path in sorted(snapshot_dir.rglob("*")):
         if not path.is_file():
             continue
@@ -34,7 +34,7 @@ def serialize_hashes(hashes: dict[str, str]) -> str:
 def parse_hashes(text: str) -> dict[str, str]:
     hashes: dict[str, str] = {}
     for line in text.splitlines():
-        if not line.strip():
+        if not line.strip() or line.startswith("#"):
             continue
         rel, _, digest = line.partition("\t")
         hashes[rel] = digest
@@ -42,7 +42,10 @@ def parse_hashes(text: str) -> dict[str, str]:
 
 
 def capture(snapshot_dir: Path, hashfile: Path) -> None:
-    hashfile.write_text(serialize_hashes(compute_hashes(snapshot_dir)), encoding="utf-8")
+    hashes = compute_hashes(snapshot_dir)
+    if not hashes:
+        raise ValueError(f"snapshot directory is empty, nothing to capture: {snapshot_dir}")
+    hashfile.write_text(f"# count: {len(hashes)}\n{serialize_hashes(hashes)}", encoding="utf-8")
 
 
 def diff_hashes(before: dict[str, str], after: dict[str, str]) -> list[str]:
@@ -70,7 +73,11 @@ def main(argv: list[str] | None = None) -> int:
     hashfile = Path(hashfile_arg)
 
     if command == "capture":
-        capture(SNAPSHOT_DIR, hashfile)
+        try:
+            capture(SNAPSHOT_DIR, hashfile)
+        except (FileNotFoundError, ValueError) as exc:
+            print(f"verify-helm-snapshot-stability: {exc}", file=sys.stderr)
+            return 1
         print(f"verify-helm-snapshot-stability: captured snapshot hashes to {hashfile}")
         return 0
 
@@ -78,7 +85,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"verify-helm-snapshot-stability: missing captured hashfile: {hashfile}", file=sys.stderr)
         return 1
 
-    changed = verify(SNAPSHOT_DIR, hashfile)
+    try:
+        changed = verify(SNAPSHOT_DIR, hashfile)
+    except FileNotFoundError as exc:
+        print(
+            f"verify-helm-snapshot-stability: {exc} (the snapshot tree captured at the start of this "
+            "run has vanished before verify ran)",
+            file=sys.stderr,
+        )
+        return 1
     if changed:
         print(
             "verify-helm-snapshot-stability: helm unittest modified the following snapshot file(s) "

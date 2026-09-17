@@ -13,8 +13,11 @@ import sys
 from pathlib import Path
 
 FLIP_CONDITION_MESSAGE = (
-    "warn-only until GX-22's chart-helper fix is confirmed clean across a two-run render; "
-    "remove --warn-only here once confirmed."
+    "warn-only, permanently (see GX-22): this check renders through the helm binary directly, so it "
+    "can only ever observe a chart-template-level defect. It structurally cannot observe a defect in "
+    "the helm-unittest plugin's own snapshot cache/serializer, which is GX-22's actual root cause, so "
+    "an observed-clean render here proves nothing about that defect class and must never be used to "
+    "flip this check to blocking."
 )
 
 

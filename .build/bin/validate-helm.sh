@@ -18,6 +18,7 @@ Runs the GroundX Helm production chart gate from one stable entrypoint:
   - helm lint for both chart surfaces
   - src/groundx/templates <-> helm/templates mirror-equality guard
   - pinned helm-unittest plugin version guard
+  - guard-script unit tests (pytest over .build/tests)
   - helm unittest for src/groundx
   - snapshot-rewrite-on-run guard (see GX-22)
   - snapshot label guard unit tests
@@ -65,6 +66,9 @@ echo "==> Verifying src/groundx/templates and helm/templates are mirrored"
 
 echo "==> Verifying pinned helm-unittest plugin version"
 "${PY}" .build/bin/verify-helm-unittest-plugin-version.py
+
+echo "==> Running guard-script unit tests (pytest)"
+"${PY}" -m pytest .build/tests -q
 
 echo "==> Running Helm unit tests"
 helm unittest src/groundx
@@ -145,6 +149,9 @@ if [[ "${RUN_JUNIT}" == "1" ]]; then
   echo "==> Writing Helm unittest JUnit report"
   mkdir -p reports
   helm unittest -o junit --output-file reports/helm-unittest.xml src/groundx
+
+  echo "==> Verifying helm unittest (--junit) did not rewrite committed snapshots as a side effect (see GX-22)"
+  "${PY}" .build/bin/verify-helm-snapshot-stability.py verify "${SNAPSHOT_STABILITY_HASHFILE}"
 fi
 
 echo "==> Checking diff whitespace"
