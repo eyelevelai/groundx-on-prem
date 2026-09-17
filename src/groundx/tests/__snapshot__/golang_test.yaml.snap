@@ -1,3 +1,81 @@
+'OpenShift: database migration':
+  1: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      annotations:
+        helm.sh/hook: pre-upgrade
+        helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        helm.sh/hook-weight: "-5"
+      labels:
+        app: RELEASE-NAME-schema-migration
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: RELEASE-NAME-schema-migration
+      namespace: eyelevel
+    spec:
+      activeDeadlineSeconds: 900
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app: RELEASE-NAME-schema-migration
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - args:
+                - -migrate-only
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+              imagePullPolicy: IfNotPresent
+              name: migrate
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  readOnly: true
+                  subPath: config.yaml
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: RELEASE-NAME-schema-migration
 'aws: golang':
   1: |
     apiVersion: apps/v1
@@ -1548,6 +1626,90 @@
             - name: config-volume
               secret:
                 secretName: config-yaml-map
+'database migration blocks upgrades before new Go workloads':
+  1: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      annotations:
+        helm.sh/hook: pre-upgrade
+        helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        helm.sh/hook-weight: "-5"
+      labels:
+        app: upgrade-test-schema-migration
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: upgrade-test-schema-migration
+      namespace: eyelevel
+    spec:
+      activeDeadlineSeconds: 900
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app: upgrade-test-schema-migration
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - args:
+                - -migrate-only
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+              imagePullPolicy: IfNotPresent
+              name: migrate
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  readOnly: true
+                  subPath: config.yaml
+          restartPolicy: Never
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: upgrade-test-schema-migration
 'default: golang':
   1: |
     apiVersion: apps/v1
@@ -3874,6 +4036,90 @@
             - name: config-volume
               secret:
                 secretName: config-yaml-map
+'external DB: database migration':
+  1: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      annotations:
+        helm.sh/hook: pre-upgrade
+        helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        helm.sh/hook-weight: "-5"
+      labels:
+        app: RELEASE-NAME-schema-migration
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: RELEASE-NAME-schema-migration
+      namespace: eyelevel
+    spec:
+      activeDeadlineSeconds: 900
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app: RELEASE-NAME-schema-migration
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - args:
+                - -migrate-only
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+              imagePullPolicy: IfNotPresent
+              name: migrate
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  readOnly: true
+                  subPath: config.yaml
+          restartPolicy: Never
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: RELEASE-NAME-schema-migration
 'extract: golang':
   1: |
     apiVersion: apps/v1
@@ -3895,7 +4141,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9f194dfbebb1e45bf6bcd89e988672d12fcf5a6fc502a019babf40f26ee1531c
+            config-hash: 240682d490ee480abb716edfe8f71b0c9e7ab1e8c5603adf07bb611b4396acdb
           labels:
             app: groundx
         spec:
@@ -4031,7 +4277,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9f194dfbebb1e45bf6bcd89e988672d12fcf5a6fc502a019babf40f26ee1531c
+            config-hash: 240682d490ee480abb716edfe8f71b0c9e7ab1e8c5603adf07bb611b4396acdb
           labels:
             app: layout-webhook
         spec:
@@ -4153,7 +4399,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9f194dfbebb1e45bf6bcd89e988672d12fcf5a6fc502a019babf40f26ee1531c
+            config-hash: 240682d490ee480abb716edfe8f71b0c9e7ab1e8c5603adf07bb611b4396acdb
           labels:
             app: pre-process
         spec:
@@ -4259,7 +4505,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9f194dfbebb1e45bf6bcd89e988672d12fcf5a6fc502a019babf40f26ee1531c
+            config-hash: 240682d490ee480abb716edfe8f71b0c9e7ab1e8c5603adf07bb611b4396acdb
           labels:
             app: process
         spec:
@@ -4365,7 +4611,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9f194dfbebb1e45bf6bcd89e988672d12fcf5a6fc502a019babf40f26ee1531c
+            config-hash: 240682d490ee480abb716edfe8f71b0c9e7ab1e8c5603adf07bb611b4396acdb
           labels:
             app: queue
         spec:
@@ -4471,7 +4717,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9f194dfbebb1e45bf6bcd89e988672d12fcf5a6fc502a019babf40f26ee1531c
+            config-hash: 240682d490ee480abb716edfe8f71b0c9e7ab1e8c5603adf07bb611b4396acdb
           labels:
             app: summary-client
         spec:
@@ -4577,7 +4823,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9f194dfbebb1e45bf6bcd89e988672d12fcf5a6fc502a019babf40f26ee1531c
+            config-hash: 240682d490ee480abb716edfe8f71b0c9e7ab1e8c5603adf07bb611b4396acdb
           labels:
             app: upload
         spec:
@@ -4684,7 +4930,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6eaa8c57ca09d7845d3e23b1ad4707359563cb75654cd8b06ca829418fa17746
+            config-hash: feabc040a38d9892f10ece1334a8b447c42af350493f759d9fc686ed72c854cb
           labels:
             app: groundx
         spec:
@@ -4816,7 +5062,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6eaa8c57ca09d7845d3e23b1ad4707359563cb75654cd8b06ca829418fa17746
+            config-hash: feabc040a38d9892f10ece1334a8b447c42af350493f759d9fc686ed72c854cb
           labels:
             app: layout-webhook
         spec:
@@ -4934,7 +5180,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6eaa8c57ca09d7845d3e23b1ad4707359563cb75654cd8b06ca829418fa17746
+            config-hash: feabc040a38d9892f10ece1334a8b447c42af350493f759d9fc686ed72c854cb
           labels:
             app: pre-process
         spec:
@@ -5036,7 +5282,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6eaa8c57ca09d7845d3e23b1ad4707359563cb75654cd8b06ca829418fa17746
+            config-hash: feabc040a38d9892f10ece1334a8b447c42af350493f759d9fc686ed72c854cb
           labels:
             app: process
         spec:
@@ -5138,7 +5384,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6eaa8c57ca09d7845d3e23b1ad4707359563cb75654cd8b06ca829418fa17746
+            config-hash: feabc040a38d9892f10ece1334a8b447c42af350493f759d9fc686ed72c854cb
           labels:
             app: queue
         spec:
@@ -5240,7 +5486,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6eaa8c57ca09d7845d3e23b1ad4707359563cb75654cd8b06ca829418fa17746
+            config-hash: feabc040a38d9892f10ece1334a8b447c42af350493f759d9fc686ed72c854cb
           labels:
             app: summary-client
         spec:
@@ -5342,7 +5588,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 6eaa8c57ca09d7845d3e23b1ad4707359563cb75654cd8b06ca829418fa17746
+            config-hash: feabc040a38d9892f10ece1334a8b447c42af350493f759d9fc686ed72c854cb
           labels:
             app: upload
         spec:
@@ -5445,7 +5691,7 @@
       template:
         metadata:
           annotations:
-            config-hash: aef46e2589fae68e000f3c7958156d4eb2dca0d414ef293cdb417859a81921f4
+            config-hash: cb75239e9e4d01fc6b1ccb6ae656ba41a9654d3312f7725fb78903a1995cb37b
           labels:
             app: groundx
         spec:
@@ -5581,7 +5827,7 @@
       template:
         metadata:
           annotations:
-            config-hash: aef46e2589fae68e000f3c7958156d4eb2dca0d414ef293cdb417859a81921f4
+            config-hash: cb75239e9e4d01fc6b1ccb6ae656ba41a9654d3312f7725fb78903a1995cb37b
           labels:
             app: layout-webhook
         spec:
@@ -5703,7 +5949,7 @@
       template:
         metadata:
           annotations:
-            config-hash: aef46e2589fae68e000f3c7958156d4eb2dca0d414ef293cdb417859a81921f4
+            config-hash: cb75239e9e4d01fc6b1ccb6ae656ba41a9654d3312f7725fb78903a1995cb37b
           labels:
             app: pre-process
         spec:
@@ -5809,7 +6055,7 @@
       template:
         metadata:
           annotations:
-            config-hash: aef46e2589fae68e000f3c7958156d4eb2dca0d414ef293cdb417859a81921f4
+            config-hash: cb75239e9e4d01fc6b1ccb6ae656ba41a9654d3312f7725fb78903a1995cb37b
           labels:
             app: process
         spec:
@@ -5915,7 +6161,7 @@
       template:
         metadata:
           annotations:
-            config-hash: aef46e2589fae68e000f3c7958156d4eb2dca0d414ef293cdb417859a81921f4
+            config-hash: cb75239e9e4d01fc6b1ccb6ae656ba41a9654d3312f7725fb78903a1995cb37b
           labels:
             app: queue
         spec:
@@ -6021,7 +6267,7 @@
       template:
         metadata:
           annotations:
-            config-hash: aef46e2589fae68e000f3c7958156d4eb2dca0d414ef293cdb417859a81921f4
+            config-hash: cb75239e9e4d01fc6b1ccb6ae656ba41a9654d3312f7725fb78903a1995cb37b
           labels:
             app: summary-client
         spec:
@@ -6127,7 +6373,7 @@
       template:
         metadata:
           annotations:
-            config-hash: aef46e2589fae68e000f3c7958156d4eb2dca0d414ef293cdb417859a81921f4
+            config-hash: cb75239e9e4d01fc6b1ccb6ae656ba41a9654d3312f7725fb78903a1995cb37b
           labels:
             app: upload
         spec:
@@ -6234,7 +6480,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 576d303b86d884a871ec675088b841faac922b7feef90f8fad8292753aff1e86
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
           labels:
             app: groundx
         spec:
@@ -6380,7 +6626,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 576d303b86d884a871ec675088b841faac922b7feef90f8fad8292753aff1e86
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
           labels:
             app: large-file-delivery
         spec:
@@ -6494,7 +6740,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 576d303b86d884a871ec675088b841faac922b7feef90f8fad8292753aff1e86
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
           labels:
             app: layout-webhook
         spec:
@@ -6612,7 +6858,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 576d303b86d884a871ec675088b841faac922b7feef90f8fad8292753aff1e86
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
           labels:
             app: pre-process
         spec:
@@ -6714,7 +6960,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 576d303b86d884a871ec675088b841faac922b7feef90f8fad8292753aff1e86
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
           labels:
             app: process
         spec:
@@ -6816,7 +7062,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 576d303b86d884a871ec675088b841faac922b7feef90f8fad8292753aff1e86
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
           labels:
             app: queue
         spec:
@@ -6918,7 +7164,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 576d303b86d884a871ec675088b841faac922b7feef90f8fad8292753aff1e86
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
           labels:
             app: summary-client
         spec:
@@ -7020,7 +7266,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 576d303b86d884a871ec675088b841faac922b7feef90f8fad8292753aff1e86
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
           labels:
             app: upload
         spec:
@@ -7123,7 +7369,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c3e956e4bd6817093f61b823d12319e890f5b9c15e0bc528a89224c9d2474318
+            config-hash: b3201b59e3d5d88a1d9d2f505c506ef7fe5e335f8d475e675253d823c554ca30
           labels:
             app: groundx
         spec:
@@ -7269,7 +7515,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c3e956e4bd6817093f61b823d12319e890f5b9c15e0bc528a89224c9d2474318
+            config-hash: b3201b59e3d5d88a1d9d2f505c506ef7fe5e335f8d475e675253d823c554ca30
           labels:
             app: large-file-delivery
         spec:
@@ -7383,7 +7629,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c3e956e4bd6817093f61b823d12319e890f5b9c15e0bc528a89224c9d2474318
+            config-hash: b3201b59e3d5d88a1d9d2f505c506ef7fe5e335f8d475e675253d823c554ca30
           labels:
             app: layout-webhook
         spec:
@@ -7501,7 +7747,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c3e956e4bd6817093f61b823d12319e890f5b9c15e0bc528a89224c9d2474318
+            config-hash: b3201b59e3d5d88a1d9d2f505c506ef7fe5e335f8d475e675253d823c554ca30
           labels:
             app: pre-process
         spec:
@@ -7603,7 +7849,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c3e956e4bd6817093f61b823d12319e890f5b9c15e0bc528a89224c9d2474318
+            config-hash: b3201b59e3d5d88a1d9d2f505c506ef7fe5e335f8d475e675253d823c554ca30
           labels:
             app: process
         spec:
@@ -7705,7 +7951,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c3e956e4bd6817093f61b823d12319e890f5b9c15e0bc528a89224c9d2474318
+            config-hash: b3201b59e3d5d88a1d9d2f505c506ef7fe5e335f8d475e675253d823c554ca30
           labels:
             app: queue
         spec:
@@ -7807,7 +8053,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c3e956e4bd6817093f61b823d12319e890f5b9c15e0bc528a89224c9d2474318
+            config-hash: b3201b59e3d5d88a1d9d2f505c506ef7fe5e335f8d475e675253d823c554ca30
           labels:
             app: summary-client
         spec:
@@ -7909,7 +8155,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c3e956e4bd6817093f61b823d12319e890f5b9c15e0bc528a89224c9d2474318
+            config-hash: b3201b59e3d5d88a1d9d2f505c506ef7fe5e335f8d475e675253d823c554ca30
           labels:
             app: upload
         spec:
@@ -7991,6 +8237,75 @@
             - name: config-volume
               secret:
                 secretName: config-yaml-map
+'metadata: database migration':
+  1: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      annotations:
+        helm.sh/hook: pre-upgrade
+        helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        helm.sh/hook-weight: "-5"
+      labels:
+        app: RELEASE-NAME-schema-migration
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: RELEASE-NAME-schema-migration
+      namespace: eyelevel
+    spec:
+      activeDeadlineSeconds: 900
+      backoffLimit: 0
+      template:
+        metadata:
+          annotations:
+            prometheus.io/port: "8081"
+          labels:
+            app: RELEASE-NAME-schema-migration
+            app.kubernetes.io/name: myapp
+        spec:
+          affinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - myapp
+                topologyKey: kubernetes.io/hostname
+          containers:
+            - args:
+                - -migrate-only
+              image: test.image:v1
+              imagePullPolicy: Never
+              name: migrate
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                readOnlyRootFilesystem: true
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  readOnly: true
+                  subPath: config.yaml
+          nodeSelector:
+            disktype: ssd
+          restartPolicy: Never
+          securityContext:
+            fsGroup: 2000
+          serviceAccountName: other-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: workload-type
+              operator: Equal
+              value: batch
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: RELEASE-NAME-schema-migration
 'metadata: golang':
   1: |
     apiVersion: apps/v1
@@ -8700,6 +9015,90 @@
             - name: config-volume
               secret:
                 secretName: config-yaml-map
+'minikube: database migration':
+  1: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      annotations:
+        helm.sh/hook: pre-upgrade
+        helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        helm.sh/hook-weight: "-5"
+      labels:
+        app: RELEASE-NAME-schema-migration
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: RELEASE-NAME-schema-migration
+      namespace: eyelevel
+    spec:
+      activeDeadlineSeconds: 900
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app: RELEASE-NAME-schema-migration
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - args:
+                - -migrate-only
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+              imagePullPolicy: IfNotPresent
+              name: migrate
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  readOnly: true
+                  subPath: config.yaml
+          restartPolicy: Never
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: RELEASE-NAME-schema-migration
 'minikube: golang':
   1: |
     apiVersion: apps/v1
@@ -10976,7 +11375,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 576d303b86d884a871ec675088b841faac922b7feef90f8fad8292753aff1e86
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
           labels:
             app: groundx
         spec:
@@ -11122,7 +11521,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 576d303b86d884a871ec675088b841faac922b7feef90f8fad8292753aff1e86
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
             google-credentials-hash: 72a44514058cb545a86c2bc6895318ca8cce3322655796071dbc9a0addfe58ba
           labels:
             app: large-file-delivery
@@ -11237,7 +11636,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 576d303b86d884a871ec675088b841faac922b7feef90f8fad8292753aff1e86
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
           labels:
             app: layout-webhook
         spec:
@@ -11355,7 +11754,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 576d303b86d884a871ec675088b841faac922b7feef90f8fad8292753aff1e86
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
           labels:
             app: pre-process
         spec:
@@ -11457,7 +11856,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 576d303b86d884a871ec675088b841faac922b7feef90f8fad8292753aff1e86
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
           labels:
             app: process
         spec:
@@ -11559,7 +11958,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 576d303b86d884a871ec675088b841faac922b7feef90f8fad8292753aff1e86
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
           labels:
             app: queue
         spec:
@@ -11661,7 +12060,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 576d303b86d884a871ec675088b841faac922b7feef90f8fad8292753aff1e86
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
           labels:
             app: summary-client
         spec:
@@ -11763,7 +12162,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 576d303b86d884a871ec675088b841faac922b7feef90f8fad8292753aff1e86
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
           labels:
             app: upload
         spec:
