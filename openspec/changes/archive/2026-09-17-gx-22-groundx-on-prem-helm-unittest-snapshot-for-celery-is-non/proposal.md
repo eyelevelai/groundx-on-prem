@@ -15,7 +15,11 @@ resolves to whatever release the plugin's `main` branch currently names — toda
 release's snapshot cache (`pkg/unittest/snapshot/cache.go:159-181`) rewrites the entire `.snap`
 file whenever a snapshot entry vanishes, but counts only *updated* entries as failures — so a
 vanished empty-render label (`disabled: celery`) is silently dropped from the file while the run
-still reports **PASS**. That is the ticket's reported symptom verbatim. Separately, this repo has
+still reports **PASS**, under `-u` (proven at every release from 2019 to an unreleased `main`
+build). The CI/pre-push gate's own invocation (plain `helm unittest`, never `-u`) was separately
+confirmed never exposed to this mechanism at any tested version — its write gate cannot be
+tripped by a value-only mismatch, only a structural insert/vanish, which no run in this
+investigation produced. Separately, this repo has
 no `.gitattributes` line-ending pin, so a Windows checkout renders chart resources with CRLF
 against the LF blobs the committed snapshot's `*-hash` annotations were computed from — harmless
 churn, unrelated to the plugin defect, found investigating this ticket and worth closing at the
@@ -36,10 +40,15 @@ value.
   each `helm unittest` invocation** — not at the end of the script, since `verify-helm-snapshots.py`
   already exits the script first on this failure class under `set -euo pipefail`, so an
   end-of-script check would never run.
-- **Freeze the plugin on the newest older release that still emits the empty-render labels**
-  (human decision at the plan gate, option (a) over accepting the current release and loosening
-  `verify-helm-snapshots.py`'s empty-label checks) — found via an empirical backward tag search.
-  This requires **no snapshot regeneration** and keeps the verifier's existing guarantees intact.
+- **Pin the plugin on the newest official release, `v1.1.2`.** The plan's chosen fork at the plan
+  gate was option (a): freeze on the newest *older* release that still emits every required
+  empty-render label. An empirical backward tag search (every tag from `v0.3.0` through an
+  unreleased `main` build) found that option (a) **does not exist** — the label-drop is a
+  structural property of the plugin's zero-manifest snapshot handling, present at every release,
+  not a version-selection problem. A follow-on investigation found the actual CI/pre-push gate
+  invocation (plain `helm unittest`, never `-u`) was never exposed to this defect at any tested
+  version, so the newest release is pinned with no loss of protection and no snapshot
+  regeneration required. See `design.md`'s Decisions for the full evidence.
 - **Keep the already-landed guard tooling as-is.** `.build/bin/verify-helm-mirror.py` and
   `.build/bin/check-render-determinism.py` (committed at `e9d61bb` during the withdrawn approach)
   stay: mirror-equality blocking, repeat-render determinism warn-only with no flip condition in
@@ -91,7 +100,7 @@ and the gate-assertion placement are fully specified in the accepted cross-servi
 - `scripts/githooks/groundx-on-prem/install.sh`, `NOTES.md` (meta-repo, human pass) — kept in sync
   with the same pin.
 - No `src/groundx/templates/**` or `helm/templates/**` file is edited.
-- `src/groundx/tests/__snapshot__/*.snap` — not touched under the chosen fork (option a); no
+- `src/groundx/tests/__snapshot__/*.snap` — not touched; the newest-release pin requires no
   regeneration.
 - Already-landed guard tooling (`.build/bin/verify-helm-mirror.py`,
   `.build/bin/check-render-determinism.py`, committed at `e9d61bb`) is unaffected by this change.

@@ -77,8 +77,11 @@ vanished-empty-render-label rewrite this assertion targets.
 
 - **GIVEN** a hash of every file under `src/groundx/tests/__snapshot__` was captured before
   `helm unittest src/groundx` ran
-- **WHEN** the `helm unittest src/groundx` invocation rewrites a `.snap` file's content (e.g. an
-  unpinned plugin release silently drops a vanished empty-render label while still reporting PASS)
+- **WHEN** the `helm unittest src/groundx` invocation performs a structural insert or vanish of a
+  snapshot test case (this assertion's defense-in-depth target; GX-22's investigation confirmed the
+  `helm-unittest` plugin's empty-render-label-drop mechanism is triggered only by `-u`, never by
+  the plain invocation this gate runs, so this assertion guards against a hypothetical future
+  structural rewrite, not a currently-observed defect in the plain-mode gate)
 - **THEN** the assertion immediately following that invocation recomputes the hashes, finds a
   mismatch, names the changed file, and fails the script — before `verify-helm-snapshots.py` or any
   later step runs
@@ -96,3 +99,28 @@ vanished-empty-render-label rewrite this assertion targets.
   captured-after-this-run content, never against git's working-tree dirty/clean status
 - **Polarity:** finalize success — a snapshot's pre-existing state, however it got there, is never
   itself the failure condition; only a change caused by this run's own `helm unittest` invocation is.
+
+### Requirement: The build gate enforces the pinned `helm-unittest` plugin version
+
+`.build/bin/validate-helm.sh` SHALL fail whenever the `helm-unittest` plugin version actually
+installed and resolved at runtime does not match the version named in
+`.build/HELM_UNITTEST_VERSION`, the single pinned source of truth — reading the version the
+installed plugin binary itself reports, never merely an install command in a workflow file or doc.
+A missing pin file, a missing plugin install, or an unreadable `plugin.yaml` SHALL also fail the
+gate, never pass silently.
+
+#### Scenario: A mismatched installed plugin version is rejected (catches)
+
+- **GIVEN** `.build/HELM_UNITTEST_VERSION` names one version and the installed `helm-unittest`
+  plugin's own `plugin.yaml` reports a different version
+- **WHEN** the plugin-version guard runs
+- **THEN** it reports both versions and fails
+- **Polarity:** reject before state — `helm unittest` never runs against the wrong tool.
+
+#### Scenario: A matching installed plugin version passes (must-not-block)
+
+- **GIVEN** the installed `helm-unittest` plugin's `plugin.yaml` reports the same version named in
+  `.build/HELM_UNITTEST_VERSION`
+- **WHEN** the plugin-version guard runs
+- **THEN** it passes
+- **Polarity:** finalize success.

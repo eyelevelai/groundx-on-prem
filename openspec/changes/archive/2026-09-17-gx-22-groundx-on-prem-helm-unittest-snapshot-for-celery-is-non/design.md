@@ -48,8 +48,13 @@ reported symptom:
   inserted or vanished, retains cached bodies for unchanged entries (`:111`), and counts only
   *updated* entries as failures (`:199-204` `FailedCount`, `:206-219` `VanishedCount`) — so a
   vanished empty-render label (`disabled: celery`) is silently dropped from the file while the run
-  still reports **PASS**. This is the ticket's reported symptom verbatim: "rewrites the snapshot
-  ... yet the run still reports PASS," and "the `disabled: celery` key sometimes dropped."
+  still reports **PASS**, under `-u`. This is the ticket's reported symptom verbatim: "rewrites the
+  snapshot ... yet the run still reports PASS," and "the `disabled: celery` key sometimes dropped."
+  **This mechanism is proven only for `-u`** (Stage B's empirical search, every release
+  2019–present); Stage B.1a separately confirmed the plain-mode gate invocation this change
+  protects (`helm unittest src/groundx`, no `-u`) was never exposed to it in any environment
+  tested — plain mode's write gate cannot be tripped by a value-only mismatch at all, only by a
+  genuine structural insert/vanish, which this investigation found no evidence of.
 - Separately, this repo has no `.gitattributes` line-ending pin, so a Windows checkout
   (`core.autocrlf`) renders `src/groundx/templates/resources/*.yaml` with CRLF against the LF blobs
   the committed snapshot's `*-hash` annotations were computed from — harmless churn confined to
@@ -91,15 +96,30 @@ to this ticket's reported drift — tracked as its own follow-up (not yet filed;
      (`validate-helm.sh:94`, under `set -euo pipefail`) already exits the script first on exactly
      this failure class — a vanished empty-render label — so an end-of-script placement would never
      run on the failure this assertion exists to catch.
-- **Chosen fork (human decision, plan gate round 6): option (a).** Freeze
-  `.build/HELM_UNITTEST_VERSION` on the newest older `helm-unittest` release that still emits every
-  required empty-render label (the 24 labels across 9 snapshot files `verify-helm-snapshots.py`'s
-  `REQUIRED_EMPTY_LABELS` already asserts), found via an empirical backward tag search (tasks.md
-  Stage B). This requires **no snapshot regeneration** — Stage D is a no-op under this fork — and
-  keeps `verify-helm-snapshots.py`'s existing guarantees fully intact, unlike option (b) (accept the
-  current release, loosen the verifier's empty-label checks), which was considered and rejected: it
-  would weaken an active guardrail to accommodate a tool defect instead of pinning around the
-  defect. Option (a) is also reversible and cheap to determine empirically before committing to it.
+- **Chosen fork (human decision, plan gate round 6): option (a) as planned — found not to exist,
+  resolved by pinning the newest release instead.** The plan's chosen fork at round 6 was option
+  (a): freeze `.build/HELM_UNITTEST_VERSION` on the newest *older* `helm-unittest` release that
+  still emits every required empty-render label (the 24 labels across 9 snapshot files
+  `verify-helm-snapshots.py`'s `REQUIRED_EMPTY_LABELS` already asserts), over option (b) (accept
+  the current release, loosen the verifier's empty-label checks) — (a) would have been reversible,
+  required no snapshot regeneration, and kept the verifier's guarantees fully intact.
+
+  **Stage B's empirical backward tag search (v1.1.2, v1.1.1, v0.3.0, and an unreleased `main`
+  build) found that no release at any point in the plugin's history satisfies option (a)'s bar
+  under `-u`** — the label-drop is a structural property of how `MatchSnapshotValidator.Validate()`
+  handles a zero-manifest render, present at every release since 2019, not a version-selection
+  problem. Option (a), as originally specified, does not exist. A follow-on investigation
+  (B.1a), requested before closing the escalation, found the actual CI/pre-push gate invocation —
+  plain `helm unittest`, never `-u`, also the ticket's own `## How to confirm` recipe — was **never
+  exposed** to this defect at any tested version: the plugin's snapshot-file rewrite gate
+  (`StoreToFileIfNeeded`) only fires on a structural insert/vanish, never a value-only mismatch, so
+  the `-u`-only label-drop cannot reach the gate this change protects. **Resolved by pinning
+  `.build/HELM_UNITTEST_VERSION` at `v1.1.2`, the newest official release** — empirically confirmed
+  clean for the gate's actual (plain-mode) invocation, with no older pin offering any additional
+  protection against a hazard confirmed `-u`-only. This requires **no snapshot regeneration**.
+  The `-u`-only label-drop hazard itself remains unfixed at every release and is flagged for the
+  human to decide on a separate follow-up ticket (see tasks.md Stage B.1) — this change does not
+  address it.
 
 ## Tooling: guard-script conventions (Guard change class)
 
