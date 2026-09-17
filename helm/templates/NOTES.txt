@@ -4,3 +4,9 @@
 Release: {{ .Release.Name }}
 Namespace: {{ $ns }}
 =============
+
+Database schema must match the application images before rollout.
+Go workload upgrades run the GroundX image with -migrate-only first.
+Use a compatible GroundX image even for worker-only upgrades.
+Fresh installs use normal GroundX initialization. Database additions remain on rollback.
+See docs/agents/database-upgrades.md before upgrading; do not bypass hooks.

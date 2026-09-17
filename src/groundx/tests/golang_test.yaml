@@ -4,6 +4,177 @@ chart:
   version: 0.1.0
 
 tests:
+  - it: "external DB: database migration"
+    templates:
+      - ../templates/app/schema-migration.yaml
+    values:
+      - ../values/values.existing.yaml
+    release:
+      upgrade: true
+    documentSelector:
+      path: kind
+      value: Job
+    asserts:
+      - matchSnapshot: {}
+  - it: "OpenShift: database migration"
+    templates:
+      - ../templates/app/schema-migration.yaml
+    values:
+      - ../values/openshift/values.yaml
+    release:
+      upgrade: true
+    documentSelector:
+      path: kind
+      value: Job
+    asserts:
+      - matchSnapshot: {}
+  - it: "minikube: database migration"
+    templates:
+      - ../templates/app/schema-migration.yaml
+    values:
+      - ../values/minikube/values.yaml
+    release:
+      upgrade: true
+    documentSelector:
+      path: kind
+      value: Job
+    asserts:
+      - matchSnapshot: {}
+  - it: "metadata: database migration"
+    templates:
+      - ../templates/app/schema-migration.yaml
+    values:
+      - ./files/values.metadata.yaml
+    release:
+      upgrade: true
+    documentSelector:
+      path: kind
+      value: Job
+    asserts:
+      - matchSnapshot: {}
+  - it: "database migration blocks upgrades before new Go workloads"
+    templates:
+      - ../templates/app/schema-migration.yaml
+    release:
+      name: upgrade-test
+      upgrade: true
+    documentSelector:
+      path: kind
+      value: Job
+    asserts:
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: pre-upgrade
+      - equal:
+          path: metadata.annotations["helm.sh/hook-weight"]
+          value: "-5"
+      - equal:
+          path: metadata.annotations["helm.sh/hook-delete-policy"]
+          value: before-hook-creation,hook-succeeded
+      - equal:
+          path: spec.backoffLimit
+          value: 0
+      - equal:
+          path: spec.activeDeadlineSeconds
+          value: 900
+      - equal:
+          path: spec.template.spec.restartPolicy
+          value: Never
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: ["-migrate-only"]
+      - equal:
+          path: spec.template.metadata.labels.app
+          value: upgrade-test-schema-migration
+      - notExists:
+          path: spec.template.spec.initContainers
+      - notExists:
+          path: spec.template.spec.containers[0].ports
+      - notExists:
+          path: spec.template.spec.containers[0].env
+      - equal:
+          path: spec.template.spec.volumes[0].secret.secretName
+          value: upgrade-test-schema-migration
+      - matchSnapshot: {}
+  - it: "fresh install creates no database upgrade hook"
+    templates:
+      - ../templates/app/schema-migration.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: "worker-only upgrade still migrates with the GroundX image"
+    templates:
+      - ../templates/app/schema-migration.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      queue.enabled: true
+      groundx.image: test.invalid/groundx:migration
+    release:
+      upgrade: true
+    documentSelector:
+      path: kind
+      value: Job
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: test.invalid/groundx:migration
+  - it: "disabled Go workloads create no migration hook"
+    templates:
+      - ../templates/app/schema-migration.yaml
+    values:
+      - ./files/values.disabled.yaml
+    release:
+      upgrade: true
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: "migration inherits security and credentials without workspace dependencies"
+    templates:
+      - ../templates/app/schema-migration.yaml
+    values:
+      - ./files/values.workspace.enabled.yaml
+    set:
+      groundx.image: test.invalid/groundx:migration
+      groundx.serviceAccount.name: migration-account
+      groundx.containerSecurityContext.readOnlyRootFilesystem: true
+      groundx.nodeSelector.disktype: ssd
+      groundx.annotations.example: test
+      cluster.secrets: [database-credentials]
+      cluster.imagePullSecrets: [private-images]
+      imageType: chainguard
+    release:
+      upgrade: true
+    documentSelector:
+      path: kind
+      value: Job
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: migration-account
+      - equal:
+          path: spec.template.spec.nodeSelector.disktype
+          value: ssd
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: true
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[0].mountPath
+          value: /home/nonroot/.cashbot/config.yaml
+      - equal:
+          path: spec.template.spec.containers[0].envFrom
+          value:
+            - secretRef:
+                name: database-credentials
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: private-images
+      - notExists:
+          path: spec.template.spec.containers[0].env
+      - equal:
+          path: spec.template.metadata.labels.app
+          value: RELEASE-NAME-schema-migration
   - it: "shared Google credentials: golang"
     templates:
       - ../templates/app/golang.yaml

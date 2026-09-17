@@ -381,6 +381,13 @@ if [[ "${RUN_JUNIT}" == "1" ]]; then
 fi
 
 echo "==> Checking diff whitespace"
+echo "==> Verifying database upgrade hook ships identically"
+cmp src/groundx/templates/app/schema-migration.yaml helm/templates/app/schema-migration.yaml
+for chart in src/groundx helm; do
+  helm template schema-upgrade "${chart}" --is-upgrade \
+    -f src/groundx/values/minikube/values.yaml >/dev/null
+done
+
 git diff --check
 
 echo "==> Helm chart checks passed"

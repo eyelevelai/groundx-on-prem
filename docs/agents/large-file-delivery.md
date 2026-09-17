@@ -140,6 +140,10 @@ Go workload configuration hashes and can restart existing producer pods.
 
 ## Rollout and recovery
 
+The [database migration gate](database-upgrades.md) runs the target GroundX
+image before chart upgrades. Use compatible Cashbot images and review the
+database engine and migration cost before rollout.
+
 Install the additive database column before the updated monitor and workers.
 Keep account policies disabled until all old producer workers are replaced,
 transport and credentials are ready, and the cashbot-go activation record has
