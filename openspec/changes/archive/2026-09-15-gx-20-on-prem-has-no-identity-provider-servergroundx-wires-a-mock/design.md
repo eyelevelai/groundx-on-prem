@@ -28,7 +28,7 @@ See `proposal.md` for the current-state analysis (no `cognito:` anywhere in the 
 
 - **Rollout:** additive, any order. An install that upgrades the chart without setting any `cognito.*` key renders no `cognito:` key and is unaffected — verified structurally by the same guard mechanism `admin:` already uses. An install that wants Cognito sets all five `cognito.*` keys (chart does not enforce completeness; cashbot-go's `Cognito.Validate()` fails startup fast on a partial `mode: cognito` config).
 - **Blast radius:** every environment that redeploys `config-yaml-map` re-renders it with the (empty-by-default) new block; no other rendered key changes. No stateful resource, no new Kubernetes object kind, no data-store migration in this repo.
-- **Rollback:** `helm rollback` to the prior chart version stops rendering `cognito:` entirely; cashbot-go (deployed independently) falls back to its own `apiKeyOnly` default with no data loss, since this change introduces no persisted on-prem state.
+- **Rollback:** A Cognito-enabled installation MUST NOT `helm rollback` to a pre-GX-20 chart version: that chart stops rendering `cognito:`, restarts cashbot-go in `apiKeyOnly` mode, and disables password authentication. There is no Cognito-preserving rollback to a chart version that lacks this config surface; use a forward fix on a GX-20-compatible chart/image instead. The ordinary Helm rollback remains applicable only to installs that did not enable Cognito.
 - **Removal plan:** none — additive, no old shape retired (matches the FINALIZED contract's "Removal plan: n/a").
 
 ## Risks / Trade-offs

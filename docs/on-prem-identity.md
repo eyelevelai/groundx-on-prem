@@ -50,6 +50,15 @@ cognito:
 - `cognito.adminPassword` is not a supported chart key (rejected by `values.schema.json`); it has
   no rendering path on-prem and is unrelated to the separate, unchanged `admin.password` key.
 
+## Rollback
+
+Do not run `helm rollback` to a chart version before GX-20 for an installation using
+`mode: cognito`. The older chart removes the rendered `cognito:` configuration; when the pod
+restarts, cashbot-go falls back to `apiKeyOnly` and password authentication stops working. There
+is no Cognito-preserving rollback to a chart without this configuration surface. Use a forward
+fix on a GX-20-compatible chart/image instead. Ordinary Helm rollback remains appropriate only
+for installations that did not enable Cognito.
+
 ## Air-gapped installs
 
 Air-gapped installs must use `apiKeyOnly` — reaching AWS Cognito to validate a login is not

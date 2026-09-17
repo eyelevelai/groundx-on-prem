@@ -19,6 +19,9 @@
 - [x] 3.1 Write `docs/on-prem-identity.md`: the `apiKeyOnly` default identity behavior, the optional `cognito` mode and its five required keys, and the explicit air-gapped answer (`apiKeyOnly` — `mode: cognito` requires reaching AWS Cognito, which an air-gapped cluster cannot do).
   check: test -f docs/on-prem-identity.md && grep -q 'apiKeyOnly' docs/on-prem-identity.md && grep -qi 'cognito' docs/on-prem-identity.md && grep -qi 'air-gap' docs/on-prem-identity.md
 
+- [x] 3.2 Document that a Cognito-enabled installation must not roll back to a pre-GX-20 chart, because it removes the rendered `cognito:` configuration and disables password authentication; direct recovery to a GX-20-compatible forward fix instead.
+  check: grep -q 'MUST NOT.*pre-GX-20' openspec/changes/archive/2026-09-15-gx-20-on-prem-has-no-identity-provider-servergroundx-wires-a-mock/design.md && grep -q 'Do not run.*before GX-20' docs/on-prem-identity.md
+
 ## Notes
 
 - **Validator gate:** `.build/bin/validate-helm.sh` is this repo's full local gate (lint + `helm unittest` snapshot tests + dual-surface render checks) and must pass before merge, in addition to the task-level checks above.
