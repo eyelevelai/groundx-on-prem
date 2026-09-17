@@ -83,11 +83,13 @@ every install that does not set it renders no `cognito:` key at all, so cashbot-
 Secret object, no data-store schema or migration in this repo (cashbot-go's own MySQL usage for
 `apiKeyOnly` customer/API-key rows is out of this proposal's scope).
 
-**Rollback/rollforward:** `helm rollback` to the prior chart version stops rendering the
-`cognito:` block entirely; cashbot-go (deployed independently, pinned to its own image tag) falls
-back to its own `apiKeyOnly` default with no data loss, because this proposal introduces no new
-persisted on-prem state. Rolling the chart forward without also updating `values.yaml` is
-backward-compatible by construction (additive, unset key → `apiKeyOnly`).
+**Rollback/rollforward:** A Cognito-enabled installation MUST NOT `helm rollback` to a pre-GX-20
+chart version. That chart stops rendering `cognito:`, restarts cashbot-go in `apiKeyOnly` mode,
+and disables password authentication. There is no Cognito-preserving rollback to a chart version
+that lacks this configuration surface; use a forward fix on a GX-20-compatible chart/image
+instead. Ordinary Helm rollback remains applicable only to installations that did not enable
+Cognito. An installation that upgrades without setting any `cognito.*` value remains backward
+compatible by construction (unset key → `apiKeyOnly`).
 
 **Cross-service dependency:** this proposal consumes the FINALIZED
 cashbot-go → groundx-on-prem config-key contract (`pkg/config/types.go:132-155`, committed
