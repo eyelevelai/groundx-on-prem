@@ -23,6 +23,7 @@
 {{- $mapPrefix := get $svcData "mapPrefix" -}}
 {{- $node := get $svcData "node" -}}
 {{- $nsl := get $svcData "nodeSelector" -}}
+{{- $probe := get $svcData "probe" | default dict -}}
 {{- $pvc := get $svcData "pvc" | default dict -}}
 {{- $rp := get $svcData "replicas" -}}
 {{- $rs := get $svcData "resources" -}}
@@ -146,12 +147,15 @@ spec:
             initialDelaySeconds: 10
             failureThreshold: 12
             periodSeconds: 30
+            timeoutSeconds: {{ dig "liveness" "timeoutSeconds" 3 $probe }}
           readinessProbe:
             httpGet:
               path: /health
               port: {{ $cport }}
             initialDelaySeconds: 10
             periodSeconds: 30
+            timeoutSeconds: {{ dig "readiness" "timeoutSeconds" 3 $probe }}
+            failureThreshold: {{ dig "readiness" "failureThreshold" 3 $probe }}
 {{- include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
           volumeMounts:
             - name: config-volume

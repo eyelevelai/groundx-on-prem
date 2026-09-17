@@ -186,6 +186,21 @@ true
 false
 {{- end }}
 
+{{- define "groundx.ranker.api.probe" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- $pb := dig "probe" dict $in -}}
+{{- $lv := dig "liveness" dict $pb -}}
+{{- $rd := dig "readiness" dict $pb -}}
+{{- dict
+    "liveness"  (dict "timeoutSeconds" (dig "timeoutSeconds" 3 $lv))
+    "readiness" (dict
+      "failureThreshold" (dig "failureThreshold" 3 $rd)
+      "timeoutSeconds"   (dig "timeoutSeconds" 3 $rd)
+    )
+  | toYaml -}}
+{{- end }}
+
 {{- define "groundx.ranker.api.threads" -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "api" dict $b -}}
@@ -247,6 +262,7 @@ false
   "name"         (include "groundx.ranker.api.serviceName" .)
   "node"         (include "groundx.ranker.api.node" .)
   "port"         (include "groundx.ranker.api.containerPort" .)
+  "probe"        (include "groundx.ranker.api.probe" . | fromYaml)
   "pull"         (include "groundx.ranker.api.imagePullPolicy" .)
   "replicas"     ($rep)
 -}}
