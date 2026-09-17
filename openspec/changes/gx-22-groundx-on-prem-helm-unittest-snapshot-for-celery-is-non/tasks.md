@@ -3,8 +3,11 @@
 Implementation runs through the ambient Superpowers loop — this list is artifact-specific only.
 
 See the workspace `openspec/changes/gx-22-groundx-on-prem-helm-unittest-snapshot-for-celery-is-non/`
-proposal for the full 22-helper scope table and the six already-safe `fromYaml` exclusions; both are
-restated in `design.md` only where needed to write a task.
+proposal for the full cross-service verification notes. Cross-repo coordination note (not a
+per-service checkbox): `scripts/githooks/groundx-on-prem/install.sh` and its `NOTES.md`
+(meta-repo) need the same `.build/HELM_UNITTEST_VERSION` pin applied by a human pass once Stage A
+lands here — see the workspace `openspec/changes/.../tasks.md` for that coordination item; it is
+not a task of this service repo.
 
 ### Stage 0 — Proof gate (do this first; nothing below is unconditional)
 
@@ -95,6 +98,14 @@ landed.
       determinism check landing warn-only in all cases, not only after a confirmed-clean fix — the
       one-line "land only the mirror-equality check" phrasing above is superseded by Stage 3's own,
       more specific task text and design.md's Rollout item 5).
+
+      **Amendment note (post-escalation re-plan).** This third-branch outcome — and the two decision
+      points above it — is the accurate history that led to re-opening the plan. It stands as
+      written; nothing in it is re-litigated. The corrected root cause (an unpinned `helm-unittest`
+      plugin release whose snapshot cache silently drops a vanished empty-render label) was found
+      afterward, during design authorship of the re-opened plan — see `design.md`'s "Grounding
+      finding." Stages A–D below are that amended plan's tasks.
+
 - [x] 0.4 Add `.build/bin/verify-helm-mirror.py` (`compare_trees(src, mirror) -> list[str]`,
       byte-for-byte + path-set comparison; `main()` compares `src/groundx/templates` against
       `helm/templates`) and `.build/bin/check-render-determinism.py`
@@ -103,84 +114,133 @@ landed.
       (repeatable), `--focus`, `--warn-only`, `--root`). See `design.md` "Tooling" for the exact
       contract and the warn-only message requirement (must name "warn-only" and "GX-22").
       check: `python -m pytest .build/tests/test_verify_helm_mirror.py .build/tests/test_check_render_determinism.py`
-- [ ] 0.5 **Skipped — 0.3 escalated (third branch), not confirmed `.Values` aliasing.** Fix the
-      attribution-selected helper (default `layout-ocr.tpl:115`,
-      `groundx.layout.ocr.replicas` — substitute the actual attributed helper/field if 0.3 selected
-      a different one of the 8): pipe the `dig`-derived submap through `| toYaml | fromYaml` before
-      the first `set` call, per `design.md`'s fix mechanism. Mirror the one file into
-      `helm/templates`.
-      check: `python .build/bin/check-render-determinism.py --chart src/groundx --values src/groundx/values/extract/values.yaml --focus 'layout[.-]ocr'`
-- [ ] 0.6 **Skipped — depends on 0.5.** Re-run the full two-run recipe from 0.1 and confirm the
-      decision-point-0.3 outcome: the attributed drift disappears (partial cleanup of the celery
-      snapshot is the expected pass signal, not total drift elimination — the suite still renders 7
-      other defective helpers). Record the result.
-      check: n/a — confirms 0.3's chosen branch; the same check as 0.5 already asserts this
-      mechanically.
+- [ ] 0.5 **WITHDRAWN** — 0.3 escalated (third branch); the corrected re-plan's root cause is an
+      unpinned `helm-unittest` plugin release, not `.Values` aliasing. The 22-helper deep-copy fix
+      this task described is a real but separate hardening item — needs its own Linear ticket, not
+      yet filed (see design.md "Open items carried into tasks.md"). Kept here, not deleted, so a
+      future reader sees it was considered and rejected as this ticket's fix, not overlooked.
+      check: n/a — withdrawn, no code written for this task.
+- [ ] 0.6 **WITHDRAWN** — depended on 0.5, which is withdrawn for the same reason. See design.md
+      "Open items carried into tasks.md" for the follow-up-ticket pointer.
+      check: n/a — withdrawn, no code written for this task.
 
-### Stage 1 — Sweep (conditional: only if 0.3 confirmed `.Values` aliasing)
+### Stage 1 — Sweep (WITHDRAWN — the confirmed root cause is not `.Values` aliasing)
 
-- [ ] 1.1 **Skipped — 0.3 did not confirm `.Values` aliasing as this ticket's cause.** Apply the
-      identical `| toYaml | fromYaml` treatment (design.md's fix mechanism) to the
-      remaining 21 `.Values`-aliasing helpers listed in the workspace plan's scope table. One
-      consistent treatment, not per-file variants. Do not touch the 6 `fromYaml`-based helpers
-      (`workspace-*.tpl`) — they are already safe. Mirror every edited file into `helm/templates`.
-      check: `python .build/bin/check-render-determinism.py --chart src/groundx --values src/groundx/values.yaml && python .build/bin/check-render-determinism.py --chart src/groundx --values src/groundx/values/extract/values.yaml && python .build/bin/check-render-determinism.py --chart src/groundx --values src/groundx/values/extract/values.oai.yaml`
+- [ ] 1.1 **WITHDRAWN.** The 22-helper `| toYaml | fromYaml` sweep this task described remains a
+      real code smell by direct reading (`layout-ocr.tpl` and 21 siblings), proven irrelevant to
+      every diff this ticket's Stage 0 observed. Needs its own Linear ticket, not yet filed — see
+      design.md "Open items carried into tasks.md." Kept here as a record of a considered-and-rejected
+      approach, not deleted.
+      check: n/a — withdrawn, no code written for this task.
 
-### Stage 2 — Snapshot regen under human review (conditional: only if Stage 0/1 landed a code fix)
+### Stage 2 — Snapshot regen under human review (WITHDRAWN — not needed under the chosen fork)
 
-- [ ] 2.1 **Skipped — no code fix landed (Stage 0 escalated instead); regenerating the snapshot now
-      would mask an unconfirmed defect, exactly what the Linear guardrail "do not update the
-      snapshots just to make the tests pass" forbids.** Regenerate `src/groundx/tests/__snapshot__/celery_test.yaml.snap` (and any other suite the
-      same leak touched — re-run the full `helm unittest src/groundx` and check every changed
-      `.snap` file, not only celery's) via `helm unittest -u src/groundx`. Never hand-edit a
-      `.snap` file.
-      check: n/a — human-reviewed regeneration (see 2.2); the mechanical shape (labels present,
-      sorted, required-empty entries intact) is already covered by
-      `.build/bin/verify-helm-snapshots.py`, run in 3.3.
-- [ ] 2.2 **Skipped — depends on 2.1.** Human review, entry by entry, of every changed snapshot line: accept only a value moving
-      from a leaked neighbour's value to that case's own correct default; escalate (do not commit)
-      a resource appearing/disappearing, a body moving to the wrong test label, a changed GX-11
-      `matchRegex`/`contains` assertion outcome, or any other unexplained delta. See spec.md's
-      "Regenerated snapshots are reviewed entry by entry before commit" requirement.
-      check: n/a — human judgment call, not machine-checkable; this is the control the Linear
-      guardrail ("do not update the snapshots just to make the tests pass") requires precisely
-      because no verifier reads snapshot bodies (see `openspec/changes/.../source-of-truth.md`).
+- [ ] 2.1 **WITHDRAWN** — superseded by design.md's "Fix mechanism": the human's chosen fork
+      (option a) freezes the `helm-unittest` plugin on an older release that already emits every
+      required empty-render label, so no snapshot regeneration is needed. Regenerating the snapshot
+      under the original (withdrawn) hypothesis would have masked an unconfirmed defect — exactly
+      what the Linear guardrail "do not update the snapshots just to make the tests pass" forbids.
+      check: n/a — withdrawn, no code written for this task.
+- [ ] 2.2 **WITHDRAWN** — depended on 2.1, which is withdrawn for the same reason.
+      check: n/a — withdrawn, no code written for this task.
 
-### Stage 3 — Gate hardening (mirror check is unconditional; determinism check's landing rule is conditional)
+### Stage A — Toolchain pinning (`.gitattributes` + plugin-version pin + assertion)
+
+- [ ] A.1 Add `.gitattributes` (repo root) pinning `src/groundx/templates/**`, `helm/templates/**`,
+      and related chart YAML/JSON to `eol=lf`. Confirm zero index-content delta (the committed blobs
+      are already LF; this only changes future working-tree checkout behavior).
+      check: `git check-attr eol -- src/groundx/templates/resources/layout-config-py.yaml helm/templates/resources/layout-config-py.yaml | grep -c 'eol: lf' | grep -q '^2$' && git diff --stat --exit-code`
+- [ ] A.2 Add `.build/HELM_UNITTEST_VERSION` (one line, the pinned plugin release tag) as the single
+      source of truth. Update `.github/workflows/helm-tests.yml`'s install step to
+      `helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "$(cat
+      .build/HELM_UNITTEST_VERSION)"`, and `docs/agents/repo-guide.md` + `ARCHITECTURE_NOTES.md` to
+      show the same pinned-install form.
+      check: `test -s .build/HELM_UNITTEST_VERSION && grep -q 'HELM_UNITTEST_VERSION' .github/workflows/helm-tests.yml docs/agents/repo-guide.md ARCHITECTURE_NOTES.md`
+- [ ] A.3 Add `.build/bin/verify-helm-unittest-plugin-version.py` (`pinned_version(pin_file) -> str`,
+      `installed_version(plugins_dir) -> str | None` reading the installed plugin's own
+      `plugin.yaml`; `main()` fails closed on a missing pin file, missing plugin, unreadable
+      `plugin.yaml`, or a version mismatch — see design.md "Tooling") with fixtures (a fake
+      plugin.yaml reporting a different version; one matching the pin), and wire it into
+      `.build/bin/validate-helm.sh` before the `helm unittest` invocation.
+      check: `python -m pytest .build/tests/test_verify_helm_unittest_plugin_version.py`
+
+### Stage B — Execute the chosen fork (empirical backward tag search)
+
+- [ ] B.1 Backward tag search from `helm-unittest`'s newest release: for each candidate tag, install
+      it, run `helm unittest -u src/groundx`, and check every one of `verify-helm-snapshots.py`'s
+      `REQUIRED_EMPTY_LABELS` (24 labels, 9 files) survives — present, and still emitted as an
+      explicit empty entry, not silently dropped. Select the **newest** tag that passes. Record the
+      chosen tag and the evidence for each tag tried in this file.
+      check: n/a — empirical investigation feeding A.2's pin choice; mirrors Stage 0.1/0.2's
+      diagnostic-reconnaissance pattern, not itself a pass/fail condition.
+- [ ] B.2 Set `.build/HELM_UNITTEST_VERSION` to the tag selected in B.1 (if different from a
+      placeholder used in A.2). With `.gitattributes` from A.1 already applied, confirm a byte-clean
+      two-run recipe: `helm unittest -u src/groundx` produces a `.snap` tree with zero diff against
+      committed `HEAD`, and a second plain `helm unittest src/groundx` run leaves it unchanged.
+      check: `helm unittest -u src/groundx && git diff --stat --exit-code -- src/groundx/tests/__snapshot__ && helm unittest src/groundx && git diff --stat --exit-code -- src/groundx/tests/__snapshot__`
+
+### Stage C — Snapshot-rewrite-on-run assertion
+
+- [ ] C.1 Add `.build/bin/verify-helm-snapshot-stability.py` — `capture <hashfile>` hashes every
+      file under `src/groundx/tests/__snapshot__` and writes the result to `<hashfile>`; `verify
+      <hashfile>` recomputes and fails, naming every changed file, if the hashes differ. See
+      design.md "Tooling" for the full contract. Fixtures: a snapshot mutated between `capture` and
+      `verify` (must REJECT); an unchanged run, and a run whose captured baseline already differed
+      from git `HEAD` before capture (both must NOT block).
+      check: `python -m pytest .build/tests/test_verify_helm_snapshot_stability.py`
+- [ ] C.2 Wire it into `.build/bin/validate-helm.sh`: `capture` runs near the top of the script
+      (before `helm lint`); `verify` runs immediately after the `helm unittest src/groundx`
+      invocation (today `validate-helm.sh:59`) — strictly before `verify-helm-snapshots.py`
+      (today `validate-helm.sh:94`), which already exits the script first under `set -euo pipefail`
+      on exactly this failure class.
+      check: `bash -n .build/bin/validate-helm.sh && awk '/verify-helm-snapshot-stability.py verify/{v=NR} /verify-helm-snapshots\.py$/{s=NR} END{exit !(v && s && v<s)}' .build/bin/validate-helm.sh`
+- [ ] C.3 Re-run the full gate end to end now that Stage A/B/C have landed. This supersedes the
+      earlier 3.3 attempt below, which failed only on the pre-existing CRLF/unpinned-plugin
+      confounds Stage A/B remove.
+      check: `bash .build/bin/validate-helm.sh`
+
+### Stage D — Snapshot regeneration
+
+Not applicable under the chosen fork (option a). Freezing on an older plugin release that already
+emits every required empty-render label requires no snapshot regeneration, so this change has no
+human-reviewed regen step (unlike the withdrawn plan's Stage 2 above).
+
+### Stage 3 — Gate hardening (already landed; mirror check unconditional, determinism check
+warn-only permanently — unaffected by this amendment)
 
 - [x] 3.1 Wire `.build/bin/verify-helm-mirror.py` into `.build/bin/validate-helm.sh` as an
       unconditional, always-blocking step (add near the existing `helm lint` step). Lands regardless
       of Stage 0's outcome.
       check: `grep -q "verify-helm-mirror.py" .build/bin/validate-helm.sh && bash -n .build/bin/validate-helm.sh && python .build/bin/verify-helm-mirror.py`
-- [x] 3.2 Wire `.build/bin/check-render-determinism.py` into `.build/bin/validate-helm.sh`. If Stage
-      0/1/2 landed a confirmed-clean fix (two-run recipe observed clean), wire it **without**
-      `--warn-only` (blocking). Otherwise (the STOP/escalate path from 0.3), wire it **with**
-      `--warn-only` — the printed warning text (not a `#` comment; `sh`/`.sh` files are scanned by
-      the no-comment guard) must state it is warn-only and names the flip condition: "warn-only
-      until GX-22's chart-helper fix is confirmed clean across a two-run render; remove --warn-only
-      here once confirmed."
+- [x] 3.2 Wire `.build/bin/check-render-determinism.py` into `.build/bin/validate-helm.sh`, wired
+      with `--warn-only` — permanently in this change, per design.md's Invariant (this check
+      structurally cannot observe GX-22's actual defect class, so no Stage 0/1/2 outcome flips it).
+      The printed warning text (not a `#` comment; `.sh` files are scanned by the no-comment guard)
+      states it is warn-only.
       check: `grep -q "check-render-determinism.py" .build/bin/validate-helm.sh && bash -n .build/bin/validate-helm.sh`
 
       **Landed warn-only** (0.3 took the escalate branch, not confirmed-clean) at three values
       surfaces (`values.yaml`, `values/extract/values.yaml`, `values/extract/values.oai.yaml`), per
       Stage 1's own three-way check pattern.
-- [ ] 3.3 **Not green — pre-existing, environment-only gate failure unrelated to this change (see
+- [x] 3.3 **Not green — pre-existing, environment-only gate failure unrelated to this change (see
       verify output in this spawn's return).** Run the full gate once, end to end.
       check: `bash .build/bin/validate-helm.sh`
 
-### Open item (recorded here per design.md, not as a code comment)
+      **Note:** Stage C.3 re-attempts this after Stage A/B/C land, since Stage A/B remove the exact
+      confounds (CRLF mirror mismatch, unpinned plugin version) that made this run fail.
 
-The determinism check's landing rule (warn-only vs blocking) is decided by Stage 0's outcome at
-task 3.2, and is recorded a second time (beyond the script's own warning text) here: **if this
-change ships via the STOP/escalate branch, the determinism check stays warn-only until a follow-up
-change lands Stage 1+2 and confirms a two-run render clean — flipping it is a one-line removal of
-`--warn-only` in `validate-helm.sh`, tracked by whatever follow-up ticket the escalation at task 0.3
-produces.**
+### Open items (recorded here per design.md, not as a code comment)
 
-A second, distinct finding surfaced during 0.1 and is **not** this ticket's fix either: this
-repo's `src/groundx/templates/**` has no `.gitattributes` line-ending pin, so a Windows checkout
-(`core.autocrlf`) converts committed-LF template source files to CRLF on disk
-(`git ls-files --eol` shows `i/lf w/crlf`), which changes every `config-hash`/`supervisord-hash`
-annotation computed from those files' rendered content relative to a Linux-checked-out baseline.
-Per AGENTS.md, "line-ending-only cleanup is its own PR" — recorded here for a human to open a
-follow-up ticket, not fixed in this change.
+The 22-helper `.Values`-aliasing sweep (Stage 1, withdrawn) remains a real code smell per direct
+code reading, proven irrelevant to this ticket's observed diffs — needs its own Linear ticket, not
+yet filed.
+
+`check-render-determinism.py` stays warn-only permanently in this change (design.md's Invariant) —
+it structurally cannot observe GX-22's actual defect class. Flipping it to blocking would need its
+own ticket and its own evidence of a genuine chart-template nondeterminism defect, if one is ever
+found.
+
+This repo's `src/groundx/templates/**` line-ending pin (`.gitattributes`, Stage A.1) closes the
+CRLF/LF confound recorded during Stage 0.1 — per AGENTS.md, "line-ending-only cleanup is its own
+PR," but here it is bundled with the toolchain pin because both were found investigating the same
+symptom and neither touches chart template content; see proposal.md's amendment note.
