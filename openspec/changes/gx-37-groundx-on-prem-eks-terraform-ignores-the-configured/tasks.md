@@ -87,11 +87,16 @@ config, and documentation. No schema or seed data changes.
 
 - [ ] Push groundx-on-prem's feature branch — the hand-off gate prompts and pushes on
       confirmation.
+      check: n/a — pipeline hand-off action performed by /sdd-feature's Step 12, not a repo-local
+      verifiable check.
 - [ ] Open a PR **against `0.2.7`**, not `main` (this feature's base branch override).
+      check: n/a — pipeline hand-off action performed by /sdd-feature's Step 12, not a repo-local
+      verifiable check.
 - [ ] After the PR merges, return `repos/groundx-on-prem` to its declared base branch
       (`git -C repos/groundx-on-prem checkout main` per `repos.yml`; the *feature's* base was
       `0.2.7`, but the anchor clone's own tracked branch per `repos.yml` stays `main` — do not
       leave the anchor on `0.2.7`) and the root meta-repo to its declared branch.
+      check: n/a — manual human action performed after PR merge, not a repo-local verifiable check.
 
 ## Deferred follow-ups (expand/contract)
 
