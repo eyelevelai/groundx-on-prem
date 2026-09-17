@@ -20,8 +20,9 @@ dependency on any other `groundx-*` repo** (verified).
 ## How to run and test
 
 - **Lint / render:** `helm lint src/groundx` · `helm template src/groundx -f src/groundx/values/minikube/values.yaml`
-- **Test:** `helm unittest src/groundx` (requires the `helm-unittest` plugin:
-  `helm plugin install https://github.com/helm-unittest/helm-unittest.git`)
+- **Test:** `helm unittest src/groundx` (requires the `helm-unittest` plugin, pinned at
+  `.build/HELM_UNITTEST_VERSION`:
+  `helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "$(cat .build/HELM_UNITTEST_VERSION)"`)
 - **Helpers:** `bin/uuid` generates the UUIDs needed for `admin.apiKey` / `admin.username`
 - **Real install** (needs a cluster + license):
   `helm repo add groundx https://registry.groundx.ai/helm && helm repo update`

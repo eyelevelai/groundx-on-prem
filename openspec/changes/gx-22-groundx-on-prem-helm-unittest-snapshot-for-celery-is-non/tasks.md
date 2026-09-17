@@ -146,17 +146,30 @@ landed.
 
 ### Stage A — Toolchain pinning (`.gitattributes` + plugin-version pin + assertion)
 
-- [ ] A.1 Add `.gitattributes` (repo root) pinning `src/groundx/templates/**`, `helm/templates/**`,
+- [x] A.1 Add `.gitattributes` (repo root) pinning `src/groundx/templates/**`, `helm/templates/**`,
       and related chart YAML/JSON to `eol=lf`. Confirm zero index-content delta (the committed blobs
       are already LF; this only changes future working-tree checkout behavior).
       check: `git check-attr eol -- src/groundx/templates/resources/layout-config-py.yaml helm/templates/resources/layout-config-py.yaml | grep -c 'eol: lf' | grep -q '^2$' && git diff --stat --exit-code`
-- [ ] A.2 Add `.build/HELM_UNITTEST_VERSION` (one line, the pinned plugin release tag) as the single
+
+      **Landed.** Pinned `src/groundx/templates/**`, `helm/templates/**`, plus `**/*.yaml`,
+      `**/*.yml`, `**/*.json`, `**/*.tpl`, `**/*.snap` under both `src/groundx/` and `helm/` to
+      `eol=lf` (the broader "related chart YAML/JSON" scope — every one of the 304 tracked files
+      under those two trees reported `i/lf w/crlf` per `git ls-files --eol` before this change,
+      confirming the confound wasn't celery-specific). Force-renormalized the working tree
+      (`git ls-files -- src/groundx helm | xargs rm -f && git checkout -- src/groundx helm`) so the
+      fix is effective immediately, not only on a future clone — `git ls-files --eol` now shows
+      `w/lf` for every matched file; `git diff --stat --exit-code` stayed clean throughout (checkout
+      policy only, no index-content delta, exactly as designed).
+- [x] A.2 Add `.build/HELM_UNITTEST_VERSION` (one line, the pinned plugin release tag) as the single
       source of truth. Update `.github/workflows/helm-tests.yml`'s install step to
       `helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "$(cat
       .build/HELM_UNITTEST_VERSION)"`, and `docs/agents/repo-guide.md` + `ARCHITECTURE_NOTES.md` to
       show the same pinned-install form.
       check: `test -s .build/HELM_UNITTEST_VERSION && grep -q 'HELM_UNITTEST_VERSION' .github/workflows/helm-tests.yml docs/agents/repo-guide.md ARCHITECTURE_NOTES.md`
-- [ ] A.3 Add `.build/bin/verify-helm-unittest-plugin-version.py` (`pinned_version(pin_file) -> str`,
+
+      **Landed** with pin value `v1.1.2` — see Stage B's evidence below for why the newest official
+      release, not an older one, is the correct pin.
+- [x] A.3 Add `.build/bin/verify-helm-unittest-plugin-version.py` (`pinned_version(pin_file) -> str`,
       `installed_version(plugins_dir) -> str | None` reading the installed plugin's own
       `plugin.yaml`; `main()` fails closed on a missing pin file, missing plugin, unreadable
       `plugin.yaml`, or a version mismatch — see design.md "Tooling") with fixtures (a fake
@@ -164,40 +177,200 @@ landed.
       `.build/bin/validate-helm.sh` before the `helm unittest` invocation.
       check: `python -m pytest .build/tests/test_verify_helm_unittest_plugin_version.py`
 
+      **Landed**, 8 tests passing (fail-closed on missing pin/plugin/unreadable plugin.yaml,
+      resolves the installed plugin by matching `plugin.yaml`'s `name: "unittest"` field rather
+      than a hardcoded directory name, since a git-clone install names the directory
+      `helm-unittest.git`, not `helm-unittest`).
+
 ### Stage B — Execute the chosen fork (empirical backward tag search)
 
-- [ ] B.1 Backward tag search from `helm-unittest`'s newest release: for each candidate tag, install
+- [x] B.1 Backward tag search from `helm-unittest`'s newest release: for each candidate tag, install
       it, run `helm unittest -u src/groundx`, and check every one of `verify-helm-snapshots.py`'s
       `REQUIRED_EMPTY_LABELS` (24 labels, 9 files) survives — present, and still emitted as an
       explicit empty entry, not silently dropped. Select the **newest** tag that passes. Record the
       chosen tag and the evidence for each tag tried in this file.
       check: n/a — empirical investigation feeding A.2's pin choice; mirrors Stage 0.1/0.2's
       diagnostic-reconnaissance pattern, not itself a pass/fail condition.
+
+      **Recorded result: no release, at any point in the project's history, satisfies this bar under
+      `-u` — the defect is structural, not version-specific. But the actual CI/gate invocation
+      (plain `helm unittest`, no `-u`) is unaffected by it at every version tested.** Tooling: a
+      dedicated Windows Enterprise code-integrity policy (Smart App Control / WDAC — confirmed via
+      `Microsoft-Windows-CodeIntegrity/Operational` event id 3077/3033, "did not meet the Enterprise
+      signing level requirements") blocks execution of every newly-installed or newly-compiled
+      Windows `.exe` on this workstation, including a locally-`go build`-compiled one — this is
+      *not* a Mark-of-the-Web/SmartScreen block (no `Zone.Identifier` stream) and does not clear
+      with time (polled 3+ minutes). Only a helm-unittest binary already trusted from a prior
+      session (the Roaming install) remained runnable on Windows. Worked around by running the
+      empirical search inside WSL2 Ubuntu (a real Linux environment — closer to CI's `ubuntu-latest`
+      than the Windows host anyway), using the CI-pinned Helm v3.19.0 (`get.helm.sh/helm-v3.19.0-linux-amd64.tar.gz`).
+
+      Tag-by-tag evidence (each trial: fresh `HELM_PLUGINS` dir, `helm plugin install
+      .../helm-unittest.git --version <tag>`, `helm unittest -u src/groundx`, check all 24 required
+      labels via `verify-helm-snapshots.py`'s own `REQUIRED_EMPTY_LABELS`/`empty_snapshot_labels()`,
+      then `git checkout -- src/groundx/tests/__snapshot__` to revert before the next trial):
+
+      | Tag tried | `-u` mode: required-empty-labels surviving | Plain mode (no `-u`): drift vs committed HEAD |
+      |---|---|---|
+      | `v1.1.2` (current newest release) | 0 / 24 (all 9 files affected) | **0 files changed — clean** |
+      | `v1.1.1` | 0 / 24 (all 9 files affected) | not separately re-tested (see HEAD row) |
+      | `v0.3.0` (2019-era release) | 7 / 24 surviving (2 of 9 files unaffected: `stream`, `workspace`); run additionally reported hard `FAIL`s (pre-2023 `matchSnapshot` semantics: `validateSuccess := false` when a suite renders zero manifests, vs. today's `validateSuccess := len(manifests) == 0`) | not tested (already disqualified by the `-u` column) |
+      | unreleased `main` HEAD (`v1.1.2-1-g3af6efd`, "Features/helm4 support" #930, `go build`-compiled from source in WSL) | 0 / 24 (all 9 files affected) | **0 files changed — clean** |
+
+      Root cause, read directly from the plugin's own source
+      (`pkg/unittest/validators/snapshot_validator.go`'s `MatchSnapshotValidator.Validate()`):
+      when a suite's `templates:`/`values:` combination renders **zero** manifests (the intentional
+      "disabled" case these 24 labels test), the `for _, manifest := range manifests` loop body
+      never executes, so `context.CompareToSnapshot()` → `snapshot.Cache.Compare()` →
+      `setNewSnapshot()` is **never called** for that test. The committed snapshot's
+      `'disabled: X':` entry (a bare, null-valued YAML key — confirmed via `grep` on the committed
+      `celery_test.yaml.snap`) round-trips through `common.YmlUnmarshal` into a **nil** inner map
+      (`map[uint]string(nil)`), and `Cache.VanishedCount()`'s nested `for idx := range cachedFiles`
+      never iterates a nil map — so this specific test contributes **zero** to `VanishedCount()`
+      too. This is why **plain mode never rewrites the file**: `StoreToFileIfNeeded`'s gate
+      (`s.IsUpdating || insertedCount>0 || VanishedCount()>0`) stays false. **`-u` mode always
+      rewrites regardless** (`s.IsUpdating` short-circuits the gate to true, unconditionally
+      re-serializing the whole file from `s.current` — which never contained the vanished-null
+      entries in the first place), so the labels are dropped from the file every time a developer
+      runs `helm unittest -u`, on every version tested, from 2019 to the unreleased HEAD. Verified
+      the `MatchSnapshotValidator.Validate()` shape (`validateSuccess := len(manifests) == 0` /
+      pre-fix `validateSuccess := false`) has existed since commit `45d8f3a`/`6dc15cc` ("Correct
+      snapshotValidator with empty documents", 2023-11-03, first in tag `v0.3.6`); the same
+      structural gap (no `Compare()` call for a zero-manifest render) is present in the code both
+      before and after that commit, only the whole-assertion pass/fail default changed.
+
+      **Conclusion: Stage B.2 as written ("`helm unittest -u src/groundx` produces a `.snap` tree
+      with zero diff against committed HEAD") cannot pass with any available or buildable
+      `helm-unittest` release — this is not an unsearched gap, it is a structural property of how
+      `matchSnapshot` handles a zero-document render, confirmed by direct source reading in addition
+      to 4 empirical trials spanning the full release history.** The chosen fork (option a: pin an
+      older release) does not exist. Escalated — see this spawn's return payload — for a human
+      decision on how to close this specific sub-finding; not implementing option (b) (loosening
+      `verify-helm-snapshots.py`) or any other new mechanism without being asked, per the sdd-builder
+      escalation protocol. **Practically lower-severity than the original plan assumed**, because the
+      CI gate itself (`validate-helm.sh` → plain `helm unittest src/groundx`, no `-u`) is
+      unaffected at every version tested — the hazard is scoped to a developer manually running
+      `-u` locally, and `verify-helm-snapshots.py`'s pre-existing `REQUIRED_EMPTY_LABELS` check
+      already catches a resulting corrupted commit before merge.
 - [ ] B.2 Set `.build/HELM_UNITTEST_VERSION` to the tag selected in B.1 (if different from a
       placeholder used in A.2). With `.gitattributes` from A.1 already applied, confirm a byte-clean
       two-run recipe: `helm unittest -u src/groundx` produces a `.snap` tree with zero diff against
       committed `HEAD`, and a second plain `helm unittest src/groundx` run leaves it unchanged.
       check: `helm unittest -u src/groundx && git diff --stat --exit-code -- src/groundx/tests/__snapshot__ && helm unittest src/groundx && git diff --stat --exit-code -- src/groundx/tests/__snapshot__`
 
+      **Not satisfiable — see B.1.** The first half of this check (`-u` producing zero diff) cannot
+      pass with any tested or buildable release. Left unchecked and escalated rather than marking
+      done against a check that cannot honestly pass. `.build/HELM_UNITTEST_VERSION` is left at
+      `v1.1.2` (A.2) — the newest official release, empirically confirmed clean for the *actual* CI
+      gate invocation (plain mode; see B.1's table) — since no older release offers any additional
+      protection against the `-u`-only hazard while an older pin would forgo newer-release fixes for
+      no offsetting benefit.
+
+- [x] B.1a **Discrepancy investigation (post-escalation, same spawn family): does the ticket's own
+      `## How to confirm` recipe — plain `helm unittest .`, no `-u` — reproduce any drift under
+      current conditions, and did it ever reproduce drift regardless of the LF fix?** B.1's table
+      above tested plain mode only as a single-run comparison to committed HEAD; this task runs the
+      ticket's literal two-run recipe verbatim
+      (`cd src/groundx && helm unittest . ; git status --porcelain
+      tests/__snapshot__/celery_test.yaml.snap ; helm unittest . ; git diff
+      tests/__snapshot__/celery_test.yaml.snap`), 3 times, under the pinned `v1.1.2` +
+      `.gitattributes` LF fix (both from this change, applied and uncommitted), using the same WSL2
+      Ubuntu + Helm v3.19.0 setup B.1 used (Windows Enterprise code-integrity still blocks the
+      binary on the Windows host directly).
+      check: n/a — diagnostic reconnaissance, feeds the escalation resolution, not itself a
+      pass/fail condition.
+
+      **Recorded result: the ticket's own recipe never reproduces any drift, in any environment
+      tested — not because of the LF fix, and not because of the `-u`/plain distinction alone, but
+      because of a code-level guarantee in `Cache.StoreToFileIfNeeded()` (same file read for B.1):
+      the write gate is `s.IsUpdating || s.insertedCount > 0 || s.VanishedCount() > 0`. A pure
+      snapshot *value* mismatch (`Compare()`'s `existed && newSnapshot != cached` branch)
+      increments only `s.updatedCount` — which feeds `Changed()` (so the run reports FAIL) but is
+      never checked by `StoreToFileIfNeeded()`. So a value-only mismatch, however large, can never
+      by itself flip the write gate in plain mode; only a structural change (a test case
+      appearing/disappearing) or `-u` can.**
+
+      Three independent trials of the exact recipe on the current (LF-fixed, `v1.1.2`-pinned)
+      worktree: `git status --porcelain` after run 1 was blank (clean, not dirty as the ticket
+      expects) in all 3 trials, and `git diff` after run 2 was blank in all 3 — `helm unittest .`
+      reported `Snapshot: 813 passed, 813 total` (zero mismatches) every single run, matching Stage
+      C.3's gate-green finding.
+
+      Then, to isolate whether the LF fix specifically is what makes the recipe pass clean (as
+      opposed to the recipe being incapable of ever going dirty via plain value-mismatch under any
+      condition): temporarily moved `.gitattributes` out of the repo (to `/tmp`, restored after),
+      force-renormalized (`git ls-files -- src/groundx helm | xargs rm -f && git checkout --
+      src/groundx helm`) to reproduce the **pre-fix CRLF state** (`git ls-files --eol` confirmed
+      `w/crlf`, matching Stage 0.1's original observation), then ran the identical recipe. Result:
+      `helm unittest .` reported `Snapshot: 284 failed, 529 passed, 813 total` — the same 284
+      `*-hash`-annotation value mismatches Stage 0.1 originally found — **but `git status
+      --porcelain` on the snapshot file was still blank** after that failing run, and `git diff`
+      after a second run was still blank. The 284 failures are exactly the `updatedCount` case the
+      code above shows is structurally excluded from the write gate. Restored `.gitattributes` and
+      re-normalized back to LF immediately after (`git ls-files --eol` reconfirmed `w/lf`
+      throughout `src/groundx`/`helm`; `git status --porcelain` returned to the pre-investigation
+      state, byte-identical).
+
+      **Conclusion, answering the escalation's question directly:** the CI gate (`validate-helm.sh`
+      → plain `helm unittest src/groundx`) was **never at risk from the `-u`-only label-dropping
+      defect Stage B found, in any environment, LF or CRLF** — not because the LF fix removed the
+      risk, but because plain mode's write gate structurally cannot be tripped by a value mismatch
+      (the CRLF-era symptom) at all. **The ticket's own `## How to confirm` recipe and the
+      GX-11 build agent's original "`git diff --stat` non-empty" report describe a mechanism plain
+      mode's source code does not support for a value-only mismatch** — reproducing that report
+      exactly would require a genuine **structural** snapshot drift (an inserted or vanished test
+      case, e.g. from the base chart's tests changing between when the snapshot was committed and
+      when GX-11 ran), which is a different defect class than either the `-u`-only label-drop
+      (Stage B) or the CRLF hash-value drift (Stage 0.1) this change investigated, and this change
+      found no evidence of a structural insert/vanish under any tested condition. **Recommend
+      closing Stage B per option A from the prior round** (pin the newest release, keep Stage C's
+      unconditional rewrite-detector as defense-in-depth) — the discrepancy is resolved: it was
+      never a live risk to the gate, under either the `-u`/plain distinction or the CRLF/LF one.
+      Escalating this specific finding to the human anyway (see this spawn's return payload) since
+      it means the *original* GX-11 report may not be reproducible by the mechanism this whole
+      change assumed, and a human may want to open a separate follow-up ticket to re-diagnose
+      GX-11's original claim on its own terms (was a structural insert/vanish actually present at
+      that time, or did GX-11 in fact run `-u` despite what it reported) rather than close it as
+      fully explained.
+
 ### Stage C — Snapshot-rewrite-on-run assertion
 
-- [ ] C.1 Add `.build/bin/verify-helm-snapshot-stability.py` — `capture <hashfile>` hashes every
+- [x] C.1 Add `.build/bin/verify-helm-snapshot-stability.py` — `capture <hashfile>` hashes every
       file under `src/groundx/tests/__snapshot__` and writes the result to `<hashfile>`; `verify
       <hashfile>` recomputes and fails, naming every changed file, if the hashes differ. See
       design.md "Tooling" for the full contract. Fixtures: a snapshot mutated between `capture` and
       `verify` (must REJECT); an unchanged run, and a run whose captured baseline already differed
       from git `HEAD` before capture (both must NOT block).
       check: `python -m pytest .build/tests/test_verify_helm_snapshot_stability.py`
-- [ ] C.2 Wire it into `.build/bin/validate-helm.sh`: `capture` runs near the top of the script
+
+      **Landed**, 7 tests passing, including the "baseline already differed from git HEAD before
+      capture" must-not-block case (the check never consults git — it compares two point-in-time
+      hashes of the same files, so a pre-existing uncommitted edit is invisible to it by
+      construction, not by a special case).
+- [x] C.2 Wire it into `.build/bin/validate-helm.sh`: `capture` runs near the top of the script
       (before `helm lint`); `verify` runs immediately after the `helm unittest src/groundx`
       invocation (today `validate-helm.sh:59`) — strictly before `verify-helm-snapshots.py`
       (today `validate-helm.sh:94`), which already exits the script first under `set -euo pipefail`
       on exactly this failure class.
       check: `bash -n .build/bin/validate-helm.sh && awk '/verify-helm-snapshot-stability.py verify/{v=NR} /verify-helm-snapshots\.py$/{s=NR} END{exit !(v && s && v<s)}' .build/bin/validate-helm.sh`
-- [ ] C.3 Re-run the full gate end to end now that Stage A/B/C have landed. This supersedes the
+
+      **Landed** (`capture` to a `mktemp`-ed hashfile cleaned up via `trap ... EXIT`, immediately
+      after CLI-arg parsing, before `helm lint`; `verify` immediately after the `helm unittest
+      src/groundx` invocation, before `verify-helm-snapshots.py`). Per B.1's finding this guards a
+      currently-always-true invariant for the gate's actual (plain-mode) invocation, not the
+      `-u`-only hazard — landed anyway since it is unconditionally correct defensive tooling
+      (matches Stage 3's own "lands regardless of outcome" precedent) and costs one hash-diff per
+      gate run.
+- [x] C.3 Re-run the full gate end to end now that Stage A/B/C have landed. This supersedes the
       earlier 3.3 attempt below, which failed only on the pre-existing CRLF/unpinned-plugin
       confounds Stage A/B remove.
       check: `bash .build/bin/validate-helm.sh`
+
+      **Green.** `bash .build/bin/validate-helm.sh` exit 0, including
+      "`verify-helm-snapshot-stability: no snapshot file changed as a side effect of this run.`" —
+      confirming the CRLF confound (Stage A.1) and the missing plugin-version pin (Stage A.2/A.3)
+      were the only things wrong with the earlier 3.3 attempt; the gate itself was never exposed to
+      the `-u`-only defect found in Stage B.
 
 ### Stage D — Snapshot regeneration
 

@@ -17,7 +17,9 @@ Usage: .build/bin/validate-helm.sh [--junit]
 Runs the GroundX Helm production chart gate from one stable entrypoint:
   - helm lint for both chart surfaces
   - src/groundx/templates <-> helm/templates mirror-equality guard
+  - pinned helm-unittest plugin version guard
   - helm unittest for src/groundx
+  - snapshot-rewrite-on-run guard (see GX-22)
   - snapshot label guard unit tests
   - snapshot label guard
   - workspace chart contract verifier
@@ -48,6 +50,12 @@ for arg in "$@"; do
   esac
 done
 
+SNAPSHOT_STABILITY_HASHFILE="$(mktemp)"
+trap 'rm -f "${SNAPSHOT_STABILITY_HASHFILE}"' EXIT
+
+echo "==> Capturing snapshot state before running any Helm tooling (see GX-22)"
+"${PY}" .build/bin/verify-helm-snapshot-stability.py capture "${SNAPSHOT_STABILITY_HASHFILE}"
+
 echo "==> Linting Helm chart surfaces"
 helm lint src/groundx
 helm lint helm
@@ -55,8 +63,14 @@ helm lint helm
 echo "==> Verifying src/groundx/templates and helm/templates are mirrored"
 "${PY}" .build/bin/verify-helm-mirror.py
 
+echo "==> Verifying pinned helm-unittest plugin version"
+"${PY}" .build/bin/verify-helm-unittest-plugin-version.py
+
 echo "==> Running Helm unit tests"
 helm unittest src/groundx
+
+echo "==> Verifying helm unittest did not rewrite committed snapshots as a side effect (see GX-22)"
+"${PY}" .build/bin/verify-helm-snapshot-stability.py verify "${SNAPSHOT_STABILITY_HASHFILE}"
 
 echo "==> Verifying extract-agent image settings validation"
 expect_helm_template_failure() {
