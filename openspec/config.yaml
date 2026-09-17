@@ -68,6 +68,21 @@ context: |
   
   - COMMIT CONVENTION: standard conventional commits (inferred; no explicit convention in-repo).
   
+  - TERRAFORM TOOLING (terraform/aws/, active/deployed on 0.2.7, not legacy): EKS module pinned to
+    terraform-aws-modules/eks/aws 20.37.2 (no loose ~> constraint on this branch). Module tests
+    live in terraform/aws/eks/tests/*.tftest.hcl (command = plan, mock_provider "aws" {}); an
+    explicitly-configured resource argument (e.g. cluster_version = var.x) keeps its configured
+    value at plan time even under a mocked provider, so asserting on a module's own output (not
+    just var./local. echoing itself) is a valid, non-vacuous test mechanism. terraform_version
+    "1.7.0" is the floor for mock_provider/override_module support (the repo's own
+    required_version is only >= 1.0.0, which does not guarantee it). terraform/aws/eks/*.tf
+    symlinks into terraform/aws/ and terraform/shared/ — edit the target, never the link.
+    env.auto.tfvars is a symlink to ../env.tfvars, which does not exist in a fresh checkout
+    (only env.tfvars.example is committed) — a local `terraform test`/`plan` run needs
+    `cp -n env.tfvars.example env.tfvars` first or Terraform's auto-load aborts on the dangling
+    symlink. setup-eks has no pre-existing aws eks describe-cluster call; only aws eks
+    list-clusters (bin/shared/util:test_aws()) for connectivity.
+
   - KNOWN GAPS / OPEN QUESTIONS:
     - helm/ <-> src/groundx duplication: no regen script, no drift check — manual sync, latent drift.
     - upload.groundx.ai model-weight download hardcoded in init-containers — air-gap blocker; no documented pre-seeding mechanism.
