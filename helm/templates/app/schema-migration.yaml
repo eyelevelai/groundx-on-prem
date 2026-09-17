@@ -1,0 +1,83 @@
+{{- $svcs := include "groundx.golang.services" . | fromYaml -}}
+{{- if and .Release.IsUpgrade (gt (len $svcs) 0) -}}
+{{- $name := printf "%s-schema-migration" (.Release.Name | trunc 46 | trimSuffix "-") -}}
+{{- $cfg := include "groundx.groundx.settings" . | fromYaml -}}
+{{- $username := include "groundx.container.username" . -}}
+{{- $config := include (print .Template.BasePath "/resources/config-yaml.yaml") . | fromYaml -}}
+{{- $secrets := include "groundx.secrets" . | fromYaml -}}
+{{- $pullSecrets := include "groundx.imagePullSecrets" . | fromYaml -}}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $name }}
+  namespace: {{ include "groundx.ns" . | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $name "indent" 4 "root" $) }}
+  annotations:
+    helm.sh/hook: pre-upgrade
+    helm.sh/hook-weight: "-10"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+stringData:
+{{ toYaml $config.stringData | indent 2 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}
+  namespace: {{ include "groundx.ns" . | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $name "indent" 4 "root" $) }}
+  annotations:
+    helm.sh/hook: pre-upgrade
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 900
+  template:
+    metadata:
+      labels:
+{{ toYaml (mergeOverwrite (dict) (get $cfg "labels" | default dict) (dict "app" $name)) | indent 8 }}
+{{- with get $cfg "annotations" }}
+      annotations:
+{{ toYaml . | indent 8 }}
+{{- end }}
+    spec:
+      restartPolicy: Never
+{{- with get $cfg "serviceAccountName" }}
+      serviceAccountName: {{ . | quote }}
+{{- end }}
+{{- if gt (len $pullSecrets) 0 }}
+      imagePullSecrets:
+{{- range $pullSecrets }}
+        - name: {{ . | quote }}
+{{- end }}
+{{- end }}
+{{ include "groundx.renderAffinity" (dict "ctx" (get $cfg "affinity") "node" (get $cfg "node") "indent" 6 "root" $) }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" (get $cfg "securityContext") "indent" 6 "root" $ "user" $username "cfg" "spec") }}
+{{ include "groundx.renderNodeSelector" (dict "ctx" (get $cfg "nodeSelector") "node" (get $cfg "node") "indent" 6 "root" $) }}
+{{ include "groundx.renderTolerations" (dict "ctx" (get $cfg "tolerations") "node" (get $cfg "node") "indent" 6 "root" $) }}
+      containers:
+        - name: migrate
+          image: {{ get $cfg "image" | quote }}
+          imagePullPolicy: {{ get $cfg "pull" | quote }}
+          args: ["-migrate-only"]
+{{- if gt (len $secrets) 0 }}
+          envFrom:
+{{- range $secrets }}
+            - secretRef:
+                name: {{ . | quote }}
+{{- end }}
+{{- end }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" (get $cfg "containerSecurityContext") "indent" 10 "root" $ "user" $username "cfg" "container") }}
+{{ include "groundx.renderContainerResources" (dict "ctx" (get $cfg "resources") "indent" 10) }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /home/{{ include "groundx.golang.home" . }}/.cashbot/config.yaml
+              subPath: config.yaml
+              readOnly: true
+      volumes:
+        - name: config-volume
+          secret:
+            secretName: {{ $name }}
+{{- end }}
