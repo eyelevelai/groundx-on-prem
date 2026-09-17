@@ -1,5 +1,9 @@
 # Verification
 
+Review PR: [chart #108](https://github.com/eyelevelai/groundx-on-prem/pull/108),
+dependent on [Cashbot #1754](https://github.com/EyeLevel-ai/cashbot-go/pull/1754).
+CI was pending when the PRs were opened. Keep this change active until merge.
+
 The local chart gate passed on September 16, 2026: 319 source-chart tests and
 850 snapshots, published-mirror and prerequisite suites, credential rendering,
 workspace and storage contracts, syntax and whitespace checks. The new hook is
