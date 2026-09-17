@@ -48,18 +48,60 @@ node group inherits the cluster's resolved version and its AMI release selection
 existing-cluster documentation note must state this precisely: setting the key changes not only
 the control plane target but every managed node group's AMI selection.
 
-**D3 verification — the strong test mechanism is expressible; no escalation.** Confirmed in the
-same module's `outputs.tf`: `output "cluster_version" { value = try(aws_eks_cluster.this[0].version,
-null) }`. Because `aws_eks_cluster.this[0].version = var.cluster_version` is a direct
-pass-through argument (not a provider-computed-only attribute), a `terraform test` `command = plan`
-run under `mock_provider "aws" {}` resolves this attribute to the literal configured value — mocked
-providers only synthesize values for attributes that are computed and *not* set in configuration;
-an explicitly-configured argument (including an explicit `null`) keeps its configured value at plan
-time. Both the "key set" and "key unset" run blocks are therefore observable at plan time on
-`module.eyelevel_eks[0].cluster_version` — the escalation trigger in the plan's D3.4 does not fire.
-The new test file lives at `terraform/aws/eks/tests/cluster_version.tftest.hcl`, a sibling of
-`node_diagnostics.tftest.hcl` that does not carry a file-level `override_module` on
-`module.eyelevel_eks` (it may still reuse the `irsa_*` and IAM policy document overrides).
+**D3 verification — REVISED 2026-09-17 (escalation resolved by the human).** The original plan
+assumed a `terraform test` `command = plan` run under `mock_provider "aws" {}` could assert
+directly on `module.eyelevel_eks[0].cluster_version` (the module's own output) and observe the
+literal configured value at plan time, reasoning that an explicitly-set argument (unlike a
+provider-computed one) keeps its configured value under mocking. **This was verified empirically
+and found false for this module.** `aws_eks_cluster.this[0]` declares `cluster_version` in its
+schema with both `Optional: true` and `Computed: true` (it is a version the provider can also
+select/normalize, not a pure pass-through). Terraform's mock provider engine reports the resolved
+value of any `Optional+Computed` attribute as `(known after apply)` — i.e. unknown — at plan time
+for a real (non-overridden) module resource, **regardless of whether the config sets it**. This
+was confirmed live against `terraform-aws-modules/eks/aws` v20.37.2 under this repo's own
+`mock_provider "aws" {}`: both the "key set" and "key unset" run blocks show
+`module.eyelevel_eks[0].cluster_version` as unknown at plan time, so an assertion against it
+cannot distinguish the two cases — the single-assertion mechanism the plan specified is vacuous
+for this module, not merely weak.
+
+The escalation was resolved by the human by **splitting the proof into two independent, narrower
+checks**, each of which is provably non-vacuous for the specific claim it makes:
+
+1. **Value-resolution test (`.tftest.hcl`, `command = plan`).** Assert directly on
+   `var.environment_internal.eks_version` / the local it resolves through — **not** on any
+   resource or module output — for both cases: unset → `null`, set to a specific string → that
+   exact string. A plain Terraform variable/local is never `Optional+Computed`; its resolved
+   value is fully known at plan time regardless of provider mocking. This proves the *value
+   computation* (D1's null-equivalence, the type change in `variables.tf`) is correct. It does
+   **not** by itself prove the value reaches the module — that would repeat the exact vacuous
+   claim just falsified above if the assertion target were a module output instead.
+2. **Structural wiring check (new, non-`.tftest.hcl` mechanism).** Confirm — independently of any
+   resolved resource value — that `terraform/aws/eks/eks.tf`'s `module "eyelevel_eks"` block's
+   `cluster_version` argument expression actually **references**
+   `var.environment_internal.eks_version` (or the local it resolves through). Terraform's parsed,
+   unevaluated configuration reference graph describes *wiring*, not resolved state, so it does
+   not suffer the Optional+Computed unknown-at-plan-time problem. Preferred mechanism: run
+   `terraform -chdir=terraform/aws/eks plan -out=tfplan`, then
+   `terraform -chdir=terraform/aws/eks show -json tfplan`, and inspect
+   `.configuration.root_module.module_calls.eyelevel_eks.expressions.cluster_version.references`
+   for an entry containing `environment_internal`. A plain source-line grep
+   (`grep -E 'cluster_version\s*=\s*var\.environment_internal\.eks_version'
+   terraform/aws/eks/eks.tf`) is an acceptable simpler fallback, chosen at implementation time if
+   the JSON-reference-graph approach proves awkward to script reliably against this Terraform
+   version's `show -json` output shape.
+
+Together (1) proves the value is computed correctly and (2) proves that value is the one wired
+into the module argument — covering AC #6 (the configured value reaches the module) without
+requiring the disproportionate ~15-resource mock-data stack a full-module-output assertion would
+have needed to work around the Optional+Computed limitation (rejected as disproportionate for this
+thin-slice fix). Both checks remain independently RED-failing against today's unwired code: check
+(1) fails because the variable doesn't yet exist in the expected shape; check (2) fails because
+`eks.tf` does not yet reference `environment_internal.eks_version` in `cluster_version` at all.
+
+The new value-resolution test file lives at `terraform/aws/eks/tests/cluster_version.tftest.hcl`,
+a sibling of `node_diagnostics.tftest.hcl` that does not carry a file-level `override_module` on
+`module.eyelevel_eks` (it may still reuse the `irsa_*` and IAM policy document overrides) — it
+never asserts on the module's output, only on the variable/local's own value.
 
 **D1.6 verification — `setup-eks`'s existing-cluster lookup mechanism.** `terraform/aws/setup-eks`
 has no pre-existing `aws eks describe-cluster` call to reuse (only `bin/shared/util:test_aws()`'s
@@ -163,4 +205,17 @@ again (documented in `proposal.md`'s Rollback/rollforward section) rather than a
 
 None — all decisions were resolved at the plan gate (D1, D1.6, D2, D3, D4, D5) and the two
 design-phase verifications the plan handed to the builder (D1's null-equivalence and node-group
-cascade wording; D3's plan-time observability) are confirmed in the pinned module source above.
+cascade wording; D3's revised two-check wiring proof) are confirmed above.
+
+**2026-09-17 — D3 escalation resolved by the human.** The apply-mode spawn empirically verified
+(live, against the pinned module) that `aws_eks_cluster.this[0].cluster_version` is
+`Optional+Computed` in the underlying provider schema, so Terraform's mock engine reports it as
+unknown at plan time for a real (non-overridden) module resource regardless of whether the config
+sets it — falsifying the plan's D3 assumption that a single module-output assertion would be
+observable. The builder correctly escalated rather than weaken the test silently. Resolution: split
+D3's proof into (1) a `.tftest.hcl` assertion on the variable/local's own resolved value (set vs.
+unset — never Optional+Computed, fully known at plan time) and (2) a separate structural wiring
+check on Terraform's parsed configuration reference graph (`terraform show -json`'s
+`module_calls.eyelevel_eks.expressions.cluster_version.references`, or a source-line grep fallback)
+confirming `eks.tf`'s `cluster_version` argument actually references
+`environment_internal.eks_version`. See the revised D3 verification above for the full reasoning.

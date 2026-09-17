@@ -1,18 +1,34 @@
-## 1. Core wiring and plan-time test (thin vertical slice)
+## 1. Core wiring and plan-time proof (thin vertical slice)
+
+**Note (design D3, revised 2026-09-17):** the proof is split into two independent checks because
+`aws_eks_cluster.this[0].cluster_version` is Optional+Computed in the provider schema — Terraform's
+mock provider reports it as unknown at plan time for a real module resource regardless of
+configuration, so it cannot be asserted on directly. See `design.md`'s revised D3 section.
 
 - [ ] 1.1 Add `terraform/aws/eks/tests/cluster_version.tftest.hcl`: two `command = plan` run
       blocks under `mock_provider "aws" {}` (reusing the existing `irsa_*`/IAM policy document
-      overrides from `node_diagnostics.tftest.hcl`, not overriding `module.eyelevel_eks`) —
-      (a) `environment_internal.eks_version` set to a version string asserts
-      `module.eyelevel_eks[0].cluster_version == "<that value>"`; (b) the key unset asserts
-      `module.eyelevel_eks[0].cluster_version == null`. Written first as the RED baseline: both
-      assertions fail against today's code (the module receives no `cluster_version` at all).
+      overrides from `node_diagnostics.tftest.hcl`, not overriding `module.eyelevel_eks`) that
+      assert on the **variable/local's own resolved value** — never on any `module.eyelevel_eks`
+      output — (a) `environment_internal.eks_version` set to a version string asserts the
+      resolved `var.environment_internal.eks_version` (or the local it flows through) equals that
+      value; (b) the key unset asserts it resolves to `null`. Written first as the RED baseline:
+      both assertions fail against today's code (the variable does not yet carry this key in the
+      expected shape).
   check: cp -n terraform/aws/env.tfvars.example terraform/aws/env.tfvars && terraform -chdir=terraform/aws/eks init -backend=false && terraform -chdir=terraform/aws/eks test -filter=tests/cluster_version.tftest.hcl
-- [ ] 1.2 Change `environment_internal` in `terraform/aws/variables.tf` to
+- [ ] 1.2 Add a structural wiring check confirming `terraform/aws/eks/eks.tf`'s
+      `module "eyelevel_eks"` block's `cluster_version` argument expression references
+      `environment_internal.eks_version` in Terraform's parsed configuration — via
+      `terraform show -json` on a real plan's
+      `configuration.root_module.module_calls.eyelevel_eks.expressions.cluster_version.references`,
+      or the source-line grep fallback if the JSON approach proves awkward to script reliably.
+      Written first as RED: `eks.tf` does not yet set `cluster_version` at all, so the check must
+      fail before task 1.3 wires it.
+  check: cp -n terraform/aws/env.tfvars.example terraform/aws/env.tfvars && terraform -chdir=terraform/aws/eks init -backend=false && terraform -chdir=terraform/aws/eks plan -out=/tmp/gx37.tfplan && terraform -chdir=terraform/aws/eks show -json /tmp/gx37.tfplan | jq -e '.configuration.root_module.module_calls.eyelevel_eks.expressions.cluster_version.references[]? | select(contains("environment_internal"))'
+- [ ] 1.3 Change `environment_internal` in `terraform/aws/variables.tf` to
       `object({ eks_version = optional(string) })` with default `{}` (null-defaulting), and wire
       `cluster_version = var.environment_internal.eks_version` into `module "eyelevel_eks"` in
       `terraform/aws/eks/eks.tf`.
-  check: cp -n terraform/aws/env.tfvars.example terraform/aws/env.tfvars && terraform -chdir=terraform/aws/eks init -backend=false && terraform -chdir=terraform/aws/eks test -filter=tests/cluster_version.tftest.hcl
+  check: cp -n terraform/aws/env.tfvars.example terraform/aws/env.tfvars && terraform -chdir=terraform/aws/eks init -backend=false && terraform -chdir=terraform/aws/eks test -filter=tests/cluster_version.tftest.hcl && terraform -chdir=terraform/aws/eks plan -out=/tmp/gx37.tfplan && terraform -chdir=terraform/aws/eks show -json /tmp/gx37.tfplan | jq -e '.configuration.root_module.module_calls.eyelevel_eks.expressions.cluster_version.references[]? | select(contains("environment_internal"))'
 
 ## 2. `env.tfvars.example` documents the new key
 
