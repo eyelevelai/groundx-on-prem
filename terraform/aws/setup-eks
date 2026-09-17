@@ -120,6 +120,8 @@ ssh_key="$SSH_KEY"
 if $KC; then
     status "testing EKS cluster configuration"
 
+    eks_version=$(resolve_eks_version "$ENV_DIR" "1.35")
+
     cat <<EOF > "$ENV_DIR/env.tfvars"
 environment = {
   cluster_role_arns = $role_arns
@@ -129,6 +131,10 @@ environment = {
   stage = "prod"
   subnets = $subnets
   vpc_id = "$vpc_id"
+}
+
+environment_internal = {
+  eks_version = "$eks_version"
 }
 
 storage = {
@@ -219,6 +225,8 @@ fi
 if $KC; then
     status "testing EKS cluster configuration"
 
+    eks_version=$(resolve_eks_version "$ENV_DIR" "1.35")
+
     cat <<EOF > "$ENV_DIR/env.tfvars"
 environment = {
   cluster_role_arns = $role_arns
@@ -228,6 +236,10 @@ environment = {
   stage = "prod"
   subnets = $subnets
   vpc_id = "$vpc_id"
+}
+
+environment_internal = {
+  eks_version = "$eks_version"
 }
 
 storage = {

@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+printf '%s\n' "$*" >> "$FAKE_TERRAFORM_LOG"
+
+if [[ "$1" == "-chdir="* && "$2" == "output" && "$3" == "-raw" && "$4" == "cluster_name" ]]; then
+  if [[ "$FAKE_SCENARIO" == "existing_cluster" ]]; then
+    printf 'eyelevel_abc123'
+    exit 0
+  fi
+  exit 1
+fi
+
+echo "unexpected terraform invocation: $*" >&2
+exit 2

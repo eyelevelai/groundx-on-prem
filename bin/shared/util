@@ -188,4 +188,21 @@ test_kubernetes_version() {
   fi
 }
 
+resolve_eks_version() {
+  local env_dir="$1" declared_default="$2"
+  local existing_cluster_name running_version
+
+  existing_cluster_name=$(terraform -chdir="$env_dir/eks" output -raw cluster_name 2>/dev/null)
+  if [[ -n "$existing_cluster_name" && "$existing_cluster_name" != "(not created)" ]]; then
+    running_version=$(aws eks describe-cluster --name "$existing_cluster_name" \
+      --query 'cluster.version' --output text 2>/dev/null)
+    if [[ -n "$running_version" && "$running_version" != "None" ]]; then
+      echo "$running_version"
+      return 0
+    fi
+  fi
+
+  echo "$declared_default"
+}
+
 warn() { echo -e "$@ \e[33;1m\u26a0\e[0m"; }

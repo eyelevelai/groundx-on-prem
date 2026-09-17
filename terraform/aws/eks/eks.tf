@@ -372,6 +372,7 @@ module "eyelevel_eks" {
   enable_irsa                              = true
 
   cluster_name                             = local.cluster_name
+  cluster_version                          = var.environment_internal.eks_version
   iam_role_name                            = "${local.cluster_name}-cluster-role"
 
   cluster_endpoint_private_access          = true

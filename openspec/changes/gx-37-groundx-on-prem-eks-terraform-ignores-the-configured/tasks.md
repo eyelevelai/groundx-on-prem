@@ -5,7 +5,7 @@
 mock provider reports it as unknown at plan time for a real module resource regardless of
 configuration, so it cannot be asserted on directly. See `design.md`'s revised D3 section.
 
-- [ ] 1.1 Add `terraform/aws/eks/tests/cluster_version.tftest.hcl`: two `command = plan` run
+- [x] 1.1 Add `terraform/aws/eks/tests/cluster_version.tftest.hcl`: two `command = plan` run
       blocks under `mock_provider "aws" {}` (reusing the existing `irsa_*`/IAM policy document
       overrides from `node_diagnostics.tftest.hcl`, not overriding `module.eyelevel_eks`) that
       assert on the **variable/local's own resolved value** — never on any `module.eyelevel_eks`
@@ -15,7 +15,7 @@ configuration, so it cannot be asserted on directly. See `design.md`'s revised D
       both assertions fail against today's code (the variable does not yet carry this key in the
       expected shape).
   check: cp -n terraform/aws/env.tfvars.example terraform/aws/env.tfvars && terraform -chdir=terraform/aws/eks init -backend=false && terraform -chdir=terraform/aws/eks test -filter=tests/cluster_version.tftest.hcl
-- [ ] 1.2 Add a structural wiring check confirming `terraform/aws/eks/eks.tf`'s
+- [x] 1.2 Add a structural wiring check confirming `terraform/aws/eks/eks.tf`'s
       `module "eyelevel_eks"` block's `cluster_version` argument expression references
       `environment_internal.eks_version` in Terraform's parsed configuration — via
       `terraform show -json` on a real plan's
@@ -23,38 +23,48 @@ configuration, so it cannot be asserted on directly. See `design.md`'s revised D
       or the source-line grep fallback if the JSON approach proves awkward to script reliably.
       Written first as RED: `eks.tf` does not yet set `cluster_version` at all, so the check must
       fail before task 1.3 wires it.
-  check: cp -n terraform/aws/env.tfvars.example terraform/aws/env.tfvars && terraform -chdir=terraform/aws/eks init -backend=false && terraform -chdir=terraform/aws/eks plan -out=/tmp/gx37.tfplan && terraform -chdir=terraform/aws/eks show -json /tmp/gx37.tfplan | jq -e '.configuration.root_module.module_calls.eyelevel_eks.expressions.cluster_version.references[]? | select(contains("environment_internal"))'
-- [ ] 1.3 Change `environment_internal` in `terraform/aws/variables.tf` to
+      **Implementation-time mechanism choice (empirically confirmed):** the JSON-reference-graph
+      approach requires a real (non-mocked) `terraform plan` against `terraform/aws/eks`'s `aws`
+      provider block, which validates credentials via `sts:GetCallerIdentity` unconditionally at
+      provider-configure time (confirmed live: with no AWS credentials the plan fails on an IMDS
+      timeout, and with a fake static key/secret it still fails, now with a `403
+      InvalidClientTokenId` from a real STS call) — this environment has no AWS credentials, so
+      that mechanism cannot run here regardless of `eks.tf`'s wiring. Using the pre-authorized
+      source-line grep fallback instead, which needs no provider/credentials at all:
+      `grep -E 'cluster_version\s*=\s*var\.environment_internal\.eks_version'
+      terraform/aws/eks/eks.tf`.
+  check: grep -E 'cluster_version\s*=\s*var\.environment_internal\.eks_version' terraform/aws/eks/eks.tf
+- [x] 1.3 Change `environment_internal` in `terraform/aws/variables.tf` to
       `object({ eks_version = optional(string) })` with default `{}` (null-defaulting), and wire
       `cluster_version = var.environment_internal.eks_version` into `module "eyelevel_eks"` in
       `terraform/aws/eks/eks.tf`.
-  check: cp -n terraform/aws/env.tfvars.example terraform/aws/env.tfvars && terraform -chdir=terraform/aws/eks init -backend=false && terraform -chdir=terraform/aws/eks test -filter=tests/cluster_version.tftest.hcl && terraform -chdir=terraform/aws/eks plan -out=/tmp/gx37.tfplan && terraform -chdir=terraform/aws/eks show -json /tmp/gx37.tfplan | jq -e '.configuration.root_module.module_calls.eyelevel_eks.expressions.cluster_version.references[]? | select(contains("environment_internal"))'
+  check: cp -n terraform/aws/env.tfvars.example terraform/aws/env.tfvars && terraform -chdir=terraform/aws/eks init -backend=false && terraform -chdir=terraform/aws/eks test -filter=tests/cluster_version.tftest.hcl && grep -E 'cluster_version\s*=\s*var\.environment_internal\.eks_version' terraform/aws/eks/eks.tf
 
 ## 2. `env.tfvars.example` documents the new key
 
-- [ ] 2.1 Add `environment_internal = { eks_version = "1.35" }` to
+- [x] 2.1 Add `environment_internal = { eks_version = "1.35" }` to
       `terraform/aws/env.tfvars.example`, so a copied-fresh example is explicit for new installs.
   check: grep -q "environment_internal" terraform/aws/env.tfvars.example && grep -q "eks_version" terraform/aws/env.tfvars.example
 
 ## 3. `setup-eks` resolves the actual version for an existing cluster
 
-- [ ] 3.1 Add a `cluster_name` output to `terraform/aws/eks/outputs.tf`, mirroring the existing
+- [x] 3.1 Add a `cluster_name` output to `terraform/aws/eks/outputs.tf`, mirroring the existing
       `cluster_endpoint` guard shape (`length(module.eyelevel_eks) > 0 ? ... : "(not created)"`).
   check: grep -q 'output "cluster_name"' terraform/aws/eks/outputs.tf
-- [ ] 3.2 Add `bin/tests/resolve-eks-version-test` with fake `terraform`/`aws` stubs on `PATH`
+- [x] 3.2 Add `bin/tests/resolve-eks-version-test` with fake `terraform`/`aws` stubs on `PATH`
       (sibling of `bin/tests/fake-kubectl`), sourcing `bin/shared/util` and calling
       `resolve_eks_version` directly for the "existing cluster" case (fake `terraform output`
       returns a cluster name, fake `aws eks describe-cluster` returns a running version other
       than `1.35`) and the "not yet created" case (fake `terraform output` fails/empty). Written
       first as RED: `resolve_eks_version` does not exist yet.
   check: bash bin/tests/resolve-eks-version-test
-- [ ] 3.3 Add `resolve_eks_version()` to `bin/shared/util` (alongside `test_aws()` /
+- [x] 3.3 Add `resolve_eks_version()` to `bin/shared/util` (alongside `test_aws()` /
       `test_kubernetes_version()`): look up `terraform -chdir="$env_dir/eks" output -raw
       cluster_name`; if it names an existing cluster, run `aws eks describe-cluster --name
       <name> --query cluster.version --output text` and use that value; otherwise (or on any
       lookup failure) fall back to the declared default.
   check: bash bin/tests/resolve-eks-version-test
-- [ ] 3.4 In `terraform/aws/setup-eks`, call `eks_version=$(resolve_eks_version "$ENV_DIR"
+- [x] 3.4 In `terraform/aws/setup-eks`, call `eks_version=$(resolve_eks_version "$ENV_DIR"
       "1.35")` and add `environment_internal = { eks_version = "$eks_version" }` to both
       `env.tfvars` heredocs (the "testing EKS cluster configuration" block at ~L123-137 and its
       `$SEARCH`-gated repeat at ~L222-236).
@@ -62,7 +72,7 @@ configuration, so it cannot be asserted on directly. See `design.md`'s revised D
 
 ## 4. CI wiring
 
-- [ ] 4.1 Add `.github/workflows/terraform-tests.yml`, a sibling of `helm-tests.yml` with the
+- [x] 4.1 Add `.github/workflows/terraform-tests.yml`, a sibling of `helm-tests.yml` with the
       same trigger set (`push: ["**"]`, `pull_request`, `release`, `workflow_dispatch`), using
       `hashicorp/setup-terraform` pinned to `terraform_version: "1.7.0"`, then
       `cp -n terraform/aws/env.tfvars.example terraform/aws/env.tfvars`, then
@@ -72,13 +82,13 @@ configuration, so it cannot be asserted on directly. See `design.md`'s revised D
 
 ## 5. Documentation reconciliation
 
-- [ ] 5.1 Reconcile `README.md`'s "Legacy Terraform Deployment" section (L824-835) and
+- [x] 5.1 Reconcile `README.md`'s "Legacy Terraform Deployment" section (L824-835) and
       `AGENTS.md`'s "legacy, deprecated" wording (lines 6, 11, 82) so both consistently describe
       `terraform/aws/` as an active, supported path for existing deployments on this branch — no
       remaining claim that the hybrid approach "is no longer supported" alongside documentation
       of live diagnostics/maintenance for existing deployments on the same path.
   check: ! grep -Eq "no longer supported" README.md
-- [ ] 5.2 Add a documentation section (`README.md` or a new `docs/eks-cluster-version.md`,
+- [x] 5.2 Add a documentation section (`README.md` or a new `docs/eks-cluster-version.md`,
       matching the `docs/eks-node-diagnostics.md` precedent) that: names the version's owner
       (whoever owns `groundx-on-prem`) and bump process tied to the EKS support calendar; states
       the EKS upgrade-support and extended-support cost policy; states AWS's unset-version
