@@ -168,16 +168,19 @@ exactly as decided in the workspace-level design.md; see that document for the f
 
 **RED-baseline check command (both preconditions handled in the command itself, per the plan):**
 ```
-cp -n terraform/aws/env.tfvars.example terraform/aws/env.tfvars
+[ -f terraform/aws/env.tfvars ] || cp terraform/aws/env.tfvars.example terraform/aws/env.tfvars
 terraform -chdir=terraform/aws/eks init -backend=false && \
 terraform -chdir=terraform/aws/eks test -filter=tests/cluster_version.tftest.hcl
 ```
 `init -backend=false` still performs the module-source fetch (network required for
 `terraform-aws-modules/eks` 20.37.2) but skips remote state, matching the plan's distinction
 between an infrastructure failure (init) and the intended RED assertion failure (test). The
-`cp -n` guards the `env.auto.tfvars` dangling-symlink precondition without touching a tracked file
-(`env.tfvars` stays untracked, matching today's convention — `setup-eks` already treats it as
-generated, disposable state).
+existence check guards the `env.auto.tfvars` dangling-symlink precondition without touching a
+tracked file (`env.tfvars` stays untracked, matching today's convention — `setup-eks` already
+treats it as generated, disposable state). **Portability note (found during GREEN confirmation):**
+the originally-specified `cp -n` is not portable — GNU `cp -n` exits 0 when skipping an existing
+destination, but BSD/macOS `cp -n` exits 1, silently short-circuiting the `&&`-chained check on a
+Mac with no output at all. `[ -f ... ] || cp ...` is portable across both.
 
 ## Risks / Trade-offs
 

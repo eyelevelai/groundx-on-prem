@@ -14,7 +14,7 @@ configuration, so it cannot be asserted on directly. See `design.md`'s revised D
       value; (b) the key unset asserts it resolves to `null`. Written first as the RED baseline:
       both assertions fail against today's code (the variable does not yet carry this key in the
       expected shape).
-  check: cp -n terraform/aws/env.tfvars.example terraform/aws/env.tfvars && terraform -chdir=terraform/aws/eks init -backend=false && terraform -chdir=terraform/aws/eks test -filter=tests/cluster_version.tftest.hcl
+  check: ([ -f terraform/aws/env.tfvars ] || cp terraform/aws/env.tfvars.example terraform/aws/env.tfvars) && terraform -chdir=terraform/aws/eks init -backend=false && terraform -chdir=terraform/aws/eks test -filter=tests/cluster_version.tftest.hcl
 - [x] 1.2 Add a structural wiring check confirming `terraform/aws/eks/eks.tf`'s
       `module "eyelevel_eks"` block's `cluster_version` argument expression references
       `environment_internal.eks_version` in Terraform's parsed configuration — via
@@ -38,7 +38,7 @@ configuration, so it cannot be asserted on directly. See `design.md`'s revised D
       `object({ eks_version = optional(string) })` with default `{}` (null-defaulting), and wire
       `cluster_version = var.environment_internal.eks_version` into `module "eyelevel_eks"` in
       `terraform/aws/eks/eks.tf`.
-  check: cp -n terraform/aws/env.tfvars.example terraform/aws/env.tfvars && terraform -chdir=terraform/aws/eks init -backend=false && terraform -chdir=terraform/aws/eks test -filter=tests/cluster_version.tftest.hcl && grep -E 'cluster_version\s*=\s*var\.environment_internal\.eks_version' terraform/aws/eks/eks.tf
+  check: ([ -f terraform/aws/env.tfvars ] || cp terraform/aws/env.tfvars.example terraform/aws/env.tfvars) && terraform -chdir=terraform/aws/eks init -backend=false && terraform -chdir=terraform/aws/eks test -filter=tests/cluster_version.tftest.hcl && grep -E 'cluster_version\s*=\s*var\.environment_internal\.eks_version' terraform/aws/eks/eks.tf
 
 ## 2. `env.tfvars.example` documents the new key
 
