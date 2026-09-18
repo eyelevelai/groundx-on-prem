@@ -1,0 +1,41 @@
+name: terraform
+
+on:
+    push:
+        branches: ["**"]
+    pull_request:
+    release:
+        types: [published, created]
+    workflow_dispatch:
+
+jobs:
+    eks-cluster-version-test:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Set up Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                  terraform_version: "1.16.3"
+
+            - name: Generate env.tfvars from the example
+              run: cp -n terraform/aws/env.tfvars.example terraform/aws/env.tfvars
+
+            - name: Terraform init
+              run: terraform -chdir=terraform/aws/eks init -backend=false
+
+            - name: Terraform test
+              run: terraform -chdir=terraform/aws/eks test
+
+            - name: Confirm cluster_version is wired to environment_internal.eks_version
+              run: grep -vE '^\s*(#|//)' terraform/aws/eks/eks.tf | grep -E 'cluster_version\s*=\s*var\.environment_internal\.eks_version'
+
+            - name: Run resolve-eks-version bash tests
+              run: bash bin/tests/resolve-eks-version-test
+
+            - name: Run setup-eks wiring bash tests
+              run: bash bin/tests/setup-eks-wiring-test
+

@@ -60,9 +60,10 @@
 - [Use the SDKs](#use-the-sdks)
 - [Use the APIs](#use-the-apis)
 
-**[Legacy Terraform Deployment](#legacy-terraform-deployment)**
+**[Terraform Deployment (terraform/aws/)](#terraform-deployment-terraformaws)**
 - [Accessing Legacy Scripts](#accessing-legacy-scripts)
 - [Optional EKS Node Diagnostics](#optional-eks-node-diagnostics)
+- [EKS Cluster Version Configuration](#eks-cluster-version-configuration)
 
 # What is GroundX On-Prem?
 
@@ -821,9 +822,12 @@ The [API endpoint](#get-the-api-endpoint), in conjuction with the `admin.api_key
 
 All of the methods and operations described in the [GroundX documentation](https://documentation.groundx.ai/reference) are supported with your On-Prem instance of GroundX. You simply have to substitute `https://api.groundx.ai` with your [API endpoint](#get-the-api-endpoint).
 
-# Legacy Terraform Deployment
+# Terraform Deployment (terraform/aws/)
 
-As of November 4, 2025, we have migrated to a pure helm release deployment. The previous hybrid terraform-helm approach is no longer supported.
+As of November 4, 2025, new installs use a pure Helm release deployment. `terraform/aws/` is not
+used for new installs, but on this branch it remains an active, supported path for existing AWS
+EKS deployments created through it: those deployments continue to be maintained through the
+bundled Terraform (see the two sections below), not retired.
 
 ## Accessing Legacy Scripts
 If you would like to access the legacy terraform scripts, they can be pulled from [legacy-terraform-deployment](https://github.com/eyelevelai/groundx-on-prem/releases/tag/legacy-terraform-deployment).
@@ -833,3 +837,41 @@ If you would like to access the legacy terraform scripts, they can be pulled fro
 Existing AWS EKS deployments still managed by the bundled Terraform can enable
 default-off diagnostics with one setting. See
 [EKS Node Diagnostics](docs/eks-node-diagnostics.md).
+
+## EKS Cluster Version Configuration
+
+`terraform/aws/variables.tf`'s `environment_internal.eks_version` key controls the Kubernetes
+version requested for a new EKS cluster (via `terraform/aws/eks/eks.tf`'s
+`module "eyelevel_eks".cluster_version`). Leaving the key unset (the default) passes `null` to
+the module, so AWS creates the cluster at the AWS default version rather than a version this repo
+selects — see the [EKS `CreateCluster` API
+reference](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html) for what
+"the AWS default version" means; it is not necessarily the newest version EKS offers.
+
+**Owner and bump process.** The declared default in `terraform/aws/env.tfvars.example` (currently
+`1.35`) is owned by whoever maintains `groundx-on-prem`. Bump it when the currently-declared
+version approaches the end of its [AWS EKS standard support
+window](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-version-support.html), so new
+installs land on a version still inside standard support. A version past that window enters AWS's
+paid **extended support** period at an additional per-cluster hourly cost until it reaches its
+extended-support end date, after which AWS may auto-upgrade the cluster.
+
+**Adopting the key on an existing cluster.** `setup-eks` writes the key automatically: it reads
+Terraform state (`terraform show -json`) to find an existing cluster, then looks up that cluster's
+actual running version via `aws eks describe-cluster` — the declared default is only used when
+state shows no cluster at all. If a cluster is found in state but its running version cannot be
+resolved (bad credentials, missing IAM permission, wrong region, throttling), `setup-eks` aborts
+rather than silently falling back to the declared default and risking an unattended downgrade — a
+normal re-run is safe, an unresolvable one stops instead of guessing. An operator hand-editing
+`env.tfvars` for an existing cluster must instead:
+
+1. Read the cluster's actual running version first: `aws eks describe-cluster --name <cluster>
+   --query cluster.version --output text`. EKS does not support control-plane downgrades, so
+   setting a lower version than what is running is rejected.
+2. Know that this same value also drives every EKS-managed node group's AMI release selection
+   (`groundx-on-prem`'s node groups don't override it, so they inherit the cluster's resolved
+   version) — changing it can trigger a managed-node-group rollout, not just a control-plane
+   change.
+3. Review `terraform -chdir=terraform/aws/eks plan` before applying. `bin/environment eks` calls
+   `terraform apply --auto-approve` with no confirmation gate, so the plan output is the only
+   review point before a version change takes effect.

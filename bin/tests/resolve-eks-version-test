@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+FAKE_TERRAFORM="$ROOT_DIR/bin/tests/fake-terraform"
+FAKE_AWS="$ROOT_DIR/bin/tests/fake-aws"
+
+fail() {
+  echo "FAIL: $*" >&2
+  exit 1
+}
+
+TEST_ROOT=$(mktemp -d)
+trap 'rm -rf "$TEST_ROOT"' EXIT
+
+run_scenario() {
+  local scenario="$1"
+  local run_dir="$TEST_ROOT/$scenario"
+  mkdir -p "$run_dir/bin" "$run_dir/env"
+  ln -s "$FAKE_TERRAFORM" "$run_dir/bin/terraform"
+  ln -s "$FAKE_AWS" "$run_dir/bin/aws"
+
+  set +e
+  (
+    FAKE_SCENARIO="$scenario" \
+      FAKE_TERRAFORM_LOG="$run_dir/terraform.log" \
+      FAKE_AWS_LOG="$run_dir/aws.log" \
+      PATH="$run_dir/bin:$PATH" \
+      bash -c '. "'"$ROOT_DIR"'/bin/shared/util"; resolve_eks_version "'"$run_dir/env"'" "1.35"'
+  ) >"$run_dir/stdout" 2>"$run_dir/stderr"
+  echo $? > "$run_dir/exit_code"
+  set -e
+}
+
+run_scenario existing_cluster
+[[ "$(cat "$TEST_ROOT/existing_cluster/exit_code")" == "0" ]] || fail "existing-cluster resolution should succeed"
+existing_result=$(cat "$TEST_ROOT/existing_cluster/stdout")
+[[ "$existing_result" == "1.31" ]] || fail "expected the existing cluster's actual running version (1.31), got [$existing_result]"
+
+run_scenario not_yet_created
+[[ "$(cat "$TEST_ROOT/not_yet_created/exit_code")" == "0" ]] || fail "not-yet-created resolution should succeed"
+not_created_result=$(cat "$TEST_ROOT/not_yet_created/stdout")
+[[ "$not_created_result" == "1.35" ]] || fail "expected the declared default (1.35) for a not-yet-created cluster, got [$not_created_result]"
+
+run_scenario existing_cluster_lookup_fails
+lookup_fail_exit=$(cat "$TEST_ROOT/existing_cluster_lookup_fails/exit_code")
+[[ "$lookup_fail_exit" != "0" ]] || fail "an existing cluster whose version lookup fails must exit non-zero, not silently fall back to the declared default"
+lookup_fail_result=$(cat "$TEST_ROOT/existing_cluster_lookup_fails/stdout")
+[[ "$lookup_fail_result" != "1.35" ]] || fail "an existing cluster whose version lookup fails must never emit the declared default (1.35) -- that is the unattended-downgrade risk this function exists to prevent"
+[[ -z "$lookup_fail_result" ]] || fail "an existing cluster whose version lookup fails must not emit any version on stdout, got [$lookup_fail_result]"
+
+run_scenario state_read_fails
+state_fail_exit=$(cat "$TEST_ROOT/state_read_fails/exit_code")
+[[ "$state_fail_exit" != "0" ]] || fail "a 'terraform show -json' failure (e.g. the eks/ dir was never terraform-init'd) must exit non-zero, not be treated as 'no existing cluster'"
+state_fail_result=$(cat "$TEST_ROOT/state_read_fails/stdout")
+[[ "$state_fail_result" != "1.35" ]] || fail "a 'terraform show -json' failure must never emit the declared default (1.35) -- an un-init'd eks/ dir is the NORMAL pre-setup-eks state, and treating it as 'no cluster' is the unattended-downgrade risk this function exists to prevent"
+[[ -z "$state_fail_result" ]] || fail "a 'terraform show -json' failure must not emit any version on stdout, got [$state_fail_result]"
+
+echo "resolve-eks-version tests passed"
+
+TFVARS_TEST_ROOT=$(mktemp -d)
+trap 'rm -rf "$TEST_ROOT" "$TFVARS_TEST_ROOT"' EXIT
+
+missing_key_dir="$TFVARS_TEST_ROOT/missing-key"
+mkdir -p "$missing_key_dir"
+cat >"$missing_key_dir/env.tfvars.example" <<'EOF'
+environment_internal = {
+  stage = "prod"
+}
+EOF
+set +e
+(
+  bash -c '. "'"$ROOT_DIR"'/bin/shared/util"; declared_eks_version_default "'"$missing_key_dir"'"'
+) >"$missing_key_dir/stdout" 2>"$missing_key_dir/stderr"
+missing_key_exit=$?
+set -e
+[[ "$missing_key_exit" != "0" ]] || fail "declared_eks_version_default must exit non-zero when eks_version is missing from env.tfvars.example"
+[[ -z "$(cat "$missing_key_dir/stdout")" ]] || fail "declared_eks_version_default must not emit anything on stdout when eks_version is missing"
+
+commented_dir="$TFVARS_TEST_ROOT/commented"
+mkdir -p "$commented_dir"
+cat >"$commented_dir/env.tfvars.example" <<'EOF'
+environment_internal = {
+  # eks_version = "1.35"
+  stage = "prod"
+}
+EOF
+set +e
+(
+  bash -c '. "'"$ROOT_DIR"'/bin/shared/util"; declared_eks_version_default "'"$commented_dir"'"'
+) >"$commented_dir/stdout" 2>"$commented_dir/stderr"
+commented_exit=$?
+set -e
+[[ "$commented_exit" != "0" ]] || fail "declared_eks_version_default must not parse a commented-out eks_version line as a live value"
+[[ -z "$(cat "$commented_dir/stdout")" ]] || fail "declared_eks_version_default must not emit anything on stdout for a commented-out eks_version line, got [$(cat "$commented_dir/stdout")]"
+
+live_dir="$TFVARS_TEST_ROOT/live"
+mkdir -p "$live_dir"
+cat >"$live_dir/env.tfvars.example" <<'EOF'
+environment_internal = {
+  # eks_version = "1.20"
+  eks_version = "1.35"
+}
+EOF
+live_result=$(bash -c '. "'"$ROOT_DIR"'/bin/shared/util"; declared_eks_version_default "'"$live_dir"'"')
+[[ "$live_result" == "1.35" ]] || fail "declared_eks_version_default must parse the live eks_version line and ignore a commented one above it, got [$live_result]"
+
+echo "declared-eks-version-default tests passed"

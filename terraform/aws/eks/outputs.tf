@@ -3,6 +3,11 @@ output "cluster_endpoint" {
   value       = length(module.eyelevel_eks) > 0 ? module.eyelevel_eks[0].cluster_endpoint : "(not created)"
 }
 
+output "cluster_name" {
+  description = "Name of the EKS cluster"
+  value       = length(module.eyelevel_eks) > 0 ? module.eyelevel_eks[0].cluster_name : "(not created)"
+}
+
 output "storage_driver" {
   description = "Selected Kubernetes storage driver"
   value       = var.storage.driver
