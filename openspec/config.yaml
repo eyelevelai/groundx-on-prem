@@ -79,8 +79,12 @@ context: |
     explicitly-configured resource argument (e.g. cluster_version = var.x) keeps its configured
     value at plan time even under a mocked provider, so asserting on a module's own output (not
     just var./local. echoing itself) is a valid, non-vacuous test mechanism. terraform_version
-    "1.7.0" is the floor for mock_provider/override_module support (the repo's own
-    required_version is only >= 1.0.0, which does not guarantee it). terraform/aws/eks/*.tf
+    "1.7.0" has the mock_provider/override_module syntax but its mock engine cannot resolve
+    nested count/for_each expressions inside terraform-aws-modules/eks/aws that depend on mocked
+    data-source attributes (observed: real CI failure, "Invalid count argument"/"Invalid for_each
+    argument"). CI and local verification are both pinned to "1.16.3", confirmed working; the
+    repo's own required_version is only >= 1.0.0, which guarantees neither the syntax nor correct
+    mock resolution. terraform/aws/eks/*.tf
     symlinks into terraform/aws/ and terraform/shared/ — edit the target, never the link.
     env.auto.tfvars is a symlink to ../env.tfvars, which does not exist in a fresh checkout
     (only env.tfvars.example is committed) — a local `terraform test`/`plan` run needs

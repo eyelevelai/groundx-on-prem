@@ -328,3 +328,17 @@ step is never reached), rather than relying on static text matching against `set
 `bin/tests/fake-terraform` gained a `state_read_fails` scenario and
 `bin/tests/resolve-eks-version-test` gained the corresponding assertion, plus direct tests of
 `declared_eks_version_default()`'s missing-key and commented-line cases.
+
+## Amendment — post-merge CI failure (D4's pinned Terraform version)
+
+D4 pinned CI to `terraform_version: "1.7.0"` as the floor known to support `mock_provider`/
+`override_module` syntax. All verification during review ran against a locally-installed
+Terraform `1.16.3`, and never against `1.7.0` itself. Once the PR opened, GitHub Actions (running
+the pinned `1.7.0`) failed both `.tftest.hcl` files with `Invalid count argument` /
+`Invalid for_each argument` errors inside the vendored `terraform-aws-modules/eks/aws` module —
+`1.7.0`'s `mock_provider` implementation cannot resolve the module's nested `count`/`for_each`
+expressions that depend on mocked data-source attributes, a limitation later Terraform releases
+fixed. Corrected: CI is now pinned to `terraform_version: "1.16.3"`, the exact version verified
+throughout this review. The general lesson — pin CI to the same binary version used for local
+verification, not merely "the minimum version with the syntax available" — is noted here for any
+future change to this workflow.
