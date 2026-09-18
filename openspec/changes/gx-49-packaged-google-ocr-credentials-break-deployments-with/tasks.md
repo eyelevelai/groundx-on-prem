@@ -7,19 +7,7 @@
   `/app/credentials.json` volume mount (L181), and the `credentials-volume` volume (L199/L208)
   are emitted for the layout OCR worker only. The RED regression case is already authored in
   `src/groundx/tests/celery_test.yaml`.
-  check:
-  ```
-  mkdir -p src/groundx/files/ocr && cat > src/groundx/files/ocr/gcv-test.json <<'JSON'
-  {
-    "type": "service_account",
-    "project_id": "groundx-helm-test",
-    "private_key_id": "test",
-    "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",
-    "token_uri": "https://oauth2.googleapis.com/token"
-  }
-  JSON
-  helm unittest -f 'tests/celery_test.yaml' src/groundx
-  ```
+  check: mkdir -p src/groundx/files/ocr && printf '%s' '{"type":"service_account","project_id":"groundx-helm-test","private_key_id":"test","client_email":"test@groundx-helm-test.iam.gserviceaccount.com","token_uri":"https://oauth2.googleapis.com/token"}' > src/groundx/files/ocr/gcv-test.json && helm unittest -f 'tests/celery_test.yaml' src/groundx; rc=$?; rm -rf src/groundx/files/ocr; exit $rc
 - [ ] 1.2 Mirror the identical corrected predicate into `helm/templates/app/celery.yaml`
   (byte-identical to `src/groundx/templates/app/celery.yaml`, matching the pre-existing
   byte-identity of this file) so the published chart carries the same fix on both surfaces.

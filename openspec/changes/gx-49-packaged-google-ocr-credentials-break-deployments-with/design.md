@@ -92,3 +92,5 @@ Secret is created for.
 
 Rollout, blast radius, and rollback/rollforward are already documented in `proposal.md` (standard
 chart-version rollback; no stateful or manual-ops step) and are unchanged by these decisions.
+
+- 2026-09-18 · groundx-on-prem · rest/RED · task 1.1 check reformatted to a single parseable line (acceptance-check.py CHECK_RE is single-line; a fenced multi-line check read as missing-check).
