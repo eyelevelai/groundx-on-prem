@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+SETUP_EKS="$ROOT_DIR/terraform/aws/setup-eks"
+
+fail() {
+  echo "FAIL: $*" >&2
+  exit 1
+}
+
+[[ -f "$SETUP_EKS" ]] || fail "terraform/aws/setup-eks not found"
+
+resolve_pattern='eks_version=$(resolve_eks_version "$ENV_DIR"'
+resolve_calls=$(grep -F -c "$resolve_pattern" "$SETUP_EKS" || true)
+[[ "$resolve_calls" -eq 2 ]] || fail "expected setup-eks to call resolve_eks_version at both heredoc call sites, found $resolve_calls"
+
+heredoc_pattern='eks_version = "$eks_version"'
+heredoc_writes=$(grep -F -c "$heredoc_pattern" "$SETUP_EKS" || true)
+[[ "$heredoc_writes" -eq 2 ]] || fail "expected both env.tfvars heredocs to write environment_internal.eks_version, found $heredoc_writes"
+
+default_pattern='declared_eks_version_default "$ENV_DIR"'
+default_calls=$(grep -F -c "$default_pattern" "$SETUP_EKS" || true)
+[[ "$default_calls" -eq 2 ]] || fail "expected setup-eks to call declared_eks_version_default at both call sites, found $default_calls"
+
+echo "setup-eks-wiring tests passed"

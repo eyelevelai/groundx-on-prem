@@ -53,21 +53,6 @@ override_module {
   }
 }
 
-run "configured_version_resolves_to_the_configured_value" {
-  command = plan
-
-  variables {
-    environment_internal = {
-      eks_version = "1.36"
-    }
-  }
-
-  assert {
-    condition     = var.environment_internal.eks_version == "1.36"
-    error_message = "The configured version key must resolve to the configured value."
-  }
-}
-
 run "unset_version_resolves_to_null" {
   command = plan
 

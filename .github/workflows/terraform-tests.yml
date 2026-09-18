@@ -30,3 +30,12 @@ jobs:
             - name: Terraform test
               run: terraform -chdir=terraform/aws/eks test
 
+            - name: Confirm cluster_version is wired to environment_internal.eks_version
+              run: grep -E 'cluster_version\s*=\s*var\.environment_internal\.eks_version' terraform/aws/eks/eks.tf
+
+            - name: Run resolve-eks-version bash tests
+              run: bash bin/tests/resolve-eks-version-test
+
+            - name: Run setup-eks wiring bash tests
+              run: bash bin/tests/setup-eks-wiring-test
+

@@ -190,19 +190,53 @@ test_kubernetes_version() {
 
 resolve_eks_version() {
   local env_dir="$1" declared_default="$2"
-  local existing_cluster_name running_version
+  local state_json cluster_name running_version
 
-  existing_cluster_name=$(terraform -chdir="$env_dir/eks" output -raw cluster_name 2>/dev/null)
-  if [[ -n "$existing_cluster_name" && "$existing_cluster_name" != "(not created)" ]]; then
-    running_version=$(aws eks describe-cluster --name "$existing_cluster_name" \
-      --query 'cluster.version' --output text 2>/dev/null)
-    if [[ -n "$running_version" && "$running_version" != "None" ]]; then
-      echo "$running_version"
-      return 0
-    fi
+  state_json=$(terraform -chdir="$env_dir/eks" show -json 2>/dev/null)
+
+  if [[ -z "$state_json" ]] || ! jq -e '.values' <<<"$state_json" >/dev/null 2>&1; then
+    echo "$declared_default"
+    return 0
   fi
 
-  echo "$declared_default"
+  cluster_name=$(jq -r \
+    '[.. | objects | select(.type? == "aws_eks_cluster") | .values.name] | first // empty' \
+    <<<"$state_json" 2>/dev/null)
+
+  if [[ -z "$cluster_name" ]]; then
+    echo "$declared_default"
+    return 0
+  fi
+
+  running_version=$(aws eks describe-cluster --name "$cluster_name" \
+    --query 'cluster.version' --output text 2>/dev/null)
+
+  if [[ -n "$running_version" && "$running_version" != "None" ]]; then
+    echo "$running_version"
+    return 0
+  fi
+
+  warn "Terraform state shows an existing EKS cluster [$cluster_name], but 'aws eks describe-cluster' could not resolve its running version (check AWS credentials, IAM permissions for eks:DescribeCluster, and the configured region -- this can also be throttling)."
+  return 1
 }
 
-warn() { echo -e "$@ \e[33;1m\u26a0\e[0m"; }
+declared_eks_version_default() {
+  local env_dir="$1"
+  local example="$env_dir/env.tfvars.example"
+
+  [[ -f "$example" ]] || return 1
+
+  awk '
+    /^environment_internal[[:space:]]*=/ { in_block = 1 }
+    in_block && /eks_version/ {
+      match($0, /"[0-9]+\.[0-9]+"/)
+      if (RSTART > 0) {
+        print substr($0, RSTART + 1, RLENGTH - 2)
+        exit
+      }
+    }
+    in_block && /^}/ { in_block = 0 }
+  ' "$example"
+}
+
+warn() { echo -e >&2 "$@ \e[33;1m\u26a0\e[0m"; }

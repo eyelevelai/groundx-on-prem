@@ -4,11 +4,17 @@ set -euo pipefail
 
 printf '%s\n' "$*" >> "$FAKE_TERRAFORM_LOG"
 
-if [[ "$1" == "-chdir="* && "$2" == "output" && "$3" == "-raw" && "$4" == "cluster_name" ]]; then
-  if [[ "$FAKE_SCENARIO" == "existing_cluster" ]]; then
-    printf 'eyelevel_abc123'
-    exit 0
-  fi
+if [[ "$1" == "-chdir="* && "$2" == "show" && "$3" == "-json" ]]; then
+  case "$FAKE_SCENARIO" in
+    existing_cluster|existing_cluster_lookup_fails)
+      printf '%s' '{"format_version":"1.0","values":{"root_module":{"resources":[],"child_modules":[{"address":"module.eyelevel_eks","resources":[],"child_modules":[{"address":"module.eyelevel_eks.module.eks","resources":[{"address":"module.eyelevel_eks.module.eks.aws_eks_cluster.this[0]","type":"aws_eks_cluster","values":{"name":"eyelevel_abc123","version":"1.31"}}]}]}]}}}'
+      exit 0
+      ;;
+    not_yet_created)
+      printf '%s' '{"format_version":"1.0"}'
+      exit 0
+      ;;
+  esac
   exit 1
 fi
 

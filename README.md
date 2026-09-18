@@ -856,10 +856,14 @@ installs land on a version still inside standard support. A version past that wi
 paid **extended support** period at an additional per-cluster hourly cost until it reaches its
 extended-support end date, after which AWS may auto-upgrade the cluster.
 
-**Adopting the key on an existing cluster.** `setup-eks` writes the key automatically — the
-declared default for a not-yet-created cluster, or the target cluster's actual running version
-(read via `aws eks describe-cluster`) when one already exists — so a normal re-run is safe. An
-operator hand-editing `env.tfvars` for an existing cluster must instead:
+**Adopting the key on an existing cluster.** `setup-eks` writes the key automatically: it reads
+Terraform state (`terraform show -json`) to find an existing cluster, then looks up that cluster's
+actual running version via `aws eks describe-cluster` — the declared default is only used when
+state shows no cluster at all. If a cluster is found in state but its running version cannot be
+resolved (bad credentials, missing IAM permission, wrong region, throttling), `setup-eks` aborts
+rather than silently falling back to the declared default and risking an unattended downgrade — a
+normal re-run is safe, an unresolvable one stops instead of guessing. An operator hand-editing
+`env.tfvars` for an existing cluster must instead:
 
 1. Read the cluster's actual running version first: `aws eks describe-cluster --name <cluster>
    --query cluster.version --output text`. EKS does not support control-plane downgrades, so

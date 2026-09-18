@@ -222,3 +222,72 @@ check on Terraform's parsed configuration reference graph (`terraform show -json
 `module_calls.eyelevel_eks.expressions.cluster_version.references`, or a source-line grep fallback)
 confirming `eks.tf`'s `cluster_version` argument actually references
 `environment_internal.eks_version`. See the revised D3 verification above for the full reasoning.
+
+## Amendments
+
+**2026-09-18 — review fix round 1: D1.6's existing-cluster detection was corrected; two risk
+statements above were false.** All three automated reviewers found the same critical bug: the
+originally-shipped `resolve_eks_version()` (see D1.6 above) detected an existing cluster by
+reading the newly-added `terraform/aws/eks/outputs.tf` `cluster_name` output. That output does
+not exist in any pre-change cluster's Terraform state, so on the very first run after adopting
+this change, the existing-cluster branch was unreachable for every real existing cluster — the
+lookup always fell through to the declared default and `setup-eks` auto-applied it with no
+confirmation gate, which is exactly the unattended-downgrade risk this feature exists to prevent.
+
+**Corrected mechanism.** `resolve_eks_version()` now reads `terraform -chdir="$env_dir/eks" show
+-json` directly and searches the parsed state (`jq`, recursive descent over all resources at any
+nesting depth) for an `aws_eks_cluster` resource's `name` — this exists in Terraform state for
+*any* prior apply of this module (the underlying `terraform-aws-modules/eks/aws` module has always
+created this resource), independent of whether the new `cluster_name` output is present. The
+`cluster_name` output itself is left in place as a convenience for operators inspecting `terraform
+output` after apply, but the safety-lookup path no longer depends on it.
+
+**Fail loud, not open, on an unresolvable lookup.** The function now distinguishes three cases: (a)
+no Terraform state at all, or state with no `aws_eks_cluster` resource → genuinely no existing
+cluster, emit the declared default (safe); (b) an `aws_eks_cluster` resource is found but `aws eks
+describe-cluster` cannot resolve its running version (bad credentials, missing IAM permission,
+wrong region, throttling) → emit a `warn()` naming the failure and return non-zero, emitting no
+version at all; `terraform/aws/setup-eks` now checks this exit code at both call sites and aborts
+(`exit 1`) rather than writing any `env.tfvars`. Case (b) never silently falls back to the declared
+default.
+
+**The two risk statements below claiming otherwise are corrected, not deleted, per record
+hygiene — do not treat the original "Risks / Trade-offs" section above as current:**
+- "this reproduces exactly the pre-fix behavior for that one run, no worse than today" was false —
+  the pre-fix behavior on a lookup failure was to write the declared default and let
+  `bin/environment eks` auto-apply it unattended; that is the exact regression this change exists
+  to prevent, not a neutral no-op. The corrected behavior aborts `setup-eks` before writing
+  `env.tfvars` at all.
+- "the printed terraform plan surfaces any diff before auto-apply" was false as a mitigation for a
+  lookup failure — `bin/environment eks` calls `terraform apply --auto-approve` with no
+  confirmation gate (documented accurately elsewhere in this same design and in README.md's
+  existing-cluster adoption note), so a plan diff is never reviewed by a human before it applies.
+  The corrected mitigation is refusing to proceed at all on an unresolvable lookup, not a plan
+  review that does not exist in this unattended path.
+
+**Single source of truth for the declared default (F7).** The literal `"1.35"` was previously
+duplicated in three places (`terraform/aws/env.tfvars.example` and two `setup-eks` call sites).
+`bin/shared/util` now also carries `declared_eks_version_default()`, which parses the
+`environment_internal.eks_version` value out of `env.tfvars.example` at runtime; both `setup-eks`
+call sites derive the default from it instead of hardcoding the literal. `env.tfvars.example`
+remains the single authored source of the declared default value.
+
+**Test coverage added.** `bin/tests/resolve-eks-version-test` gained a third scenario,
+`existing_cluster_lookup_fails` (state shows an existing cluster, the AWS lookup fails), asserting
+the corrected fail-loud behavior — non-zero exit, no version emitted on stdout, never the declared
+default. `.github/workflows/terraform-tests.yml` gained three new steps: a structural check that
+`eks.tf`'s `cluster_version` argument references `environment_internal.eks_version` (previously
+only asserted by a local task check, never run in CI — a reviewer-found gap), a step running
+`bin/tests/resolve-eks-version-test` (previously not wired into any CI workflow), and a step
+running the new `bin/tests/setup-eks-wiring-test`, which statically asserts `setup-eks` itself
+calls `resolve_eks_version`/`declared_eks_version_default` and writes their results into both
+heredocs (F8 — task 3.4's original check exercised `resolve_eks_version` in isolation only, never
+`setup-eks`'s own use of it).
+
+**`cluster_version.tftest.hcl`'s "configured value" run block was removed, not kept alongside the
+new CI structural check.** That run block set `environment_internal = { eks_version = "1.36" }`
+in its own `variables` block and then asserted the value equaled `"1.36"` — tautological, since no
+production code path could make it fail. Its intended job (proving the "set" case reaches the
+module) is now covered by the CI structural-wiring step added above; the remaining
+`unset_version_resolves_to_null` run block still proves the type/default-resolution half of D1
+that the structural check does not cover.

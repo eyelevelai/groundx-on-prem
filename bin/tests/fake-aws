@@ -5,10 +5,16 @@ set -euo pipefail
 printf '%s\n' "$*" >> "$FAKE_AWS_LOG"
 
 if [[ "$1" == "eks" && "$2" == "describe-cluster" ]]; then
-  if [[ "$FAKE_SCENARIO" == "existing_cluster" ]]; then
-    printf '1.31'
-    exit 0
-  fi
+  case "$FAKE_SCENARIO" in
+    existing_cluster)
+      printf '1.31'
+      exit 0
+      ;;
+    existing_cluster_lookup_fails)
+      echo "AccessDeniedException: User is not authorized to perform: eks:DescribeCluster" >&2
+      exit 254
+      ;;
+  esac
   echo "ClusterNotFoundException" >&2
   exit 254
 fi

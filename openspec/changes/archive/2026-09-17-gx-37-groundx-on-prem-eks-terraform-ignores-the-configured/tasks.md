@@ -127,3 +127,45 @@ config, and documentation. No schema or seed data changes.
 ## Deferred follow-ups (expand/contract)
 
 None named by this change.
+
+## Amendments
+
+**2026-09-18 — review fix round 1.** All three reviewers found the same critical bug in the
+implementation of tasks 3.3/3.4: `resolve_eks_version()`'s existing-cluster detection relied on
+the new `cluster_name` output (task 3.1), which does not exist in any pre-change cluster's state,
+so the safety lookup was unreachable on the run that matters most. Fixed without reopening this
+change's task numbering (see `design.md`'s `## Amendments` for the full rationale):
+
+- `bin/shared/util:resolve_eks_version()` now detects an existing cluster from
+  `terraform show -json` state directly (searching for any `aws_eks_cluster` resource, at any
+  module nesting depth) instead of the `cluster_name` output, and fails loud (non-zero exit, no
+  stdout) rather than falling back to the declared default when a cluster is found but its version
+  cannot be resolved.
+  check: bash bin/tests/resolve-eks-version-test
+- `terraform/aws/setup-eks` checks `resolve_eks_version`'s exit code at both call sites and aborts
+  before writing `env.tfvars` on failure, instead of writing whatever it returned.
+  check: bash bin/tests/resolve-eks-version-test
+- Added `bin/shared/util:declared_eks_version_default()`, parsing the declared default out of
+  `env.tfvars.example` so the `"1.35"` literal has one authored source instead of three (F7).
+  check: grep -n 'declared_eks_version_default' bin/shared/util terraform/aws/setup-eks
+- Added a third `bin/tests/resolve-eks-version-test` scenario, `existing_cluster_lookup_fails`,
+  asserting the fail-loud behavior (F5).
+  check: bash bin/tests/resolve-eks-version-test
+- `.github/workflows/terraform-tests.yml` gained two steps: the structural
+  `cluster_version`-wiring grep (task 1.2's check, previously never run in CI — F3) and a step
+  running `bin/tests/resolve-eks-version-test` (previously wired into no CI workflow — F5).
+  check: n/a — CI workflow file; exercised by the platform on push/PR, not locally runnable in
+  this worktree
+- Removed `cluster_version.tftest.hcl`'s tautological `configured_version_resolves_to_the_configured_value`
+  run block (F4); its job is now covered by the CI structural check above.
+  check: terraform -chdir=terraform/aws/eks test -filter=tests/cluster_version.tftest.hcl
+- `README.md`'s "Adopting the key on an existing cluster" note is corrected to describe the
+  fail-loud behavior instead of the two false risk-mitigation claims design.md originally recorded
+  (F6).
+  check: grep -q "aborts$" README.md
+- Added `bin/tests/setup-eks-wiring-test`, a static check asserting `setup-eks` actually calls
+  `resolve_eks_version` and `declared_eks_version_default` and writes `environment_internal` from
+  their results at both heredoc call sites, wired into
+  `.github/workflows/terraform-tests.yml` (F8 — the prior check only exercised
+  `resolve_eks_version` in isolation, never `setup-eks`'s own use of it).
+  check: bash bin/tests/setup-eks-wiring-test
