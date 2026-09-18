@@ -18,7 +18,7 @@ workflows:
   - verify
 
 context: |
-  - IDENTITY: groundx-on-prem. Role: infra. Language: Helm (+ Bash operator CLI + legacy Terraform). Chart version: 0.2.5. Privileged: true (Tier 3 explicit authorization required for any destructive/deploy/publish operation).
+  - IDENTITY: groundx-on-prem. Role: infra. Language: Helm (+ Bash operator CLI + Terraform, active/supported for existing AWS EKS deployments on this branch -- not used for new installs). Chart version: 0.2.5. Privileged: true (Tier 3 explicit authorization required for any destructive/deploy/publish operation).
   - PURPOSE: Packages the commercial GroundX RAG platform (document ingestion + hybrid text/vector search + re-ranking + LLM summarization) as a Kubernetes deployment for self-hosted/air-gapped environments. Deploys pre-built private container images; no app source code lives here.
   - K8S TARGETS: eks, aks, gke, openshift, minikube (selected via cluster.type values key).
   - BACKING SERVICES DEPLOYED (each can be swapped via existing:{} + serviceType): Redis (cache), MySQL/Percona XtraDB (db), MinIO/S3 (file), OpenSearch (search), Kafka/Strimzi or SQS (stream). Optional: Neo4j (legacy only, absent from current Helm path), Prometheus/Grafana (monitoring).
