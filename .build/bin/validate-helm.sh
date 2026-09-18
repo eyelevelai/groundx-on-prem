@@ -121,6 +121,31 @@ for chart in src/groundx helm; do
     echo "${chart}: google OCR disabled render must not mount a Secret that is never created." >&2
     exit 1
   fi
+  mixed_worker_render="$(helm template ocr-google-mixed "${chart}" \
+    -f src/groundx/tests/files/values.ocr-google.yaml \
+    --set extract.enabled=true \
+    --set extract.agent.enabled=true \
+    --set extract.api.enabled=true \
+    --set extract.download.enabled=true \
+    --set extract.save.enabled=true \
+    --set workspace.enabled=true \
+    --set workspace.token=test-runner-token)"
+  for unwanted in "extract-ocr-credentials-map" "workspace-ocr-credentials-map"; do
+    if grep -q -- "${unwanted}" <<<"${mixed_worker_render}"; then
+      echo "${chart}: packaged layout OCR credentials with extraction and workspace workers enabled must not reference ${unwanted}." >&2
+      exit 1
+    fi
+  done
+  for present in "name: extract-download" "name: extract-save" "name: workspace-workspace"; do
+    if ! grep -q -- "${present}" <<<"${mixed_worker_render}"; then
+      echo "${chart}: mixed-worker regression fixture must actually render ${present}, not vacuously pass by being disabled." >&2
+      exit 1
+    fi
+  done
+  if ! grep -q -- "ocr-credentials-hash" <<<"${mixed_worker_render}" || ! grep -q -- "layout-ocr-credentials-map" <<<"${mixed_worker_render}"; then
+    echo "${chart}: layout-ocr must keep its OCR annotation and credentials Secret volume when extraction and workspace workers are also enabled." >&2
+    exit 1
+  fi
 done
 
 echo "==> Verifying shared Google credential isolation and rotation"
