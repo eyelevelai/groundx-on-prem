@@ -20,7 +20,7 @@
 {{- $lifecycle := get $svcData "lifecycle" | default dict -}}
 {{- $mapPrefix := get $svcData "mapPrefix" -}}
 {{- $sharedGoogle := and (eq $mapPrefix "layout") (eq (include "groundx.layout.ocr.sharedGoogle" $) "true") -}}
-{{- $mountOCR := and (eq $ocrCreate "true") (or (eq $hasOCR "true") $sharedGoogle) -}}
+{{- $mountOCR := and (eq $mapPrefix "layout") (eq $ocrCreate "true") (or (eq $hasOCR "true") $sharedGoogle) -}}
 {{- $name := get $svcData "name" -}}
 {{- $node := get $svcData "node" -}}
 {{- $nsl := get $svcData "nodeSelector" -}}
