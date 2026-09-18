@@ -14,6 +14,10 @@ if [[ "$1" == "-chdir="* && "$2" == "show" && "$3" == "-json" ]]; then
       printf '%s' '{"format_version":"1.0"}'
       exit 0
       ;;
+    state_read_fails)
+      echo "Error: Terraform state not initialized. Run \"terraform init\" in this directory." >&2
+      exit 1
+      ;;
   esac
   exit 1
 fi

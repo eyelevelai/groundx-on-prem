@@ -4,6 +4,8 @@ set -euo pipefail
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 SETUP_EKS="$ROOT_DIR/terraform/aws/setup-eks"
+FAKE_TERRAFORM="$ROOT_DIR/bin/tests/fake-terraform"
+FAKE_AWS="$ROOT_DIR/bin/tests/fake-aws"
 
 fail() {
   echo "FAIL: $*" >&2
@@ -12,16 +14,74 @@ fail() {
 
 [[ -f "$SETUP_EKS" ]] || fail "terraform/aws/setup-eks not found"
 
-resolve_pattern='eks_version=$(resolve_eks_version "$ENV_DIR"'
-resolve_calls=$(grep -F -c "$resolve_pattern" "$SETUP_EKS" || true)
-[[ "$resolve_calls" -eq 2 ]] || fail "expected setup-eks to call resolve_eks_version at both heredoc call sites, found $resolve_calls"
+guard_calls=$(grep -F -c 'eks_version=$(resolve_setup_eks_version "$ENV_DIR")' "$SETUP_EKS" || true)
+[[ "$guard_calls" -eq 2 ]] || fail "expected setup-eks to call resolve_setup_eks_version at both call sites, found $guard_calls"
 
 heredoc_pattern='eks_version = "$eks_version"'
 heredoc_writes=$(grep -F -c "$heredoc_pattern" "$SETUP_EKS" || true)
 [[ "$heredoc_writes" -eq 2 ]] || fail "expected both env.tfvars heredocs to write environment_internal.eks_version, found $heredoc_writes"
 
-default_pattern='declared_eks_version_default "$ENV_DIR"'
-default_calls=$(grep -F -c "$default_pattern" "$SETUP_EKS" || true)
-[[ "$default_calls" -eq 2 ]] || fail "expected setup-eks to call declared_eks_version_default at both call sites, found $default_calls"
+extract_guard() {
+  sed -n '/# EKS_VERSION_GUARD_BEGIN/,/# EKS_VERSION_GUARD_END/p' "$SETUP_EKS" \
+    | sed '1d;$d'
+}
+
+guard_snippet=$(extract_guard)
+[[ -n "$guard_snippet" ]] || fail "could not extract the EKS_VERSION_GUARD block from setup-eks"
+guard_occurrences=$(grep -c 'EKS_VERSION_GUARD_BEGIN' "$SETUP_EKS" || true)
+[[ "$guard_occurrences" -eq 2 ]] || fail "expected exactly 2 EKS_VERSION_GUARD blocks in setup-eks, found $guard_occurrences"
+
+TEST_ROOT=$(mktemp -d)
+trap 'rm -rf "$TEST_ROOT"' EXIT
+
+run_guard_scenario() {
+  local run_name="$1" scenario="$2" tfvars_example_body="$3"
+  local run_dir="$TEST_ROOT/$run_name"
+  mkdir -p "$run_dir/bin" "$run_dir/env"
+  ln -s "$FAKE_TERRAFORM" "$run_dir/bin/terraform"
+  ln -s "$FAKE_AWS" "$run_dir/bin/aws"
+  printf '%s' "$tfvars_example_body" > "$run_dir/env/env.tfvars.example"
+
+  set +e
+  (
+    ENV_DIR="$run_dir/env"
+    FAKE_SCENARIO="$scenario"
+    FAKE_TERRAFORM_LOG="$run_dir/terraform.log"
+    FAKE_AWS_LOG="$run_dir/aws.log"
+    export ENV_DIR FAKE_SCENARIO FAKE_TERRAFORM_LOG FAKE_AWS_LOG
+    export PATH="$run_dir/bin:$PATH"
+    . "$ROOT_DIR/bin/shared/util"
+    eval "$guard_snippet"
+    touch "$run_dir/wrote-tfvars"
+  ) >"$run_dir/stdout" 2>"$run_dir/stderr"
+  echo $? > "$run_dir/exit_code"
+  set -e
+}
+
+standard_example='environment_internal = {
+  eks_version = "1.35"
+}
+'
+
+missing_key_example='environment_internal = {
+  stage = "prod"
+}
+'
+
+run_guard_scenario success_not_yet_created not_yet_created "$standard_example"
+[[ "$(cat "$TEST_ROOT/success_not_yet_created/exit_code")" == "0" ]] || fail "the extracted guard should succeed and fall through to the write step when no cluster exists"
+[[ -f "$TEST_ROOT/success_not_yet_created/wrote-tfvars" ]] || fail "the extracted guard should have let the subsequent write step run for a not-yet-created cluster"
+
+run_guard_scenario state_read_fails state_read_fails "$standard_example"
+[[ "$(cat "$TEST_ROOT/state_read_fails/exit_code")" != "0" ]] || fail "setup-eks's guard must abort (non-zero exit) when the Terraform state read fails"
+[[ ! -f "$TEST_ROOT/state_read_fails/wrote-tfvars" ]] || fail "setup-eks's guard must NOT reach the env.tfvars write step when the Terraform state read fails"
+
+run_guard_scenario existing_cluster_lookup_fails existing_cluster_lookup_fails "$standard_example"
+[[ "$(cat "$TEST_ROOT/existing_cluster_lookup_fails/exit_code")" != "0" ]] || fail "setup-eks's guard must abort (non-zero exit) when the AWS version lookup for an existing cluster fails"
+[[ ! -f "$TEST_ROOT/existing_cluster_lookup_fails/wrote-tfvars" ]] || fail "setup-eks's guard must NOT reach the env.tfvars write step when the AWS version lookup fails"
+
+run_guard_scenario missing_declared_key not_yet_created "$missing_key_example"
+[[ "$(cat "$TEST_ROOT/missing_declared_key/exit_code")" != "0" ]] || fail "setup-eks's guard must abort (non-zero exit) when env.tfvars.example has no parseable eks_version, instead of silently letting an empty version through"
+[[ ! -f "$TEST_ROOT/missing_declared_key/wrote-tfvars" ]] || fail "setup-eks's guard must NOT reach the env.tfvars write step when the declared default cannot be parsed"
 
 echo "setup-eks-wiring tests passed"

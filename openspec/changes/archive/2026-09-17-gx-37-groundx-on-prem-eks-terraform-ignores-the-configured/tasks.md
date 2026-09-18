@@ -130,11 +130,11 @@ None named by this change.
 
 ## Amendments
 
-**2026-09-18 — review fix round 1.** All three reviewers found the same critical bug in the
-implementation of tasks 3.3/3.4: `resolve_eks_version()`'s existing-cluster detection relied on
-the new `cluster_name` output (task 3.1), which does not exist in any pre-change cluster's state,
-so the safety lookup was unreachable on the run that matters most. Fixed without reopening this
-change's task numbering (see `design.md`'s `## Amendments` for the full rationale):
+**2026-09-18 — existing-cluster detection corrected.** The implementation of tasks 3.3/3.4 had a
+critical bug: `resolve_eks_version()`'s existing-cluster detection relied on the new `cluster_name`
+output (task 3.1), which does not exist in any pre-change cluster's state, so the safety lookup was
+unreachable on the run that matters most. Fixed without reopening this change's task numbering (see
+`design.md`'s `## Amendments` for the full rationale):
 
 - `bin/shared/util:resolve_eks_version()` now detects an existing cluster from
   `terraform show -json` state directly (searching for any `aws_eks_cluster` resource, at any
@@ -146,26 +146,55 @@ change's task numbering (see `design.md`'s `## Amendments` for the full rational
   before writing `env.tfvars` on failure, instead of writing whatever it returned.
   check: bash bin/tests/resolve-eks-version-test
 - Added `bin/shared/util:declared_eks_version_default()`, parsing the declared default out of
-  `env.tfvars.example` so the `"1.35"` literal has one authored source instead of three (F7).
+  `env.tfvars.example` so the `"1.35"` literal has one authored source instead of three.
   check: grep -n 'declared_eks_version_default' bin/shared/util terraform/aws/setup-eks
 - Added a third `bin/tests/resolve-eks-version-test` scenario, `existing_cluster_lookup_fails`,
-  asserting the fail-loud behavior (F5).
+  asserting the fail-loud behavior.
   check: bash bin/tests/resolve-eks-version-test
 - `.github/workflows/terraform-tests.yml` gained two steps: the structural
-  `cluster_version`-wiring grep (task 1.2's check, previously never run in CI — F3) and a step
-  running `bin/tests/resolve-eks-version-test` (previously wired into no CI workflow — F5).
+  `cluster_version`-wiring grep (task 1.2's check, previously never run in CI) and a step
+  running `bin/tests/resolve-eks-version-test` (previously wired into no CI workflow).
   check: n/a — CI workflow file; exercised by the platform on push/PR, not locally runnable in
   this worktree
 - Removed `cluster_version.tftest.hcl`'s tautological `configured_version_resolves_to_the_configured_value`
-  run block (F4); its job is now covered by the CI structural check above.
+  run block; its job is now covered by the CI structural check above.
   check: terraform -chdir=terraform/aws/eks test -filter=tests/cluster_version.tftest.hcl
 - `README.md`'s "Adopting the key on an existing cluster" note is corrected to describe the
-  fail-loud behavior instead of the two false risk-mitigation claims design.md originally recorded
-  (F6).
+  fail-loud behavior instead of the two false risk-mitigation claims design.md originally recorded.
   check: grep -q "aborts$" README.md
 - Added `bin/tests/setup-eks-wiring-test`, a static check asserting `setup-eks` actually calls
   `resolve_eks_version` and `declared_eks_version_default` and writes `environment_internal` from
   their results at both heredoc call sites, wired into
-  `.github/workflows/terraform-tests.yml` (F8 — the prior check only exercised
+  `.github/workflows/terraform-tests.yml` (the prior check only exercised
   `resolve_eks_version` in isolation, never `setup-eks`'s own use of it).
   check: bash bin/tests/setup-eks-wiring-test
+
+**2026-09-18 (later the same day) — the state-read call still failed open, and the declared-default
+parser still accepted a commented-out or missing key.** See `design.md`'s `## Amendments` for the
+full rationale.
+
+- `bin/shared/util:resolve_eks_version()` now captures `terraform show -json`'s own exit status: a
+  non-zero exit, or output that fails to parse as JSON (the normal shape of the error/warning text
+  Terraform prints when `terraform/aws/eks` has never been `terraform init`'d), warns and returns
+  non-zero instead of being treated as "no existing cluster". Reproduced live against real
+  Terraform (a real `terraform.tfstate` with an `aws_eks_cluster` resource, `.terraform/` removed)
+  both before the fix (silently emitted the declared default) and after (warns, exits non-zero, no
+  stdout).
+  check: bash bin/tests/resolve-eks-version-test
+- `bin/shared/util:declared_eks_version_default()`'s `awk` parser now skips any line whose first
+  non-whitespace character is `#` (a commented-out `eks_version` line was previously parsed as
+  live), and the function now returns non-zero when the parsed value is empty (previously returned
+  exit 0 with empty stdout on a missing key, so the caller's abort-on-failure guard never fired).
+  check: bash bin/tests/resolve-eks-version-test
+- Extracted `bin/shared/util:resolve_setup_eks_version()`, combining
+  `declared_eks_version_default()` + `resolve_eks_version()` into one function both
+  `terraform/aws/setup-eks` call sites now use, making the abort decision directly drivable.
+  `bin/tests/setup-eks-wiring-test` now extracts the guard block from `setup-eks`'s own source and
+  executes it under simulated helper failures, asserting both the non-zero exit and that the
+  subsequent `env.tfvars` write step is never reached — rather than statically matching call-site
+  text.
+  check: bash bin/tests/setup-eks-wiring-test
+- `bin/tests/fake-terraform` gained a `state_read_fails` scenario, and
+  `bin/tests/resolve-eks-version-test` gained direct tests of
+  `declared_eks_version_default()`'s missing-key and commented-line cases.
+  check: bash bin/tests/resolve-eks-version-test

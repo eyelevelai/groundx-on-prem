@@ -190,13 +190,19 @@ test_kubernetes_version() {
 
 resolve_eks_version() {
   local env_dir="$1" declared_default="$2"
-  local state_json cluster_name running_version
+  local state_json state_exit cluster_name running_version
 
   state_json=$(terraform -chdir="$env_dir/eks" show -json 2>/dev/null)
+  state_exit=$?
 
-  if [[ -z "$state_json" ]] || ! jq -e '.values' <<<"$state_json" >/dev/null 2>&1; then
-    echo "$declared_default"
-    return 0
+  if [[ $state_exit -ne 0 ]]; then
+    warn "Unable to read Terraform state for [$env_dir/eks] ('terraform show -json' exited $state_exit -- has 'terraform init' been run there?). Refusing to guess whether an EKS cluster already exists."
+    return 1
+  fi
+
+  if [[ -z "$state_json" ]] || ! jq -e '.' <<<"$state_json" >/dev/null 2>&1; then
+    warn "Terraform state for [$env_dir/eks] could not be parsed as JSON. Refusing to guess whether an EKS cluster already exists."
+    return 1
   fi
 
   cluster_name=$(jq -r \
@@ -220,13 +226,31 @@ resolve_eks_version() {
   return 1
 }
 
+resolve_setup_eks_version() {
+  local env_dir="$1"
+  local declared_default eks_version
+
+  declared_default=$(declared_eks_version_default "$env_dir") || {
+    warn "Unable to read the declared default EKS version from $env_dir/env.tfvars.example."
+    return 1
+  }
+
+  eks_version=$(resolve_eks_version "$env_dir" "$declared_default") || {
+    return 1
+  }
+
+  echo "$eks_version"
+}
+
 declared_eks_version_default() {
   local env_dir="$1"
   local example="$env_dir/env.tfvars.example"
+  local value
 
   [[ -f "$example" ]] || return 1
 
-  awk '
+  value=$(awk '
+    /^[[:space:]]*#/ { next }
     /^environment_internal[[:space:]]*=/ { in_block = 1 }
     in_block && /eks_version/ {
       match($0, /"[0-9]+\.[0-9]+"/)
@@ -236,7 +260,11 @@ declared_eks_version_default() {
       }
     }
     in_block && /^}/ { in_block = 0 }
-  ' "$example"
+  ' "$example")
+
+  [[ -n "$value" ]] || return 1
+
+  echo "$value"
 }
 
 warn() { echo -e >&2 "$@ \e[33;1m\u26a0\e[0m"; }

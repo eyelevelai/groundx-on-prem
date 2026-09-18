@@ -192,6 +192,8 @@ Mac with no output at all. `[ -f ... ] || cp ...` is portable across both.
   falls back to `1.35`] → Mitigation: this reproduces exactly the pre-fix behavior for that one run
   (no worse than today), and the printed `terraform plan` (still required before `bin/environment
   eks` applies) surfaces any resulting diff for human review before auto-apply.
+  **[CORRECTED — see ## Amendments below: both halves of this mitigation were false. The lookup
+  failure no longer falls back to `1.35` at all; `setup-eks` aborts before writing `env.tfvars`.]**
 - [CI's `terraform test` requires network access to fetch the pinned module] → Mitigation: this is
   the existing `terraform init` dependency for this module on every environment already; not a new
   requirement introduced by this change.
@@ -225,9 +227,9 @@ confirming `eks.tf`'s `cluster_version` argument actually references
 
 ## Amendments
 
-**2026-09-18 — review fix round 1: D1.6's existing-cluster detection was corrected; two risk
-statements above were false.** All three automated reviewers found the same critical bug: the
-originally-shipped `resolve_eks_version()` (see D1.6 above) detected an existing cluster by
+**2026-09-18 — D1.6's existing-cluster detection was corrected; two risk statements above were
+false.** The originally-shipped `resolve_eks_version()` (see D1.6 above) detected an existing
+cluster by
 reading the newly-added `terraform/aws/eks/outputs.tf` `cluster_name` output. That output does
 not exist in any pre-change cluster's Terraform state, so on the very first run after adopting
 this change, the existing-cluster branch was unreachable for every real existing cluster — the
@@ -265,7 +267,7 @@ hygiene — do not treat the original "Risks / Trade-offs" section above as curr
   The corrected mitigation is refusing to proceed at all on an unresolvable lookup, not a plan
   review that does not exist in this unattended path.
 
-**Single source of truth for the declared default (F7).** The literal `"1.35"` was previously
+**Single source of truth for the declared default.** The literal `"1.35"` was previously
 duplicated in three places (`terraform/aws/env.tfvars.example` and two `setup-eks` call sites).
 `bin/shared/util` now also carries `declared_eks_version_default()`, which parses the
 `environment_internal.eks_version` value out of `env.tfvars.example` at runtime; both `setup-eks`
@@ -277,11 +279,11 @@ remains the single authored source of the declared default value.
 the corrected fail-loud behavior — non-zero exit, no version emitted on stdout, never the declared
 default. `.github/workflows/terraform-tests.yml` gained three new steps: a structural check that
 `eks.tf`'s `cluster_version` argument references `environment_internal.eks_version` (previously
-only asserted by a local task check, never run in CI — a reviewer-found gap), a step running
+only asserted by a local task check, never run in CI), a step running
 `bin/tests/resolve-eks-version-test` (previously not wired into any CI workflow), and a step
 running the new `bin/tests/setup-eks-wiring-test`, which statically asserts `setup-eks` itself
 calls `resolve_eks_version`/`declared_eks_version_default` and writes their results into both
-heredocs (F8 — task 3.4's original check exercised `resolve_eks_version` in isolation only, never
+heredocs (the original check exercised `resolve_eks_version` in isolation only, never
 `setup-eks`'s own use of it).
 
 **`cluster_version.tftest.hcl`'s "configured value" run block was removed, not kept alongside the
@@ -291,3 +293,38 @@ production code path could make it fail. Its intended job (proving the "set" cas
 module) is now covered by the CI structural-wiring step added above; the remaining
 `unset_version_resolves_to_null` run block still proves the type/default-resolution half of D1
 that the structural check does not cover.
+
+**2026-09-18 (later the same day) — `resolve_eks_version()`'s state-read call still failed open,
+and the declared-default parser still accepted a commented-out or missing key.** The prior
+amendment above fixed the *lookup mechanism* (reading Terraform state directly instead of the
+`cluster_name` output) but left a second gap: the `terraform -chdir="$env_dir/eks" show -json`
+call itself can fail — its most common real trigger is that `terraform/aws/eks` has never been
+`terraform init`'d yet, which is the normal state before `setup-eks` runs (init happens later, in
+`bin/environment`). On that failure, the function's stdout capture held terraform's error/warning
+text rather than valid JSON, which was indistinguishable from "state read succeeded and shows no
+cluster" under the existing check — so it silently fell through to the declared default exactly
+like the `cluster_name`-output bug the prior amendment fixed. Corrected: the function now captures
+the call's own exit status directly; a non-zero exit, or output that fails to parse as JSON, warns
+and returns non-zero (fails loud) rather than being treated as "genuinely no cluster". Reproduced
+live against real Terraform (a real `terraform.tfstate` with an `aws_eks_cluster` resource, `.terraform/`
+removed) before and after the fix: before, `terraform show -json` exits 1 with warning text on
+stdout and the old code silently emitted the declared default; after, the function correctly warns
+and exits non-zero, emitting nothing.
+
+Separately, `declared_eks_version_default()`'s `awk` parser did not skip commented-out lines and
+did not distinguish "no value found" from "found and printed" — a commented-out
+`# eks_version = "1.35"` line was parsed as if it were live, and a genuinely missing key returned
+exit 0 with empty stdout, so `setup-eks`'s guard (`declared_eks_version_default ... || { abort }`)
+never fired on either case and an empty `eks_version = ""` could reach `env.tfvars`. Corrected: the
+parser now skips any line whose first non-whitespace character is `#`, and the function returns
+non-zero when the parsed value is empty.
+
+Both call sites in `terraform/aws/setup-eks` are now driven through a single extracted function,
+`resolve_setup_eks_version()` (in `bin/shared/util`), which calls `declared_eks_version_default()`
+then `resolve_eks_version()` and propagates either's failure — this makes the abort decision
+directly testable (`bin/tests/setup-eks-wiring-test` now executes the extracted guard logic under
+simulated failures and asserts both the non-zero exit and that the subsequent `env.tfvars` write
+step is never reached), rather than relying on static text matching against `setup-eks`'s source.
+`bin/tests/fake-terraform` gained a `state_read_fails` scenario and
+`bin/tests/resolve-eks-version-test` gained the corresponding assertion, plus direct tests of
+`declared_eks_version_default()`'s missing-key and commented-line cases.
