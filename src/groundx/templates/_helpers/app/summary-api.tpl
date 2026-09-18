@@ -180,6 +180,21 @@ true
 false
 {{- end }}
 
+{{- define "groundx.summary.api.probe" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- $pb := dig "probe" dict $in -}}
+{{- $lv := dig "liveness" dict $pb -}}
+{{- $rd := dig "readiness" dict $pb -}}
+{{- dict
+    "liveness"  (dict "timeoutSeconds" (dig "timeoutSeconds" 3 $lv))
+    "readiness" (dict
+      "failureThreshold" (dig "failureThreshold" 3 $rd)
+      "timeoutSeconds"   (dig "timeoutSeconds" 3 $rd)
+    )
+  | toYaml -}}
+{{- end }}
+
 {{- define "groundx.summary.api.threads" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "api" dict $b -}}
@@ -246,6 +261,7 @@ false
   "name"         (include "groundx.summary.api.serviceName" .)
   "node"         (include "groundx.summary.api.node" .)
   "port"         (include "groundx.summary.api.containerPort" .)
+  "probe"        (include "groundx.summary.api.probe" . | fromYaml)
   "pull"         (include "groundx.summary.api.imagePullPolicy" .)
   "replicas"     ($rep)
 -}}
