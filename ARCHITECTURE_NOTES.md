@@ -72,7 +72,8 @@ There is no runtime "main" in this repo. The operational entry points are:
 helm template src/groundx -f src/groundx/values/minikube/values.yaml
 
 # Unit tests (exactly what CI runs — .github/workflows/helm-tests.yml)
-helm plugin install https://github.com/helm-unittest/helm-unittest.git
+# plugin version pinned at .build/HELM_UNITTEST_VERSION
+helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "$(cat .build/HELM_UNITTEST_VERSION)"
 helm unittest src/groundx                       # snapshot tests in src/groundx/tests/
 
 # Generate UUIDs required for admin.apiKey / admin.username

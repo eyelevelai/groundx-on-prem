@@ -16,12 +16,17 @@ Usage: .build/bin/validate-helm.sh [--junit]
 
 Runs the GroundX Helm production chart gate from one stable entrypoint:
   - helm lint for both chart surfaces
+  - src/groundx/templates <-> helm/templates mirror-equality guard
+  - pinned helm-unittest plugin version guard
+  - guard-script unit tests (stdlib scripts under .build/tests)
   - helm unittest for src/groundx
+  - snapshot-rewrite-on-run guard (see GX-22)
   - snapshot label guard unit tests
   - snapshot label guard
   - workspace chart contract verifier
   - storage chart and generated AWS values contract verifier
   - targeted render checks for both chart surfaces
+  - repeat-render determinism guard (warn-only; see GX-22)
   - git whitespace check
 
 Options:
@@ -46,12 +51,34 @@ for arg in "$@"; do
   esac
 done
 
+SNAPSHOT_STABILITY_HASHFILE="$(mktemp)"
+trap 'rm -f "${SNAPSHOT_STABILITY_HASHFILE}"' EXIT
+
+echo "==> Capturing snapshot state before running any Helm tooling (see GX-22)"
+"${PY}" .build/bin/verify-helm-snapshot-stability.py capture "${SNAPSHOT_STABILITY_HASHFILE}"
+
 echo "==> Linting Helm chart surfaces"
 helm lint src/groundx
 helm lint helm
 
+echo "==> Verifying src/groundx/templates and helm/templates are mirrored"
+"${PY}" .build/bin/verify-helm-mirror.py
+
+echo "==> Verifying pinned helm-unittest plugin version"
+"${PY}" .build/bin/verify-helm-unittest-plugin-version.py
+
+echo "==> Running guard-script unit tests"
+"${PY}" .build/tests/test_verify_helm_mirror.py
+"${PY}" .build/tests/test_check_render_determinism.py
+"${PY}" .build/tests/test_verify_helm_unittest_plugin_version.py
+"${PY}" .build/tests/test_verify_helm_snapshot_stability.py
+"${PY}" .build/tests/test_validate_helm_structure.py
+
 echo "==> Running Helm unit tests"
 helm unittest src/groundx
+
+echo "==> Verifying helm unittest did not rewrite committed snapshots as a side effect (see GX-22)"
+"${PY}" .build/bin/verify-helm-snapshot-stability.py verify "${SNAPSHOT_STABILITY_HASHFILE}"
 
 echo "==> Verifying extract-agent image settings validation"
 expect_helm_template_failure() {
@@ -104,6 +131,11 @@ helm template workspace-contract helm \
   -f src/groundx/tests/files/values.workspace-metrics.yaml \
   >/dev/null
 
+echo "==> Checking repeat-render determinism (warn-only, see GX-22)"
+"${PY}" .build/bin/check-render-determinism.py --chart src/groundx --values src/groundx/values.yaml --warn-only
+"${PY}" .build/bin/check-render-determinism.py --chart src/groundx --values src/groundx/values/extract/values.yaml --warn-only
+"${PY}" .build/bin/check-render-determinism.py --chart src/groundx --values src/groundx/values/extract/values.oai.yaml --warn-only
+
 echo "==> Validating workspace smoke/E2E script syntax and wording"
 bash -n .build/bin/smoke-workspace-runner.sh
 bash -n .build/bin/workspace-runner-git-e2e.sh
@@ -121,6 +153,9 @@ if [[ "${RUN_JUNIT}" == "1" ]]; then
   echo "==> Writing Helm unittest JUnit report"
   mkdir -p reports
   helm unittest -o junit --output-file reports/helm-unittest.xml src/groundx
+
+  echo "==> Verifying helm unittest (--junit) did not rewrite committed snapshots as a side effect (see GX-22)"
+  "${PY}" .build/bin/verify-helm-snapshot-stability.py verify "${SNAPSHOT_STABILITY_HASHFILE}"
 fi
 
 echo "==> Checking diff whitespace"
