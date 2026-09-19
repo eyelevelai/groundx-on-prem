@@ -417,3 +417,24 @@ This repo's `src/groundx/templates/**` line-ending pin (`.gitattributes`, Stage 
 CRLF/LF confound recorded during Stage 0.1 — per AGENTS.md, "line-ending-only cleanup is its own
 PR," but here it is bundled with the toolchain pin because both were found investigating the same
 symptom and neither touches chart template content; see proposal.md's amendment note.
+
+## Amendments
+
+**2026-09-19.** Two items deferred above without a ticket id are now filed. The original task text
+above is left as written; this entry supersedes it in place:
+
+- The withdrawn 22-helper `.Values`-aliasing sweep (task 0.5/0.6/1.1's "WITHDRAWN" text, and the
+  "Open items" section above — "needs its own Linear ticket, not yet filed") is tracked as
+  **GX-58**.
+- The `helm-unittest -u` empty-render label-drop hazard (task B.1's finding, "flagged for the
+  human to decide on a separate follow-up ticket") is tracked as **GX-59**.
+
+Separately (a later review round, same amendment date): tasks 0.4, A.3, and C.1's `check:` lines
+above name `python -m pytest .build/tests/test_*.py`, run when those tasks were landed. A
+subsequent fix round converted `.build/tests/test_check_render_determinism.py`,
+`test_verify_helm_snapshot_stability.py`, `test_verify_helm_unittest_plugin_version.py`, and
+`test_verify_helm_mirror.py` to standalone stdlib scripts and removed `validate-helm.sh`'s
+unconditional `python -m pytest .build/tests -q` step (no pytest install site existed in CI or the
+pre-push gate for it) — see `.build/bin/validate-helm.sh` and `.build/tests/` as they stand today
+for the current, pytest-independent invocation. The `check:` text above is left as originally
+written, per Record hygiene.

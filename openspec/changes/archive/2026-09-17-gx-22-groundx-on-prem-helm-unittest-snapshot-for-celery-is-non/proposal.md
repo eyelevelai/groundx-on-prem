@@ -104,3 +104,11 @@ and the gate-assertion placement are fully specified in the accepted cross-servi
   regeneration.
 - Already-landed guard tooling (`.build/bin/verify-helm-mirror.py`,
   `.build/bin/check-render-determinism.py`, committed at `e9d61bb`) is unaffected by this change.
+
+## Amendments
+
+**2026-09-19.** The withdrawn 22-helper `.Values`-aliasing sweep named in "What Changes" above
+("needs its own Linear ticket, not yet filed") is now tracked as **GX-58**. The original text is
+left as written; this entry supersedes it in place. See `design.md`'s Amendments for the other
+follow-up item filed from this change (GX-59, the `helm-unittest -u` empty-render label-drop
+hazard), which this proposal did not separately name.

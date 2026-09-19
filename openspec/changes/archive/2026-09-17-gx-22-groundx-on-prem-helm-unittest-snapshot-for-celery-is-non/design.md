@@ -182,3 +182,15 @@ script — both are recorded here and restated in tasks.md:
 - Flipping `check-render-determinism.py` to blocking is out of scope for this change (see the
   Invariant above — this check cannot observe the actual defect class GX-22 fixes). Would need its
   own ticket and its own evidence of a genuine chart-template nondeterminism defect if pursued later.
+
+## Amendments
+
+**2026-09-19.** Two items this change deferred without a ticket id are now filed. The original text
+above is left as written; this entry supersedes it in place:
+
+- The withdrawn 22-helper `.Values`-aliasing sweep (`layout-ocr.tpl` and 21 siblings — see "Open
+  items carried into tasks.md" above and the "Grounding finding" section) is tracked as **GX-58**.
+- The `helm-unittest -u` empty-render label-drop hazard — structural, present at every plugin
+  release from 2019 to an unreleased `main` build (Stage B's empirical search, see "Fix mechanism"
+  above), and flagged there as needing "a human decision on how to close this specific
+  sub-finding" — is tracked as **GX-59**.

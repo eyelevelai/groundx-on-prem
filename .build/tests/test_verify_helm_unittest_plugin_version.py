@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import contextlib
 import importlib.util
+import io
 import tempfile
 from pathlib import Path
 
@@ -13,6 +15,13 @@ def load_guard():
     assert spec.loader is not None
     spec.loader.exec_module(module)
     return module
+
+
+@contextlib.contextmanager
+def captured_stderr():
+    buffer = io.StringIO()
+    with contextlib.redirect_stderr(buffer):
+        yield buffer
 
 
 def write_plugin_yaml(plugins_dir: Path, dir_name: str, *, name: str, version: str) -> Path:
@@ -56,7 +65,7 @@ def test_installed_version_returns_none_when_plugins_dir_missing():
         assert guard.installed_version(Path(directory) / "does-not-exist") is None
 
 
-def test_main_rejects_version_mismatch(monkeypatch, capsys):
+def test_main_rejects_version_mismatch():
     guard = load_guard()
     with tempfile.TemporaryDirectory() as directory:
         pin_file = Path(directory) / "HELM_UNITTEST_VERSION"
@@ -64,18 +73,20 @@ def test_main_rejects_version_mismatch(monkeypatch, capsys):
         plugins_dir = Path(directory) / "plugins"
         write_plugin_yaml(plugins_dir, "helm-unittest.git", name="unittest", version="1.1.2")
 
-        monkeypatch.setattr(guard, "PIN_FILE", pin_file)
-        monkeypatch.setattr(guard, "resolve_plugins_dir", lambda: plugins_dir)
+        guard.PIN_FILE = pin_file
+        guard.resolve_plugins_dir = lambda: plugins_dir
 
-        exit_code = guard.main()
-        output = capsys.readouterr()
+        with captured_stderr() as buffer:
+            exit_code = guard.main()
+
+        text = buffer.getvalue()
 
         assert exit_code == 1
-        assert "0.8.2" in output.err
-        assert "1.1.2" in output.err
+        assert "0.8.2" in text
+        assert "1.1.2" in text
 
 
-def test_main_accepts_matching_version(monkeypatch, capsys):
+def test_main_accepts_matching_version():
     guard = load_guard()
     with tempfile.TemporaryDirectory() as directory:
         pin_file = Path(directory) / "HELM_UNITTEST_VERSION"
@@ -83,29 +94,46 @@ def test_main_accepts_matching_version(monkeypatch, capsys):
         plugins_dir = Path(directory) / "plugins"
         write_plugin_yaml(plugins_dir, "helm-unittest.git", name="unittest", version="0.8.2")
 
-        monkeypatch.setattr(guard, "PIN_FILE", pin_file)
-        monkeypatch.setattr(guard, "resolve_plugins_dir", lambda: plugins_dir)
+        guard.PIN_FILE = pin_file
+        guard.resolve_plugins_dir = lambda: plugins_dir
 
         exit_code = guard.main()
 
         assert exit_code == 0
 
 
-def test_main_fails_closed_on_missing_pin_file(monkeypatch):
+def test_main_fails_closed_on_missing_pin_file():
     guard = load_guard()
     with tempfile.TemporaryDirectory() as directory:
-        monkeypatch.setattr(guard, "PIN_FILE", Path(directory) / "does-not-exist")
+        guard.PIN_FILE = Path(directory) / "does-not-exist"
 
         assert guard.main() == 1
 
 
-def test_main_fails_closed_on_missing_plugin(monkeypatch):
+def test_main_fails_closed_on_missing_plugin():
     guard = load_guard()
     with tempfile.TemporaryDirectory() as directory:
         pin_file = Path(directory) / "HELM_UNITTEST_VERSION"
         pin_file.write_text("v0.8.2\n", encoding="utf-8")
 
-        monkeypatch.setattr(guard, "PIN_FILE", pin_file)
-        monkeypatch.setattr(guard, "resolve_plugins_dir", lambda: Path(directory) / "empty-plugins")
+        guard.PIN_FILE = pin_file
+        guard.resolve_plugins_dir = lambda: Path(directory) / "empty-plugins"
 
         assert guard.main() == 1
+
+
+def main() -> int:
+    test_pinned_version_reads_and_strips_whitespace()
+    test_installed_version_finds_matching_plugin_by_name()
+    test_installed_version_ignores_unrelated_plugin_directories()
+    test_installed_version_returns_none_when_plugins_dir_missing()
+    test_main_rejects_version_mismatch()
+    test_main_accepts_matching_version()
+    test_main_fails_closed_on_missing_pin_file()
+    test_main_fails_closed_on_missing_plugin()
+    print("verify-helm-unittest-plugin-version tests passed")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

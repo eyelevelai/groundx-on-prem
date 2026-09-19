@@ -18,7 +18,7 @@ Runs the GroundX Helm production chart gate from one stable entrypoint:
   - helm lint for both chart surfaces
   - src/groundx/templates <-> helm/templates mirror-equality guard
   - pinned helm-unittest plugin version guard
-  - guard-script unit tests (pytest over .build/tests)
+  - guard-script unit tests (stdlib scripts under .build/tests)
   - helm unittest for src/groundx
   - snapshot-rewrite-on-run guard (see GX-22)
   - snapshot label guard unit tests
@@ -67,8 +67,12 @@ echo "==> Verifying src/groundx/templates and helm/templates are mirrored"
 echo "==> Verifying pinned helm-unittest plugin version"
 "${PY}" .build/bin/verify-helm-unittest-plugin-version.py
 
-echo "==> Running guard-script unit tests (pytest)"
-"${PY}" -m pytest .build/tests -q
+echo "==> Running guard-script unit tests"
+"${PY}" .build/tests/test_verify_helm_mirror.py
+"${PY}" .build/tests/test_check_render_determinism.py
+"${PY}" .build/tests/test_verify_helm_unittest_plugin_version.py
+"${PY}" .build/tests/test_verify_helm_snapshot_stability.py
+"${PY}" .build/tests/test_validate_helm_structure.py
 
 echo "==> Running Helm unit tests"
 helm unittest src/groundx

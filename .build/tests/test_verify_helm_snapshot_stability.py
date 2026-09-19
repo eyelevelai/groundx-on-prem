@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import contextlib
 import importlib.util
+import io
 import tempfile
 from pathlib import Path
 
@@ -13,6 +15,13 @@ def load_guard():
     assert spec.loader is not None
     spec.loader.exec_module(module)
     return module
+
+
+@contextlib.contextmanager
+def captured_stderr():
+    buffer = io.StringIO()
+    with contextlib.redirect_stderr(buffer):
+        yield buffer
 
 
 def test_unchanged_snapshot_tree_is_not_flagged():
@@ -79,7 +88,7 @@ def test_verify_names_every_changed_file():
         assert guard.verify(snapshot_dir, hashfile) == ["a_test.yaml.snap", "b_test.yaml.snap"]
 
 
-def test_main_capture_then_verify_round_trip(capsys):
+def test_main_capture_then_verify_round_trip():
     guard = load_guard()
     with tempfile.TemporaryDirectory() as directory:
         snapshot_dir = Path(directory) / "__snapshot__"
@@ -93,14 +102,14 @@ def test_main_capture_then_verify_round_trip(capsys):
         assert guard.main(["verify", str(hashfile)]) == 0
 
 
-def test_main_verify_fails_closed_on_missing_hashfile(capsys):
+def test_main_verify_fails_closed_on_missing_hashfile():
     guard = load_guard()
     with tempfile.TemporaryDirectory() as directory:
-        exit_code = guard.main(["verify", str(Path(directory) / "does-not-exist.txt")])
-        output = capsys.readouterr()
+        with captured_stderr() as buffer:
+            exit_code = guard.main(["verify", str(Path(directory) / "does-not-exist.txt")])
 
         assert exit_code == 1
-        assert "missing captured hashfile" in output.err
+        assert "missing captured hashfile" in buffer.getvalue()
 
 
 def test_main_rejects_unknown_command():
@@ -141,21 +150,21 @@ def test_capture_fails_closed_when_snapshot_dir_empty():
         assert not hashfile.exists()
 
 
-def test_main_capture_fails_closed_on_missing_snapshot_dir(capsys):
+def test_main_capture_fails_closed_on_missing_snapshot_dir():
     guard = load_guard()
     with tempfile.TemporaryDirectory() as directory:
         guard.SNAPSHOT_DIR = Path(directory) / "does-not-exist"
         hashfile = Path(directory) / "hashes.txt"
 
-        exit_code = guard.main(["capture", str(hashfile)])
-        output = capsys.readouterr()
+        with captured_stderr() as buffer:
+            exit_code = guard.main(["capture", str(hashfile)])
 
         assert exit_code == 1
-        assert "snapshot directory not found" in output.err
+        assert "snapshot directory not found" in buffer.getvalue()
         assert not hashfile.exists()
 
 
-def test_main_verify_fails_closed_when_tree_vanishes_after_capture(capsys):
+def test_main_verify_fails_closed_when_tree_vanishes_after_capture():
     guard = load_guard()
     with tempfile.TemporaryDirectory() as directory:
         snapshot_dir = Path(directory) / "__snapshot__"
@@ -170,9 +179,30 @@ def test_main_verify_fails_closed_when_tree_vanishes_after_capture(capsys):
             entry.unlink()
         snapshot_dir.rmdir()
 
-        exit_code = guard.main(["verify", str(hashfile)])
-        output = capsys.readouterr()
+        with captured_stderr() as buffer:
+            exit_code = guard.main(["verify", str(hashfile)])
 
         assert exit_code == 1
-        assert "snapshot directory not found" in output.err
-        assert "vanished" in output.err
+        text = buffer.getvalue()
+        assert "snapshot directory not found" in text
+        assert "vanished" in text
+
+
+def main() -> int:
+    test_unchanged_snapshot_tree_is_not_flagged()
+    test_snapshot_mutated_between_capture_and_verify_is_rejected()
+    test_baseline_already_differing_from_git_head_is_not_flagged()
+    test_verify_names_every_changed_file()
+    test_main_capture_then_verify_round_trip()
+    test_main_verify_fails_closed_on_missing_hashfile()
+    test_main_rejects_unknown_command()
+    test_capture_fails_closed_when_snapshot_dir_missing()
+    test_capture_fails_closed_when_snapshot_dir_empty()
+    test_main_capture_fails_closed_on_missing_snapshot_dir()
+    test_main_verify_fails_closed_when_tree_vanishes_after_capture()
+    print("verify-helm-snapshot-stability tests passed")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

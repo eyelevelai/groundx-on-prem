@@ -55,3 +55,15 @@ def test_file_present_on_only_one_side_is_rejected():
         failures = guard.compare_trees(src, mirror)
 
         assert any("app/celery.yaml" in failure and "only" in failure for failure in failures)
+
+
+def main() -> int:
+    test_identical_mirrors_pass()
+    test_differing_mirror_file_is_rejected()
+    test_file_present_on_only_one_side_is_rejected()
+    print("verify-helm-mirror tests passed")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
