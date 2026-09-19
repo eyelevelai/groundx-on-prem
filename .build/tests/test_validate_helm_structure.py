@@ -5,6 +5,7 @@ from pathlib import Path
 
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "bin" / "validate-helm.sh"
+TESTS_DIR = Path(__file__).resolve().parent
 MAX_LOOKAHEAD = 5
 
 UNITTEST_INVOCATION_PATTERN = re.compile(r"^\s*helm unittest\b")
@@ -48,9 +49,36 @@ def test_detector_catches_a_reintroduced_unguarded_invocation():
     assert unguarded != []
 
 
+def find_test_files_not_referenced_in_script(script_text: str) -> list[str]:
+    missing: list[str] = []
+    for test_file in sorted(TESTS_DIR.glob("test_*.py")):
+        if test_file.name not in script_text:
+            missing.append(test_file.name)
+    return missing
+
+
+def test_every_test_file_is_referenced_in_validate_helm():
+    script_text = SCRIPT_PATH.read_text(encoding="utf-8")
+
+    missing = find_test_files_not_referenced_in_script(script_text)
+
+    assert missing == []
+
+
+def test_detector_catches_a_test_file_omitted_from_validate_helm():
+    script_text = SCRIPT_PATH.read_text(encoding="utf-8")
+    regressed_text = script_text.replace("test_validate_helm_structure.py", "")
+
+    missing = find_test_files_not_referenced_in_script(regressed_text)
+
+    assert missing != []
+
+
 def main() -> int:
     test_every_helm_unittest_invocation_is_guarded_in_validate_helm()
     test_detector_catches_a_reintroduced_unguarded_invocation()
+    test_every_test_file_is_referenced_in_validate_helm()
+    test_detector_catches_a_test_file_omitted_from_validate_helm()
     print("validate-helm structure tests passed")
     return 0
 

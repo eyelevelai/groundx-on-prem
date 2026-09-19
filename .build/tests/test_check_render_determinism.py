@@ -79,7 +79,9 @@ def test_differing_renders_are_detected_and_fail_in_blocking_mode():
 
             assert diff != []
 
-            exit_code = checker.main(["--chart", "src/groundx", "--root", directory])
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                exit_code = checker.main(["--chart", "src/groundx", "--root", directory])
 
         assert exit_code == 1
 
