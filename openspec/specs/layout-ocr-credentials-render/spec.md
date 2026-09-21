@@ -37,7 +37,7 @@ Guarantee that `celery.yaml`'s `$hasOCR` conditional blocks (the OCR credentials
 
 ### Requirement: Layout Celery OCR credential wiring is scoped to layout workers only
 
-The `$mountOCR` guard in `src/groundx/templates/app/celery.yaml` (and its byte-identical mirror `helm/templates/app/celery.yaml`) SHALL evaluate true only for the Celery worker whose Deployment `layout-ocr-credentials.yaml` actually creates an OCR-credentials Secret for (the layout `ocr` worker), never for any other Celery worker produced by the same `range`, regardless of that other worker's own settings; a worker for which no OCR-credentials Secret exists SHALL never carry the `ocr-credentials-hash` annotation, the `/app/credentials.json` volume mount, or a `credentials-volume` volume. Invariant: a worker may carry this wiring only when a Secret that satisfies the exact reference it would emit (the layout worker's own OCR Secret, or the already layout-scoped shared-Google Secret) actually exists for that worker.
+When OCR is enabled with packaged `layout.ocr.credentials`, the `$mountOCR` guard in `src/groundx/templates/app/celery.yaml` and its mirror `helm/templates/app/celery.yaml` SHALL preserve the `ocr-credentials-hash` annotation, `/app/credentials.json` mount and credentials Secret volume on every enabled layout Celery worker: correct, map, ocr, process and save. These workers share the layout credential Secret and initialize OCR through the same Celery application. Non-layout Celery workers SHALL receive none of this layout OCR wiring. Existing shared-Google source selection and explicitly configured existing Secrets SHALL remain supported.
 
 #### Scenario: packaged layout OCR credentials do not leak onto extraction workers (polarity: reject before state)
 
@@ -65,24 +65,23 @@ The `$mountOCR` guard in `src/groundx/templates/app/celery.yaml` (and its byte-i
 - **AND THEN** the render is asserted to actually contain the `workspace-workspace` Deployment
   resource, for the same not-vacuously-absent reason as above
 
-#### Scenario: the layout OCR worker keeps its own credential wiring (polarity: finalize success; must-not-block case)
+#### Scenario: all layout Celery workers keep their credential wiring (polarity: finalize success; must-not-block case)
 
-- **GIVEN** the same mixed configuration (packaged layout OCR credentials, extraction and
-  workspace workers all enabled)
+- **GIVEN** packaged layout OCR credentials, all five layout Celery workers, extraction and
+  workspace workers are enabled
 - **WHEN** `helm template` renders the chart (both chart surfaces)
-- **THEN** the layout OCR worker's Deployment (`layout-ocr`) still renders the
+- **THEN** each Deployment (`layout-correct`, `layout-map`, `layout-ocr`, `layout-process`
+  and `layout-save`, using default service names) renders the
   `ocr-credentials-hash` annotation, the `/app/credentials.json` volume mount, and a
   `credentials-volume` volume backed by `layout-ocr-credentials-map`
-- **AND THEN** this holds with extraction and workspace workers active alongside it — a guard
-  narrowed to fix the leak must not also strip the wiring from the one worker that legitimately
-  needs it (an over-scoped guard is caught here, not just an under-scoped one)
+- **AND** each Deployment is asserted present and checked individually, so missing workers
+  or credentials on only `layout-ocr` cannot satisfy the requirement
 
-#### Scenario: shared Google credentials on the layout worker are unaffected (polarity: finalize success)
+#### Scenario: shared Google credentials on layout workers are unaffected (polarity: finalize success)
 
 - **GIVEN** `google.credentials` or `google.existingSecret` is configured (the shared-credential
   path) with `layout.ocr.credentials` unset, and extraction/workspace workers are enabled
 - **WHEN** `helm template` renders the chart (both chart surfaces)
-- **THEN** the layout OCR worker still mounts the shared Google credentials Secret exactly as
+- **THEN** enabled layout Celery workers still mount the shared Google credentials Secret exactly as
   before this change
 - **AND THEN** no extraction or workspace worker mounts it either
-
