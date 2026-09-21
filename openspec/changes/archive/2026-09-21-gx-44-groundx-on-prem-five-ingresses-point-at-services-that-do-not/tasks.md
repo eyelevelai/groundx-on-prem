@@ -39,16 +39,21 @@
 
 ## Deferred follow-ups
 
-Split out of this ticket at the brainstorm gate (see `proposal.md` "Explicitly out of scope");
-each needs a Linear ticket filed before the workspace change record is archived — see the
-workspace `openspec/changes/gx-44-.../tasks.md` "Deferred follow-ups" for the full list (the file
-Ingress never rendering, the unconditional `ai.eyelevelSearch.baseURL`, and the `src/groundx` vs
-`helm/` mirror drift on the `origin/0.2.7` line). No cross-service coordination applies —
-groundx-on-prem is the only affected repo for this change.
+Three items were split out of this ticket at the brainstorm gate (see `proposal.md` "Explicitly
+out of scope") — the file Ingress never rendering, the unconditional `ai.eyelevelSearch.baseURL`,
+and the `src/groundx` vs `helm/` mirror drift on the `origin/0.2.7` line — and a fourth, below, is
+a residual gap in the guard this change adds. Each needs a Linear ticket filed before the
+workspace change record is archived; the workspace `openspec/changes/gx-44-.../tasks.md`
+"Deferred follow-ups" carries all four. No cross-service coordination applies — groundx-on-prem is
+the only affected repo for this change.
 
-- The D4 not-created guard is gated on `hasSuffix ".api" $svc`, so it does not cover the `groundx`
-  or `layoutWebhook` pathless Ingress entries: either can still render naming a Service the chart
-  never creates. Reproduce with `helm template gx src/groundx --set groundx.enabled=false --set
-  groundx.ingress.enabled=true --set groundx.ingress.hostName=foo.example.com -s
+- The D4 not-created guard does not cover the `groundx` or `layoutWebhook` pathless Ingress
+  entries: either can still render naming a Service the chart never creates. The two escape by
+  different routes, and a fix must handle both — `layoutWebhook` is in the guarded loop but the
+  `hasSuffix ".api" $svc` gate skips it, while `groundx` is never in that loop at all (it is set
+  into `$svcs` by the pre-loop block at `_helpers/app/ingress.tpl:5-9`), so widening the suffix
+  gate alone would leave `groundx` exposed. Note `groundx.ingress` defaults to
+  `enabled: true`. Reproduce with `helm template gx src/groundx --set groundx.enabled=false
+  --set groundx.ingress.enabled=true --set groundx.ingress.hostName=foo.example.com -s
   templates/resources/ingress.yaml` — the rendered Ingress names backend `groundx`, and no
   `groundx` Service renders under that flag pair. *(ticket to file)*

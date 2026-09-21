@@ -20,9 +20,10 @@ this is a latent misconfiguration in the generated backend reference, not an obs
 
 Separately, nothing today stops a pathless API Ingress from being enabled on a component that the
 chart does not create — the Ingress renders naming a Service that will never exist, silently. The
-guard added for this (see "What Changes") is scoped to the five `*.api` entries; `groundx` and
-`layoutWebhook` are not `*.api` entries and remain able to render this way — a known, deferred gap
-(see `tasks.md` "Deferred follow-ups").
+guard added for this (see "What Changes") is scoped to the five `*.api` entries, so `groundx` and
+`layoutWebhook` remain able to render this way — `layoutWebhook` because the suffix gate skips it,
+`groundx` because it never enters the guarded loop at all. A known, deferred gap (see `tasks.md`
+"Deferred follow-ups").
 
 ## What Changes
 

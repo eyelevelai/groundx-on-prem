@@ -38,11 +38,15 @@
   `src/groundx/templates/_helpers/app/ingress.tpl`'s `groundx.app.ingress` entry loop, gated on
   `hasSuffix ".api" $svc`, so it evaluates only for the five literal `*.api` entries already in
   that loop's `$services` list (`extract.api`, `layout.api`, `ranker.api`, `summary.api`,
-  `workspace.api`). `file` and `layoutWebhook` are not `*.api` entries and never reach the guard —
-  a pathless Ingress on either can still name a Service the chart does not create (e.g.
-  `groundx.enabled: false` with `groundx.ingress.enabled: true`, reproduced by rendering
-  `templates/resources/ingress.yaml` under that flag pair and checking no `groundx` Service
-  renders); this is a deliberately narrow scope, deferred rather than fixed here (see `tasks.md`
+  `workspace.api`). Two entries can still render a pathless Ingress naming a Service the chart
+  does not create, by two different routes: `layoutWebhook` is in the loop but is not a `*.api`
+  entry, so the suffix gate skips it; `groundx` never enters the loop at all — it is set into
+  `$svcs` by the pre-loop block at `ingress.tpl:5-9`, so widening the suffix gate would not reach
+  it. Reproduce either with `--set <entry>.enabled=false --set <entry>.ingress.enabled=true` and
+  checking no matching Service renders. `file` is in the loop and also not `*.api`, but no orphan
+  is possible there: its ingress helper returns no `data` key, so `resources/ingress.yaml:10`
+  skips the resource and no Ingress renders at all (tracked separately as its own deferred item).
+  This is a deliberately narrow scope, deferred rather than fixed here (see `tasks.md`
   "Deferred follow-ups"), not an oversight. For each `*.api` entry, when its ingress is enabled
   **and** its `ingress.data` carries no non-empty `paths` (the pathless branch only — a non-empty
   `paths` block is user-managed and already renders its own backend, so there is nothing for this
