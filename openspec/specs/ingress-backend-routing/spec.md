@@ -1,7 +1,8 @@
 # ingress-backend-routing Specification
 
 ## Purpose
-TBD - created by archiving change gx-44-groundx-on-prem-five-ingresses-point-at-services-that-do-not. Update Purpose after archive.
+Define how the chart's generated (pathless) API Ingresses resolve their backend Service name, and
+require template rendering to fail rather than name a Service the chart does not create.
 ## Requirements
 ### Requirement: Generated Ingress backend names the rendered `-api` Service
 The chart SHALL name the generated (pathless) Ingress backend after the Service it actually creates (`groundx.<entry>.serviceName`, the `<component>-api` name) for each of the five API components — `extract.api`, `layout.api`, `ranker.api`, `summary.api`, `workspace.api` — on both supported Ingress API shapes, without changing the Ingress object's own `metadata.name`.

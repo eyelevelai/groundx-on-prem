@@ -29,15 +29,21 @@
   `networking.k8s.io/v1` shape (:48) and `serviceName` in the legacy shape (:53). `metadata.name`
   (:26) keeps using `$name`, so the Ingress object's identity is unchanged and `helm upgrade`
   patches in place. No `*-api.tpl` helper changes; `groundx.<entry>.serviceName` already returns
-  the rendered `-api` Service name for all five entries and is byte-identical for `groundx` /
-  `layoutWebhook` (whose Ingress and Service names already match — confirmed by render, see
+  the rendered `-api` Service name for all five entries and is unaffected by this naming defect
+  for `groundx` / `layoutWebhook` — their Ingress `name` already comes from that same
+  `serviceName` helper, so it already matches their Service name (confirmed by render, see
   `proposal.md`).
 
 - **Hard-fail (D4) site and scope.** The guard lives in
-  `src/groundx/templates/_helpers/app/ingress.tpl`'s `groundx.app.ingress` entry loop, evaluated
-  only for the five literal `*.api` entries already in that loop's `$services` list
-  (`extract.api`, `layout.api`, `ranker.api`, `summary.api`, `workspace.api` — `file` and
-  `layoutWebhook` are excluded by construction). For each such entry, when its ingress is enabled
+  `src/groundx/templates/_helpers/app/ingress.tpl`'s `groundx.app.ingress` entry loop, gated on
+  `hasSuffix ".api" $svc`, so it evaluates only for the five literal `*.api` entries already in
+  that loop's `$services` list (`extract.api`, `layout.api`, `ranker.api`, `summary.api`,
+  `workspace.api`). `file` and `layoutWebhook` are not `*.api` entries and never reach the guard —
+  a pathless Ingress on either can still name a Service the chart does not create (e.g.
+  `groundx.enabled: false` with `groundx.ingress.enabled: true`, reproduced by rendering
+  `templates/resources/ingress.yaml` under that flag pair and checking no `groundx` Service
+  renders); this is a deliberately narrow scope, deferred rather than fixed here (see `tasks.md`
+  "Deferred follow-ups"), not an oversight. For each `*.api` entry, when its ingress is enabled
   **and** its `ingress.data` carries no non-empty `paths` (the pathless branch only — a non-empty
   `paths` block is user-managed and already renders its own backend, so there is nothing for this
   guard to judge), the loop calls `include (printf "groundx.%s.create" $entry) $`; when that

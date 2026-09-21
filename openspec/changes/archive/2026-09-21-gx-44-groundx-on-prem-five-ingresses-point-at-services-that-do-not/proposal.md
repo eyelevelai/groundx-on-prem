@@ -13,12 +13,16 @@ while the chart actually renders that Service as `<component>-api` (e.g. `layout
 from the base `serviceName` helper while the Service itself is named via `printf "%s-api"`, e.g.
 `src/groundx/templates/_helpers/app/layout-api.tpl:8-11` vs `:205`). The Ingress therefore points
 at a Service the chart never creates, on both supported Ingress API shapes
-(`networking.k8s.io/v1` and the legacy shape). `groundx` and `layoutWebhook` are unaffected — their
-Ingress and Service names already match. No deployment evidence of customer impact exists; this is
-a latent misconfiguration in the generated backend reference, not an observed outage.
+(`networking.k8s.io/v1` and the legacy shape). `groundx` and `layoutWebhook` are unaffected by
+this naming defect — their Ingress `name` already comes from the same `serviceName` helper as
+their Service, so the two names already match. No deployment evidence of customer impact exists;
+this is a latent misconfiguration in the generated backend reference, not an observed outage.
 
 Separately, nothing today stops a pathless API Ingress from being enabled on a component that the
-chart does not create — the Ingress renders naming a Service that will never exist, silently.
+chart does not create — the Ingress renders naming a Service that will never exist, silently. The
+guard added for this (see "What Changes") is scoped to the five `*.api` entries; `groundx` and
+`layoutWebhook` are not `*.api` entries and remain able to render this way — a known, deferred gap
+(see `tasks.md` "Deferred follow-ups").
 
 ## What Changes
 

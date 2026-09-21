@@ -45,3 +45,10 @@ workspace `openspec/changes/gx-44-.../tasks.md` "Deferred follow-ups" for the fu
 Ingress never rendering, the unconditional `ai.eyelevelSearch.baseURL`, and the `src/groundx` vs
 `helm/` mirror drift on the `origin/0.2.7` line). No cross-service coordination applies —
 groundx-on-prem is the only affected repo for this change.
+
+- The D4 not-created guard is gated on `hasSuffix ".api" $svc`, so it does not cover the `groundx`
+  or `layoutWebhook` pathless Ingress entries: either can still render naming a Service the chart
+  never creates. Reproduce with `helm template gx src/groundx --set groundx.enabled=false --set
+  groundx.ingress.enabled=true --set groundx.ingress.hostName=foo.example.com -s
+  templates/resources/ingress.yaml` — the rendered Ingress names backend `groundx`, and no
+  `groundx` Service renders under that flag pair. *(ticket to file)*
