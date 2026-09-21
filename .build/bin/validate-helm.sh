@@ -76,6 +76,9 @@ for test_file in .build/tests/test_*.py; do
   grep -qF "${base}" "${SELF_PATH}" || { echo "orphaned guard-script test file not referenced in validate-helm.sh: ${base}" >&2; exit 1; }
 done
 
+echo "==> Verifying every helm unittest invocation is guarded (see GX-22)"
+[[ "$(grep -cE '^[[:space:]]*helm unittest\b' "${SELF_PATH}")" == "1" ]] || { echo "expected exactly one guarded helm unittest invocation (inside run_helm_unittest_and_verify_stability) in validate-helm.sh" >&2; exit 1; }
+
 echo "==> Running guard-script unit tests"
 "${PY}" .build/tests/test_verify_helm_unittest_plugin_version.py
 "${PY}" .build/tests/test_verify_helm_snapshot_stability.py

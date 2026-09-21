@@ -23,26 +23,18 @@ TBD - created by archiving change gx-22-groundx-on-prem-helm-unittest-snapshot-f
 - **THEN** it passes
 - **Polarity:** finalize success.
 
-### Requirement: The repeat-render determinism check lands warn-only, with no flip condition in this change
+### Removed: the repeat-render determinism check
 
-`.build/bin/validate-helm.sh` SHALL run a repeat-render determinism check that renders the chart twice from the same values and reports any diff, and SHALL warn rather than fail the script on any diff it finds, stating in that warning that it is warn-only. This change introduces no condition under which it becomes blocking: the check renders through the `helm` binary directly and structurally cannot observe a defect in the `helm-unittest` plugin's own snapshot cache/serializer, which is this ticket's actual root cause — so an observed-clean render proves nothing about GX-22's fix and must not be used to flip this check.
-
-#### Scenario: Warn-only mode never blocks on a render diff (must-not-block)
-
-- **GIVEN** the repeat-render determinism check is wired into `.build/bin/validate-helm.sh`
-- **WHEN** it finds a diff between two renders of the chart from the same values
-- **THEN** it prints the diff and a message stating it is warn-only, and the script continues (exit
-  0 from this step)
-- **Polarity:** skip unrelated repair path — a render diff this check finds is not routed into a
-  hard failure, because this check cannot attribute the diff to GX-22's actual defect class.
-
-#### Scenario: A clean two-run render also does not block (must-not-block)
-
-- **GIVEN** the repeat-render determinism check finds no diff between two renders
-- **WHEN** the check runs
-- **THEN** it passes, as it always has, with no change in behavior triggered by this being clean
-- **Polarity:** finalize success — a clean result is accepted as the ordinary case, not treated as
-  the trigger for a mode change this change does not implement.
+**Removed 2026-09-21.** This requirement previously described `.build/bin/check-render-determinism.py`
+running warn-only inside `.build/bin/validate-helm.sh`. A later senior-engineer review found that
+check's own `FLIP_CONDITION_MESSAGE` already documented it renders through the `helm` binary
+directly and therefore structurally cannot observe a defect in the `helm-unittest` plugin's own
+snapshot cache/serializer — this ticket's actual root cause — and it only ever ran `--warn-only`,
+never enforcing anything. It was deleted, along with its test file and its three
+`validate-helm.sh` call sites, in commit `af4c511` (see the archived change record's 2026-09-21
+amendment for the full history). No replacement requirement exists; the code no longer has this
+capability. The mirror-equality requirement above and the snapshot-rewrite-on-run requirement below
+remain the enforcement mechanisms this gate runs.
 
 ### Requirement: Regenerated snapshots are reviewed entry by entry before commit
 

@@ -194,3 +194,14 @@ above is left as written; this entry supersedes it in place:
   release from 2019 to an unreleased `main` build (Stage B's empirical search, see "Fix mechanism"
   above), and flagged there as needing "a human decision on how to close this specific
   sub-finding" — is tracked as **GX-59**.
+
+**2026-09-21.** A later senior-engineer review round found `.build/bin/verify-helm-mirror.py`
+duplicated `.build/bin/verify-storage-contract.py`'s pre-existing mirror-equality check, and
+`.build/bin/check-render-determinism.py` could never observe this ticket's actual defect class (per
+its own `FLIP_CONDITION_MESSAGE`, and it only ever ran `--warn-only`, never enforcing anything) —
+both confirmed and deleted, along with their test files, in commit `af4c511`, replaced respectively
+by generalizing `verify_mirrors()` to byte-compare the full `src/groundx/templates` <->
+`helm/templates` tree and by removing the dead-weight determinism check outright. **This supersedes
+the "repeat-render determinism" Invariant above and the "Flipping `check-render-determinism.py` to
+blocking is out of scope" Open item** — the check itself no longer exists, so there is no flip
+condition left to reason about. The original text is left as written per Record hygiene.

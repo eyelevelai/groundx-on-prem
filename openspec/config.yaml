@@ -26,7 +26,7 @@ context: |
   
   - AGENT BOUNDARY — READ THIS BEFORE ANY EDIT:
     - src/groundx/ is the SOURCE OF TRUTH. All Helm chart changes go here.
-    - helm/ is a MANUAL MIRROR of src/groundx/ with tests/ removed and Chart.yaml reformatted. DO NOT HAND-EDIT helm/. There is NO in-repo regen script and NO drift check between helm/ and src/. Any change to src/ must be manually synced to helm/. This is a latent drift risk and a prime early-win cleanup target.
+    - helm/ is a MANUAL MIRROR of src/groundx/ with tests/ removed and Chart.yaml reformatted. DO NOT HAND-EDIT helm/. There is NO in-repo regen script (nothing auto-syncs helm/ from src/groundx/) — a human still has to mirror edits by hand. There IS a drift check: verify_mirrors() in .build/bin/verify-storage-contract.py (run by validate-helm.sh's "Verifying storage contract" step) byte-compares the full src/groundx/templates tree against helm/templates on every gate run and fails on any mismatch. Any change to src/ must still be manually synced to helm/ before that gate run — the missing regen script remains a latent-drift/prime early-win cleanup target even though the gate now catches drift before merge.
     - helm-releases/*.tgz are build outputs of src/build.sh (helm package). Never edit.
     - src/groundx/tests/__snapshot__/*.snap are generated golden files from helm-unittest. Never hand-edit; regenerate with: helm unittest -u src/groundx. CI (helm-tests.yml) enforces snapshot match — this is the ONLY check that guards template changes.
     - terraform/**/.terraform.lock.hcl are generated lockfiles.
@@ -64,7 +64,7 @@ context: |
     - helm unittest src/groundx (snapshot tests — the CI gate, enforced in helm-tests.yml)
     - helm template src/groundx -f values/minikube/values.yaml (render check)
     - helm lint (declared in repos.yml run.lint)
-    - NO drift check between helm/ and src/groundx/ — gap.
+    - verify_mirrors() in .build/bin/verify-storage-contract.py enforces the full templates/ tree on every gate run (drift IS checked). The remaining gap is the absence of a regen script — nothing auto-syncs helm/ from src/groundx/, so a human still mirrors edits by hand.
   
   - COMMIT CONVENTION: standard conventional commits (inferred; no explicit convention in-repo).
   
@@ -83,7 +83,7 @@ context: |
       a parallel bash test harness.
 
   - KNOWN GAPS / OPEN QUESTIONS:
-    - helm/ <-> src/groundx duplication: no regen script, no drift check — manual sync, latent drift.
+    - helm/ <-> src/groundx duplication: no regen script (manual sync required); a drift check DOES exist (verify_mirrors() in .build/bin/verify-storage-contract.py fails the gate on mismatch) — the remaining gap is only the absence of a regen script, not the absence of a check.
     - upload.groundx.ai model-weight download hardcoded in init-containers — air-gap blocker; no documented pre-seeding mechanism.
     - licenseKey phone-home behavior unknown (validation logic lives in opaque container images).
     - Neo4j (graph) service wired in legacy bin/terraform but absent from current chart — likely legacy-only, unconfirmed.

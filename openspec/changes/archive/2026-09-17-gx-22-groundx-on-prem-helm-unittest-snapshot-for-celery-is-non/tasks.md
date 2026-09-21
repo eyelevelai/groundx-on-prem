@@ -438,3 +438,19 @@ unconditional `python -m pytest .build/tests -q` step (no pytest install site ex
 pre-push gate for it) — see `.build/bin/validate-helm.sh` and `.build/tests/` as they stand today
 for the current, pytest-independent invocation. The `check:` text above is left as originally
 written, per Record hygiene.
+
+**2026-09-21.** A later senior-engineer review round found `.build/bin/verify-helm-mirror.py`
+(landed by task 0.4, wired by task 3.1) duplicated `.build/bin/verify-storage-contract.py`'s
+pre-existing `verify_mirrors()` mirror-equality check, and `.build/bin/check-render-determinism.py`
+(landed by task 0.4, wired by task 3.2) could never observe this ticket's actual defect class — its
+own `FLIP_CONDITION_MESSAGE` documented that it renders through the `helm` binary directly and
+structurally cannot observe a defect in the `helm-unittest` plugin's own snapshot cache/serializer,
+and it only ever ran `--warn-only`, never enforcing anything. Both were confirmed and deleted, along
+with their test files, in commit `af4c511`, replaced respectively by generalizing
+`verify_mirrors()` to byte-compare the full `src/groundx/templates` <-> `helm/templates` tree and by
+removing the dead-weight determinism check outright. **Tasks 0.4, 3.1, and 3.2 above are superseded
+by this entry** — their original text and `[x]` marks are left as written per Record hygiene, but
+their `check:` commands (which invoke the now-deleted `verify-helm-mirror.py` /
+`check-render-determinism.py` and their deleted test files) will fail permanently if re-run; do not
+treat a failure of those specific commands as a regression. See `proposal.md`'s and `design.md`'s
+matching 2026-09-21 amendments for the superseded design decisions.

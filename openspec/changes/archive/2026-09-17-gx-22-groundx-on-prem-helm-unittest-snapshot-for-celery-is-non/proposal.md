@@ -112,3 +112,15 @@ and the gate-assertion placement are fully specified in the accepted cross-servi
 left as written; this entry supersedes it in place. See `design.md`'s Amendments for the other
 follow-up item filed from this change (GX-59, the `helm-unittest -u` empty-render label-drop
 hazard), which this proposal did not separately name.
+
+**2026-09-21.** A later senior-engineer review round found `.build/bin/verify-helm-mirror.py`
+duplicated `.build/bin/verify-storage-contract.py`'s pre-existing mirror-equality check, and
+`.build/bin/check-render-determinism.py` could never observe this ticket's actual defect class —
+both confirmed and deleted, along with their test files, in commit `af4c511`, replaced respectively
+by generalizing the existing `verify_mirrors()` function to byte-compare the full
+`src/groundx/templates` <-> `helm/templates` tree and by removing the dead-weight determinism check
+outright. **This supersedes the "Keep the already-landed guard tooling as-is" decision** (under
+"What Changes" above) **and the "Already-landed guard tooling ... is unaffected by this change"
+line** (under "Blast Radius" above) — both files those entries named no longer exist. The original
+text is left as written per Record hygiene; see `docs/agents/repo-guide.md` and
+`.build/bin/verify-storage-contract.py` for the current, correct state of the mirror-equality check.
