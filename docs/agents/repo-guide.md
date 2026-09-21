@@ -21,8 +21,7 @@ dependency on any other `groundx-*` repo** (verified).
 
 - **Lint / render:** `helm lint src/groundx` · `helm template src/groundx -f src/groundx/values/minikube/values.yaml`
 - **Test:** `helm unittest src/groundx` (requires the `helm-unittest` plugin, pinned at
-  `.build/HELM_UNITTEST_VERSION`:
-  `helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "$(cat .build/HELM_UNITTEST_VERSION)"`)
+  `.build/HELM_UNITTEST_VERSION`; see `ARCHITECTURE_NOTES.md` §5 for the exact install command)
 - **Helpers:** `bin/uuid` generates the UUIDs needed for `admin.apiKey` / `admin.username`
 - **Real install** (needs a cluster + license):
   `helm repo add groundx https://registry.groundx.ai/helm && helm repo update`
@@ -57,9 +56,11 @@ without explicit human authorization.**
   `src/containers/`, `monitoring/`, `bin/` logic (with the privileged caveats above), docs.
 - **You MUST NOT hand-edit:**
   - **`helm/`** — a **near-identical published mirror** of `src/groundx` (tests/ removed, `Chart.yaml`
-    reordered). Edit `src/groundx/`, then sync to `helm/`. Reason: **mirror**. ⚠️ **Enforcement: NONE** —
-    there is no in-repo script that regenerates `helm/` from `src/` and no check that asserts they match.
-    Manual sync, latent drift; a prime cleanup target (logged in `service.yaml` `known_gaps`).
+    reordered). Edit `src/groundx/`, then sync to `helm/`. Reason: **mirror**. Enforcement: manual
+    sync (there is no regen script), but `.build/bin/verify-storage-contract.py`'s `verify_mirrors()`
+    (run by `.build/bin/validate-helm.sh`'s "Verifying storage contract" step) byte-compares the full
+    `src/groundx/templates` tree against `helm/templates`, plus the `prereqs/storageclass/` files, on
+    every gate run — drift there fails the gate.
   - **`src/groundx/tests/__snapshot__/*.snap`** — generated golden files. Do not hand-edit; regenerate
     with `helm unittest -u src/groundx`. Reason: **generated**. Enforcement: `helm-tests.yml` CI asserts
     rendered output matches these snapshots.
@@ -75,9 +76,10 @@ without explicit human authorization.**
 
 ## Repo-specific gotchas
 
-- **`helm/` ↔ `src/groundx/` duplication has no regen script and no drift check** — the single most
-  important hazard. A change to `src/groundx/` that isn't mirrored into `helm/` silently ships stale
-  templates. Sync both, every time.
+- **`helm/` ↔ `src/groundx/` duplication has no regen script** — still a real hazard even though the
+  gate's `verify_mirrors()` catches drift before merge (see "Agent boundaries" above). A change to
+  `src/groundx/` that isn't mirrored into `helm/` fails the gate rather than shipping silently, but
+  there is nothing that syncs it for you. Sync both, every time.
 - **`upload.groundx.ai` model-weight download is HARDCODED** in inference init-containers — an
   **air-gap blocker**; weights must be mirrored for offline installs (mechanism not documented in-repo).
 - **The `groundx.extract` config binding is UNSCHEMATIZED.** `extract-config-py.yaml` generates Python
