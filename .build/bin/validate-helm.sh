@@ -142,10 +142,24 @@ for chart in src/groundx helm; do
       exit 1
     fi
   done
-  if ! grep -q -- "ocr-credentials-hash" <<<"${mixed_worker_render}" || ! grep -q -- "layout-ocr-credentials-map" <<<"${mixed_worker_render}"; then
-    echo "${chart}: layout-ocr must keep its OCR annotation and credentials Secret volume when extraction and workspace workers are also enabled." >&2
-    exit 1
-  fi
+  for worker in layout-correct layout-map layout-ocr layout-process layout-save; do
+    if ! worker="${worker}" yq -e '
+      select(.kind == "Deployment" and .metadata.name == strenv(worker)) |
+      (.spec.template.metadata.annotations."ocr-credentials-hash" // "" | test("^[0-9a-f]{64}$")) and
+      ([.spec.template.spec.containers[0].volumeMounts[] | select(
+        .name == "credentials-volume" and
+        .mountPath == "/app/credentials.json" and
+        .subPath == "credentials.json"
+      )] | length == 1) and
+      ([.spec.template.spec.volumes[] | select(
+        .name == "credentials-volume" and
+        .secret.secretName == "layout-ocr-credentials-map"
+      )] | length == 1)
+    ' <<<"${mixed_worker_render}" >/dev/null; then
+      echo "${chart}: ${worker} must render with its OCR annotation, credentials mount and layout credentials Secret volume." >&2
+      exit 1
+    fi
+  done
 done
 
 echo "==> Verifying shared Google credential isolation and rotation"
