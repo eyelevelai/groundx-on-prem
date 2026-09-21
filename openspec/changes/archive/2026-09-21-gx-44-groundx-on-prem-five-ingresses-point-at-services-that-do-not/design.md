@@ -43,9 +43,12 @@
   entry, so the suffix gate skips it; `groundx` never enters the loop at all — it is set into
   `$svcs` by the pre-loop block at `ingress.tpl:5-9`, so widening the suffix gate would not reach
   it. Reproduce either with `--set <entry>.enabled=false --set <entry>.ingress.enabled=true` and
-  checking no matching Service renders. `file` is in the loop and also not `*.api`, but no orphan
-  is possible there: its ingress helper returns no `data` key, so `resources/ingress.yaml:10`
-  skips the resource and no Ingress renders at all (tracked separately as its own deferred item).
+  checking no matching Service renders. `file` is in the loop and also not `*.api`, but on the
+  ordinary opt-in path enabling `file.ingress` renders no Ingress at all: its helper returns the
+  raw values with no `data` key, so `resources/ingress.yaml:10` skips the resource (tracked
+  separately as its own deferred item). Writing the helper's internal shape directly
+  (`file.ingress.data.*`) does render one, but with an empty `metadata.name`, which the API server
+  rejects — so it never becomes a cluster orphan either.
   This is a deliberately narrow scope, deferred rather than fixed here (see `tasks.md`
   "Deferred follow-ups"), not an oversight. For each `*.api` entry, when its ingress is enabled
   **and** its `ingress.data` carries no non-empty `paths` (the pathless branch only — a non-empty
