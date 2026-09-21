@@ -27,3 +27,19 @@
 No manual ops, secret change, or canary/stage sequencing beyond a normal chart-version bump is
 required — see `proposal.md`'s Rollback/rollforward section. This is an `INDEPENDENT`,
 single-repo change with no cross-service coordination to record.
+
+## Merged closeout
+
+[Chart fix #111](https://github.com/eyelevelai/groundx-on-prem/pull/111) merged into
+`0.2.7` at `963af99010ab376b2103bf0a71dd9f86144a890c` on 2026-09-21, including
+[regression coverage #113](https://github.com/eyelevelai/groundx-on-prem/pull/113).
+
+All five layout Celery workers retain credentials. The durable
+`layout-ocr-credentials-render` spec defines this scope. The tests require each
+worker's annotation, mount and Secret reference, with CI checks on both chart
+copies. Restricting packaged credentials to `layout-ocr` fails the four other
+worker tests and both chart checks; the unmodified code passes.
+
+This closes the chart implementation and regression-coverage work. Merge does
+not establish chart publication or deployment. GX-50 image dependencies and
+the separate harness and engineering-context documentation remain separate work.
