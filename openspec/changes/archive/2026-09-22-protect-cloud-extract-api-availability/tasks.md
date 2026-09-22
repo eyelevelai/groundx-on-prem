@@ -5,4 +5,4 @@
 - [x] Enable budgets only for redundant hosted APIs.
 - [x] Mirror source chart changes into `helm/`.
 - [x] Run the full Helm validator and verify the hosted render.
-- [ ] Deploy through the normal hosted production Helm workflow and verify live readiness.
+- [ ] Deferred: deploy through the normal hosted production Helm workflow and verify live readiness. Merge and local render evidence do not prove deployment.
