@@ -1,0 +1,19 @@
+suite: "generated ingress backend routing"
+chart:
+  appVersion: 0.1.0
+  version: 0.1.0
+
+tests:
+  - it: "enabled: extract api ingress, legacy apiVersion shape"
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.extract-ingress-legacy.yaml
+    asserts:
+      - equal:
+          path: apiVersion
+          value: extensions/v1beta1
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.serviceName
+          value: extract-api
