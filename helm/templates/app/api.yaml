@@ -23,6 +23,7 @@
 {{- $mapPrefix := get $svcData "mapPrefix" -}}
 {{- $node := get $svcData "node" -}}
 {{- $nsl := get $svcData "nodeSelector" -}}
+{{- $pdb := get $svcData "disruptionBudget" | default dict -}}
 {{- $probe := get $svcData "probe" | default dict -}}
 {{- $pvc := get $svcData "pvc" | default dict -}}
 {{- $rp := get $svcData "replicas" -}}
@@ -182,6 +183,22 @@ spec:
 
 {{- if not (empty $pvc) }}
 {{ include "groundx.renderPVC" (dict "ctx" $pvc "app" $svc "root" $) }}
+{{- end }}
+
+{{- if dig "enabled" false $pdb }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $svc }}
+  namespace: {{ include "groundx.ns" $ | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: {{ $svc }}
 {{- end }}
 
 {{ end }}

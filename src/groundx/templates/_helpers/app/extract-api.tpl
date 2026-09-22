@@ -265,6 +265,7 @@ false
 {{- $cfg := dict
   "cfg"          (printf "%s-config-py-map" $svc)
   "dependencies" $dpnd
+  "disruptionBudget" (dig "disruptionBudget" dict $in)
   "env"          $env
   "fileDomain"   (include "groundx.extract.file.serviceDependency" .)
   "filePort"     (include "groundx.extract.file.port" .)
