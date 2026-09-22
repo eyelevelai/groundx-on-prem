@@ -247,6 +247,7 @@ false
 {{- $cfg := dict
   "cfg"          (printf "%s-config-py-map" $svc)
   "dependencies" $dpnd
+  "disruptionBudget" (dig "disruptionBudget" dict $in)
   "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
   "image"        (include "groundx.layout.api.image" .)
   "interface"    (include "groundx.layout.api.interface" .)

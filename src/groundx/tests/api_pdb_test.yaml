@@ -1,10 +1,10 @@
-suite: "extract api disruption budget renders as expected"
+suite: "api disruption budgets render as expected"
 chart:
   appVersion: 0.1.0
   version: 0.1.0
 
 tests:
-  - it: "default: no extract api disruption budget"
+  - it: "default: no shared api disruption budgets"
     templates:
       - ../templates/app/api.yaml
     values:
@@ -12,9 +12,33 @@ tests:
     set:
       extract.enabled: true
       extract.api.enabled: true
+      layout.api.enabled: true
+      ranker.api.enabled: true
+      summary.api.enabled: true
+      summary.inference.enabled: true
+      workspace.enabled: true
+      workspace.api.enabled: true
+      workspace.existingSecret: workspace-test-secret
     asserts:
-      - hasDocuments:
-          count: 2
+      - containsDocument:
+          apiVersion: policy/v1
+          kind: PodDisruptionBudget
+          any: true
+        not: true
+
+  - it: "default: no groundx api disruption budget"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      groundx.enabled: true
+    asserts:
+      - containsDocument:
+          apiVersion: policy/v1
+          kind: PodDisruptionBudget
+          any: true
+        not: true
 
   - it: "enabled: extract api disruption budget"
     templates:
@@ -40,3 +64,126 @@ tests:
       - equal:
           path: spec.selector.matchLabels.app
           value: extract-api
+
+  - it: "enabled: layout api disruption budget"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      layout.api.enabled: true
+      layout.api.disruptionBudget.enabled: true
+    documentSelector:
+      path: kind
+      value: PodDisruptionBudget
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: metadata.name
+          value: layout-api
+      - equal:
+          path: spec.minAvailable
+          value: 1
+      - equal:
+          path: spec.selector.matchLabels.app
+          value: layout-api
+
+  - it: "enabled: ranker api disruption budget"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      ranker.api.enabled: true
+      ranker.api.disruptionBudget.enabled: true
+    documentSelector:
+      path: kind
+      value: PodDisruptionBudget
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: metadata.name
+          value: ranker-api
+      - equal:
+          path: spec.minAvailable
+          value: 1
+      - equal:
+          path: spec.selector.matchLabels.app
+          value: ranker-api
+
+  - it: "enabled: summary api disruption budget"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      summary.api.enabled: true
+      summary.inference.enabled: true
+      summary.api.disruptionBudget.enabled: true
+    documentSelector:
+      path: kind
+      value: PodDisruptionBudget
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: metadata.name
+          value: summary-api
+      - equal:
+          path: spec.minAvailable
+          value: 1
+      - equal:
+          path: spec.selector.matchLabels.app
+          value: summary-api
+
+  - it: "enabled: workspace api disruption budget"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      workspace.enabled: true
+      workspace.api.enabled: true
+      workspace.api.disruptionBudget.enabled: true
+      workspace.existingSecret: workspace-test-secret
+    documentSelector:
+      path: kind
+      value: PodDisruptionBudget
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: metadata.name
+          value: workspace-api
+      - equal:
+          path: spec.minAvailable
+          value: 1
+      - equal:
+          path: spec.selector.matchLabels.app
+          value: workspace-api
+
+  - it: "enabled: groundx api disruption budget"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      groundx.enabled: true
+      groundx.disruptionBudget.enabled: true
+    documentSelector:
+      path: kind
+      value: PodDisruptionBudget
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: metadata.name
+          value: groundx
+      - equal:
+          path: spec.minAvailable
+          value: 1
+      - equal:
+          path: spec.selector.matchLabels.app
+          value: groundx

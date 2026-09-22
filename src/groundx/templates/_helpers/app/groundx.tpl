@@ -234,6 +234,7 @@ false
 
 {{- $cfg := dict
   "dependencies" $dpnd
+  "disruptionBudget" (dig "disruptionBudget" dict $in)
   "image"        (include "groundx.groundx.image" .)
   "interface"    (include "groundx.groundx.interface" . | trim)
   "name"         (include "groundx.groundx.serviceName" .)
