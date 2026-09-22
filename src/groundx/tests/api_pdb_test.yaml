@@ -1,0 +1,51 @@
+suite: "extract api disruption budget renders as expected"
+chart:
+  appVersion: 0.1.0
+  version: 0.1.0
+
+templates:
+  - templates/app/extract-api-pdb.yaml
+  - templates/_helpers/app/extract-api.tpl
+  - templates/_helpers/app/extract.tpl
+  - templates/_helpers/elements/labels.tpl
+  - templates/_helpers/main.tpl
+
+tests:
+  - it: "default: no extract api disruption budget"
+    template: templates/app/extract-api-pdb.yaml
+    values:
+      - ../values.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: "enabled: extract api disruption budget"
+    template: templates/app/extract-api-pdb.yaml
+    values:
+      - ../values.yaml
+    set:
+      extract.enabled: true
+      extract.api.enabled: true
+      extract.api.disruptionBudget.enabled: true
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: metadata.name
+          value: extract-api
+      - equal:
+          path: spec.minAvailable
+          value: 1
+      - equal:
+          path: spec.selector.matchLabels.app
+          value: extract-api
+
+  - it: "disabled api: no disruption budget"
+    template: templates/app/extract-api-pdb.yaml
+    values:
+      - ../values.yaml
+    set:
+      extract.api.disruptionBudget.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
