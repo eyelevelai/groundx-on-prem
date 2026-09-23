@@ -115,6 +115,20 @@ for chart in src/groundx helm; do
   expect_helm_template_failure "${chart}" "minLongEdgePx" --set extract.agent.targetLongEdgePx=899 --set extract.agent.minLongEdgePx=900
   expect_helm_template_failure "${chart}" "jpegQualities" --set-json extract.agent.jpegQualities='[96]'
   expect_helm_template_failure "${chart}" "maxImagePayloadBytes" --set extract.agent.maxImagePayloadBytes=0
+  expect_helm_template_failure "${chart}" "workspace.api.ingress is enabled but workspace.api is not created" --set workspace.api.ingress.enabled=true
+done
+
+echo "==> Verifying generated Ingress backend routing"
+for chart in src/groundx helm; do
+  ingress_output="$(helm template phoenix-check "${chart}" -f src/groundx/tests/files/values.phoenix.yaml -s templates/resources/ingress.yaml)"
+  if [[ "${ingress_output}" != *"name: extract-api"* ]]; then
+    echo "Expected ${chart} generated Ingress backend to name extract-api" >&2
+    exit 1
+  fi
+  if [[ "${ingress_output}" != *"name: summary-api"* ]]; then
+    echo "Expected ${chart} generated Ingress backend to name summary-api" >&2
+    exit 1
+  fi
 done
 
 echo "==> Verifying Helm snapshots did not silently drop empty renders"
