@@ -398,7 +398,7 @@ tests:
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "cognito:\n\\s+mode: local"
+          pattern: "cognito:\n\\s+mode: \"local\""
         template: ../templates/resources/config-yaml.yaml
   - it: "cognito: existing enum value still renders"
     templates:
@@ -429,7 +429,7 @@ tests:
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "cognito:\n\\s+mode: cognito"
+          pattern: "cognito:\n\\s+mode: \"cognito\""
         template: ../templates/resources/config-yaml.yaml
   - it: "unset: no cognito block renders"
     templates:

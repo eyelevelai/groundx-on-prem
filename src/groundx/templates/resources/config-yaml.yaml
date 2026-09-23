@@ -165,7 +165,7 @@ data:
     {{- if ne (include "groundx.cognito.mode" .) "" }}
 
     cognito:
-      mode: {{ include "groundx.cognito.mode" . }}
+      mode: {{ include "groundx.cognito.mode" . | quote }}
     {{- end }}
 
     engines:
