@@ -6,6 +6,12 @@
 #   https://github.com/helm-unittest/helm-unittest/releases/download/v<version>/helm-unittest-<os>-<arch>-<version>.tgz
 # Each archive is extracted and its `untt-<os>-<arch>[.exe]` member is hashed with sha256.
 #
+# The 7 lines below are one per platform the plugin's own installer (install-binary.sh's
+# verifySupported()) ships a prebuilt binary for — not every os-arch pair resolve_arch()/resolve_os()
+# can name. A host resolving to any other os-arch pair (e.g. armv5/armv6/armv7, 386) has no entry
+# here and verify-helm-unittest-plugin-version.py fails closed on it, which is correct: this file
+# only covers what the plugin can actually install.
+#
 # Regenerate ALL 7 lines below whenever .build/HELM_UNITTEST_VERSION changes: download each
 # platform's .tgz from the URL pattern above for the new version, extract the untt-<os>-<arch>
 # binary, and sha256 it. A partial regeneration (some platforms updated, some left stale) is

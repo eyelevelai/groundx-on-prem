@@ -1,7 +1,12 @@
 # helm-chart-render-determinism Specification
 
 ## Purpose
-TBD - created by archiving change gx-22-groundx-on-prem-helm-unittest-snapshot-for-celery-is-non. Update Purpose after archive.
+Define how `.build/bin/validate-helm.sh` guards the chart's render determinism: `helm/` and
+`src/groundx/templates` stay byte-identical mirrors, a `helm unittest` run must not rewrite the
+committed snapshots it runs against, regenerated snapshots are reviewed entry by entry before
+commit, and the installed `helm-unittest` plugin (both its declared version and its actual binary
+bytes) matches the repo's single pinned version.
+
 ## Requirements
 ### Requirement: The build gate enforces `helm/` ↔ `src/groundx/templates` mirror equality
 
@@ -22,19 +27,6 @@ TBD - created by archiving change gx-22-groundx-on-prem-helm-unittest-snapshot-f
 - **WHEN** the mirror-equality check runs
 - **THEN** it passes
 - **Polarity:** finalize success.
-
-### Removed: the repeat-render determinism check
-
-**Removed 2026-09-21.** This requirement previously described `.build/bin/check-render-determinism.py`
-running warn-only inside `.build/bin/validate-helm.sh`. A later senior-engineer review found that
-check's own `FLIP_CONDITION_MESSAGE` already documented it renders through the `helm` binary
-directly and therefore structurally cannot observe a defect in the `helm-unittest` plugin's own
-snapshot cache/serializer — this ticket's actual root cause — and it only ever ran `--warn-only`,
-never enforcing anything. It was deleted, along with its test file and its three
-`validate-helm.sh` call sites, in commit `af4c511` (see the archived change record's 2026-09-21
-amendment for the full history). No replacement requirement exists; the code no longer has this
-capability. The mirror-equality requirement above and the snapshot-rewrite-on-run requirement below
-remain the enforcement mechanisms this gate runs.
 
 ### Requirement: Regenerated snapshots are reviewed entry by entry before commit
 
