@@ -65,10 +65,14 @@ vanished-empty-render-label rewrite this assertion targets.
 - **GIVEN** a hash of every file under `src/groundx/tests/__snapshot__` was captured before
   `helm unittest src/groundx` ran
 - **WHEN** the `helm unittest src/groundx` invocation performs a structural insert or vanish of a
-  snapshot test case (this assertion's defense-in-depth target; GX-22's investigation confirmed the
-  `helm-unittest` plugin's empty-render-label-drop mechanism is triggered only by `-u`, never by
-  the plain invocation this gate runs, so this assertion guards against a hypothetical future
-  structural rewrite, not a currently-observed defect in the plain-mode gate)
+  snapshot test case (this assertion's real target: `helm-unittest`'s snapshot cache
+  (`pkg/unittest/snapshot/cache.go`) writes the `.snap` file whenever `insertedCount > 0` or
+  `VanishedCount() > 0`, and `FailedCount()` counts only `updatedCount` — both apply identically
+  whether or not `-u` is passed, so this write-and-silent-PASS path is reachable in the plain
+  invocation this gate runs, not `-u`-exclusive. GX-22's investigation reproduced the drop-and-PASS
+  symptom end to end under `-u`; no plain-mode run in 15+ trials happened to produce a structural
+  insert/vanish, so this assertion defends a path confirmed reachable but not yet directly observed
+  in plain mode, not a hypothetical one)
 - **THEN** the assertion immediately following that invocation recomputes the hashes, finds a
   mismatch, names the changed file, and fails the script — before `verify-helm-snapshots.py` or any
   later step runs

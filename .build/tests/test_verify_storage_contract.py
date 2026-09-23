@@ -26,7 +26,7 @@ def write_mirrored_tree(root: Path, files: dict[str, str]) -> tuple[Path, Path]:
     return src_templates, mirror_templates
 
 
-def test_matching_mirrored_trees_pass(monkeypatch):
+def test_matching_mirrored_trees_pass():
     guard = load_guard()
     with tempfile.TemporaryDirectory() as directory:
         src_templates, mirror_templates = write_mirrored_tree(
@@ -36,9 +36,9 @@ def test_matching_mirrored_trees_pass(monkeypatch):
                 "resources/nested/service.yaml": "kind: Service\n",
             },
         )
-        monkeypatch.setattr(guard, "MIRRORED_FILES", ())
-        monkeypatch.setattr(guard, "SRC_TEMPLATES", src_templates)
-        monkeypatch.setattr(guard, "MIRROR_TEMPLATES", mirror_templates)
+        guard.MIRRORED_FILES = ()
+        guard.SRC_TEMPLATES = src_templates
+        guard.MIRROR_TEMPLATES = mirror_templates
 
         successes = guard.verify_mirrors()
 
@@ -46,7 +46,7 @@ def test_matching_mirrored_trees_pass(monkeypatch):
         assert any("resources/nested/service.yaml" in item for item in successes)
 
 
-def test_content_drift_is_rejected(monkeypatch):
+def test_content_drift_is_rejected():
     guard = load_guard()
     with tempfile.TemporaryDirectory() as directory:
         src_templates, mirror_templates = write_mirrored_tree(
@@ -56,9 +56,9 @@ def test_content_drift_is_rejected(monkeypatch):
         (mirror_templates / "resources" / "deployment.yaml").write_text(
             "kind: DeploymentDrifted\n", encoding="utf-8"
         )
-        monkeypatch.setattr(guard, "MIRRORED_FILES", ())
-        monkeypatch.setattr(guard, "SRC_TEMPLATES", src_templates)
-        monkeypatch.setattr(guard, "MIRROR_TEMPLATES", mirror_templates)
+        guard.MIRRORED_FILES = ()
+        guard.SRC_TEMPLATES = src_templates
+        guard.MIRROR_TEMPLATES = mirror_templates
 
         try:
             guard.verify_mirrors()
@@ -69,7 +69,7 @@ def test_content_drift_is_rejected(monkeypatch):
             raise AssertionError("expected AssertionError for a content-drifted mirror file")
 
 
-def test_file_present_on_only_one_side_is_rejected(monkeypatch):
+def test_file_present_on_only_one_side_is_rejected():
     guard = load_guard()
     with tempfile.TemporaryDirectory() as directory:
         src_templates, mirror_templates = write_mirrored_tree(
@@ -77,9 +77,9 @@ def test_file_present_on_only_one_side_is_rejected(monkeypatch):
             {"resources/deployment.yaml": "kind: Deployment\n"},
         )
         (src_templates / "resources" / "only-in-src.yaml").write_text("kind: OnlyInSrc\n", encoding="utf-8")
-        monkeypatch.setattr(guard, "MIRRORED_FILES", ())
-        monkeypatch.setattr(guard, "SRC_TEMPLATES", src_templates)
-        monkeypatch.setattr(guard, "MIRROR_TEMPLATES", mirror_templates)
+        guard.MIRRORED_FILES = ()
+        guard.SRC_TEMPLATES = src_templates
+        guard.MIRROR_TEMPLATES = mirror_templates
 
         try:
             guard.verify_mirrors()
@@ -90,30 +90,10 @@ def test_file_present_on_only_one_side_is_rejected(monkeypatch):
             raise AssertionError("expected AssertionError for a file present on only one side")
 
 
-class _FakeMonkeypatch:
-    def __init__(self) -> None:
-        self._saved: list[tuple[object, str, object]] = []
-
-    def setattr(self, target: object, name: str, value: object) -> None:
-        self._saved.append((target, name, getattr(target, name)))
-        setattr(target, name, value)
-
-    def undo(self) -> None:
-        for target, name, value in reversed(self._saved):
-            setattr(target, name, value)
-
-
 def main() -> int:
-    for test in (
-        test_matching_mirrored_trees_pass,
-        test_content_drift_is_rejected,
-        test_file_present_on_only_one_side_is_rejected,
-    ):
-        monkeypatch = _FakeMonkeypatch()
-        try:
-            test(monkeypatch)
-        finally:
-            monkeypatch.undo()
+    test_matching_mirrored_trees_pass()
+    test_content_drift_is_rejected()
+    test_file_present_on_only_one_side_is_rejected()
     print("verify-storage-contract verify_mirrors tests passed")
     return 0
 
