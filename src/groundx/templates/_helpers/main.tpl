@@ -22,6 +22,11 @@
 {{- (dig "username" "" $b) | trim -}}
 {{- end }}
 
+{{- define "groundx.cognito.mode" -}}
+{{- $in := .Values.cognito | default dict -}}
+{{- dig "mode" "" $in -}}
+{{- end }}
+
 {{- define "groundx.busybox.image" -}}
 {{- $in := .Values.busybox | default dict -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}

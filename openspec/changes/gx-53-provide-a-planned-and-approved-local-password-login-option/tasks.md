@@ -1,6 +1,6 @@
 ## 1. Render the opt-in `cognito.mode` value (src/groundx — the vertical slice)
 
-- [ ] 1.1 Add a `cognito` object (`{ "type": "object", "properties": { "mode": { "type": "string" } },
+- [x] 1.1 Add a `cognito` object (`{ "type": "object", "properties": { "mode": { "type": "string" } },
       "additionalProperties": false }`) to `src/groundx/values.schema.json`; add the
       `groundx.cognito.mode` helper to `src/groundx/templates/_helpers/main.tpl` (alongside
       `groundx.admin.*`, per design Decision 1); render the guarded `cognito: { mode: ... }` block
@@ -13,13 +13,13 @@
 
 ## 2. Mirror into `helm/`, byte-identical
 
-- [ ] 2.1 Apply the identical `values.schema.json` / `main.tpl` / `config-yaml.yaml` edits from
+- [x] 2.1 Apply the identical `values.schema.json` / `main.tpl` / `config-yaml.yaml` edits from
       task 1.1 to the `helm/` mirror (no `tests/` mirror exists there — see design Decision 6/Risk).
       check: bash -c "helm template check helm --set cognito.mode=local -s templates/resources/config-yaml.yaml | grep -q 'mode: local' && diff src/groundx/values.schema.json helm/values.schema.json && diff src/groundx/templates/resources/config-yaml.yaml helm/templates/resources/config-yaml.yaml && diff src/groundx/templates/_helpers/main.tpl helm/templates/_helpers/main.tpl"
 
 ## 3. Operator/customer documentation
 
-- [ ] 3.1 Document `cognito.mode` (including `local`) in `src/groundx/README.md`'s values table,
+- [x] 3.1 Document `cognito.mode` (including `local`) in `src/groundx/README.md`'s values table,
       plus a short section describing the local password-login flow (register → bcrypt-verified
       login → customer body, no token), the admin-mediated password-reset flow (superaccess API
       key, no email/SES), that customers keep using API keys for GroundX API access unchanged under
