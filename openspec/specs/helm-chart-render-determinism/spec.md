@@ -97,12 +97,16 @@ vanished-empty-render-label rewrite this assertion targets.
 
 ### Requirement: The build gate enforces the pinned `helm-unittest` plugin version
 
-`.build/bin/validate-helm.sh` SHALL fail whenever the `helm-unittest` plugin version actually
-installed and resolved at runtime does not match the version named in
-`.build/HELM_UNITTEST_VERSION`, the single pinned source of truth — reading the version the
-installed plugin binary itself reports, never merely an install command in a workflow file or doc.
-A missing pin file, a missing plugin install, or an unreadable `plugin.yaml` SHALL also fail the
-gate, never pass silently.
+`.build/bin/validate-helm.sh` SHALL fail whenever the installed `helm-unittest` plugin does not
+match `.build/HELM_UNITTEST_VERSION`, the single pinned source of truth, via a two-part check: (1)
+the installed plugin's own `plugin.yaml` declares the same version as the pin, and (2) the
+installed `untt-<os>-<arch>[.exe]` binary's SHA-256 matches the committed reference hash for the
+resolved platform in `.build/HELM_UNITTEST_BINARY_SHA256` — because the plugin's own install
+script skips re-downloading whenever a same-named binary file already exists, so a stale binary
+can sit behind a correct version string, and the `untt` binary itself has no version flag to read
+directly. A missing pin file, a missing plugin install, an unreadable `plugin.yaml`, a missing or
+unreadable installed binary, or a missing/malformed/mismatched reference hash entry SHALL also
+fail the gate, never pass silently.
 
 #### Scenario: A mismatched installed plugin version is rejected (catches)
 
@@ -115,8 +119,20 @@ gate, never pass silently.
 #### Scenario: A matching installed plugin version passes (must-not-block)
 
 - **GIVEN** the installed `helm-unittest` plugin's `plugin.yaml` reports the same version named in
-  `.build/HELM_UNITTEST_VERSION`
+  `.build/HELM_UNITTEST_VERSION`, and its installed `untt-<os>-<arch>[.exe]` binary's SHA-256
+  matches the committed reference hash for the resolved platform
 - **WHEN** the plugin-version guard runs
 - **THEN** it passes
 - **Polarity:** finalize success.
+
+#### Scenario: A correct declared version with stale binary bytes is rejected (catches)
+
+- **GIVEN** the installed `helm-unittest` plugin's `plugin.yaml` reports the same version named in
+  `.build/HELM_UNITTEST_VERSION`, but the installed `untt-<os>-<arch>[.exe]` binary's SHA-256 does
+  not match the committed reference hash for the resolved platform in
+  `.build/HELM_UNITTEST_BINARY_SHA256`
+- **WHEN** the plugin-version guard runs
+- **THEN** it reports both hashes and fails, without ever reaching `helm unittest`
+- **Polarity:** reject before state — a correct-looking version string never stands in for the
+  actual installed binary bytes.
 

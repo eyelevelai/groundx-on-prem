@@ -183,6 +183,24 @@ def test_read_reference_hashes_parses_platform_lines():
         assert hashes == {"linux-amd64": "a" * 64, "macos-arm64": "b" * 64}
 
 
+def test_read_reference_hashes_skips_comment_and_blank_lines():
+    guard = load_guard()
+    with tempfile.TemporaryDirectory() as directory:
+        reference_file = Path(directory) / "HELM_UNITTEST_BINARY_SHA256"
+        reference_file.write_text(
+            "# SHA-256 reference hashes — see header for provenance\n"
+            "\n"
+            f"linux-amd64  {'a' * 64}\n"
+            "# a mid-file comment line should also be skipped\n"
+            f"macos-arm64  {'b' * 64}\n",
+            encoding="utf-8",
+        )
+
+        hashes = guard.read_reference_hashes(reference_file)
+
+        assert hashes == {"linux-amd64": "a" * 64, "macos-arm64": "b" * 64}
+
+
 def test_verify_binary_integrity_accepts_matching_bytes():
     guard = load_guard()
     with tempfile.TemporaryDirectory() as directory:
@@ -293,6 +311,7 @@ def main() -> int:
     test_resolve_arch_maps_known_architecture_names()
     test_binary_file_name_appends_exe_suffix_on_windows_only()
     test_read_reference_hashes_parses_platform_lines()
+    test_read_reference_hashes_skips_comment_and_blank_lines()
     test_verify_binary_integrity_accepts_matching_bytes()
     test_verify_binary_integrity_rejects_mismatched_bytes()
     test_verify_binary_integrity_fails_closed_when_local_binary_missing()

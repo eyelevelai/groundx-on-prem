@@ -1,3 +1,15 @@
+# SHA-256 of each platform's extracted `untt-<os>-<arch>[.exe]` binary from the pinned
+# helm-unittest release named in .build/HELM_UNITTEST_VERSION — NOT the sha256 of the .tgz
+# release archive itself.
+#
+# Source: the official GitHub release archive at
+#   https://github.com/helm-unittest/helm-unittest/releases/download/v<version>/helm-unittest-<os>-<arch>-<version>.tgz
+# Each archive is extracted and its `untt-<os>-<arch>[.exe]` member is hashed with sha256.
+#
+# Regenerate ALL 7 lines below whenever .build/HELM_UNITTEST_VERSION changes: download each
+# platform's .tgz from the URL pattern above for the new version, extract the untt-<os>-<arch>
+# binary, and sha256 it. A partial regeneration (some platforms updated, some left stale) is
+# indistinguishable from tampering to verify-helm-unittest-plugin-version.py.
 linux-amd64  820eb13d0cb270f4c53fe7d55cc26692cc934b638575602759b17420450a314f
 linux-arm64  5b69447b04f1e469efd641df2ed101eecc9fe9197178e0610ad22f3a6fc74095
 linux-s390x  19370f10ad51aa6b640dfef210bae21611689fb2c5c67a1d4c5a558a8a05f039

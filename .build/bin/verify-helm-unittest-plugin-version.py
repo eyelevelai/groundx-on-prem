@@ -98,7 +98,7 @@ def read_reference_hashes(reference_file: Path) -> dict[str, str]:
     hashes: dict[str, str] = {}
     for line in reference_file.read_text(encoding="utf-8").splitlines():
         stripped = line.strip()
-        if not stripped:
+        if not stripped or stripped.startswith("#"):
             continue
         parts = stripped.split()
         if len(parts) != 2:
