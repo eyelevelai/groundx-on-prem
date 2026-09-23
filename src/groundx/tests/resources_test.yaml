@@ -369,3 +369,91 @@ tests:
       - ./files/values.workspace.enabled.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "local: cognito mode config"
+    templates:
+      - ../templates/resources/config-models.yaml
+      - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/extract-config-py.yaml
+      - ../templates/resources/extract-gunicorn-conf-py.yaml
+      - ../templates/resources/extract-supervisord-conf.yaml
+      - ../templates/resources/layout-config-py.yaml
+      - ../templates/resources/layout-gunicorn-conf-py.yaml
+      - ../templates/resources/layout-ocr-credentials.yaml
+      - ../templates/resources/layout-supervisord-conf.yaml
+      - ../templates/resources/ldconfig-symlink.yaml
+      - ../templates/resources/ranker-config-py.yaml
+      - ../templates/resources/ranker-gunicorn-conf-py.yaml
+      - ../templates/resources/ranker-supervisord-conf.yaml
+      - ../templates/resources/secret.yaml
+      - ../templates/resources/summary-config-py.yaml
+      - ../templates/resources/summary-gunicorn-conf-py.yaml
+      - ../templates/resources/summary-supervisord-conf.yaml
+      - ../templates/resources/workspace-config-py.yaml
+      - ../templates/resources/workspace-gunicorn-conf-py.yaml
+      - ../templates/resources/workspace-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      cognito.mode: local
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "cognito:\n\\s+mode: local"
+  - it: "cognito: existing enum value still renders"
+    templates:
+      - ../templates/resources/config-models.yaml
+      - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/extract-config-py.yaml
+      - ../templates/resources/extract-gunicorn-conf-py.yaml
+      - ../templates/resources/extract-supervisord-conf.yaml
+      - ../templates/resources/layout-config-py.yaml
+      - ../templates/resources/layout-gunicorn-conf-py.yaml
+      - ../templates/resources/layout-ocr-credentials.yaml
+      - ../templates/resources/layout-supervisord-conf.yaml
+      - ../templates/resources/ldconfig-symlink.yaml
+      - ../templates/resources/ranker-config-py.yaml
+      - ../templates/resources/ranker-gunicorn-conf-py.yaml
+      - ../templates/resources/ranker-supervisord-conf.yaml
+      - ../templates/resources/secret.yaml
+      - ../templates/resources/summary-config-py.yaml
+      - ../templates/resources/summary-gunicorn-conf-py.yaml
+      - ../templates/resources/summary-supervisord-conf.yaml
+      - ../templates/resources/workspace-config-py.yaml
+      - ../templates/resources/workspace-gunicorn-conf-py.yaml
+      - ../templates/resources/workspace-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      cognito.mode: cognito
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "cognito:\n\\s+mode: cognito"
+  - it: "unset: no cognito block renders"
+    templates:
+      - ../templates/resources/config-models.yaml
+      - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/extract-config-py.yaml
+      - ../templates/resources/extract-gunicorn-conf-py.yaml
+      - ../templates/resources/extract-supervisord-conf.yaml
+      - ../templates/resources/layout-config-py.yaml
+      - ../templates/resources/layout-gunicorn-conf-py.yaml
+      - ../templates/resources/layout-ocr-credentials.yaml
+      - ../templates/resources/layout-supervisord-conf.yaml
+      - ../templates/resources/ldconfig-symlink.yaml
+      - ../templates/resources/ranker-config-py.yaml
+      - ../templates/resources/ranker-gunicorn-conf-py.yaml
+      - ../templates/resources/ranker-supervisord-conf.yaml
+      - ../templates/resources/secret.yaml
+      - ../templates/resources/summary-config-py.yaml
+      - ../templates/resources/summary-gunicorn-conf-py.yaml
+      - ../templates/resources/summary-supervisord-conf.yaml
+      - ../templates/resources/workspace-config-py.yaml
+      - ../templates/resources/workspace-gunicorn-conf-py.yaml
+      - ../templates/resources/workspace-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "cognito:"
