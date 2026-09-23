@@ -162,6 +162,12 @@ data:
             - {{ . }}
           {{- end }}
 
+    {{- if ne (include "groundx.cognito.mode" .) "" }}
+
+    cognito:
+      mode: {{ include "groundx.cognito.mode" . }}
+    {{- end }}
+
     engines:
       {{ range $i, $e := $engs }}
       {{- $engineID := get $e "engineId" -}}
