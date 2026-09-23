@@ -70,6 +70,7 @@
 {{- $wrwt := include "groundx.workspace.workspace.throughput" . | trim -}}
 {{- $integration := .Values.integration | default dict -}}
 {{- $captureAccounts := get $integration "extractionCaptureAccounts" | default list -}}
+{{- $captureDomains := get $integration "extractionCaptureDomains" | default list -}}
 {{- if gt (len $svcs) 0 }}
 apiVersion: v1
 kind: Secret
@@ -253,6 +254,10 @@ stringData:
 {{- if gt (len $captureAccounts) 0 }}
       extractionCaptureAccounts:
 {{ toYaml $captureAccounts | nindent 8 }}
+{{- end }}
+{{- if gt (len $captureDomains) 0 }}
+      extractionCaptureDomains:
+{{ toYaml $captureDomains | nindent 8 }}
 {{- end }}
       search:
         duration: {{ include "groundx.integration.search.duration" . }}
