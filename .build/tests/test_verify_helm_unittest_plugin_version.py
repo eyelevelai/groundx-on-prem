@@ -164,16 +164,35 @@ def test_binary_file_name_appends_exe_suffix_on_windows_only():
     assert guard.binary_file_name("macos", "arm64") == "untt-macos-arm64"
 
 
+def write_reference_hashes(directory: Path, entries: dict[str, str]) -> Path:
+    reference_file = directory / "HELM_UNITTEST_BINARY_SHA256"
+    lines = [f"{platform_key}  {digest}" for platform_key, digest in entries.items()]
+    reference_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return reference_file
+
+
+def test_read_reference_hashes_parses_platform_lines():
+    guard = load_guard()
+    with tempfile.TemporaryDirectory() as directory:
+        reference_file = write_reference_hashes(
+            Path(directory), {"linux-amd64": "a" * 64, "macos-arm64": "b" * 64}
+        )
+
+        hashes = guard.read_reference_hashes(reference_file)
+
+        assert hashes == {"linux-amd64": "a" * 64, "macos-arm64": "b" * 64}
+
+
 def test_verify_binary_integrity_accepts_matching_bytes():
     guard = load_guard()
     with tempfile.TemporaryDirectory() as directory:
         plugin_dir = Path(directory)
         binary_bytes = b"pinned-release-binary-contents"
         (plugin_dir / "untt-linux-amd64").write_bytes(binary_bytes)
+        digest = hashlib.sha256(binary_bytes).hexdigest()
+        reference_file = write_reference_hashes(plugin_dir, {"linux-amd64": digest})
 
-        guard.fetch_pinned_binary_bytes = lambda *args, **kwargs: binary_bytes
-
-        guard.verify_binary_integrity(plugin_dir, "v1.1.2", "linux", "amd64")
+        guard.verify_binary_integrity(plugin_dir, "linux", "amd64", reference_file)
 
 
 def test_verify_binary_integrity_rejects_mismatched_bytes():
@@ -181,15 +200,15 @@ def test_verify_binary_integrity_rejects_mismatched_bytes():
     with tempfile.TemporaryDirectory() as directory:
         plugin_dir = Path(directory)
         (plugin_dir / "untt-linux-amd64").write_bytes(b"stale-local-binary")
-
-        guard.fetch_pinned_binary_bytes = lambda *args, **kwargs: b"real-pinned-release-binary"
+        real_digest = hashlib.sha256(b"real-pinned-release-binary").hexdigest()
+        reference_file = write_reference_hashes(plugin_dir, {"linux-amd64": real_digest})
 
         try:
-            guard.verify_binary_integrity(plugin_dir, "v1.1.2", "linux", "amd64")
+            guard.verify_binary_integrity(plugin_dir, "linux", "amd64", reference_file)
         except guard.BinaryVerificationError as exc:
             message = str(exc)
             assert hashlib.sha256(b"stale-local-binary").hexdigest() in message
-            assert hashlib.sha256(b"real-pinned-release-binary").hexdigest() in message
+            assert real_digest in message
         else:
             raise AssertionError("expected BinaryVerificationError for a byte mismatch")
 
@@ -198,74 +217,44 @@ def test_verify_binary_integrity_fails_closed_when_local_binary_missing():
     guard = load_guard()
     with tempfile.TemporaryDirectory() as directory:
         plugin_dir = Path(directory)
-
-        guard.fetch_pinned_binary_bytes = lambda *args, **kwargs: b"irrelevant"
+        reference_file = write_reference_hashes(plugin_dir, {"linux-amd64": "c" * 64})
 
         try:
-            guard.verify_binary_integrity(plugin_dir, "v1.1.2", "linux", "amd64")
+            guard.verify_binary_integrity(plugin_dir, "linux", "amd64", reference_file)
         except guard.BinaryVerificationError:
             pass
         else:
             raise AssertionError("expected BinaryVerificationError for a missing local binary")
 
 
-def test_verify_binary_integrity_fails_closed_when_fetch_raises():
+def test_verify_binary_integrity_fails_closed_when_reference_file_missing():
     guard = load_guard()
     with tempfile.TemporaryDirectory() as directory:
         plugin_dir = Path(directory)
         (plugin_dir / "untt-linux-amd64").write_bytes(b"local-binary")
-
-        def raise_fetch_error(*args, **kwargs):
-            raise guard.BinaryVerificationError("simulated network failure")
-
-        guard.fetch_pinned_binary_bytes = raise_fetch_error
+        reference_file = plugin_dir / "does-not-exist"
 
         try:
-            guard.verify_binary_integrity(plugin_dir, "v1.1.2", "linux", "amd64")
+            guard.verify_binary_integrity(plugin_dir, "linux", "amd64", reference_file)
         except guard.BinaryVerificationError as exc:
-            assert "simulated network failure" in str(exc)
+            assert "missing reference hash file" in str(exc)
         else:
-            raise AssertionError("expected BinaryVerificationError when the fetch step fails")
+            raise AssertionError("expected BinaryVerificationError when the reference file is missing")
 
 
-def test_fetch_pinned_binary_bytes_fails_closed_on_download_error():
+def test_verify_binary_integrity_fails_closed_when_platform_entry_missing():
     guard = load_guard()
+    with tempfile.TemporaryDirectory() as directory:
+        plugin_dir = Path(directory)
+        (plugin_dir / "untt-linux-amd64").write_bytes(b"local-binary")
+        reference_file = write_reference_hashes(plugin_dir, {"macos-arm64": "d" * 64})
 
-    class FailingOpener:
-        def __call__(self, *args, **kwargs):
-            raise guard.urllib.error.URLError("simulated download failure")
-
-    guard.urllib.request.urlopen = FailingOpener()
-
-    try:
-        guard.fetch_pinned_binary_bytes("1.1.2", "linux", "amd64", "untt-linux-amd64")
-    except guard.BinaryVerificationError as exc:
-        assert "failed to download" in str(exc)
-    else:
-        raise AssertionError("expected BinaryVerificationError when the download fails")
-
-
-def test_fetch_pinned_binary_bytes_fails_closed_on_malformed_archive():
-    guard = load_guard()
-
-    class FakeResponse:
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *exc_info):
-            return False
-
-        def read(self):
-            return b"not-a-valid-gzip-archive"
-
-    guard.urllib.request.urlopen = lambda *args, **kwargs: FakeResponse()
-
-    try:
-        guard.fetch_pinned_binary_bytes("1.1.2", "linux", "amd64", "untt-linux-amd64")
-    except guard.BinaryVerificationError as exc:
-        assert "failed to read" in str(exc)
-    else:
-        raise AssertionError("expected BinaryVerificationError for a malformed archive")
+        try:
+            guard.verify_binary_integrity(plugin_dir, "linux", "amd64", reference_file)
+        except guard.BinaryVerificationError as exc:
+            assert "no reference sha256 entry for platform 'linux-amd64'" in str(exc)
+        else:
+            raise AssertionError("expected BinaryVerificationError for a missing platform entry")
 
 
 def test_main_fails_closed_when_binary_verification_fails():
@@ -303,12 +292,12 @@ def main() -> int:
     test_resolve_os_maps_known_platform_names()
     test_resolve_arch_maps_known_architecture_names()
     test_binary_file_name_appends_exe_suffix_on_windows_only()
+    test_read_reference_hashes_parses_platform_lines()
     test_verify_binary_integrity_accepts_matching_bytes()
     test_verify_binary_integrity_rejects_mismatched_bytes()
     test_verify_binary_integrity_fails_closed_when_local_binary_missing()
-    test_verify_binary_integrity_fails_closed_when_fetch_raises()
-    test_fetch_pinned_binary_bytes_fails_closed_on_download_error()
-    test_fetch_pinned_binary_bytes_fails_closed_on_malformed_archive()
+    test_verify_binary_integrity_fails_closed_when_reference_file_missing()
+    test_verify_binary_integrity_fails_closed_when_platform_entry_missing()
     test_main_fails_closed_when_binary_verification_fails()
     print("verify-helm-unittest-plugin-version tests passed")
     return 0

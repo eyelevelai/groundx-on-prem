@@ -4,28 +4,20 @@
 from __future__ import annotations
 
 import hashlib
-import io
 import os
 import platform
 import re
 import shlex
 import subprocess
 import sys
-import tarfile
-import urllib.error
-import urllib.request
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
 PIN_FILE = ROOT / ".build" / "HELM_UNITTEST_VERSION"
+REFERENCE_HASH_FILE = ROOT / ".build" / "HELM_UNITTEST_BINARY_SHA256"
 FALLBACK_PLUGINS_DIR = Path.home() / ".local" / "share" / "helm" / "plugins"
 PLUGIN_NAME = "unittest"
-RELEASE_URL_TEMPLATE = (
-    "https://github.com/helm-unittest/helm-unittest/releases/download/"
-    "v{version}/helm-unittest-{os}-{arch}-{version}.tgz"
-)
-DOWNLOAD_TIMEOUT_SECONDS = 30
 
 _NAME_PATTERN = re.compile(r'^name:\s*"?([^"\n]+?)"?\s*$', re.MULTILINE)
 _VERSION_PATTERN = re.compile(r'^version:\s*"?([^"\n]+?)"?\s*$', re.MULTILINE)
@@ -102,39 +94,23 @@ def binary_file_name(os_name: str, arch: str) -> str:
     return f"untt-{os_name}-{arch}{suffix}"
 
 
-def fetch_pinned_binary_bytes(version_number: str, os_name: str, arch: str, member_name: str) -> bytes:
-    url = RELEASE_URL_TEMPLATE.format(version=version_number, os=os_name, arch=arch)
-
-    try:
-        with urllib.request.urlopen(url, timeout=DOWNLOAD_TIMEOUT_SECONDS) as response:
-            archive_bytes = response.read()
-    except (urllib.error.URLError, OSError, TimeoutError) as exc:
-        raise BinaryVerificationError(
-            f"failed to download the pinned helm-unittest release from {url}: {exc}"
-        ) from exc
-
-    try:
-        with tarfile.open(fileobj=io.BytesIO(archive_bytes), mode="r:gz") as archive:
-            member = archive.getmember(member_name)
-            extracted = archive.extractfile(member)
-            if extracted is None:
-                raise BinaryVerificationError(
-                    f"pinned helm-unittest release archive at {url} has no extractable content "
-                    f"for member '{member_name}'"
-                )
-            return extracted.read()
-    except tarfile.TarError as exc:
-        raise BinaryVerificationError(
-            f"failed to read the pinned helm-unittest release archive from {url}: {exc}"
-        ) from exc
-    except KeyError as exc:
-        raise BinaryVerificationError(
-            f"pinned helm-unittest release archive at {url} does not contain expected member "
-            f"'{member_name}': {exc}"
-        ) from exc
+def read_reference_hashes(reference_file: Path) -> dict[str, str]:
+    hashes: dict[str, str] = {}
+    for line in reference_file.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        parts = stripped.split()
+        if len(parts) != 2:
+            raise BinaryVerificationError(
+                f"malformed line in reference hash file {reference_file}: '{line}'"
+            )
+        platform_key, digest = parts
+        hashes[platform_key] = digest.lower()
+    return hashes
 
 
-def verify_binary_integrity(plugin_dir: Path, pinned: str, os_name: str, arch: str) -> None:
+def verify_binary_integrity(plugin_dir: Path, os_name: str, arch: str, reference_file: Path) -> None:
     member_name = binary_file_name(os_name, arch)
     binary_path = plugin_dir / member_name
 
@@ -148,16 +124,29 @@ def verify_binary_integrity(plugin_dir: Path, pinned: str, os_name: str, arch: s
             f"failed to read installed helm-unittest binary at {binary_path}: {exc}"
         ) from exc
 
+    if not reference_file.is_file():
+        raise BinaryVerificationError(f"missing reference hash file: {reference_file}")
+
+    try:
+        reference_hashes = read_reference_hashes(reference_file)
+    except OSError as exc:
+        raise BinaryVerificationError(
+            f"failed to read reference hash file {reference_file}: {exc}"
+        ) from exc
+
+    platform_key = f"{os_name}-{arch}"
+    pinned_hash = reference_hashes.get(platform_key)
+    if pinned_hash is None:
+        raise BinaryVerificationError(
+            f"no reference sha256 entry for platform '{platform_key}' in {reference_file}"
+        )
+
     installed_hash = hashlib.sha256(installed_bytes).hexdigest()
-    version_number = normalize(pinned)
-    pinned_bytes = fetch_pinned_binary_bytes(version_number, os_name, arch, member_name)
-    pinned_hash = hashlib.sha256(pinned_bytes).hexdigest()
 
     if installed_hash != pinned_hash:
         raise BinaryVerificationError(
-            f"installed helm-unittest binary at {binary_path} does not match the pinned release "
-            f"v{version_number} for {os_name}-{arch}: installed sha256={installed_hash}, "
-            f"pinned sha256={pinned_hash}"
+            f"installed helm-unittest binary at {binary_path} does not match the reference sha256 "
+            f"for {platform_key}: installed sha256={installed_hash}, pinned sha256={pinned_hash}"
         )
 
 
@@ -234,7 +223,7 @@ def main() -> int:
     arch = resolve_arch()
 
     try:
-        verify_binary_integrity(plugin_dir, pinned, os_name, arch)
+        verify_binary_integrity(plugin_dir, os_name, arch, REFERENCE_HASH_FILE)
     except BinaryVerificationError as exc:
         print(f"verify-helm-unittest-plugin-version: {exc}", file=sys.stderr)
         return 1
