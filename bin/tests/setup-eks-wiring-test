@@ -14,8 +14,8 @@ fail() {
 
 [[ -f "$SETUP_EKS" ]] || fail "terraform/aws/setup-eks not found"
 
-guard_calls=$(grep -F -c 'eks_version=$(resolve_setup_eks_version "$ENV_DIR")' "$SETUP_EKS" || true)
-[[ "$guard_calls" -eq 2 ]] || fail "expected setup-eks to call resolve_setup_eks_version at both call sites, found $guard_calls"
+guard_calls=$(grep -F -c 'eks_version=$(resolve_setup_eks_version "$ENV_DIR" "$REGION")' "$SETUP_EKS" || true)
+[[ "$guard_calls" -eq 2 ]] || fail "expected setup-eks to call resolve_setup_eks_version with \$REGION at both call sites, found $guard_calls"
 
 heredoc_pattern='eks_version = "$eks_version"'
 heredoc_writes=$(grep -F -c "$heredoc_pattern" "$SETUP_EKS" || true)
@@ -45,10 +45,11 @@ run_guard_scenario() {
   set +e
   (
     ENV_DIR="$run_dir/env"
+    REGION="us-test-region-1"
     FAKE_SCENARIO="$scenario"
     FAKE_TERRAFORM_LOG="$run_dir/terraform.log"
     FAKE_AWS_LOG="$run_dir/aws.log"
-    export ENV_DIR FAKE_SCENARIO FAKE_TERRAFORM_LOG FAKE_AWS_LOG
+    export ENV_DIR REGION FAKE_SCENARIO FAKE_TERRAFORM_LOG FAKE_AWS_LOG
     export PATH="$run_dir/bin:$PATH"
     . "$ROOT_DIR/bin/shared/util"
     eval "$guard_snippet"
@@ -79,6 +80,8 @@ run_guard_scenario state_read_fails state_read_fails "$standard_example"
 run_guard_scenario existing_cluster_lookup_fails existing_cluster_lookup_fails "$standard_example"
 [[ "$(cat "$TEST_ROOT/existing_cluster_lookup_fails/exit_code")" != "0" ]] || fail "setup-eks's guard must abort (non-zero exit) when the AWS version lookup for an existing cluster fails"
 [[ ! -f "$TEST_ROOT/existing_cluster_lookup_fails/wrote-tfvars" ]] || fail "setup-eks's guard must NOT reach the env.tfvars write step when the AWS version lookup fails"
+lookup_fails_aws_log=$(cat "$TEST_ROOT/existing_cluster_lookup_fails/aws.log")
+[[ "$lookup_fails_aws_log" == *"--region us-test-region-1"* ]] || fail "expected setup-eks's guard to pass \$REGION through to the aws describe-cluster call, got [$lookup_fails_aws_log]"
 
 run_guard_scenario missing_declared_key not_yet_created "$missing_key_example"
 [[ "$(cat "$TEST_ROOT/missing_declared_key/exit_code")" != "0" ]] || fail "setup-eks's guard must abort (non-zero exit) when env.tfvars.example has no parseable eks_version, instead of silently letting an empty version through"

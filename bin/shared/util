@@ -189,8 +189,10 @@ test_kubernetes_version() {
 }
 
 resolve_eks_version() {
-  local env_dir="$1" declared_default="$2"
+  local env_dir="$1" declared_default="$2" region="${3:-}"
   local state_json state_exit cluster_name running_version
+  local -a aws_region_args=()
+  [[ -n "$region" ]] && aws_region_args=(--region "$region")
 
   state_json=$(terraform -chdir="$env_dir/eks" show -json 2>/dev/null)
   state_exit=$?
@@ -214,7 +216,7 @@ resolve_eks_version() {
     return 0
   fi
 
-  running_version=$(aws eks describe-cluster --name "$cluster_name" \
+  running_version=$(aws eks describe-cluster "${aws_region_args[@]}" --name "$cluster_name" \
     --query 'cluster.version' --output text 2>/dev/null)
 
   if [[ -n "$running_version" && "$running_version" != "None" ]]; then
@@ -222,12 +224,12 @@ resolve_eks_version() {
     return 0
   fi
 
-  warn "Terraform state shows an existing EKS cluster [$cluster_name], but 'aws eks describe-cluster' could not resolve its running version (check AWS credentials, IAM permissions for eks:DescribeCluster, and the configured region -- this can also be throttling)."
+  warn "Terraform state shows an existing EKS cluster [$cluster_name], but 'aws eks describe-cluster'${region:+ (region: $region)} could not resolve its running version (check AWS credentials, IAM permissions for eks:DescribeCluster, and the configured region -- this can also be throttling)."
   return 1
 }
 
 resolve_setup_eks_version() {
-  local env_dir="$1"
+  local env_dir="$1" region="${2:-}"
   local declared_default eks_version
 
   declared_default=$(declared_eks_version_default "$env_dir") || {
@@ -235,7 +237,7 @@ resolve_setup_eks_version() {
     return 1
   }
 
-  eks_version=$(resolve_eks_version "$env_dir" "$declared_default") || {
+  eks_version=$(resolve_eks_version "$env_dir" "$declared_default" "$region") || {
     return 1
   }
 

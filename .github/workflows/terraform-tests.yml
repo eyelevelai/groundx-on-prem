@@ -31,7 +31,15 @@ jobs:
               run: terraform -chdir=terraform/aws/eks test
 
             - name: Confirm cluster_version is wired to environment_internal.eks_version
-              run: grep -vE '^\s*(#|//)' terraform/aws/eks/eks.tf | grep -E 'cluster_version\s*=\s*var\.environment_internal\.eks_version'
+              run: |
+                  python3 -c "
+                  import re, sys
+                  text = open('terraform/aws/eks/eks.tf').read()
+                  text = re.sub(r'/\*.*?\*/', '', text, flags=re.DOTALL)
+                  lines = [l for l in text.splitlines() if not re.match(r'^\s*(#|//)', l)]
+                  text = '\n'.join(lines)
+                  sys.exit(0 if re.search(r'cluster_version\s*=\s*var\.environment_internal\.eks_version', text) else 1)
+                  "
 
             - name: Run resolve-eks-version bash tests
               run: bash bin/tests/resolve-eks-version-test

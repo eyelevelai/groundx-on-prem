@@ -15,8 +15,8 @@ TEST_ROOT=$(mktemp -d)
 trap 'rm -rf "$TEST_ROOT"' EXIT
 
 run_scenario() {
-  local scenario="$1"
-  local run_dir="$TEST_ROOT/$scenario"
+  local scenario="$1" region="${2:-}" run_name="${3:-$1}"
+  local run_dir="$TEST_ROOT/$run_name"
   mkdir -p "$run_dir/bin" "$run_dir/env"
   ln -s "$FAKE_TERRAFORM" "$run_dir/bin/terraform"
   ln -s "$FAKE_AWS" "$run_dir/bin/aws"
@@ -27,7 +27,7 @@ run_scenario() {
       FAKE_TERRAFORM_LOG="$run_dir/terraform.log" \
       FAKE_AWS_LOG="$run_dir/aws.log" \
       PATH="$run_dir/bin:$PATH" \
-      bash -c '. "'"$ROOT_DIR"'/bin/shared/util"; resolve_eks_version "'"$run_dir/env"'" "1.35"'
+      bash -c '. "'"$ROOT_DIR"'/bin/shared/util"; resolve_eks_version "'"$run_dir/env"'" "1.35" "'"$region"'"'
   ) >"$run_dir/stdout" 2>"$run_dir/stderr"
   echo $? > "$run_dir/exit_code"
   set -e
@@ -37,6 +37,15 @@ run_scenario existing_cluster
 [[ "$(cat "$TEST_ROOT/existing_cluster/exit_code")" == "0" ]] || fail "existing-cluster resolution should succeed"
 existing_result=$(cat "$TEST_ROOT/existing_cluster/stdout")
 [[ "$existing_result" == "1.31" ]] || fail "expected the existing cluster's actual running version (1.31), got [$existing_result]"
+existing_aws_log=$(cat "$TEST_ROOT/existing_cluster/aws.log")
+[[ "$existing_aws_log" != *"--region"* ]] || fail "no region was passed in, so the aws invocation must not carry --region, got [$existing_aws_log]"
+
+run_scenario existing_cluster "us-west-2" existing_cluster_region
+[[ "$(cat "$TEST_ROOT/existing_cluster_region/exit_code")" == "0" ]] || fail "existing-cluster resolution with a region should succeed"
+region_result=$(cat "$TEST_ROOT/existing_cluster_region/stdout")
+[[ "$region_result" == "1.31" ]] || fail "expected the existing cluster's actual running version (1.31) with a region set, got [$region_result]"
+region_aws_log=$(cat "$TEST_ROOT/existing_cluster_region/aws.log")
+[[ "$region_aws_log" == *"--region us-west-2"* ]] || fail "expected the aws invocation to carry --region us-west-2 (the operator-selected region, not the CLI default), got [$region_aws_log]"
 
 run_scenario not_yet_created
 [[ "$(cat "$TEST_ROOT/not_yet_created/exit_code")" == "0" ]] || fail "not-yet-created resolution should succeed"

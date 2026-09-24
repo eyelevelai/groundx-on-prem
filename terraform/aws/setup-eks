@@ -122,7 +122,7 @@ if $KC; then
     status "testing EKS cluster configuration"
 
     # EKS_VERSION_GUARD_BEGIN
-    eks_version=$(resolve_setup_eks_version "$ENV_DIR") || {
+    eks_version=$(resolve_setup_eks_version "$ENV_DIR" "$REGION") || {
         error "Unable to determine the target EKS cluster version. Aborting rather than risking an unattended downgrade (see the warning above for the reason)." && echo ""
         exit 1
     }
@@ -232,7 +232,7 @@ if $KC; then
     status "testing EKS cluster configuration"
 
     # EKS_VERSION_GUARD_BEGIN
-    eks_version=$(resolve_setup_eks_version "$ENV_DIR") || {
+    eks_version=$(resolve_setup_eks_version "$ENV_DIR" "$REGION") || {
         error "Unable to determine the target EKS cluster version. Aborting rather than risking an unattended downgrade (see the warning above for the reason)." && echo ""
         exit 1
     }
