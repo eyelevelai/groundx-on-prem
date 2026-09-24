@@ -1,0 +1,25 @@
+# SHA-256 of each platform's extracted `untt-<os>-<arch>[.exe]` binary from the pinned
+# helm-unittest release named in .build/HELM_UNITTEST_VERSION — NOT the sha256 of the .tgz
+# release archive itself.
+#
+# Source: the official GitHub release archive at
+#   https://github.com/helm-unittest/helm-unittest/releases/download/v<version>/helm-unittest-<os>-<arch>-<version>.tgz
+# Each archive is extracted and its `untt-<os>-<arch>[.exe]` member is hashed with sha256.
+#
+# The 7 lines below are one per platform the plugin's own installer (install-binary.sh's
+# verifySupported()) ships a prebuilt binary for — not every os-arch pair resolve_arch()/resolve_os()
+# can name. A host resolving to any other os-arch pair (e.g. armv5/armv6/armv7, 386) has no entry
+# here and verify-helm-unittest-plugin-version.py fails closed on it, which is correct: this file
+# only covers what the plugin can actually install.
+#
+# Regenerate ALL 7 lines below whenever .build/HELM_UNITTEST_VERSION changes: download each
+# platform's .tgz from the URL pattern above for the new version, extract the untt-<os>-<arch>
+# binary, and sha256 it. A partial regeneration (some platforms updated, some left stale) is
+# indistinguishable from tampering to verify-helm-unittest-plugin-version.py.
+linux-amd64  820eb13d0cb270f4c53fe7d55cc26692cc934b638575602759b17420450a314f
+linux-arm64  5b69447b04f1e469efd641df2ed101eecc9fe9197178e0610ad22f3a6fc74095
+linux-s390x  19370f10ad51aa6b640dfef210bae21611689fb2c5c67a1d4c5a558a8a05f039
+linux-ppc64le  125fc30fde9a12c20150f99b94d5542b5d8edc8a001bf1badaf051f74bb04a34
+macos-amd64  7151ec08b58480ac2b49c515fb741b0ed81788e5f75b086df2f994f24d3082a7
+macos-arm64  f804feda430c3b0931e3141c1ebea578fdc78687922750a11b1b45293cde699a
+windows-amd64  e08d3557baf3ecdcd893abb349ab86b922382c54ae71a418b83dde3559df30f4

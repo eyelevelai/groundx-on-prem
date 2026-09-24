@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${ROOT_DIR}"
 
 RUN_JUNIT=0
+PY="$(command -v python3 || command -v python)" || { echo "no python interpreter on PATH (need python3 or python)" >&2; exit 1; }
 
 usage() {
   cat <<'USAGE'
@@ -12,13 +13,16 @@ Usage: .build/bin/validate-helm.sh [--junit]
 
 Runs the GroundX Helm production chart gate from one stable entrypoint:
   - helm lint for both chart surfaces
-  - helm unittest for src/groundx and the helm/ mirror
+  - pinned helm-unittest plugin version guard
+  - guard-script unit tests (stdlib scripts under .build/tests)
+  - helm unittest for src/groundx, the helm/ mirror, and the kafka-cluster subchart
+  - snapshot-rewrite-on-run guard (see GX-22)
   - google OCR credentials render for both chart surfaces
   - shared Google credential isolation, rotation and schema checks
   - snapshot label guard unit tests
   - snapshot label guard
   - workspace chart contract verifier
-  - storage chart and generated AWS values contract verifier
+  - storage chart, generated AWS values, and template-mirror contract verifier
   - probe-mirror-drift guard (renders src/groundx and helm/ and compares the API-pod probe timing)
   - targeted render checks for both chart surfaces
   - git whitespace check
@@ -55,12 +59,13 @@ OCR_TEST_CREDENTIALS="files/ocr/gcv-test.json"
 layout_pvc_values=""
 layout_pvc_render=""
 ocr_generated_files=()
+SNAPSHOT_STABILITY_HASHFILE="$(mktemp)"
 cleanup() {
   if ((${#ocr_generated_files[@]})); then
     rm -f "${ocr_generated_files[@]}"
   fi
   rmdir src/groundx/files/ocr src/groundx/files helm/files/ocr helm/files 2>/dev/null || true
-  rm -f "${layout_pvc_values}" "${layout_pvc_render}"
+  rm -f "${layout_pvc_values}" "${layout_pvc_render}" "${SNAPSHOT_STABILITY_HASHFILE}"
 }
 trap cleanup EXIT
 for chart in src/groundx helm; do
@@ -82,14 +87,40 @@ JSON
   ocr_generated_files+=("${ocr_target}")
 done
 
+run_helm_unittest_and_verify_stability() {
+  local marker_suffix="$1"; shift
+  helm unittest "$@" src/groundx helm src/groundx/prereqs/kafka-cluster
+  echo "==> Verifying helm unittest ${marker_suffix}did not rewrite committed snapshots as a side effect (see GX-22)"
+  "${PY}" .build/bin/verify-helm-snapshot-stability.py verify "${SNAPSHOT_STABILITY_HASHFILE}"
+}
+
+echo "==> Capturing snapshot state before running any Helm tooling (see GX-22)"
+"${PY}" .build/bin/verify-helm-snapshot-stability.py capture "${SNAPSHOT_STABILITY_HASHFILE}"
+
 echo "==> Linting Helm chart surfaces"
 helm lint src/groundx
 helm lint helm
 
+echo "==> Verifying pinned helm-unittest plugin version"
+"${PY}" .build/bin/verify-helm-unittest-plugin-version.py
+
+echo "==> Verifying every guard-script test file is referenced in validate-helm.sh"
+SELF_PATH="${ROOT_DIR}/.build/bin/validate-helm.sh"
+for test_file in .build/tests/test_*.py; do
+  base="$(basename "${test_file}")"
+  grep -qF "${base}" "${SELF_PATH}" || { echo "orphaned guard-script test file not referenced in validate-helm.sh: ${base}" >&2; exit 1; }
+done
+
+echo "==> Verifying every helm unittest invocation is guarded (see GX-22)"
+[[ "$(grep -cE '^[[:space:]]*helm unittest\b' "${SELF_PATH}")" == "1" ]] || { echo "expected exactly one guarded helm unittest invocation (inside run_helm_unittest_and_verify_stability) in validate-helm.sh" >&2; exit 1; }
+
+echo "==> Running guard-script unit tests"
+"${PY}" .build/tests/test_verify_helm_unittest_plugin_version.py
+"${PY}" .build/tests/test_verify_helm_snapshot_stability.py
+"${PY}" .build/tests/test_verify_storage_contract.py
+
 echo "==> Running Helm unit tests"
-helm unittest src/groundx
-helm unittest helm
-helm unittest src/groundx/prereqs/kafka-cluster
+run_helm_unittest_and_verify_stability ""
 
 echo "==> Verifying Google OCR credentials rendering for both chart surfaces"
 for chart in src/groundx helm; do
@@ -420,7 +451,7 @@ fi
 if [[ "${RUN_JUNIT}" == "1" ]]; then
   echo "==> Writing Helm unittest JUnit report"
   mkdir -p reports
-  helm unittest -o junit --output-file reports/helm-unittest.xml src/groundx
+  run_helm_unittest_and_verify_stability "(--junit) " -o junit --output-file reports/helm-unittest.xml
 fi
 
 echo "==> Checking diff whitespace"
