@@ -144,6 +144,31 @@ tests:
       - matchRegex:
           path: stringData["config.yaml"]
           pattern: "integrationTests:\\n  extractionCaptureAccounts:\\n\\n    - internal-certification-account\\n    - second-internal-account\\n  search:"
+  - it: "extraction capture domains default to none"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "extractionCaptureDomains"
+  - it: "configured extraction capture domains render exactly"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.extraction-capture-domains.yaml
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "extractionCaptureDomains:\\n\\n    - eyelevel.ai\\n    - valantor.com"
   - it: "default: resources"
     templates:
       - ../templates/resources/config-models.yaml

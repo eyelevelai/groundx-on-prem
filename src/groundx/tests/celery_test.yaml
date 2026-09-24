@@ -222,3 +222,131 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].command[2]
           value: "export PYTHONPATH=/app && supervisord -c /app/supervisord.conf\n"
+  - &packaged_layout_credentials
+    it: "packaged layout OCR credentials with extraction and workspace workers enabled: layout-ocr keeps its annotation, mount and volume (regression, GX-49; must-not-block)"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.ocr-google.yaml
+    set:
+      layout.correct.enabled: true
+      layout.map.enabled: true
+      layout.process.enabled: true
+      layout.save.enabled: true
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.api.enabled: true
+      extract.download.enabled: true
+      extract.save.enabled: true
+      workspace.enabled: true
+      workspace.token: test-runner-token
+    documentSelector:
+      path: metadata.name
+      value: layout-ocr
+    asserts:
+      - isKind:
+          of: Deployment
+      - matchRegex:
+          path: spec.template.metadata.annotations["ocr-credentials-hash"]
+          pattern: "^[0-9a-f]{64}$"
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: credentials-volume
+            mountPath: /app/credentials.json
+            subPath: credentials.json
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: credentials-volume
+            secret:
+              secretName: layout-ocr-credentials-map
+  - <<: *packaged_layout_credentials
+    it: "packaged layout OCR credentials: layout-correct keeps its annotation, mount and volume (GX-49)"
+    documentSelector:
+      path: metadata.name
+      value: layout-correct
+  - <<: *packaged_layout_credentials
+    it: "packaged layout OCR credentials: layout-map keeps its annotation, mount and volume (GX-49)"
+    documentSelector:
+      path: metadata.name
+      value: layout-map
+  - <<: *packaged_layout_credentials
+    it: "packaged layout OCR credentials: layout-process keeps its annotation, mount and volume (GX-49)"
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+  - <<: *packaged_layout_credentials
+    it: "packaged layout OCR credentials: layout-save keeps its annotation, mount and volume (GX-49)"
+    documentSelector:
+      path: metadata.name
+      value: layout-save
+  - it: "packaged layout OCR credentials with extraction and workspace workers enabled: extract-download must not reference layout's OCR credentials Secret (regression, GX-49; catches)"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.ocr-google.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.api.enabled: true
+      extract.download.enabled: true
+      extract.save.enabled: true
+      workspace.enabled: true
+      workspace.token: test-runner-token
+    documentSelector:
+      path: metadata.name
+      value: extract-download
+    asserts:
+      - isKind:
+          of: Deployment
+      - notExists:
+          path: spec.template.metadata.annotations["ocr-credentials-hash"]
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: credentials-volume
+            mountPath: /app/credentials.json
+            subPath: credentials.json
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: credentials-volume
+            secret:
+              secretName: extract-ocr-credentials-map
+  - it: "packaged layout OCR credentials with extraction and workspace workers enabled: workspace-workspace must not reference layout's OCR credentials Secret (regression, GX-49; catches)"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.ocr-google.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.api.enabled: true
+      extract.download.enabled: true
+      extract.save.enabled: true
+      workspace.enabled: true
+      workspace.token: test-runner-token
+    documentSelector:
+      path: metadata.name
+      value: workspace-workspace
+    asserts:
+      - isKind:
+          of: Deployment
+      - notExists:
+          path: spec.template.metadata.annotations["ocr-credentials-hash"]
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: credentials-volume
+            mountPath: /app/credentials.json
+            subPath: credentials.json
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: credentials-volume
+            secret:
+              secretName: workspace-ocr-credentials-map

@@ -35,6 +35,17 @@
       },
       "additionalProperties": false
     },
+    "cognito": {
+      "type": "object",
+      "properties": {
+        "mode": { "type": "string", "enum": ["cognito", "apiKeyOnly"] },
+        "clientId": { "type": "string" },
+        "clientSecret": { "type": "string" },
+        "poolId": { "type": "string" },
+        "region": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
     "cluster": {
       "type": "object",
       "properties": {
@@ -517,6 +528,14 @@
             "annotations": { "type": "object" },
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "enabled": { "type": "boolean" },
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
@@ -679,6 +698,14 @@
         "annotations": { "type": "object" },
         "containerPort": { "type": "integer" },
         "containerSecurityContext": { "type": "object" },
+        "disruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        },
         "enabled": { "type": "boolean" },
         "image": { "type": "string" },
         "imagePullPolicy": { "type": "string" },
@@ -737,6 +764,14 @@
             "annotations": { "type": "object" },
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "enabled": { "type": "boolean" },
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
@@ -1524,6 +1559,14 @@
             "batchSize": { "type": "integer", "minimum": 1 },
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "enabled": { "type": "boolean" },
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
@@ -1753,6 +1796,14 @@
             "annotations": { "type": "object" },
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "enabled": { "type": "boolean" },
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
@@ -2085,6 +2136,14 @@
             "annotations": { "type": "object" },
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "enabled": { "type": "boolean" },
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
@@ -2284,6 +2343,11 @@
       "type": "object",
       "properties": {
         "extractionCaptureAccounts": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "extractionCaptureDomains": {
           "type": "array",
           "items": { "type": "string", "minLength": 1 },
           "uniqueItems": true

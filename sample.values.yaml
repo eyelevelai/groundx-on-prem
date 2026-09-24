@@ -6,6 +6,16 @@ admin:
   password: "password"
   username: "00000000-0000-0000-0000-000000000000"
 
+# Uncomment and fill to enable Cognito login; omit to stay on the apiKeyOnly identity default.
+# mode: cognito also requires AWS credentials reaching the pod (existing chart mechanism, not a
+# new value: standard AWS env vars, or an IRSA-enabled serviceAccount.name) and region set.
+# cognito:
+#   mode: cognito
+#   clientId: "<cognito-app-client-id>"
+#   clientSecret: "<cognito-app-client-secret>"
+#   poolId: "<cognito-user-pool-id>"
+#   region: "<aws-region>"
+
 cluster:
   pvClass: eyelevel-pv
 

@@ -121,6 +121,45 @@ for chart in src/groundx helm; do
     echo "${chart}: google OCR disabled render must not mount a Secret that is never created." >&2
     exit 1
   fi
+  mixed_worker_render="$(helm template ocr-google-mixed "${chart}" \
+    -f src/groundx/tests/files/values.ocr-google.yaml \
+    --set extract.enabled=true \
+    --set extract.agent.enabled=true \
+    --set extract.api.enabled=true \
+    --set extract.download.enabled=true \
+    --set extract.save.enabled=true \
+    --set workspace.enabled=true \
+    --set workspace.token=test-runner-token)"
+  for unwanted in "extract-ocr-credentials-map" "workspace-ocr-credentials-map"; do
+    if grep -q -- "${unwanted}" <<<"${mixed_worker_render}"; then
+      echo "${chart}: packaged layout OCR credentials with extraction and workspace workers enabled must not reference ${unwanted}." >&2
+      exit 1
+    fi
+  done
+  for present in "name: extract-download" "name: extract-save" "name: workspace-workspace"; do
+    if ! grep -q -- "${present}" <<<"${mixed_worker_render}"; then
+      echo "${chart}: mixed-worker regression fixture must actually render ${present}, not vacuously pass by being disabled." >&2
+      exit 1
+    fi
+  done
+  for worker in layout-correct layout-map layout-ocr layout-process layout-save; do
+    if ! worker="${worker}" yq -e '
+      select(.kind == "Deployment" and .metadata.name == strenv(worker)) |
+      (.spec.template.metadata.annotations."ocr-credentials-hash" // "" | test("^[0-9a-f]{64}$")) and
+      ([.spec.template.spec.containers[0].volumeMounts[] | select(
+        .name == "credentials-volume" and
+        .mountPath == "/app/credentials.json" and
+        .subPath == "credentials.json"
+      )] | length == 1) and
+      ([.spec.template.spec.volumes[] | select(
+        .name == "credentials-volume" and
+        .secret.secretName == "layout-ocr-credentials-map"
+      )] | length == 1)
+    ' <<<"${mixed_worker_render}" >/dev/null; then
+      echo "${chart}: ${worker} must render with its OCR annotation, credentials mount and layout credentials Secret volume." >&2
+      exit 1
+    fi
+  done
 done
 
 echo "==> Verifying shared Google credential isolation and rotation"
