@@ -20,9 +20,12 @@ dependency on any other `groundx-*` repo** (verified).
   dual-surface render checks) and is the entrypoint to prefer. It generates the throwaway
   Google-OCR credentials fixture the OCR unit tests need; a bare `helm unittest src/groundx` fails
   the `celery` OCR case with `layout.ocr.credentials file not found` unless that fixture exists, so
-  generate it first or run the gate. It requires the `helm-unittest` plugin:
-  `helm plugin install https://github.com/helm-unittest/helm-unittest.git`, and `yq` (mikefarah v4
-  line) for the `probe-mirror-drift` guard's field-level renders
+  generate it first or run the gate. It requires the `helm-unittest` plugin, pinned at
+  `.build/HELM_UNITTEST_VERSION` (see GX-22 — the gate also byte-verifies the installed binary
+  against `.build/HELM_UNITTEST_BINARY_SHA256`, not just the declared version, since the plugin's
+  own installer can leave a stale binary behind a correct-looking version string):
+  `helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "$(cat .build/HELM_UNITTEST_VERSION)"`,
+  and `yq` (mikefarah v4 line) for the `probe-mirror-drift` guard's field-level renders
   (`src/groundx/tests/files/verify-probe-mirror-drift.sh`). Do not regenerate the `__snapshot__`
   golden files with `helm unittest -u src/groundx` — see the "Agent boundaries" section below for
   why and for the correct method.
@@ -103,12 +106,14 @@ without explicit human authorization.**
 
 ## Repo-specific gotchas
 
-- **`helm/` ↔ `src/groundx/` duplication has no regen script and no general drift check** — the
-  single most important hazard. A change to `src/groundx/` that isn't mirrored into `helm/` silently
-  ships stale templates. Sync both, every time. The one exception is the five API-pod probe-timing
-  fields, which `.build/bin/validate-helm.sh` gates via
-  `src/groundx/tests/files/verify-probe-mirror-drift.sh` (FRA-145) — everything else in the mirror
-  is still unchecked.
+- **`helm/` ↔ `src/groundx/` duplication has no regen script** — the single most important hazard.
+  A change to `src/groundx/` that isn't mirrored into `helm/` silently ships stale templates until
+  the gate catches it. Sync both, every time. There IS a drift check: `verify_mirrors()` in
+  `.build/bin/verify-storage-contract.py` byte-compares the full `src/groundx/templates` tree
+  against `helm/templates` on every gate run and fails on any mismatch (see GX-22). The five
+  API-pod probe-timing fields are separately drift-guarded by
+  `src/groundx/tests/files/verify-probe-mirror-drift.sh` (FRA-145), a narrower rendered-output
+  check that predates and still complements the full-tree one.
 - **`upload.groundx.ai` model-weight download is HARDCODED** in inference init-containers — an
   **air-gap blocker**; weights must be mirrored for offline installs (mechanism not documented in-repo).
 - **Hosted ranker-only EKS is migration-state, not generic chart truth.** As of 2026-07-23,
