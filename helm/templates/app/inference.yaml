@@ -197,6 +197,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+{{- if eq $mapPrefix "summary" }}
+            - name: HF_HUB_OFFLINE
+              value: "1"
+{{- end }}
 {{- if gt (len $scr) 0 }}
           envFrom:
 {{- range $kk, $vv := $scr }}
