@@ -139,3 +139,7 @@ shape, the FRA-115 producer, and the plan-gate decisions this design carries for
   `-f`) is parsed as a real YAML float and accepted, rendering `ocrTimeout=120,`; operators using a
   values file rather than `--set` should write an unquoted integer to avoid relying on that
   float-to-integer coercion.
+
+## Amendments
+
+- 2026-09-25, review round 3: the "Image precondition" decision above says the FRA-115 merge was "tagged into the `0.2.7` image line, 2026-08-18". ai-server has no `0.2.7` tag. The precondition is a layout-process image built from ai-server `master` at or after merge `c96acfd` (FRA-115, 2026-08-18); images without that change have no per-page OCR timeout.
