@@ -19,11 +19,9 @@ variable "environment" {
 variable "environment_internal" {
   description   = "Environment internal settings"
   type          = object({
-    eks_version = string
+    eks_version = optional(string)
   })
-  default       = {
-    eks_version = "1.35"
-  }
+  default       = {}
 }
 
 variable "node_diagnostics" {

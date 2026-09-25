@@ -1,0 +1,67 @@
+name: terraform
+
+on:
+    push:
+        branches: ["**"]
+    pull_request:
+    release:
+        types: [published, created]
+    workflow_dispatch:
+
+jobs:
+    eks-cluster-version-test:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Set up Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                  terraform_version: "1.16.3"
+
+            - name: Generate env.tfvars from the example
+              run: cp -n terraform/aws/env.tfvars.example terraform/aws/env.tfvars
+
+            - name: Terraform init
+              run: terraform -chdir=terraform/aws/eks init -backend=false
+
+            - name: Terraform test
+              run: terraform -chdir=terraform/aws/eks test
+
+            - name: Install python-hcl2 (for parsed-configuration check)
+              run: pip install --quiet python-hcl2==8.1.4
+
+            - name: Confirm cluster_version is wired to environment_internal.eks_version
+              run: |
+                  python3 -c "
+                  import hcl2, sys
+
+                  # Parse the actual HCL structure (not source text) so a decoy match cannot pass:
+                  # not from a comment (a real parser has no concept of one), not from an unused
+                  # local elsewhere in the file, and not from a look-alike string nested under some
+                  # other key inside the module block. Only the module call's own cluster_version
+                  # argument counts. python-hcl2's module-label key is quoted (e.g. '\"eyelevel_eks\"')
+                  # as of the pinned 8.1.4 -- strip quotes so this doesn't silently no-op if that
+                  # representation ever changes again.
+                  with open('terraform/aws/eks/eks.tf') as f:
+                      data = hcl2.load(f)
+
+                  for entry in data.get('module', []):
+                      block = next((v for k, v in entry.items() if k.strip('\"') == 'eyelevel_eks'), None)
+                      if block is None:
+                          continue
+                      cluster_version = block.get('cluster_version')
+                      if cluster_version is not None and 'environment_internal.eks_version' in str(cluster_version):
+                          sys.exit(0)
+
+                  sys.exit(1)
+                  "
+
+            - name: Run resolve-eks-version bash tests
+              run: bash bin/tests/resolve-eks-version-test
+
+            - name: Run setup-eks wiring bash tests
+              run: bash bin/tests/setup-eks-wiring-test
+
