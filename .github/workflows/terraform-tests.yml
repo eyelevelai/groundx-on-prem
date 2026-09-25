@@ -30,46 +30,31 @@ jobs:
             - name: Terraform test
               run: terraform -chdir=terraform/aws/eks test
 
+            - name: Install python-hcl2 (for parsed-configuration check)
+              run: pip install --quiet python-hcl2==7.*
+
             - name: Confirm cluster_version is wired to environment_internal.eks_version
               run: |
                   python3 -c "
-                  import re, sys
+                  import hcl2, sys
 
-                  text = open('terraform/aws/eks/eks.tf').read()
-                  text = re.sub(r'/\*.*?\*/', '', text, flags=re.DOTALL)
-                  lines = [l for l in text.splitlines() if not re.match(r'^\s*(#|//)', l)]
-                  text = '\n'.join(lines)
+                  # Parse the actual HCL structure (not source text) so a decoy match cannot pass:
+                  # not from a comment (a real parser has no concept of one), not from an unused
+                  # local elsewhere in the file, and not from a look-alike string nested under some
+                  # other key inside the module block. Only the module call's own cluster_version
+                  # argument counts.
+                  with open('terraform/aws/eks/eks.tf') as f:
+                      data = hcl2.load(f)
 
-                  # Scope the check to the actual module '{ ... }' block in parsed configuration,
-                  # not the whole file — a match anywhere in the file (e.g. an unused local
-                  # coincidentally carrying the same assignment) is not proof the module argument
-                  # itself is wired.
-                  match = re.search(r'module\s+\"eyelevel_eks\"\s*{', text)
-                  if not match:
-                      sys.exit(1)
+                  for entry in data.get('module', []):
+                      block = entry.get('\"eyelevel_eks\"')
+                      if block is None:
+                          continue
+                      cluster_version = block.get('cluster_version')
+                      if cluster_version is not None and 'environment_internal.eks_version' in str(cluster_version):
+                          sys.exit(0)
 
-                  depth = 0
-                  end = None
-                  in_string = False
-                  i = match.end() - 1
-                  while i < len(text):
-                      c = text[i]
-                      if c == '\"':
-                          in_string = not in_string
-                      elif not in_string:
-                          if c == '{':
-                              depth += 1
-                          elif c == '}':
-                              depth -= 1
-                              if depth == 0:
-                                  end = i
-                                  break
-                      i += 1
-                  if end is None:
-                      sys.exit(1)
-
-                  module_block = text[match.end() - 1:end + 1]
-                  sys.exit(0 if re.search(r'cluster_version\s*=\s*var\.environment_internal\.eks_version', module_block) else 1)
+                  sys.exit(1)
                   "
 
             - name: Run resolve-eks-version bash tests
