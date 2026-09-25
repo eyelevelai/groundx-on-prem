@@ -109,3 +109,4 @@ hand-typed); and verify the result with a plain `helm unittest` (no `-u`, OCR fi
 branch still touches only `ocrTimeout`/`config-hash` lines — that outcome is correct — only the
 mechanism description above is wrong. See `design.md` for the full recorded decision. Original
 `## What Changes` and `## Impact` text left intact per no-silent-rewrite of archived history.
+- 2026-09-25, review round 3: "Why" says FRA-115 merged to `ai-server` master 2026-08-18 "(0.2.7 tag)". ai-server has no `0.2.7` tag. FRA-115 is merge commit `c96acfd` on `master`, 2026-08-18; the layout-process image must include that change for the value to take effect.
