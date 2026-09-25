@@ -17,8 +17,13 @@ The following table lists the configurable parameters of the GroundX chart and t
 | `admin.username`                            | A UUID that will be associated with the admin account in this deployment        | `00000000-0000-0000-0000-000000000000`|
 | `admin.email`                               | The password associated with the admin account in this deployment               | `support@mycorp.net`                  |
 | `admin.password`                            | The email associated with the admin account in this deployment                  | `password`                            |
+| `cognito.mode`                              | The identity mode: `apiKeyOnly` (default, unset), `cognito`, or `local`         | unset (`apiKeyOnly`)                  |
 | `extract.terminalAgentTraceEnabled`         | Enables terminal-only private diagnostics for every extract pod                  | `false`                               |
 | `extract.<pod>.terminalAgentTraceEnabled`   | Overrides the shared diagnostic value for api, agent, download, or save           | inherited                             |
+
+`local` is a supported `cognito.mode` value for on-prem local password-login identity mode (see
+[`docs/on-prem-identity.md`](/docs/on-prem-identity.md)); it requires a cashbot-go image that
+supports it.
 
 ## Extract model request overrides
 
