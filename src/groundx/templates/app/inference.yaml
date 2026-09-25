@@ -198,7 +198,6 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
 {{- if eq $mapPrefix "summary" }}
-            # GX-34: gated repos need auth to re-verify an absent file; trust the local cache instead.
             - name: HF_HUB_OFFLINE
               value: "1"
 {{- end }}
