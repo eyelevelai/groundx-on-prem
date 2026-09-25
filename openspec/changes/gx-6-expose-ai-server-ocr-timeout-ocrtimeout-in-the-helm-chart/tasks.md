@@ -9,12 +9,12 @@ src/groundx/tests/__snapshot__/resources_test.yaml.snap` before continuing.
 
 ## 1. Render `layout.ocr.timeout` end-to-end in `src/groundx` (schema → render → tested — the thin vertical slice)
 
-- [ ] 1.1 Add `layout.ocr.timeout` to `src/groundx/values.schema.json`'s `layout.ocr` block:
+- [x] 1.1 Add `layout.ocr.timeout` to `src/groundx/values.schema.json`'s `layout.ocr` block:
       `"timeout": { "type": "integer", "minimum": 1, "maximum": 250 }`, inserted between the
       existing `"threads"` (line 1016) and `"tolerations"` (line 1017) properties, matching the
       alphabetical sibling ordering already used in that block.
       check: ${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} template src/groundx --set layout.ocr.timeout=251 2>&1 | grep -c "layout/ocr/timeout.*maximum: got 251, want 250"
-- [ ] 1.2 Add the `groundx.layout.ocr.timeout` helper to
+- [x] 1.2 Add the `groundx.layout.ocr.timeout` helper to
       `src/groundx/templates/_helpers/app/layout-ocr.tpl` — `dig "timeout" 120 $in`, the exact
       shape of the sibling `groundx.layout.api.timeout` helper
       (`templates/_helpers/app/layout-api.tpl:199-202`) — positioned between the existing
@@ -25,11 +25,11 @@ src/groundx/tests/__snapshot__/resources_test.yaml.snap` before continuing.
       existing `ocrProject=...,` and `ocrType=...,` lines (alphabetical, matching the file's
       existing key ordering).
       check: ${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} template src/groundx --set layout.ocr.timeout=187 --show-only templates/resources/layout-config-py.yaml 2>&1 | grep -c 'ocrTimeout=187,'
-- [ ] 1.3 Add a one-line comment directly above `ocr:` in `src/groundx/values.yaml` (around line
+- [x] 1.3 Add a one-line comment directly above `ocr:` in `src/groundx/values.yaml` (around line
       244) documenting the 250 ceiling and that the value only affects the Tesseract OCR path
       (Google OCR ignores it) — no ticket ID, no narration, one line.
       check: n/a — comment-only documentation change, no rendered behavior to assert
-- [ ] 1.4 Extend `src/groundx/tests/resources_test.yaml` with the override case
+- [x] 1.4 Extend `src/groundx/tests/resources_test.yaml` with the override case
       (`layout.ocr.timeout: 187` renders `ocrTimeout=187,`) and the rejection case
       (`layout.ocr.timeout: 251` fails schema validation) — **already committed in this authoring
       pass** as the two new `it:` cases immediately before `"existing: resources"`. This task
@@ -44,7 +44,7 @@ src/groundx/tests/__snapshot__/resources_test.yaml.snap` before continuing.
 
 ## 2. Mirror identically into `helm/`
 
-- [ ] 2.1 Apply the same three edits from 1.1–1.3 (schema property, helper, rendered
+- [x] 2.1 Apply the same three edits from 1.1–1.3 (schema property, helper, rendered
       `config.py` line, `values.yaml` comment) into `helm/values.schema.json`,
       `helm/templates/_helpers/app/layout-ocr.tpl`, `helm/templates/resources/layout-config-py.yaml`,
       and `helm/values.yaml` — `helm/` has no `tests/` directory (removed in the mirror), so no
@@ -53,7 +53,7 @@ src/groundx/tests/__snapshot__/resources_test.yaml.snap` before continuing.
 
 ## 3. Regenerate snapshots and run the canonical gate
 
-- [ ] 3.1 Regenerate every `helm-unittest` golden snapshot the `layout-config-py` Secret's
+- [x] 3.1 Regenerate every `helm-unittest` golden snapshot the `layout-config-py` Secret's
       `config-hash` annotation touches, using the **pinned v3.19.0** binary only — never the
       ambient/unpinned `helm` (see the cross-cutting note above). The `config-hash` annotation at
       `templates/app/api.yaml:69`, `templates/app/celery.yaml:67`, and `templates/app/inference.yaml:71`
@@ -100,7 +100,7 @@ src/groundx/tests/__snapshot__/resources_test.yaml.snap` before continuing.
       Delete the scratch copy and its throwaway extraction script before finishing this task —
       neither is committed and neither should remain in the worktree.
       check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; snaps="src/groundx/tests/__snapshot__/resources_test.yaml.snap src/groundx/tests/__snapshot__/api_test.yaml.snap src/groundx/tests/__snapshot__/celery_test.yaml.snap src/groundx/tests/__snapshot__/inference_test.yaml.snap"; f=src/groundx/files/ocr/gcv-test.json; created=0; if [ ! -e "$f" ]; then mkdir -p "$(dirname "$f")"; printf '%s\n' '{' '  "type": "service_account",' '  "project_id": "groundx-helm-test",' '  "private_key_id": "test",' '  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",' '  "token_uri": "https://oauth2.googleapis.com/token"' '}' > "$f"; created=1; fi; out=$("$HB" unittest -f tests/resources_test.yaml -f tests/api_test.yaml -f tests/celery_test.yaml -f tests/inference_test.yaml src/groundx 2>&1); rc=$?; if [ "$created" = 1 ]; then rm -f "$f"; rmdir src/groundx/files/ocr src/groundx/files 2>/dev/null; fi; if [ $rc -ne 0 ]; then printf '%s\n' "$out"; exit 1; fi; grep -q 'ocrTimeout=120,' src/groundx/tests/__snapshot__/resources_test.yaml.snap || { echo "resources snapshot missing ocrTimeout=120,"; exit 1; }; bad=$(git diff --unified=0 origin/0.2.7...HEAD -- $snaps | grep -E '^[+-][^+-]' | grep -vE '^[+-].*(ocrTimeout=[0-9]+,|config-hash: )'); [ -z "$bad" ] || { echo "snapshot diff touches lines beyond ocrTimeout/config-hash:"; printf '%s\n' "$bad"; exit 1; }
-- [ ] 3.2 Run the canonical gate, `.build/bin/validate-helm.sh`, with a real `python3` first on
+- [x] 3.2 Run the canonical gate, `.build/bin/validate-helm.sh`, with a real `python3` first on
       PATH (the bare `python` on this machine is a 2-line stub that silently skips 4 of its
       checks, including `verify-helm-snapshots.py`) and the pinned helm shimmed onto PATH as
       `helm` (mirrors `scripts/githooks/groundx-on-prem/pre-push`'s own shim pattern).
@@ -120,7 +120,7 @@ src/groundx/tests/__snapshot__/resources_test.yaml.snap` before continuing.
       `layout-config-py.yaml` output under the same override (`layout.ocr.timeout=187`) — proves
       task 2.1 actually mirrored task 1.2 rather than drifting.
       check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; set -o pipefail; a=$("$HB" template src/groundx --set layout.ocr.timeout=187 --show-only templates/resources/layout-config-py.yaml 2>&1); ra=$?; b=$("$HB" template helm --set layout.ocr.timeout=187 --show-only templates/resources/layout-config-py.yaml 2>&1); rb=$?; if [ $ra -ne 0 ] || [ $rb -ne 0 ]; then echo "one or both renders failed (src rc=$ra, helm rc=$rb)"; exit 1; fi; echo "$a" | grep -q 'ocrTimeout=187,' || { echo "src render missing ocrTimeout=187,"; exit 1; }; echo "$b" | grep -q 'ocrTimeout=187,' || { echo "helm render missing ocrTimeout=187,"; exit 1; }; diff <(echo "$a") <(echo "$b")
-- [ ] 4.3 Mutation proof: temporarily change the helper's default from `120` to `121` (or the
+- [x] 4.3 Mutation proof: temporarily change the helper's default from `120` to `121` (or the
       schema `maximum` from `250` to `249`), re-run the two committed tests from 1.4, confirm they
       now fail (proving the tests actually exercise the code rather than passing vacuously), then
       revert the mutation before committing anything.
