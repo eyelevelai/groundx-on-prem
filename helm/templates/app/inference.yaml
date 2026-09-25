@@ -198,12 +198,7 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
 {{- if eq $mapPrefix "summary" }}
-            # GX-34: gated repos (Gemma) require auth even to re-check that an
-            # already-known-absent file still does not exist, so the client
-            # re-verifying that on every restart fails without a credential.
-            # Permanent, not scoped to that one check: any future rebuild
-            # needing a file not already in the local cache will hard-fail
-            # startup instead of fetching it.
+            # GX-34: gated repos need auth to re-verify an absent file; trust the local cache instead.
             - name: HF_HUB_OFFLINE
               value: "1"
 {{- end }}
