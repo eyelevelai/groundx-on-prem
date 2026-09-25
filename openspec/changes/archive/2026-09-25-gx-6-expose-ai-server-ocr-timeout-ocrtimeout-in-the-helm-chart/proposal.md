@@ -91,3 +91,21 @@ the timeout value.)
   `ocrTimeout` line plus `config-hash` lines, and stop and escalate if any
   label drops or reorders; snapshots are never hand-edited); see this
   change's `design.md` for the recorded decisions and rationale.
+
+## Amendments
+
+### 2026-09-25 — snapshot-regeneration method corrected (review round 1, F2)
+
+The `## What Changes` snapshot bullet and the `## Impact` "Open design questions" line above both
+describe the shipped snapshot method as running `helm unittest -u` directly and confirming the
+resulting diff is only the new config line plus `config-hash` churn. That is not the method that
+shipped. The installed `helm-unittest` plugin (v1.1.2) drops or reorders committed snapshot labels
+on direct `-u` regeneration (FRA-145, tracked further as GX-59), so `design.md` records — and the
+implementation used — a different procedure: run `helm unittest -u` only against a **scratch copy**
+of `src/groundx`, never against the committed snapshot files directly; script-apply only the
+resulting `ocrTimeout`/`config-hash` line-level changes into the committed snapshots (never
+hand-typed); and verify the result with a plain `helm unittest` (no `-u`, OCR fixture present),
+`verify-helm-snapshots.py`, and `.build/bin/validate-helm.sh`. The snapshot diff against the base
+branch still touches only `ocrTimeout`/`config-hash` lines — that outcome is correct — only the
+mechanism description above is wrong. See `design.md` for the full recorded decision. Original
+`## What Changes` and `## Impact` text left intact per no-silent-rewrite of archived history.
