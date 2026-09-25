@@ -13,7 +13,7 @@ src/groundx/tests/__snapshot__/resources_test.yaml.snap` before continuing.
       `"timeout": { "type": "integer", "minimum": 1, "maximum": 250 }`, inserted between the
       existing `"threads"` (line 1016) and `"tolerations"` (line 1017) properties, matching the
       alphabetical sibling ordering already used in that block.
-      check: `${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} template src/groundx --set layout.ocr.timeout=251 2>&1 | grep -c "layout/ocr/timeout.*maximum: got 251, want 250"`
+      check: ${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} template src/groundx --set layout.ocr.timeout=251 2>&1 | grep -c "layout/ocr/timeout.*maximum: got 251, want 250"
 - [ ] 1.2 Add the `groundx.layout.ocr.timeout` helper to
       `src/groundx/templates/_helpers/app/layout-ocr.tpl` — `dig "timeout" 120 $in`, the exact
       shape of the sibling `groundx.layout.api.timeout` helper
@@ -24,7 +24,7 @@ src/groundx/tests/__snapshot__/resources_test.yaml.snap` before continuing.
       `src/groundx/templates/resources/layout-config-py.yaml`, on its own line between the
       existing `ocrProject=...,` and `ocrType=...,` lines (alphabetical, matching the file's
       existing key ordering).
-      check: `${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} template src/groundx --set layout.ocr.timeout=187 --show-only templates/resources/layout-config-py.yaml 2>&1 | grep -c 'ocrTimeout=187,'`
+      check: ${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} template src/groundx --set layout.ocr.timeout=187 --show-only templates/resources/layout-config-py.yaml 2>&1 | grep -c 'ocrTimeout=187,'
 - [ ] 1.3 Add a one-line comment directly above `ocr:` in `src/groundx/values.yaml` (around line
       244) documenting the 250 ceiling and that the value only affects the Tesseract OCR path
       (Google OCR ignores it) — no ticket ID, no narration, one line.
@@ -40,16 +40,7 @@ src/groundx/tests/__snapshot__/resources_test.yaml.snap` before continuing.
       stub), since the stub content mismatches the `"shared Google credentials: resources"`
       snapshot's expected values and makes the suite exit non-zero for a reason unrelated to this
       task; ensure the fixture is always removed after the run, success or failure.
-      check: `HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; f=src/groundx/files/ocr/gcv-test.json; created=0; if [ ! -e "$f" ]; then mkdir -p "$(dirname "$f")"; cat > "$f" <<'JSON'
-{
-  "type": "service_account",
-  "project_id": "groundx-helm-test",
-  "private_key_id": "test",
-  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",
-  "token_uri": "https://oauth2.googleapis.com/token"
-}
-JSON
-created=1; fi; out=$("$HB" unittest -f tests/resources_test.yaml src/groundx 2>&1); rc=$?; if [ "$created" = 1 ]; then rm -f "$f"; rmdir src/groundx/files/ocr src/groundx/files 2>/dev/null; fi; if [ $rc -ne 0 ]; then printf '%s\n' "$out"; exit 1; fi; printf '%s' "$out" | grep -qE '^Tests:.*[1-9][0-9]* failed' && { echo "helm unittest exited 0 but its own summary reports a failure"; printf '%s\n' "$out"; exit 1; }; exit 0`
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; f=src/groundx/files/ocr/gcv-test.json; created=0; if [ ! -e "$f" ]; then mkdir -p "$(dirname "$f")"; printf '%s\n' '{' '  "type": "service_account",' '  "project_id": "groundx-helm-test",' '  "private_key_id": "test",' '  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",' '  "token_uri": "https://oauth2.googleapis.com/token"' '}' > "$f"; created=1; fi; out=$("$HB" unittest -f tests/resources_test.yaml src/groundx 2>&1); rc=$?; if [ "$created" = 1 ]; then rm -f "$f"; rmdir src/groundx/files/ocr src/groundx/files 2>/dev/null; fi; if [ $rc -ne 0 ]; then printf '%s\n' "$out"; exit 1; fi; printf '%s' "$out" | grep -qE '^Tests:.*[1-9][0-9]* failed' && { echo "helm unittest exited 0 but its own summary reports a failure"; printf '%s\n' "$out"; exit 1; }; exit 0
 
 ## 2. Mirror identically into `helm/`
 
@@ -58,7 +49,7 @@ created=1; fi; out=$("$HB" unittest -f tests/resources_test.yaml src/groundx 2>&
       `helm/templates/_helpers/app/layout-ocr.tpl`, `helm/templates/resources/layout-config-py.yaml`,
       and `helm/values.yaml` — `helm/` has no `tests/` directory (removed in the mirror), so no
       snapshot task applies here.
-      check: `${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} template helm --set layout.ocr.timeout=187 --show-only templates/resources/layout-config-py.yaml 2>&1 | grep -c 'ocrTimeout=187,'`
+      check: ${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} template helm --set layout.ocr.timeout=187 --show-only templates/resources/layout-config-py.yaml 2>&1 | grep -c 'ocrTimeout=187,'
 
 ## 3. Regenerate snapshots and run the canonical gate
 
@@ -108,21 +99,12 @@ created=1; fi; out=$("$HB" unittest -f tests/resources_test.yaml src/groundx 2>&
 
       Delete the scratch copy and its throwaway extraction script before finishing this task —
       neither is committed and neither should remain in the worktree.
-      check: `HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; snaps="src/groundx/tests/__snapshot__/resources_test.yaml.snap src/groundx/tests/__snapshot__/api_test.yaml.snap src/groundx/tests/__snapshot__/celery_test.yaml.snap src/groundx/tests/__snapshot__/inference_test.yaml.snap"; f=src/groundx/files/ocr/gcv-test.json; created=0; if [ ! -e "$f" ]; then mkdir -p "$(dirname "$f")"; cat > "$f" <<'JSON'
-{
-  "type": "service_account",
-  "project_id": "groundx-helm-test",
-  "private_key_id": "test",
-  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",
-  "token_uri": "https://oauth2.googleapis.com/token"
-}
-JSON
-created=1; fi; out=$("$HB" unittest -f tests/resources_test.yaml -f tests/api_test.yaml -f tests/celery_test.yaml -f tests/inference_test.yaml src/groundx 2>&1); rc=$?; if [ "$created" = 1 ]; then rm -f "$f"; rmdir src/groundx/files/ocr src/groundx/files 2>/dev/null; fi; if [ $rc -ne 0 ]; then printf '%s\n' "$out"; exit 1; fi; grep -q 'ocrTimeout=120,' src/groundx/tests/__snapshot__/resources_test.yaml.snap || { echo "resources snapshot missing ocrTimeout=120,"; exit 1; }; bad=$(git diff --unified=0 origin/0.2.7...HEAD -- $snaps | grep -E '^[+-][^+-]' | grep -vE '^[+-].*(ocrTimeout=[0-9]+,|config-hash: )'); [ -z "$bad" ] || { echo "snapshot diff touches lines beyond ocrTimeout/config-hash:"; printf '%s\n' "$bad"; exit 1; }`
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; snaps="src/groundx/tests/__snapshot__/resources_test.yaml.snap src/groundx/tests/__snapshot__/api_test.yaml.snap src/groundx/tests/__snapshot__/celery_test.yaml.snap src/groundx/tests/__snapshot__/inference_test.yaml.snap"; f=src/groundx/files/ocr/gcv-test.json; created=0; if [ ! -e "$f" ]; then mkdir -p "$(dirname "$f")"; printf '%s\n' '{' '  "type": "service_account",' '  "project_id": "groundx-helm-test",' '  "private_key_id": "test",' '  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",' '  "token_uri": "https://oauth2.googleapis.com/token"' '}' > "$f"; created=1; fi; out=$("$HB" unittest -f tests/resources_test.yaml -f tests/api_test.yaml -f tests/celery_test.yaml -f tests/inference_test.yaml src/groundx 2>&1); rc=$?; if [ "$created" = 1 ]; then rm -f "$f"; rmdir src/groundx/files/ocr src/groundx/files 2>/dev/null; fi; if [ $rc -ne 0 ]; then printf '%s\n' "$out"; exit 1; fi; grep -q 'ocrTimeout=120,' src/groundx/tests/__snapshot__/resources_test.yaml.snap || { echo "resources snapshot missing ocrTimeout=120,"; exit 1; }; bad=$(git diff --unified=0 origin/0.2.7...HEAD -- $snaps | grep -E '^[+-][^+-]' | grep -vE '^[+-].*(ocrTimeout=[0-9]+,|config-hash: )'); [ -z "$bad" ] || { echo "snapshot diff touches lines beyond ocrTimeout/config-hash:"; printf '%s\n' "$bad"; exit 1; }
 - [ ] 3.2 Run the canonical gate, `.build/bin/validate-helm.sh`, with a real `python3` first on
       PATH (the bare `python` on this machine is a 2-line stub that silently skips 4 of its
       checks, including `verify-helm-snapshots.py`) and the pinned helm shimmed onto PATH as
       `helm` (mirrors `scripts/githooks/groundx-on-prem/pre-push`'s own shim pattern).
-      check: `h="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; d=$(mktemp -d); ln -s "$h" "$d/helm"; PATH="$d:$(dirname "$(command -v python3)"):$PATH" .build/bin/validate-helm.sh >/tmp/gx6-validate-helm.out 2>&1; rc=$?; rm -rf "$d"; exit $rc`
+      check: h="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; d=$(mktemp -d); ln -s "$h" "$d/helm"; PATH="$d:$(dirname "$(command -v python3)"):$PATH" .build/bin/validate-helm.sh >/tmp/gx6-validate-helm.out 2>&1; rc=$?; rm -rf "$d"; exit $rc
 
 ## 4. Evidence (not committed tests — render matrix, src/helm parity, mutation proof)
 
@@ -133,16 +115,16 @@ created=1; fi; out=$("$HB" unittest -f tests/resources_test.yaml -f tests/api_te
       renders `120` while a quoted `"120.0"` string is rejected. Never print full rendered
       manifests; grep specific keys only. Record the matrix results in the PR description, not a
       committed file.
-      check: `HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; for m in all ingest; do for v in 187 0 251 601; do "$HB" template src/groundx --set mode=$m --set layout.ocr.timeout=$v >/dev/null 2>&1; rc=$?; if [ "$v" = "187" ]; then [ $rc -eq 0 ] || { echo "matrix mismatch: mode=$m timeout=$v rc=$rc (expected accept)"; exit 1; }; else [ $rc -ne 0 ] || { echo "matrix mismatch: mode=$m timeout=$v rc=$rc (expected reject)"; exit 1; }; fi; done; done; "$HB" template src/groundx --set layout.ocr.timeout=120.0 2>&1 | grep -q 'ocrTimeout=120,' || { echo "unquoted 120.0 did not coerce to 120"; exit 1; }; "$HB" template src/groundx --set-string layout.ocr.timeout=120.0 >/dev/null 2>&1 && { echo "quoted \"120.0\" was wrongly accepted"; exit 1; }; echo ok`
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; for m in all ingest; do for v in 187 0 251 601; do "$HB" template src/groundx --set mode=$m --set layout.ocr.timeout=$v >/dev/null 2>&1; rc=$?; if [ "$v" = "187" ]; then [ $rc -eq 0 ] || { echo "matrix mismatch: mode=$m timeout=$v rc=$rc (expected accept)"; exit 1; }; else [ $rc -ne 0 ] || { echo "matrix mismatch: mode=$m timeout=$v rc=$rc (expected reject)"; exit 1; }; fi; done; done; "$HB" template src/groundx --set layout.ocr.timeout=120.0 2>&1 | grep -q 'ocrTimeout=120,' || { echo "unquoted 120.0 did not coerce to 120"; exit 1; }; "$HB" template src/groundx --set-string layout.ocr.timeout=120.0 >/dev/null 2>&1 && { echo "quoted \"120.0\" was wrongly accepted"; exit 1; }; echo ok
 - [ ] 4.2 `src`-vs-`helm` rendered-diff parity: confirm both trees render byte-identical
       `layout-config-py.yaml` output under the same override (`layout.ocr.timeout=187`) — proves
       task 2.1 actually mirrored task 1.2 rather than drifting.
-      check: `HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; diff <("$HB" template src/groundx --set layout.ocr.timeout=187 --show-only templates/resources/layout-config-py.yaml) <("$HB" template helm --set layout.ocr.timeout=187 --show-only templates/resources/layout-config-py.yaml)`
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; set -o pipefail; a=$("$HB" template src/groundx --set layout.ocr.timeout=187 --show-only templates/resources/layout-config-py.yaml 2>&1); ra=$?; b=$("$HB" template helm --set layout.ocr.timeout=187 --show-only templates/resources/layout-config-py.yaml 2>&1); rb=$?; if [ $ra -ne 0 ] || [ $rb -ne 0 ]; then echo "one or both renders failed (src rc=$ra, helm rc=$rb)"; exit 1; fi; echo "$a" | grep -q 'ocrTimeout=187,' || { echo "src render missing ocrTimeout=187,"; exit 1; }; echo "$b" | grep -q 'ocrTimeout=187,' || { echo "helm render missing ocrTimeout=187,"; exit 1; }; diff <(echo "$a") <(echo "$b")
 - [ ] 4.3 Mutation proof: temporarily change the helper's default from `120` to `121` (or the
       schema `maximum` from `250` to `249`), re-run the two committed tests from 1.4, confirm they
       now fail (proving the tests actually exercise the code rather than passing vacuously), then
       revert the mutation before committing anything.
-      check: `HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; sed -i.bak 's/dig "timeout" 120 \$in/dig "timeout" 121 $in/' src/groundx/templates/_helpers/app/layout-ocr.tpl; out=$("$HB" template src/groundx 2>&1 | grep -c 'ocrTimeout=120,'); mv src/groundx/templates/_helpers/app/layout-ocr.tpl.bak src/groundx/templates/_helpers/app/layout-ocr.tpl; [ "$out" = "0" ]`
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; f=src/groundx/files/ocr/gcv-test.json; created=0; if [ ! -e "$f" ]; then mkdir -p "$(dirname "$f")"; printf '%s\n' '{' '  "type": "service_account",' '  "project_id": "groundx-helm-test",' '  "private_key_id": "test",' '  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",' '  "token_uri": "https://oauth2.googleapis.com/token"' '}' > "$f"; created=1; fi; base=$("$HB" unittest -f tests/resources_test.yaml src/groundx 2>&1); rb=$?; sed -i.bak 's/dig "timeout" 120 \$in/dig "timeout" 121 $in/' src/groundx/templates/_helpers/app/layout-ocr.tpl; mut=$("$HB" unittest -f tests/resources_test.yaml src/groundx 2>&1); rm_rc=$?; mv src/groundx/templates/_helpers/app/layout-ocr.tpl.bak src/groundx/templates/_helpers/app/layout-ocr.tpl; if [ "$created" = 1 ]; then rm -f "$f"; rmdir src/groundx/files/ocr src/groundx/files 2>/dev/null; fi; if [ $rb -ne 0 ]; then echo "unmutated committed resources_test.yaml cases must pass first"; exit 1; fi; if [ $rm_rc -eq 0 ]; then echo "mutating the helper default did not make the committed cases fail"; exit 1; fi; exit 0
 
 ---
 Rollout: this is a single-repo, single-commit-group change (no expand/contract needed — a purely
