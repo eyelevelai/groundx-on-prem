@@ -31,7 +31,7 @@ jobs:
               run: terraform -chdir=terraform/aws/eks test
 
             - name: Install python-hcl2 (for parsed-configuration check)
-              run: pip install --quiet python-hcl2==7.*
+              run: pip install --quiet python-hcl2==8.1.4
 
             - name: Confirm cluster_version is wired to environment_internal.eks_version
               run: |
@@ -42,12 +42,14 @@ jobs:
                   # not from a comment (a real parser has no concept of one), not from an unused
                   # local elsewhere in the file, and not from a look-alike string nested under some
                   # other key inside the module block. Only the module call's own cluster_version
-                  # argument counts.
+                  # argument counts. python-hcl2's module-label key is quoted (e.g. '\"eyelevel_eks\"')
+                  # as of the pinned 8.1.4 -- strip quotes so this doesn't silently no-op if that
+                  # representation ever changes again.
                   with open('terraform/aws/eks/eks.tf') as f:
                       data = hcl2.load(f)
 
                   for entry in data.get('module', []):
-                      block = entry.get('\"eyelevel_eks\"')
+                      block = next((v for k, v in entry.items() if k.strip('\"') == 'eyelevel_eks'), None)
                       if block is None:
                           continue
                       cluster_version = block.get('cluster_version')
