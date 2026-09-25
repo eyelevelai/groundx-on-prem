@@ -77,16 +77,21 @@ version-downgrade state; the written value must match what is already running.
 
 ### Requirement: `terraform/aws/`'s supported status is documented consistently
 `README.md` and `AGENTS.md` SHALL describe `terraform/aws/`'s supported status consistently with
-each other and with its actual, currently-deployed state on this branch. Neither document may
-describe the path as both "no longer supported" and, elsewhere, as actively maintaining existing
-deployments.
+each other and with its actual, currently-deployed state on this branch: an optional path for
+provisioning AWS infrastructure (a VPC and/or EKS cluster) ahead of the Helm install, and the
+supported path for maintaining AWS infrastructure already provisioned through it. Neither document
+may claim this path is retired, or scope it to existing deployments only — the November 4, 2025
+migration retired the previous hybrid terraform-helm approach to deploying the *application* onto
+the cluster (now a pure Helm release), not Terraform's role in provisioning or maintaining the
+underlying AWS infrastructure.
 
 #### Scenario: README and AGENTS.md agree on supported status
-- **WHEN** `README.md`'s "Legacy Terraform Deployment" section and `AGENTS.md`'s Terraform
-  description are read together
-- **THEN** both describe the same supported status for `terraform/aws/` on this branch — neither
-  contradicts the other, and neither claims retirement while the repo also documents live
-  diagnostics/maintenance procedures for existing deployments on the same path
+- **WHEN** `README.md`'s "Terraform Deployment (terraform/aws/)" section and `AGENTS.md`'s
+  Terraform description are read together
+- **THEN** both describe `terraform/aws/` the same way: optional for provisioning new AWS
+  infrastructure and supported for maintaining existing AWS infrastructure it created — neither
+  contradicts the other, neither claims retirement, and neither scopes the path to existing
+  deployments only
 
 ### Requirement: Documentation states AWS's version-selection behavior as "the AWS default version"
 Documentation added or edited by this change SHALL describe AWS's unset-`cluster_version`
@@ -101,13 +106,17 @@ reference), and SHALL NOT use "the latest version" — the two can differ.
 
 ### Requirement: Documentation names the version's owner, bump process, and EKS upgrade/extended-support policy
 Documentation SHALL name who owns the declared default version and bumps it, describe the
-bump process tied to the EKS support calendar, and state AWS's EKS upgrade-support and
-extended-support cost behavior explicitly.
+bump process tied to the EKS support calendar, and state both outcomes of AWS's EKS upgrade
+policy at the end of standard support (`EXTENDED`: paid extended support at an additional
+per-cluster hourly cost; `STANDARD`: a forced upgrade to the next supported version, with no
+extended-support period) — since this module leaves the policy unset and does not itself
+determine which outcome a given cluster gets.
 
 #### Scenario: Owner, bump process, and upgrade policy are documented
 - **WHEN** an operator or maintainer reads the added documentation for the version key
 - **THEN** it names an owner (or ownership rule) for the declared default, describes when/how it
-  is bumped relative to the EKS support calendar, and states the EKS extended-support cost policy
+  is bumped relative to the EKS support calendar, and states both the `EXTENDED` (paid,
+  cost-bearing) and `STANDARD` (forced upgrade) outcomes of AWS's upgrade policy
 
 ### Requirement: Documentation gives operators an existing-cluster adoption procedure
 Documentation SHALL tell an operator adopting the version key on an already-existing cluster to:

@@ -34,11 +34,42 @@ jobs:
               run: |
                   python3 -c "
                   import re, sys
+
                   text = open('terraform/aws/eks/eks.tf').read()
                   text = re.sub(r'/\*.*?\*/', '', text, flags=re.DOTALL)
                   lines = [l for l in text.splitlines() if not re.match(r'^\s*(#|//)', l)]
                   text = '\n'.join(lines)
-                  sys.exit(0 if re.search(r'cluster_version\s*=\s*var\.environment_internal\.eks_version', text) else 1)
+
+                  # Scope the check to the actual module '{ ... }' block in parsed configuration,
+                  # not the whole file — a match anywhere in the file (e.g. an unused local
+                  # coincidentally carrying the same assignment) is not proof the module argument
+                  # itself is wired.
+                  match = re.search(r'module\s+\"eyelevel_eks\"\s*{', text)
+                  if not match:
+                      sys.exit(1)
+
+                  depth = 0
+                  end = None
+                  in_string = False
+                  i = match.end() - 1
+                  while i < len(text):
+                      c = text[i]
+                      if c == '\"':
+                          in_string = not in_string
+                      elif not in_string:
+                          if c == '{':
+                              depth += 1
+                          elif c == '}':
+                              depth -= 1
+                              if depth == 0:
+                                  end = i
+                                  break
+                      i += 1
+                  if end is None:
+                      sys.exit(1)
+
+                  module_block = text[match.end() - 1:end + 1]
+                  sys.exit(0 if re.search(r'cluster_version\s*=\s*var\.environment_internal\.eks_version', module_block) else 1)
                   "
 
             - name: Run resolve-eks-version bash tests

@@ -824,19 +824,21 @@ All of the methods and operations described in the [GroundX documentation](https
 
 # Terraform Deployment (terraform/aws/)
 
-As of November 4, 2025, new installs use a pure Helm release deployment. `terraform/aws/` is not
-used for new installs, but on this branch it remains an active, supported path for existing AWS
-EKS deployments created through it: those deployments continue to be maintained through the
-bundled Terraform (see the two sections below), not retired.
+`terraform/aws/` is an optional path for provisioning AWS infrastructure (a VPC and/or an EKS
+cluster) ahead of the Helm install described above — see [Deployment](#what-is-groundx-on-prem)
+step 1. It is also the supported path for maintaining AWS infrastructure already provisioned
+through it. As of November 4, 2025, the previous **hybrid terraform-helm approach to deploying the
+GroundX application itself** was retired in favor of a pure Helm release; that change is about how
+the application is installed onto a cluster, not about Terraform's role in provisioning the
+cluster, which is unaffected and remains supported for both new and existing AWS installs.
 
 ## Accessing Legacy Scripts
 If you would like to access the legacy terraform scripts, they can be pulled from [legacy-terraform-deployment](https://github.com/eyelevelai/groundx-on-prem/releases/tag/legacy-terraform-deployment).
 
 ## Optional EKS Node Diagnostics
 
-Existing AWS EKS deployments still managed by the bundled Terraform can enable
-default-off diagnostics with one setting. See
-[EKS Node Diagnostics](docs/eks-node-diagnostics.md).
+AWS EKS deployments managed by the bundled Terraform (new or existing) can enable default-off
+diagnostics with one setting. See [EKS Node Diagnostics](docs/eks-node-diagnostics.md).
 
 ## EKS Cluster Version Configuration
 
@@ -852,9 +854,22 @@ reference](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster
 `1.35`) is owned by whoever maintains `groundx-on-prem`. Bump it when the currently-declared
 version approaches the end of its [AWS EKS standard support
 window](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-version-support.html), so new
-installs land on a version still inside standard support. A version past that window enters AWS's
-paid **extended support** period at an additional per-cluster hourly cost until it reaches its
-extended-support end date, after which AWS may auto-upgrade the cluster.
+installs land on a version still inside standard support.
+
+**What happens when standard support ends.** This module does not set an [EKS upgrade
+policy](https://docs.aws.amazon.com/eks/latest/APIReference/API_UpgradePolicyRequest.html), so the
+outcome depends on the policy the cluster ends up with (AWS's own default for newly created
+clusters is `EXTENDED`; an existing cluster this Terraform now maintains may already carry a
+different policy set outside this repo):
+
+- **`EXTENDED`** — the cluster keeps running its current version past standard support, at an
+  additional per-cluster hourly cost ([EKS pricing](https://aws.amazon.com/eks/pricing/)), until it
+  reaches its extended-support end date.
+- **`STANDARD`** — there is no paid extended-support period; AWS force-upgrades the cluster to the
+  next supported version once standard support ends, whether or not that upgrade was planned.
+
+Know which policy your cluster has (`aws eks describe-cluster --name <cluster> --query
+cluster.upgradePolicy`) so you know which of these two outcomes to expect, and budget for it.
 
 **Adopting the key on an existing cluster.** `setup-eks` writes the key automatically: it reads
 Terraform state (`terraform show -json`) to find an existing cluster, then looks up that cluster's
