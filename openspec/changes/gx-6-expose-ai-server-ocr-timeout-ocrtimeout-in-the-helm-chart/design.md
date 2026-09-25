@@ -131,3 +131,11 @@ shape, the FRA-115 producer, and the plan-gate decisions this design carries for
   (`GX_ON_PREM_HELM` or a scratch binary) and never the ambient one, and any accidental snapshot
   file change from an unpinned run must be reverted (`git checkout --
   tests/__snapshot__/resources_test.yaml.snap`) before it is inspected for the intended diff.
+- **`--set`/`--set-string` and a values file diverge on an unquoted decimal for this field,
+  confirmed directly against the pinned `v3.19.0` binary.** `--set layout.ocr.timeout=120.0` and
+  `--set-string layout.ocr.timeout=120.0` are both rejected (`got string, want integer`) — helm's
+  CLI value parser treats `120.0` as a string either way for this integer-typed schema field — but
+  the same value written into a YAML values file (`layout: {ocr: {timeout: 120.0}}`, applied via
+  `-f`) is parsed as a real YAML float and accepted, rendering `ocrTimeout=120,`; operators using a
+  values file rather than `--set` should write an unquoted integer to avoid relying on that
+  float-to-integer coercion.

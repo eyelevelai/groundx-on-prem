@@ -108,18 +108,30 @@ src/groundx/tests/__snapshot__/resources_test.yaml.snap` before continuing.
 
 ## 4. Evidence (not committed tests — render matrix, src/helm parity, mutation proof)
 
-- [ ] 4.1 Render matrix: for `mode` in `{all, ingest}` × `layout.ocr.timeout` in
-      `{unset, 187, 0, 251, 601, "120.0"}`, record whether the render succeeds and, if so, the
-      rendered `ocrTimeout=` value — confirms `601` is rejected the same way `251` is (both
-      exceed the ceiling), and that an unquoted `120.0` float coerces to the integer schema and
-      renders `120` while a quoted `"120.0"` string is rejected. Never print full rendered
-      manifests; grep specific keys only. Record the matrix results in the PR description, not a
-      committed file.
-      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; for m in all ingest; do for v in 187 0 251 601; do "$HB" template src/groundx --set mode=$m --set layout.ocr.timeout=$v >/dev/null 2>&1; rc=$?; if [ "$v" = "187" ]; then [ $rc -eq 0 ] || { echo "matrix mismatch: mode=$m timeout=$v rc=$rc (expected accept)"; exit 1; }; else [ $rc -ne 0 ] || { echo "matrix mismatch: mode=$m timeout=$v rc=$rc (expected reject)"; exit 1; }; fi; done; done; "$HB" template src/groundx --set layout.ocr.timeout=120.0 2>&1 | grep -q 'ocrTimeout=120,' || { echo "unquoted 120.0 did not coerce to 120"; exit 1; }; "$HB" template src/groundx --set-string layout.ocr.timeout=120.0 >/dev/null 2>&1 && { echo "quoted \"120.0\" was wrongly accepted"; exit 1; }; echo ok
-- [ ] 4.2 `src`-vs-`helm` rendered-diff parity: confirm both trees render byte-identical
-      `layout-config-py.yaml` output under the same override (`layout.ocr.timeout=187`) — proves
-      task 2.1 actually mirrored task 1.2 rather than drifting.
-      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; set -o pipefail; a=$("$HB" template src/groundx --set layout.ocr.timeout=187 --show-only templates/resources/layout-config-py.yaml 2>&1); ra=$?; b=$("$HB" template helm --set layout.ocr.timeout=187 --show-only templates/resources/layout-config-py.yaml 2>&1); rb=$?; if [ $ra -ne 0 ] || [ $rb -ne 0 ]; then echo "one or both renders failed (src rc=$ra, helm rc=$rb)"; exit 1; fi; echo "$a" | grep -q 'ocrTimeout=187,' || { echo "src render missing ocrTimeout=187,"; exit 1; }; echo "$b" | grep -q 'ocrTimeout=187,' || { echo "helm render missing ocrTimeout=187,"; exit 1; }; diff <(echo "$a") <(echo "$b")
+- [x] 4.1 Render matrix: for `mode` in `{all, ingest}` × `layout.ocr.timeout` in
+      `{unset, 187, 0, 251, 601}`, record whether the render succeeds and, if so, the rendered
+      `ocrTimeout=` value — confirms `601` is rejected the same way `251` is (both exceed the
+      ceiling). Also confirms `--set layout.ocr.timeout=120.0` and
+      `--set-string layout.ocr.timeout=120.0` are **both rejected**: helm's `--set`/`--set-string`
+      CLI flags parse an unquoted decimal like `120.0` as a **string**, not a float (observed
+      directly against the pinned v3.19.0 binary: both flags produce
+      `Error: ... at '/layout/ocr/timeout': got string, want integer`), so the integer-typed
+      schema field rejects it either way — there is no accepted-CLI-float case for this field. A
+      **values file** behaves differently: `layout: {ocr: {timeout: 120.0}}` written to a YAML
+      file and passed via `-f` is parsed as a real YAML float, which the integer schema accepts (a
+      float with no fractional part satisfies a JSON-Schema `integer` type) and renders
+      `ocrTimeout=120,` — observed directly. Never print full rendered manifests; grep specific
+      keys only. Record the matrix results in the PR description, not a committed file.
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; set -o pipefail; for m in all ingest; do for v in 187 0 251 601; do "$HB" template src/groundx --set mode=$m --set layout.ocr.timeout=$v >/dev/null 2>&1; rc=$?; if [ "$v" = "187" ]; then [ $rc -eq 0 ] || { echo "matrix mismatch: mode=$m timeout=$v rc=$rc (expected accept)"; exit 1; }; else [ $rc -ne 0 ] || { echo "matrix mismatch: mode=$m timeout=$v rc=$rc (expected reject)"; exit 1; }; fi; done; done; "$HB" template src/groundx --set layout.ocr.timeout=120.0 >/dev/null 2>&1 && { echo "unquoted --set 120.0 was wrongly accepted"; exit 1; }; "$HB" template src/groundx --set-string layout.ocr.timeout=120.0 >/dev/null 2>&1 && { echo "--set-string 120.0 was wrongly accepted"; exit 1; }; tf=$(mktemp); printf '%s\n' 'layout:' '  ocr:' '    timeout: 120.0' > "$tf"; out=$("$HB" template src/groundx -f "$tf" --show-only templates/resources/layout-config-py.yaml 2>&1); rc=$?; rm -f "$tf"; [ $rc -eq 0 ] || { echo "values-file float 120.0 render failed: $out"; exit 1; }; echo "$out" | grep -q 'ocrTimeout=120,' || { echo "values-file float 120.0 did not render ocrTimeout=120,: $out"; exit 1; }; echo ok
+- [x] 4.2 `src`-vs-`helm` rendered-`config.py`-content parity: confirm the `ocrTimeout=` line
+      rendered from `layout-config-py.yaml` matches between both trees under the same override
+      (`layout.ocr.timeout=187`) — proves task 2.1 actually mirrored task 1.2 rather than
+      drifting. Compares only that one line, not the whole rendered document: the pre-existing,
+      out-of-scope `helm/Chart.yaml` version pin (`0.2.6` vs `src/groundx`'s `0.2.7`) makes every
+      full-document render differ on chart/appVersion/label fields regardless of this change —
+      confirmed directly (a whole-document diff on this override shows exactly that 4-line
+      version/label delta and nothing else).
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; set -o pipefail; a=$("$HB" template src/groundx --set layout.ocr.timeout=187 --show-only templates/resources/layout-config-py.yaml 2>&1); ra=$?; b=$("$HB" template helm --set layout.ocr.timeout=187 --show-only templates/resources/layout-config-py.yaml 2>&1); rb=$?; if [ $ra -ne 0 ] || [ $rb -ne 0 ]; then echo "one or both renders failed (src rc=$ra, helm rc=$rb)"; exit 1; fi; la=$(echo "$a" | grep 'ocrTimeout='); lb=$(echo "$b" | grep 'ocrTimeout='); echo "$la" | grep -q 'ocrTimeout=187,' || { echo "src render missing ocrTimeout=187,"; exit 1; }; echo "$lb" | grep -q 'ocrTimeout=187,' || { echo "helm render missing ocrTimeout=187,"; exit 1; }; diff <(printf '%s\n' "$la") <(printf '%s\n' "$lb")
 - [x] 4.3 Mutation proof: temporarily change the helper's default from `120` to `121` (or the
       schema `maximum` from `250` to `249`), re-run the two committed tests from 1.4, confirm they
       now fail (proving the tests actually exercise the code rather than passing vacuously), then
