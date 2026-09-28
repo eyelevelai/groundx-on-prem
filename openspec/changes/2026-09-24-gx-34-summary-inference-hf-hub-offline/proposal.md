@@ -34,12 +34,19 @@ network call of any kind.
   services.
 - Mirror the change into `helm/` (verified byte-identical to `src/groundx/` for this file before the
   change).
+- Rebuild the `g34b` model artifact from its existing, already-downloaded S3 parts (no HuggingFace
+  account access needed for this — it does not require a fresh authenticated download), stripping
+  the two leaked credential files (`token`, `stored_tokens`), and upload it under a new name,
+  `g34b-092526`, leaving the existing `g34b.*` files untouched so no deployment breaks mid-rollout.
+  Point `summary-inference`'s `modelVersion` at `g34b-092526` (`src/groundx/templates/_helpers/app/summary-inference.tpl`
+  and its `helm/` mirror).
 
 ### Explicitly out of scope
 
-- Rebuilding the `g34b` artifact to exclude the leaked credential files, and rotating/revoking the
-  leaked token. Both require HuggingFace account access this change does not have; tracked
-  separately on GX-34, owned by the ticket's other assignee.
+- Rotating/revoking the leaked token itself. Requires HuggingFace account access this change does
+  not have; tracked separately on GX-34, owned by the ticket's other assignee.
+- Deleting the old, still-credential-bearing `g34b.*` files from S3. Left in place deliberately so
+  this rollout has no window with neither a valid credential nor `HF_HUB_OFFLINE` in effect.
 - Any change to `layout-inference` or `ranker-inference`. Neither depends on HuggingFace.
 - The pre-existing pre-upgrade migration-job hang and the `layout-inference` OCR crash found during
   the same investigation, both filed separately (GX-69 and a GX-49/GX-50 follow-up), unrelated to

@@ -13,24 +13,41 @@
       every values fixture in that suite.
       check: helm unittest -u src/groundx -f 'tests/inference_test.yaml'
 
-## 2. Full gate
+## 2. Rebuild the `g34b` artifact clean and point the chart at it
 
-- [x] 2.1 Run the repo's CI-parity validator end to end (lint, unit tests, snapshot guard,
+- [x] 2.1 Rebuild the model package from its existing S3 parts (no fresh HuggingFace download
+      needed), stripping `token` and `stored_tokens`, and upload the result to
+      `upload.groundx.ai/summary/model/current/` under a new name, `g34b-092526`, leaving the
+      existing `g34b.*` files untouched.
+      check: for p in 00 01 02 03 04; do curl -sI "https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.$p" | grep -qi "^HTTP/.* 200" || exit 1; done
+- [x] 2.2 In `src/groundx/templates/_helpers/app/summary-inference.tpl`, change `modelVersion` from
+      `g34b` to `g34b-092526`, and mirror into `helm/`.
+      check: diff src/groundx/templates/_helpers/app/summary-inference.tpl helm/templates/_helpers/app/summary-inference.tpl
+- [x] 2.3 Regenerate the `inference_test.yaml` snapshot so it reflects the new `modelVersion` in the
+      download URL and completion-marker filename.
+      check: helm unittest -u src/groundx -f 'tests/inference_test.yaml'
+
+## 3. Full gate
+
+- [x] 3.1 Run the repo's CI-parity validator end to end (lint, unit tests, snapshot guard,
       both-surface render checks) and confirm it is clean.
       check: bash .build/bin/validate-helm.sh
 
 ## Verified on real infrastructure (not just templates)
 
 Confirmed directly on the `groundx-validation` test cluster with the real pinned
-`summary-inference` image before this change was written: credential deleted, `HF_HUB_OFFLINE=1`
-applied by hand, full pod restart, pod reached `1/1 Running`, and a real test document summarized
+`summary-inference` image, using this branch (`HF_HUB_OFFLINE=1` + `modelVersion: g34b-092526`
+together): credential deleted, full pod restart, pod reached `1/1 Running`, the completion marker on
+disk confirmed it downloaded `g34b-092526` (not the old `g34b`), and a real test document summarized
 successfully end to end with no HuggingFace network dependency. See GX-34 for the evidence files.
 
 ## Deferred follow-ups
 
-- The `g34b` artifact itself still contains the leaked credential files and the leaked token has
-  not been rotated. Both need HuggingFace account access this change does not have. Tracked on
-  GX-34, owned by the ticket's other assignee — this change alone does not close GX-34.
+- The leaked token itself has not been rotated. Needs HuggingFace account access this change does
+  not have. Tracked on GX-34, owned by the ticket's other assignee.
+- The old `g34b.*` files still sit in S3 with the leaked token baked in. Left in place deliberately
+  (see proposal.md) until this rollout is confirmed safe; deleting them is a separate follow-up.
+- This change alone does not close GX-34 for the two reasons above.
 - `ranker-inference`'s `USE_TF` gap (no `env` key for that service either, must be set by hand
   after every upgrade) is a materially identical, already-known issue, not fixed here. A generic
   per-service `env` override in `values.yaml` would fix both at once but is a larger, separate
