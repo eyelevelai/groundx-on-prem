@@ -50,6 +50,10 @@ src/groundx/tests/__snapshot__/resources_test.yaml.snap` before continuing.
       and `helm/values.yaml` — `helm/` has no `tests/` directory (removed in the mirror), so no
       snapshot task applies here.
       check: ${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} template helm --set layout.ocr.timeout=187 --show-only templates/resources/layout-config-py.yaml 2>&1 | grep -c 'ocrTimeout=187,'
+- [x] 2.2 Add `helm/tests/layout_ocr_timeout_test.yaml` asserting the `helm/` mirror renders
+      `ocrTimeout=120,` when unset and `ocrTimeout=187,` for an override, so `validate-helm.sh`'s
+      existing `helm unittest helm` step fails if the mirror line is dropped.
+      check: ${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} unittest -f tests/layout_ocr_timeout_test.yaml helm
 
 ## 3. Regenerate snapshots and run the canonical gate
 

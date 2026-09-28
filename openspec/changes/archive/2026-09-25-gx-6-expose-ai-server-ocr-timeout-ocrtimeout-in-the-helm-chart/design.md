@@ -143,3 +143,4 @@ shape, the FRA-115 producer, and the plan-gate decisions this design carries for
 ## Amendments
 
 - 2026-09-25, review round 3: the "Image precondition" decision above says the FRA-115 merge was "tagged into the `0.2.7` image line, 2026-08-18". ai-server has no `0.2.7` tag. The precondition is a layout-process image built from ai-server `master` at or after merge `c96acfd` (FRA-115, 2026-08-18); images without that change have no per-page OCR timeout.
+- 2026-09-28, PR review: `helm/` has a `tests/` directory (`helm/tests/`, run by `validate-helm.sh`'s `helm unittest helm` step), so task 2.1's "no `tests/` directory" note does not hold. Task 2.2 adds `helm/tests/layout_ocr_timeout_test.yaml`, covering the unset default and an override on the mirror.
