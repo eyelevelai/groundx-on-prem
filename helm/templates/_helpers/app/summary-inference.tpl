@@ -281,7 +281,7 @@ true
   "image"          (include "groundx.summary.inference.image" .)
   "mapPrefix"      ("summary")
   "modelParts"     ("00 01 02 03 04")
-  "modelVersion"   ("g34b")
+  "modelVersion"   ("g34b-092526")
   "name"           (include "groundx.summary.inference.serviceName" .)
   "node"           (include "groundx.summary.inference.node" .)
   "port"           (include "groundx.summary.inference.containerPort" .)

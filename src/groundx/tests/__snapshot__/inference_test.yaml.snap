@@ -579,6 +579,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -671,7 +673,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -682,18 +684,18 @@
 
                     rm /workspace/hf_models_cache/summary.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
@@ -1363,6 +1365,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1455,7 +1459,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -1466,18 +1470,18 @@
 
                     rm /workspace/hf_models_cache/summary.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
@@ -2146,6 +2150,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -2238,7 +2244,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -2249,18 +2255,18 @@
 
                     rm /workspace/hf_models_cache/summary.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
@@ -2930,6 +2936,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -3022,7 +3030,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -3033,18 +3041,18 @@
 
                     rm /workspace/hf_models_cache/summary.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
@@ -3985,6 +3993,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
@@ -4080,7 +4090,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -4091,18 +4101,18 @@
 
                     rm /workspace/hf_models_cache/summary.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
@@ -4513,6 +4523,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -4605,7 +4617,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -4616,18 +4628,18 @@
 
                     rm /workspace/hf_models_cache/summary.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
@@ -5540,6 +5552,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               image: test.image:v1
               imagePullPolicy: Never
               livenessProbe:
@@ -5624,7 +5638,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/myapp/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/myapp/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] myapp.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/myapp.tar.gz.part.$PART $URL && { echo "Downloaded myapp.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -5635,18 +5649,18 @@
 
                     rm /workspace/hf_models_cache/myapp.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
@@ -6199,6 +6213,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -6264,7 +6280,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -6275,18 +6291,18 @@
 
                     rm /workspace/hf_models_cache/summary.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
@@ -6822,6 +6838,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -6885,7 +6903,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -6896,18 +6914,18 @@
 
                     rm /workspace/hf_models_cache/summary.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
@@ -7441,6 +7459,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
               imagePullPolicy: Always
               livenessProbe:
@@ -7509,7 +7529,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -7520,18 +7540,18 @@
 
                     rm /workspace/hf_models_cache/summary.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
