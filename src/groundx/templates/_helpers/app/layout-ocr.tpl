@@ -161,6 +161,12 @@ true
 {{ dig "threads" 1 $in }}
 {{- end }}
 
+{{- define "groundx.layout.ocr.timeout" -}}
+{{- $b := .Values.layout | default dict -}}
+{{- $in := dig "ocr" dict $b -}}
+{{ dig "timeout" 120 $in }}
+{{- end }}
+
 {{- define "groundx.layout.ocr.type" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "ocr" dict $b -}}
