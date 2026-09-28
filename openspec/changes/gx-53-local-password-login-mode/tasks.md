@@ -18,9 +18,7 @@
 ## 2. Chart tests (`resources_test.yaml`)
 
 - [x] 2.1 Add a helm-unittest case proving `cognito.mode: local` renders `mode: "local"` into the
-  deployed `config.yaml` (`config-yaml-map`), and a second case proving that leaving
-  `cognito.mode` unset still renders no `cognito` block — the widening leaves the existing
-  default unaffected. Both cases assert with `matchRegex`/`notMatchRegex`, so
+  deployed `config.yaml` (`config-yaml-map`). It asserts with `matchRegex`, so
   `src/groundx/tests/__snapshot__/resources_test.yaml.snap` needs **no edit at all** for this
   change — confirmed by running the suite without `-u` and observing zero diff against the
   committed snapshot afterward.
@@ -31,7 +29,7 @@
 - [x] 3.1 Document `cognito.mode: local` in `src/groundx/README.md`'s parameter table (+ the
   `helm/README.md` mirror), and add a `## Optional: local` section to `docs/on-prem-identity.md`
   describing the render, that it requires a cashbot-go image that supports it, and the
-  roll-forward-not-back rollback note.
+  rollback note (roll forward; `helm rollback` silently turns local login off).
   check: grep -q 'cognito.mode' src/groundx/README.md && grep -q 'cognito.mode' helm/README.md && grep -q '^## Optional: `local`$' docs/on-prem-identity.md && grep -qi 'roll forward, not back' docs/on-prem-identity.md
 
 ## Notes

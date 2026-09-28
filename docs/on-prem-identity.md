@@ -74,9 +74,16 @@ is no Cognito-preserving rollback to a chart without this configuration surface.
 fix on a GX-20-compatible chart/image instead. Ordinary Helm rollback remains appropriate only
 for installations that did not enable Cognito.
 
-The same applies to `mode: local`: a chart version before this `local` value was added to the
-schema rejects `cognito.mode: local` at render/validation time rather than silently falling back
-— roll forward, not back, for an install using `local`.
+For `mode: local`, a rollback turns password login off instead of failing. `helm rollback`
+restores the older revision's saved values, and a revision from before `local` was enabled has
+`cognito.mode` set to `cognito`, `apiKeyOnly`, or unset. The rollback succeeds, cashbot-go starts in
+that older mode, and local password login stops working. Only `helm upgrade --version <older>`
+with the current values fails, because the older chart's schema rejects `cognito.mode: local`.
+
+Roll forward, not back, for an install using `local`. If a rollback is unavoidable, roll back only
+to a revision that already ran a `local`-compatible chart and cashbot-go image with
+`cognito.mode: local` set. A rollback does not remove the stored passwords, so they work again once
+the install is back on `local`.
 
 ## Air-gapped installs
 

@@ -47,10 +47,11 @@ object change, so no new architectural decision or ADR is warranted.
   the chart (matches the existing `cognito` mode's division of responsibility — the chart never
   validates cross-service semantic compatibility). Mitigation: documented in
   `docs/on-prem-identity.md` and `README.md` as an explicit precondition.
-- [Risk] Rolling back to a pre-this-change chart version for an install that set `cognito.mode:
-  local` → schema validation rejects the render (`helm template`/`helm upgrade` failure), not a
-  silent fallback. Mitigation: documented in `docs/on-prem-identity.md`'s Rollback section — roll
-  forward, not back, for such an install.
+- [Risk] `helm rollback` to a revision from before `local` was enabled restores that revision's
+  saved values, so the rollback succeeds and local password login silently turns off (only
+  `helm upgrade --version <older>` with the current values is rejected by the older schema).
+  Mitigation: documented in `docs/on-prem-identity.md`'s Rollback section — roll forward, or roll
+  back only to a revision that already had `cognito.mode: local` set.
 
 ## Migration Plan
 

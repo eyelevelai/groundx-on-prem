@@ -15,7 +15,7 @@ identity mode (GX-53, phase 2 of GX-20) — `helm template`/`helm lint`/`helm up
   `groundx.cognito.mode` helper and the `mode: {{ include "groundx.cognito.mode" . | quote }}`
   render already pass any accepted string value through verbatim.
 - Add a helm-unittest assertion proving `cognito.mode: local` renders `mode: "local"` into the
-  deployed `config.yaml`, and that leaving `cognito.mode` unset still renders no `cognito` key.
+  deployed `config.yaml`.
 - Document `cognito.mode: local` in `src/groundx/README.md` (+ `helm/README.md` mirror) and
   `docs/on-prem-identity.md`, including that it requires a cashbot-go image that supports it.
 
@@ -42,9 +42,10 @@ identity mode (GX-53, phase 2 of GX-20) — `helm template`/`helm lint`/`helm up
   by a cashbot-go image that already accepts `local`; an install that never sets `cognito.mode`
   is byte-for-byte unaffected). Environments: dev/staging/prod on-prem chart consumers who choose
   to opt into `cognito.mode: local` — no stateful-resource impact, no data migration.
-- Rollback: rolling back to a chart version before this change causes `cognito.mode: local` to
-  be rejected at schema-validation time (a `helm template`/`helm upgrade` failure, not a silent
-  runtime fallback) for any install that had set it — roll forward rather than back for those
-  installs; every other install is unaffected either way.
+- Rollback: `helm rollback` to a revision from before `local` was enabled succeeds and restores
+  that revision's identity mode, so local password login silently stops; only
+  `helm upgrade --version <older>` with the current values fails schema validation. Installs using
+  `local` roll forward, or roll back only to a revision that already had `local` set. Every other
+  install is unaffected either way.
 - Open design questions: none — the render mechanism and guard structure are unchanged; this is
   a pure enum-widening change with no facilitated design decision to brainstorm.
