@@ -232,3 +232,25 @@ design carries forward from `decomposition.md` Revision 1 item 3).
 - **No change to the "one narrow place" scope decision.** This remains the only place in the chart
   that parses an operator-supplied Kubernetes quantity string; `renderDiskBudgetMi` itself is still
   a plain integer-MiB chart input, unaffected by this round.
+
+### 2026-09-29 — review round 3 fix (P1): narrow the round 2 "full Kubernetes storage-quantity grammar" claim
+
+- **Correction, not a parser change.** The round 2 amendment above overstates what
+  `groundx.layout.process.storageMi` accepts by calling it "the full Kubernetes storage-quantity
+  grammar." Confirmed directly against the implementation
+  (`templates/_helpers/app/layout-process.tpl:112-145`): the helper strips one recognized
+  suffix — binary `Ki`/`Mi`/`Gi`/`Ti`/`Pi`/`Ei` or decimal `k`/`M`/`G`/`T`/`P`/`E` (lowercase `k`
+  only) — from the input, then requires the remaining text to match
+  `^[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?$`. The forms it actually accepts are exactly: a plain
+  integer or decimal byte count with at least one digit on each side of any decimal point,
+  optionally in exponent form (`e`/`E`); the same with one of the twelve suffixes above; or an
+  unquoted YAML number (`float64`/`int`/`int64`, formatted via `printf "%.0f"` before the same
+  check).
+- **Confirmed rejected, with the named "is not a recognized Kubernetes storage quantity" render
+  error, despite each being a valid Kubernetes quantity form:** a leading-sign value (`+4Gi` — the
+  regex has no `+`/`-` prefix alternative), a leading-dot decimal (`.5Gi` — the regex requires a
+  digit before the dot), a trailing-dot decimal (`5.Gi` — the regex requires a digit after the dot
+  whenever a dot is present), and the milli suffix (`m`, e.g. `9000000000m` — not a key in the
+  helper's `$units` dict, so it falls through to the digit-only regex and fails).
+- No template code changes as part of this fix — this narrows the round 2 claim, it does not
+  widen the parser.

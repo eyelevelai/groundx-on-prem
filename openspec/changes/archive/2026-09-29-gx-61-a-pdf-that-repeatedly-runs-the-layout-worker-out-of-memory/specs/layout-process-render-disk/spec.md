@@ -203,3 +203,17 @@ The chart SHALL fail template rendering (`fail`) when `layout.process.workers` o
 - **WHEN** `helm template` renders the release
 - **THEN** rendering fails with the "not a recognized Kubernetes storage quantity" error naming
   the offending value, and no `layout-process` Deployment renders
+
+## Amendments
+
+### 2026-09-29 — review round 3 fix (P1): narrow the round 2 "full Kubernetes storage-quantity grammar" claim
+
+- **Correction to the round 2 amendment above** (`design.md`'s matching amendment carries the same
+  correction): "the full Kubernetes form" overstates what
+  `groundx.layout.process.storageMi` accepts. It accepts exactly: a plain integer or decimal byte
+  count with at least one digit on each side of any decimal point, optionally in exponent form
+  (`e`/`E`); the same with a binary suffix (`Ki`/`Mi`/`Gi`/`Ti`/`Pi`/`Ei`) or a decimal SI suffix
+  (`k`/`M`/`G`/`T`/`P`/`E`, lowercase `k` only); or an unquoted YAML number.
+- **Rarer, valid Kubernetes quantity forms are rejected**, with the named "is not a recognized
+  Kubernetes storage quantity" render error: a leading-sign value (`+4Gi`), a leading-dot decimal
+  (`.5Gi`), a trailing-dot decimal (`5.Gi`), and the milli suffix (`m`, e.g. `9000000000m`).

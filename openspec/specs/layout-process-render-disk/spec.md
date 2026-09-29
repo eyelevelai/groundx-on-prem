@@ -128,6 +128,29 @@ own limit.
 - **THEN** the `layout-process` Deployment renders normally with `limits["ephemeral-storage"]: 4Gi`
   and `requests["ephemeral-storage"]: 3072Mi`
 
+#### Scenario: an ephemeral-storage limit is accepted in any recognized quantity form (polarity: finalize success)
+
+- **GIVEN** `layout.process.resources.limits["ephemeral-storage"]` set to a value comfortably
+  above the computed request, expressed as a decimal SI suffix (e.g. `4000000k`), a binary suffix
+  (e.g. `1Pi`), exponent form (e.g. `"4e9"`), or an unquoted number in a values file (e.g.
+  `4294967296`) — the accepted forms are a plain integer or decimal byte count with at least one
+  digit on each side of any decimal point, optionally in exponent form, the same with a binary
+  suffix (`Ki`/`Mi`/`Gi`/`Ti`/`Pi`/`Ei`) or a decimal SI suffix (`k`/`M`/`G`/`T`/`P`/`E`, lowercase
+  `k` only), or an unquoted YAML number
+- **WHEN** `helm template` renders the release
+- **THEN** the `layout-process` Deployment renders normally with the limit unchanged and
+  `requests["ephemeral-storage"]` at the computed value — parsing succeeds and no `fail` fires
+
+#### Scenario: an unrecognized ephemeral-storage quantity is rejected before any resource renders (polarity: reject before state; catches the adversarial counterexample)
+
+- **GIVEN** `layout.process.resources.limits["ephemeral-storage"]` set to an uppercase-`K`
+  suffixed value (e.g. `5000000K` — not a valid Kubernetes suffix), a non-quantity string (e.g.
+  `abc`), or a rarer valid Kubernetes quantity form outside the accepted set above (e.g. a
+  leading-sign `+4Gi`, a leading-dot `.5Gi`, a trailing-dot `5.Gi`, or the milli suffix `m`)
+- **WHEN** `helm template` renders the release
+- **THEN** rendering fails with the "not a recognized Kubernetes storage quantity" error naming
+  the offending value, and no `layout-process` Deployment renders
+
 ### Requirement: the chart rejects `workers`/`threads` below 1 for `layout.process`
 
 The chart SHALL fail template rendering (`fail`) when `layout.process.workers` or

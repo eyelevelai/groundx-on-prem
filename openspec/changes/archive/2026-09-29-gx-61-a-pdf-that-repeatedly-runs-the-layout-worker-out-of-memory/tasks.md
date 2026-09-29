@@ -329,7 +329,7 @@ items (the `layout.process.batchSize`/GX-7/FRA-150 items out of scope for GX-61)
       removing the `k`/`Pi` dict entries in a scratch copy and confirming exactly those two new
       cases fail, and separately by reverting the exponent-group regex and confirming the exponent
       case fails too, with every other case unaffected in both runs.
-      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; d=$(mktemp -d); cp -R src/groundx "$d"/groundx; mkdir -p "$d/groundx/files/ocr"; printf '%s\n' '{' '  "type": "service_account",' '  "project_id": "groundx-helm-test",' '  "private_key_id": "test",' '  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",' '  "token_uri": "https://oauth2.googleapis.com/token"' '}' > "$d/groundx/files/ocr/gcv-test.json"; out=$("$HB" unittest -f tests/celery_test.yaml "$d/groundx" 2>&1); rc=$?; rm -rf "$d"; git diff --quiet -- src/groundx/tests/__snapshot__ helm/tests/__snapshot__ || { echo "worktree snapshot mutated by a scratch-copy check"; exit 1; }; [ $rc -eq 0 ] || { printf '%s\n' "$out"; exit 1; }; exit 0
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; d=$(mktemp -d); cp -R src/groundx "$d"/groundx; mkdir -p "$d/groundx/files/ocr"; printf '%s\n' '{' '  "type": "service_account",' '  "project_id": "groundx-helm-test",' '  "private_key_id": "test",' '  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",' '  "token_uri": "https://oauth2.googleapis.com/token"' '}' > "$d/groundx/files/ocr/gcv-test.json"; j=$(mktemp -d); "$HB" unittest -f tests/celery_test.yaml -o junit --output-file "$j/out.xml" "$d/groundx" >/tmp/gx61-celery-unittest-72.out 2>&1; rc=$?; rm -rf "$d"; git diff --quiet -- src/groundx/tests/__snapshot__ helm/tests/__snapshot__ || { rm -rf "$j"; echo "worktree snapshot mutated by a scratch-copy check"; exit 1; }; if [ $rc -ne 0 ]; then cat /tmp/gx61-celery-unittest-72.out; rm -rf "$j"; exit 1; fi; fail=0; for name in "render-disk: an ephemeral-storage limit accepts a decimal SI suffix (k)" "render-disk: an ephemeral-storage limit accepts a binary suffix (Pi)" "render-disk: an ephemeral-storage limit accepts exponent form" "render-disk: an unquoted numeric ephemeral-storage limit from a values file is accepted" "render-disk: an uppercase K suffix is rejected" "render-disk: a garbage ephemeral-storage quantity is rejected"; do grep -F "name=\"$name\"" "$j/out.xml" | grep -q 'result="Pass"' || { echo "missing or failing case: $name"; fail=1; }; done; rm -rf "$j"; [ "$fail" -eq 0 ] || exit 1; exit 0
 - [x] 7.3 Fix task 2.2's and task 6.4's `check:` lines above: 6.4's original check
       (`helm template ... --show-only templates/resources/hpa.yaml | grep -c "name:
       layout-process-hpa"`) passed on the unmodified base branch, because `layout-process-hpa`
@@ -343,3 +343,15 @@ items (the `layout.process.batchSize`/GX-7/FRA-150 items out of scope for GX-61)
       (matching the pattern task 2.2 originally used), so either failing would be caught.
       check: n/a — this task corrects the check: lines on tasks 2.2 and 6.4 themselves; the fixed
       lines are self-verifying (see task 6.4 above, now identical in shape)
+
+### 2026-09-29 — review round 3 fix (P3)
+
+- [x] 7.4 Fix task 7.2's `check:` line above: it only asserted the scratch-copy `helm unittest`
+      invocation exited 0, which passes as long as the suite as a whole is green — it does not
+      confirm any of the six cases task 7.2 added actually exist or pass, so a case silently
+      dropped or renamed after this task was written would not be caught. The check now runs the
+      same invocation with JUnit output (matching task 6.4's pattern) and greps for each of the
+      six case names with `result="Pass"`, confirmed to correctly report a missing case when one
+      of the six names is not present in the output.
+      check: n/a — this task corrects the check: line on task 7.2 itself; the fixed line is
+      self-verifying (see task 7.2 above, now identical in shape to task 6.4's pattern)
