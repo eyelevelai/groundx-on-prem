@@ -12,6 +12,7 @@ usage() {
 Usage: .build/bin/validate-helm.sh [--junit]
 
 Runs the GroundX Helm production chart gate from one stable entrypoint:
+  - chart source line-ending guard (see GX-22)
   - helm lint for both chart surfaces
   - pinned helm-unittest plugin version guard
   - guard-script unit tests (stdlib scripts under .build/tests)
@@ -48,6 +49,21 @@ for arg in "$@"; do
       ;;
   esac
 done
+
+# .gitattributes (see GX-22) only normalizes line endings for files checked out AFTER it lands --
+# an existing checkout with core.autocrlf=true can still have these files on disk as CRLF against
+# the LF blobs the committed snapshot hash annotations were computed from, which silently
+# reproduces this ticket's original symptom (helm unittest snapshot mismatches that look like a
+# real regression). `git add --renormalize .` alone does not fix this: it only rewrites the index,
+# not the working-tree bytes, so it can report "nothing to stage" while the files are still CRLF
+# on disk. Check the real files before anything else runs, so a stale checkout fails fast with the
+# actual fix instead of failing later with a confusing snapshot diff.
+echo "==> Verifying chart source line endings match .gitattributes (see GX-22)"
+if git ls-files --eol -- src/groundx helm 2>/dev/null | grep 'attr/text eol=lf' | grep -q 'w/crlf'; then
+  echo "chart files are checked out as CRLF against this repo's eol=lf .gitattributes pin (an existing checkout from before the pin, or core.autocrlf=true on this machine). helm unittest snapshot hashes will not match until the working tree is re-checked out. Fix:" >&2
+  echo "  git ls-files -z -- src/groundx helm | xargs -0 rm -f && git checkout -- src/groundx helm" >&2
+  exit 1
+fi
 
 # The Google-OCR tests render a credentials file that layout-ocr-credentials.yaml reads
 # via .Files.Get. That file must NOT ship in the packaged chart (files/ is packaged), so
