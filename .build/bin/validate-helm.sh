@@ -59,8 +59,20 @@ done
 # on disk. Check the real files before anything else runs, so a stale checkout fails fast with the
 # actual fix instead of failing later with a confusing snapshot diff.
 echo "==> Verifying chart source line endings match .gitattributes (see GX-22)"
-if git ls-files --eol -- src/groundx helm 2>/dev/null | grep 'attr/text eol=lf' | grep -q 'w/crlf'; then
-  echo "chart files are checked out as CRLF against this repo's eol=lf .gitattributes pin (an existing checkout from before the pin, or core.autocrlf=true on this machine). helm unittest snapshot hashes will not match until the working tree is re-checked out. Fix:" >&2
+# `grep -q` as the last stage of a pipe under `set -o pipefail` can make this check silently pass:
+# `-q` exits after the first match, which can SIGPIPE the upstream `git ls-files`/`grep` before they
+# finish writing, and pipefail then reports THAT non-zero exit instead of the match `if` needs to
+# see, so the `if` reads it as false. Confirmed to actually happen intermittently once the file list
+# is large enough that grep's early exit outruns the writer. `grep -c` reads its input to completion
+# either way, so this cannot happen.
+crlf_count="$(git ls-files --eol -- src/groundx helm 2>/dev/null | grep 'attr/text eol=lf' | grep -cE 'w/crlf|w/mixed' || true)"
+if [ "${crlf_count:-0}" -gt 0 ]; then
+  echo "chart files are checked out as CRLF against this repo's eol=lf .gitattributes pin (an existing checkout from before the pin, or core.autocrlf=true on this machine). helm unittest snapshot hashes will not match until the working tree is re-checked out." >&2
+  if ! git diff --quiet -- src/groundx helm 2>/dev/null || ! git diff --cached --quiet -- src/groundx helm 2>/dev/null; then
+    echo "You have uncommitted changes under src/groundx or helm -- commit or stash them first, the fix below discards uncommitted edits to those paths:" >&2
+  else
+    echo "Fix:" >&2
+  fi
   echo "  git ls-files -z -- src/groundx helm | xargs -0 rm -f && git checkout -- src/groundx helm" >&2
   exit 1
 fi
