@@ -33,6 +33,7 @@
 {{- end }}
 {{- $sct := get $svcData "securityContext" -}}
 {{- $tl := get $svcData "tolerations" -}}
+{{- $tsc := get $svcData "topologySpreadConstraints" -}}
 
 {{- $desired := get $rp "desired" -}}
 
@@ -78,6 +79,7 @@ spec:
 {{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" $username "cfg" "spec") }}
 {{ include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
 {{ include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
+{{- include "groundx.renderTopologySpread" (dict "ctx" $tsc "indent" 6) }}
 {{- if not (empty $dpnd) }}
       initContainers:
 {{- if hasKey $dpnd "metrics" }}

@@ -1,0 +1,19 @@
+suite: drain protection renders on the published chart
+tests:
+  - it: "a worker budget and spread render"
+    templates:
+      - ../templates/app/metrics.yaml
+    set:
+      metrics.enabled: true
+      metrics.disruptionBudget.enabled: true
+      metrics.topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+    asserts:
+      - documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.selector.matchLabels.app, value: metrics }
+      - documentSelector: { path: kind, value: Deployment }
+        equal:
+          path: spec.template.spec.topologySpreadConstraints[0].maxSkew
+          value: 1
