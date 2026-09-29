@@ -262,3 +262,40 @@ workload — `api`, `correct`, `inference`, `map`, `ocr`, `save` — is untouche
 See the workspace-level `openspec/changes/<change>/tasks.md` (outside this repo, under this
 ticket's workspace change directory) for cross-service coordination and any deferred follow-up
 items (the `layout.process.batchSize`/GX-7/FRA-150 items out of scope for GX-61).
+
+## Amendments
+
+### 2026-09-29 — review round 1 fix (G1, G2, G3, G4)
+
+- [x] 6.1 Add the `groundx.layout.process.storageMi` helper (parses a Kubernetes storage quantity
+      to MiB; `fail`s on an unrecognized format) and a guard in `groundx.layout.process.settings`
+      that fails template rendering when `layout.process.resources.limits["ephemeral-storage"]` is
+      set below the computed request, naming `layout.process.renderDiskBudgetMi` and the offending
+      limit. Mirror into `helm/`.
+      check: ${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} template src/groundx --set layout.process.resources.limits.ephemeral-storage=1Gi 2>&1 | grep -c 'layout.process.resources.limits\["ephemeral-storage"\].*1Gi.*below the computed ephemeral-storage request of 3072Mi'
+- [x] 6.2 Add a guard in `groundx.layout.process.settings` that fails template rendering when
+      `layout.process.workers` or `layout.process.threads` is below 1, naming the offending field
+      and value. Template-scoped to `layout.process`, not a shared schema `minimum` (see
+      `design.md` Amendments). Mirror into `helm/`.
+      check: ${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} template src/groundx --set layout.process.workers=-1 2>&1 | grep -c 'layout.process.workers must be at least 1 (got -1)'
+- [x] 6.3 Add unittest cases for 6.1/6.2 (reject below-request limit, reject negative
+      workers/threads, and a "limit at or above the computed request renders unchanged" must-not-block
+      case) to `src/groundx/tests/celery_test.yaml` and `helm/tests/layout_process_render_disk_test.yaml`;
+      confirm each reject case fails on the pre-round code (RED) via a scratch copy of the pre-fix
+      `layout-process.tpl` and passes post-fix.
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; d=$(mktemp -d); cp -R src/groundx "$d"/groundx; mkdir -p "$d/groundx/files/ocr"; printf '%s\n' '{' '  "type": "service_account",' '  "project_id": "groundx-helm-test",' '  "private_key_id": "test",' '  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",' '  "token_uri": "https://oauth2.googleapis.com/token"' '}' > "$d/groundx/files/ocr/gcv-test.json"; out=$("$HB" unittest -f tests/celery_test.yaml "$d/groundx" 2>&1); rc=$?; rm -rf "$d"; git diff --quiet -- src/groundx/tests/__snapshot__ helm/tests/__snapshot__ || { echo "worktree snapshot mutated by a scratch-copy check"; exit 1; }; [ $rc -eq 0 ] || { printf '%s\n' "$out"; exit 1; }; exit 0
+- [x] 6.4 Extend the "the emptyDir volume stays per-pod under multiple replicas" test to also set
+      `cluster.hpa: true` and assert the rendered `layout-process-hpa` HorizontalPodAutoscaler's
+      `minReplicas`/`maxReplicas`, closing the previously-untested HPA half of the per-pod scenario
+      (see `spec.md` Amendments for why `cluster.hpa`, not `layout.process.replicas.hpa`, is used).
+      check: ${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} template src/groundx --set cluster.hpa=true --set layout.process.replicas.desired=3 --set layout.process.replicas.min=1 --set layout.process.replicas.max=6 --show-only templates/resources/hpa.yaml 2>&1 | grep -c "name: layout-process-hpa"
+- [x] 6.5 Fix the ADR's self-contradictory restart wording (a container restart gives the new
+      container a fresh writable layer; the dead container's own layer and its temp files stay on
+      the node, invisible to the new container, until kubelet GC or pod deletion) and replace the
+      unresolvable "comment thread C2-C7, confirmed by three spike reports" citation with the
+      finding stated directly plus a link to GX-61.
+      check: n/a — doc-only correction, no rendered behavior to assert
+- [x] 6.6 Amend `specs/layout-process-render-disk/spec.md`, `design.md`, and this file with dated
+      `## Amendments` sections (this change is already archived; the record-hygiene rule forbids
+      silently rewriting an archived artifact's original text).
+      check: n/a — record-hygiene/documentation task, no rendered behavior to assert

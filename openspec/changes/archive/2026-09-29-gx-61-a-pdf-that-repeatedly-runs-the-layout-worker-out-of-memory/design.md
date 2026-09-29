@@ -179,3 +179,34 @@ design carries forward from `decomposition.md` Revision 1 item 3).
   because both `ai-server` (`LAYOUT_RENDER_DISK_BUDGET_MIB`, a plain env-var int) and this chart's
   formula need the same integer, and a `resource.Quantity` string would need parsing on the
   `ai-server` side for no benefit.
+
+## Amendments
+
+### 2026-09-29 — review round 1 fix (G1, G2)
+
+- **New decision: `layout.process.resources.limits["ephemeral-storage"]` IS parsed, in one narrow
+  place, despite the decision above against `resource.Quantity` parsing.** That decision is about
+  `renderDiskBudgetMi` (a chart *input*, kept a plain integer). The new guard added in this fix
+  round instead reads an *operator-supplied* `resources.limits["ephemeral-storage"]` string — a
+  standard Kubernetes quantity (`"1Gi"`, `"500Mi"`, a bare byte count) — which cannot itself be a
+  plain integer-MiB value, since the operator may write it in whatever unit they already use.
+  `groundx.layout.process.storageMi` (`templates/_helpers/app/layout-process.tpl`) converts it to
+  MiB for comparison against the computed request: it recognizes the binary suffixes `Ki`/`Mi`/`Gi`/
+  `Ti` and the decimal suffixes `K`/`M`/`G`/`T`, plus a bare numeric byte count, and `fail`s closed
+  (see the guard-change-class "fail closed" rule) on any value it cannot parse (e.g. exponential
+  notation) rather than silently skipping the check.
+- **New decision: the `workers`/`threads` guard is a template-level `fail`, not a schema
+  `minimum`.** `workers`/`threads` are declared once in `values.schema.json` and shared across
+  every Celery-style service (`layout.process`, `layout.correct`, `ranker.inference`, …); adding a
+  schema `minimum: 1` there would tighten every sibling service's contract, which is out of this
+  ticket's scope. The guard is scoped to `groundx.layout.process.settings` instead, firing only for
+  `layout.process`'s own render-disk formula (`workers × threads × renderDiskBudgetMi + 1024`),
+  which is the one place a negative value would render a negative-sized `emptyDir`/`ephemeral-storage`
+  quantity.
+- **Both guards fire during `groundx.layout.process.settings`'s evaluation**, which Helm's chart-wide
+  render always reaches through two call sites (`templates/app/celery.yaml` and
+  `templates/resources/layout-supervisord-conf.yaml`) — a `helm template`/`helm upgrade` therefore
+  fails the whole release, not just the `layout-process` Deployment, on either violation. This
+  matches the "reject before state" polarity required for this class of input (see `spec.md`'s new
+  requirements) and the existing `renderDiskBudgetMi` schema-`minimum` precedent already in this
+  chart, which fails the same way for the same reason.

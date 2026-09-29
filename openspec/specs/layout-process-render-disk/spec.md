@@ -32,7 +32,9 @@ render from their own `.settings` helpers, are untouched.
 
 #### Scenario: the volume stays per-pod under multiple replicas and HPA, so horizontal scaling is not blocked (polarity: finalize success; must not block)
 
-- **GIVEN** `layout.process.replicas.desired: 3` and `layout.process.replicas.hpa: true`
+- **GIVEN** `layout.process.replicas.desired: 3` and the cluster-wide `cluster.hpa: true` toggle
+  (`layout.process.replicas.hpa` is not itself a schema-settable field — `layout.process`'s HPA
+  path inherits the cluster-wide toggle when its own `replicas.hpa` is unset)
 - **WHEN** `helm template` renders the `layout-process` Deployment and (where the chart's HPA
   path is enabled) its `HorizontalPodAutoscaler`
 - **THEN** every replica's pod template carries its own independent `emptyDir` (not a shared or
@@ -61,7 +63,10 @@ threads × renderDiskBudgetMi + 1024` MiB (`3072Mi` at the 0.2.7 defaults of 1 w
 the 1 GiB reserve keeps the app's own enforced budget below the volume's ceiling, so the app
 refuses an oversized render chunk before Kubernetes would evict the pod on disk pressure. The
 computed `ephemeral-storage` request SHALL replace any user-supplied one; every other key under
-`layout.process.resources` SHALL be preserved unchanged, and `.Values` SHALL NOT be mutated.
+`layout.process.resources` SHALL be preserved unchanged. The merge SHALL use a deep copy so the
+original `.Values.layout.process.resources` map is never mutated in place (implementation
+guarantee, following the `layout-inference.tpl:239` precedent — see `design.md` in the
+`gx-61-a-pdf-that-repeatedly-runs-the-layout-worker-out-of-memory` archived change).
 
 #### Scenario: the default budget sizes the volume ceiling and the app's request identically (polarity: finalize success)
 
@@ -97,7 +102,44 @@ computed `ephemeral-storage` request SHALL replace any user-supplied one; every 
   `renderDiskBudgetMi`
 - **THEN** `requests["ephemeral-storage"]` renders as the chart-computed `3072Mi` (the
   user-supplied `500Mi` is replaced, never merged or summed with it), while `requests.cpu:
-  250m` and `requests.memory: 2Gi` render unchanged — the same render, run twice, must not show
-  the computed value leaking into a second, unrelated release's `resources` block (the values
-  dict passed in is never mutated in place)
+  250m` and `requests.memory: 2Gi` render unchanged
+
+### Requirement: the chart rejects an under-sized `ephemeral-storage` limit rather than producing an invalid pod
+
+The chart SHALL fail template rendering (`fail`) when
+`layout.process.resources.limits["ephemeral-storage"]` is set below the computed
+`ephemeral-storage` request, naming `layout.process.renderDiskBudgetMi` and the offending limit in
+the error — never silently raising the operator's limit or silently producing a request above its
+own limit.
+
+#### Scenario: an under-sized ephemeral-storage limit is rejected before any resource renders (polarity: reject before state)
+
+- **GIVEN** `layout.process.resources.limits["ephemeral-storage"]: 1Gi` at the chart's default
+  budget (computed request `3072Mi`)
+- **WHEN** `helm template` renders the release
+- **THEN** rendering fails with an error naming `layout.process.renderDiskBudgetMi` and the
+  configured limit, and no `layout-process` Deployment renders
+
+#### Scenario: a limit at or above the computed request renders unchanged (polarity: finalize success; must not block)
+
+- **GIVEN** `layout.process.resources.limits["ephemeral-storage"]: 4Gi` at the chart's default
+  budget
+- **WHEN** `helm template` renders the release
+- **THEN** the `layout-process` Deployment renders normally with `limits["ephemeral-storage"]: 4Gi`
+  and `requests["ephemeral-storage"]: 3072Mi`
+
+### Requirement: the chart rejects `workers`/`threads` below 1 for `layout.process`
+
+The chart SHALL fail template rendering (`fail`) when `layout.process.workers` or
+`layout.process.threads` is below `1`, rather than rendering a negative or zero
+`emptyDir.sizeLimit`/`ephemeral-storage` value. This is a template-level guard scoped to
+`layout.process`'s render-disk formula; it does not add a schema `minimum` to the shared
+`workers`/`threads` properties other services also declare.
+
+#### Scenario: a negative workers or threads value is rejected before any resource renders (polarity: reject before state)
+
+- **GIVEN** `layout.process.workers: -1` (or, separately, `layout.process.threads: -1`)
+- **WHEN** `helm template` renders the release
+- **THEN** rendering fails with an error naming the offending field and its value, and no
+  `layout-process` Deployment renders with a negative-sized volume or request
 

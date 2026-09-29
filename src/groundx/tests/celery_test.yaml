@@ -119,6 +119,53 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "layout/process/renderDiskBudgetMi.*minimum.*got 0, want 1"
+  - it: "render-disk: an ephemeral-storage limit below the computed request is rejected before any resource renders"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.resources.limits.ephemeral-storage: 1Gi
+    asserts:
+      - failedTemplate:
+          errorPattern: 'layout\.process\.resources\.limits\["ephemeral-storage"\].*1Gi.*below the computed ephemeral-storage request of 3072Mi.*renderDiskBudgetMi'
+  - it: "render-disk: an ephemeral-storage limit at or above the computed request renders unchanged"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.resources.limits.ephemeral-storage: 4Gi
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits["ephemeral-storage"]
+          value: 4Gi
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests["ephemeral-storage"]
+          value: 3072Mi
+  - it: "render-disk: negative workers is rejected before any resource renders"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.workers: -1
+    asserts:
+      - failedTemplate:
+          errorPattern: "layout\\.process\\.workers must be at least 1 \\(got -1\\)"
+  - it: "render-disk: negative threads is rejected before any resource renders"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.threads: -1
+    asserts:
+      - failedTemplate:
+          errorPattern: "layout\\.process\\.threads must be at least 1 \\(got -1\\)"
   - it: "render-disk: a user-supplied ephemeral-storage request is replaced, other resources keys survive"
     templates:
       - ../templates/app/celery.yaml
@@ -138,28 +185,61 @@ tests:
             cpu: 250m
             memory: 2Gi
             ephemeral-storage: 3072Mi
-  - it: "render-disk: the emptyDir volume stays per-pod under multiple replicas, not shared or bound"
+  - it: "render-disk: the emptyDir volume stays per-pod under multiple replicas and HPA, not shared or bound"
     templates:
       - ../templates/app/celery.yaml
+      - ../templates/resources/hpa.yaml
     values:
       - ../values.yaml
     set:
+      cluster.hpa: true
       layout.process.replicas.desired: 3
-    documentSelector:
-      path: metadata.name
-      value: layout-process
+      layout.process.replicas.min: 1
+      layout.process.replicas.max: 6
     asserts:
       - isKind:
           of: Deployment
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: layout-process
       - equal:
           path: spec.replicas
           value: 3
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: layout-process
       - contains:
           path: spec.template.spec.volumes
           content:
             name: render-temp
             emptyDir:
               sizeLimit: 3072Mi
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: layout-process
+      - containsDocument:
+          kind: HorizontalPodAutoscaler
+          apiVersion: autoscaling/v2
+          name: layout-process-hpa
+          any: true
+        template: ../templates/resources/hpa.yaml
+      - equal:
+          path: spec.minReplicas
+          value: 1
+        template: ../templates/resources/hpa.yaml
+        documentSelector:
+          path: metadata.name
+          value: layout-process-hpa
+      - equal:
+          path: spec.maxReplicas
+          value: 6
+        template: ../templates/resources/hpa.yaml
+        documentSelector:
+          path: metadata.name
+          value: layout-process-hpa
   - it: "default: celery"
     templates:
       - ../templates/app/celery.yaml

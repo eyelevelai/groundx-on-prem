@@ -97,3 +97,75 @@ computed `ephemeral-storage` request SHALL replace any user-supplied one; every 
   250m` and `requests.memory: 2Gi` render unchanged — the same render, run twice, must not show
   the computed value leaking into a second, unrelated release's `resources` block (the values
   dict passed in is never mutated in place)
+
+## Amendments
+
+### 2026-09-29 — review round 1 fix (G1, G2, G3)
+
+- **G1/G2 — two new requirements added below**, each with a `reject before state` scenario: the
+  chart now `fail`s template rendering rather than silently rendering an invalid manifest when a
+  user-set `ephemeral-storage` limit is below the computed request, or when `workers`/`threads` is
+  below 1.
+- **G3 — clarification on the "single source" requirement's mutation clause (text above is left
+  as originally written; this note does not edit it).** The requirement's "...and `.Values` SHALL
+  NOT be mutated" clause, and the last scenario's "the same render, run twice, must not show the
+  computed value leaking into a second, unrelated release's `resources` block (the values dict
+  passed in is never mutated in place)" clause, are **not** independently exercised by any test in
+  this spec — confirmed empirically: `groundx.layout.process.settings` computes the same
+  deterministic value from the same inputs on every call within one render (it is called twice per
+  render, from `templates/app/celery.yaml` and `templates/resources/layout-supervisord-conf.yaml`,
+  and always overwrites the `ephemeral-storage` key with the freshly computed value), so removing
+  the `deepCopy` calls in a scratch copy of the chart still passes every existing test in this
+  spec. The `deepCopy` merge itself is unchanged and correct; it remains documented as a code-level
+  implementation decision in `design.md` (following the `layout-inference.tpl:239` precedent). A
+  reader should treat those two clauses as an implementation guarantee recorded in `design.md`, not
+  as a scenario this spec's tests assert.
+- **Correction to the per-pod/HPA scenario above:** `src/groundx/tests/celery_test.yaml`'s matching
+  test ("the emptyDir volume stays per-pod under multiple replicas and HPA, not shared or bound")
+  now also renders `templates/resources/hpa.yaml` and asserts the `layout-process-hpa`
+  `HorizontalPodAutoscaler`'s `minReplicas`/`maxReplicas`, closing the previously-untested HPA half
+  of this scenario. Note: `layout.process.replicas.hpa` is not itself a schema-settable field
+  (`values.schema.json`'s `layout.process.replicas` block only allows `desired`/`max`/`min`, unlike
+  e.g. `ranker.inference.replicas`, which also allows `hpa`/`cooldown`/`target`/`threshold`/
+  `throughput`) — a pre-existing gap outside this ticket's scope. The test instead enables HPA via
+  the cluster-wide `cluster.hpa: true` toggle (the same mechanism `tests/ranker_test.yaml` already
+  uses), which `layout.process`'s HPA path inherits when its own `replicas.hpa` is unset.
+
+### Requirement: the chart rejects an under-sized `ephemeral-storage` limit rather than producing an invalid pod
+
+The chart SHALL fail template rendering (`fail`) when
+`layout.process.resources.limits["ephemeral-storage"]` is set below the computed
+`ephemeral-storage` request, naming `layout.process.renderDiskBudgetMi` and the offending limit in
+the error — never silently raising the operator's limit or silently producing a request above its
+own limit.
+
+#### Scenario: an under-sized ephemeral-storage limit is rejected before any resource renders (polarity: reject before state)
+
+- **GIVEN** `layout.process.resources.limits["ephemeral-storage"]: 1Gi` at the chart's default
+  budget (computed request `3072Mi`)
+- **WHEN** `helm template` renders the release
+- **THEN** rendering fails with an error naming `layout.process.renderDiskBudgetMi` and the
+  configured limit, and no `layout-process` Deployment renders
+
+#### Scenario: a limit at or above the computed request renders unchanged (polarity: finalize success; must not block)
+
+- **GIVEN** `layout.process.resources.limits["ephemeral-storage"]: 4Gi` at the chart's default
+  budget
+- **WHEN** `helm template` renders the release
+- **THEN** the `layout-process` Deployment renders normally with `limits["ephemeral-storage"]: 4Gi`
+  and `requests["ephemeral-storage"]: 3072Mi`
+
+### Requirement: the chart rejects `workers`/`threads` below 1 for `layout.process`
+
+The chart SHALL fail template rendering (`fail`) when `layout.process.workers` or
+`layout.process.threads` is below `1`, rather than rendering a negative or zero
+`emptyDir.sizeLimit`/`ephemeral-storage` value. This is a template-level guard scoped to
+`layout.process`'s render-disk formula; it does not add a schema `minimum` to the shared
+`workers`/`threads` properties other services also declare.
+
+#### Scenario: a negative workers or threads value is rejected before any resource renders (polarity: reject before state)
+
+- **GIVEN** `layout.process.workers: -1` (or, separately, `layout.process.threads: -1`)
+- **WHEN** `helm template` renders the release
+- **THEN** rendering fails with an error naming the offending field and its value, and no
+  `layout-process` Deployment renders with a negative-sized volume or request

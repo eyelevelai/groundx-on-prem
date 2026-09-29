@@ -8,10 +8,10 @@ Accepted (2026-09-29).
 
 GX-61's production incident: one 93-page PDF drove `layout-process` to 11 layout attempts,
 `OOMKilled` up to 16 times on `groundx-prod-eks` (2026-09-11), while holding a whole render batch
-in memory. The durable fix (comment thread C2-C7, confirmed by three spike reports; `ai-server`
-scope, not this repo's) renders pages to disk a few at a time instead. That disk-render path needs
-somewhere in every `layout-process` pod to put temp page files, and this repo is the only place
-that can supply it: `ai-server` has no chart-level control over a pod's volumes.
+in memory. The durable fix — render pages to disk a few at a time instead of holding a whole batch
+in memory (`ai-server` scope, not this repo's; see GX-61) — needs somewhere in every
+`layout-process` pod to put temp page files, and this repo is the only place that can supply it:
+`ai-server` has no chart-level control over a pod's volumes.
 
 Two decisions belong to this chart, not to `ai-server`:
 
@@ -32,12 +32,13 @@ Two decisions belong to this chart, not to `ai-server`:
   restart, and the affinity requirement directly conflicts with this ticket's horizontal-scaling
   requirement (every `layout-process` replica must be schedulable independently).
 - The bare container writable layer is rejected because it does not survive the actual production
-  failure mode: a whole-container restart (`OOMKilled`). Kubernetes tears down and recreates the
-  container's writable layer on restart, but only deletes an `emptyDir` when the **pod** itself is
-  deleted — so a container restart inside a still-running pod leaves the `emptyDir`'s prior
-  contents in place for the new container to sweep, while the same restart silently discards (and
-  cannot itself clean up) anything that lived only in the dead container's writable layer, leaving
-  it to accumulate until the pod is eventually deleted.
+  failure mode: a whole-container restart (`OOMKilled`). On a container restart, the new container
+  gets a fresh writable layer — the dead container's own layer, and any temp files written into it,
+  stays on the node (invisible to the new container, which cannot clean up files it never had
+  access to) until the kubelet garbage-collects it or the pod itself is deleted. An `emptyDir`, by
+  contrast, is deleted only when the **pod** itself is deleted, so it survives exactly that
+  container-restart boundary — a container restart inside a still-running pod leaves the
+  `emptyDir`'s prior contents in place for the new container to sweep immediately.
 - An `emptyDir` satisfies both constraints: it is created and deleted with the pod (no operator
   step, no cross-pod sharing, no scheduling affinity), and it survives exactly the restart
   boundary this incident needs it to survive (container restart, not pod deletion) — the new
