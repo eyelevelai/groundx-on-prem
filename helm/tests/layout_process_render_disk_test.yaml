@@ -1,0 +1,57 @@
+suite: layout-process render-disk emptyDir, mount, env, and resources
+tests:
+  - it: "default: the emptyDir volume, mount, env, and resources request render at the 2048Mi budget default"
+    templates:
+      - ../templates/app/celery.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: TMPDIR
+            value: "/tmp/render"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LAYOUT_RENDER_DISK_BUDGET_MIB
+            value: "2048"
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: render-temp
+            emptyDir:
+              sizeLimit: 3072Mi
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: render-temp
+            mountPath: /tmp/render
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests["ephemeral-storage"]
+          value: 3072Mi
+
+  - it: "override: renderDiskBudgetMi: 4096 renders 5120Mi in sizeLimit and the ephemeral-storage request at 1 worker x 1 thread"
+    templates:
+      - ../templates/app/celery.yaml
+    set:
+      layout.process.renderDiskBudgetMi: 4096
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: render-temp
+            emptyDir:
+              sizeLimit: 5120Mi
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests["ephemeral-storage"]
+          value: 5120Mi
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LAYOUT_RENDER_DISK_BUDGET_MIB
+            value: "4096"

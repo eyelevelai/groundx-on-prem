@@ -103,6 +103,12 @@ true
 {{ dig "queue" "process_queue" $in }}
 {{- end }}
 
+{{- define "groundx.layout.process.renderDiskBudgetMi" -}}
+{{- $b := .Values.layout | default dict -}}
+{{- $in := dig "process" dict $b -}}
+{{ dig "renderDiskBudgetMi" 2048 $in }}
+{{- end }}
+
 {{- define "groundx.layout.process.replicas" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $c := dig "process" dict $b -}}
@@ -174,9 +180,15 @@ true
 
 {{- $rep := (include "groundx.layout.process.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.layout.process.serviceAccountName" . -}}
+{{- $renderMountPath := "/tmp/render" -}}
+{{- $renderDiskBudgetMi := (include "groundx.layout.process.renderDiskBudgetMi" . | int) -}}
+{{- $renderThreads := (include "groundx.layout.process.threads" . | int) -}}
+{{- $renderWorkers := (include "groundx.layout.process.workers" . | int) -}}
+{{- $renderDiskMi := add (mul $renderWorkers $renderThreads $renderDiskBudgetMi) 1024 -}}
 {{- $cfg := dict
   "celery"       ("document.celery_process")
   "dependencies" $dpnd
+  "env"          (dict "TMPDIR" $renderMountPath "LAYOUT_RENDER_DISK_BUDGET_MIB" (toString $renderDiskBudgetMi))
   "image"        (include "groundx.layout.process.image" .)
   "mapPrefix"    ("layout")
   "name"         (include "groundx.layout.process.serviceName" .)
@@ -186,6 +198,8 @@ true
   "replicas"     ($rep)
   "service"      (include "groundx.layout.serviceName" .)
   "threads"      (include "groundx.layout.process.threads" .)
+  "volumeMounts" (list (dict "name" "render-temp" "mountPath" $renderMountPath))
+  "volumes"      (list (dict "name" "render-temp" "emptyDir" (dict "sizeLimit" (printf "%dMi" $renderDiskMi))))
   "workers"      (include "groundx.layout.process.workers" .)
 -}}
 {{- if and $san (ne $san "") -}}
@@ -206,9 +220,11 @@ true
 {{- if and (hasKey $in "nodeSelector") (not (empty (get $in "nodeSelector"))) -}}
   {{- $_ := set $cfg "nodeSelector" (get $in "nodeSelector") -}}
 {{- end -}}
-{{- if and (hasKey $in "resources") (not (empty (get $in "resources"))) -}}
-  {{- $_ := set $cfg "resources" (get $in "resources") -}}
-{{- end -}}
+{{- $renderResources := deepCopy (dig "resources" dict $in) -}}
+{{- $renderRequests := deepCopy (dig "requests" dict $renderResources) -}}
+{{- $_ := set $renderRequests "ephemeral-storage" (printf "%dMi" $renderDiskMi) -}}
+{{- $_ := set $renderResources "requests" $renderRequests -}}
+{{- $_ := set $cfg "resources" $renderResources -}}
 {{- if and (hasKey $in "securityContext") (not (empty (get $in "securityContext"))) -}}
   {{- $_ := set $cfg "securityContext" (get $in "securityContext") -}}
 {{- end -}}
