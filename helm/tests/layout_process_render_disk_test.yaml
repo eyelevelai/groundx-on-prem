@@ -55,3 +55,30 @@ tests:
           content:
             name: LAYOUT_RENDER_DISK_BUDGET_MIB
             value: "4096"
+
+  - it: "an ephemeral-storage limit below the computed request is rejected before any resource renders"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    set:
+      layout.process.resources.limits.ephemeral-storage: 1Gi
+    asserts:
+      - failedTemplate:
+          errorPattern: 'layout\.process\.resources\.limits\["ephemeral-storage"\].*1Gi.*below the computed ephemeral-storage request of 3072Mi.*renderDiskBudgetMi'
+
+  - it: "negative workers is rejected before any resource renders"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    set:
+      layout.process.workers: -1
+    asserts:
+      - failedTemplate:
+          errorPattern: "layout\\.process\\.workers must be at least 1 \\(got -1\\)"
+
+  - it: "negative threads is rejected before any resource renders"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    set:
+      layout.process.threads: -1
+    asserts:
+      - failedTemplate:
+          errorPattern: "layout\\.process\\.threads must be at least 1 \\(got -1\\)"
