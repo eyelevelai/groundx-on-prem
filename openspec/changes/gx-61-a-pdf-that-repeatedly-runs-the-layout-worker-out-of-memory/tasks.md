@@ -8,6 +8,31 @@ repo dependency for `verify-probe-mirror-drift.sh`) on `PATH`. If any check belo
 `celery_test.yaml.snap` modified in a way not asserted by its own task, run
 `git checkout -- src/groundx/tests/__snapshot__/celery_test.yaml.snap` before continuing.
 
+**Mutation safety (2026-09-29 RED-baseline finding):** a plain (`-u`-less) `helm unittest`
+invocation against this worktree's tracked `src/groundx`/`helm` trees was observed rewriting
+`src/groundx/tests/__snapshot__/celery_test.yaml.snap` (dropped a snapshot label, renamed
+another) — the GX-59 label defect, apparently reachable without `-u` too. Every `helm unittest`
+invocation below (tasks 2.1, 2.2, 3.1, 4.2) and the mutation proof (task 5.1) therefore run
+against a **scratch copy** of the chart (`d=$(mktemp -d); cp -R src/groundx "$d"/groundx` or the
+`helm/` equivalent) and never against the tracked tree directly, and each ends by asserting
+`git diff --quiet -- src/groundx/tests/__snapshot__ helm/tests/__snapshot__` so a mutation is
+caught immediately rather than silently committed. `helm template`/`helm lint` are read-only
+(they write nothing) and are exempt from this — they run directly against `src/groundx`/`helm` as
+before. Task 5.3 still invokes `.build/bin/validate-helm.sh` directly against the real trees
+unchanged — it is this repo's one sanctioned executable gate script (`AGENTS.md`) and its own
+internal `helm unittest` calls are the same canonical-gate invocation CI already runs on every
+push; redesigning it around a scratch copy is out of scope here (it also ends in `git diff
+--check`, which needs a real git working tree). `celery_test.yaml` also carries a pre-existing,
+unrelated `it:` case (`"legacy OCR credentials override the shared source"`) that needs
+`files/ocr/gcv-test.json` to exist under the chart root or the whole suite errors with
+`layout.ocr.credentials file not found` (this is the same throwaway fixture
+`.build/bin/validate-helm.sh` generates for the real trees — see its header comment); every
+scratch-copy check below that runs the full `celery_test.yaml` suite (2.1, 2.2, 3.1, 5.1) writes
+this exact fixture content into the scratch copy first — using the validate-helm.sh's own
+byte-for-byte JSON, since the fixture's content is itself hashed into a snapshot-covered
+`ocr-credentials-hash` annotation and a differently-formatted JSON produces a different hash and
+a spurious snapshot mismatch.
+
 Constants used throughout: mount path `/tmp/render`, volume name `render-temp`, env vars `TMPDIR`
 and `LAYOUT_RENDER_DISK_BUDGET_MIB`, schema property `layout.process.renderDiskBudgetMi` (integer,
 minimum 1, default 2048). At the chart's defaults (1 worker × 1 thread × 2048 MiB budget + 1024 MiB
@@ -92,15 +117,16 @@ reserve), the computed `emptyDir.sizeLimit` / `resources.requests["ephemeral-sto
          keys survive" — `set` the same three overrides as task 1.6, `equal` on
          `containers[0].resources.requests` against the exact expected map (`cpu: 250m, memory:
          2Gi, ephemeral-storage: 3072Mi`).
-      check: ${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} unittest -f tests/celery_test.yaml src/groundx 2>&1 | grep -E '^(PASS|# Tests:)' | tail -5; ${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} unittest -f tests/celery_test.yaml src/groundx >/tmp/gx61-celery-unittest.out 2>&1; rc=$?; grep -qE '^Tests:.*[1-9][0-9]* failed' /tmp/gx61-celery-unittest.out && { cat /tmp/gx61-celery-unittest.out; exit 1; }; exit $rc
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; d=$(mktemp -d); cp -R src/groundx "$d"/groundx; mkdir -p "$d/groundx/files/ocr"; printf '%s\n' '{' '  "type": "service_account",' '  "project_id": "groundx-helm-test",' '  "private_key_id": "test",' '  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",' '  "token_uri": "https://oauth2.googleapis.com/token"' '}' > "$d/groundx/files/ocr/gcv-test.json"; j=$(mktemp -d); "$HB" unittest -f tests/celery_test.yaml -o junit --output-file "$j/out.xml" "$d/groundx" >/tmp/gx61-celery-unittest.out 2>&1; rc=$?; rm -rf "$d"; git diff --quiet -- src/groundx/tests/__snapshot__ helm/tests/__snapshot__ || { rm -rf "$j"; echo "worktree snapshot mutated by a scratch-copy check"; exit 1; }; if [ $rc -ne 0 ]; then cat /tmp/gx61-celery-unittest.out; rm -rf "$j"; exit 1; fi; fail=0; for name in "render-disk: layout-process gets the emptyDir volume, mount, and disk-budget env at chart defaults" "render-disk: an override scales sizeLimit, the ephemeral-storage request, and the budget env together" "render-disk: schema rejects a below-minimum renderDiskBudgetMi before any resource renders" "render-disk: a user-supplied ephemeral-storage request is replaced, other resources keys survive"; do grep -F "name=\"$name\"" "$j/out.xml" | grep -q 'result="Pass"' || { echo "missing or failing case: $name"; fail=1; }; done; rm -rf "$j"; [ "$fail" -eq 0 ] || exit 1; exit 0
 
-- [ ] 2.2 Add one `it:` case asserting the render-temp volume stays per-pod and adds no
-      shared/bound storage under multiple replicas — `set:
+- [ ] 2.2 Add one `it:` case titled exactly `"render-disk: the emptyDir volume stays per-pod
+      under multiple replicas, not shared or bound"` asserting the render-temp volume stays
+      per-pod and adds no shared/bound storage under multiple replicas — `set:
       {layout.process.replicas.desired: 3}`, scoped to `layout-process`, asserting `spec.replicas:
       3`, `isKind: {of: Deployment}` (not converted to a `StatefulSet`), and the same `render-temp`
       `emptyDir` `contains` assertion as case 1 above (proves the volume shape is independent of
       replica count — one `emptyDir` per pod template, not a per-replica-indexed list).
-      check: ${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} unittest -f tests/celery_test.yaml src/groundx >/tmp/gx61-celery-unittest-2.out 2>&1; rc=$?; grep -qE '^Tests:.*[1-9][0-9]* failed' /tmp/gx61-celery-unittest-2.out && { cat /tmp/gx61-celery-unittest-2.out; exit 1; }; exit $rc
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; d=$(mktemp -d); cp -R src/groundx "$d"/groundx; mkdir -p "$d/groundx/files/ocr"; printf '%s\n' '{' '  "type": "service_account",' '  "project_id": "groundx-helm-test",' '  "private_key_id": "test",' '  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",' '  "token_uri": "https://oauth2.googleapis.com/token"' '}' > "$d/groundx/files/ocr/gcv-test.json"; j=$(mktemp -d); "$HB" unittest -f tests/celery_test.yaml -o junit --output-file "$j/out.xml" "$d/groundx" >/tmp/gx61-celery-unittest-2.out 2>&1; rc=$?; rm -rf "$d"; git diff --quiet -- src/groundx/tests/__snapshot__ helm/tests/__snapshot__ || { rm -rf "$j"; echo "worktree snapshot mutated by a scratch-copy check"; exit 1; }; if [ $rc -ne 0 ]; then cat /tmp/gx61-celery-unittest-2.out; rm -rf "$j"; exit 1; fi; name="render-disk: the emptyDir volume stays per-pod under multiple replicas, not shared or bound"; ok=0; grep -F "name=\"$name\"" "$j/out.xml" | grep -q 'result="Pass"' && ok=1; rm -rf "$j"; [ "$ok" -eq 1 ] || { echo "missing or failing case: $name"; exit 1; }; exit 0
 
 ## 3. Hand-patch `src/groundx/tests/__snapshot__/celery_test.yaml.snap`'s 12 `layout-process` blocks
 
@@ -139,15 +165,20 @@ reserve), the computed `emptyDir.sizeLimit` / `resources.requests["ephemeral-sto
       stays identical to its base-branch content — no snapshot label dropped, added, reordered, or
       re-quoted, and no unrelated field injected.
       (d) Verify byte-exact correctness with a **plain** (`-u`-less)
-      `helm unittest -f tests/celery_test.yaml src/groundx` (pinned binary) against the real
-      worktree, confirming it exits 0 — a plain run compares against the committed snapshot
-      rather than rewriting it.
+      `helm unittest -f tests/celery_test.yaml <fresh-scratch-copy-of-src/groundx>` (pinned
+      binary) — copy the now-patched `src/groundx` to a second, fresh scratch directory first and
+      run there, never directly against the real worktree: a plain run compares against the
+      committed snapshot rather than rewriting it, but this repo's `helm-unittest` has been
+      observed rewriting the committed snapshot even on a plain run (task list's Mutation safety
+      note above), so even this verification step must not touch the tracked file directly.
+      Confirm it exits 0, then confirm `git diff --quiet -- src/groundx/tests/__snapshot__` on the
+      real worktree to prove the verification itself left the committed file untouched.
       (e) Diff the patched file against `origin/0.2.7` and confirm every added line matches one of
       the expected shapes and **no line is removed**: no dropped snapshot label, no reordering, no
       unrelated content. Commit this snapshot file in its own commit, separate from the
       schema/helper/template commit; the PR body states this method and cites GX-59.
       Delete the scratch copy and its throwaway extraction script before finishing this task.
-      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; out=$("$HB" unittest -f tests/celery_test.yaml src/groundx 2>&1); rc=$?; if [ $rc -ne 0 ]; then printf '%s\n' "$out"; exit 1; fi; grep -q 'ephemeral-storage: 3072Mi' src/groundx/tests/__snapshot__/celery_test.yaml.snap || { echo "snapshot missing ephemeral-storage: 3072Mi"; exit 1; }; [ "$(grep -c 'ephemeral-storage: 3072Mi' src/groundx/tests/__snapshot__/celery_test.yaml.snap)" -ge 11 ] || { echo "expected the default-budget ephemeral-storage line in at least 11 of the 12 default-budget blocks (the override case in task 2.1 renders a different value)"; exit 1; }; bad=$(git diff --unified=0 origin/0.2.7...HEAD -- src/groundx/tests/__snapshot__/celery_test.yaml.snap | grep -E '^-[^-]'); [ -z "$bad" ] || { echo "snapshot diff removed a line — expected additions only:"; printf '%s\n' "$bad"; exit 1; }; added=$(git diff --unified=0 origin/0.2.7...HEAD -- src/groundx/tests/__snapshot__/celery_test.yaml.snap | grep -E '^\+[^+]'); bad2=$(printf '%s\n' "$added" | grep -vE '^\+\s*(- name: render-temp|emptyDir:|sizeLimit: [0-9]+Mi|- mountPath: /tmp/render|name: render-temp|- name: (TMPDIR|LAYOUT_RENDER_DISK_BUDGET_MIB)|value: "(/tmp/render|[0-9]+)"|ephemeral-storage: [0-9]+Mi)\s*$'); [ -z "$bad2" ] || { echo "snapshot diff added a line outside the expected shapes:"; printf '%s\n' "$bad2"; exit 1; }; exit 0
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; d=$(mktemp -d); cp -R src/groundx "$d"/groundx; mkdir -p "$d/groundx/files/ocr"; printf '%s\n' '{' '  "type": "service_account",' '  "project_id": "groundx-helm-test",' '  "private_key_id": "test",' '  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",' '  "token_uri": "https://oauth2.googleapis.com/token"' '}' > "$d/groundx/files/ocr/gcv-test.json"; out=$("$HB" unittest -f tests/celery_test.yaml "$d/groundx" 2>&1); rc=$?; rm -rf "$d"; git diff --quiet -- src/groundx/tests/__snapshot__ helm/tests/__snapshot__ || { echo "worktree snapshot mutated by a scratch-copy check"; exit 1; }; if [ $rc -ne 0 ]; then printf '%s\n' "$out"; exit 1; fi; grep -q 'ephemeral-storage: 3072Mi' src/groundx/tests/__snapshot__/celery_test.yaml.snap || { echo "snapshot missing ephemeral-storage: 3072Mi"; exit 1; }; [ "$(grep -c 'ephemeral-storage: 3072Mi' src/groundx/tests/__snapshot__/celery_test.yaml.snap)" -ge 11 ] || { echo "expected the default-budget ephemeral-storage line in at least 11 of the 12 default-budget blocks (the override case in task 2.1 renders a different value)"; exit 1; }; bad=$(git diff --unified=0 origin/0.2.7...HEAD -- src/groundx/tests/__snapshot__/celery_test.yaml.snap | grep -E '^-[^-]'); [ -z "$bad" ] || { echo "snapshot diff removed a line — expected additions only:"; printf '%s\n' "$bad"; exit 1; }; added=$(git diff --unified=0 origin/0.2.7...HEAD -- src/groundx/tests/__snapshot__/celery_test.yaml.snap | grep -E '^\+[^+]'); bad2=$(printf '%s\n' "$added" | grep -vE '^\+\s*(- name: render-temp|emptyDir:|sizeLimit: [0-9]+Mi|- mountPath: /tmp/render|name: render-temp|- name: (TMPDIR|LAYOUT_RENDER_DISK_BUDGET_MIB)|value: "(/tmp/render|[0-9]+)"|ephemeral-storage: [0-9]+Mi)\s*$'); [ -z "$bad2" ] || { echo "snapshot diff added a line outside the expected shapes:"; printf '%s\n' "$bad2"; exit 1; }; exit 0
 
 ## 4. Mirror into `helm/`
 
@@ -165,7 +196,7 @@ reserve), the computed `emptyDir.sizeLimit` / `resources.requests["ephemeral-sto
       (`renderDiskBudgetMi: 4096` renders `5120Mi` in `sizeLimit` and the ephemeral-storage
       request at 1 worker × 1 thread), so `validate-helm.sh`'s existing `helm unittest helm` step
       fails if the mirror drifts from `src/groundx`.
-      check: ${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} unittest -f tests/layout_process_render_disk_test.yaml helm
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; test -f helm/tests/layout_process_render_disk_test.yaml || { echo "helm/tests/layout_process_render_disk_test.yaml missing"; exit 1; }; d=$(mktemp -d); cp -R helm "$d"/helm; j=$(mktemp -d); "$HB" unittest -f tests/layout_process_render_disk_test.yaml -o junit --output-file "$j/out.xml" "$d/helm" >/tmp/gx61-render-disk-unittest.out 2>&1; rc=$?; rm -rf "$d"; git diff --quiet -- src/groundx/tests/__snapshot__ helm/tests/__snapshot__ || { rm -rf "$j"; echo "worktree snapshot mutated by a scratch-copy check"; exit 1; }; if [ $rc -ne 0 ]; then cat /tmp/gx61-render-disk-unittest.out; rm -rf "$j"; exit 1; fi; n=$(grep -oE '<test name=' "$j/out.xml" | wc -l | tr -d ' '); rm -rf "$j"; [ "$n" -ge 2 ] || { echo "expected at least 2 test cases (default + override) from layout_process_render_disk_test.yaml, saw $n"; exit 1; }; exit 0
 
 ## 5. Evidence (not committed tests — mutation proof, src/helm parity, canonical gate)
 
@@ -173,7 +204,7 @@ reserve), the computed `emptyDir.sizeLimit` / `resources.requests["ephemeral-sto
       schema `minimum` from `1` to `0`), re-run the four new cases from task 2.1, confirm at least
       one now fails (proving the tests actually exercise the code rather than passing vacuously),
       then revert the mutation before committing anything.
-      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; base=$("$HB" unittest -f tests/celery_test.yaml src/groundx 2>&1); rb=$?; sed -i.bak 's/dig "renderDiskBudgetMi" 2048 \$in/dig "renderDiskBudgetMi" 2049 $in/' src/groundx/templates/_helpers/app/layout-process.tpl; mut=$("$HB" unittest -f tests/celery_test.yaml src/groundx 2>&1); rm_rc=$?; mv src/groundx/templates/_helpers/app/layout-process.tpl.bak src/groundx/templates/_helpers/app/layout-process.tpl; if [ $rb -ne 0 ]; then echo "unmutated committed celery_test.yaml cases must pass first"; exit 1; fi; if [ $rm_rc -eq 0 ]; then echo "mutating the helper default did not make any committed case fail"; exit 1; fi; exit 0
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; d=$(mktemp -d); cp -R src/groundx "$d"/groundx; mkdir -p "$d/groundx/files/ocr"; printf '%s\n' '{' '  "type": "service_account",' '  "project_id": "groundx-helm-test",' '  "private_key_id": "test",' '  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",' '  "token_uri": "https://oauth2.googleapis.com/token"' '}' > "$d/groundx/files/ocr/gcv-test.json"; base=$("$HB" unittest -f tests/celery_test.yaml "$d/groundx" 2>&1); rb=$?; sed -i.bak 's/dig "renderDiskBudgetMi" 2048 \$in/dig "renderDiskBudgetMi" 2049 $in/' "$d/groundx/templates/_helpers/app/layout-process.tpl"; mut=$("$HB" unittest -f tests/celery_test.yaml "$d/groundx" 2>&1); rm_rc=$?; rm -rf "$d"; git diff --quiet -- src/groundx/tests/__snapshot__ helm/tests/__snapshot__ || { echo "worktree snapshot mutated by a scratch-copy check"; exit 1; }; git diff --quiet -- src/groundx/templates/_helpers/app/layout-process.tpl || { echo "worktree helper template mutated by the mutation-proof check"; exit 1; }; if [ $rb -ne 0 ]; then echo "unmutated committed celery_test.yaml cases must pass first"; exit 1; fi; if [ $rm_rc -eq 0 ]; then echo "mutating the helper default did not make any committed case fail"; exit 1; fi; exit 0
 
 - [ ] 5.2 `src`-vs-`helm` rendered-content parity: confirm the `env`/`volumes`/`resources` fields
       rendered from `layout-process.tpl` match between both trees under the same override
@@ -181,7 +212,7 @@ reserve), the computed `emptyDir.sizeLimit` / `resources.requests["ephemeral-sto
       rather than drifting. Compares only those fields, not the whole rendered document (the
       pre-existing, out-of-scope `helm/Chart.yaml` version pin makes a whole-document diff differ
       on chart/appVersion/label fields regardless of this change).
-      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; a=$("$HB" template src/groundx --show-only templates/app/celery.yaml --set layout.process.renderDiskBudgetMi=4096 2>&1 | yq eval-all 'select(.metadata.name == "layout-process")' - | yq eval '.spec.template.spec.containers[0].resources.requests."ephemeral-storage"' -); b=$("$HB" template helm --show-only templates/app/celery.yaml --set layout.process.renderDiskBudgetMi=4096 2>&1 | yq eval-all 'select(.metadata.name == "layout-process")' - | yq eval '.spec.template.spec.containers[0].resources.requests."ephemeral-storage"' -); [ "$a" = "$b" ] && [ -n "$a" ] || { echo "src ($a) and helm ($b) diverge or are empty"; exit 1; }; exit 0
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; render() { "$HB" template "$1" --show-only templates/app/celery.yaml --set layout.process.renderDiskBudgetMi=4096 2>&1 | yq eval-all 'select(.metadata.name == "layout-process")' -; }; src_doc=$(render src/groundx); helm_doc=$(render helm); fail() { echo "$1"; exit 1; }; for field in '.spec.template.spec.containers[0].env[] | select(.name == "TMPDIR") | .value' '.spec.template.spec.containers[0].env[] | select(.name == "LAYOUT_RENDER_DISK_BUDGET_MIB") | .value' '.spec.template.spec.volumes[] | select(.name == "render-temp") | .emptyDir.sizeLimit' '.spec.template.spec.containers[0].resources.requests."ephemeral-storage"'; do av=$(echo "$src_doc" | yq eval "$field" -); bv=$(echo "$helm_doc" | yq eval "$field" -); { [ -n "$av" ] && [ "$av" != "null" ]; } || fail "src/groundx missing/empty for: $field"; { [ -n "$bv" ] && [ "$bv" != "null" ]; } || fail "helm missing/empty for: $field"; [ "$av" = "$bv" ] || fail "src ($av) and helm ($bv) diverge for: $field"; done; echo ok
 
 - [ ] 5.3 Run the canonical gate, `.build/bin/validate-helm.sh`, with a real `python3` first on
       PATH (the bare `python` on some machines is a stub that silently skips several checks
@@ -189,7 +220,7 @@ reserve), the computed `emptyDir.sizeLimit` / `resources.requests["ephemeral-sto
       (mirrors `scripts/githooks/groundx-on-prem/pre-push`'s own shim pattern). This repo's
       `AGENTS.md` marks `.build/bin/validate-helm.sh` itself as the one script this Tier 3
       privileged repo's read/template/lint/unittest-only constraint permits executing.
-      check: h="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; d=$(mktemp -d); ln -s "$h" "$d/helm"; PATH="$d:$(dirname "$(command -v python3)"):$PATH" .build/bin/validate-helm.sh >/tmp/gx61-validate-helm.out 2>&1; rc=$?; rm -rf "$d"; if [ $rc -ne 0 ]; then cat /tmp/gx61-validate-helm.out; fi; exit $rc
+      check: h="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; d=$(mktemp -d); ln -s "$h" "$d/helm"; PATH="$d:$(dirname "$(command -v python3)"):$PATH" .build/bin/validate-helm.sh >/tmp/gx61-validate-helm.out 2>&1; rc=$?; rm -rf "$d"; if [ $rc -ne 0 ]; then cat /tmp/gx61-validate-helm.out; exit $rc; fi; doc=$("$h" template src/groundx --show-only templates/app/celery.yaml 2>&1 | yq eval-all 'select(.metadata.name == "layout-process")' -); v=$(echo "$doc" | yq eval '.spec.template.spec.containers[0].resources.requests."ephemeral-storage"' -); { [ -n "$v" ] && [ "$v" != "null" ]; } || { echo "the canonical gate passed but ephemeral-storage is still absent from the src/groundx render — the gate alone does not exercise this feature"; exit 1; }; exit 0
 
 ---
 Rollout: this is a single-repo, additive, schema-optional change — no expand/contract needed. It
