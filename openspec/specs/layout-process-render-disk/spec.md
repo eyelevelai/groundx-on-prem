@@ -43,15 +43,17 @@ render from their own `.settings` helpers, are untouched.
   volume, affinity, or `StatefulSet` conversion appears — scaling `layout-process` out is not
   newly constrained by this change
 
-#### Scenario: an unpatched image on the patched chart leaves the mount and env unused, harmlessly (backward-compatibility scenario, cross-service touchpoint with `ai-server`; polarity: finalize success)
+#### Scenario: an unpatched image on the patched chart honors `TMPDIR` for one temp file but ignores the render-disk budget, harmlessly (backward-compatibility scenario, cross-service touchpoint with `ai-server`; polarity: finalize success)
 
 - **GIVEN** the patched chart is deployed with a `layout-process` image built before `ai-server`'s
   companion change (same ticket) lands
-- **WHEN** the pod starts
+- **WHEN** the pod starts and renders a PDF
 - **THEN** the emptyDir is mounted and `TMPDIR`/`LAYOUT_RENDER_DISK_BUDGET_MIB` are set in the
-  container environment, but the deployment is otherwise unaffected — nothing in this chart change
-  requires the running image to read either value, so an old image continues rendering PDFs
-  exactly as it does today, using whatever temp directory its own code already resolves
+  container environment; the old image's `pdf2image.convert_from_bytes` writes its one temporary
+  PDF copy via `tempfile.mkstemp()` (`pdf2image.py:354`), which resolves its directory from
+  `TMPDIR`, so that single copy lands on the emptyDir — but the old image reads and enforces
+  neither `LAYOUT_RENDER_DISK_BUDGET_MIB` nor any per-batch disk ceiling, so the deployment is
+  otherwise unaffected and the old image keeps rendering PDFs exactly as it does today
 
 ### Requirement: `layout.process.renderDiskBudgetMi` is the single source for the app's disk budget and the volume's ceiling
 

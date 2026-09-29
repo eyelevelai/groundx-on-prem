@@ -217,3 +217,21 @@ The chart SHALL fail template rendering (`fail`) when `layout.process.workers` o
 - **Rarer, valid Kubernetes quantity forms are rejected**, with the named "is not a recognized
   Kubernetes storage quantity" render error: a leading-sign value (`+4Gi`), a leading-dot decimal
   (`.5Gi`), a trailing-dot decimal (`5.Gi`), and the milli suffix (`m`, e.g. `9000000000m`).
+
+## Amendments
+
+### 2026-09-29 — review round 4 fix (Q1): the "unpatched image on the patched chart" scenario overstated the mount as unused
+
+- **Correction to the "an unpatched image on the patched chart leaves the mount and env unused,
+  harmlessly" scenario above (line 41 as originally written; this note does not edit it).** An old
+  `layout-process` image renders PDFs via `pdf2image.convert_from_bytes`, which writes its one
+  temporary PDF copy with `tempfile.mkstemp()` (`pdf2image.py:354`, confirmed by reading the
+  installed package source); `mkstemp()` with no explicit `dir=` resolves its directory from the
+  `TMPDIR` environment variable, so that single temporary file lands on the render emptyDir — the
+  mount is not unused.
+- **What remains true, and what does not:** the old image reads and enforces neither
+  `LAYOUT_RENDER_DISK_BUDGET_MIB` nor any per-batch disk ceiling of its own, so the emptyDir's
+  `sizeLimit` is the only backstop against an old image's temp file growing unbounded, and the
+  deployment is otherwise unaffected — an old image keeps rendering PDFs exactly as it does today,
+  just with that one temp file now on disk-backed storage instead of wherever `tempfile.mkstemp()`
+  would have resolved without `TMPDIR` set.

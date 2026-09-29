@@ -121,3 +121,23 @@ resources, or environment; `layout-ocr-timeout` covers the unrelated OCR-timeout
   precedent), the deepCopy mechanism chosen for merging the ephemeral-storage request without
   mutating `.Values.layout.process.resources`, and re-confirmation that `layout.process` schema's
   `additionalProperties: false` is the only schema gate this change must satisfy.
+
+## Amendments
+
+### 2026-09-29 — review round 4 fix (Q1): "leaves the volume mounted but unused" overstated the old-image behavior
+
+- **Correction to the "Affected environments" bullet above** (line 81 as originally written; this
+  note does not edit it): "an unpatched `ai-server` image on a patched chart leaves the volume
+  mounted but unused" is not accurate. The old image's `pdf2image.convert_from_bytes` writes its
+  one temporary PDF copy with `tempfile.mkstemp()` (`pdf2image.py:354`, confirmed by reading the
+  installed package source), which with no explicit `dir=` resolves from the `TMPDIR` environment
+  variable the patched chart now sets — so that one temp file does land on the mounted emptyDir.
+- **What stays true:** the old image reads and enforces neither `LAYOUT_RENDER_DISK_BUDGET_MIB`
+  nor any disk ceiling of its own, so the emptyDir's chart-computed `sizeLimit` is the only backstop
+  against that image's temp usage until the companion `ai-server` change lands; the deployment is
+  otherwise unaffected, matching the corresponding scenario amendment in
+  `specs/layout-process-render-disk/spec.md`.
+- **Same correction applies to the "Backward compatible, no BREAKING change" paragraph** earlier in
+  this file, which likewise says "an old image on a patched chart gets an emptyDir and env pair it
+  simply does not read" — read that parenthetical as: the old image's `pdf2image` temp file lands on
+  the emptyDir via `TMPDIR`, but the image does not read or enforce `LAYOUT_RENDER_DISK_BUDGET_MIB`.
