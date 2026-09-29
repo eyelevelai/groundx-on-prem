@@ -187,3 +187,100 @@ tests:
       - equal:
           path: spec.selector.matchLabels.app
           value: groundx
+
+  - it: "enabled: go worker budget and spread"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      summaryClient.enabled: true
+      summaryClient.disruptionBudget.enabled: true
+      summaryClient.topologySpreadConstraints: &spread
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+    asserts:
+      - documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.selector.matchLabels.app, value: summary-client }
+      - documentSelector: { path: kind, value: Deployment }
+        equal: { path: spec.template.spec.topologySpreadConstraints, value: *spread }
+
+  - it: "enabled: celery budgets stay per worker"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      layout.map.enabled: true
+      layout.map.disruptionBudget.enabled: true
+      layout.map.topologySpreadConstraints: *spread
+      layout.ocr.enabled: true
+      layout.ocr.disruptionBudget.enabled: true
+    asserts:
+      - hasDocuments: { count: 4 }
+      - documentIndex: 1
+        equal: { path: spec.selector.matchLabels.app, value: layout-map }
+      - documentIndex: 3
+        equal: { path: spec.selector.matchLabels.app, value: layout-ocr }
+      - documentIndex: 0
+        equal: { path: spec.template.spec.topologySpreadConstraints, value: *spread }
+
+  - it: "enabled: metrics budget and spread"
+    templates:
+      - ../templates/app/metrics.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      metrics.enabled: true
+      metrics.disruptionBudget.enabled: true
+      metrics.topologySpreadConstraints: *spread
+    asserts:
+      - documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.selector.matchLabels.app, value: metrics }
+      - documentSelector: { path: kind, value: Deployment }
+        equal: { path: spec.template.spec.topologySpreadConstraints, value: *spread }
+
+  - it: "enabled: inference budget and spread"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      layout.inference.enabled: true
+      layout.inference.disruptionBudget.enabled: true
+      layout.inference.topologySpreadConstraints: *spread
+    asserts:
+      - documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.selector.matchLabels.app, value: layout-inference }
+      - documentSelector: { path: kind, value: Deployment }
+        equal: { path: spec.template.spec.topologySpreadConstraints, value: *spread }
+
+  - it: "spread only: api and groundx render spread without a budget"
+    templates:
+      - ../templates/app/api.yaml
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      layout.api.enabled: true
+      layout.api.topologySpreadConstraints: *spread
+      groundx.enabled: true
+      groundx.topologySpreadConstraints: *spread
+    asserts:
+      - documentSelector: { path: kind, value: Deployment, matchMany: true }
+        equal: { path: spec.template.spec.topologySpreadConstraints, value: *spread }
+      - containsDocument: { apiVersion: policy/v1, kind: PodDisruptionBudget, any: true }
+        not: true
+
+  - it: "schema rejects an unknown key on a disruptionBudget block"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      layout.map.enabled: true
+      layout.map.disruptionBudget.bogus: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "layout/map/disruptionBudget.*bogus.*not allowed"
