@@ -169,3 +169,37 @@ The chart SHALL fail template rendering (`fail`) when `layout.process.workers` o
 - **WHEN** `helm template` renders the release
 - **THEN** rendering fails with an error naming the offending field and its value, and no
   `layout-process` Deployment renders with a negative-sized volume or request
+
+## Amendments
+
+### 2026-09-29 — review round 2 fix (O1)
+
+- **Correction to the "an under-sized ephemeral-storage limit is rejected" requirement above: the
+  quantity grammar it parses is now the full Kubernetes form, not the narrower set round 1
+  shipped.** Round 1's `groundx.layout.process.storageMi` accepted binary `Ki`/`Mi`/`Gi`/`Ti` and
+  decimal `K`/`M`/`G`/`T` (uppercase `K` — itself a bug, since Kubernetes' only valid lowercase
+  decimal suffix is `k`) and rejected exponent form and a native YAML number outright. It now
+  accepts binary `Ki`/`Mi`/`Gi`/`Ti`/`Pi`/`Ei`, decimal `k`/`M`/`G`/`T`/`P`/`E` (lowercase `k`
+  only — uppercase `K` is now rejected), a bare byte count, exponent form (`e`/`E`), and an
+  unquoted numeric value from a values file. Two new scenarios below cover the previously-missing
+  forms; the existing "an under-sized ephemeral-storage limit is rejected" and "a limit at or
+  above the computed request renders unchanged" scenarios are unchanged and still pass.
+
+#### Scenario: an ephemeral-storage limit is accepted in any recognized Kubernetes quantity form (polarity: finalize success)
+
+- **GIVEN** `layout.process.resources.limits["ephemeral-storage"]` set to a value comfortably
+  above the computed request, expressed as a decimal SI suffix (e.g. `4000000k`), a binary suffix
+  (e.g. `1Pi`), exponent form (e.g. `"4e9"`), or an unquoted number in a values file (e.g.
+  `4294967296`)
+- **WHEN** `helm template` renders the release
+- **THEN** the `layout-process` Deployment renders normally with the limit unchanged and
+  `requests["ephemeral-storage"]` at the computed value — parsing succeeds and no `fail` fires
+
+#### Scenario: an unrecognized ephemeral-storage quantity is rejected before any resource renders (polarity: reject before state; catches the adversarial counterexample)
+
+- **GIVEN** `layout.process.resources.limits["ephemeral-storage"]` set to an uppercase-`K`
+  suffixed value (e.g. `5000000K` — not a valid Kubernetes suffix) or a non-quantity string (e.g.
+  `abc`)
+- **WHEN** `helm template` renders the release
+- **THEN** rendering fails with the "not a recognized Kubernetes storage quantity" error naming
+  the offending value, and no `layout-process` Deployment renders

@@ -146,6 +146,93 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].resources.requests["ephemeral-storage"]
           value: 3072Mi
+  - it: "render-disk: an ephemeral-storage limit accepts a decimal SI suffix (k)"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.resources.limits.ephemeral-storage: 4000000k
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits["ephemeral-storage"]
+          value: 4000000k
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests["ephemeral-storage"]
+          value: 3072Mi
+  - it: "render-disk: an ephemeral-storage limit accepts a binary suffix (Pi)"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.resources.limits.ephemeral-storage: 1Pi
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits["ephemeral-storage"]
+          value: 1Pi
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests["ephemeral-storage"]
+          value: 3072Mi
+  - it: "render-disk: an ephemeral-storage limit accepts exponent form"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.resources.limits.ephemeral-storage: "4e9"
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits["ephemeral-storage"]
+          value: "4e9"
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests["ephemeral-storage"]
+          value: 3072Mi
+  - it: "render-disk: an unquoted numeric ephemeral-storage limit from a values file is accepted"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.render-disk-unquoted-storage.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits["ephemeral-storage"]
+          value: 4294967296
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests["ephemeral-storage"]
+          value: 3072Mi
+  - it: "render-disk: an uppercase K suffix is rejected"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.resources.limits.ephemeral-storage: 5000000K
+    asserts:
+      - failedTemplate:
+          errorPattern: '"5000000K" is not a recognized Kubernetes storage quantity'
+  - it: "render-disk: a garbage ephemeral-storage quantity is rejected"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.resources.limits.ephemeral-storage: abc
+    asserts:
+      - failedTemplate:
+          errorPattern: '"abc" is not a recognized Kubernetes storage quantity'
   - it: "render-disk: negative workers is rejected before any resource renders"
     templates:
       - ../templates/resources/layout-supervisord-conf.yaml

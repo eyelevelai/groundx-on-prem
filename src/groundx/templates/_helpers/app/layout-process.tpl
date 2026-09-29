@@ -110,16 +110,25 @@ true
 {{- end }}
 
 {{- define "groundx.layout.process.storageMi" -}}
-{{- $raw := toString . -}}
+{{- $raw := "" -}}
+{{- if or (kindIs "float64" .) (kindIs "int" .) (kindIs "int64" .) -}}
+  {{- $raw = printf "%.0f" (float64 .) -}}
+{{- else -}}
+  {{- $raw = toString . -}}
+{{- end -}}
 {{- $units := dict
   "Ki" 1024.0
   "Mi" 1048576.0
   "Gi" 1073741824.0
   "Ti" 1099511627776.0
-  "K"  1000.0
+  "Pi" 1125899906842624.0
+  "Ei" 1152921504606846976.0
+  "k"  1000.0
   "M"  1000000.0
   "G"  1000000000.0
   "T"  1000000000000.0
+  "P"  1000000000000000.0
+  "E"  1000000000000000000.0
 -}}
 {{- $mult := 1.0 -}}
 {{- $num := $raw -}}
@@ -129,8 +138,8 @@ true
     {{- $mult = $m -}}
   {{- end -}}
 {{- end -}}
-{{- if not (regexMatch "^[0-9]+(\\.[0-9]+)?$" $num) -}}
-  {{- fail (printf "%q is not a recognized Kubernetes storage quantity (expected a plain byte count or a Ki/Mi/Gi/Ti/K/M/G/T suffix)" $raw) -}}
+{{- if not (regexMatch "^[0-9]+(\\.[0-9]+)?([eE][+-]?[0-9]+)?$" $num) -}}
+  {{- fail (printf "%q is not a recognized Kubernetes storage quantity (expected a plain byte count, exponent form, or a Ki/Mi/Gi/Ti/Pi/Ei/k/M/G/T/P/E suffix)" $raw) -}}
 {{- end -}}
 {{ divf (mulf ($num | float64) $mult) 1048576.0 }}
 {{- end }}

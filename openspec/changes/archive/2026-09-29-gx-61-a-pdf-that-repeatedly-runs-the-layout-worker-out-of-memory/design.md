@@ -210,3 +210,25 @@ design carries forward from `decomposition.md` Revision 1 item 3).
   matches the "reject before state" polarity required for this class of input (see `spec.md`'s new
   requirements) and the existing `renderDiskBudgetMi` schema-`minimum` precedent already in this
   chart, which fails the same way for the same reason.
+
+### 2026-09-29 — review round 2 fix (O1)
+
+- **Correction to the round 1 amendment above: `groundx.layout.process.storageMi` now parses the
+  full Kubernetes storage-quantity grammar, not the narrower set originally shipped.** Round 1's
+  text above states the guard "recognizes the binary suffixes `Ki`/`Mi`/`Gi`/`Ti` and the decimal
+  suffixes `K`/`M`/`G`/`T`... and `fail`s closed... on any value it cannot parse (e.g. exponential
+  notation)". Both are corrected by this round: `K` (uppercase) was never a valid Kubernetes
+  decimal suffix — the only valid lowercase-decimal form is `k` — so round 1 shipped with a bug
+  that *wrongly accepted* `K` and offered no `P`/`E`/`Pi`/`Ei` suffixes at all; and rejecting
+  exponent form was itself a gap, not a deliberate design choice, since Kubernetes quantities
+  (`"129e6"`) and a plain unquoted number from a values file both need it. The helper now accepts
+  binary `Ki`/`Mi`/`Gi`/`Ti`/`Pi`/`Ei`, decimal `k`/`M`/`G`/`T`/`P`/`E` (lowercase `k` only —
+  uppercase `K` is rejected, closing the round 1 bug), a bare byte count, exponent form (`e`/`E`),
+  and a native YAML number (`float64`/`int`/`int64`, as arrives from an unquoted values-file
+  entry) — converted via `printf "%.0f"` rather than Go's default `%v` formatting, which switches
+  to scientific notation for a large byte count and made the pre-fix helper reject its own
+  input (`4294967296` rendered as `"4.294967296e+09"` and failed to parse). Still `fail`s closed,
+  same named message, on anything else.
+- **No change to the "one narrow place" scope decision.** This remains the only place in the chart
+  that parses an operator-supplied Kubernetes quantity string; `renderDiskBudgetMi` itself is still
+  a plain integer-MiB chart input, unaffected by this round.

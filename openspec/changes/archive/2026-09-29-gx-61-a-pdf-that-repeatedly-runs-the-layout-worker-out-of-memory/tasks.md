@@ -126,7 +126,7 @@ reserve), the computed `emptyDir.sizeLimit` / `resources.requests["ephemeral-sto
       3`, `isKind: {of: Deployment}` (not converted to a `StatefulSet`), and the same `render-temp`
       `emptyDir` `contains` assertion as case 1 above (proves the volume shape is independent of
       replica count — one `emptyDir` per pod template, not a per-replica-indexed list).
-      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; d=$(mktemp -d); cp -R src/groundx "$d"/groundx; mkdir -p "$d/groundx/files/ocr"; printf '%s\n' '{' '  "type": "service_account",' '  "project_id": "groundx-helm-test",' '  "private_key_id": "test",' '  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",' '  "token_uri": "https://oauth2.googleapis.com/token"' '}' > "$d/groundx/files/ocr/gcv-test.json"; j=$(mktemp -d); "$HB" unittest -f tests/celery_test.yaml -o junit --output-file "$j/out.xml" "$d/groundx" >/tmp/gx61-celery-unittest-2.out 2>&1; rc=$?; rm -rf "$d"; git diff --quiet -- src/groundx/tests/__snapshot__ helm/tests/__snapshot__ || { rm -rf "$j"; echo "worktree snapshot mutated by a scratch-copy check"; exit 1; }; if [ $rc -ne 0 ]; then cat /tmp/gx61-celery-unittest-2.out; rm -rf "$j"; exit 1; fi; name="render-disk: the emptyDir volume stays per-pod under multiple replicas, not shared or bound"; ok=0; grep -F "name=\"$name\"" "$j/out.xml" | grep -q 'result="Pass"' && ok=1; rm -rf "$j"; [ "$ok" -eq 1 ] || { echo "missing or failing case: $name"; exit 1; }; exit 0
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; d=$(mktemp -d); cp -R src/groundx "$d"/groundx; mkdir -p "$d/groundx/files/ocr"; printf '%s\n' '{' '  "type": "service_account",' '  "project_id": "groundx-helm-test",' '  "private_key_id": "test",' '  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",' '  "token_uri": "https://oauth2.googleapis.com/token"' '}' > "$d/groundx/files/ocr/gcv-test.json"; j=$(mktemp -d); "$HB" unittest -f tests/celery_test.yaml -o junit --output-file "$j/out.xml" "$d/groundx" >/tmp/gx61-celery-unittest-2.out 2>&1; rc=$?; rm -rf "$d"; git diff --quiet -- src/groundx/tests/__snapshot__ helm/tests/__snapshot__ || { rm -rf "$j"; echo "worktree snapshot mutated by a scratch-copy check"; exit 1; }; if [ $rc -ne 0 ]; then cat /tmp/gx61-celery-unittest-2.out; rm -rf "$j"; exit 1; fi; name="render-disk: the emptyDir volume stays per-pod under multiple replicas and HPA, not shared or bound"; ok=0; grep -F "name=\"$name\"" "$j/out.xml" | grep -q 'result="Pass"' && ok=1; rm -rf "$j"; [ "$ok" -eq 1 ] || { echo "missing or failing case: $name (task 2.2's original case, extended by task 6.4 to also cover HPA)"; exit 1; }; exit 0
 
 ## 3. Hand-patch `src/groundx/tests/__snapshot__/celery_test.yaml.snap`'s 12 `layout-process` blocks
 
@@ -288,7 +288,7 @@ items (the `layout.process.batchSize`/GX-7/FRA-150 items out of scope for GX-61)
       `cluster.hpa: true` and assert the rendered `layout-process-hpa` HorizontalPodAutoscaler's
       `minReplicas`/`maxReplicas`, closing the previously-untested HPA half of the per-pod scenario
       (see `spec.md` Amendments for why `cluster.hpa`, not `layout.process.replicas.hpa`, is used).
-      check: ${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} template src/groundx --set cluster.hpa=true --set layout.process.replicas.desired=3 --set layout.process.replicas.min=1 --set layout.process.replicas.max=6 --show-only templates/resources/hpa.yaml 2>&1 | grep -c "name: layout-process-hpa"
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; d=$(mktemp -d); cp -R src/groundx "$d"/groundx; mkdir -p "$d/groundx/files/ocr"; printf '%s\n' '{' '  "type": "service_account",' '  "project_id": "groundx-helm-test",' '  "private_key_id": "test",' '  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",' '  "token_uri": "https://oauth2.googleapis.com/token"' '}' > "$d/groundx/files/ocr/gcv-test.json"; j=$(mktemp -d); "$HB" unittest -f tests/celery_test.yaml -o junit --output-file "$j/out.xml" "$d/groundx" >/tmp/gx61-celery-unittest-64.out 2>&1; rc=$?; rm -rf "$d"; git diff --quiet -- src/groundx/tests/__snapshot__ helm/tests/__snapshot__ || { rm -rf "$j"; echo "worktree snapshot mutated by a scratch-copy check"; exit 1; }; if [ $rc -ne 0 ]; then cat /tmp/gx61-celery-unittest-64.out; rm -rf "$j"; exit 1; fi; name="render-disk: the emptyDir volume stays per-pod under multiple replicas and HPA, not shared or bound"; ok=0; grep -F "name=\"$name\"" "$j/out.xml" | grep -q 'result="Pass"' && ok=1; rm -rf "$j"; [ "$ok" -eq 1 ] || { echo "missing or failing case: $name"; exit 1; }; exit 0
 - [x] 6.5 Fix the ADR's self-contradictory restart wording (a container restart gives the new
       container a fresh writable layer; the dead container's own layer and its temp files stay on
       the node, invisible to the new container, until kubelet GC or pod deletion) and replace the
@@ -299,3 +299,47 @@ items (the `layout.process.batchSize`/GX-7/FRA-150 items out of scope for GX-61)
       `## Amendments` sections (this change is already archived; the record-hygiene rule forbids
       silently rewriting an archived artifact's original text).
       check: n/a — record-hygiene/documentation task, no rendered behavior to assert
+
+### 2026-09-29 — review round 2 fix (O1, O2)
+
+- [x] 7.1 Extend `groundx.layout.process.storageMi` (`templates/_helpers/app/layout-process.tpl`)
+      to accept the full Kubernetes quantity grammar for an `ephemeral-storage` limit: binary
+      suffixes `Ki`/`Mi`/`Gi`/`Ti`/`Pi`/`Ei`, decimal SI suffixes `k`/`M`/`G`/`T`/`P`/`E` (lowercase
+      `k` only — the previous round's `K` entry was itself the bug this round corrects), a bare
+      byte count, exponent form (`e`/`E`), and a native YAML number arriving as `float64`/`int`/
+      `int64` from a values file (converted with `printf "%.0f"` so a large unquoted byte count
+      never round-trips through Go's `%v` scientific-notation formatting — confirmed this was a
+      real defect: `4294967296` unquoted in a values file rendered as `"4.294967296e+09"` on the
+      pre-fix helper and was rejected). Anything else, including uppercase `K`, still `fail`s with
+      the same named message (text updated to list the extended suffix set). Mirror into `helm/`.
+      check: ${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} template src/groundx --set layout.process.resources.limits.ephemeral-storage=1Pi --show-only templates/app/celery.yaml 2>&1 | grep -c "ephemeral-storage: 1Pi"
+- [x] 7.2 Add six `it:` cases to `src/groundx/tests/celery_test.yaml` and
+      `helm/tests/layout_process_render_disk_test.yaml` (plus a
+      `tests/files/values.render-disk-unquoted-storage.yaml` fixture in both trees for the
+      values-file case): one accept case per suffix family (`4000000k` for the decimal family,
+      `1Pi` for the binary family — chosen because both are newly recognized suffixes, not ones
+      the pre-round code already happened to accept), one exponent-form accept case (`"4e9"`,
+      quoted so the test-suite YAML parser preserves it as a string rather than pre-folding it to
+      a float before the helper ever sees it), one unquoted-numeric-values-file accept case
+      (`4294967296`), and reject cases for uppercase `K` (`5000000K`) and garbage (`abc`). Confirmed
+      RED on the pre-round helper via a scratch copy (all four accept cases failed — the `k`/`Pi`
+      cases with "not a recognized Kubernetes storage quantity", the exponent case the same, and
+      the unquoted-numeric case with the `4.294967296e+09` scientific-notation defect above) and
+      GREEN post-fix (43/43 in `celery_test.yaml`, 11/11 in the `helm/` mirror). Mutation-proofed by
+      removing the `k`/`Pi` dict entries in a scratch copy and confirming exactly those two new
+      cases fail, and separately by reverting the exponent-group regex and confirming the exponent
+      case fails too, with every other case unaffected in both runs.
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; d=$(mktemp -d); cp -R src/groundx "$d"/groundx; mkdir -p "$d/groundx/files/ocr"; printf '%s\n' '{' '  "type": "service_account",' '  "project_id": "groundx-helm-test",' '  "private_key_id": "test",' '  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",' '  "token_uri": "https://oauth2.googleapis.com/token"' '}' > "$d/groundx/files/ocr/gcv-test.json"; out=$("$HB" unittest -f tests/celery_test.yaml "$d/groundx" 2>&1); rc=$?; rm -rf "$d"; git diff --quiet -- src/groundx/tests/__snapshot__ helm/tests/__snapshot__ || { echo "worktree snapshot mutated by a scratch-copy check"; exit 1; }; [ $rc -eq 0 ] || { printf '%s\n' "$out"; exit 1; }; exit 0
+- [x] 7.3 Fix task 2.2's and task 6.4's `check:` lines above: 6.4's original check
+      (`helm template ... --show-only templates/resources/hpa.yaml | grep -c "name:
+      layout-process-hpa"`) passed on the unmodified base branch, because `layout-process-hpa`
+      rendering is pre-existing chart behavior unrelated to this change (confirmed directly:
+      `git show origin/0.2.7:src/groundx/templates/resources/hpa.yaml` already renders it) — the
+      check exercised nothing this change added. Task 2.2's check still greps the test's original
+      title (`"...multiple replicas, not shared or bound"`), but task 6.4 renamed that same `it:`
+      case to `"...multiple replicas and HPA, not shared or bound"` when it extended it, so 2.2's
+      check has been failing to find its own case (by name) since round 1 landed. Both checks now
+      run the actual unittest case by its current name via a JUnit-output scratch-copy run
+      (matching the pattern task 2.2 originally used), so either failing would be caught.
+      check: n/a — this task corrects the check: lines on tasks 2.2 and 6.4 themselves; the fixed
+      lines are self-verifying (see task 6.4 above, now identical in shape)
