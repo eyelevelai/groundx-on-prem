@@ -154,13 +154,24 @@ design carries forward from `decomposition.md` Revision 1 item 3).
   memory alone would allow. This chart cannot see or enforce node disk size — the
   `groundx-studio-harness` `cluster-requirements.md` follow-on (Level 2, out of scope here) is
   where the sizing rule for operators is documented.
-- **All 12 `matchSnapshot` `celery_test.yaml` cases that render `layout-process` need hand-patch,
-  not just the "default" one.** `layout-process` renders in the `default`, `empty`, `aws`,
-  `openshift`, `minikube`, `existing`, `extract`, `extract.ingest`, `extract.oai`, `cloud`,
-  `phoenix`, and `workspace-enabled` snapshot blocks (confirmed: 24 occurrences of `name:
-  layout-process` across the snapshot file, 2 per block × 12 blocks). Missing any one of them is
+- **All 13 `matchSnapshot` `celery_test.yaml` cases that render `layout-process` need hand-patch,
+  not just the "default" one — corrected during implementation from this design's original count
+  of 12.** A literal grep for `name: layout-process` finds exactly 24 occurrences (2 per block ×
+  12 blocks: `default`, `empty`, `aws`, `openshift`, `minikube`, `existing`, `extract`,
+  `extract.ingest`, `extract.oai`, `cloud`, `phoenix`, and `shared Google credentials`) and was
+  originally mistaken for the complete set. `metadata: celery` renders the identical
+  `groundx.layout.process.settings` pod too, just under a renamed container (`name:
+  myapp-process`, via that test's `layout.serviceName: myapp` override) — a literal-string grep
+  cannot see it, but the pod still needs the same env/resources/volume patch, at a *different*
+  computed value (`values.metadata.yaml` also overrides `layout.process.workers: 2` and
+  `layout.process.threads: 2`, so its budget renders as `9216Mi`, not the `3072Mi` default — this
+  design's original "no test values file overrides workers/threads" premise was also wrong).
+  `workspace-enabled: celery` was originally listed among the 12 but does **not** need patching:
+  it layers on top of `values.disabled.yaml`, which sets `layout.process.enabled: false`, and
+  `values.workspace.enabled.yaml` never re-enables it, so no such Deployment renders there at all
+  (confirmed alongside `disabled: celery`, which is correctly excluded). Missing any of the 13 is
   a silent stale-snapshot pass at review time, not a render failure — task 3 in `tasks.md`
-  enumerates all 12 explicitly rather than patching only the most visible one.
+  enumerates all 13 explicitly rather than patching only the most visible one.
 - **`renderDiskBudgetMi` is fixed as an integer-MiB unit, not a `resource.Quantity` string
   (`"2Gi"`).** This keeps the Helm formula plain integer arithmetic (`mul`/`add`, no `resource.Quantity`
   parsing in Sprig), matching the plan-gate decision (`decomposition.md` Revision 1, item 3). The

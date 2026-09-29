@@ -41,14 +41,14 @@ reserve), the computed `emptyDir.sizeLimit` / `resources.requests["ephemeral-sto
 
 ## 1. Wire the render-disk volume, env, and disk-budget resources request end-to-end in `src/groundx` (thin vertical slice)
 
-- [ ] 1.1 Add `layout.process.renderDiskBudgetMi` to `src/groundx/values.schema.json`'s
+- [x] 1.1 Add `layout.process.renderDiskBudgetMi` to `src/groundx/values.schema.json`'s
       `layout.process` block: `"renderDiskBudgetMi": { "type": "integer", "minimum": 1 }`,
       inserted between the existing `"queue"` (line 1040) and `"replicas"` (line 1041)
       properties, matching the alphabetical sibling ordering already used in that block (and the
       GX-6 precedent for inserting a new bounded integer field alphabetically).
       check: ${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0} template src/groundx --set layout.process.renderDiskBudgetMi=0 2>&1 | grep -c "layout/process/renderDiskBudgetMi.*minimum: got 0, want 1"
 
-- [ ] 1.2 Add the `groundx.layout.process.renderDiskBudgetMi` helper to
+- [x] 1.2 Add the `groundx.layout.process.renderDiskBudgetMi` helper to
       `src/groundx/templates/_helpers/app/layout-process.tpl` (`dig "renderDiskBudgetMi" 2048
       $in`, the same shape as the sibling `groundx.layout.process.batchSize` helper already in
       this file). In `groundx.layout.process.settings`, add `env` (`TMPDIR` = `/tmp/render`,
@@ -60,9 +60,9 @@ reserve), the computed `emptyDir.sizeLimit` / `resources.requests["ephemeral-sto
       `templates/app/celery.yaml` needs no change — it already renders any `env`/`volumes`/
       `volumeMounts` a service's `.settings` helper supplies (`celery.yaml:27-39,140-146,171-175,
       206-224`).
-      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; doc=$("$HB" template src/groundx --show-only templates/app/celery.yaml 2>&1 | yq eval-all 'select(.metadata.name == "layout-process")' -) || exit 1; echo "$doc" | yq eval '.spec.template.spec.containers[0].env[] | select(.name == "TMPDIR") | .value' - | grep -qx '"/tmp/render"' || { echo "TMPDIR missing or wrong: $doc"; exit 1; }; echo "$doc" | yq eval '.spec.template.spec.containers[0].env[] | select(.name == "LAYOUT_RENDER_DISK_BUDGET_MIB") | .value' - | grep -qx '"2048"' || { echo "budget env missing or wrong: $doc"; exit 1; }; echo "$doc" | yq eval '.spec.template.spec.volumes[] | select(.name == "render-temp")' - | grep -qx 'emptyDir:' || { echo "render-temp volume missing: $doc"; exit 1; }; echo "$doc" | yq eval '.spec.template.spec.volumes[] | select(.name == "render-temp") | .emptyDir.sizeLimit' - | grep -qx '3072Mi' || { echo "sizeLimit missing or wrong: $doc"; exit 1; }; echo "$doc" | yq eval '.spec.template.spec.volumes[] | select(.name == "render-temp") | has("medium")' - | grep -qx 'false' || { echo "render-temp volume must not set medium (must stay disk-backed): $doc"; exit 1; }; echo "$doc" | yq eval '.spec.template.spec.containers[0].volumeMounts[] | select(.name == "render-temp") | .mountPath' - | grep -qx '/tmp/render' || { echo "volumeMount missing or wrong: $doc"; exit 1; }; echo ok
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; doc=$("$HB" template src/groundx --show-only templates/app/celery.yaml 2>&1 | yq eval-all 'select(.metadata.name == "layout-process")' -) || exit 1; echo "$doc" | yq eval '.spec.template.spec.containers[0].env[] | select(.name == "TMPDIR") | .value' - | grep -qx '/tmp/render' || { echo "TMPDIR missing or wrong: $doc"; exit 1; }; echo "$doc" | yq eval '.spec.template.spec.containers[0].env[] | select(.name == "LAYOUT_RENDER_DISK_BUDGET_MIB") | .value' - | grep -qx '2048' || { echo "budget env missing or wrong: $doc"; exit 1; }; echo "$doc" | yq eval '.spec.template.spec.volumes[] | select(.name == "render-temp")' - | grep -qx 'emptyDir:' || { echo "render-temp volume missing: $doc"; exit 1; }; echo "$doc" | yq eval '.spec.template.spec.volumes[] | select(.name == "render-temp") | .emptyDir.sizeLimit' - | grep -qx '3072Mi' || { echo "sizeLimit missing or wrong: $doc"; exit 1; }; echo "$doc" | yq eval '.spec.template.spec.volumes[] | select(.name == "render-temp") | has("medium")' - | grep -qx 'false' || { echo "render-temp volume must not set medium (must stay disk-backed): $doc"; exit 1; }; echo "$doc" | yq eval '.spec.template.spec.containers[0].volumeMounts[] | select(.name == "render-temp") | .mountPath' - | grep -qx '/tmp/render' || { echo "volumeMount missing or wrong: $doc"; exit 1; }; echo ok
 
-- [ ] 1.3 In the same `groundx.layout.process.settings` helper, replace the existing conditional
+- [x] 1.3 In the same `groundx.layout.process.settings` helper, replace the existing conditional
       `resources` assignment (`{{- if and (hasKey $in "resources") (not (empty (get $in
       "resources"))) -}} {{- $_ := set $cfg "resources" (get $in "resources") -}} {{- end -}}`)
       with an unconditional merge that always renders `resources.requests["ephemeral-storage"]`:
@@ -76,26 +76,26 @@ reserve), the computed `emptyDir.sizeLimit` / `resources.requests["ephemeral-sto
       unchanged.
       check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; doc=$("$HB" template src/groundx --show-only templates/app/celery.yaml 2>&1 | yq eval-all 'select(.metadata.name == "layout-process")' -) || exit 1; req=$(echo "$doc" | yq eval '.spec.template.spec.containers[0].resources.requests' -); echo "$req" | grep -q '^cpu: 100m$' || { echo "cpu request missing/changed: $req"; exit 1; }; echo "$req" | grep -q '^memory: 1Gi$' || { echo "memory request missing/changed: $req"; exit 1; }; echo "$req" | grep -q 'ephemeral-storage: 3072Mi' || { echo "ephemeral-storage request missing: $req"; exit 1; }; echo ok
 
-- [ ] 1.4 Add a one-line comment directly above `process:` in `src/groundx/values.yaml` (around
+- [x] 1.4 Add a one-line comment directly above `process:` in `src/groundx/values.yaml` (around
       line 257) documenting the default budget and what it sizes (mirrors the existing
       `layout.ocr.timeout` comment convention immediately above `ocr:` in the same file) — no
       ticket ID, no narration, one line.
       check: n/a — comment-only documentation change, no rendered behavior to assert
 
-- [ ] 1.5 Confirm an override scales all three rendered fields (`sizeLimit`, the
+- [x] 1.5 Confirm an override scales all three rendered fields (`sizeLimit`, the
       `ephemeral-storage` request, and the env value) together from the single
       `renderDiskBudgetMi` input, including when `workers` also changes — proves task 1.2/1.3's
       formula, not just its default-value path.
-      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; doc=$("$HB" template src/groundx --show-only templates/app/celery.yaml --set layout.process.renderDiskBudgetMi=4096 --set layout.process.workers=2 2>&1 | yq eval-all 'select(.metadata.name == "layout-process")' -) || exit 1; echo "$doc" | yq eval '.spec.template.spec.volumes[] | select(.name == "render-temp") | .emptyDir.sizeLimit' - | grep -qx '9216Mi' || { echo "sizeLimit did not scale: $doc"; exit 1; }; echo "$doc" | yq eval '.spec.template.spec.containers[0].resources.requests."ephemeral-storage"' - | grep -qx '9216Mi' || { echo "ephemeral-storage request did not scale: $doc"; exit 1; }; echo "$doc" | yq eval '.spec.template.spec.containers[0].env[] | select(.name == "LAYOUT_RENDER_DISK_BUDGET_MIB") | .value' - | grep -qx '"4096"' || { echo "budget env did not follow override: $doc"; exit 1; }; echo ok
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; doc=$("$HB" template src/groundx --show-only templates/app/celery.yaml --set layout.process.renderDiskBudgetMi=4096 --set layout.process.workers=2 2>&1 | yq eval-all 'select(.metadata.name == "layout-process")' -) || exit 1; echo "$doc" | yq eval '.spec.template.spec.volumes[] | select(.name == "render-temp") | .emptyDir.sizeLimit' - | grep -qx '9216Mi' || { echo "sizeLimit did not scale: $doc"; exit 1; }; echo "$doc" | yq eval '.spec.template.spec.containers[0].resources.requests."ephemeral-storage"' - | grep -qx '9216Mi' || { echo "ephemeral-storage request did not scale: $doc"; exit 1; }; echo "$doc" | yq eval '.spec.template.spec.containers[0].env[] | select(.name == "LAYOUT_RENDER_DISK_BUDGET_MIB") | .value' - | grep -qx '4096' || { echo "budget env did not follow override: $doc"; exit 1; }; echo ok
 
-- [ ] 1.6 Confirm a user-supplied `ephemeral-storage` request is replaced by the chart-computed
+- [x] 1.6 Confirm a user-supplied `ephemeral-storage` request is replaced by the chart-computed
       value while every other `resources.requests` key the user set survives unchanged (the
       deepCopy-merge behavior, not just the no-override default path).
       check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; doc=$("$HB" template src/groundx --show-only templates/app/celery.yaml --set layout.process.resources.requests.cpu=250m --set layout.process.resources.requests.memory=2Gi --set layout.process.resources.requests.ephemeral-storage=500Mi 2>&1 | yq eval-all 'select(.metadata.name == "layout-process")' -) || exit 1; req=$(echo "$doc" | yq eval '.spec.template.spec.containers[0].resources.requests' -); echo "$req" | grep -q '^cpu: 250m$' || { echo "cpu override lost: $req"; exit 1; }; echo "$req" | grep -q '^memory: 2Gi$' || { echo "memory override lost: $req"; exit 1; }; echo "$req" | grep -q 'ephemeral-storage: 3072Mi' || { echo "chart-computed ephemeral-storage did not win: $req"; exit 1; }; echo "$req" | grep -q '500Mi' && { echo "stale user-supplied ephemeral-storage leaked through: $req"; exit 1; }; echo ok
 
 ## 2. Extend `src/groundx/tests/celery_test.yaml` with discrete assertion cases
 
-- [ ] 2.1 Add four `it:` cases to `src/groundx/tests/celery_test.yaml` (immediately before the
+- [x] 2.1 Add four `it:` cases to `src/groundx/tests/celery_test.yaml` (immediately before the
       existing `"default: celery"` case, alongside the other non-snapshot assertion-style cases
       already in this file), each `documentSelector`-scoped to `metadata.name: layout-process`
       except the reject case (which asserts the whole release fails to render, so no document
@@ -119,7 +119,7 @@ reserve), the computed `emptyDir.sizeLimit` / `resources.requests["ephemeral-sto
          2Gi, ephemeral-storage: 3072Mi`).
       check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; d=$(mktemp -d); cp -R src/groundx "$d"/groundx; mkdir -p "$d/groundx/files/ocr"; printf '%s\n' '{' '  "type": "service_account",' '  "project_id": "groundx-helm-test",' '  "private_key_id": "test",' '  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",' '  "token_uri": "https://oauth2.googleapis.com/token"' '}' > "$d/groundx/files/ocr/gcv-test.json"; j=$(mktemp -d); "$HB" unittest -f tests/celery_test.yaml -o junit --output-file "$j/out.xml" "$d/groundx" >/tmp/gx61-celery-unittest.out 2>&1; rc=$?; rm -rf "$d"; git diff --quiet -- src/groundx/tests/__snapshot__ helm/tests/__snapshot__ || { rm -rf "$j"; echo "worktree snapshot mutated by a scratch-copy check"; exit 1; }; if [ $rc -ne 0 ]; then cat /tmp/gx61-celery-unittest.out; rm -rf "$j"; exit 1; fi; fail=0; for name in "render-disk: layout-process gets the emptyDir volume, mount, and disk-budget env at chart defaults" "render-disk: an override scales sizeLimit, the ephemeral-storage request, and the budget env together" "render-disk: schema rejects a below-minimum renderDiskBudgetMi before any resource renders" "render-disk: a user-supplied ephemeral-storage request is replaced, other resources keys survive"; do grep -F "name=\"$name\"" "$j/out.xml" | grep -q 'result="Pass"' || { echo "missing or failing case: $name"; fail=1; }; done; rm -rf "$j"; [ "$fail" -eq 0 ] || exit 1; exit 0
 
-- [ ] 2.2 Add one `it:` case titled exactly `"render-disk: the emptyDir volume stays per-pod
+- [x] 2.2 Add one `it:` case titled exactly `"render-disk: the emptyDir volume stays per-pod
       under multiple replicas, not shared or bound"` asserting the render-temp volume stays
       per-pod and adds no shared/bound storage under multiple replicas — `set:
       {layout.process.replicas.desired: 3}`, scoped to `layout-process`, asserting `spec.replicas:
@@ -130,22 +130,36 @@ reserve), the computed `emptyDir.sizeLimit` / `resources.requests["ephemeral-sto
 
 ## 3. Hand-patch `src/groundx/tests/__snapshot__/celery_test.yaml.snap`'s 12 `layout-process` blocks
 
-- [ ] 3.1 `layout-process` renders inside 12 of `celery_test.yaml`'s `matchSnapshot` blocks —
-      `'aws: celery'`, `'cloud: celery'`, `'default: celery'`, `'empty: celery'`,
-      `'existing: celery'`, `'extract: celery'`, `'extract.ingest: celery'`,
-      `'extract.oai: celery'`, `'minikube: celery'`, `'openshift: celery'`, `'phoenix: celery'`,
-      `'workspace-enabled: celery'` (confirmed: 24 occurrences of `name: layout-process` in the
-      committed snapshot today, 2 per block × 12 blocks — the `'disabled: celery'`,
-      `'metadata: celery'`, and `'shared Google credentials: celery'` blocks disable or don't
-      render `layout-process` and are unaffected). None of this repo's test values files override
-      `layout.process.workers`/`threads`/`renderDiskBudgetMi`, so every one of the 12 blocks gets
-      the identical default-budget rendering: two new `env` entries
+- [x] 3.1 (corrected during implementation — see the `implementation note` below) `layout-process`
+      renders inside 13 of `celery_test.yaml`'s `matchSnapshot` blocks — `'aws: celery'`,
+      `'cloud: celery'`, `'default: celery'`, `'empty: celery'`, `'existing: celery'`,
+      `'extract: celery'`, `'extract.ingest: celery'`, `'extract.oai: celery'`,
+      `'metadata: celery'`, `'minikube: celery'`, `'openshift: celery'`, `'phoenix: celery'`, and
+      `'shared Google credentials: celery'`. The `'disabled: celery'` and
+      `'workspace-enabled: celery'` blocks set `layout.process.enabled: false` (directly, or via
+      the `values.disabled.yaml` base `workspace-enabled: celery` layers on top of) and render no
+      `layout-process`/renamed-process Deployment at all — those two are unaffected.
+      **Implementation note (corrects this task's original premise):** a literal grep for
+      `name: layout-process` finds exactly 24 occurrences (2 per block × 12 blocks) and was
+      mistaken for the complete set — but `'metadata: celery'` renders the same
+      `groundx.layout.process.settings` pod under a renamed container (`name: myapp-process`, via
+      that test's `layout.serviceName: myapp` override in `values.metadata.yaml`), so it needs the
+      identical patch and was missing from the original 12-block list (which incorrectly listed
+      `'workspace-enabled: celery'` instead — that block's `layout.process` stays disabled from its
+      `values.disabled.yaml` base, confirmed by `layout.process.enabled: false` there and no
+      re-enable in `values.workspace.enabled.yaml`, so it renders no such Deployment and was wrongly
+      included). `values.metadata.yaml` also overrides `layout.process.workers: 2` and
+      `layout.process.threads: 2` (contradicting this task's original "no test values file
+      overrides workers/threads/renderDiskBudgetMi" premise), so its budget renders as `9216Mi`
+      (`2 × 2 × 2048 + 1024`) — the only one of the 13 blocks that is not the `3072Mi` default;
+      the other 12 all render the identical default-budget shape: two new `env` entries
       (`LAYOUT_RENDER_DISK_BUDGET_MIB` then `TMPDIR`, alphabetical — the range over the `env` dict
-      sorts by key), one new `resources.requests.ephemeral-storage: 3072Mi` line (alphabetically
-      positioned among the existing `requests` keys), one new `render-temp` entry appended to that
-      block's `volumeMounts` list, and one new `render-temp` entry appended to that block's
-      `volumes` list. No block's `config-hash` annotation changes — that hash covers
-      `layout-config-py.yaml` (the shared config Secret), which this change does not touch.
+      sorts by key), one new `resources.requests.ephemeral-storage` line (alphabetically
+      positioned among the existing `requests` keys; `3072Mi` for 12 blocks, `9216Mi` for
+      `'metadata: celery'`), one new `render-temp` entry appended to that block's `volumeMounts`
+      list, and one new `render-temp` entry appended to that block's `volumes` list. No block's
+      `config-hash` annotation changes — that hash covers `layout-config-py.yaml` (the shared
+      config Secret), which this change does not touch.
 
       Follow the same **"Apply only regenerated lines"** method the GX-6 design record used (its
       underlying cause — the installed `helm-unittest` v1.1.2 plugin drops/reorders unrelated
@@ -178,18 +192,18 @@ reserve), the computed `emptyDir.sizeLimit` / `resources.requests["ephemeral-sto
       unrelated content. Commit this snapshot file in its own commit, separate from the
       schema/helper/template commit; the PR body states this method and cites GX-59.
       Delete the scratch copy and its throwaway extraction script before finishing this task.
-      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; d=$(mktemp -d); cp -R src/groundx "$d"/groundx; mkdir -p "$d/groundx/files/ocr"; printf '%s\n' '{' '  "type": "service_account",' '  "project_id": "groundx-helm-test",' '  "private_key_id": "test",' '  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",' '  "token_uri": "https://oauth2.googleapis.com/token"' '}' > "$d/groundx/files/ocr/gcv-test.json"; out=$("$HB" unittest -f tests/celery_test.yaml "$d/groundx" 2>&1); rc=$?; rm -rf "$d"; git diff --quiet -- src/groundx/tests/__snapshot__ helm/tests/__snapshot__ || { echo "worktree snapshot mutated by a scratch-copy check"; exit 1; }; if [ $rc -ne 0 ]; then printf '%s\n' "$out"; exit 1; fi; grep -q 'ephemeral-storage: 3072Mi' src/groundx/tests/__snapshot__/celery_test.yaml.snap || { echo "snapshot missing ephemeral-storage: 3072Mi"; exit 1; }; [ "$(grep -c 'ephemeral-storage: 3072Mi' src/groundx/tests/__snapshot__/celery_test.yaml.snap)" -ge 11 ] || { echo "expected the default-budget ephemeral-storage line in at least 11 of the 12 default-budget blocks (the override case in task 2.1 renders a different value)"; exit 1; }; bad=$(git diff --unified=0 origin/0.2.7...HEAD -- src/groundx/tests/__snapshot__/celery_test.yaml.snap | grep -E '^-[^-]'); [ -z "$bad" ] || { echo "snapshot diff removed a line — expected additions only:"; printf '%s\n' "$bad"; exit 1; }; added=$(git diff --unified=0 origin/0.2.7...HEAD -- src/groundx/tests/__snapshot__/celery_test.yaml.snap | grep -E '^\+[^+]'); bad2=$(printf '%s\n' "$added" | grep -vE '^\+\s*(- name: render-temp|emptyDir:|sizeLimit: [0-9]+Mi|- mountPath: /tmp/render|name: render-temp|- name: (TMPDIR|LAYOUT_RENDER_DISK_BUDGET_MIB)|value: "(/tmp/render|[0-9]+)"|ephemeral-storage: [0-9]+Mi)\s*$'); [ -z "$bad2" ] || { echo "snapshot diff added a line outside the expected shapes:"; printf '%s\n' "$bad2"; exit 1; }; exit 0
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; d=$(mktemp -d); cp -R src/groundx "$d"/groundx; mkdir -p "$d/groundx/files/ocr"; printf '%s\n' '{' '  "type": "service_account",' '  "project_id": "groundx-helm-test",' '  "private_key_id": "test",' '  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",' '  "token_uri": "https://oauth2.googleapis.com/token"' '}' > "$d/groundx/files/ocr/gcv-test.json"; out=$("$HB" unittest -f tests/celery_test.yaml "$d/groundx" 2>&1); rc=$?; rm -rf "$d"; git diff --quiet -- src/groundx/tests/__snapshot__ helm/tests/__snapshot__ || { echo "worktree snapshot mutated by a scratch-copy check"; exit 1; }; if [ $rc -ne 0 ]; then printf '%s\n' "$out"; exit 1; fi; grep -q 'ephemeral-storage: 3072Mi' src/groundx/tests/__snapshot__/celery_test.yaml.snap || { echo "snapshot missing ephemeral-storage: 3072Mi"; exit 1; }; [ "$(grep -c 'ephemeral-storage: 3072Mi' src/groundx/tests/__snapshot__/celery_test.yaml.snap)" -eq 12 ] || { echo "expected exactly 12 default-budget (3072Mi) blocks plus the 'metadata: celery' 9216Mi block (13 total)"; exit 1; }; grep -q 'ephemeral-storage: 9216Mi' src/groundx/tests/__snapshot__/celery_test.yaml.snap || { echo "snapshot missing the 'metadata: celery' 9216Mi block (layout.process.workers/threads overridden to 2 there)"; exit 1; }; bad=$(git diff --unified=0 origin/0.2.7...HEAD -- src/groundx/tests/__snapshot__/celery_test.yaml.snap | grep -E '^-[^-]'); [ -z "$bad" ] || { echo "snapshot diff removed a line — expected additions only:"; printf '%s\n' "$bad"; exit 1; }; added=$(git diff --unified=0 origin/0.2.7...HEAD -- src/groundx/tests/__snapshot__/celery_test.yaml.snap | grep -E '^\+[^+]'); bad2=$(printf '%s\n' "$added" | grep -vE '^\+\s*(- name: render-temp|- emptyDir:|emptyDir:|sizeLimit: [0-9]+Mi|- mountPath: /tmp/render|name: render-temp|- name: (TMPDIR|LAYOUT_RENDER_DISK_BUDGET_MIB)|value: "?(/tmp/render|[0-9]+)"?|ephemeral-storage: [0-9]+Mi)\s*$'); [ -z "$bad2" ] || { echo "snapshot diff added a line outside the expected shapes:"; printf '%s\n' "$bad2"; exit 1; }; exit 0
 
 ## 4. Mirror into `helm/`
 
-- [ ] 4.1 Apply the same edits from 1.1–1.4 into `helm/values.schema.json` (same insertion
+- [x] 4.1 Apply the same edits from 1.1–1.4 into `helm/values.schema.json` (same insertion
       point), `helm/templates/_helpers/app/layout-process.tpl` (confirmed byte-identical to
       `src/groundx`'s copy today, so this is a plain copy of the same diff, not a drift
       reconciliation), and `helm/values.yaml`. `helm/templates/app/celery.yaml` needs no change,
       same reasoning as task 1.2.
-      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; doc=$("$HB" template helm --show-only templates/app/celery.yaml 2>&1 | yq eval-all 'select(.metadata.name == "layout-process")' -) || exit 1; echo "$doc" | yq eval '.spec.template.spec.containers[0].env[] | select(.name == "TMPDIR") | .value' - | grep -qx '"/tmp/render"' || { echo "helm/ mirror missing TMPDIR: $doc"; exit 1; }; echo "$doc" | yq eval '.spec.template.spec.containers[0].resources.requests."ephemeral-storage"' - | grep -qx '3072Mi' || { echo "helm/ mirror missing ephemeral-storage request: $doc"; exit 1; }; echo ok
+      check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; doc=$("$HB" template helm --show-only templates/app/celery.yaml 2>&1 | yq eval-all 'select(.metadata.name == "layout-process")' -) || exit 1; echo "$doc" | yq eval '.spec.template.spec.containers[0].env[] | select(.name == "TMPDIR") | .value' - | grep -qx '/tmp/render' || { echo "helm/ mirror missing TMPDIR: $doc"; exit 1; }; echo "$doc" | yq eval '.spec.template.spec.containers[0].resources.requests."ephemeral-storage"' - | grep -qx '3072Mi' || { echo "helm/ mirror missing ephemeral-storage request: $doc"; exit 1; }; echo ok
 
-- [ ] 4.2 Add `helm/tests/layout_process_render_disk_test.yaml` (mirrors the
+- [x] 4.2 Add `helm/tests/layout_process_render_disk_test.yaml` (mirrors the
       `helm/tests/layout_ocr_timeout_test.yaml` GX-6 precedent — no `chart:` override, no
       `values:` override, just `templates:`/`set:`/`asserts:`) with two cases: the default-budget
       case (env, volume, and resources assertions from task 2.1 case 1) and an override case
@@ -200,13 +214,13 @@ reserve), the computed `emptyDir.sizeLimit` / `resources.requests["ephemeral-sto
 
 ## 5. Evidence (not committed tests — mutation proof, src/helm parity, canonical gate)
 
-- [ ] 5.1 Mutation proof: temporarily change the helper's default from `2048` to `2049` (or the
+- [x] 5.1 Mutation proof: temporarily change the helper's default from `2048` to `2049` (or the
       schema `minimum` from `1` to `0`), re-run the four new cases from task 2.1, confirm at least
       one now fails (proving the tests actually exercise the code rather than passing vacuously),
       then revert the mutation before committing anything.
       check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; d=$(mktemp -d); cp -R src/groundx "$d"/groundx; mkdir -p "$d/groundx/files/ocr"; printf '%s\n' '{' '  "type": "service_account",' '  "project_id": "groundx-helm-test",' '  "private_key_id": "test",' '  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",' '  "token_uri": "https://oauth2.googleapis.com/token"' '}' > "$d/groundx/files/ocr/gcv-test.json"; base=$("$HB" unittest -f tests/celery_test.yaml "$d/groundx" 2>&1); rb=$?; sed -i.bak 's/dig "renderDiskBudgetMi" 2048 \$in/dig "renderDiskBudgetMi" 2049 $in/' "$d/groundx/templates/_helpers/app/layout-process.tpl"; mut=$("$HB" unittest -f tests/celery_test.yaml "$d/groundx" 2>&1); rm_rc=$?; rm -rf "$d"; git diff --quiet -- src/groundx/tests/__snapshot__ helm/tests/__snapshot__ || { echo "worktree snapshot mutated by a scratch-copy check"; exit 1; }; git diff --quiet -- src/groundx/templates/_helpers/app/layout-process.tpl || { echo "worktree helper template mutated by the mutation-proof check"; exit 1; }; if [ $rb -ne 0 ]; then echo "unmutated committed celery_test.yaml cases must pass first"; exit 1; fi; if [ $rm_rc -eq 0 ]; then echo "mutating the helper default did not make any committed case fail"; exit 1; fi; exit 0
 
-- [ ] 5.2 `src`-vs-`helm` rendered-content parity: confirm the `env`/`volumes`/`resources` fields
+- [x] 5.2 `src`-vs-`helm` rendered-content parity: confirm the `env`/`volumes`/`resources` fields
       rendered from `layout-process.tpl` match between both trees under the same override
       (`layout.process.renderDiskBudgetMi=4096`) — proves task 4.1 actually mirrored tasks 1.2–1.3
       rather than drifting. Compares only those fields, not the whole rendered document (the
@@ -214,7 +228,7 @@ reserve), the computed `emptyDir.sizeLimit` / `resources.requests["ephemeral-sto
       on chart/appVersion/label fields regardless of this change).
       check: HB="${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to pinned helm v3.19.0}"; render() { "$HB" template "$1" --show-only templates/app/celery.yaml --set layout.process.renderDiskBudgetMi=4096 2>&1 | yq eval-all 'select(.metadata.name == "layout-process")' -; }; src_doc=$(render src/groundx); helm_doc=$(render helm); fail() { echo "$1"; exit 1; }; for field in '.spec.template.spec.containers[0].env[] | select(.name == "TMPDIR") | .value' '.spec.template.spec.containers[0].env[] | select(.name == "LAYOUT_RENDER_DISK_BUDGET_MIB") | .value' '.spec.template.spec.volumes[] | select(.name == "render-temp") | .emptyDir.sizeLimit' '.spec.template.spec.containers[0].resources.requests."ephemeral-storage"'; do av=$(echo "$src_doc" | yq eval "$field" -); bv=$(echo "$helm_doc" | yq eval "$field" -); { [ -n "$av" ] && [ "$av" != "null" ]; } || fail "src/groundx missing/empty for: $field"; { [ -n "$bv" ] && [ "$bv" != "null" ]; } || fail "helm missing/empty for: $field"; [ "$av" = "$bv" ] || fail "src ($av) and helm ($bv) diverge for: $field"; done; echo ok
 
-- [ ] 5.3 Run the canonical gate, `.build/bin/validate-helm.sh`, with a real `python3` first on
+- [x] 5.3 Run the canonical gate, `.build/bin/validate-helm.sh`, with a real `python3` first on
       PATH (the bare `python` on some machines is a stub that silently skips several checks
       including `verify-helm-snapshots.py`) and the pinned helm shimmed onto PATH as `helm`
       (mirrors `scripts/githooks/groundx-on-prem/pre-push`'s own shim pattern). This repo's

@@ -50,6 +50,116 @@ tests:
             name: credentials-volume
             secret:
               secretName: layout-ocr-credentials-map
+  - it: "render-disk: layout-process gets the emptyDir volume, mount, and disk-budget env at chart defaults"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: TMPDIR
+            value: "/tmp/render"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LAYOUT_RENDER_DISK_BUDGET_MIB
+            value: "2048"
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: render-temp
+            emptyDir:
+              sizeLimit: 3072Mi
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: render-temp
+            mountPath: /tmp/render
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests["ephemeral-storage"]
+          value: 3072Mi
+  - it: "render-disk: an override scales sizeLimit, the ephemeral-storage request, and the budget env together"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.renderDiskBudgetMi: 4096
+      layout.process.workers: 2
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: render-temp
+            emptyDir:
+              sizeLimit: 9216Mi
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests["ephemeral-storage"]
+          value: 9216Mi
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LAYOUT_RENDER_DISK_BUDGET_MIB
+            value: "4096"
+  - it: "render-disk: schema rejects a below-minimum renderDiskBudgetMi before any resource renders"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.renderDiskBudgetMi: 0
+    asserts:
+      - failedTemplate:
+          errorPattern: "layout/process/renderDiskBudgetMi.*minimum.*got 0, want 1"
+  - it: "render-disk: a user-supplied ephemeral-storage request is replaced, other resources keys survive"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.resources.requests.cpu: 250m
+      layout.process.resources.requests.memory: 2Gi
+      layout.process.resources.requests.ephemeral-storage: 500Mi
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests
+          value:
+            cpu: 250m
+            memory: 2Gi
+            ephemeral-storage: 3072Mi
+  - it: "render-disk: the emptyDir volume stays per-pod under multiple replicas, not shared or bound"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.replicas.desired: 3
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.replicas
+          value: 3
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: render-temp
+            emptyDir:
+              sizeLimit: 3072Mi
   - it: "default: celery"
     templates:
       - ../templates/app/celery.yaml
