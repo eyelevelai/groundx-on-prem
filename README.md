@@ -503,15 +503,18 @@ If you wish to use an existing OpenSearch cluster, you must configure the `searc
 
 #### Deploying a Dedicated OpenSearch Cluster
 
-If you'd like to install OpenSearch to your cluster, first choose the OpenSearch admin password. It must be the same value you later set as `search.privilegedPassword` in your GroundX `values.yaml`. Put it in a local values file that you do not commit, and restrict its permissions:
+If you'd like to install OpenSearch to your cluster, first choose the OpenSearch admin password. It must be the same value you later set as `search.privilegedPassword` in your GroundX `values.yaml`. Put it in a local values file that you do not commit. Restrict permissions before the file exists, and create it in an editor rather than with a shell command so the password is not saved to your shell history:
 
 ```bash
-cat > opensearch-admin.values.yaml <<'YAML'
+umask 077
+```
+
+Create `opensearch-admin.values.yaml` in an editor with this content, then confirm it is owner-only with `chmod 600 opensearch-admin.values.yaml`:
+
+```yaml
 extraEnvs:
   - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
     value: "<opensearch-admin-password>"
-YAML
-chmod 600 opensearch-admin.values.yaml
 ```
 
 Then install OpenSearch with both values files. Pass the password only through this file, never on the command line:

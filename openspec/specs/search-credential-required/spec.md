@@ -25,7 +25,7 @@ Invariant: a render in which search is in use never carries a search credential 
 
 #### Scenario: Externally hosted search still needs both passwords (polarity: reject before state)
 - **WHEN** the chart is rendered with `search.existing.url` set (or `search.enabled: false`) and either password empty
-- **THEN** the render fails naming the empty key, because the GroundX API still authenticates to that search cluster with both credentials
+- **THEN** the render fails naming the empty key, because the GroundX API uses the admin credential to provision `search.username` when the application login is rejected
 
 #### Scenario: Supplied passwords render unchanged (polarity: accept and enqueue; must not block; backward compatibility during rollout)
 - **WHEN** the chart is rendered with `mode` not `ingest` and both passwords set to non-empty test values

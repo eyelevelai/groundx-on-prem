@@ -44,8 +44,8 @@ Gate 0 (main loop, before apply): the throwaway local probe of the seed image's 
 
 ## 5. Terraform operator
 
-- [x] 5.1 `variable "search"` has no default and rejects an empty `password` and, separately, an empty `root_password`; complete non-empty input is accepted. Probed on an extracted copy of the variable block through `terraform plan` (no providers needed).
-  check: bash -c 'd=$(mktemp -d); awk "/^variable \"search\" \{/,/^\}/" terraform/groundx-operator/operator/variables.tf > $d/v.tf; printf "output \"o\" { value = var.search.index }\n" >> $d/v.tf; cd $d && terraform init -backend=false >/dev/null 2>&1; p() { terraform plan -input=false -var "search={index=\"i\",user=\"u\",password=\"$1\",root_password=\"$2\"}" >/dev/null 2>&1; }; p a b && ! p "" b && ! p a "" && ! terraform plan -input=false >/dev/null 2>&1'
+- [x] 5.1 `variable "search"` has no default and rejects an empty or angle-bracket placeholder `password` and, separately, `root_password`; complete real input is accepted. Probed on an extracted copy of the variable block through `terraform plan` (no providers needed).
+  check: bash -c 'd=$(mktemp -d); awk "/^variable \"search\" \{/,/^\}/" terraform/groundx-operator/operator/variables.tf > $d/v.tf; printf "output \"o\" { value = var.search.index }\n" >> $d/v.tf; cd $d && terraform init -backend=false >/dev/null 2>&1; p() { terraform plan -input=false -var "search={index=\"i\",user=\"u\",password=\"$1\",root_password=\"$2\"}" >/dev/null 2>&1; }; p a b && ! p "" b && ! p a "" && ! p "<x>" b && ! p a "<x>" && ! terraform plan -input=false >/dev/null 2>&1'
 - [x] 5.2 `env.tfvars.example` and `env.tfvars.example-openshift` show angle-bracket placeholders (no colon) for both search passwords and keep `index` and `user`.
   check: bash -c 'for f in terraform/groundx-operator/operator/env.tfvars.example terraform/groundx-operator/operator/env.tfvars.example-openshift; do b=$(awk "/^search = \{/,/^\}/" $f); [ "$(grep -Ec "^ *(root_)?password *= *\"<[^:>]+>\"" <<<"$b")" -eq 2 ] && grep -q "index" <<<"$b" && grep -q "user" <<<"$b" || exit 1; done'
 
@@ -54,6 +54,6 @@ Gate 0 (main loop, before apply): the throwaway local probe of the seed image's 
 - [x] 6.1 The CI workflow render commands and the render checks declared in `service.yaml`, `openspec/config.yaml` and `AGENTS.md` pass the fixture; nothing is added to `values/minikube` or any install example.
   check: bash -c 'for f in .github/workflows/helm-tests.yml service.yaml openspec/config.yaml AGENTS.md; do grep -q "values.search-credentials.yaml" $f || exit 1; done; ! grep -q "search" src/groundx/values/minikube/values.yaml'
 - [x] 6.2 `.build/bin/validate-helm.sh` and the `verify-*` scripts it runs render with the fixture and the whole gate passes (with `helm` resolving to v3.19.0 on PATH).
-  check: bash -c 'd=$(mktemp -d); ln -s ${GX_ON_PREM_HELM:-$HOME/.local/bin/helm-v3.19.0} $d/helm; ln -s ${GX_ON_PREM_PYTHON:-/Users/nitin/projects/groundx/engineering-context/.venv/bin/python3} $d/python; PATH=$d:$PATH .build/bin/validate-helm.sh >/dev/null 2>&1'
+  check: bash -c 'd=$(mktemp -d); ln -s ${GX_ON_PREM_HELM:-$HOME/.local/bin/helm-v3.19.0} $d/helm; ln -s ${GX_ON_PREM_PYTHON:-$(command -v python3)} $d/python; PATH=$d:$PATH .build/bin/validate-helm.sh >/dev/null 2>&1'
 
 See workspace `openspec/changes/gx-75-the-on-prem-chart-defaults-the-opensearch-passwords-to-a/tasks.md` for cross-service coordination and deferred items.

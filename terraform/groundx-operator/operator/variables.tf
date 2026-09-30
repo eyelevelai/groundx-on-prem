@@ -828,8 +828,18 @@ variable "search" {
   }
 
   validation {
+    condition     = !can(regex("^<.*>$", var.search.password))
+    error_message = "search.password must be replaced; it is still an angle-bracket placeholder."
+  }
+
+  validation {
     condition     = length(var.search.root_password) > 0
     error_message = "search.root_password must not be empty."
+  }
+
+  validation {
+    condition     = !can(regex("^<.*>$", var.search.root_password))
+    error_message = "search.root_password must be replaced; it is still an angle-bracket placeholder."
   }
 }
 

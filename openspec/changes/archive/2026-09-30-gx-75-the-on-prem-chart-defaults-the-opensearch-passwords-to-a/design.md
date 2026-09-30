@@ -2,7 +2,7 @@
 
 **Goals.** With search in use, no chart render, tracked file, or Terraform input yields a search password the operator did not choose; the failure names the missing key; `mode: ingest` is unaffected.
 
-**Non-Goals.** An operator-supplied `existingSecret` for search or any backing service (follow-up ticket); the Percona and MinIO seed defaults; changes to `cashbot-go`, the harness, or the derived agent bundle; any change to resource kinds, names, or mounts.
+**Non-Goals.** An operator-supplied `existingSecret` for search or any backing service (out of scope; search credentials come only from values, matching db, cache, and file); the Percona and MinIO seed defaults; changes to `cashbot-go`, the harness, or the derived agent bundle; any change to resource kinds, names, or mounts.
 
 ## Decisions
 
