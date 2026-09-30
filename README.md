@@ -605,7 +605,10 @@ Earlier chart versions defaulted both OpenSearch passwords to a public value. An
 
 1. Set `search.privilegedPassword` to the admin password your OpenSearch currently uses. If you never changed it, this is the old public default.
 2. Set `search.password` to the application user password your install currently uses.
-3. Rotate both to new values through the OpenSearch security API, then update `search.password` and `search.privilegedPassword` to match and upgrade again.
+3. Rotate the credentials. The OpenSearch `admin` user is reserved, so the security REST API refuses to change it (it returns 403 "Resource 'admin' is reserved"). Use these routes instead:
+   - Application password: set a new `search.password` and upgrade. The GroundX API re-creates `search.username` with it, using the admin credential, when its login is rejected.
+   - Admin password: open a shell in the OpenSearch pod (for example `kubectl exec -it -n eyelevel opensearch-cluster-master-0 -- bash`). Run `plugins/opensearch-security/tools/hash.sh` without `-p` so it prompts for the password and keeps it out of shell history. Put the printed hash as the `admin` hash in `config/opensearch-security/internal_users.yml`, then run `plugins/opensearch-security/tools/securityadmin.sh -f config/opensearch-security/internal_users.yml -t internalusers -icl -nhnv -cacert config/root-ca.pem -cert config/kirk.pem -key config/kirk-key.pem`. This upload replaces the stored user list, so the GroundX application user is removed until the next step. See the OpenSearch [securityadmin documentation](https://docs.opensearch.org/latest/security/configuration/security-admin/).
+   - Then set `search.privilegedPassword` to the new admin password and upgrade. The GroundX API restarts and re-creates its user.
 
 If `search.privilegedPassword` does not match the real admin password, the GroundX API cannot create its OpenSearch user and crash-loops with an unauthorized error. If you deploy a Terraform `search` object, `index`, `user`, `password`, and `root_password` are now all required.
 

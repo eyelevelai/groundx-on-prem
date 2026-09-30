@@ -1,7 +1,7 @@
 # search-credential-required Specification
 
 ## Purpose
-TBD - created by archiving change gx-75-the-on-prem-chart-defaults-the-opensearch-passwords-to-a. Update Purpose after archive.
+Require operators to supply the OpenSearch application and admin passwords instead of relying on a chart default.
 ## Requirements
 ### Requirement: Search passwords are operator supplied when search is in use
 When `mode` is not `ingest`, the chart SHALL require the operator to supply both `search.password` and `search.privilegedPassword`. An empty or absent value for either key SHALL fail the render with a message that names the offending key. This applies to `src/groundx` and to the `helm/` mirror. The requirement is enforced in the template (search helpers and `config-yaml.yaml`), not in `values.schema.json`, so that it can be gated on mode. Both keys SHALL stay in `values.yaml` as empty strings because the schema requires them.
@@ -93,4 +93,3 @@ Every CI, gate, and declared render command that renders a non-ingest configurat
 #### Scenario: Gate fails closed without the fixture (polarity: reject before state)
 - **WHEN** a non-ingest render is attempted without search passwords
 - **THEN** it fails naming the key, and is not silently satisfied by a default
-
