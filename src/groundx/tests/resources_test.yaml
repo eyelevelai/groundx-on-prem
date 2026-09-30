@@ -1007,3 +1007,42 @@ tests:
       - matchRegex:
           path: stringData["config.yaml"]
           pattern: 'largeFile:\n\s+region: us-west-2\n\s+type: sqs\n\s+url: https://sqs.us-west-2.amazonaws.com/123456789012/large-file'
+  - it: fails the render naming search.password when it is empty and search is in use
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      search.password: ""
+      search.privilegedPassword: test-admin-credential
+    asserts:
+      - failedTemplate:
+          errorPattern: 'search\.password'
+  - it: fails the render naming search.privilegedPassword when it is empty and search is in use
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      search.password: test-app-credential
+      search.privilegedPassword: ""
+    asserts:
+      - failedTemplate:
+          errorPattern: 'search\.privilegedPassword'
+  - it: renders in ingest mode without search passwords
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      mode: ingest
+      search.password: ""
+      search.privilegedPassword: ""
+    asserts:
+      - isKind:
+          of: Secret
+  - it: renders no search password in ingest mode even when one is supplied
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      mode: ingest
+      search.password: ingest-sentinel-app-credential
+      search.privilegedPassword: ingest-sentinel-admin-credential
+    asserts:
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'ingest-sentinel'
