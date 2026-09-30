@@ -249,7 +249,7 @@ workload — `api`, `correct`, `inference`, `map`, `ocr`, `save` — is untouche
    not an error.
 2. This PR's merge to `0.2.7` does **not** publish the chart — publishing (`Chart.yaml` version
    bump, `src/build.sh`) is a separate, maintainer-only, human-run release step (see `design.md`'s
-   "Chart version and publish convention" decision), and Fraud-X's pinned vendored commit does not
+   "Chart version and publish convention" decision), and a downstream consumer's pinned vendored commit does not
    move until they re-vendor.
 3. `groundx-studio-harness` documentation (`values-yaml.md`, `cluster-requirements.md`,
    `failure-modes.md`, `troubleshooting.md`) is Level 2 for this ticket — out of scope for this

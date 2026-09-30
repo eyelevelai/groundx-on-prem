@@ -75,8 +75,8 @@ resources, or environment; `layout-ocr-timeout` covers the unrelated OCR-timeout
   `celery.yaml` is unmodified), `src/groundx/tests/celery_test.yaml`, `src/groundx/tests/__snapshot__/*.snap`
   (hand-patched), `helm/tests/`, and the identical files mirrored by hand into `helm/`.
 - **Affected environments**: every install of this chart once the patched `0.2.7` chart is
-  published and adopted, including Fraud-X once it re-vendors at a newer pinned commit (today
-  pinned to a fixed `0.2.7` commit — this PR alone does not reach Fraud-X prod). The companion
+  published and adopted, including any downstream consumer once it re-vendors at a newer pinned commit (a consumer
+  pinned to a fixed `0.2.7` commit does not get this change from this PR alone). The companion
   `ai-server` change (separate repo, same ticket) is what actually starts using the mount and
   budget; an unpatched `ai-server` image on a patched chart leaves the volume mounted but unused.
 - **Blast radius / rollout**: only the `layout-process` Deployment gains env vars, a volume, a
