@@ -49,3 +49,16 @@ See workspace `openspec/changes/gx-74-the-helm-chart-cannot-protect-groundx-serv
 The original check for task 2.1 grepped for `name: summary-client`, which the summary-client Deployment also carries, so it passed without a PodDisruptionBudget. The corrected check requires the rendered PodDisruptionBudget document itself to carry the `app: "summary-client"` label. Run against the chart, it exited 0 with `summaryClient.disruptionBudget.enabled=true` and exited 1 with it set to `false`.
 
 Corrected check: bash -c '"${GX_ON_PREM_HELM:-$HOME/.local/bin/helm-v3.19.0}" template gx-check src/groundx -f src/groundx/tests/files/values.disabled.yaml --set summaryClient.enabled=true --set summaryClient.disruptionBudget.enabled=true -s templates/app/golang.yaml | grep -A16 "kind: PodDisruptionBudget" | grep -q "app: \"summary-client\""'
+
+### 2026-09-30: review follow-ups (replica-minimum warning, all-30 render guard, usable spread fixture)
+
+Approved review of PR #125 raised three non-blocking points, taken here. The fourth, `unhealthyPodEvictionPolicy`, is a separate ticket.
+
+- [x] 7.1 `templates/NOTES.txt` warns per service when a disruption budget is on and the effective minimum replica count is below 2, resolved from the services' own settings helpers and the chart's HPA selection; a warning, not a `fail`, so installs that already work keep working. Output with no budget enabled is unchanged.
+  check: bash -c '"${GX_ON_PREM_HELM:-$HOME/.local/bin/helm-v3.19.0}" unittest src/groundx -f tests/api_pdb_test.yaml'
+- [x] 7.2 Mirror task 7.1 into `helm/` and cover it with one case in `helm/tests/drain_protection_test.yaml`.
+  check: bash -c 'diff -rq src/groundx/templates helm/templates && "${GX_ON_PREM_HELM:-$HOME/.local/bin/helm-v3.19.0}" unittest helm -f tests/drain_protection_test.yaml'
+- [x] 8.1 `.build/bin/validate-helm.sh` renders both charts with the budget and a spread on all 30 services, set by `--set` flags built from a service array over `values.large-file.yaml`, and requires exactly 30 PodDisruptionBudgets and 30 pod specs carrying `topologySpreadConstraints`.
+  check: bash -c 'grep -q "all 30 workloads" .build/bin/validate-helm.sh && ! test -e src/groundx/tests/files/values.drain-all.yaml && grep -c "disruptionBudget.enabled=true" .build/bin/validate-helm.sh'
+- [x] 9.1 The spread fixtures in `src/groundx/tests/api_pdb_test.yaml` carry a `labelSelector` matching each service's own `app` label.
+  check: bash -c 'test "$(grep -c "^ *app: " src/groundx/tests/api_pdb_test.yaml)" -ge 6 && "${GX_ON_PREM_HELM:-$HOME/.local/bin/helm-v3.19.0}" unittest src/groundx -f tests/api_pdb_test.yaml'

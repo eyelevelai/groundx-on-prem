@@ -17,3 +17,15 @@ tests:
         equal:
           path: spec.template.spec.topologySpreadConstraints[0].maxSkew
           value: 1
+
+  - it: "notes warn when a budget is on and the minimum replica count is below 2"
+    templates:
+      - ../templates/NOTES.txt
+      - ../templates/_helpers/*.tpl
+      - ../templates/_helpers/*/*.tpl
+    set:
+      metrics.enabled: true
+      metrics.disruptionBudget.enabled: true
+    asserts:
+      - template: ../templates/NOTES.txt
+        matchRegex: { path: raw, pattern: "WARNING: metrics has a disruption budget .* replica count \\(replicas.desired\\) is 1" }

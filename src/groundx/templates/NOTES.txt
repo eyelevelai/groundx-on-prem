@@ -10,3 +10,9 @@ Go workload upgrades run the GroundX image with -migrate-only first.
 Use a compatible GroundX image even for worker-only upgrades.
 Fresh installs use normal GroundX initialization. Database additions remain on rollback.
 See docs/agents/database-upgrades.md before upgrading; do not bypass hooks.
+{{ $pdbWarnings := dig "warnings" list (include "groundx.disruptionBudget.warnings" . | fromYaml) -}}
+{{- if $pdbWarnings }}
+
+{{ range $pdbWarnings }}{{ . }}
+{{ end }}
+{{- end -}}

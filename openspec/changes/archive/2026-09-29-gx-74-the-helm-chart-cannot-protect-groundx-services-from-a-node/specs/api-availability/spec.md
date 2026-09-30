@@ -72,3 +72,20 @@ The source and published chart surfaces SHALL expose and render the same disrupt
 - **GIVEN** a service that gains the new keys and an unrelated unknown key under it
 - **WHEN** Helm validates the values
 - **THEN** validation fails on the unknown key
+
+## Amendments
+
+### 2026-09-30: replica-minimum warning
+
+#### Scenario: A budget with a single-replica minimum warns (catches)
+
+- **GIVEN** a service with `disruptionBudget.enabled` true whose effective minimum replica count is 1
+- **WHEN** Helm renders the release notes
+- **THEN** the notes carry a WARNING line naming that service and the value that sets the minimum
+- **AND** rendering does not fail
+
+#### Scenario: A budget with a minimum of 2 or more does not warn (must not block)
+
+- **GIVEN** budget-enabled services whose effective minimum is at least 2, and services below 2 that have no budget
+- **WHEN** Helm renders the release notes
+- **THEN** no WARNING line is rendered for any of them
