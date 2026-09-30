@@ -3,8 +3,10 @@ chart:
   appVersion: 0.1.0
   version: 0.1.0
 
-values:
-  - ./files/values.search-credentials.yaml
+set:
+  search:
+    password: fixture-app-credential
+    privilegedPassword: fixture-admin-credential
 
 tests:
   - it: "external DB: database migration"
@@ -259,7 +261,6 @@ tests:
       - ../templates/app/golang.yaml
     values:
       - ../values.yaml
-      - ./files/values.search-credentials.yaml
     asserts:
       - matchSnapshot: {}
   - it: "empty: golang"
@@ -295,6 +296,9 @@ tests:
       - ../templates/app/golang.yaml
     values:
       - ../values/values.existing.yaml
+    set:
+      search.password: mypass
+      search.privilegedPassword: admin
     asserts:
       - matchSnapshot: {}
   - it: "metadata: golang"

@@ -3,8 +3,10 @@ chart:
   appVersion: 0.1.0
   version: 0.1.0
 
-values:
-  - ./files/values.search-credentials.yaml
+set:
+  search:
+    password: fixture-app-credential
+    privilegedPassword: fixture-admin-credential
 
 tests:
   - it: "default: stream"
@@ -12,7 +14,6 @@ tests:
       - ../templates/services/stream-topics.yaml
     values:
       - ../values.yaml
-      - ./files/values.search-credentials.yaml
     asserts:
       - matchSnapshot: {}
   - it: "empty: stream"
@@ -112,7 +113,6 @@ tests:
       - ../templates/services/stream-topics.yaml
     values:
       - ../values.yaml
-      - ./files/values.search-credentials.yaml
     asserts:
       - equal:
           path: apiVersion
@@ -125,7 +125,6 @@ tests:
       - ../templates/services/stream-topics.yaml
     values:
       - ../values.yaml
-      - ./files/values.search-credentials.yaml
     set:
       namespace: custom-ns
     asserts:

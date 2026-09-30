@@ -4,14 +4,14 @@ chart:
   version: 0.1.0
 
 set:
+  search:
+    password: fixture-app-credential
+    privilegedPassword: fixture-admin-credential
   metrics:
     enabled: true
     serviceMonitor:
       enabled: true
     useExisting: true
-
-values:
-  - ./files/values.search-credentials.yaml
 
 tests:
   - it: "default: golang"
@@ -19,7 +19,6 @@ tests:
       - ../templates/app/metrics.yaml
     values:
       - ../values.yaml
-      - ./files/values.search-credentials.yaml
     asserts:
       - matchSnapshot: {}
   - it: "empty: golang"
@@ -55,6 +54,9 @@ tests:
       - ../templates/app/metrics.yaml
     values:
       - ../values/values.existing.yaml
+    set:
+      search.password: mypass
+      search.privilegedPassword: admin
     asserts:
       - matchSnapshot: {}
   - it: "metadata: golang"
@@ -120,7 +122,6 @@ tests:
       - ../templates/services/cache-metrics.yaml
     values:
       - ../values.yaml
-      - ./files/values.search-credentials.yaml
     set:
       cache.metrics.username: metrics-acl-user
       cache.metrics.password: "metrics-conf-p@ss"
@@ -185,7 +186,6 @@ tests:
       - ../templates/services/cache-metrics.yaml
     values:
       - ../values.yaml
-      - ./files/values.search-credentials.yaml
     asserts:
       - hasDocuments:
           count: 0

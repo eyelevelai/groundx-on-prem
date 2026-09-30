@@ -150,6 +150,8 @@ MIRRORED_FILES = (
     "templates/_helpers/app/summary-inference.tpl",
     "templates/_helpers/app/workspace.tpl",
     "templates/_helpers/services/cache.tpl",
+    "templates/_helpers/services/search.tpl",
+    "templates/resources/config-yaml.yaml",
     "templates/services/cache.yaml",
     "templates/services/cache-metrics.yaml",
 )

@@ -14,15 +14,15 @@ Gate 0 (main loop, before apply): the throwaway local probe of the seed image's 
   check: bash -c 'yq -e ".search.password == \"\" and .search.privilegedPassword == \"\"" src/groundx/values.yaml helm/values.yaml >/dev/null && yq -e "(.search | has(\"password\") | not) and (.search | has(\"privilegedPassword\") | not)" src/groundx/values/values.aws.services.yaml helm/values/values.aws.services.yaml >/dev/null'
 - [x] 1.4 One literal-free fixture `src/groundx/tests/files/values.search-credentials.yaml` carries two distinct non-empty test-only values and renders the chart cleanly.
   check: bash -c 'H=${GX_ON_PREM_HELM:-$HOME/.local/bin/helm-v3.19.0}; f=src/groundx/tests/files/values.search-credentials.yaml; test -f $f && yq -e ".search.password != \"\" and .search.privilegedPassword != \"\" and .search.password != .search.privilegedPassword" $f >/dev/null && $H template t src/groundx -f $f >/dev/null 2>&1'
-- [x] 1.5 Every helm-unittest suite that renders `config-yaml.yaml` loads the fixture at suite level, `resources_test.yaml.snap` is hand-patched (each literal replaced by the fixture value of the matching key, never `-u`), and the acceptance cases already written in `resources_test.yaml` pass.
-  check: bash -c 'grep -q "values.search-credentials.yaml" src/groundx/tests/resources_test.yaml && grep -q "values.search-credentials.yaml" src/groundx/tests/workspace_test.yaml && grep -q "values.search-credentials.yaml" src/groundx/tests/anthropic_test.yaml && grep -q "values.search-credentials.yaml" src/groundx/tests/ranker_test.yaml && grep -q fixture-admin-credential src/groundx/tests/__snapshot__/resources_test.yaml.snap'
+- [x] 1.5 Every helm-unittest suite that renders `config-yaml.yaml` supplies the fixture values through one suite-level `set:` block, `resources_test.yaml.snap` is hand-patched (each literal replaced by the fixture value of the matching key, never `-u`), and the acceptance cases already written in `resources_test.yaml` pass.
+  check: bash -c 'for f in resources workspace anthropic ranker; do grep -q "privilegedPassword: fixture-admin-credential" src/groundx/tests/${f}_test.yaml || exit 1; done; grep -q fixture-admin-credential src/groundx/tests/__snapshot__/resources_test.yaml.snap'
 
 ## 2. `helm/` mirror
 
 - [x] 2.1 The `helm/` mirror carries the same helper and `config-yaml.yaml` behavior: default render fails naming the key, and the four files that are byte-identical to `src/groundx` today stay identical.
   check: bash -c 'H=${GX_ON_PREM_HELM:-$HOME/.local/bin/helm-v3.19.0}; ! $H template t helm >/dev/null 2>&1 && $H template t helm 2>&1 >/dev/null | grep -q "search\.password" && for f in templates/_helpers/services/search.tpl templates/resources/config-yaml.yaml values/opensearch/values.yaml values/values.aws.services.yaml; do cmp -s src/groundx/$f helm/$f || exit 1; done'
-- [x] 2.2 The `helm/` unit suite (`helm/tests/search_credentials_test.yaml`, already written: empty `search.password`, empty `search.privilegedPassword`, ingest sentinel) passes.
-  check: bash -c 'H=${GX_ON_PREM_HELM:-$HOME/.local/bin/helm-v3.19.0}; $H unittest helm >/dev/null 2>&1'
+- [x] 2.2 `helm/templates/_helpers/services/search.tpl` and `helm/templates/resources/config-yaml.yaml` are byte-identical to `src/groundx` and are enforced by the mirror byte-compare in `verify-storage-contract.py`, which the gate runs; the `helm/` suite that renders the layout config still passes.
+  check: bash -c 'H=${GX_ON_PREM_HELM:-$HOME/.local/bin/helm-v3.19.0}; grep -q "templates/_helpers/services/search.tpl" .build/bin/verify-storage-contract.py && grep -q "templates/resources/config-yaml.yaml" .build/bin/verify-storage-contract.py && python3 .build/bin/verify-storage-contract.py >/dev/null 2>&1 && $H unittest helm >/dev/null 2>&1'
 
 ## 3. Remove the literal everywhere
 

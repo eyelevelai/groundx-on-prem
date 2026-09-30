@@ -3,8 +3,10 @@ chart:
   appVersion: 0.1.0
   version: 0.1.0
 
-values:
-  - ./files/values.search-credentials.yaml
+set:
+  search:
+    password: fixture-app-credential
+    privilegedPassword: fixture-admin-credential
 
 tests:
   - it: "default: cache"
@@ -13,7 +15,6 @@ tests:
       - ../templates/services/cache-metrics.yaml
     values:
       - ../values.yaml
-      - ./files/values.search-credentials.yaml
     asserts:
       - matchSnapshot: {}
   - it: "empty: cache"
@@ -135,7 +136,6 @@ tests:
       - ../templates/services/cache.yaml
     values:
       - ../values.yaml
-      - ./files/values.search-credentials.yaml
     set:
       cache.password: "main-conf-p@ss"
     asserts:
@@ -203,7 +203,6 @@ tests:
       - ../templates/services/cache.yaml
     values:
       - ../values.yaml
-      - ./files/values.search-credentials.yaml
     asserts:
       - hasDocuments:
           count: 0
@@ -225,7 +224,6 @@ tests:
       - ../templates/resources/cache-conf.yaml
     values:
       - ../values.yaml
-      - ./files/values.search-credentials.yaml
     set:
       cache.password: "pw with space"
     asserts:
@@ -242,7 +240,6 @@ tests:
       - ../templates/resources/cache-conf.yaml
     values:
       - ../values.yaml
-      - ./files/values.search-credentials.yaml
     set:
       cache.password: 'a"b\c'
     asserts:
@@ -259,7 +256,6 @@ tests:
       - ../templates/resources/cache-conf.yaml
     values:
       - ../values.yaml
-      - ./files/values.search-credentials.yaml
     set:
       cache.username: 'ac"l'
       cache.password: "pw"
@@ -277,7 +273,6 @@ tests:
       - ../templates/resources/cache-conf.yaml
     values:
       - ../values.yaml
-      - ./files/values.search-credentials.yaml
     set:
       cache.password: "line1\nline2"
     asserts:
@@ -290,7 +285,6 @@ tests:
       - ../templates/resources/cache-conf.yaml
     values:
       - ../values.yaml
-      - ./files/values.search-credentials.yaml
     set:
       cache.username: "alice bob"
       cache.password: "pw"
