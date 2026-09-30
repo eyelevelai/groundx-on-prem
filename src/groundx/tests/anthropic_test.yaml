@@ -3,12 +3,16 @@ chart:
   appVersion: 0.1.0
   version: 0.1.0
 
+values:
+  - ./files/values.search-credentials.yaml
+
 tests:
   - it: "summary existing Anthropic renders only supplied external configuration"
     templates:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       admin.apiKey: admin-only-sentinel
       engines.default.engineId: claude-sonnet-4-20250514
@@ -37,6 +41,7 @@ tests:
       - ../templates/services/stream-topics.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       summary.existing.apiKey: provider-key
       summary.existing.serviceType: anthropic
@@ -50,6 +55,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       engines.default.apiKey: provider-key
       engines.default.engineId: claude-sonnet-4-20250514
@@ -71,6 +77,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       admin.apiKey: admin-only-sentinel
       engines.default.engineId: claude-sonnet-4-20250514
@@ -92,6 +99,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       engines.default.apiKey: provider-key
       engines.default.baseUrl: https://api.anthropic.test/v1
@@ -152,6 +160,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       admin.apiKey: groundx-admin-test-key
     documentSelector:
@@ -236,6 +245,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       admin.apiKey: groundx-admin-test-key
       engines.default.baseUrl: https://api.anthropic.test/v1
@@ -266,6 +276,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       admin.apiKey: groundx-admin-test-key
       engines.default.engineId: claude-sonnet-4-20250514
@@ -296,6 +307,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       admin.apiKey: groundx-admin-test-key
       engines.default.apiKey: anthropic-provider-test-key
@@ -320,6 +332,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       engines.default.engineId: gpt-5-mini
       engines.custom.apiKey: provider-key
@@ -340,6 +353,7 @@ tests:
       - ../templates/services/stream-topics.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       engines.default.engineId: gpt-5-mini
       engines.custom.apiKey: provider-key
@@ -354,6 +368,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       engines.default.engineId: gpt-5-mini
       engines.custom.apiKey: provider-key
@@ -375,6 +390,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       admin.apiKey: admin-only-sentinel
       engines.default.engineId: gpt-5-mini
@@ -512,6 +528,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       admin.apiKey: admin-only-sentinel
       engines.default.baseUrl: https://api.anthropic.test/v1
@@ -854,6 +871,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       admin.apiKey: admin-only-sentinel
       engines.default.engineId: custom-model

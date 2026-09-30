@@ -503,14 +503,27 @@ If you wish to use an existing OpenSearch cluster, you must configure the `searc
 
 #### Deploying a Dedicated OpenSearch Cluster
 
-If you'd like to install OpenSearch to your cluster, use the following commands below:
+If you'd like to install OpenSearch to your cluster, first choose the OpenSearch admin password. It must be the same value you later set as `search.privilegedPassword` in your GroundX `values.yaml`. Put it in a local values file that you do not commit, and restrict its permissions:
+
+```bash
+cat > opensearch-admin.values.yaml <<'YAML'
+extraEnvs:
+  - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+    value: "<opensearch-admin-password>"
+YAML
+chmod 600 opensearch-admin.values.yaml
+```
+
+Then install OpenSearch with both values files. Pass the password only through this file, never on the command line:
 
 ```bash
 helm repo add opensearch https://opensearch-project.github.io/helm-charts/
 helm repo update
 
-helm install opensearch opensearch/opensearch -n eyelevel -f helm/values/opensearch/values.yaml
+helm install opensearch opensearch/opensearch -n eyelevel -f helm/values/opensearch/values.yaml -f opensearch-admin.values.yaml
 ```
+
+OpenSearch reads `OPENSEARCH_INITIAL_ADMIN_PASSWORD` only when it first initializes an empty data volume. Changing it later does not change the admin password of an existing volume.
 
 ### Kafka
 
@@ -571,13 +584,27 @@ admin.password
 cluster.pvClass # an existing storage class
 cluster.pvAccessMode # ReadWriteMany for shared filesystems, ReadWriteOnce for block/local storage
 cluster.type    # type of Kubernetes cluster
+search.password           # required unless mode is ingest: the OpenSearch application user password
+search.privilegedPassword # required unless mode is ingest: the OpenSearch admin password
 ```
+
+The chart has no default OpenSearch passwords. When `mode` is not `ingest`, rendering fails until both `search.password` and `search.privilegedPassword` are set. In `mode: ingest` neither is used or rendered.
 
 **Note**: `admin.apiKey` and `admin.username` must be valid UUIDs. We provide a helper script to generate random UUIDs. You can run it using thefollowing command:
 
 ```bash
 bin/uuid
 ```
+
+#### Upgrading an Existing Install
+
+Earlier chart versions defaulted both OpenSearch passwords to a public value. An OpenSearch data volume created with them keeps its original admin password, because the seed value is only read on first initialization. Before upgrading:
+
+1. Set `search.privilegedPassword` to the admin password your OpenSearch currently uses. If you never changed it, this is the old public default.
+2. Set `search.password` to the application user password your install currently uses.
+3. Rotate both to new values through the OpenSearch security API, then update `search.password` and `search.privilegedPassword` to match and upgrade again.
+
+If `search.privilegedPassword` does not match the real admin password, the GroundX API cannot create its OpenSearch user and crash-loops with an unauthorized error. If you deploy a Terraform `search` object, `index`, `user`, `password`, and `root_password` are now all required.
 
 ### Persistent Storage
 

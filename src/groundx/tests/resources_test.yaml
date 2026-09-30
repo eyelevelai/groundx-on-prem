@@ -3,6 +3,9 @@ chart:
   appVersion: 0.1.0
   version: 0.1.0
 
+values:
+  - ./files/values.search-credentials.yaml
+
 tests:
   - it: "database migration uses target database config in a separate hook Secret"
     templates:
@@ -124,6 +127,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     documentSelector:
       path: metadata.name
       value: config-yaml-map
@@ -136,6 +140,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
       - ./files/values.extraction-capture-accounts.yaml
     documentSelector:
       path: metadata.name
@@ -149,6 +154,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     documentSelector:
       path: metadata.name
       value: config-yaml-map
@@ -161,6 +167,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
       - ./files/values.extraction-capture-domains.yaml
     documentSelector:
       path: metadata.name
@@ -193,6 +200,7 @@ tests:
       - ../templates/resources/workspace-supervisord-conf.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     asserts:
       - matchSnapshot: {}
   - it: "empty: resources"
@@ -304,6 +312,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
       - ./files/values.engine-max-images-valid.yaml
     asserts:
       - matchRegex:
@@ -314,6 +323,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
       - ./files/values.engine-max-images-null.yaml
     asserts:
       - notMatchRegex:
@@ -324,6 +334,7 @@ tests:
       - ../templates/resources/layout-config-py.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       layout.ocr.timeout: 187
     asserts:
@@ -335,6 +346,7 @@ tests:
       - ../templates/resources/layout-config-py.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       layout.ocr.timeout: 251
     asserts:
@@ -715,6 +727,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     documentSelector:
       path: metadata.name
       value: config-yaml-map
@@ -858,6 +871,7 @@ tests:
       - ../templates/resources/ranker-config-py.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       cache.password: "has space"
       cache.metrics.password: "metrics has space"
@@ -938,6 +952,7 @@ tests:
       - ../templates/resources/layout-config-py.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       cache.metrics.existing.addr: metrics-redis.mycorp.net
       cache.metrics.existing.ssl: true

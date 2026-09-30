@@ -10,12 +10,16 @@ set:
       enabled: true
     useExisting: true
 
+values:
+  - ./files/values.search-credentials.yaml
+
 tests:
   - it: "default: golang"
     templates:
       - ../templates/app/metrics.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     asserts:
       - matchSnapshot: {}
   - it: "empty: golang"
@@ -116,6 +120,7 @@ tests:
       - ../templates/services/cache-metrics.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       cache.metrics.username: metrics-acl-user
       cache.metrics.password: "metrics-conf-p@ss"
@@ -180,6 +185,7 @@ tests:
       - ../templates/services/cache-metrics.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     asserts:
       - hasDocuments:
           count: 0

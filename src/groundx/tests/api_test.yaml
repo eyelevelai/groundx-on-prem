@@ -3,12 +3,16 @@ chart:
   appVersion: 0.1.0
   version: 0.1.0
 
+values:
+  - ./files/values.search-credentials.yaml
+
 tests:
   - it: "default: api"
     templates:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     asserts:
       - matchSnapshot: {}
   - it: "empty: api"
@@ -129,6 +133,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     documentSelector:
       path: spec.template.metadata.labels.app
       value: layout-api
@@ -150,6 +155,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     documentSelector:
       path: spec.template.metadata.labels.app
       value: ranker-api
@@ -171,6 +177,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     documentSelector:
       path: spec.template.metadata.labels.app
       value: summary-api
@@ -214,6 +221,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       layout.api.probe.liveness.timeoutSeconds: 7
       layout.api.probe.readiness.timeoutSeconds: 9
@@ -236,6 +244,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       layout.api.probe.liveness.timeoutSeconds: 7
       layout.api.probe.readiness.timeoutSeconds: 9
@@ -258,6 +267,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       ranker.api.probe.liveness.timeoutSeconds: 11
       ranker.api.probe.readiness.timeoutSeconds: 13
@@ -280,6 +290,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       ranker.api.probe.liveness.timeoutSeconds: 11
       ranker.api.probe.readiness.timeoutSeconds: 13
@@ -302,6 +313,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       summary.api.probe.liveness.timeoutSeconds: 15
       summary.api.probe.readiness.timeoutSeconds: 17
@@ -324,6 +336,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       summary.api.probe.liveness.timeoutSeconds: 15
       summary.api.probe.readiness.timeoutSeconds: 17
@@ -438,6 +451,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       layout.api.probe.liveness.retries: 5
     asserts:
@@ -448,6 +462,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       layout.api.probe.readiness.timeoutSeconds: "soon"
     asserts:
@@ -458,6 +473,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       ranker.api.probe.liveness.retries: 5
     asserts:
@@ -468,6 +484,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       ranker.api.probe.readiness.timeoutSeconds: "soon"
     asserts:
@@ -478,6 +495,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       summary.api.probe.liveness.retries: 5
     asserts:
@@ -488,6 +506,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       summary.api.probe.readiness.timeoutSeconds: "soon"
     asserts:
@@ -540,6 +559,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       layout.api.probe.readiness.timeoutSeconds: 0
     asserts:
@@ -550,6 +570,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       layout.api.probe.readiness.failureThreshold: 0
     asserts:
@@ -560,6 +581,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       layout.api.probe.liveness.timeoutSeconds: 0
     asserts:
@@ -570,6 +592,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       ranker.api.probe.readiness.timeoutSeconds: 0
     asserts:
@@ -580,6 +603,7 @@ tests:
       - ../templates/app/api.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       summary.api.probe.readiness.timeoutSeconds: 0
     asserts:

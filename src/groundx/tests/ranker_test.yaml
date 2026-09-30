@@ -3,6 +3,9 @@ chart:
   appVersion: 0.1.0
   version: 0.1.0
 
+values:
+  - ./files/values.search-credentials.yaml
+
 tests:
   - it: "ranker inference uses worker-aware HTTP probes"
     templates:
@@ -82,6 +85,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       ranker.inference.enabled: true
     asserts:
@@ -142,6 +146,7 @@ tests:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     set:
       ranker.inference.enabled: true
       ranker.cache.addr: ranker-cache.existing.com

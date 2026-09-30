@@ -3,12 +3,16 @@ chart:
   appVersion: 0.1.0
   version: 0.1.0
 
+values:
+  - ./files/values.search-credentials.yaml
+
 tests:
   - it: "default: inference"
     templates:
       - ../templates/app/inference.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     asserts:
       - matchSnapshot: {}
   - it: "empty: inference"
@@ -108,6 +112,7 @@ tests:
       - ../templates/app/inference.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
       - ./files/values.layout-inference.cpu.yaml
     documentSelector:
       path: metadata.name
@@ -131,6 +136,7 @@ tests:
       - ../templates/app/inference.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
       - ./files/values.layout-inference.cpu-zero-gpu.yaml
     documentSelector:
       path: metadata.name
@@ -154,6 +160,7 @@ tests:
       - ../templates/app/inference.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
       - ./files/values.layout-inference.cpu-non-gpu-resources.yaml
     documentSelector:
       path: metadata.name
@@ -177,6 +184,7 @@ tests:
       - ../templates/app/inference.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
       - ./files/values.layout-inference.cpu-placement.yaml
     documentSelector:
       path: metadata.name
@@ -200,6 +208,7 @@ tests:
       - ../templates/app/inference.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     documentSelector:
       path: metadata.name
       value: layout-inference

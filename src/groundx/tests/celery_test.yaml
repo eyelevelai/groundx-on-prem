@@ -3,6 +3,9 @@ chart:
   appVersion: 0.1.0
   version: 0.1.0
 
+values:
+  - ./files/values.search-credentials.yaml
+
 tests:
   - it: "shared Google credentials: celery"
     templates:
@@ -55,6 +58,7 @@ tests:
       - ../templates/app/celery.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     asserts:
       - matchSnapshot: {}
   - it: "empty: celery"
@@ -215,6 +219,7 @@ tests:
       - ../templates/app/celery.yaml
     values:
       - ../values.yaml
+      - ./files/values.search-credentials.yaml
     documentSelector:
       path: metadata.name
       value: layout-correct
