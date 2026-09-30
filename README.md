@@ -614,9 +614,9 @@ Earlier chart versions defaulted both OpenSearch passwords to a public value. An
      4. Upload only the users: `plugins/opensearch-security/tools/securityadmin.sh -f /tmp/security-backup/internal_users.yml -t internalusers -icl -nhnv -cacert config/root-ca.pem -cert config/kirk.pem -key config/kirk-key.pem`.
 
      The backup keeps the existing users, including the GroundX application user, so search keeps working. See the OpenSearch [securityadmin documentation](https://docs.opensearch.org/latest/security/configuration/security-admin/).
-   - Then set `search.privilegedPassword` to the new admin password and upgrade. The GroundX API restarts and re-creates its user.
+   - Then set `search.privilegedPassword` to the new admin password and upgrade. Confirm the rotation from inside the pod with `curl -k -u admin https://localhost:9200/_plugins/_security/authinfo`, which prompts for the password: the new password must succeed and the old one must be rejected.
 
-If `search.privilegedPassword` does not match the real admin password, the GroundX API cannot create its OpenSearch user and crash-loops with an unauthorized error. If you deploy a Terraform `search` object, `index`, `user`, `password`, and `root_password` are now all required.
+If `search.privilegedPassword` does not match the real admin password, the GroundX API crash-loops with an unauthorized error when it has to create or update its OpenSearch user: on a first install, or after `search.password` changes. On an existing install the mismatch is otherwise silent, so run the check above. If you deploy a Terraform `search` object, `index`, `user`, `password`, and `root_password` are now all required.
 
 ### Persistent Storage
 
