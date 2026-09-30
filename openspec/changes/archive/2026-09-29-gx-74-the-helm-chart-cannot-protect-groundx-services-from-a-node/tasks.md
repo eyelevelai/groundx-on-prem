@@ -52,13 +52,13 @@ Corrected check: bash -c '"${GX_ON_PREM_HELM:-$HOME/.local/bin/helm-v3.19.0}" te
 
 ### 2026-09-30: review follow-ups (replica-minimum warning, all-30 render guard, usable spread fixture)
 
-Approved review of PR #125 raised three non-blocking points, taken here. The fourth, `unhealthyPodEvictionPolicy`, is a separate ticket.
+Approved review of PR #125 raised three non-blocking points, taken here. The fourth, `unhealthyPodEvictionPolicy`, is tracked in GX-84.
 
 - [x] 7.1 `templates/NOTES.txt` warns per service when a disruption budget is on and the effective minimum replica count is below 2, resolved from the services' own settings helpers and the chart's HPA selection; a warning, not a `fail`, so installs that already work keep working. Output with no budget enabled is unchanged.
   check: bash -c '"${GX_ON_PREM_HELM:-$HOME/.local/bin/helm-v3.19.0}" unittest src/groundx -f tests/api_pdb_test.yaml'
 - [x] 7.2 Mirror task 7.1 into `helm/` and cover it with one case in `helm/tests/drain_protection_test.yaml`.
   check: bash -c 'diff -rq src/groundx/templates helm/templates && "${GX_ON_PREM_HELM:-$HOME/.local/bin/helm-v3.19.0}" unittest helm -f tests/drain_protection_test.yaml'
 - [x] 8.1 `.build/bin/validate-helm.sh` renders both charts with the budget and a spread on all 30 services, set by `--set` flags built from a service array over `values.large-file.yaml`, and requires exactly 30 PodDisruptionBudgets and 30 pod specs carrying `topologySpreadConstraints`.
-  check: bash -c 'grep -q "all 30 workloads" .build/bin/validate-helm.sh && ! test -e src/groundx/tests/files/values.drain-all.yaml && grep -c "disruptionBudget.enabled=true" .build/bin/validate-helm.sh'
+  check: bash -c 'set -euo pipefail; h="${GX_ON_PREM_HELM:-$HOME/.local/bin/helm-v3.19.0}"; helm(){ "$h" "$@"; }; eval "$(sed -n "/all 30 workloads/,/Verifying deprecated compatibility/p" .build/bin/validate-helm.sh | sed "\$d")"'
 - [x] 9.1 The spread fixtures in `src/groundx/tests/api_pdb_test.yaml` carry a `labelSelector` matching each service's own `app` label.
   check: bash -c 'test "$(grep -c "^ *app: " src/groundx/tests/api_pdb_test.yaml)" -ge 6 && "${GX_ON_PREM_HELM:-$HOME/.local/bin/helm-v3.19.0}" unittest src/groundx -f tests/api_pdb_test.yaml'

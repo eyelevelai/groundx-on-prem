@@ -32,4 +32,6 @@ Non-goals: the bundled Redis StatefulSets and the `schema-migration` Job; config
 
 **Guard.** `.build/bin/validate-helm.sh` gains one render check per chart surface with `--set` flags generated from an array of the 30 service keys (layered over `values.large-file.yaml`, which supplies the required delivery settings): exactly 30 PodDisruptionBudgets and 30 pod specs with `topologySpreadConstraints`. A missed pass-through in any renderer helper now fails the gate. The spread test fixtures gain a `labelSelector` on each service's `app` label so they are usable constraints.
 
-Not in this amendment: `unhealthyPodEvictionPolicy: AlwaysAllow`, tracked as a separate ticket.
+Not in this amendment: `unhealthyPodEvictionPolicy: AlwaysAllow`, tracked in GX-84.
+
+With these additions, hand-written tests total about 208 lines: 177 in `src/groundx/tests/api_pdb_test.yaml` and 31 in `helm/tests/drain_protection_test.yaml`.
