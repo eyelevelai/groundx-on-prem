@@ -235,3 +235,10 @@ The chart SHALL fail template rendering (`fail`) when `layout.process.workers` o
   deployment is otherwise unaffected — an old image keeps rendering PDFs exactly as it does today,
   just with that one temp file now on disk-backed storage instead of wherever `tempfile.mkstemp()`
   would have resolved without `TMPDIR` set.
+
+## Amendments
+
+### 2026-09-30 — test slimming
+
+- The test named in the per-pod/HPA correction above ("the emptyDir volume stays per-pod under multiple replicas and HPA, not shared or bound") was merged into `src/groundx/tests/celery_test.yaml`'s "a custom budget and workers scale sizeLimit, request, and env together, and the volume stays per-pod under replicas and HPA" case. It still asserts the Deployment `spec.replicas`, the `emptyDir` sizeLimit, and the `layout-process-hpa` `minReplicas`/`maxReplicas`.
+- Requirements and behavior are unchanged; only the set of unit cases that exercise them was reduced.

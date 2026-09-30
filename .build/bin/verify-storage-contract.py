@@ -145,6 +145,7 @@ MIRRORED_FILES = (
     "prereqs/storageclass/values.azure-files.example.yaml",
     "prereqs/storageclass/values.gke-filestore.example.yaml",
     "templates/_helpers/app/layout-inference.tpl",
+    "templates/_helpers/app/layout-process.tpl",
     "templates/_helpers/app/ranker-inference.tpl",
     "templates/_helpers/app/summary-inference.tpl",
     "templates/_helpers/app/workspace.tpl",
