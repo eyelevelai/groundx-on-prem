@@ -65,6 +65,23 @@ cognito:
   image version and does not implement the local password-login behavior — that is entirely
   cashbot-go's runtime concern.
 
+Operating an install in `local` mode:
+
+- **Nobody has a password right after enabling `local`.** `admin.password` is not used, and
+  customers created under `apiKeyOnly` have no stored password. Use the admin API key to set one
+  with `POST customer/password/reset` (a customer's own partner key also works for its customers),
+  or create the customer through `customer/register` with a password.
+- **Login and register need a partner or admin key.** `customer/login` and `customer/register`
+  are called with a partner or admin API key plus the customer's email and password; they are not
+  open to anonymous callers.
+- **MCP sign-in asks for email and password.** Under `local`, the MCP authorize page shows email
+  and password fields instead of an API-key field, so a user without a password cannot authorize an
+  MCP client from it until one is set.
+- **Nothing throttles password attempts.** Neither cashbot-go nor this chart limits failed logins.
+  If the API is reachable by untrusted clients, add rate limits at your ingress; the Ingress
+  template passes `annotations` through, for example
+  `nginx.ingress.kubernetes.io/limit-rps` on ingress-nginx.
+
 ## Rollback
 
 Do not run `helm rollback` to a chart version before GX-20 for an installation using
