@@ -137,10 +137,13 @@ groundx (main API/LB)  → OpenSearch hybrid query → ranker-api → ranker-inf
   a latent drift risk and a prime AI-first cleanup target.**
 - **`helm-releases/*.tgz`** are build outputs of `src/build.sh` (`helm package`). Never edit.
 - **`src/groundx/tests/__snapshot__/*.snap`** are **generated golden files** from `helm-unittest`.
-  Do not hand-edit; regenerate with `helm unittest -u src/groundx` (generate the throwaway OCR
-  credentials fixture first, or the celery suite errors — run `.build/bin/validate-helm.sh` to see
-  the gate wiring). CI (`helm-tests.yml`) enforces
-  that rendered output matches these snapshots — **this is the check that guards template changes.**
+  Do not hand-edit; **do not regenerate with `helm unittest -u src/groundx`** — the installed
+  `helm-unittest` plugin drops required empty-render snapshot labels on `-u` regeneration. Instead,
+  hand-patch the affected snapshot(s) for the new/changed fields, then verify byte-exact by running
+  `helm unittest` **without** `-u` (compares against the committed snapshot rather than rewriting
+  it) followed by `verify-helm-snapshots.py`. See "Agent boundaries" in `AGENTS.md` for the full
+  explanation. CI (`helm-tests.yml`) enforces that rendered output matches these snapshots — **this
+  is the check that guards template changes.**
 - **`terraform/**/.terraform.lock.hcl`** are generated lockfiles.
 - No codegen of *other* repos happens here (no OpenAPI/SDK generation, no submodules).
 
