@@ -16,3 +16,7 @@
 ## Future validation
 
 A live fault exercise requires an authorized disposable matching EKS cluster. None is currently reachable. The local test covers one ready DNS endpoint that answers and one that times out.
+
+## Closeout
+
+PR [#130](https://github.com/eyelevelai/groundx-on-prem/pull/130) merged into `0.2.7` on 2026-10-01 as `2f847bb5e18c727355df8e079cd13b563fe122bb`. Production activation is complete at Helm revision 399. The live fault exercise remains deferred and was not performed. Evidence collection does not repair DNS or recover interrupted extraction tasks.

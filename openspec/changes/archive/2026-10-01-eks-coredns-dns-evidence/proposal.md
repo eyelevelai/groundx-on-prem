@@ -13,7 +13,7 @@ An extraction worker failed to resolve the Redis hostname while one CoreDNS pod'
 - The default Terraform plan is unchanged. With the setting enabled, the CloudWatch add-on updates and one collector pod is added. The existing CloudWatch agent and GroundX workloads retain their current configuration.
 - The probe adds a 10m CPU and 32Mi memory request to each extraction worker pod and requires a rolling worker restart. It reads only kube-dns EndpointSlices, sends DNS queries, and emits logs. It changes no application data or DNS routing.
 - CloudWatch receives per-CoreDNS-pod request, response, and upstream health metrics and incurs additional log and custom-metric charges. Its agent drops CoreDNS request-duration histograms, so lookup duration comes from the probe logs. Missing recent samples can indicate a scrape or publication failure.
-- Production is the only currently reachable matching cluster. No cluster fault is injected into production. The CloudWatch add-on update is active; the worker sidecar requires a narrow Helm rollout review.
+- The CloudWatch add-on and worker sidecars are active in production. No cluster fault was injected into production. A live fault exercise requires an authorized disposable matching cluster.
 
 ## Capabilities
 
