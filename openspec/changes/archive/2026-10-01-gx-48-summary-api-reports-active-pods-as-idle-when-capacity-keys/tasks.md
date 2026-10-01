@@ -26,5 +26,5 @@
 
 Release together with ai-server#66 (`<HOSTNAME>-<pid>` capacity ids); see `proposal.md` Impact for the
 order-dependent effect when `summary.api.workers > 1`. See workspace
-`openspec/changes/gx-48-summary-api-reports-active-pods-as-idle-when-capacity-keys/tasks.md` for
-cross-service coordination and deferred items.
+`openspec/changes/archive/2026-10-01-gx-48-summary-api-reports-active-pods-as-idle-when-capacity-keys/tasks.md`
+in the engineering-context repo for cross-service coordination and deferred items.

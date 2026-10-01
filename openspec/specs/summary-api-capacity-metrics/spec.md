@@ -10,6 +10,13 @@ The `summary-api` entry of `metrics.inference` in the rendered `config.yaml` SHA
 `groundx.summary.api.threshold` and `workers` is `groundx.summary.api.workers`. The entry SHALL still
 be omitted when the threshold is `0`. No other metrics entry SHALL change.
 
+The two `max(1, ...)` floors are defensive guards, not separately tested behavior: the floor on
+`workers` prevents a divide-by-zero render when `workers` is `0`, and the floor on the result keeps the
+value non-zero because cashbot-go treats a `tokensPerMinute` of `0` as no metric
+(`inf.TokensPerMinute > 0` at `metrics.go:364`). The result floor is not reachable through chart values:
+`values.schema.json` does not allow `summary.api.replicas.threshold`, so `threshold` is always
+`2400 * threads * workers` and the division is exact.
+
 Polarity: `finalize success` (the per-process value is rendered) and `skip unrelated repair path`
 (no other entry is touched).
 
@@ -28,14 +35,6 @@ Polarity: `finalize success` (the per-process value is rendered) and `skip unrel
 - **THEN** the `summary-api` inference value equals the value `groundx.summary.api.threshold` returns,
   and every existing snapshot whose fixture does not set `workers` greater than 1 is unchanged
   (the opposite outcome, a changed default snapshot, must not occur)
-
-#### Scenario: Result is never below 1
-
-- **GIVEN** a `threshold` smaller than `workers`
-- **WHEN** the value is computed
-- **THEN** the rendered `tokensPerMinute` is `1`, never `0` and never a render error from dividing by
-  zero, because a `0` value would be read by cashbot-go as "no throughput metric"
-  (`inf.TokensPerMinute > 0` at `metrics.go:364`)
 
 ### Requirement: `src/groundx` and `helm/` render the same value
 
