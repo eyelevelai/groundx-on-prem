@@ -503,21 +503,44 @@ If you wish to use an existing OpenSearch cluster, you must configure the `searc
 
 #### Deploying a Dedicated OpenSearch Cluster
 
-If you'd like to install OpenSearch to your cluster, first choose the OpenSearch admin password. It must be the same value you later set as `search.privilegedPassword` in your GroundX `values.yaml`. Put it in a local values file that you do not commit. Restrict permissions before the file exists, and create it in an editor rather than with a shell command so the password is not saved to your shell history:
+If you'd like to install OpenSearch to your cluster, first choose the OpenSearch admin password. It must be the same value you later set as `search.privilegedPassword` in your GroundX `values.yaml`. Supply it to OpenSearch through a Kubernetes Secret, so the password is not written into the OpenSearch StatefulSet pod spec where anyone who can read pods in the namespace could see it. Restrict permissions before each file exists, and create it in an editor rather than with a shell command so the password is not saved to your shell history:
 
 ```bash
 umask 077
 ```
 
-Create `opensearch-admin.values.yaml` in an editor with this content, then confirm it is owner-only with `chmod 600 opensearch-admin.values.yaml`:
+Create `opensearch-admin-secret.yaml` in an editor with this content, then confirm it is owner-only with `chmod 600 opensearch-admin-secret.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: opensearch-admin
+  namespace: eyelevel
+type: Opaque
+stringData:
+  OPENSEARCH_INITIAL_ADMIN_PASSWORD: "<opensearch-admin-password>"
+```
+
+Apply the Secret, then delete the local file:
+
+```bash
+kubectl apply -f opensearch-admin-secret.yaml
+rm opensearch-admin-secret.yaml
+```
+
+Create `opensearch-admin.values.yaml` with this content. It references the Secret instead of embedding the password, so this file holds no credential:
 
 ```yaml
 extraEnvs:
   - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
-    value: "<opensearch-admin-password>"
+    valueFrom:
+      secretKeyRef:
+        name: opensearch-admin
+        key: OPENSEARCH_INITIAL_ADMIN_PASSWORD
 ```
 
-Then install OpenSearch with both values files. Pass the password only through this file, never on the command line:
+Then install OpenSearch with both values files:
 
 ```bash
 helm repo add opensearch https://opensearch-project.github.io/helm-charts/
@@ -526,7 +549,7 @@ helm repo update
 helm install opensearch opensearch/opensearch -n eyelevel -f helm/values/opensearch/values.yaml -f opensearch-admin.values.yaml
 ```
 
-OpenSearch reads `OPENSEARCH_INITIAL_ADMIN_PASSWORD` only when it first initializes an empty data volume. Changing it later does not change the admin password of an existing volume.
+OpenSearch reads `OPENSEARCH_INITIAL_ADMIN_PASSWORD` only when it first initializes an empty data volume. Changing it later does not change the admin password of an existing volume. The Secret must exist before OpenSearch starts, which the order above ensures.
 
 ### Kafka
 
