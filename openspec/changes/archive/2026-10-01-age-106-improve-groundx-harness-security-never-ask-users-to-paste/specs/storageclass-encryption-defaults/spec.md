@@ -108,3 +108,16 @@ four false-like opt-out spellings render with the key omitted. This is a gate-cl
   renders with the key omitted
 - **THEN** `.build/bin/verify-storage-contract.py` passes (exit 0) -- the gate does not flag any of
   these legitimate renders
+
+## Amendments
+
+### 2026-10-01
+The "Opt-out normalization treats all false-like spellings as 'omit the key'" requirement above
+said the normalization applies "for both new installs and existing-class renders." That was
+self-contradictory with the "Existing StorageClass is preserved on `helm upgrade` via Helm
+`lookup`" requirement in this same spec: the lookup guard means an existing class's live
+parameters are always preserved as-is, regardless of the opt-out value -- the opt-out only affects
+new installs and no-live-cluster render flows (`helm template`/GitOps). The live, current spec at
+`openspec/specs/storageclass-encryption-defaults/spec.md` carries the corrected wording; this
+archived copy is left as originally shipped per record-hygiene (no silent rewrite of a shipped
+record).

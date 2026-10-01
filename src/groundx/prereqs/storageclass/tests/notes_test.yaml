@@ -50,6 +50,16 @@ tests:
       - equalRaw:
           value: ""
 
+  - it: "EBS lookup hit, supplied encrypted \"false\" agrees with a live class already \"false\": stays silent"
+    set:
+      storageClassName: existing-ebs-unencrypted
+      parameters.encrypted: "false"
+    asserts:
+      - notMatchRegexRaw:
+          pattern: "already exists"
+      - equalRaw:
+          value: ""
+
   - it: "non-EBS lookup hit never warns, even though the supplied and live parameters disagree"
     set:
       storageClassName: existing-efs

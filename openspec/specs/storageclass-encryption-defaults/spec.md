@@ -37,9 +37,12 @@ it is ever rendered into a non-EBS manifest).
 
 ### Requirement: Opt-out normalization treats all false-like spellings as "omit the key"
 The chart SHALL treat `encrypted: "false"` (quoted string), unquoted `false`, `null`, and `""` as
-equivalent: all four normalize to omitting the `encrypted` key from the rendered manifest, for
-both new installs and existing-class renders. Polarity: reject before state (no `encrypted` key is
-created in rendered state for any of the four opt-out spellings).
+equivalent: all four normalize to omitting the `encrypted` key from the rendered manifest, for new
+installs and for any render with no live cluster to look up (e.g. `helm template`/GitOps). An
+existing class's live parameters are always preserved as-is regardless of the opt-out value -- the
+lookup guard means the opt-out never affects an existing-class render. Polarity: reject before
+state (no `encrypted` key is created in rendered state for any of the four opt-out spellings, on
+the paths the opt-out actually affects).
 
 #### Scenario: Quoted "false" string opts out
 - **WHEN** `parameters.encrypted` is set to the quoted string `"false"`

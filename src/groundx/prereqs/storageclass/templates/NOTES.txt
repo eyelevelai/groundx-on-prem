@@ -9,7 +9,10 @@
 {{- end }}
 {{- $liveEncrypted := "" }}
 {{- if $existing.parameters }}
-{{- $liveEncrypted = toString (get $existing.parameters "encrypted") }}
+{{- $liveRaw := get $existing.parameters "encrypted" }}
+{{- if and $liveRaw (ne (toString $liveRaw) "") (ne (toString $liveRaw) "false") }}
+{{- $liveEncrypted = toString $liveRaw }}
+{{- end }}
 {{- end }}
 {{- if ne $suppliedEncrypted $liveEncrypted }}
 StorageClass {{ .Values.storageClassName }} already exists -- its live parameters are authoritative and the supplied "encrypted" value was not applied.

@@ -81,7 +81,6 @@ STORAGE_EXAMPLES: typing.Dict[str, StorageExampleSpec] = {
             r'basePath:\s+"/eyelevel"',
             r'fileSystemId:\s+"fs-REPLACE_ME"',
             r'provisioningMode:\s+"efs-ap"',
-            r'ensureUniqueDirectory:\s+"false"',
         ),
         "must_not": (r'type:\s+""', r'type:\s+"gp3"', r"parameters:\s+\{\}"),
     },
@@ -276,6 +275,26 @@ def verify_optout_normalization(chart: Path) -> typing.List[str]:
     return successes
 
 
+def verify_non_ebs_false_value_survives(chart: Path) -> typing.List[str]:
+    successes: typing.List[str] = []
+    with tempfile.TemporaryDirectory(prefix="groundx-nonebs-false-values-") as temp:
+        override = write_values(
+            Path(temp),
+            "values.nonebs.false.override.yaml",
+            'parameters:\n  ensureUniqueDirectory: "false"\n',
+        )
+        spec = STORAGE_EXAMPLES["efs"]
+        command = ["helm", "template", "nonebs-false", str(chart), "-f", str(chart / spec["file"]), "-f", str(override)]
+        rendered = run(command)
+        require(
+            rendered,
+            r'ensureUniqueDirectory:\s+"false"',
+            f"{chart.relative_to(ROOT)} non-EBS 'false' parameter survival",
+        )
+        successes.append(f"{chart.relative_to(ROOT)} non-EBS 'false' parameter survival passed")
+    return successes
+
+
 def verify_notes_lookup_miss_renders_without_warning(chart: Path) -> typing.List[str]:
     command = ["helm", "install", "notes-lookup-miss", str(chart), "--dry-run=client"]
     rendered = run(command)
@@ -349,7 +368,7 @@ workspace:
             r'fileSystemId:\s+"fs-0123456789abcdef0"',
             r'basePath:\s+"/eyelevel"',
         ),
-        "storage_must_not": (r'type:\s+"gp3"', r'type:\s+""'),
+        "storage_must_not": (r'type:\s+"gp3"', r'type:\s+""', r"encrypted:", r"kmsKeyId:"),
         "access": "ReadWriteMany",
     },
     "ebs": {
@@ -376,6 +395,7 @@ workspace:
         "storage_must": (
             r"provisioner:\s+ebs\.csi\.aws\.com",
             r'type:\s+"gp3"',
+            r'encrypted:\s+"true"',
         ),
         "storage_must_not": (r'type:\s+""',),
         "access": "ReadWriteOnce",
@@ -521,6 +541,7 @@ def main() -> int:
         verify_setup_script_contract,
         lambda: [item for chart in STORAGE_CHARTS for item in verify_provisioner_isolation(chart)],
         lambda: [item for chart in STORAGE_CHARTS for item in verify_optout_normalization(chart)],
+        lambda: [item for chart in STORAGE_CHARTS for item in verify_non_ebs_false_value_survives(chart)],
         lambda: [item for chart in STORAGE_CHARTS for item in verify_notes_lookup_miss_renders_without_warning(chart)],
     )
     for check in checks:
