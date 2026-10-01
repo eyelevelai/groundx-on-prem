@@ -1,0 +1,36 @@
+name: dns-observability
+
+on:
+  push:
+    paths:
+      - .github/workflows/dns-observability.yml
+      - monitoring/dns-probe/**
+      - terraform/aws/**
+  pull_request:
+    paths:
+      - .github/workflows/dns-observability.yml
+      - monitoring/dns-probe/**
+      - terraform/aws/**
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.19.0
+      - name: Validate Terraform
+        run: |
+          touch terraform/aws/env.tfvars
+          terraform -chdir=terraform/aws/eks init -backend=false -input=false -lockfile=readonly
+          terraform -chdir=terraform/aws/eks validate
+          terraform -chdir=terraform/aws/eks test -filter=tests/node_diagnostics.tftest.hcl
+      - name: Validate probe
+        run: |
+          python3 -m unittest discover -s monitoring/dns-probe/tests -v
+          helm lint monitoring/dns-probe --set-string targetHost=redis.example.internal
+          helm template dns-probe monitoring/dns-probe -n kube-system --set-string targetHost=redis.example.internal >/dev/null

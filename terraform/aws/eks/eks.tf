@@ -5,6 +5,81 @@ locals {
   cluster_addons = merge(
     {
       amazon-cloudwatch-observability = {
+        addon_version        = var.dns_observability.enabled ? "v5.4.0-eksbuild.1" : null
+        configuration_values = var.dns_observability.enabled ? jsonencode({
+          agents = [
+            { name = "cloudwatch-agent" },
+            {
+              name = "coredns-metrics"
+              mode = "deployment"
+              nodeSelector = {
+                eyelevel_node = local.cpu_only_label
+              }
+              tolerations = [
+                { key = "node", operator = "Equal", value = local.cpu_only_label, effect = "NoSchedule" },
+                { key = "eyelevel_node", operator = "Equal", value = local.cpu_only_label, effect = "NoSchedule" }
+              ]
+              config = {
+                agent = { region = var.environment.region }
+                logs = {
+                  metrics_collected = {
+                    prometheus = {
+                      prometheus_config_path = "/etc/prometheusconfig/prometheus.yaml"
+                      emf_processor = {
+                        metric_declaration = [
+                          {
+                            source_labels    = ["Namespace", "Pod"]
+                            label_matcher    = "kube-system;coredns-.+"
+                            dimensions       = [["Namespace", "Pod", "type"]]
+                            metric_selectors = ["^coredns_dns_requests_total$"]
+                          },
+                          {
+                            source_labels    = ["Namespace", "Pod"]
+                            label_matcher    = "kube-system;coredns-.+"
+                            dimensions       = [["Namespace", "Pod", "rcode"]]
+                            metric_selectors = ["^coredns_dns_responses_total$"]
+                          },
+                          {
+                            source_labels = ["Namespace", "Pod"]
+                            label_matcher = "kube-system;coredns-.+"
+                            dimensions    = [["Namespace", "Pod"]]
+                            metric_selectors = [
+                              "^up$",
+                              "^coredns_dns_request_duration_seconds_(sum|count)$",
+                              "^coredns_forward_healthcheck_broken_total$"
+                            ]
+                          },
+                          {
+                            source_labels    = ["Namespace", "Pod"]
+                            label_matcher    = "kube-system;coredns-.+"
+                            dimensions       = [["Namespace", "Pod", "to"]]
+                            metric_selectors = ["^coredns_proxy_healthcheck_failures_total$"]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+              prometheus = {
+                config = {
+                  global = { scrape_interval = "30s", scrape_timeout = "5s" }
+                  scrape_configs = [
+                    {
+                      job_name              = "coredns"
+                      kubernetes_sd_configs = [{ role = "pod", namespaces = { names = ["kube-system"] } }]
+                      relabel_configs = [
+                        { source_labels = ["__meta_kubernetes_pod_label_k8s_app", "__meta_kubernetes_pod_container_port_name"], action = "keep", regex = "kube-dns;metrics" },
+                        { source_labels = ["__meta_kubernetes_namespace"], target_label = "Namespace" },
+                        { source_labels = ["__meta_kubernetes_pod_name"], target_label = "Pod" }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }) : null
         resolve_conflicts_on_create = "OVERWRITE"
         resolve_conflicts_on_update = "OVERWRITE"
       }
