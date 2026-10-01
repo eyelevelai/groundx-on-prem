@@ -67,6 +67,45 @@ run "diagnostics_are_disabled_by_default" {
   }
 }
 
+run "dns_collection_is_disabled_by_default" {
+  command = plan
+
+  assert {
+    condition     = var.dns_observability.enabled == false && local.cluster_addons["amazon-cloudwatch-observability"].configuration_values == null && local.cluster_addons["amazon-cloudwatch-observability"].addon_version == null
+    error_message = "The existing CloudWatch add-on must have no custom configuration by default."
+  }
+}
+
+run "dns_collection_keeps_default_agent_and_scrapes_coredns_once" {
+  command = plan
+
+  variables {
+    dns_observability = { enabled = true }
+  }
+
+  assert {
+    condition     = local.cluster_addons["amazon-cloudwatch-observability"].addon_version == "v5.4.0-eksbuild.1"
+    error_message = "The tested CloudWatch add-on version must be pinned when DNS collection is enabled."
+  }
+
+  assert {
+    condition = jsondecode(local.cluster_addons["amazon-cloudwatch-observability"].configuration_values).agents[0] == {
+      name = "cloudwatch-agent"
+    }
+    error_message = "The existing CloudWatch agent must retain its defaults."
+  }
+
+  assert {
+    condition     = jsondecode(local.cluster_addons["amazon-cloudwatch-observability"].configuration_values).agents[1].mode == "deployment"
+    error_message = "CoreDNS metrics must be scraped by only one collector deployment."
+  }
+
+  assert {
+    condition     = jsondecode(local.cluster_addons["amazon-cloudwatch-observability"].configuration_values).agents[1].prometheus.config.scrape_configs[0].kubernetes_sd_configs[0].namespaces.names[0] == "kube-system"
+    error_message = "The collector must discover CoreDNS in kube-system."
+  }
+}
+
 run "diagnostics_are_disabled_explicitly" {
   command = plan
 
