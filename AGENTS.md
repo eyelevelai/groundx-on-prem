@@ -15,7 +15,7 @@ dependency on any other `groundx-*` repo** (verified).
 
 ## How to run and test
 
-- **Lint / render:** `helm lint src/groundx` · `helm template src/groundx -f src/groundx/values/minikube/values.yaml`
+- **Lint / render:** `helm lint src/groundx` · `helm template src/groundx -f src/groundx/values/minikube/values.yaml -f src/groundx/tests/files/values.search-credentials.yaml`
 - **Test:** `.build/bin/validate-helm.sh` runs the full local gate (lint + `helm unittest` +
   dual-surface render checks) and is the entrypoint to prefer. It generates the throwaway
   Google-OCR credentials fixture the OCR unit tests need; a bare `helm unittest src/groundx` fails
@@ -44,7 +44,7 @@ dependency on any other `groundx-*` repo** (verified).
   a Kubernetes-only payload-contract canary.
 - **Quality gates that MUST pass before any PR merges:**
   - `.build/bin/validate-helm.sh` — lint + `helm unittest` snapshot tests + dual-surface render checks; **this is the CI gate** (`.github/workflows/helm-tests.yml` runs it on every push/PR/release) and the **only** check that guards template changes. It generates the OCR credentials fixture first (see Test above).
-  - `helm template src/groundx -f src/groundx/values/minikube/values.yaml` — render check (must render cleanly).
+  - `helm template src/groundx -f src/groundx/values/minikube/values.yaml -f src/groundx/tests/files/values.search-credentials.yaml` — render check (must render cleanly).
 
 ## Privileged operations — Tier 3 ⚠️ DO NOT RUN UNPROMPTED
 

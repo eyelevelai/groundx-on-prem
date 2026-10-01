@@ -15,6 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 CHART = ROOT / "src" / "groundx"
 CHARTS = (ROOT / "src" / "groundx", ROOT / "helm")
+SEARCH_CREDENTIALS_VALUES = ROOT / "src" / "groundx" / "tests" / "files" / "values.search-credentials.yaml"
 STORAGE_CHART = ROOT / "src" / "groundx" / "prereqs" / "storageclass"
 STORAGE_CHARTS = (
     ROOT / "src" / "groundx" / "prereqs" / "storageclass",
@@ -149,6 +150,8 @@ MIRRORED_FILES = (
     "templates/_helpers/app/summary-inference.tpl",
     "templates/_helpers/app/workspace.tpl",
     "templates/_helpers/services/cache.tpl",
+    "templates/_helpers/services/search.tpl",
+    "templates/resources/config-yaml.yaml",
     "templates/services/cache.yaml",
     "templates/services/cache-metrics.yaml",
 )
@@ -196,7 +199,7 @@ def verify_storageclass(chart: Path) -> typing.List[str]:
 
 
 def verify_pvc_fixture(chart: Path, name: str, spec: PvcFixtureSpec) -> str:
-    command = ["helm", "template", f"pvc-{name}", str(chart)]
+    command = ["helm", "template", f"pvc-{name}", str(chart), "-f", str(SEARCH_CREDENTIALS_VALUES)]
     for values in spec.get("values", ()):
         command.extend(("-f", str(ROOT / values)))
     for show_only in spec.get("show_only", ()):
@@ -356,7 +359,7 @@ def verify_driver(driver: str, spec: GeneratedValuesSpec) -> typing.List[str]:
             reject(storage_render, pattern, f"{driver} generated storage values")
         successes.append(f"{driver} generated StorageClass values passed")
 
-        app_render = run(["helm", "template", f"aws-{driver}-app", str(CHART), "-f", str(app_values)])
+        app_render = run(["helm", "template", f"aws-{driver}-app", str(CHART), "-f", str(SEARCH_CREDENTIALS_VALUES), "-f", str(app_values)])
         verify_app_render(app_render, driver, spec["access"])
         successes.append(f"{driver} generated app values passed")
 
@@ -367,6 +370,8 @@ def verify_driver(driver: str, spec: GeneratedValuesSpec) -> typing.List[str]:
                     "template",
                     f"aws-{driver}-eks",
                     str(CHART),
+                    "-f",
+                    str(SEARCH_CREDENTIALS_VALUES),
                     "-f",
                     str(EKS_VALUES),
                     "-f",

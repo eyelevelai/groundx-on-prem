@@ -3,12 +3,20 @@ chart:
   appVersion: 0.1.0
   version: 0.1.0
 
+set:
+  search:
+    password: fixture-app-credential
+    privilegedPassword: fixture-admin-credential
+
 tests:
   - it: "database migration uses target database config in a separate hook Secret"
     templates:
       - ../templates/app/schema-migration.yaml
     values:
       - ../values/values.existing.yaml
+    set:
+      search.password: mypass
+      search.privilegedPassword: admin
     release:
       name: migration-config
       upgrade: true
@@ -364,6 +372,9 @@ tests:
       - ../templates/resources/workspace-supervisord-conf.yaml
     values:
       - ../values/values.existing.yaml
+    set:
+      search.password: mypass
+      search.privilegedPassword: admin
     asserts:
       - matchSnapshot: {}
   - it: "metadata: resources"
@@ -1007,3 +1018,71 @@ tests:
       - matchRegex:
           path: stringData["config.yaml"]
           pattern: 'largeFile:\n\s+region: us-west-2\n\s+type: sqs\n\s+url: https://sqs.us-west-2.amazonaws.com/123456789012/large-file'
+  - it: fails the render naming search.password when it is empty and search is in use
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      search.password: ""
+    asserts:
+      - failedTemplate:
+          errorPattern: 'search\.password'
+  - it: fails the render naming search.privilegedPassword when it is empty and search.existing.url is set
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      search.privilegedPassword: ""
+      search.existing.url: https://search.test.invalid:9200
+    asserts:
+      - failedTemplate:
+          errorPattern: 'search\.privilegedPassword'
+  - it: fails the render naming search.password when every Golang service is disabled outside ingest mode
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      groundx.enabled: false
+      layoutWebhook.enabled: false
+      preProcess.enabled: false
+      process.enabled: false
+      queue.enabled: false
+      largeFileDeliver.enabled: false
+      summaryClient.enabled: false
+      upload.enabled: false
+      search.password: ""
+    asserts:
+      - failedTemplate:
+          errorPattern: 'search\.password'
+  - it: fails the render naming search.privilegedPassword when every Golang service is disabled outside ingest mode
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      groundx.enabled: false
+      layoutWebhook.enabled: false
+      preProcess.enabled: false
+      process.enabled: false
+      queue.enabled: false
+      largeFileDeliver.enabled: false
+      summaryClient.enabled: false
+      upload.enabled: false
+      search.privilegedPassword: ""
+    asserts:
+      - failedTemplate:
+          errorPattern: 'search\.privilegedPassword'
+  - it: renders in ingest mode without search passwords
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      mode: ingest
+      search.password: ""
+      search.privilegedPassword: ""
+    asserts:
+      - isKind:
+          of: Secret
+  - it: renders no search password in ingest mode even when one is supplied
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      mode: ingest
+    asserts:
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'fixture-(app|admin)-credential'

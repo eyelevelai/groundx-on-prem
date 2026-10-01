@@ -123,6 +123,7 @@ jobs:
           run: |
             helm template groundx src/groundx \
               -f src/groundx/values/minikube/values.yaml \
+              -f src/groundx/tests/files/values.search-credentials.yaml \
               --set namespace="${KIND_NAMESPACE}" \
               --show-only templates/services/stream-topics.yaml \
               | kubectl apply -n "${KIND_NAMESPACE}" -f -
@@ -195,6 +196,7 @@ jobs:
           run: |
             helm template groundx src/groundx \
               -f src/groundx/values/minikube/values.yaml \
+              -f src/groundx/tests/files/values.search-credentials.yaml \
               --set namespace="${KIND_NAMESPACE}" \
               --show-only templates/services/stream-topics.yaml \
               | sed 's#^apiVersion: kafka.strimzi.io/v1$#apiVersion: kafka.strimzi.io/v1beta2#' \

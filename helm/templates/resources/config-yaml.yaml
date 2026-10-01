@@ -71,6 +71,8 @@
 {{- $integration := .Values.integration | default dict -}}
 {{- $captureAccounts := get $integration "extractionCaptureAccounts" | default list -}}
 {{- $captureDomains := get $integration "extractionCaptureDomains" | default list -}}
+{{- $_ := include "groundx.search.password" . -}}
+{{- $_ := include "groundx.search.privilegedPassword" . -}}
 {{- if gt (len $svcs) 0 }}
 apiVersion: v1
 kind: Secret
@@ -148,7 +150,9 @@ stringData:
             - {{ . }}
           {{- end }}
           username: {{ include "groundx.search.username" . | quote }}
+          {{- if ne (include "groundx.search.password" .) "" }}
           password: {{ include "groundx.search.password" . | quote }}
+          {{- end }}
       extract:
         client:
           {{- if ne (include "groundx.admin.username" .) "" }}
@@ -246,7 +250,9 @@ stringData:
         {{- end }}
       {{- end }}
       search:
+        {{- if ne (include "groundx.search.privilegedPassword" .) "" }}
         password: {{ include "groundx.search.privilegedPassword" . | quote }}
+        {{- end }}
         searchModel: all_access
         username: {{ include "groundx.search.privilegedUsername" . | quote }}
 

@@ -91,13 +91,25 @@ true
 {{- end }}
 
 {{- define "groundx.search.password" -}}
+{{- if ne (include "groundx.mode" .) "ingest" -}}
 {{- $in := .Values.search | default dict -}}
-{{ dig "password" "R0otb_*t!kazs" $in }}
+{{- $v := dig "password" "" $in -}}
+{{- if empty $v -}}
+{{- fail "search.password is required unless mode is ingest" -}}
+{{- end -}}
+{{ $v }}
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.search.privilegedPassword" -}}
+{{- if ne (include "groundx.mode" .) "ingest" -}}
 {{- $in := .Values.search | default dict -}}
-{{ dig "privilegedPassword" "R0otb_*t!kazs" $in }}
+{{- $v := dig "privilegedPassword" "" $in -}}
+{{- if empty $v -}}
+{{- fail "search.privilegedPassword is required unless mode is ingest" -}}
+{{- end -}}
+{{ $v }}
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.search.privilegedUsername" -}}
