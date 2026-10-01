@@ -59,6 +59,7 @@ STORAGE_EXAMPLES: typing.Dict[str, StorageExampleSpec] = {
             r"provisioner:\s+ebs\.csi\.aws\.com",
             r'reclaimPolicy:\s+Delete',
             r'type:\s+"gp3"',
+            r'encrypted:\s+"true"',
         ),
         "must_not": (r'type:\s+""', r"parameters:\s+\{\}"),
     },
@@ -68,6 +69,7 @@ STORAGE_EXAMPLES: typing.Dict[str, StorageExampleSpec] = {
             r"provisioner:\s+ebs\.csi\.aws\.com",
             r'reclaimPolicy:\s+Delete',
             r'type:\s+"gp3"',
+            r'encrypted:\s+"true"',
         ),
         "must_not": (r'type:\s+""', r"parameters:\s+\{\}"),
     },
@@ -139,6 +141,7 @@ PVC_FIXTURES: typing.Dict[str, PvcFixtureSpec] = {
 MIRRORED_FILES = (
     "prereqs/storageclass/Chart.yaml",
     "prereqs/storageclass/templates/storageclass.yaml",
+    "prereqs/storageclass/templates/NOTES.txt",
     "prereqs/storageclass/values.yaml",
     "prereqs/storageclass/values.ebs.example.yaml",
     "prereqs/storageclass/values.efs.example.yaml",
@@ -219,6 +222,60 @@ def verify_mirrors() -> typing.List[str]:
             raise AssertionError(f"mirrored file drift: {relative}")
         successes.append(f"mirror {relative} passed")
     return successes
+
+
+NON_EBS_EXAMPLES = ("efs", "azure-files", "gke-filestore")
+
+
+def verify_provisioner_isolation(chart: Path) -> typing.List[str]:
+    successes: typing.List[str] = []
+    with tempfile.TemporaryDirectory(prefix="groundx-isolation-values-") as temp:
+        override = write_values(
+            Path(temp),
+            "values.isolation.override.yaml",
+            "parameters:\n  encrypted: \"true\"\n  kmsKeyId: \"test-key\"\n",
+        )
+        for name in NON_EBS_EXAMPLES:
+            spec = STORAGE_EXAMPLES[name]
+            command = ["helm", "template", f"isolation-{name}", str(chart)]
+            values_file = spec["file"]
+            if values_file is not None:
+                command.extend(("-f", str(chart / values_file)))
+            command.extend(("-f", str(override)))
+            rendered = run(command)
+
+            reject(rendered, r"encrypted:", f"{name} provisioner isolation (encrypted leaked)")
+            reject(rendered, r"kmsKeyId:", f"{name} provisioner isolation (kmsKeyId leaked)")
+            successes.append(f"{chart.relative_to(ROOT)} {name} provisioner isolation passed")
+    return successes
+
+
+OPTOUT_SPELLINGS: typing.Dict[str, str] = {
+    "quoted-false": 'parameters:\n  encrypted: "false"\n',
+    "unquoted-false": "parameters:\n  encrypted: false\n",
+    "null": "parameters:\n  encrypted: null\n",
+    "empty-string": 'parameters:\n  encrypted: ""\n',
+}
+
+
+def verify_optout_normalization(chart: Path) -> typing.List[str]:
+    successes: typing.List[str] = []
+    with tempfile.TemporaryDirectory(prefix="groundx-optout-values-") as temp:
+        temp_dir = Path(temp)
+        for spelling, body in OPTOUT_SPELLINGS.items():
+            values = write_values(temp_dir, f"values.optout.{spelling}.yaml", body)
+            command = ["helm", "template", f"optout-{spelling}", str(chart), "-f", str(values)]
+            rendered = run(command)
+            reject(rendered, r"encrypted:", f"opt-out spelling '{spelling}'")
+            successes.append(f"{chart.relative_to(ROOT)} opt-out spelling '{spelling}' passed")
+    return successes
+
+
+def verify_notes_lookup_miss(chart: Path) -> typing.List[str]:
+    command = ["helm", "template", "notes-lookup-miss", str(chart), "--show-only", "templates/NOTES.txt"]
+    rendered = run(command)
+    reject(rendered, r"already exists", f"{chart.relative_to(ROOT)} NOTES.txt lookup-miss warning")
+    return [f"{chart.relative_to(ROOT)} NOTES.txt lookup-miss (no warning) passed"]
 
 
 def verify_no_stale_strings() -> typing.List[str]:
@@ -456,6 +513,9 @@ def main() -> int:
         verify_setup_eks,
         lambda: [item for driver, spec in GENERATED.items() for item in verify_driver(driver, spec)],
         verify_setup_script_contract,
+        lambda: [item for chart in STORAGE_CHARTS for item in verify_provisioner_isolation(chart)],
+        lambda: [item for chart in STORAGE_CHARTS for item in verify_optout_normalization(chart)],
+        lambda: [item for chart in STORAGE_CHARTS for item in verify_notes_lookup_miss(chart)],
     )
     for check in checks:
         try:
