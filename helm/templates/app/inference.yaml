@@ -38,6 +38,8 @@
 {{- $sct := get $svcData "securityContext" -}}
 {{- $supe := get $svcData "supervisord" -}}
 {{- $tl := get $svcData "tolerations" -}}
+{{- $tsc := get $svcData "topologySpreadConstraints" -}}
+{{- $pdb := get $svcData "disruptionBudget" | default dict -}}
 {{- $ud := get $svcData "updateStrategy" -}}
 {{- $wd := get $svcData "workingDir" -}}
 
@@ -94,6 +96,7 @@ spec:
 {{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" $username "cfg" "spec") }}
 {{- include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
 {{- include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
+{{- include "groundx.renderTopologySpread" (dict "ctx" $tsc "indent" 6) }}
       initContainers:
         - name: wait-for-cache
           image: {{ include "groundx.busybox.image" $ }}
@@ -304,6 +307,22 @@ spec:
           persistentVolumeClaim:
             claimName: {{ dig "name" "" $pvc }}
 {{ include "groundx.renderPVC" (dict "ctx" $pvc "app" $svc "root" $) }}
+{{- end }}
+
+{{- if dig "enabled" false $pdb }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $svc }}
+  namespace: {{ include "groundx.ns" $ | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: {{ $svc }}
 {{- end }}
 
 {{ end }}
