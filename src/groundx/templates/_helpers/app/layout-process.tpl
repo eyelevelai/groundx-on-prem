@@ -103,6 +103,47 @@ true
 {{ dig "queue" "process_queue" $in }}
 {{- end }}
 
+{{- define "groundx.layout.process.renderDiskBudgetMi" -}}
+{{- $b := .Values.layout | default dict -}}
+{{- $in := dig "process" dict $b -}}
+{{ dig "renderDiskBudgetMi" 2048 $in }}
+{{- end }}
+
+{{- define "groundx.layout.process.storageMi" -}}
+{{- $raw := "" -}}
+{{- if or (kindIs "float64" .) (kindIs "int" .) (kindIs "int64" .) -}}
+  {{- $raw = printf "%.0f" (float64 .) -}}
+{{- else -}}
+  {{- $raw = toString . -}}
+{{- end -}}
+{{- $units := dict
+  "Ki" 1024.0
+  "Mi" 1048576.0
+  "Gi" 1073741824.0
+  "Ti" 1099511627776.0
+  "Pi" 1125899906842624.0
+  "Ei" 1152921504606846976.0
+  "k"  1000.0
+  "M"  1000000.0
+  "G"  1000000000.0
+  "T"  1000000000000.0
+  "P"  1000000000000000.0
+  "E"  1000000000000000000.0
+-}}
+{{- $mult := 1.0 -}}
+{{- $num := $raw -}}
+{{- range $suffix, $m := $units -}}
+  {{- if hasSuffix $suffix $raw -}}
+    {{- $num = trimSuffix $suffix $raw -}}
+    {{- $mult = $m -}}
+  {{- end -}}
+{{- end -}}
+{{- if not (regexMatch "^[0-9]+(\\.[0-9]+)?([eE][+-]?[0-9]+)?$" $num) -}}
+  {{- fail (printf "%q is not a recognized Kubernetes storage quantity (expected a plain byte count, exponent form, or a Ki/Mi/Gi/Ti/Pi/Ei/k/M/G/T/P/E suffix)" $raw) -}}
+{{- end -}}
+{{ divf (mulf ($num | float64) $mult) 1048576.0 }}
+{{- end }}
+
 {{- define "groundx.layout.process.replicas" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $c := dig "process" dict $b -}}
@@ -174,9 +215,21 @@ true
 
 {{- $rep := (include "groundx.layout.process.replicas" . | fromYaml) -}}
 {{- $san := include "groundx.layout.process.serviceAccountName" . -}}
+{{- $renderMountPath := "/tmp/render" -}}
+{{- $renderDiskBudgetMi := (include "groundx.layout.process.renderDiskBudgetMi" . | int) -}}
+{{- $renderThreads := (include "groundx.layout.process.threads" . | int) -}}
+{{- $renderWorkers := (include "groundx.layout.process.workers" . | int) -}}
+{{- if lt $renderWorkers 1 -}}
+  {{- fail (printf "layout.process.workers must be at least 1 (got %d)" $renderWorkers) -}}
+{{- end -}}
+{{- if lt $renderThreads 1 -}}
+  {{- fail (printf "layout.process.threads must be at least 1 (got %d)" $renderThreads) -}}
+{{- end -}}
+{{- $renderDiskMi := add (mul $renderWorkers $renderThreads $renderDiskBudgetMi) 1024 -}}
 {{- $cfg := dict
   "celery"       ("document.celery_process")
   "dependencies" $dpnd
+  "env"          (dict "TMPDIR" $renderMountPath "LAYOUT_RENDER_DISK_BUDGET_MIB" (toString $renderDiskBudgetMi))
   "image"        (include "groundx.layout.process.image" .)
   "mapPrefix"    ("layout")
   "name"         (include "groundx.layout.process.serviceName" .)
@@ -186,6 +239,8 @@ true
   "replicas"     ($rep)
   "service"      (include "groundx.layout.serviceName" .)
   "threads"      (include "groundx.layout.process.threads" .)
+  "volumeMounts" (list (dict "name" "render-temp" "mountPath" $renderMountPath))
+  "volumes"      (list (dict "name" "render-temp" "emptyDir" (dict "sizeLimit" (printf "%dMi" $renderDiskMi))))
   "workers"      (include "groundx.layout.process.workers" .)
 -}}
 {{- if and $san (ne $san "") -}}
@@ -206,9 +261,19 @@ true
 {{- if and (hasKey $in "nodeSelector") (not (empty (get $in "nodeSelector"))) -}}
   {{- $_ := set $cfg "nodeSelector" (get $in "nodeSelector") -}}
 {{- end -}}
-{{- if and (hasKey $in "resources") (not (empty (get $in "resources"))) -}}
-  {{- $_ := set $cfg "resources" (get $in "resources") -}}
+{{- $renderResources := deepCopy (dig "resources" dict $in) -}}
+{{- $renderLimits := dig "limits" dict $renderResources -}}
+{{- if hasKey $renderLimits "ephemeral-storage" -}}
+  {{- $renderLimitRaw := get $renderLimits "ephemeral-storage" -}}
+  {{- $renderLimitMi := include "groundx.layout.process.storageMi" $renderLimitRaw | trim | float64 -}}
+  {{- if lt $renderLimitMi (float64 $renderDiskMi) -}}
+    {{- fail (printf "layout.process.resources.limits[\"ephemeral-storage\"] (%v) is below the computed ephemeral-storage request of %dMi (workers x threads x layout.process.renderDiskBudgetMi + 1024Mi); raise the limit or lower layout.process.renderDiskBudgetMi, workers, or threads" $renderLimitRaw $renderDiskMi) -}}
+  {{- end -}}
 {{- end -}}
+{{- $renderRequests := deepCopy (dig "requests" dict $renderResources) -}}
+{{- $_ := set $renderRequests "ephemeral-storage" (printf "%dMi" $renderDiskMi) -}}
+{{- $_ := set $renderResources "requests" $renderRequests -}}
+{{- $_ := set $cfg "resources" $renderResources -}}
 {{- if and (hasKey $in "securityContext") (not (empty (get $in "securityContext"))) -}}
   {{- $_ := set $cfg "securityContext" (get $in "securityContext") -}}
 {{- end -}}
