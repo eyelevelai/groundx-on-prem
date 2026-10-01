@@ -1035,6 +1035,38 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: 'search\.privilegedPassword'
+  - it: fails the render naming search.password when every Golang service is disabled outside ingest mode
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      groundx.enabled: false
+      layoutWebhook.enabled: false
+      preProcess.enabled: false
+      process.enabled: false
+      queue.enabled: false
+      largeFileDeliver.enabled: false
+      summaryClient.enabled: false
+      upload.enabled: false
+      search.password: ""
+    asserts:
+      - failedTemplate:
+          errorPattern: 'search\.password'
+  - it: fails the render naming search.privilegedPassword when every Golang service is disabled outside ingest mode
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      groundx.enabled: false
+      layoutWebhook.enabled: false
+      preProcess.enabled: false
+      process.enabled: false
+      queue.enabled: false
+      largeFileDeliver.enabled: false
+      summaryClient.enabled: false
+      upload.enabled: false
+      search.privilegedPassword: ""
+    asserts:
+      - failedTemplate:
+          errorPattern: 'search\.privilegedPassword'
   - it: renders in ingest mode without search passwords
     templates:
       - ../templates/resources/config-yaml.yaml

@@ -71,6 +71,8 @@
 {{- $integration := .Values.integration | default dict -}}
 {{- $captureAccounts := get $integration "extractionCaptureAccounts" | default list -}}
 {{- $captureDomains := get $integration "extractionCaptureDomains" | default list -}}
+{{- $_ := include "groundx.search.password" . -}}
+{{- $_ := include "groundx.search.privilegedPassword" . -}}
 {{- if gt (len $svcs) 0 }}
 apiVersion: v1
 kind: Secret
