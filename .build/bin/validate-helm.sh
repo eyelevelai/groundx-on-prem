@@ -336,6 +336,23 @@ for chart in src/groundx helm; do
   done
 done
 
+echo "==> Verifying disruption budgets and spread render on all 30 workloads"
+drain_flags=(--set extract.enabled=true --set workspace.enabled=true --set workspace.token=test-runner-token)
+for svc in extract.agent extract.api extract.download extract.save layout.api layout.correct layout.inference layout.map layout.ocr layout.process layout.save ranker.api ranker.inference summary.api summary.inference workspace.api workspace.cleanup workspace.command workspace.provision workspace.publish workspace.workspace groundx largeFileDeliver layoutWebhook metrics preProcess process queue summaryClient upload; do
+  [[ "${svc}" == largeFileDeliver ]] || drain_flags+=(--set "${svc}.enabled=true")
+  drain_flags+=(--set "${svc}.disruptionBudget.enabled=true" \
+    --set-json "${svc}.topologySpreadConstraints=[{\"maxSkew\":1,\"topologyKey\":\"kubernetes.io/hostname\",\"whenUnsatisfiable\":\"ScheduleAnyway\",\"labelSelector\":{\"matchLabels\":{\"app\":\"x\"}}}]")
+done
+for chart in src/groundx helm; do
+  drain_render="$(helm template drain-all "${chart}" -f src/groundx/tests/files/values.large-file.yaml -f "${SEARCH_CREDENTIALS}" "${drain_flags[@]}")"
+  drain_pdbs="$(grep -c '^kind: PodDisruptionBudget$' <<<"${drain_render}" || true)"
+  drain_spreads="$(grep -c '^      topologySpreadConstraints:$' <<<"${drain_render}" || true)"
+  if [[ "${drain_pdbs}" != "30" || "${drain_spreads}" != "30" ]]; then
+    echo "${chart}: expected 30 PodDisruptionBudgets and 30 pod specs with topologySpreadConstraints, got ${drain_pdbs} and ${drain_spreads}." >&2
+    exit 1
+  fi
+done
+
 echo "==> Verifying deprecated compatibility values contract"
 python - <<'PY'
 import json
