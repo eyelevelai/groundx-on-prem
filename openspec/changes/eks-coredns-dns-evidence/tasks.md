@@ -3,6 +3,7 @@
 - [x] Add default-off Terraform setting and one dedicated CoreDNS collector while preserving the default CloudWatch agent.
 - [x] Add the extraction-pod DNS probe sidecar and least-privilege EndpointSlice access.
 - [x] Add focused local checks for default-off Terraform, CoreDNS scrape identity, normal and slow resolution, and a ready but silent DNS endpoint.
+- [x] Run the Terraform and Python probe checks in the existing Helm CI job, sharing setup and the existing Helm validation gate.
 - [x] Document production plan review, activation, evidence query, and rollback.
 
 ## Rollout
