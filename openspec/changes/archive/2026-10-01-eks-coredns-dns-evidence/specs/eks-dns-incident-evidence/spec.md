@@ -1,6 +1,6 @@
 # EKS DNS Incident Evidence
 
-## Requirements
+## ADDED Requirements
 
 ### Requirement: Opt-in CoreDNS collection preserves existing monitoring
 
@@ -37,3 +37,10 @@ The optional probe SHALL run in each extraction agent pod, resolve the configure
 ### Requirement: Production rollout does not disrupt DNS
 
 The rollout SHALL leave CoreDNS workload definitions unchanged, require review of the actual Terraform plan, and verify metric delivery. The sidecar rollout SHALL review the GroundX Helm change for unrelated resources, preserve in-flight extraction handling, account for per-pod resource requests, and verify both extraction pods and their probes before declaring evidence collection active. A failure injection SHALL run only in an authorized disposable cluster.
+
+#### Scenario: Production activation
+
+- **GIVEN** reviewed Terraform and Helm changes with no unrelated application changes
+- **WHEN** evidence collection is activated
+- **THEN** both CoreDNS pods publish metrics and both extraction pods produce probe logs
+- **AND** no DNS failure is injected into production
