@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: dns-probe
-  namespace: {{ .Release.Namespace }}
-data:
-  dns_probe.py: |
-{{ .Files.Get "files/dns_probe.py" | indent 4 }}

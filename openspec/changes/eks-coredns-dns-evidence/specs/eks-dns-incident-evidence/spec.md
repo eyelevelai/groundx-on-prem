@@ -20,7 +20,7 @@ The EKS Terraform SHALL leave the CloudWatch add-on unchanged by default. When D
 
 ### Requirement: Probe identifies the failing DNS path
 
-The probe SHALL run on extraction CPU nodes, resolve the configured Redis hostname with the normal pod resolver, and on failure or slow resolution record kube-dns EndpointSlice readiness and direct query outcomes for every listed CoreDNS endpoint. Its Kubernetes permission SHALL be limited to reading EndpointSlices in `kube-system`.
+The optional probe SHALL run in each extraction agent pod, resolve the configured Redis hostname with that pod's normal resolver, and on failure or slow resolution record kube-dns EndpointSlice readiness and direct query outcomes for every listed CoreDNS endpoint. Its Kubernetes permission SHALL be limited to listing EndpointSlices in `kube-system`.
 
 #### Scenario: One ready endpoint stops answering
 
@@ -36,4 +36,4 @@ The probe SHALL run on extraction CPU nodes, resolve the configured Redis hostna
 
 ### Requirement: Production rollout does not disrupt DNS
 
-The rollout SHALL leave GroundX and CoreDNS workload definitions unchanged, require review of the actual Terraform plan, and verify metric delivery and probe placement before declaring evidence collection active. A failure injection SHALL run only in an authorized disposable cluster.
+The rollout SHALL leave CoreDNS workload definitions unchanged, require review of the actual Terraform plan, and verify metric delivery. The sidecar rollout SHALL review the GroundX Helm change for unrelated resources, preserve in-flight extraction handling, account for per-pod resource requests, and verify both extraction pods and their probes before declaring evidence collection active. A failure injection SHALL run only in an authorized disposable cluster.

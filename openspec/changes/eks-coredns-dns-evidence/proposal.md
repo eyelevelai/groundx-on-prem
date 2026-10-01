@@ -5,15 +5,15 @@ An extraction worker failed to resolve the Redis hostname while one CoreDNS pod'
 ## What Changes
 
 - Add an opt-in CoreDNS Prometheus scrape to the existing CloudWatch Observability EKS add-on. Run one dedicated collector deployment and retain the existing agent's defaults.
-- Add a small, independently installed DNS probe on extraction CPU nodes. It resolves the configured Redis hostname through the pod's normal resolver. On failure or a slow lookup it records current kube-dns EndpointSlice readiness and queries each CoreDNS pod directly.
+- Add an opt-in DNS probe sidecar to the existing extraction worker pods. It resolves the configured Redis hostname through the same pod resolver as the worker. On failure or a slow lookup it records current kube-dns EndpointSlice readiness and queries each CoreDNS pod directly.
 - Document rollout, evidence review, and rollback. A local fault test proves the probe distinguishes a DNS backend timeout from a working backend even while both are advertised ready.
 
 ## Impact
 
 - The default Terraform plan is unchanged. With the setting enabled, the CloudWatch add-on updates and one collector pod is added. The existing CloudWatch agent and GroundX workloads retain their current configuration.
-- The probe is a separate Helm release in `kube-system`, limited to extraction CPU nodes. It reads only kube-dns EndpointSlices, sends DNS queries, and emits logs. It changes no application data or DNS routing.
-- CloudWatch receives per-CoreDNS-pod metrics and incurs additional log and custom-metric charges. The probe adds a small CPU and memory request per extraction node and low-rate DNS traffic.
-- Production is the only currently reachable matching cluster. No cluster fault is injected into production. Applying either component requires a reviewed production plan and explicit approval.
+- The probe adds a 10m CPU and 32Mi memory request to each extraction worker pod and requires a rolling worker restart. It reads only kube-dns EndpointSlices, sends DNS queries, and emits logs. It changes no application data or DNS routing.
+- CloudWatch receives per-CoreDNS-pod request, response, and upstream health metrics and incurs additional log and custom-metric charges. Its agent drops CoreDNS request-duration histograms, so lookup duration comes from the probe logs. Missing recent samples can indicate a scrape or publication failure.
+- Production is the only currently reachable matching cluster. No cluster fault is injected into production. The CloudWatch add-on update is active; the worker sidecar requires a narrow Helm rollout review.
 
 ## Capabilities
 

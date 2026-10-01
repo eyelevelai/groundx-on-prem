@@ -4,12 +4,14 @@ on:
   push:
     paths:
       - .github/workflows/dns-observability.yml
-      - monitoring/dns-probe/**
+      - src/groundx/**
+      - helm/**
       - terraform/aws/**
   pull_request:
     paths:
       - .github/workflows/dns-observability.yml
-      - monitoring/dns-probe/**
+      - src/groundx/**
+      - helm/**
       - terraform/aws/**
 
 jobs:
@@ -31,6 +33,6 @@ jobs:
           terraform -chdir=terraform/aws/eks test -filter=tests/node_diagnostics.tftest.hcl
       - name: Validate probe
         run: |
-          python3 -m unittest discover -s monitoring/dns-probe/tests -v
-          helm lint monitoring/dns-probe --set-string targetHost=redis.example.internal
-          helm template dns-probe monitoring/dns-probe -n kube-system --set-string targetHost=redis.example.internal >/dev/null
+          python3 -m unittest discover -s src/groundx/tests -p 'test_dns_probe.py' -v
+          helm lint src/groundx --set extract.enabled=true --set extract.agent.enabled=true --set extract.agent.dnsProbe.enabled=true
+          helm template groundx src/groundx -n eyelevel --set extract.enabled=true --set extract.agent.enabled=true --set extract.agent.dnsProbe.enabled=true >/dev/null
