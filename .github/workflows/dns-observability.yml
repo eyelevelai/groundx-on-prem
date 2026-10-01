@@ -26,7 +26,7 @@ jobs:
       - name: Validate Terraform
         run: |
           touch terraform/aws/env.tfvars
-          terraform -chdir=terraform/aws/eks init -backend=false -input=false -lockfile=readonly
+          terraform -chdir=terraform/aws/eks init -backend=false -input=false
           terraform -chdir=terraform/aws/eks validate
           terraform -chdir=terraform/aws/eks test -filter=tests/node_diagnostics.tftest.hcl
       - name: Validate probe
