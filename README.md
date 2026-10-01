@@ -609,6 +609,8 @@ An EKS/EBS example is available at `src/groundx/prereqs/storageclass/values.ebs.
 
 For AWS EKS, `terraform/aws/setup-eks` generates `src/groundx/prereqs/storageclass/values.aws.local.yaml` and `src/groundx/values.aws.local.yaml` from Terraform outputs. Use `STORAGE_DRIVER=efs` for the shared EFS path or `STORAGE_DRIVER=ebs` for EBS. The generated Helm commands printed by the script do not require manually editing the EFS filesystem ID.
 
+**Upgrade note (EBS encryption default):** starting with `groundx-storageclass` `0.1.2`, a new EBS install renders `parameters.encrypted: "true"` by default -- an operator opting out sets `encrypted: "false"` explicitly (unquoted `false`, `null`, and `""` are equivalent opt-out spellings). An already-installed StorageClass is never changed by a real `helm upgrade --install`: the chart reads the live class via Helm's `lookup` function and, when the class already exists, renders its current live `parameters` verbatim instead of the chart's new defaults -- `helm upgrade` never attempts to change a StorageClass's `parameters`, which Kubernetes treats as immutable once the object is created. This `lookup` guard only sees a live cluster: `helm template`, a client-side dry run, and GitOps renderers have no live cluster to query, so those flows always render the new-install defaults -- an operator managing an existing unencrypted class through one of those flows must set `encrypted: "false"` explicitly to keep it unchanged. Changing an existing class's actual encryption requires creating a new StorageClass, because `parameters` cannot be updated in place.
+
 ### Helm Installation
 
 When deploying from this checkout with an environment-specific values file, use the local source chart:

@@ -272,7 +272,7 @@ def verify_optout_normalization(chart: Path) -> typing.List[str]:
 
 
 def verify_notes_lookup_miss(chart: Path) -> typing.List[str]:
-    command = ["helm", "template", "notes-lookup-miss", str(chart), "--show-only", "templates/NOTES.txt"]
+    command = ["helm", "install", "notes-lookup-miss", str(chart), "--dry-run=client"]
     rendered = run(command)
     reject(rendered, r"already exists", f"{chart.relative_to(ROOT)} NOTES.txt lookup-miss warning")
     return [f"{chart.relative_to(ROOT)} NOTES.txt lookup-miss (no warning) passed"]
