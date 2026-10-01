@@ -12,7 +12,7 @@ Usage: .build/bin/validate-helm.sh [--junit]
 
 Runs the GroundX Helm production chart gate from one stable entrypoint:
   - helm lint for both chart surfaces
-  - helm unittest for src/groundx and the helm/ mirror
+  - helm unittest for src/groundx, the helm/ mirror, kafka-cluster, and the storageclass chart
   - google OCR credentials render for both chart surfaces
   - shared Google credential isolation, rotation and schema checks
   - snapshot label guard unit tests
@@ -90,6 +90,7 @@ echo "==> Running Helm unit tests"
 helm unittest src/groundx
 helm unittest helm
 helm unittest src/groundx/prereqs/kafka-cluster
+helm unittest src/groundx/prereqs/storageclass
 
 echo "==> Verifying Google OCR credentials rendering for both chart surfaces"
 for chart in src/groundx helm; do

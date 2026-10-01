@@ -81,6 +81,7 @@ STORAGE_EXAMPLES: typing.Dict[str, StorageExampleSpec] = {
             r'basePath:\s+"/eyelevel"',
             r'fileSystemId:\s+"fs-REPLACE_ME"',
             r'provisioningMode:\s+"efs-ap"',
+            r'ensureUniqueDirectory:\s+"false"',
         ),
         "must_not": (r'type:\s+""', r'type:\s+"gp3"', r"parameters:\s+\{\}"),
     },
@@ -244,6 +245,8 @@ def verify_provisioner_isolation(chart: Path) -> typing.List[str]:
             command.extend(("-f", str(override)))
             rendered = run(command)
 
+            require(rendered, r"kind:\s+StorageClass", f"{name} provisioner isolation (StorageClass rendered)")
+            require(rendered, r"parameters:", f"{name} provisioner isolation (parameters block survives)")
             reject(rendered, r"encrypted:", f"{name} provisioner isolation (encrypted leaked)")
             reject(rendered, r"kmsKeyId:", f"{name} provisioner isolation (kmsKeyId leaked)")
             successes.append(f"{chart.relative_to(ROOT)} {name} provisioner isolation passed")
@@ -266,16 +269,19 @@ def verify_optout_normalization(chart: Path) -> typing.List[str]:
             values = write_values(temp_dir, f"values.optout.{spelling}.yaml", body)
             command = ["helm", "template", f"optout-{spelling}", str(chart), "-f", str(values)]
             rendered = run(command)
+            require(rendered, r"kind:\s+StorageClass", f"opt-out spelling '{spelling}' (StorageClass rendered)")
+            require(rendered, r'type:\s+"gp3"', f"opt-out spelling '{spelling}' (other EBS parameters survive)")
             reject(rendered, r"encrypted:", f"opt-out spelling '{spelling}'")
             successes.append(f"{chart.relative_to(ROOT)} opt-out spelling '{spelling}' passed")
     return successes
 
 
-def verify_notes_lookup_miss(chart: Path) -> typing.List[str]:
+def verify_notes_lookup_miss_renders_without_warning(chart: Path) -> typing.List[str]:
     command = ["helm", "install", "notes-lookup-miss", str(chart), "--dry-run=client"]
     rendered = run(command)
+    require(rendered, r"^NOTES:$", f"{chart.relative_to(ROOT)} NOTES.txt actually rendered")
     reject(rendered, r"already exists", f"{chart.relative_to(ROOT)} NOTES.txt lookup-miss warning")
-    return [f"{chart.relative_to(ROOT)} NOTES.txt lookup-miss (no warning) passed"]
+    return [f"{chart.relative_to(ROOT)} NOTES.txt lookup-miss (NOTES.txt confirmed rendered, no warning) passed"]
 
 
 def verify_no_stale_strings() -> typing.List[str]:
@@ -515,7 +521,7 @@ def main() -> int:
         verify_setup_script_contract,
         lambda: [item for chart in STORAGE_CHARTS for item in verify_provisioner_isolation(chart)],
         lambda: [item for chart in STORAGE_CHARTS for item in verify_optout_normalization(chart)],
-        lambda: [item for chart in STORAGE_CHARTS for item in verify_notes_lookup_miss(chart)],
+        lambda: [item for chart in STORAGE_CHARTS for item in verify_notes_lookup_miss_renders_without_warning(chart)],
     )
     for check in checks:
         try:

@@ -1,5 +1,5 @@
 {{- $existing := lookup "storage.k8s.io/v1" "StorageClass" "" .Values.storageClassName }}
-{{- if $existing }}
+{{- if and $existing (eq .Values.provisioner "ebs.csi.aws.com") }}
 {{- $suppliedEncrypted := "" }}
 {{- with .Values.parameters }}
 {{- $raw := .encrypted }}

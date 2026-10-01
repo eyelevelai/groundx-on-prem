@@ -33,15 +33,22 @@
   supplied (normalized) `encrypted` value disagrees with the live class's `parameters.encrypted`,
   print a one-line warning that the live class's parameters are authoritative and the supplied
   value was not applied; on a lookup miss, print nothing, per design.md D4
-  check: python3 -c "import importlib.util; spec=importlib.util.spec_from_file_location('vsc','.build/bin/verify-storage-contract.py'); m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m); [m.verify_notes_lookup_miss(c) for c in m.STORAGE_CHARTS]"
+  check: python3 -c "import importlib.util; spec=importlib.util.spec_from_file_location('vsc','.build/bin/verify-storage-contract.py'); m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m); [m.verify_notes_lookup_miss_renders_without_warning(c) for c in m.STORAGE_CHARTS]"
 - [x] 4.3 Sync `templates/storageclass.yaml` and the new `templates/NOTES.txt` into the `helm/`
   mirror
   check: python3 -c "import importlib.util; spec=importlib.util.spec_from_file_location('vsc','.build/bin/verify-storage-contract.py'); m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m); m.verify_mirrors()"
-- [ ] 4.4 Human cluster-verification follow-up: on a real cluster with both an already-installed
-  (lookup-hit) StorageClass and a not-yet-installed (lookup-miss) name, confirm (a) `helm upgrade
-  --install` against the existing class renders its live `parameters` unchanged and succeeds, and
-  (b) the NOTES.txt divergence warning prints when the supplied value disagrees with the live
-  class and is silent when it agrees or there is no live class
+- [x] 4.3a (added in review round 1, F5) Add a `helm-unittest` suite for the storageclass chart,
+  using `kubernetesProvider` to mock an existing live StorageClass: (a) an unencrypted EBS class
+  preserves its exact `parameters` on render, and a class with no recorded `parameters` renders no
+  `parameters` block; (b) NOTES.txt's divergence warning fires when the supplied value disagrees
+  with the live EBS class, stays silent when it agrees, and never fires for a non-EBS provisioner
+  even when parameters disagree. Wired into `.build/bin/validate-helm.sh`.
+  check: helm unittest src/groundx/prereqs/storageclass
+- [ ] 4.4 Human cluster-verification follow-up: confirm the above against a real cluster (`helm
+  upgrade --install` against the existing class renders its live `parameters` unchanged and
+  succeeds; the NOTES.txt divergence warning behavior matches). The lookup-hit branch and NOTES.txt
+  divergence warning are now exercised by task 4.3a's `helm-unittest` suite, so this step is a true
+  real-cluster confirmation, not the only check that exists for this behavior.
   check: n/a -- human-run, no live cluster available in this worktree (see design.md D3/D4 and
   AGENTS.md's migration/DB-gate-style human-verification pattern; this is not a DB migration, but
   the same "cannot be exercised without a live external system" reasoning applies)
@@ -81,3 +88,48 @@
 See the workspace-root `openspec/changes/age-106-improve-groundx-harness-security-never-ask-users-to-paste/`
 change folder (outside this repo, at the workspace root alongside `contract.md`) for cross-service
 coordination with `groundx-studio-harness` and any other deferred items for this ticket.
+
+## Amendments
+
+### 2026-10-01: review round 1 fixes (F1-F7)
+
+The review round found real defects in the original render logic and test coverage. Fixed in the
+same chart (`src/groundx/prereqs/storageclass/`, mirrored into `helm/prereqs/storageclass/`):
+
+- **F1** (`templates/storageclass.yaml`): the `"false"`-string normalization guard was applying to
+  every parameter key on every provisioner instead of only the EBS-only keys, silently dropping a
+  legitimate non-EBS `"false"` value (e.g. EFS `ensureUniqueDirectory: "false"`). Scoped the guard
+  to `$ebsOnlyKeys` membership. Added an EFS `ensureUniqueDirectory: "false"` fixture to
+  `values.efs.example.yaml` and a `verify_storageclass` assertion that it survives rendering.
+- **F2** (`templates/storageclass.yaml`): the `lookup` preservation branch only fired when the live
+  class's `parameters` map was non-empty, so a live class with genuinely empty/omitted parameters
+  fell through to the chart's new defaults on upgrade -- the exact immutable-parameter failure the
+  guard exists to prevent. Changed the branch condition to `if $existing` alone, rendering a
+  `parameters:` block only when `$existing.parameters` actually has entries.
+- **F3** (`README.md`): added a chart-publication-status note near the top of the Persistent Storage
+  section stating that only `0.1.1` is published as of this PR, and an explicit `--version 0.1.2`
+  pin instruction in the upgrade note. The root workspace `contract.md` Rollout line still needs an
+  orchestrator-level edit to state this sequencing dependency; this builder cannot write that file.
+- **F4** (`templates/NOTES.txt`): the divergence-warning check did not look at provisioner, so an
+  EFS/Azure/GKE upgrade with the chart's EBS-default merged into every provisioner's values could
+  fire a false "value not applied" warning. Scoped the check to
+  `eq .Values.provisioner "ebs.csi.aws.com"`.
+- **F5**: added `src/groundx/prereqs/storageclass/tests/{storageclass_test.yaml,notes_test.yaml}`,
+  a `helm-unittest` suite using `kubernetesProvider` to mock an existing StorageClass -- covering
+  the lookup-hit parameter-preservation branch (F2) and the NOTES.txt divergence warning (F4),
+  including its EBS-only scoping and the empty-live-parameters case. Wired into
+  `.build/bin/validate-helm.sh` (`helm unittest src/groundx/prereqs/storageclass`; the chart has no
+  `helm/` mirror test tree, consistent with the mirror's existing `tests/`-removed convention). Task
+  4.4 above now covers only the true real-cluster confirmation follow-up; the lookup-hit behavior
+  itself is exercised by this suite, not solely by a deferred human step.
+- **F6** (minor, `.build/bin/verify-storage-contract.py`): added positive anchors (`kind:
+  StorageClass`, a surviving non-gated parameter) to `verify_optout_normalization` and
+  `verify_provisioner_isolation` so a regression dropping the whole `parameters` block would no
+  longer still pass.
+- **F7** (minor, `.build/bin/verify-storage-contract.py`): renamed
+  `verify_notes_lookup_miss` to `verify_notes_lookup_miss_renders_without_warning` and added a
+  positive `^NOTES:$` anchor, so the check can no longer pass vacuously on a NOTES.txt that failed
+  to render at all.
+
+All of the above were confirmed against a reverted-template control (each test fails on the
+pre-fix behavior) and the full `.build/bin/validate-helm.sh` gate, which passed clean after the fix.
