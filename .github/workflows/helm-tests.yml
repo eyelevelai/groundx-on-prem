@@ -37,7 +37,7 @@ jobs:
               run: python3 -m unittest discover -s src/groundx/tests -p 'test_dns_probe.py' -v
 
             - name: Install helm-unittest plugin
-              run: helm plugin install https://github.com/helm-unittest/helm-unittest.git
+              run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "$(cat .build/HELM_UNITTEST_VERSION)"
 
             - name: Install yq (mikefarah v4, pinned + checksum)
               run: |

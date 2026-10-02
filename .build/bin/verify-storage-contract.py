@@ -144,14 +144,9 @@ MIRRORED_FILES = (
     "prereqs/storageclass/values.efs.example.yaml",
     "prereqs/storageclass/values.azure-files.example.yaml",
     "prereqs/storageclass/values.gke-filestore.example.yaml",
-    "templates/_helpers/app/layout-inference.tpl",
-    "templates/_helpers/app/ranker-inference.tpl",
-    "templates/_helpers/app/summary-inference.tpl",
-    "templates/_helpers/app/workspace.tpl",
-    "templates/_helpers/services/cache.tpl",
-    "templates/services/cache.yaml",
-    "templates/services/cache-metrics.yaml",
 )
+SRC_TEMPLATES = ROOT / "src" / "groundx" / "templates"
+MIRROR_TEMPLATES = ROOT / "helm" / "templates"
 STALE_PATTERNS = (
     r"type:\s+\"\"",
     r"groundx-workspaces",
@@ -218,6 +213,24 @@ def verify_mirrors() -> typing.List[str]:
         if not filecmp.cmp(left, right, shallow=False):
             raise AssertionError(f"mirrored file drift: {relative}")
         successes.append(f"mirror {relative} passed")
+
+    if not SRC_TEMPLATES.is_dir():
+        raise AssertionError(f"missing mirrored directory: {SRC_TEMPLATES.relative_to(ROOT)}")
+    if not MIRROR_TEMPLATES.is_dir():
+        raise AssertionError(f"missing mirrored directory: {MIRROR_TEMPLATES.relative_to(ROOT)}")
+
+    src_relatives = {p.relative_to(SRC_TEMPLATES) for p in SRC_TEMPLATES.rglob("*") if p.is_file()}
+    mirror_relatives = {p.relative_to(MIRROR_TEMPLATES) for p in MIRROR_TEMPLATES.rglob("*") if p.is_file()}
+    for rel in sorted(src_relatives | mirror_relatives, key=lambda item: item.as_posix()):
+        relative = (Path("templates") / rel).as_posix()
+        left = SRC_TEMPLATES / rel
+        right = MIRROR_TEMPLATES / rel
+        if not left.exists() or not right.exists():
+            raise AssertionError(f"missing mirrored file: {relative}")
+        if not filecmp.cmp(left, right, shallow=False):
+            raise AssertionError(f"mirrored file drift: {relative}")
+        successes.append(f"mirror {relative} passed")
+
     return successes
 
 

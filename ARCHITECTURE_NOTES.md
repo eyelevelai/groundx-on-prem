@@ -72,7 +72,8 @@ There is no runtime "main" in this repo. The operational entry points are:
 helm template src/groundx -f src/groundx/values/minikube/values.yaml
 
 # Full local gate (what CI runs — .github/workflows/helm-tests.yml)
-helm plugin install https://github.com/helm-unittest/helm-unittest.git
+# plugin version pinned at .build/HELM_UNITTEST_VERSION
+helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "$(cat .build/HELM_UNITTEST_VERSION)"
 .build/bin/validate-helm.sh                      # lint + unittest + dual-surface render checks
 # Bare unittest also works, but the Google-OCR case needs the throwaway credentials
 # fixture the gate generates; without it `helm unittest src/groundx` fails the celery

@@ -5,20 +5,25 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${ROOT_DIR}"
 
 RUN_JUNIT=0
+PY="$(command -v python3 || command -v python)" || { echo "no python interpreter on PATH (need python3 or python)" >&2; exit 1; }
 
 usage() {
   cat <<'USAGE'
 Usage: .build/bin/validate-helm.sh [--junit]
 
 Runs the GroundX Helm production chart gate from one stable entrypoint:
+  - chart source line-ending guard (see GX-22)
   - helm lint for both chart surfaces
-  - helm unittest for src/groundx and the helm/ mirror
+  - pinned helm-unittest plugin version guard
+  - guard-script unit tests (stdlib scripts under .build/tests)
+  - helm unittest for src/groundx, the helm/ mirror, and the kafka-cluster subchart
+  - snapshot-rewrite-on-run guard (see GX-22)
   - google OCR credentials render for both chart surfaces
   - shared Google credential isolation, rotation and schema checks
   - snapshot label guard unit tests
   - snapshot label guard
   - workspace chart contract verifier
-  - storage chart and generated AWS values contract verifier
+  - storage chart, generated AWS values, and template-mirror contract verifier
   - probe-mirror-drift guard (renders src/groundx and helm/ and compares the API-pod probe timing)
   - targeted render checks for both chart surfaces
   - git whitespace check
@@ -45,6 +50,33 @@ for arg in "$@"; do
   esac
 done
 
+# .gitattributes (see GX-22) only normalizes line endings for files checked out AFTER it lands --
+# an existing checkout with core.autocrlf=true can still have these files on disk as CRLF against
+# the LF blobs the committed snapshot hash annotations were computed from, which silently
+# reproduces this ticket's original symptom (helm unittest snapshot mismatches that look like a
+# real regression). `git add --renormalize .` alone does not fix this: it only rewrites the index,
+# not the working-tree bytes, so it can report "nothing to stage" while the files are still CRLF
+# on disk. Check the real files before anything else runs, so a stale checkout fails fast with the
+# actual fix instead of failing later with a confusing snapshot diff.
+echo "==> Verifying chart source line endings match .gitattributes (see GX-22)"
+# `grep -q` as the last stage of a pipe under `set -o pipefail` can make this check silently pass:
+# `-q` exits after the first match, which can SIGPIPE the upstream `git ls-files`/`grep` before they
+# finish writing, and pipefail then reports THAT non-zero exit instead of the match `if` needs to
+# see, so the `if` reads it as false. Confirmed to actually happen intermittently once the file list
+# is large enough that grep's early exit outruns the writer. `grep -c` reads its input to completion
+# either way, so this cannot happen.
+crlf_count="$(git ls-files --eol -- src/groundx helm 2>/dev/null | grep 'attr/text eol=lf' | grep -cE 'w/crlf|w/mixed' || true)"
+if [ "${crlf_count:-0}" -gt 0 ]; then
+  echo "chart files are checked out as CRLF against this repo's eol=lf .gitattributes pin (an existing checkout from before the pin, or core.autocrlf=true on this machine). helm unittest snapshot hashes will not match until the working tree is re-checked out." >&2
+  if ! git diff --quiet -- src/groundx helm 2>/dev/null || ! git diff --cached --quiet -- src/groundx helm 2>/dev/null; then
+    echo "You have uncommitted changes under src/groundx or helm -- commit or stash them first, the fix below discards uncommitted edits to those paths:" >&2
+  else
+    echo "Fix:" >&2
+  fi
+  echo "  git ls-files -z -- src/groundx helm | xargs -0 rm -f && git checkout -- src/groundx helm" >&2
+  exit 1
+fi
+
 # The Google-OCR tests render a credentials file that layout-ocr-credentials.yaml reads
 # via .Files.Get. That file must NOT ship in the packaged chart (files/ is packaged), so
 # generate a throwaway one for the duration of this gate and remove it on exit. The
@@ -55,12 +87,13 @@ OCR_TEST_CREDENTIALS="files/ocr/gcv-test.json"
 layout_pvc_values=""
 layout_pvc_render=""
 ocr_generated_files=()
+SNAPSHOT_STABILITY_HASHFILE="$(mktemp)"
 cleanup() {
   if ((${#ocr_generated_files[@]})); then
     rm -f "${ocr_generated_files[@]}"
   fi
   rmdir src/groundx/files/ocr src/groundx/files helm/files/ocr helm/files 2>/dev/null || true
-  rm -f "${layout_pvc_values}" "${layout_pvc_render}"
+  rm -f "${layout_pvc_values}" "${layout_pvc_render}" "${SNAPSHOT_STABILITY_HASHFILE}"
 }
 trap cleanup EXIT
 for chart in src/groundx helm; do
@@ -82,14 +115,40 @@ JSON
   ocr_generated_files+=("${ocr_target}")
 done
 
+run_helm_unittest_and_verify_stability() {
+  local marker_suffix="$1"; shift
+  helm unittest "$@" src/groundx helm src/groundx/prereqs/kafka-cluster
+  echo "==> Verifying helm unittest ${marker_suffix}did not rewrite committed snapshots as a side effect (see GX-22)"
+  "${PY}" .build/bin/verify-helm-snapshot-stability.py verify "${SNAPSHOT_STABILITY_HASHFILE}"
+}
+
+echo "==> Capturing snapshot state before running any Helm tooling (see GX-22)"
+"${PY}" .build/bin/verify-helm-snapshot-stability.py capture "${SNAPSHOT_STABILITY_HASHFILE}"
+
 echo "==> Linting Helm chart surfaces"
 helm lint src/groundx
 helm lint helm
 
+echo "==> Verifying pinned helm-unittest plugin version"
+"${PY}" .build/bin/verify-helm-unittest-plugin-version.py
+
+echo "==> Verifying every guard-script test file is referenced in validate-helm.sh"
+SELF_PATH="${ROOT_DIR}/.build/bin/validate-helm.sh"
+for test_file in .build/tests/test_*.py; do
+  base="$(basename "${test_file}")"
+  grep -qF "${base}" "${SELF_PATH}" || { echo "orphaned guard-script test file not referenced in validate-helm.sh: ${base}" >&2; exit 1; }
+done
+
+echo "==> Verifying every helm unittest invocation is guarded (see GX-22)"
+[[ "$(grep -cE '^[[:space:]]*helm unittest\b' "${SELF_PATH}")" == "1" ]] || { echo "expected exactly one guarded helm unittest invocation (inside run_helm_unittest_and_verify_stability) in validate-helm.sh" >&2; exit 1; }
+
+echo "==> Running guard-script unit tests"
+"${PY}" .build/tests/test_verify_helm_unittest_plugin_version.py
+"${PY}" .build/tests/test_verify_helm_snapshot_stability.py
+"${PY}" .build/tests/test_verify_storage_contract.py
+
 echo "==> Running Helm unit tests"
-helm unittest src/groundx
-helm unittest helm
-helm unittest src/groundx/prereqs/kafka-cluster
+run_helm_unittest_and_verify_stability ""
 
 echo "==> Verifying Google OCR credentials rendering for both chart surfaces"
 for chart in src/groundx helm; do
@@ -437,7 +496,7 @@ fi
 if [[ "${RUN_JUNIT}" == "1" ]]; then
   echo "==> Writing Helm unittest JUnit report"
   mkdir -p reports
-  helm unittest -o junit --output-file reports/helm-unittest.xml src/groundx
+  run_helm_unittest_and_verify_stability "(--junit) " -o junit --output-file reports/helm-unittest.xml
 fi
 
 echo "==> Checking diff whitespace"
