@@ -18,7 +18,7 @@ workflows:
   - verify
 
 context: |
-  - IDENTITY: groundx-on-prem. Role: infra. Language: Helm (+ Bash operator CLI + legacy Terraform). Chart version: 0.2.5. Privileged: true (Tier 3 explicit authorization required for any destructive/deploy/publish operation).
+  - IDENTITY: groundx-on-prem. Role: infra. Language: Helm (+ Bash operator CLI + Terraform, active/supported for existing AWS EKS deployments -- not used for new installs). Chart version: 0.2.7 (src/groundx/Chart.yaml; the helm/ published mirror currently lags at 0.2.6). Privileged: true (Tier 3 explicit authorization required for any destructive/deploy/publish operation).
   - PURPOSE: Packages the commercial GroundX RAG platform (document ingestion + hybrid text/vector search + re-ranking + LLM summarization) as a Kubernetes deployment for self-hosted/air-gapped environments. Deploys pre-built private container images; no app source code lives here.
   - K8S TARGETS: eks, aks, gke, openshift, minikube (selected via cluster.type values key).
   - BACKING SERVICES DEPLOYED (each can be swapped via existing:{} + serviceType): Redis (cache), MySQL/Percona XtraDB (db), MinIO/S3 (file), OpenSearch (search), Kafka/Strimzi or SQS (stream). Optional: Neo4j (legacy only, absent from current Helm path), Prometheus/Grafana (monitoring).
@@ -73,6 +73,25 @@ context: |
   
   - COMMIT CONVENTION: standard conventional commits (inferred; no explicit convention in-repo).
   
+  - TERRAFORM TOOLING (terraform/aws/, active/deployed on 0.2.7, not legacy): EKS module pinned to
+    terraform-aws-modules/eks/aws 20.37.2 (no loose ~> constraint on this branch). Module tests
+    live in terraform/aws/eks/tests/*.tftest.hcl (command = plan, mock_provider "aws" {}); an
+    explicitly-configured resource argument (e.g. cluster_version = var.x) keeps its configured
+    value at plan time even under a mocked provider, so asserting on a module's own output (not
+    just var./local. echoing itself) is a valid, non-vacuous test mechanism. terraform_version
+    "1.7.0" has the mock_provider/override_module syntax but its mock engine cannot resolve
+    nested count/for_each expressions inside terraform-aws-modules/eks/aws that depend on mocked
+    data-source attributes (observed: real CI failure, "Invalid count argument"/"Invalid for_each
+    argument"). CI and local verification are both pinned to "1.16.3", confirmed working; the
+    repo's own required_version is only >= 1.0.0, which guarantees neither the syntax nor correct
+    mock resolution. terraform/aws/eks/*.tf
+    symlinks into terraform/aws/ and terraform/shared/ — edit the target, never the link.
+    env.auto.tfvars is a symlink to ../env.tfvars, which does not exist in a fresh checkout
+    (only env.tfvars.example is committed) — a local `terraform test`/`plan` run needs
+    `cp -n env.tfvars.example env.tfvars` first or Terraform's auto-load aborts on the dangling
+    symlink. setup-eks has no pre-existing aws eks describe-cluster call; only aws eks
+    list-clusters (bin/shared/util:test_aws()) for connectivity.
+
   - KNOWN GAPS / OPEN QUESTIONS:
     - helm/ <-> src/groundx duplication: no regen script, no drift check — manual sync, latent drift.
     - upload.groundx.ai model-weight download hardcoded in init-containers — air-gap blocker; no documented pre-seeding mechanism.
