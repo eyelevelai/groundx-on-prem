@@ -151,3 +151,15 @@ this ticket documents) must fail one of the two checks, not pass both.
 - **WHEN** a commit is pushed, a pull request is opened, or a release is published
 - **THEN** `.github/workflows/terraform-tests.yml` runs `terraform -chdir=terraform/aws/eks test`
   and its result gates the workflow
+
+## Amendments
+
+**2026-10-05 — the CI and structural-check requirements above no longer apply.** The last
+requirement ("An automated proof (test + structural check)...") and its scenarios, including the
+requirement for `.github/workflows/terraform-tests.yml` and the structural wiring check, were
+removed from the shipped change after review: the Terraform path is internal and unsupported for
+customers, the ticket is rated Medium, and the team's test policy is to guard critical-logic
+regressions, extend existing tests, and skip trivial ones. The living spec at
+`openspec/specs/eks-cluster-version-config/spec.md` carries the current requirement: wiring is
+verified by code review, and tests cover only the unset-is-null default and the resolver's
+never-guess-a-version and region behavior.

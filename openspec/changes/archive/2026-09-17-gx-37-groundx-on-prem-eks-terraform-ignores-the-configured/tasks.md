@@ -198,3 +198,22 @@ full rationale.
   `bin/tests/resolve-eks-version-test` gained direct tests of
   `declared_eks_version_default()`'s missing-key and commented-line cases.
   check: bash bin/tests/resolve-eks-version-test
+
+**2026-10-05 — CI workflow and extra tests removed after review.** Per `benjamin.fletcher`'s
+review on the GX-37 Linear thread (2026-09-28, 2026-10-02): this Terraform path is internal and
+unsupported for customers and the ticket is rated Medium, so it does not warrant its own CI
+workflow; tests should cover critical-logic regressions, extend existing test files, and not prove
+trivial behavior. Commit `46900fd8` therefore removed:
+- `.github/workflows/terraform-tests.yml` (task 4.1 below stays ticked as history, but the file no
+  longer exists; the `python-hcl2` wiring check went with it),
+- `terraform/aws/eks/tests/cluster_version.tftest.hcl` (its `unset_version_resolves_to_null` run
+  now lives in the pre-existing `node_diagnostics.tftest.hcl`; the chosen-version run was dropped
+  because it only asserted a variable equals its input),
+- `bin/tests/setup-eks-wiring-test` (its one non-redundant case, that `setup-eks`'s resolver
+  wrapper never emits a guessed version, moved into `bin/tests/resolve-eks-version-test`).
+
+The `check:` lines above that run `cluster_version.tftest.hcl` or `setup-eks-wiring-test` are
+historical and no longer runnable. Their current equivalents are
+`terraform -chdir=terraform/aws/eks test` and `bash bin/tests/resolve-eks-version-test`.
+`cluster_version`'s wiring in `eks.tf` is now verified by code review only; no automated check
+guards it.
