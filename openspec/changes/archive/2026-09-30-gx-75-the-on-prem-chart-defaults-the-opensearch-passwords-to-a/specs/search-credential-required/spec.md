@@ -27,7 +27,7 @@ Invariant: a render in which search is in use never carries a search credential 
 #### Scenario: Supplied passwords render unchanged (polarity: accept and enqueue; must not block; backward compatibility during rollout)
 - **WHEN** the chart is rendered with `mode` not `ingest` and both passwords set to non-empty test values
 - **THEN** the render succeeds and `config-yaml-map` carries exactly those two values
-- **AND** an existing install that sets both keys to its current OpenSearch credentials renders the same configuration it rendered before the upgrade
+- **AND** an existing install that sets both keys to its current non-default OpenSearch credentials renders the same configuration it rendered before the upgrade (an install still on a published default must choose new credentials, which the reject requires)
 
 ### Requirement: Ingest mode renders no search password
 When `mode` is `ingest`, the chart SHALL render without any search password set, and SHALL NOT render a search password even when one is supplied.
