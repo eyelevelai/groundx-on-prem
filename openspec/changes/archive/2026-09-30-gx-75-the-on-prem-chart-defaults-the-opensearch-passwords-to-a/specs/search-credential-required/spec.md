@@ -29,6 +29,18 @@ Invariant: a render in which search is in use never carries a search credential 
 - **THEN** the render succeeds and `config-yaml-map` carries exactly those two values
 - **AND** an existing install that sets both keys to its current non-default OpenSearch credentials renders the same configuration it rendered before the upgrade (an install still on a published default must choose new credentials, which the reject requires)
 
+### Requirement: A published default search password is rejected
+When `mode` is not `ingest`, the chart SHALL fail the render if `search.password` or `search.privilegedPassword` is a published default password, so that an upgrade which silently keeps the old default (for example `helm upgrade --reuse-values`) does not deploy. The rejected set SHALL be matched by SHA-256 against `search.bannedPasswordHashes` (default: the published default's hash), so no tracked file stores the password itself. This applies to `src/groundx` and to the `helm/` mirror.
+
+#### Scenario: A published default is rejected (polarity: reject before state; catches)
+- **WHEN** the chart is rendered with `mode` not `ingest` and `search.password` (or `search.privilegedPassword`) set to a value whose SHA-256 is in `search.bannedPasswordHashes`
+- **THEN** the render fails with a message that the password must not be a published default
+- **AND** no `config-yaml-map` Secret is produced
+
+#### Scenario: A non-default password renders (polarity: accept and enqueue; must not block)
+- **WHEN** the chart is rendered with `mode` not `ingest` and both passwords set to non-empty values not present in `search.bannedPasswordHashes`
+- **THEN** the render succeeds
+
 ### Requirement: Ingest mode renders no search password
 When `mode` is `ingest`, the chart SHALL render without any search password set, and SHALL NOT render a search password even when one is supplied.
 
@@ -53,7 +65,7 @@ The literal that the chart previously published as the default OpenSearch passwo
 - **THEN** it defines no `OPENSEARCH_INITIAL_ADMIN_PASSWORD` value, so the README install cannot start OpenSearch with a password the operator did not supply
 
 ### Requirement: README takes operator-supplied OpenSearch passwords
-The README `### OpenSearch` install step SHALL take an operator-supplied admin password (passed to the OpenSearch release as `OPENSEARCH_INITIAL_ADMIN_PASSWORD`) and state that the same value must be set as `search.privilegedPassword` in the GroundX values. The README `### Configuration` minimal-keys block SHALL list `search.password` and `search.privilegedPassword` as required when `mode` is not `ingest`. The README SHALL carry a migration note for existing installs: an existing OpenSearch keeps the admin password it was first initialised with, so set `search.privilegedPassword` to the current admin password and `search.password` to the current application password, then rotate; a wrong `search.privilegedPassword` makes the GroundX API crash-loop at startup when it has to create or update its user (a first install or an application-password change), and is otherwise silent rather than fail the render.
+The README `### OpenSearch` install step SHALL take an operator-supplied admin password (passed to the OpenSearch release as `OPENSEARCH_INITIAL_ADMIN_PASSWORD`) and state that the same value must be set as `search.privilegedPassword` in the GroundX values. The README `### Configuration` minimal-keys block SHALL list `search.password` and `search.privilegedPassword` as required when `mode` is not `ingest`. The README SHALL carry a migration note for existing installs: an existing OpenSearch keeps the admin password it was first initialised with, so, when those are non-default, set `search.privilegedPassword` to the current admin password and `search.password` to the current application password, then rotate (if either current value is a published default the chart rejects it, so rotate the admin off it first and choose a new application password); a wrong `search.privilegedPassword` makes the GroundX API crash-loop at startup when it has to create or update its user (a first install or an application-password change), and is otherwise silent rather than fail the render.
 
 #### Scenario: OpenSearch step asks for a password (polarity: reject before state)
 - **WHEN** the README `### OpenSearch` section is read
