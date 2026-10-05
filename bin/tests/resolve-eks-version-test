@@ -66,6 +66,34 @@ state_fail_result=$(cat "$TEST_ROOT/state_read_fails/stdout")
 [[ "$state_fail_result" != "1.35" ]] || fail "a 'terraform show -json' failure must never emit the declared default (1.35) -- an un-init'd eks/ dir is the NORMAL pre-setup-eks state, and treating it as 'no cluster' is the unattended-downgrade risk this function exists to prevent"
 [[ -z "$state_fail_result" ]] || fail "a 'terraform show -json' failure must not emit any version on stdout, got [$state_fail_result]"
 
+run_setup_wrapper() {
+  local scenario="$1"
+  local run_dir="$TEST_ROOT/setup_wrapper_$scenario"
+  mkdir -p "$run_dir/bin" "$run_dir/env"
+  ln -s "$FAKE_TERRAFORM" "$run_dir/bin/terraform"
+  ln -s "$FAKE_AWS" "$run_dir/bin/aws"
+  printf 'environment_internal = {\n  eks_version = "1.35"\n}\n' > "$run_dir/env/env.tfvars.example"
+
+  set +e
+  (
+    FAKE_SCENARIO="$scenario" \
+      FAKE_TERRAFORM_LOG="$run_dir/terraform.log" \
+      FAKE_AWS_LOG="$run_dir/aws.log" \
+      PATH="$run_dir/bin:$PATH" \
+      bash -c '. "'"$ROOT_DIR"'/bin/shared/util"; resolve_setup_eks_version "'"$run_dir/env"'" "us-west-2"'
+  ) >"$run_dir/stdout" 2>"$run_dir/stderr"
+  echo $? > "$run_dir/exit_code"
+  set -e
+}
+
+run_setup_wrapper existing_cluster
+[[ "$(cat "$TEST_ROOT/setup_wrapper_existing_cluster/exit_code")" == "0" ]] || fail "setup-eks's resolver wrapper should succeed for an existing cluster"
+[[ "$(cat "$TEST_ROOT/setup_wrapper_existing_cluster/stdout")" == "1.31" ]] || fail "setup-eks's resolver wrapper must emit the existing cluster's running version (1.31), not the declared default (1.35)"
+
+run_setup_wrapper existing_cluster_lookup_fails
+[[ "$(cat "$TEST_ROOT/setup_wrapper_existing_cluster_lookup_fails/exit_code")" != "0" ]] || fail "setup-eks's resolver wrapper must abort (non-zero) when an existing cluster's version lookup fails, so setup-eks never writes a guessed version"
+[[ -z "$(cat "$TEST_ROOT/setup_wrapper_existing_cluster_lookup_fails/stdout")" ]] || fail "setup-eks's resolver wrapper must emit nothing on stdout when the lookup fails"
+
 echo "resolve-eks-version tests passed"
 
 TFVARS_TEST_ROOT=$(mktemp -d)

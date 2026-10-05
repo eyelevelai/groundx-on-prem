@@ -6,29 +6,17 @@ TBD - created by archiving change gx-37-groundx-on-prem-eks-terraform-ignores-th
 ### Requirement: The operator-configured Kubernetes version reaches the EKS module as `cluster_version`
 The `environment_internal` variable in `terraform/aws/variables.tf` SHALL carry an optional
 Kubernetes-version key, and its value SHALL be passed to `module "eyelevel_eks".cluster_version`
-in `terraform/aws/eks/eks.tf`. Validation MUST prove this with two independent checks: (1) the
-variable/local's own resolved value is correct (never asserted via the module's output, which
-Terraform's mock provider reports as unknown at plan time for this Optional+Computed resource
-attribute regardless of configuration — see `design.md` D3), and (2) the module call's
-`cluster_version` argument expression structurally references `environment_internal.eks_version`
-in Terraform's parsed configuration (not a resolved value).
+in `terraform/aws/eks/eks.tf`. This wiring is verified by code review; no automated check asserts
+it (see the testing requirement below). A test that only asserts a variable equals the value it
+was given proves nothing about this wiring, because Terraform's mock provider reports the
+module's resulting resource attribute as unknown at plan time (see `design.md` D3).
 
 Polarity: finalize success — the configured value must be the one that lands on the resource,
 not merely a value the plan re-states.
 
-#### Scenario: Configured version resolves correctly at the variable/local level
-- **WHEN** `environment_internal`'s version key is set to a specific version string and the plan
-  is evaluated (`terraform -chdir=terraform/aws/eks test`, `command = plan`, mocked AWS provider)
-- **THEN** the resolved value of `var.environment_internal.eks_version` (or the local it flows
-  through) equals that configured value
-
-#### Scenario: The module call structurally wires the configured value
-- **WHEN** `terraform/aws/eks/eks.tf`'s `module "eyelevel_eks"` block's `cluster_version` argument
-  is inspected via Terraform's parsed configuration (`terraform show -json`'s
-  `configuration.root_module.module_calls.eyelevel_eks.expressions.cluster_version.references`, or
-  an equivalent source-level check)
-- **THEN** the argument's expression references `environment_internal.eks_version` — the wiring
-  is present in configuration independent of any resolved resource value
+#### Scenario: The module call passes the configured value
+- **WHEN** `terraform/aws/eks/eks.tf`'s `module "eyelevel_eks"` block is reviewed
+- **THEN** its `cluster_version` argument is `var.environment_internal.eks_version`
 
 ### Requirement: An unset version key leaves the module input `null`, reproducing today's behavior
 The version key SHALL default to `null`. An operator's existing, unmodified `env.tfvars` (which
@@ -43,9 +31,7 @@ no override state may be created for existing clusters.
   evaluated (`terraform -chdir=terraform/aws/eks test`, `command = plan`, mocked AWS provider)
 - **THEN** the resolved value of `var.environment_internal.eks_version` (or the local it flows
   through) is `null` — specifically **not** `1.35` (the declared-but-previously-unused default)
-  and not any other value — so an existing cluster's plan shows zero diff on this attribute, and
-  the same structural wiring check from the requirement above confirms `cluster_version` is wired
-  to this variable/local rather than to a hardcoded default
+  and not any other value — so an existing cluster's plan shows zero diff on this attribute
 
 ### Requirement: `setup-eks` emits the declared default version for a not-yet-created cluster
 When the target EKS cluster does not yet exist, `terraform/aws/setup-eks` SHALL write the
@@ -131,36 +117,28 @@ to review `terraform plan` output before it is applied (since `bin/environment e
   control-plane downgrades, states that the value also affects managed node group AMI selection,
   and instructs reviewing the plan before applying
 
-### Requirement: An automated proof (test + structural check) shows the configured value reaches the EKS module
-A new `terraform/aws/eks/tests/*.tftest.hcl` file SHALL assert, at `command = plan` under a
-mocked AWS provider, that the `environment_internal.eks_version` variable/local's own resolved
-value equals the configured value when the version key is set, and is `null` when it is unset —
-never asserted via `module.eyelevel_eks`'s output, since Terraform's mock provider reports that
-attribute as unknown at plan time for this Optional+Computed resource regardless of configuration
-(see `design.md` D3). A separate structural wiring check (a script or command invoking
-`terraform show -json` on a real plan, or an equivalent source-level check) SHALL confirm the
-module call's `cluster_version` argument expression references `environment_internal.eks_version`
-in Terraform's parsed, unevaluated configuration. Both SHALL be wired into CI in this change (a
-new `.github/workflows/terraform-tests.yml`), so neither can silently go dormant.
+### Requirement: Tests guard only the logic whose regression would harm a live cluster
+Tests added for this capability SHALL cover critical logic only, SHALL extend existing test files
+where one already covers the area, and SHALL NOT assert that a variable equals the value it was
+given. No dedicated CI workflow is added: this Terraform path is internal and unsupported for
+customers, and the issue is rated Medium.
 
-Polarity: finalize failure — a version that does not reach the module (the historical regression
-this ticket documents) must fail one of the two checks, not pass both.
+The guarded logic is:
+- An unset version key resolves to `null`, so an existing `env.tfvars` produces a zero-diff plan
+  (`terraform/aws/eks/tests/node_diagnostics.tftest.hcl`, `unset_version_resolves_to_null`).
+- `resolve_eks_version` and `resolve_setup_eks_version` never emit a guessed version when an
+  existing cluster is found but its running version cannot be read, and pass the operator-selected
+  region through (`bin/tests/resolve-eks-version-test`).
 
-#### Scenario: Value-resolution test fails on the historical regression shape
-- **WHEN** `environment_internal` does not yet carry the version key at all (today's behavior,
-  prior to this change's wiring fix)
-- **THEN** the `.tftest.hcl` "key set" run block fails, because the variable/local the test
-  targets does not exist or does not resolve to the configured value — proving the test is
-  non-vacuous
+Polarity: reject before state — a regression that lets `setup-eks` write a guessed or lower
+version for a live cluster must fail the resolver tests.
 
-#### Scenario: Structural wiring check fails on the historical regression shape
-- **WHEN** `terraform/aws/eks/eks.tf`'s `module "eyelevel_eks"` block does not set
-  `cluster_version` at all (today's behavior, prior to this change's wiring fix)
-- **THEN** the structural wiring check finds no `cluster_version` argument expression
-  referencing `environment_internal.eks_version` and fails — proving the check is non-vacuous
+#### Scenario: Lookup failure for an existing cluster never yields a version
+- **WHEN** Terraform state shows an existing cluster and `aws eks describe-cluster` fails
+- **THEN** `resolve_eks_version` and `resolve_setup_eks_version` exit non-zero and print nothing,
+  never the declared default
 
-#### Scenario: Test runs in CI on every push/PR/release
-- **WHEN** a commit is pushed, a pull request is opened, or a release is published
-- **THEN** `.github/workflows/terraform-tests.yml` runs `terraform -chdir=terraform/aws/eks test`
-  and its result gates the workflow
-
+#### Scenario: Region is passed to the AWS lookup
+- **WHEN** a region is supplied
+- **THEN** the `aws eks describe-cluster` call carries `--region <region>`; with no region, it
+  carries no `--region` flag

@@ -157,18 +157,3 @@ run "unset_version_resolves_to_null" {
     error_message = "An unset version key must resolve to null, not any implicit default."
   }
 }
-
-run "configured_version_resolves_correctly" {
-  command = plan
-
-  variables {
-    environment_internal = {
-      eks_version = "1.31"
-    }
-  }
-
-  assert {
-    condition     = var.environment_internal.eks_version == "1.31"
-    error_message = "A configured version key must resolve to the configured value, not null or any other value."
-  }
-}
