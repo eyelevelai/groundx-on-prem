@@ -97,6 +97,9 @@ true
 {{- if empty $v -}}
 {{- fail "search.password is required unless mode is ingest" -}}
 {{- end -}}
+{{- if has (sha256sum $v) (dig "bannedPasswordHashes" (list "00b9c0a93f3fa37affc9ad8c77cb6cca46b91f39c1539aeb732a59af6c6b771f") $in) -}}
+{{- fail "search.password must not be a published default password; choose a new password" -}}
+{{- end -}}
 {{ $v }}
 {{- end -}}
 {{- end }}
@@ -107,6 +110,9 @@ true
 {{- $v := dig "privilegedPassword" "" $in -}}
 {{- if empty $v -}}
 {{- fail "search.privilegedPassword is required unless mode is ingest" -}}
+{{- end -}}
+{{- if has (sha256sum $v) (dig "bannedPasswordHashes" (list "00b9c0a93f3fa37affc9ad8c77cb6cca46b91f39c1539aeb732a59af6c6b771f") $in) -}}
+{{- fail "search.privilegedPassword must not be a published default password; choose a new password" -}}
 {{- end -}}
 {{ $v }}
 {{- end -}}

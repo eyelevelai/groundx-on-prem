@@ -1067,6 +1067,26 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: 'search\.privilegedPassword'
+  - it: fails the render when search.password is a banned published default
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      search.password: gx75-banned-test-app
+      search.bannedPasswordHashes:
+        - "0b64baf8a25a35bff9695f7d793059d59a7e1763d39674b7eb78943e82f12f2d"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'search\.password must not be a published default'
+  - it: fails the render when search.privilegedPassword is a banned published default
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      search.privilegedPassword: gx75-banned-test-admin
+      search.bannedPasswordHashes:
+        - "525e507e2d1dbdfbfb75717fab944a72d424dd999439f9dfc1422a9d6fafb9e4"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'search\.privilegedPassword must not be a published default'
   - it: renders in ingest mode without search passwords
     templates:
       - ../templates/resources/config-yaml.yaml
