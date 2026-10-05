@@ -31,7 +31,7 @@ desired: {{ dig "replicas" "desired" 1 $in }}
 -}}
 {{- $san := dig "serviceAccount" "name" (include "groundx.serviceAccountName" .) $in -}}
 {{- if $san -}}{{- $_ := set $cfg "serviceAccountName" $san -}}{{- end -}}
-{{- range $key := list "affinity" "annotations" "containerSecurityContext" "labels" "nodeSelector" "resources" "securityContext" "tolerations" -}}
+{{- range $key := list "affinity" "annotations" "containerSecurityContext" "labels" "nodeSelector" "resources" "securityContext" "tolerations" "topologySpreadConstraints" "disruptionBudget" -}}
   {{- if hasKey $in $key -}}{{- $_ := set $cfg $key (get $in $key) -}}{{- end -}}
 {{- end -}}
 {{- $mounts := list -}}

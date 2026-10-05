@@ -319,6 +319,27 @@ tests:
       - notMatchRegex:
           path: stringData["config.yaml"]
           pattern: "maxImages:"
+  - it: "layout OCR timeout override renders unquoted in layout config.py"
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.ocr.timeout: 187
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: "ocrTimeout=187,"
+  - it: "layout OCR timeout above the ceiling fails schema validation"
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.ocr.timeout: 251
+    asserts:
+      - failedTemplate:
+          errorPattern: "layout/ocr/timeout.*maximum: got 251, want 250"
   - it: "existing: resources"
     templates:
       - ../templates/resources/config-models.yaml

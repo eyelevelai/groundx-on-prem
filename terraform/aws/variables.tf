@@ -32,6 +32,14 @@ variable "node_diagnostics" {
   default = {}
 }
 
+variable "dns_observability" {
+  description = "Optional CoreDNS metrics collection. Disabled unless explicitly enabled."
+  type = object({
+    enabled = optional(bool, false)
+  })
+  default = {}
+}
+
 variable "eks_kms_source_policy_documents" {
   description = "Optional existing policy documents to merge into the EKS cluster KMS key policy."
   type        = list(string)

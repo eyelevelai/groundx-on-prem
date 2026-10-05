@@ -602,6 +602,7 @@
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -680,6 +681,15 @@
             },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "updateStrategy": { "type": "string" },
             "workers": { "type": "integer" }
           },
@@ -749,7 +759,8 @@
         },
         "serviceName": { "type": "string" },
         "serviceType": { "type": "string" },
-        "tolerations": { "type": "array" }
+        "tolerations": { "type": "array" },
+        "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -837,6 +848,7 @@
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -878,6 +890,15 @@
             },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -930,6 +951,15 @@
             },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "updateStrategy": { "type": "string" },
             "workers": { "type": "integer" }
           },
@@ -972,6 +1002,15 @@
             },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -1014,7 +1053,17 @@
               "additionalProperties": false
             },
             "threads": { "type": "integer" },
+            "timeout": { "type": "integer", "minimum": 1, "maximum": 250 },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "type": { "type": "string" },
             "workers": { "type": "integer" }
           },
@@ -1059,6 +1108,15 @@
             },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -1100,6 +1158,15 @@
             },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -1159,7 +1226,16 @@
         },
         "serviceName": { "type": "string" },
         "serviceType": { "type": "string" },
-        "tolerations": { "type": "array" }
+        "tolerations": { "type": "array" },
+        "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+        "disruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -1206,6 +1282,15 @@
         },
         "serviceName": { "type": "string" },
         "tolerations": { "type": "array" },
+        "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+        "disruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        },
         "useExisting": { "type": "boolean" }
       },
       "additionalProperties": false
@@ -1246,7 +1331,16 @@
           "additionalProperties": false
         },
         "serviceName": { "type": "string" },
-        "tolerations": { "type": "array" }
+        "tolerations": { "type": "array" },
+        "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+        "disruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -1287,7 +1381,16 @@
           "additionalProperties": false
         },
         "serviceName": { "type": "string" },
-        "tolerations": { "type": "array" }
+        "tolerations": { "type": "array" },
+        "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+        "disruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -1413,6 +1516,15 @@
         "tolerations": {
           "type": "array"
         },
+        "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+        "disruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        },
         "concurrency": {
           "type": "integer",
           "minimum": 1
@@ -1529,7 +1641,16 @@
           "additionalProperties": false
         },
         "serviceName": { "type": "string" },
-        "tolerations": { "type": "array" }
+        "tolerations": { "type": "array" },
+        "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+        "disruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -1633,6 +1754,7 @@
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -1692,6 +1814,15 @@
             },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "updateStrategy": { "type": "string" },
             "workers": { "type": "integer" }
           },
@@ -1739,7 +1870,16 @@
           "additionalProperties": false
         },
         "serviceName": { "type": "string" },
-        "tolerations": { "type": "array" }
+        "tolerations": { "type": "array" },
+        "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+        "disruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -1780,7 +1920,16 @@
           "additionalProperties": false
         },
         "serviceName": { "type": "string" },
-        "tolerations": { "type": "array" }
+        "tolerations": { "type": "array" },
+        "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+        "disruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -1873,6 +2022,7 @@
             "timeout": { "type": "integer" },
             "timeoutKeepAlive": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
             "workers": { "type": "integer" }
           },
           "additionalProperties": false
@@ -2012,6 +2162,15 @@
             },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "workers": { "type": "integer" }
           },
           "additionalProperties": false
@@ -2049,6 +2208,27 @@
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
+            "dnsProbe": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "image": { "type": "string" },
+                "intervalSeconds": { "type": "integer", "minimum": 1 },
+                "successLogEvery": { "type": "integer", "minimum": 1 },
+                "queryTimeoutSeconds": { "type": "number", "exclusiveMinimum": 0 },
+                "slowThresholdSeconds": { "type": "number", "exclusiveMinimum": 0 },
+                "resources": { "type": "object" }
+              },
+              "additionalProperties": false
+            },
+            "rolloutStrategy": {
+              "type": "object",
+              "properties": {
+                "maxSurge": { "type": "integer", "minimum": 0 },
+                "maxUnavailable": { "type": "integer", "minimum": 0 }
+              },
+              "additionalProperties": false
+            },
             "existingSecret": { "type": "boolean" },
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
@@ -2124,6 +2304,15 @@
             "threads": { "type": "integer" },
             "terminalAgentTraceEnabled": { "type": "boolean" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -2215,6 +2404,7 @@
             "terminalAgentTraceEnabled": { "type": "boolean" },
             "timeout": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -2264,6 +2454,15 @@
             "threads": { "type": "integer" },
             "terminalAgentTraceEnabled": { "type": "boolean" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -2329,6 +2528,15 @@
             "terminalAgentTraceEnabled": { "type": "boolean" },
             "templateId": { "type": "string" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
