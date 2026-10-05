@@ -1,0 +1,155 @@
+suite: layout workers and layout-inference drain on pod termination
+tests:
+  - it: "every layout celery worker defaults to a 900 second grace period and execs supervisord"
+    templates:
+      - ../templates/app/celery.yaml
+    asserts:
+      - hasDocuments:
+          count: 5
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+      - equal:
+          path: spec.template.spec.containers[0].command[2]
+          value: "export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf\n"
+
+  - it: "layout-inference defaults to a 900 second grace period"
+    templates:
+      - ../templates/app/inference.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-inference
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+
+  - it: "gracePeriod overrides grace and stop wait on that service only"
+    templates:
+      - ../templates/app/celery.yaml
+      - ../templates/resources/layout-supervisord-conf.yaml
+    set:
+      layout.map.replicas.gracePeriod: 120
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 120
+        documentSelector:
+          path: metadata.name
+          value: layout-map
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+        documentSelector:
+          path: metadata.name
+          value: layout-correct
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "stopwaitsecs=90\\n"
+        documentSelector:
+          path: metadata.name
+          value: layout-map-supervisord-conf-map
+      - notMatchRegex:
+          path: data["supervisord.conf"]
+          pattern: "stopwaitsecs=90\\n"
+        documentSelector:
+          path: metadata.name
+          value: layout-correct-supervisord-conf-map
+
+  - it: "a gracePeriod under 31 floors the stop wait at 1 second"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    set:
+      layout.map.replicas.gracePeriod: 20
+    documentSelector:
+      path: metadata.name
+      value: layout-map-supervisord-conf-map
+    asserts:
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "stopwaitsecs=1\\n"
+
+  - it: "a gracePeriod of zero fails schema validation"
+    templates:
+      - ../templates/app/celery.yaml
+    set:
+      layout.map.replicas.gracePeriod: 0
+    asserts:
+      - failedTemplate:
+          errorPattern: "layout/map/replicas/gracePeriod.*minimum: got 0, want 1"
+
+  - it: "layout-inference runs init-layout then replaces the shell with supervisord"
+    templates:
+      - ../templates/app/inference.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-inference
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command[2]
+          value: "export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf\n"
+
+  - it: "default stop wait is 870 on celery_worker programs, including layout-inference, and absent on monitor and health"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    asserts:
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)\\[program:celery_worker_1\\].*stopwaitsecs=870\\n"
+        documentSelector:
+          path: metadata.name
+          value: layout-correct-supervisord-conf-map
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)\\[program:celery_worker_1\\].*stopwaitsecs=870\\n"
+        documentSelector:
+          path: metadata.name
+          value: layout-inference-supervisord-conf-map
+      - notMatchRegex:
+          path: data["supervisord.conf"]
+          pattern: "stopwaitsecs=1\\n"
+        documentSelector:
+          path: metadata.name
+          value: layout-inference-supervisord-conf-map
+      - notMatchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)\\[program:celery_monitor\\].*stopwaitsecs"
+        documentSelector:
+          path: metadata.name
+          value: layout-inference-supervisord-conf-map
+
+  - it: "ranker inference, summary inference and workspace workers keep the shell command and no default grace period"
+    templates:
+      - ../templates/app/celery.yaml
+      - ../templates/app/inference.yaml
+    set:
+      workspace.enabled: true
+      workspace.token: test-runner-token
+    asserts:
+      - notExists:
+          path: spec.template.spec.terminationGracePeriodSeconds
+        documentSelector:
+          path: metadata.name
+          value: ranker-inference
+      - notExists:
+          path: spec.template.spec.terminationGracePeriodSeconds
+        documentSelector:
+          path: metadata.name
+          value: summary-inference
+      - notExists:
+          path: spec.template.spec.terminationGracePeriodSeconds
+        documentSelector:
+          path: metadata.name
+          value: workspace-workspace
+      - equal:
+          path: spec.template.spec.containers[0].command[2]
+          value: "export PYTHONPATH=/workspace:$PYTHONPATH &&  supervisord -c /workspace/supervisord.conf\n"
+        documentSelector:
+          path: metadata.name
+          value: ranker-inference
+      - equal:
+          path: spec.template.spec.containers[0].command[2]
+          value: "export PYTHONPATH=/app && supervisord -c /app/supervisord.conf\n"
+        documentSelector:
+          path: metadata.name
+          value: workspace-workspace
