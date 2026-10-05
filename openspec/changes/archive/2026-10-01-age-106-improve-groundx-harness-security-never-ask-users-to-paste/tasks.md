@@ -145,3 +145,13 @@ pre-fix behavior) and the full `.build/bin/validate-helm.sh` gate, which passed 
   so a supplied `"false"` against a live `"false"` no longer warns.
 - Generated-output checks now require `encrypted: "true"` for EBS and reject `encrypted` and
   `kmsKeyId` for EFS.
+
+### 2026-10-05: lookup-miss NOTES check moved into the unit suite
+
+Under the pinned Helm 3.19.0, `helm install --dry-run=client` contacts the cluster for its version,
+so `verify_notes_lookup_miss_renders_without_warning` in `.build/bin/verify-storage-contract.py`
+failed on any machine without a reachable cluster (it also picked up the machine's own kubeconfig).
+It was removed. The same case is now the `EBS lookup miss (class not in the cluster)` test in
+`src/groundx/prereqs/storageclass/tests/notes_test.yaml`, which runs against a mocked provider. The
+verifier's helm calls also pin `KUBECONFIG` to a nonexistent file so they never read ambient cluster
+credentials. The task 5.x check that named the removed function is superseded by that unit test.

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import filecmp
+import os
 import re
 import subprocess
 import sys
@@ -158,7 +159,8 @@ STALE_PATTERNS = (
 
 
 def run(command: typing.List[str]) -> str:
-    result = subprocess.run(command, cwd=ROOT, check=False, capture_output=True, text=True)
+    env = {**os.environ, "KUBECONFIG": str(ROOT / ".build" / "no-such-kubeconfig")}
+    result = subprocess.run(command, cwd=ROOT, check=False, capture_output=True, text=True, env=env)
     if result.returncode != 0:
         raise RuntimeError(f"{' '.join(command)} failed:\n{result.stderr}")
     return result.stdout
@@ -306,14 +308,6 @@ def verify_non_ebs_false_value_survives(chart: Path) -> typing.List[str]:
         )
         successes.append(f"{chart.relative_to(ROOT)} non-EBS 'false' parameter survival passed")
     return successes
-
-
-def verify_notes_lookup_miss_renders_without_warning(chart: Path) -> typing.List[str]:
-    command = ["helm", "install", "notes-lookup-miss", str(chart), "--dry-run=client"]
-    rendered = run(command)
-    require(rendered, r"^NOTES:$", f"{chart.relative_to(ROOT)} NOTES.txt actually rendered")
-    reject(rendered, r"already exists", f"{chart.relative_to(ROOT)} NOTES.txt lookup-miss warning")
-    return [f"{chart.relative_to(ROOT)} NOTES.txt lookup-miss (NOTES.txt confirmed rendered, no warning) passed"]
 
 
 def verify_no_stale_strings() -> typing.List[str]:
@@ -555,7 +549,6 @@ def main() -> int:
         lambda: [item for chart in STORAGE_CHARTS for item in verify_provisioner_isolation(chart)],
         lambda: [item for chart in STORAGE_CHARTS for item in verify_optout_normalization(chart)],
         lambda: [item for chart in STORAGE_CHARTS for item in verify_non_ebs_false_value_survives(chart)],
-        lambda: [item for chart in STORAGE_CHARTS for item in verify_notes_lookup_miss_renders_without_warning(chart)],
     )
     for check in checks:
         try:

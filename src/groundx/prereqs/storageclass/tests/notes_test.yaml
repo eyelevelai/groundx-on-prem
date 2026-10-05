@@ -60,6 +60,15 @@ tests:
       - equalRaw:
           value: ""
 
+  - it: "EBS lookup miss (class not in the cluster): NOTES.txt renders silent"
+    set:
+      storageClassName: no-such-class
+    asserts:
+      - notMatchRegexRaw:
+          pattern: "already exists"
+      - equalRaw:
+          value: ""
+
   - it: "non-EBS lookup hit never warns, even though the supplied and live parameters disagree"
     set:
       storageClassName: existing-efs
