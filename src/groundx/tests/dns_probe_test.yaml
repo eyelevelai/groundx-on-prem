@@ -1,0 +1,85 @@
+suite: extract agent DNS probe
+set:
+  search:
+    password: fixture-app-credential
+    privilegedPassword: fixture-admin-credential
+tests:
+  - it: leaves the extraction pod unchanged by default
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - notExists:
+          path: spec.strategy
+      - notExists:
+          path: spec.template.metadata.annotations["dns-probe-hash"]
+      - notContains:
+          path: spec.template.spec.containers
+          content:
+            name: dns-probe
+          any: true
+
+  - it: enables a probe in the extraction pod with the chart cache address
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.dnsProbe.enabled: true
+      extract.agent.rolloutStrategy.maxSurge: 0
+      extract.agent.rolloutStrategy.maxUnavailable: 1
+      cache.existing.addr: redis.example.test
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - equal:
+          path: spec.strategy.rollingUpdate.maxSurge
+          value: 0
+      - equal:
+          path: spec.strategy.rollingUpdate.maxUnavailable
+          value: 1
+      - contains:
+          path: spec.template.spec.containers
+          content:
+            name: dns-probe
+            image: public.ecr.aws/docker/library/python:3.12-alpine
+          any: true
+      - contains:
+          path: spec.template.spec.containers[1].env
+          content:
+            name: TARGET_HOST
+            value: redis.example.test
+      - equal:
+          path: spec.template.spec.containers[1].resources.requests.memory
+          value: 32Mi
+
+  - it: limits EndpointSlice access to the extraction service account
+    templates:
+      - ../templates/resources/extract-agent-dns-probe.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.dnsProbe.enabled: true
+      extract.agent.serviceAccount.name: extract-runtime
+    documentSelector:
+      path: kind
+      value: RoleBinding
+    asserts:
+      - equal:
+          path: subjects[0].name
+          value: extract-runtime
+      - equal:
+          path: subjects[0].namespace
+          value: eyelevel

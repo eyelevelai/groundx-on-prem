@@ -43,6 +43,9 @@
 {{- $pdb := get $svcData "disruptionBudget" | default dict -}}
 {{- $vm := get $svcData "volumeMounts" | default list -}}
 {{- $vol := get $svcData "volumes" | default list -}}
+{{- $dnsProbe := dig "agent" "dnsProbe" dict $.Values.extract -}}
+{{- $dnsProbeEnabled := and (eq $name "extract-agent") (dig "enabled" false $dnsProbe) -}}
+{{- $rolloutStrategy := dig "agent" "rolloutStrategy" dict $.Values.extract -}}
 
 {{- $desired := get $rp "desired" -}}
 ---
@@ -55,6 +58,12 @@ metadata:
 {{ include "groundx.renderDefaultLabels" (dict "name" $name "indent" 4 "root" $) }}
 spec:
   replicas: {{ $desired }}
+{{- if and (eq $name "extract-agent") (gt (len $rolloutStrategy) 0) }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+{{ toYaml $rolloutStrategy | nindent 6 }}
+{{- end }}
   selector:
     matchLabels:
       app: {{ $name }}
@@ -68,6 +77,9 @@ spec:
       annotations:
         config-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-config-py.yaml") $ | sha256sum }}
         supervisord-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-supervisord-conf.yaml") $ | sha256sum }}
+{{- if $dnsProbeEnabled }}
+        dns-probe-hash: {{ $.Files.Get "files/dns_probe.py" | sha256sum }}
+{{- end }}
 {{- if $sharedGoogle }}
 {{- if eq (include "groundx.google.managed" $) "true" }}
         ocr-credentials-hash: {{ include "groundx.google.credentials" $ | sha256sum }}
@@ -195,6 +207,45 @@ spec:
 {{- if gt (len $vm) 0 }}
 {{ toYaml $vm | nindent 12 }}
 {{- end }}
+{{- if $dnsProbeEnabled }}
+        - name: dns-probe
+          image: {{ $dnsProbe.image | quote }}
+          command: ["python", "-u", "/opt/dns-probe/dns_probe.py"]
+          env:
+            - name: TARGET_HOST
+              value: {{ include "groundx.cache.addr" $ | quote }}
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: INTERVAL_SECONDS
+              value: {{ $dnsProbe.intervalSeconds | quote }}
+            - name: SUCCESS_LOG_EVERY
+              value: {{ $dnsProbe.successLogEvery | quote }}
+            - name: QUERY_TIMEOUT_SECONDS
+              value: {{ $dnsProbe.queryTimeoutSeconds | quote }}
+            - name: SLOW_THRESHOLD_SECONDS
+              value: {{ $dnsProbe.slowThresholdSeconds | quote }}
+          resources:
+{{ toYaml $dnsProbe.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 10001
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: dns-probe-code
+              mountPath: /opt/dns-probe
+              readOnly: true
+{{- end }}
       volumes:
         - name: config-volume
           secret:
@@ -216,6 +267,11 @@ spec:
             name: {{ $name }}-supervisord-conf-map
 {{- if gt (len $vol) 0 }}
 {{ toYaml $vol | nindent 8 }}
+{{- end }}
+{{- if $dnsProbeEnabled }}
+        - name: dns-probe-code
+          configMap:
+            name: extract-agent-dns-probe
 {{- end }}
 
 {{- if dig "enabled" false $pdb }}

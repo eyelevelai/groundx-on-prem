@@ -550,6 +550,21 @@ extract:
 
   agent:
     enabled: false
+    dnsProbe:
+      enabled: false
+      image: public.ecr.aws/docker/library/python:3.12-alpine
+      intervalSeconds: 10
+      successLogEvery: 6
+      queryTimeoutSeconds: 2
+      slowThresholdSeconds: 2
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
+    rolloutStrategy: {}
     disruptionBudget:
       enabled: false
     maxTasksPerChild: 1

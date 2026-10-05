@@ -21,8 +21,23 @@ jobs:
               with:
                   version: v3.19.0
 
+            - name: Set up Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                  terraform_version: 1.9.8
+
+            - name: Validate Terraform
+              run: |
+                  touch terraform/aws/env.tfvars
+                  terraform -chdir=terraform/aws/eks init -backend=false -input=false
+                  terraform -chdir=terraform/aws/eks validate
+                  terraform -chdir=terraform/aws/eks test -filter=tests/node_diagnostics.tftest.hcl
+
+            - name: Validate DNS probe
+              run: python3 -m unittest discover -s src/groundx/tests -p 'test_dns_probe.py' -v
+
             - name: Install helm-unittest plugin
-              run: helm plugin install https://github.com/helm-unittest/helm-unittest.git
+              run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "$(cat .build/HELM_UNITTEST_VERSION)"
 
             - name: Install yq (mikefarah v4, pinned + checksum)
               run: |
