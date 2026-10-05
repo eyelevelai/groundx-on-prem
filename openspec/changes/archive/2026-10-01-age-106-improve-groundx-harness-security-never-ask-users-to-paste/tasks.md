@@ -133,3 +133,15 @@ same chart (`src/groundx/prereqs/storageclass/`, mirrored into `helm/prereqs/sto
 
 All of the above were confirmed against a reverted-template control (each test fails on the
 pre-fix behavior) and the full `.build/bin/validate-helm.sh` gate, which passed clean after the fix.
+
+### 2026-10-01: review round 2 fixes
+
+- The EFS `ensureUniqueDirectory: "false"` fixture added under F1 was removed from
+  `values.efs.example.yaml` because it was an unrequested change to an operator-facing example. The
+  proof that a non-EBS `"false"` value survives rendering now lives in
+  `verify_non_ebs_false_value_survives` in `.build/bin/verify-storage-contract.py`, which renders
+  with a temporary override file instead.
+- `templates/NOTES.txt` now normalizes the live `"false"` value the same way as the supplied value,
+  so a supplied `"false"` against a live `"false"` no longer warns.
+- Generated-output checks now require `encrypted: "true"` for EBS and reject `encrypted` and
+  `kmsKeyId` for EFS.
