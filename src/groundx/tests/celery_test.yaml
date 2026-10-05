@@ -55,6 +55,204 @@ tests:
             name: credentials-volume
             secret:
               secretName: layout-ocr-credentials-map
+  - it: "render-disk: layout-process gets the emptyDir volume, mount, and disk-budget env at chart defaults"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: TMPDIR
+            value: "/tmp/render"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LAYOUT_RENDER_DISK_BUDGET_MIB
+            value: "2048"
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: render-temp
+            emptyDir:
+              sizeLimit: 3072Mi
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: render-temp
+            mountPath: /tmp/render
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests["ephemeral-storage"]
+          value: 3072Mi
+  - it: "render-disk: a custom budget and workers scale sizeLimit, request, and env together, and the volume stays per-pod under replicas and HPA"
+    templates:
+      - ../templates/app/celery.yaml
+      - ../templates/resources/hpa.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.renderDiskBudgetMi: 4096
+      layout.process.workers: 2
+      cluster.hpa: true
+      layout.process.replicas.desired: 3
+      layout.process.replicas.min: 1
+      layout.process.replicas.max: 6
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: render-temp
+            emptyDir:
+              sizeLimit: 9216Mi
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: layout-process
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests["ephemeral-storage"]
+          value: 9216Mi
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: layout-process
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LAYOUT_RENDER_DISK_BUDGET_MIB
+            value: "4096"
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: layout-process
+      - equal:
+          path: spec.replicas
+          value: 3
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: layout-process
+      - equal:
+          path: spec.minReplicas
+          value: 1
+        template: ../templates/resources/hpa.yaml
+        documentSelector:
+          path: metadata.name
+          value: layout-process-hpa
+      - equal:
+          path: spec.maxReplicas
+          value: 6
+        template: ../templates/resources/hpa.yaml
+        documentSelector:
+          path: metadata.name
+          value: layout-process-hpa
+  - it: "render-disk: an ephemeral-storage limit below the computed request is rejected before any resource renders"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.resources.limits.ephemeral-storage: 1Gi
+    asserts:
+      - failedTemplate:
+          errorPattern: 'layout\.process\.resources\.limits\["ephemeral-storage"\].*1Gi.*below the computed ephemeral-storage request of 3072Mi.*renderDiskBudgetMi'
+  - it: "render-disk: a user-supplied ephemeral-storage request is replaced, other resources keys survive, and a limit above the request renders unchanged"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.resources.requests.cpu: 250m
+      layout.process.resources.requests.memory: 2Gi
+      layout.process.resources.requests.ephemeral-storage: 500Mi
+      layout.process.resources.limits.ephemeral-storage: 4Gi
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests
+          value:
+            cpu: 250m
+            memory: 2Gi
+            ephemeral-storage: 3072Mi
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits["ephemeral-storage"]
+          value: 4Gi
+  - it: "render-disk: an ephemeral-storage limit accepts a decimal SI suffix (k)"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.resources.limits.ephemeral-storage: 4000000k
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits["ephemeral-storage"]
+          value: 4000000k
+  - it: "render-disk: an ephemeral-storage limit accepts exponent form"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.resources.limits.ephemeral-storage: "4e9"
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits["ephemeral-storage"]
+          value: "4e9"
+  - it: "render-disk: an unquoted numeric ephemeral-storage limit from a values file is accepted"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.render-disk-unquoted-storage.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits["ephemeral-storage"]
+          value: 4294967296
+  - it: "render-disk: an uppercase K suffix is rejected"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.resources.limits.ephemeral-storage: 5000000K
+    asserts:
+      - failedTemplate:
+          errorPattern: '"5000000K" is not a recognized Kubernetes storage quantity'
+  - it: "render-disk: negative workers is rejected before any resource renders"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.workers: -1
+    asserts:
+      - failedTemplate:
+          errorPattern: "layout\\.process\\.workers must be at least 1 \\(got -1\\)"
+  - it: "render-disk: negative threads is rejected before any resource renders"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.threads: -1
+    asserts:
+      - failedTemplate:
+          errorPattern: "layout\\.process\\.threads must be at least 1 \\(got -1\\)"
   - it: "default: celery"
     templates:
       - ../templates/app/celery.yaml
