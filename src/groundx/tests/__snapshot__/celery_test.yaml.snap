@@ -436,6 +436,10 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -458,6 +462,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -476,6 +481,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -515,6 +522,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   5: |
     apiVersion: apps/v1
     kind: Deployment
@@ -1535,6 +1545,10 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1557,6 +1571,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -1575,6 +1590,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -1613,6 +1630,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2176,6 +2196,10 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -2198,6 +2222,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -2216,6 +2241,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -2254,6 +2281,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   5: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2818,6 +2848,10 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -2840,6 +2874,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -2858,6 +2893,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -2896,6 +2933,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   5: |
     apiVersion: apps/v1
     kind: Deployment
@@ -3459,6 +3499,10 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -3481,6 +3525,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -3499,6 +3544,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -3537,6 +3584,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   5: |
     apiVersion: apps/v1
     kind: Deployment
@@ -4571,6 +4621,10 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
@@ -4596,6 +4650,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -4614,6 +4669,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -4653,6 +4710,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -5676,6 +5736,10 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -5698,6 +5762,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -5716,6 +5781,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -5754,6 +5821,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -6788,6 +6858,10 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
@@ -6813,6 +6887,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -6831,6 +6906,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -6870,6 +6947,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -7383,6 +7463,10 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -7405,6 +7489,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 9216Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -7423,6 +7508,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -7460,6 +7547,9 @@
             - configMap:
                 name: myapp-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 9216Mi
+              name: render-temp
   5: |
     apiVersion: apps/v1
     kind: Deployment
@@ -8024,6 +8114,10 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -8046,6 +8140,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -8064,6 +8159,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -8102,6 +8199,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   5: |
     apiVersion: apps/v1
     kind: Deployment
@@ -8647,6 +8747,10 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -8669,6 +8773,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -8685,6 +8790,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -8719,6 +8826,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   5: |
     apiVersion: apps/v1
     kind: Deployment
@@ -9708,6 +9818,10 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: Always
               livenessProbe:
@@ -9730,6 +9844,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -9746,6 +9861,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           imagePullSecrets:
             - name: ecr-public-pull
@@ -9782,6 +9899,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -10375,6 +10495,10 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -10397,6 +10521,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -10419,6 +10544,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -10463,6 +10590,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   5: |
     apiVersion: apps/v1
     kind: Deployment
