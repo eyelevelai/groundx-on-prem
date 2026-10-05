@@ -32,6 +32,18 @@ Invariant: a render in which search is in use never carries a search credential 
 - **THEN** the render succeeds and `config-yaml-map` carries exactly those two values
 - **AND** an existing install that sets both keys to its current OpenSearch credentials renders the same configuration it rendered before the upgrade
 
+### Requirement: A published default search password is rejected
+When `mode` is not `ingest`, the chart SHALL fail the render if `search.password` or `search.privilegedPassword` is a published default password, so that an upgrade which silently keeps the old default (for example `helm upgrade --reuse-values`) does not deploy. The rejected set SHALL be matched by SHA-256 against `search.bannedPasswordHashes` (default: the published default's hash), so no tracked file stores the password itself. This applies to `src/groundx` and to the `helm/` mirror.
+
+#### Scenario: A published default is rejected (polarity: reject before state; catches)
+- **WHEN** the chart is rendered with `mode` not `ingest` and `search.password` (or `search.privilegedPassword`) set to a value whose SHA-256 is in `search.bannedPasswordHashes`
+- **THEN** the render fails with a message that the password must not be a published default
+- **AND** no `config-yaml-map` Secret is produced
+
+#### Scenario: A non-default password renders (polarity: accept and enqueue; must not block)
+- **WHEN** the chart is rendered with `mode` not `ingest` and both passwords set to non-empty values not present in `search.bannedPasswordHashes`
+- **THEN** the render succeeds
+
 ### Requirement: Ingest mode renders no search password
 When `mode` is `ingest`, the chart SHALL render without any search password set, and SHALL NOT render a search password even when one is supplied.
 

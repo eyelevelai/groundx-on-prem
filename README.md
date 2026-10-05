@@ -549,7 +549,11 @@ helm repo update
 helm install opensearch opensearch/opensearch -n eyelevel -f helm/values/opensearch/values.yaml -f opensearch-admin.values.yaml
 ```
 
-OpenSearch reads `OPENSEARCH_INITIAL_ADMIN_PASSWORD` only when it first initializes an empty data volume. Changing it later does not change the admin password of an existing volume. The Secret must exist before OpenSearch starts, which the order above ensures.
+Choose a password you have not published anywhere. The GroundX chart rejects a known published default for `search.password` or `search.privilegedPassword` and fails to render if you supply one, so an upgrade that silently keeps the old default (for example `helm upgrade --reuse-values`) will not deploy.
+
+OpenSearch requires `OPENSEARCH_INITIAL_ADMIN_PASSWORD` at every start, not only on first initialization. On an already-initialized data volume it is still read at boot, and a start without it exits with `No custom admin password found` (observed on image digest `sha256:8e95a30f…`). Keep `-f opensearch-admin.values.yaml` on every `helm upgrade opensearch …`, not just the first install, and pin the OpenSearch image to a digest so this stays reproducible. The value is consumed only to initialize an empty volume; changing it on an existing volume does not rotate the stored admin password (rotate with the backup route under Upgrading an Existing Install). The Secret must exist before OpenSearch starts, which the order above ensures.
+
+Rotating these passwords does not by itself secure OpenSearch for production: the documented install still trusts OpenSearch's demo TLS certificates, and the GroundX application user has broad privileges. For production, also replace the demo certificates with operator-supplied ones and restrict network access to OpenSearch.
 
 ### Kafka
 
@@ -626,7 +630,7 @@ bin/uuid
 
 Earlier chart versions defaulted both OpenSearch passwords to a public value. An OpenSearch data volume created with them keeps its original admin password, because the seed value is only read on first initialization. Before upgrading:
 
-1. Set `search.privilegedPassword` to the admin password your OpenSearch currently uses. If you never changed it, this is the old public default.
+1. Set `search.privilegedPassword` to the admin password your OpenSearch currently uses, unless that is a published default. The chart now rejects a published default and will not render, so if your install still uses one, first rotate the OpenSearch admin password off it with the admin-password route in step 3, then set `search.privilegedPassword` to the new value. When you upgrade the OpenSearch release itself, keep `-f opensearch-admin.values.yaml` on the `helm upgrade opensearch` command: the image requires `OPENSEARCH_INITIAL_ADMIN_PASSWORD` at every start, and a restart without it fails with `No custom admin password found`.
 2. Set `search.password` to the application user password your install currently uses.
 3. Rotate the credentials. The OpenSearch `admin` user is reserved, so the security REST API refuses to change it (it returns 403 "Resource 'admin' is reserved"). Use these routes instead:
    - Application password: set a new `search.password` and upgrade. The GroundX API re-creates `search.username` with it, using the admin credential, when its login is rejected.
