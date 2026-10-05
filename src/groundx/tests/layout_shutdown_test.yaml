@@ -118,6 +118,31 @@ tests:
           path: metadata.name
           value: layout-inference-supervisord-conf-map
 
+  - it: "workers of a multi-worker pod are grouped so Supervisor stops them together"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    set:
+      layout.map.workers: 2
+    asserts:
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)\\[program:celery_worker_2\\].*stopwaitsecs=870\\n"
+        documentSelector:
+          path: metadata.name
+          value: layout-map-supervisord-conf-map
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "\\[group:celery_workers\\]\\nprograms=celery_worker_1,celery_worker_2\\n"
+        documentSelector:
+          path: metadata.name
+          value: layout-map-supervisord-conf-map
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "\\[group:celery_workers\\]\\nprograms=celery_worker_1\\n"
+        documentSelector:
+          path: metadata.name
+          value: layout-inference-supervisord-conf-map
+
   - it: "ranker inference, summary inference and workspace workers keep the shell command and no default grace period"
     templates:
       - ../templates/app/celery.yaml

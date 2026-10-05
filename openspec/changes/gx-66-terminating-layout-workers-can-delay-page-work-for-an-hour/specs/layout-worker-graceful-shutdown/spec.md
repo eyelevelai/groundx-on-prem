@@ -55,6 +55,7 @@ The layout Supervisor config SHALL set `stopwaitsecs` to `max(1, gracePeriod - 3
 #### Scenario: Every worker of a multi-worker pod carries the stop wait (polarity: finalize success)
 - **WHEN** `layout.map.workers` is 2
 - **THEN** both `celery_worker_1` and `celery_worker_2` in the `layout-map` Supervisor config have `stopwaitsecs=870`
+- **AND** the config lists both programs in one `[group:celery_workers]` section, so Supervisor stops them together and neither takes a new task after SIGTERM
 
 #### Scenario: layout-inference stop wait is derived from its own grace period (polarity: finalize success; catches)
 - **WHEN** the chart is rendered with default values and no `layout.inference.replicas.gracePeriod`

@@ -408,14 +408,15 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].command[2]
           value: "export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf\n"
-  - it: "non-extract workers keep their existing startup command"
+  - it: "workspace workers keep their existing startup command"
     templates:
       - ../templates/app/celery.yaml
     values:
       - ../values.yaml
+      - ./files/values.workspace.enabled.yaml
     documentSelector:
       path: metadata.name
-      value: layout-correct
+      value: workspace-workspace
     asserts:
       - equal:
           path: spec.template.spec.containers[0].command[2]
