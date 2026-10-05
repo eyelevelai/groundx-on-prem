@@ -183,3 +183,16 @@ run "kms_source_policy_documents_pass_through" {
     error_message = "Configured EKS KMS source policy documents must pass through unchanged."
   }
 }
+
+run "unset_version_resolves_to_null" {
+  command = plan
+
+  variables {
+    environment_internal = {}
+  }
+
+  assert {
+    condition     = var.environment_internal.eks_version == null
+    error_message = "An unset version key must resolve to null, not any implicit default."
+  }
+}

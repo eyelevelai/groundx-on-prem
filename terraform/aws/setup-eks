@@ -10,6 +10,7 @@ echo $ENV_DIR
 
 must_have aws
 must_have terraform
+must_have jq
 
 if [ ! -f "$ENV_DIR/env.tfvars" ]; then
     echo "env.tfvars not found. Copying env.tfvars.example..."
@@ -120,6 +121,13 @@ ssh_key="$SSH_KEY"
 if $KC; then
     status "testing EKS cluster configuration"
 
+    # EKS_VERSION_GUARD_BEGIN
+    eks_version=$(resolve_setup_eks_version "$ENV_DIR" "$REGION") || {
+        error "Unable to determine the target EKS cluster version. Aborting rather than risking an unattended downgrade (see the warning above for the reason)." && echo ""
+        exit 1
+    }
+    # EKS_VERSION_GUARD_END
+
     cat <<EOF > "$ENV_DIR/env.tfvars"
 environment = {
   cluster_role_arns = $role_arns
@@ -129,6 +137,10 @@ environment = {
   stage = "prod"
   subnets = $subnets
   vpc_id = "$vpc_id"
+}
+
+environment_internal = {
+  eks_version = "$eks_version"
 }
 
 storage = {
@@ -219,6 +231,13 @@ fi
 if $KC; then
     status "testing EKS cluster configuration"
 
+    # EKS_VERSION_GUARD_BEGIN
+    eks_version=$(resolve_setup_eks_version "$ENV_DIR" "$REGION") || {
+        error "Unable to determine the target EKS cluster version. Aborting rather than risking an unattended downgrade (see the warning above for the reason)." && echo ""
+        exit 1
+    }
+    # EKS_VERSION_GUARD_END
+
     cat <<EOF > "$ENV_DIR/env.tfvars"
 environment = {
   cluster_role_arns = $role_arns
@@ -228,6 +247,10 @@ environment = {
   stage = "prod"
   subnets = $subnets
   vpc_id = "$vpc_id"
+}
+
+environment_internal = {
+  eks_version = "$eks_version"
 }
 
 storage = {
