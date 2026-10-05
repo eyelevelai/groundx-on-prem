@@ -1086,6 +1086,7 @@
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
             "queue": { "type": "string" },
+            "renderDiskBudgetMi": { "type": "integer", "minimum": 1 },
             "replicas": {
               "type": "object",
               "properties": {
@@ -2208,6 +2209,27 @@
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
+            "dnsProbe": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "image": { "type": "string" },
+                "intervalSeconds": { "type": "integer", "minimum": 1 },
+                "successLogEvery": { "type": "integer", "minimum": 1 },
+                "queryTimeoutSeconds": { "type": "number", "exclusiveMinimum": 0 },
+                "slowThresholdSeconds": { "type": "number", "exclusiveMinimum": 0 },
+                "resources": { "type": "object" }
+              },
+              "additionalProperties": false
+            },
+            "rolloutStrategy": {
+              "type": "object",
+              "properties": {
+                "maxSurge": { "type": "integer", "minimum": 0 },
+                "maxUnavailable": { "type": "integer", "minimum": 0 }
+              },
+              "additionalProperties": false
+            },
             "existingSecret": { "type": "boolean" },
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
