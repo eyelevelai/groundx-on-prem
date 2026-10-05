@@ -187,3 +187,180 @@ tests:
       - equal:
           path: spec.selector.matchLabels.app
           value: groundx
+
+  - it: "enabled: go worker budget and spread"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      summaryClient.enabled: true
+      summaryClient.disruptionBudget.enabled: true
+      summaryClient.topologySpreadConstraints: &spread
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: summary-client
+    asserts:
+      - documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.selector.matchLabels.app, value: summary-client }
+      - documentSelector: { path: kind, value: Deployment }
+        equal: { path: spec.template.spec.topologySpreadConstraints, value: *spread }
+
+  - it: "enabled: celery budgets stay per worker"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      layout.map.enabled: true
+      layout.map.disruptionBudget.enabled: true
+      layout.map.topologySpreadConstraints: &mapSpread
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: layout-map
+      layout.ocr.enabled: true
+      layout.ocr.disruptionBudget.enabled: true
+    asserts:
+      - hasDocuments: { count: 4 }
+      - documentIndex: 1
+        equal: { path: spec.selector.matchLabels.app, value: layout-map }
+      - documentIndex: 3
+        equal: { path: spec.selector.matchLabels.app, value: layout-ocr }
+      - documentIndex: 0
+        equal: { path: spec.template.spec.topologySpreadConstraints, value: *mapSpread }
+
+  - it: "enabled: metrics budget and spread"
+    templates:
+      - ../templates/app/metrics.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      metrics.enabled: true
+      metrics.disruptionBudget.enabled: true
+      metrics.topologySpreadConstraints: &metricsSpread
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: metrics
+    asserts:
+      - documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.selector.matchLabels.app, value: metrics }
+      - documentSelector: { path: kind, value: Deployment }
+        equal: { path: spec.template.spec.topologySpreadConstraints, value: *metricsSpread }
+
+  - it: "enabled: inference budget and spread"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      layout.inference.enabled: true
+      layout.inference.disruptionBudget.enabled: true
+      layout.inference.topologySpreadConstraints: &inferenceSpread
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: layout-inference
+    asserts:
+      - documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.selector.matchLabels.app, value: layout-inference }
+      - documentSelector: { path: kind, value: Deployment }
+        equal: { path: spec.template.spec.topologySpreadConstraints, value: *inferenceSpread }
+
+  - it: "spread only: api and groundx render spread without a budget"
+    templates:
+      - ../templates/app/api.yaml
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      layout.api.enabled: true
+      layout.api.topologySpreadConstraints: &apiSpread
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: layout-api
+      groundx.enabled: true
+      groundx.topologySpreadConstraints: &groundxSpread
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: groundx
+    asserts:
+      - documentSelector: { path: spec.template.metadata.labels.app, value: layout-api }
+        equal: { path: spec.template.spec.topologySpreadConstraints, value: *apiSpread }
+      - documentSelector: { path: spec.template.metadata.labels.app, value: groundx }
+        equal: { path: spec.template.spec.topologySpreadConstraints, value: *groundxSpread }
+      - containsDocument: { apiVersion: policy/v1, kind: PodDisruptionBudget, any: true }
+        not: true
+
+  - it: "schema rejects an unknown key on a disruptionBudget block"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      layout.map.enabled: true
+      layout.map.disruptionBudget.bogus: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "layout/map/disruptionBudget.*bogus.*not allowed"
+
+  - it: "notes warn when a budget is on and the minimum replica count is below 2"
+    templates:
+      - ../templates/NOTES.txt
+      - ../templates/_helpers/*.tpl
+      - ../templates/_helpers/*/*.tpl
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      cluster.hpa: true
+      summaryClient.enabled: true
+      summaryClient.disruptionBudget.enabled: true
+      extract.enabled: true
+      extract.api.enabled: true
+      extract.api.disruptionBudget.enabled: true
+      extract.api.replicas.hpa: false
+      layout.ocr.enabled: true
+    asserts:
+      - template: ../templates/NOTES.txt
+        matchRegex: { path: raw, pattern: "WARNING: summary-client has a disruption budget .* autoscaling minimum \\(replicas.min\\) is 1" }
+      - template: ../templates/NOTES.txt
+        matchRegex: { path: raw, pattern: "WARNING: extract-api has a disruption budget .* replica count \\(replicas.desired\\) is 1" }
+      - template: ../templates/NOTES.txt
+        notMatchRegex: { path: raw, pattern: "layout-ocr" }
+
+  - it: "notes stay silent when every budgeted service keeps at least 2 replicas"
+    templates:
+      - ../templates/NOTES.txt
+      - ../templates/_helpers/*.tpl
+      - ../templates/_helpers/*/*.tpl
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      cluster.hpa: true
+      summaryClient.enabled: true
+      summaryClient.disruptionBudget.enabled: true
+      summaryClient.replicas.min: 2
+      extract.enabled: true
+      extract.api.enabled: true
+      extract.api.disruptionBudget.enabled: true
+      extract.api.replicas.hpa: false
+      extract.api.replicas.desired: 2
+    asserts:
+      - template: ../templates/NOTES.txt
+        notMatchRegex: { path: raw, pattern: "WARNING" }

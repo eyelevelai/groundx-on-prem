@@ -84,6 +84,8 @@ file:
 
 metrics:
   enabled: false
+  disruptionBudget:
+    enabled: false
 
   resources:
     requests:
@@ -141,6 +143,8 @@ summary:
         memory: 256Mi
   inference:
     enabled: true
+    disruptionBudget:
+      enabled: false
 
     # specifies the amount of GPU memory to use, from 0 - 1.0
     deviceUtilize: 0.48
@@ -203,6 +207,8 @@ layout:
         memory: 256Mi
   correct:
     enabled: true
+    disruptionBudget:
+      enabled: false
 
     replicas:
       desired: 1
@@ -215,6 +221,8 @@ layout:
         memory: 1Gi
   inference:
     enabled: true
+    disruptionBudget:
+      enabled: false
 
     replicas:
       desired: 1
@@ -231,6 +239,8 @@ layout:
         nvidia.com/gpu: 1
   map:
     enabled: true
+    disruptionBudget:
+      enabled: false
 
     replicas:
       desired: 1
@@ -244,6 +254,8 @@ layout:
   ocr:
     # timeout: 120  # per-page Tesseract OCR timeout in seconds, 1-250; ignored when type is google
     enabled: true
+    disruptionBudget:
+      enabled: false
 
     replicas:
       desired: 1
@@ -257,6 +269,8 @@ layout:
   process:
     # renderDiskBudgetMi: 2048  # per-worker-process render-temp disk budget in MiB; sizes the render-temp emptyDir and its ephemeral-storage request
     enabled: true
+    disruptionBudget:
+      enabled: false
 
     replicas:
       desired: 1
@@ -269,6 +283,8 @@ layout:
         memory: 1Gi
   save:
     enabled: true
+    disruptionBudget:
+      enabled: false
 
     replicas:
       desired: 1
@@ -282,6 +298,8 @@ layout:
 
 layoutWebhook:
   enabled: true
+  disruptionBudget:
+    enabled: false
 
   replicas:
     desired: 1
@@ -295,6 +313,8 @@ layoutWebhook:
 
 preProcess:
   enabled: true
+  disruptionBudget:
+    enabled: false
 
   replicas:
     desired: 1
@@ -308,6 +328,8 @@ preProcess:
 
 process:
   enabled: true
+  disruptionBudget:
+    enabled: false
 
   replicas:
     desired: 1
@@ -321,9 +343,13 @@ process:
 
 largeFileDeliver:
   enabled: false
+  disruptionBudget:
+    enabled: false
 
 queue:
   enabled: true
+  disruptionBudget:
+    enabled: false
 
   replicas:
     desired: 1
@@ -373,6 +399,8 @@ ranker:
         memory: 128Mi
   inference:
     enabled: true
+    disruptionBudget:
+      enabled: false
 
     replicas:
       desired: 1
@@ -388,6 +416,8 @@ ranker:
 
 summaryClient:
   enabled: true
+  disruptionBudget:
+    enabled: false
 
   replicas:
     desired: 1
@@ -401,6 +431,8 @@ summaryClient:
 
 upload:
   enabled: true
+  disruptionBudget:
+    enabled: false
 
   replicas:
     desired: 1
@@ -480,26 +512,36 @@ workspace:
 
   provision:
     enabled: true
+    disruptionBudget:
+      enabled: false
     replicas:
       desired: 1
 
   workspace:
     enabled: true
+    disruptionBudget:
+      enabled: false
     replicas:
       desired: 1
 
   command:
     enabled: true
+    disruptionBudget:
+      enabled: false
     replicas:
       desired: 1
 
   publish:
     enabled: true
+    disruptionBudget:
+      enabled: false
     replicas:
       desired: 1
 
   cleanup:
     enabled: true
+    disruptionBudget:
+      enabled: false
     replicas:
       desired: 1
 
@@ -509,6 +551,23 @@ extract:
 
   agent:
     enabled: false
+    dnsProbe:
+      enabled: false
+      image: public.ecr.aws/docker/library/python:3.12-alpine
+      intervalSeconds: 10
+      successLogEvery: 6
+      queryTimeoutSeconds: 2
+      slowThresholdSeconds: 2
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
+    rolloutStrategy: {}
+    disruptionBudget:
+      enabled: false
     maxTasksPerChild: 1
     imageTransport: data_url
     targetLongEdgePx: 1000
@@ -558,6 +617,8 @@ extract:
 
   download:
     enabled: false
+    disruptionBudget:
+      enabled: false
     threads: 1
 
     replicas:
@@ -575,6 +636,8 @@ extract:
 
   save:
     enabled: false
+    disruptionBudget:
+      enabled: false
 
     replicas:
       desired: 1
