@@ -22,7 +22,7 @@ Commit plan: template, schema and test changes in one commit; the hand-patched `
 ## 2. layout-inference
 
 - [x] 2.1 Render the drain settings for `layout-inference`: accept `gracePeriod` under `layout.inference.replicas` in both schema files; in `templates/app/inference.yaml` render `terminationGracePeriodSeconds` (`dig "gracePeriod" 900`) only when the map prefix is `layout`; change `execOpts` in `templates/_helpers/app/layout-inference.tpl` to `python /app/init-layout.py && exec`; mirror the templates into `helm/templates/`
-  check: H="${GX_ON_PREM_HELM:-helm}"; "$H" unittest -f tests/layout_shutdown_test.yaml src/groundx && "$H" unittest -f tests/layout_grace_period_test.yaml helm && diff -r src/groundx/templates helm/templates && cmp src/groundx/values.schema.json helm/values.schema.json
+  check: d=$(mktemp -d) && ln -s "${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to a helm v3.19.0 binary}" "$d/helm" && PATH="$d:$PATH" bash .build/bin/validate-helm.sh; rc=$?; unlink "$d/helm"; rmdir "$d"; [ "$rc" -eq 0 ] && diff -r src/groundx/templates helm/templates && cmp src/groundx/values.schema.json helm/values.schema.json
 
 ## 3. Snapshots and the full gate
 
@@ -33,7 +33,7 @@ Commit plan: template, schema and test changes in one commit; the hand-patched `
 
 - [ ] 4.1 Record in the PR body: the rollout restart of the six layout Deployments, the `Recreate` note for `layout-inference`, the autoscaler caveat (effective grace is the smaller of `gracePeriod` and the autoscaler's `--max-graceful-termination-sec`), which snapshot blocks changed and why, the test-to-production line ratio, and the runtime proof from the local Docker and validation-cluster runs (those runs are not committed and have no check here)
   check: n/a — PR text; the runtime proof layers run outside the pipeline and are recorded in the PR body
-- [x] 4.2 Group the `celery_worker_N` programs of each layout Supervisor config in one `[group:celery_workers]` section (decided from the `layout.map.workers: 2` runtime result, recorded in `design.md` decision 8), mirror it into `helm/templates/`, and cover it with the case "workers of a multi-worker pod are grouped so Supervisor stops them together" in `src/groundx/tests/layout_shutdown_test.yaml`; that case fails on the template without the group
-  check: H="${GX_ON_PREM_HELM:-helm}"; "$H" unittest -f tests/layout_shutdown_test.yaml src/groundx && diff -r src/groundx/templates helm/templates
+- [x] 4.2 Group the `celery_worker_N` programs of each layout Supervisor config in one `[group:celery_workers]` section (decided from the `layout.map.workers: 2` runtime result, recorded in `design.md` decision 8), mirror it into `helm/templates/`, and cover it with the case "layout workers of a multi-worker pod are grouped so Supervisor stops them together" in `src/groundx/tests/celery_test.yaml`; that case fails on the template without the group
+  check: d=$(mktemp -d) && ln -s "${GX_ON_PREM_HELM:?set GX_ON_PREM_HELM to a helm v3.19.0 binary}" "$d/helm" && PATH="$d:$PATH" bash .build/bin/validate-helm.sh; rc=$?; unlink "$d/helm"; rmdir "$d"; [ "$rc" -eq 0 ] && diff -r src/groundx/templates helm/templates
 
 See workspace `openspec/changes/gx-66-terminating-layout-workers-can-delay-page-work-for-an-hour/tasks.md` for cross-service coordination and deferred items (the `groundx-studio-harness` documentation PR, held until chart 0.2.7 is published, and the ranker, summary and workspace workers tracked in GX-91).

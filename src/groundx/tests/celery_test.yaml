@@ -549,3 +549,121 @@ tests:
             name: credentials-volume
             secret:
               secretName: workspace-ocr-credentials-map
+  - it: "layout workers default to a 900 second grace period and replace the shell with supervisord"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    asserts:
+      - hasDocuments:
+          count: 5
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+      - equal:
+          path: spec.template.spec.containers[0].command[2]
+          value: "export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf\n"
+  - it: "layout gracePeriod overrides the grace period and stop wait on that service only"
+    templates:
+      - ../templates/app/celery.yaml
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.map.replicas.gracePeriod: 120
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 120
+        documentSelector:
+          path: metadata.name
+          value: layout-map
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+        documentSelector:
+          path: metadata.name
+          value: layout-correct
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "stopwaitsecs=90\\n"
+        documentSelector:
+          path: metadata.name
+          value: layout-map-supervisord-conf-map
+      - notMatchRegex:
+          path: data["supervisord.conf"]
+          pattern: "stopwaitsecs=90\\n"
+        documentSelector:
+          path: metadata.name
+          value: layout-correct-supervisord-conf-map
+  - it: "layout gracePeriod under 31 floors the stop wait at 1 second"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.map.replicas.gracePeriod: 20
+    documentSelector:
+      path: metadata.name
+      value: layout-map-supervisord-conf-map
+    asserts:
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "stopwaitsecs=1\\n"
+  - it: "layout gracePeriod of zero fails schema validation"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.map.replicas.gracePeriod: 0
+    asserts:
+      - failedTemplate:
+          errorPattern: "layout/map/replicas/gracePeriod.*minimum: got 0, want 1"
+  - it: "layout supervisord defaults: 870 second stop wait on workers including layout-inference, none on monitor, one-worker group"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    asserts:
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)\\[program:celery_worker_1\\].*stopwaitsecs=870\\n"
+        documentSelector:
+          path: metadata.name
+          value: layout-correct-supervisord-conf-map
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)\\[program:celery_worker_1\\].*stopwaitsecs=870\\n"
+        documentSelector:
+          path: metadata.name
+          value: layout-inference-supervisord-conf-map
+      - notMatchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)\\[program:celery_monitor\\].*stopwaitsecs"
+        documentSelector:
+          path: metadata.name
+          value: layout-inference-supervisord-conf-map
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "\\[group:celery_workers\\]\\nprograms=celery_worker_1\\n"
+        documentSelector:
+          path: metadata.name
+          value: layout-inference-supervisord-conf-map
+  - it: "layout workers of a multi-worker pod are grouped so Supervisor stops them together"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.map.workers: 2
+    documentSelector:
+      path: metadata.name
+      value: layout-map-supervisord-conf-map
+    asserts:
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)\\[program:celery_worker_2\\].*stopwaitsecs=870\\n"
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "\\[group:celery_workers\\]\\nprograms=celery_worker_1,celery_worker_2\\n"
