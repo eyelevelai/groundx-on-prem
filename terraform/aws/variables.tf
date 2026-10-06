@@ -258,12 +258,12 @@ variable "nodes" {
         ebs                     = {
           delete_on_termination = true
           encrypted             = true
-          iops                  = null
+          iops                  = 3000
           kms_key_id            = null
           snapshot_id           = null
-          throughput            = null
+          throughput            = 128
           volume_size           = 30
-          volume_type           = "gp2"
+          volume_type           = "gp3"
         }
         instance_types          = ["t3a.medium"]
         max_size                = 15

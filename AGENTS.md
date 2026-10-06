@@ -191,3 +191,7 @@ See [the operator guide](docs/agents/large-file-delivery.md) for the optional wo
 ## Database upgrades
 
 See [the migration gate](docs/agents/database-upgrades.md) for the pre-upgrade Job, compatible image requirement, fresh-install ordering and rollback.
+
+## EKS cost controls
+
+See [the operator guide](docs/agents/eks-cost-controls.md) for CPU disk defaults, node replacement, and CloudWatch configuration.
