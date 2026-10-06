@@ -210,3 +210,18 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].resources.limits["nvidia.com/gpu"]
           value: 1
+  - it: "layout inference defaults to a 900 second grace period and runs init-layout then replaces the shell with supervisord"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-inference
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+      - equal:
+          path: spec.template.spec.containers[0].command[2]
+          value: "export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf\n"

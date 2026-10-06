@@ -80,6 +80,9 @@ spec:
 {{ toYaml $anns | nindent 8 }}
 {{- end }}
     spec:
+{{- if eq $mapPrefix "layout" }}
+      terminationGracePeriodSeconds: {{ dig "gracePeriod" 900 $rp }}
+{{- end }}
 {{- if $rt }}
       runtimeClassName: {{ $rt }}
 {{- end }}
