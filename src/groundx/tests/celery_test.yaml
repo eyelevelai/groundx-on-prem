@@ -602,7 +602,12 @@ tests:
     values:
       - ../values.yaml
     set:
+      layout.correct.replicas.gracePeriod: 20
+      layout.inference.replicas.gracePeriod: 20
       layout.map.replicas.gracePeriod: 20
+      layout.ocr.replicas.gracePeriod: 20
+      layout.process.replicas.gracePeriod: 20
+      layout.save.replicas.gracePeriod: 20
     documentSelector:
       path: metadata.name
       value: layout-map-supervisord-conf-map

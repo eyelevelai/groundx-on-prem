@@ -5,7 +5,11 @@ tests:
       - ../templates/app/celery.yaml
       - ../templates/app/inference.yaml
     set:
+      layout.correct.replicas.gracePeriod: 100
       layout.map.replicas.gracePeriod: 120
+      layout.ocr.replicas.gracePeriod: 100
+      layout.process.replicas.gracePeriod: 100
+      layout.save.replicas.gracePeriod: 100
       layout.inference.replicas.gracePeriod: 150
     asserts:
       - equal:
