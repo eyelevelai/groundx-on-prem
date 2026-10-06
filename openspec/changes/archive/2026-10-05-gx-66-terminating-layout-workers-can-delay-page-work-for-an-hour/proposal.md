@@ -12,7 +12,7 @@ On `0.2.7` the layout workers have the same gap that the extract workers had bef
 - Accept `gracePeriod` (integer, `minimum: 1`) under `layout.{correct,map,ocr,process,save,inference}.replicas` in both `src/groundx/values.schema.json` and its `helm/` mirror. `layout.api` is not a worker and does not gain the key.
 - Mirror every changed template into `helm/` by hand (the byte-compare gate `verify_mirrors()` covers templates; the schema mirror is not covered).
 - Put the tests in a new snapshot-free `src/groundx/tests/layout_shutdown_test.yaml`, retarget one existing `celery_test` case to a workspace worker, and add one `helm/tests/layout_grace_period_test.yaml` case (design decision 10); patch the affected snapshot blocks by hand and commit them separately.
-- No `preStop` hook is added. Celery's warm shutdown on SIGTERM is relied on; the uncommitted runtime shutdown test records whether the fixed worker takes any new task after SIGTERM, and a positive finding is escalated rather than patched here.
+- No `preStop` hook is added. Celery's warm shutdown on SIGTERM is relied on; the uncommitted runtime shutdown test showed that a single-worker pod takes no new task after SIGTERM. The two-worker case took a new task 42 seconds after SIGTERM; it was escalated and resolved here by the Supervisor group (design decision 8).
 
 Behavior that stays: ranker inference, summary inference, workspace workers and extract workers render unchanged. `layout-inference` shares `inference.yaml` with ranker and summary inference, so the grace period and `exec` additions are gated on the layout map prefix.
 
