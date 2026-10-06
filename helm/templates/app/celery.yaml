@@ -285,6 +285,7 @@ metadata:
 {{ include "groundx.renderDefaultLabels" (dict "name" $name "indent" 4 "root" $) }}
 spec:
   minAvailable: 1
+  unhealthyPodEvictionPolicy: AlwaysAllow
   selector:
     matchLabels:
       app: {{ $name }}
