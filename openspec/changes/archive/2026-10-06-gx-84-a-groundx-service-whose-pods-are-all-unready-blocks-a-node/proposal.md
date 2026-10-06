@@ -1,32 +1,22 @@
 ## Why
 
-A PodDisruptionBudget the chart renders sets only `minAvailable: 1`, so Kubernetes applies its default `IfHealthyBudget` policy. When every pod of a service is running but not ready (a crash-looping or model-loading inference pod), the budget is never met and every eviction is refused, so `kubectl drain` waits until it times out even though another node is free. Setting `unhealthyPodEvictionPolicy: AlwaysAllow` lets those unready pods be evicted regardless of the budget. This follows GX-74, which added the opt-in budgets and deferred this field to GX-84.
+An opt-in budget with only `minAvailable: 1` blocks eviction when every selected pod is running but unready. `unhealthyPodEvictionPolicy: AlwaysAllow` permits those pods to move while protecting healthy pods. Kubernetes versions before 1.26 do not expose this field in their API schema, so normal Helm install validation can reject an enabled budget.
 
 ## What Changes
 
-- Add `unhealthyPodEvictionPolicy: AlwaysAllow` under `spec:`, directly after `minAvailable: 1`, in the PodDisruptionBudget block of each of five templates: `templates/app/api.yaml`, `celery.yaml`, `golang.yaml`, `inference.yaml`, `metrics.yaml`.
-- Apply it in `src/groundx` first, then mirror the same edit byte-for-byte into `helm/templates/app/` (the gate's `verify_mirrors()` byte-compares the two trees).
-- The field is rendered unconditionally whenever a budget renders. There is no new values setting and no `values.schema.json` change.
-- Extend the existing helm-unittest suites with one assertion per template in `src/groundx/tests/api_pdb_test.yaml` (the celery enabled case renders two budgets, so `documentIndex` 1 and 3) and one assertion in `helm/tests/drain_protection_test.yaml`. No new cases, no new CI job, no snapshot regeneration (no snapshot contains a PodDisruptionBudget).
-- Add a MODIFIED delta to `openspec/specs/api-availability/spec.md` so the budget requirement states the policy.
-- Behavior change: budgets are off by default, so default renders of both chart copies are unchanged. With a budget enabled, a running but not-ready pod can now be evicted by a drain even when the service is below `minAvailable`. Healthy pods remain protected by `minAvailable: 1`. This is not a breaking change.
+Render `unhealthyPodEvictionPolicy: AlwaysAllow` only when Helm reports Kubernetes 1.26 or newer, in the five existing budget templates. Edit `src/groundx` first, then copy the same files into the `helm/` mirror. Older clusters retain `minAvailable: 1` and the existing service selector without the unsupported field. No values setting or schema change is added.
 
-Out of scope: configurable `minAvailable`, a values knob for the policy, the replica-count warning, and enabling budgets by default.
+Budget tests select a modern Kubernetes version and cover omission on 1.21 and 1.25 plus retention on 1.26. Default budgets remain disabled and snapshots are unchanged. The API availability specification and Harness deployment guidance use the same version rule.
 
 ## Capabilities
 
-### New Capabilities
-
-None.
-
-### Modified Capabilities
-
-- `api-availability`: the opt-in PodDisruptionBudget requirement gains `unhealthyPodEvictionPolicy: AlwaysAllow` on every rendered budget, in both chart surfaces.
+- Modified: `api-availability`, version-dependent unhealthy-pod eviction policy.
+- New: none.
 
 ## Impact
 
-- Files: five templates under `src/groundx/templates/app/` and their `helm/templates/app/` mirrors, two helm-unittest files, and `openspec/specs/api-availability/spec.md`. All lines are on branch `0.2.7` at `2f806fb`; the field is absent from `src` and `helm` there.
-- Blast radius: only clusters that enable a service's `disruptionBudget.enabled` and then upgrade the chart. Disabled budgets render nothing, so no environment changes by default. No stateful resource is touched.
-- Cluster versions: the field takes effect on Kubernetes 1.27+ (feature on by default) and GA in 1.31. Per the ticket, on 1.26 the API server drops it silently (a drain there still blocks) and on 1.25 `helm install` succeeds with an "unknown field" warning. Behavior on 1.21-1.24 is unverified.
-- Rollback or roll-forward: revert the field in both chart copies and upgrade; a budget without the field returns to the default `IfHealthyBudget` policy. Nothing is deployed or drained by this change; validation is `helm template`, `helm lint` and `helm unittest` only.
-- Open design questions: none. The 1.21-1.24 unknown is carried as an open question to the ticket owner and does not change the approach.
+Only enabled budgets change. Kubernetes before 1.26 keeps its previous drain behavior. Kubernetes 1.26 needs the alpha feature gate; 1.27 and later enable the policy by default. Development, staging and production receive this through their next chart upgrade. No application image, replica count, stateful resource, credential or extraction contract changes. Arcadia legacy, Arcadia v1, generic v1 and ADP v1 are unaffected because no extraction logic, prompt, schema or returned data changes.
+
+Validation covers both chart copies, version boundaries, normal Helm install checking on an isolated Kubernetes 1.21 cluster, the full chart gate and minikube rendering. Nothing is deployed to customer or hosted clusters. Rollback is reverting the guard in both chart copies, which restores the old-cluster install rejection.
+
+Open design questions: none.

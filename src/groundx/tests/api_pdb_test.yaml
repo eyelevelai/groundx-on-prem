@@ -1,4 +1,7 @@
 suite: "api disruption budgets render as expected"
+capabilities:
+  majorVersion: 1
+  minorVersion: 34
 chart:
   appVersion: 0.1.0
   version: 0.1.0
@@ -378,3 +381,122 @@ tests:
     asserts:
       - template: ../templates/NOTES.txt
         notMatchRegex: { path: raw, pattern: "WARNING" }
+
+  - it: "Kubernetes 1.21 keeps enabled budgets without the unsupported eviction field"
+    templates: &budgetTemplates
+      - ../templates/app/api.yaml
+      - ../templates/app/golang.yaml
+      - ../templates/app/celery.yaml
+      - ../templates/app/metrics.yaml
+      - ../templates/app/inference.yaml
+    values:
+      - ./files/values.disabled.yaml
+    capabilities:
+      majorVersion: 1
+      minorVersion: 21
+    set: &budgetServices
+      layout.api.enabled: true
+      layout.api.disruptionBudget.enabled: true
+      groundx.enabled: true
+      groundx.disruptionBudget.enabled: true
+      layout.map.enabled: true
+      layout.map.disruptionBudget.enabled: true
+      layout.ocr.enabled: true
+      layout.ocr.disruptionBudget.enabled: true
+      metrics.enabled: true
+      metrics.disruptionBudget.enabled: true
+      layout.inference.enabled: true
+      layout.inference.disruptionBudget.enabled: true
+    asserts: &legacyBudgetAssertions
+      - template: ../templates/app/api.yaml
+        documentSelector: { path: kind, value: PodDisruptionBudget }
+        notExists: { path: spec.unhealthyPodEvictionPolicy }
+      - template: ../templates/app/api.yaml
+        documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.minAvailable, value: 1 }
+      - template: ../templates/app/api.yaml
+        documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.selector.matchLabels.app, value: layout-api }
+      - template: ../templates/app/golang.yaml
+        documentSelector: { path: kind, value: PodDisruptionBudget }
+        notExists: { path: spec.unhealthyPodEvictionPolicy }
+      - template: ../templates/app/golang.yaml
+        documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.minAvailable, value: 1 }
+      - template: ../templates/app/golang.yaml
+        documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.selector.matchLabels.app, value: groundx }
+      - template: ../templates/app/celery.yaml
+        documentIndex: 1
+        notExists: { path: spec.unhealthyPodEvictionPolicy }
+      - template: ../templates/app/celery.yaml
+        documentIndex: 1
+        equal: { path: spec.minAvailable, value: 1 }
+      - template: ../templates/app/celery.yaml
+        documentIndex: 1
+        equal: { path: spec.selector.matchLabels.app, value: layout-map }
+      - template: ../templates/app/celery.yaml
+        documentIndex: 3
+        notExists: { path: spec.unhealthyPodEvictionPolicy }
+      - template: ../templates/app/celery.yaml
+        documentIndex: 3
+        equal: { path: spec.minAvailable, value: 1 }
+      - template: ../templates/app/celery.yaml
+        documentIndex: 3
+        equal: { path: spec.selector.matchLabels.app, value: layout-ocr }
+      - template: ../templates/app/metrics.yaml
+        documentSelector: { path: kind, value: PodDisruptionBudget }
+        notExists: { path: spec.unhealthyPodEvictionPolicy }
+      - template: ../templates/app/metrics.yaml
+        documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.minAvailable, value: 1 }
+      - template: ../templates/app/metrics.yaml
+        documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.selector.matchLabels.app, value: metrics }
+      - template: ../templates/app/inference.yaml
+        documentSelector: { path: kind, value: PodDisruptionBudget }
+        notExists: { path: spec.unhealthyPodEvictionPolicy }
+      - template: ../templates/app/inference.yaml
+        documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.minAvailable, value: 1 }
+      - template: ../templates/app/inference.yaml
+        documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.selector.matchLabels.app, value: layout-inference }
+
+  - it: "Kubernetes 1.25 keeps enabled budgets without the unsupported eviction field"
+    templates: *budgetTemplates
+    values:
+      - ./files/values.disabled.yaml
+    capabilities:
+      majorVersion: 1
+      minorVersion: 25
+    set: *budgetServices
+    asserts: *legacyBudgetAssertions
+
+  - it: "Kubernetes 1.26 retains the eviction policy for clusters with the alpha feature enabled"
+    templates: *budgetTemplates
+    values:
+      - ./files/values.disabled.yaml
+    capabilities:
+      majorVersion: 1
+      minorVersion: 26
+    set: *budgetServices
+    asserts:
+      - template: ../templates/app/api.yaml
+        documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.unhealthyPodEvictionPolicy, value: AlwaysAllow }
+      - template: ../templates/app/golang.yaml
+        documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.unhealthyPodEvictionPolicy, value: AlwaysAllow }
+      - template: ../templates/app/celery.yaml
+        documentIndex: 1
+        equal: { path: spec.unhealthyPodEvictionPolicy, value: AlwaysAllow }
+      - template: ../templates/app/celery.yaml
+        documentIndex: 3
+        equal: { path: spec.unhealthyPodEvictionPolicy, value: AlwaysAllow }
+      - template: ../templates/app/metrics.yaml
+        documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.unhealthyPodEvictionPolicy, value: AlwaysAllow }
+      - template: ../templates/app/inference.yaml
+        documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.unhealthyPodEvictionPolicy, value: AlwaysAllow }
