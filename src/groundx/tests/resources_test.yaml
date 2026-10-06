@@ -683,6 +683,20 @@ tests:
       - notMatchRegex:
           path: stringData["config.yaml"]
           pattern: "drainSeconds"
+  - it: "summary-api inference capacity is per gunicorn process while throughput stays per pod"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      summary.api.workers: 2
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "\n  inference:\n(?:    .*\n)*?    - name: summary-api\n      tokensPerMinute: 9600\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "\n  throughput:\n(?:    .*\n)*?    - name: summary-api\n      tokensPerMinute: 19200\n"
   - it: "workspace-enabled: resources"
     templates:
       - ../templates/resources/config-models.yaml
