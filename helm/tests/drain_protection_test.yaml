@@ -1,4 +1,7 @@
 suite: drain protection renders on the published chart
+capabilities:
+  majorVersion: 1
+  minorVersion: 34
 tests:
   - it: "a worker budget and spread render"
     templates:
@@ -13,6 +16,8 @@ tests:
     asserts:
       - documentSelector: { path: kind, value: PodDisruptionBudget }
         equal: { path: spec.selector.matchLabels.app, value: metrics }
+      - documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.unhealthyPodEvictionPolicy, value: AlwaysAllow }
       - documentSelector: { path: kind, value: Deployment }
         equal:
           path: spec.template.spec.topologySpreadConstraints[0].maxSkew
@@ -29,3 +34,20 @@ tests:
     asserts:
       - template: ../templates/NOTES.txt
         matchRegex: { path: raw, pattern: "WARNING: metrics has a disruption budget .* replica count \\(replicas.desired\\) is 1" }
+
+  - it: "Kubernetes 1.21 keeps the published budget without the unsupported eviction field"
+    templates:
+      - ../templates/app/metrics.yaml
+    capabilities:
+      majorVersion: 1
+      minorVersion: 21
+    set:
+      metrics.enabled: true
+      metrics.disruptionBudget.enabled: true
+    asserts:
+      - documentSelector: { path: kind, value: PodDisruptionBudget }
+        notExists: { path: spec.unhealthyPodEvictionPolicy }
+      - documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.minAvailable, value: 1 }
+      - documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.selector.matchLabels.app, value: metrics }
