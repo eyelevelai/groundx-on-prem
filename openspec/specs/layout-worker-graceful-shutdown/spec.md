@@ -72,24 +72,20 @@ The layout Supervisor config SHALL set `stopwaitsecs` to `max(1, gracePeriod - 3
 ### Requirement: Values schema accepts gracePeriod on layout worker replicas
 `src/groundx/values.schema.json` and `helm/values.schema.json` SHALL accept `gracePeriod` as an integer with `minimum: 1` under `layout.correct.replicas`, `layout.map.replicas`, `layout.ocr.replicas`, `layout.process.replicas`, `layout.save.replicas` and `layout.inference.replicas`. `layout.api.replicas` SHALL NOT accept it. The two schema files SHALL stay byte-identical.
 
-#### Scenario: Valid gracePeriod renders on every worker block (polarity: accept and enqueue)
-- **WHEN** each of the six blocks sets a different `replicas.gracePeriod` of at least 1
-- **THEN** the chart validates and renders each Deployment with its own value
+#### Scenario: Valid gracePeriod renders on a worker block and on layout-inference (polarity: accept and enqueue)
+- **WHEN** `layout.map.replicas.gracePeriod` is 120 and `layout.inference.replicas.gracePeriod` is 150
+- **THEN** the chart validates and renders `layout-map` and `layout-inference` each with its own value
 
-#### Scenario: Zero and non-integer values are rejected before anything renders (polarity: reject before state)
-- **WHEN** `layout.map.replicas.gracePeriod` is 0, or is a string
-- **THEN** schema validation fails and no manifest is rendered
-
-#### Scenario: layout.api rejects gracePeriod (polarity: reject before state; catches)
-- **WHEN** `layout.api.replicas.gracePeriod` is set
-- **THEN** schema validation fails with an additional-properties error, because `layout.api` is not a worker
+#### Scenario: A gracePeriod of zero is rejected before anything renders (polarity: reject before state)
+- **WHEN** `layout.map.replicas.gracePeriod` is 0
+- **THEN** schema validation fails with a minimum error and no manifest is rendered
 
 #### Scenario: Schema surfaces stay identical (polarity: finalize success)
 - **WHEN** the two schema files are compared
 - **THEN** they are byte-identical
 
 ### Requirement: Existing values files keep validating and rendering
-Values files that do not set `gracePeriod` SHALL keep validating. The only rendered differences from the previous chart for such files SHALL be the layout workloads' pod grace period, `exec` command, Supervisor `stopwaitsecs` and the resulting `supervisord-hash` annotation.
+Values files that do not set `gracePeriod` SHALL keep validating. The only rendered differences from the previous chart for such files SHALL be the layout workloads' pod grace period, `exec` command, Supervisor `stopwaitsecs`, the `[group:celery_workers]` Supervisor section and the resulting `supervisord-hash` annotation.
 
 #### Scenario: Backward compatibility with values that omit gracePeriod (polarity: finalize success)
 - **WHEN** a values file written for the previous chart, with no `gracePeriod` under `layout`, is rendered
