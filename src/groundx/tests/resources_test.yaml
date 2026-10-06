@@ -725,6 +725,20 @@ tests:
       - matchRegex:
           path: stringData["config.yaml"]
           pattern: "session:\\n    addr: cache-metrics\\.eyelevel\\.svc\\.cluster\\.local:6379\\n    notCluster: true\\n    ssl: false\\n  summaryRequest:"
+  - it: "cognito.mode: local renders mode: \"local\" in config.yaml"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      cognito.mode: local
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "cognito:\\n  mode: \"local\""
   - it: "cashbot-go rec.session and metrics.session render their own credential (ACL user+password vs password-only)"
     templates:
       - ../templates/resources/config-yaml.yaml
