@@ -3,9 +3,7 @@
 ## Purpose
 
 Preserve per-CoreDNS-pod metrics and extraction-worker DNS lookup evidence so operators can distinguish backend failures from worker network or service-path failures.
-
 ## Requirements
-
 ### Requirement: Opt-in CoreDNS collection preserves existing monitoring
 
 The EKS Terraform SHALL retain explicit CloudWatch cost controls: Application Signals disabled and enhanced Container Insights enabled. When DNS observability is enabled, it SHALL keep the same main-agent configuration and add one dedicated CoreDNS collector that scrapes each CoreDNS pod and publishes metrics labelled by pod.
