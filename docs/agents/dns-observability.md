@@ -1,6 +1,6 @@
 # EKS DNS evidence for extraction
 
-The production EKS Terraform stack can add one CloudWatch collector for each CoreDNS pod's request volume, response codes, and upstream health failures. The default `cloudwatch-agent` keeps its current configuration. The collector drops CoreDNS duration histograms, so an optional sidecar in `extract-agent` measures Redis lookup time from the same pod network and resolver as extraction. Failed or slow lookups record kube-dns EndpointSlice readiness and directly query each listed CoreDNS pod. Neither component repairs DNS or retries extraction.
+The production EKS Terraform stack can add one CloudWatch collector for each CoreDNS pod's request volume, response codes, and upstream health failures. The main `cloudwatch-agent` keeps the explicit [EKS cost controls](eks-cost-controls.md), with Application Signals off and enhanced Container Insights on. The collector drops CoreDNS duration histograms, so an optional sidecar in `extract-agent` measures Redis lookup time from the same pod network and resolver as extraction. Failed or slow lookups record kube-dns EndpointSlice readiness and directly query each listed CoreDNS pod. Neither component repairs DNS or retries extraction.
 
 ## Preflight
 
@@ -15,7 +15,7 @@ python3 -m unittest discover -s src/groundx/tests -p 'test_dns_probe.py'
 helm lint src/groundx --set extract.enabled=true --set extract.agent.enabled=true --set extract.agent.dnsProbe.enabled=true
 ```
 
-With `dns_observability.enabled = true`, review a production Terraform plan against the current state. It must contain only an in-place `amazon-cloudwatch-observability` configuration update at the already installed add-on version. Stop on node-group, CoreDNS, stateful-resource, or version changes. Verify that the existing `cloudwatch-agent` entry has no overrides and that `coredns-metrics` is one deployment. Applying the add-on update can roll CloudWatch monitoring components, but does not roll GroundX or CoreDNS workloads.
+With `dns_observability.enabled = true`, review a production Terraform plan against the current state. It must contain only an in-place `amazon-cloudwatch-observability` configuration update at the already installed add-on version. Stop on node-group, CoreDNS, stateful-resource, or version changes. Verify that `cloudwatch-agent` retains the explicit cost configuration and that `coredns-metrics` is one deployment. Applying the add-on update can roll CloudWatch monitoring components, but does not roll GroundX or CoreDNS workloads.
 
 The `extract-agent` Deployment runs on `t3a.medium` CPU nodes with a limit of 17 pods per node. Several nodes were at that limit, so a separate probe DaemonSet could not cover the worker that encountered the failure. The sidecar uses the extraction pod's slot. It adds a 10m CPU and 32Mi memory request to each extraction pod and uses the cache hostname produced by the same chart. It makes one normal lookup per pod every 10 seconds by default and logs each failure or lookup slower than two seconds. Fluent Bit sends these logs to `/aws/containerinsights/eyelevel_890ng3/application`.
 

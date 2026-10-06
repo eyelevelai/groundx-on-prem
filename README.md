@@ -835,6 +835,10 @@ cluster, which is unaffected and remains supported for both new and existing AWS
 ## Accessing Legacy Scripts
 If you would like to access the legacy terraform scripts, they can be pulled from [legacy-terraform-deployment](https://github.com/eyelevelai/groundx-on-prem/releases/tag/legacy-terraform-deployment).
 
+## EKS CPU and monitoring cost controls
+
+CPU-only nodes default to gp3 disks and one unavailable node per update. CloudWatch keeps enhanced Container Insights enabled and Application Signals disabled. See [EKS cost controls](docs/agents/eks-cost-controls.md) before applying these settings to an existing cluster.
+
 ## Optional EKS Node Diagnostics
 
 AWS EKS deployments managed by the bundled Terraform (new or existing) can enable default-off
