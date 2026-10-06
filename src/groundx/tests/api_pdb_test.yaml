@@ -62,6 +62,9 @@ tests:
           path: spec.minAvailable
           value: 1
       - equal:
+          path: spec.unhealthyPodEvictionPolicy
+          value: AlwaysAllow
+      - equal:
           path: spec.selector.matchLabels.app
           value: extract-api
 
@@ -185,6 +188,9 @@ tests:
           path: spec.minAvailable
           value: 1
       - equal:
+          path: spec.unhealthyPodEvictionPolicy
+          value: AlwaysAllow
+      - equal:
           path: spec.selector.matchLabels.app
           value: groundx
 
@@ -230,8 +236,12 @@ tests:
       - hasDocuments: { count: 4 }
       - documentIndex: 1
         equal: { path: spec.selector.matchLabels.app, value: layout-map }
+      - documentIndex: 1
+        equal: { path: spec.unhealthyPodEvictionPolicy, value: AlwaysAllow }
       - documentIndex: 3
         equal: { path: spec.selector.matchLabels.app, value: layout-ocr }
+      - documentIndex: 3
+        equal: { path: spec.unhealthyPodEvictionPolicy, value: AlwaysAllow }
       - documentIndex: 0
         equal: { path: spec.template.spec.topologySpreadConstraints, value: *mapSpread }
 
@@ -253,6 +263,8 @@ tests:
     asserts:
       - documentSelector: { path: kind, value: PodDisruptionBudget }
         equal: { path: spec.selector.matchLabels.app, value: metrics }
+      - documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.unhealthyPodEvictionPolicy, value: AlwaysAllow }
       - documentSelector: { path: kind, value: Deployment }
         equal: { path: spec.template.spec.topologySpreadConstraints, value: *metricsSpread }
 
@@ -274,6 +286,8 @@ tests:
     asserts:
       - documentSelector: { path: kind, value: PodDisruptionBudget }
         equal: { path: spec.selector.matchLabels.app, value: layout-inference }
+      - documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.unhealthyPodEvictionPolicy, value: AlwaysAllow }
       - documentSelector: { path: kind, value: Deployment }
         equal: { path: spec.template.spec.topologySpreadConstraints, value: *inferenceSpread }
 

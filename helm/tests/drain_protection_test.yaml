@@ -13,6 +13,8 @@ tests:
     asserts:
       - documentSelector: { path: kind, value: PodDisruptionBudget }
         equal: { path: spec.selector.matchLabels.app, value: metrics }
+      - documentSelector: { path: kind, value: PodDisruptionBudget }
+        equal: { path: spec.unhealthyPodEvictionPolicy, value: AlwaysAllow }
       - documentSelector: { path: kind, value: Deployment }
         equal:
           path: spec.template.spec.topologySpreadConstraints[0].maxSkew
