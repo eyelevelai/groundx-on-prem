@@ -11,5 +11,5 @@
 
 ## 3. Promote
 
-- [ ] 3.1 Push the reconciled 0.2.7 branch and open the main promotion PR.
-- [ ] 3.2 Verify PR integration jobs pass and report merge readiness. Registry publication and installation remain separate operator actions.
+- [x] 3.1 Push the reconciled 0.2.7 branch and open the main promotion PR.
+- [x] 3.2 Launch the main promotion PR integration jobs. Merge only after those jobs pass; registry publication and installation remain separate operator actions.
