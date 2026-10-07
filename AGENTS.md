@@ -17,6 +17,8 @@ dependency on any other `groundx-*` repo** (verified).
 
 ## How to run and test
 
+Follow [CONTRIBUTING.md](CONTRIBUTING.md) for focused regression coverage and PR guidance.
+
 - **Lint / render:** `helm lint src/groundx` · `helm template src/groundx -f src/groundx/values/minikube/values.yaml`
 - **Test:** `.build/bin/validate-helm.sh` runs the full local gate (lint + `helm unittest` +
   dual-surface render checks) and is the entrypoint to prefer. It generates the throwaway

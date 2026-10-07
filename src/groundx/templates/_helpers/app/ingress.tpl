@@ -24,6 +24,17 @@
   {{- $enabled := dig "enabled" "false" $gx | toString -}}
   {{- if eq $enabled "true" -}}
     {{- $_ := set $svcs $svc $svc -}}
+    {{- if hasSuffix ".api" $svc -}}
+      {{- $data := dig "data" dict $gx -}}
+      {{- $paths := dig "paths" list $data -}}
+      {{- if or (not $paths) (eq (len $paths) 0) -}}
+        {{- $createKey := printf "groundx.%s.create" $svc -}}
+        {{- $isCreated := include $createKey $ -}}
+        {{- if eq $isCreated "false" -}}
+          {{- fail (printf "%s.ingress is enabled but %s is not created; enable %s or remove the ingress" $svc $svc $svc) -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
   {{- end -}}
 {{- end }}
 
