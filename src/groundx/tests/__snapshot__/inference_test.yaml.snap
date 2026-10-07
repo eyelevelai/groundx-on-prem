@@ -19,10 +19,10 @@
       template:
         metadata:
           annotations:
-            config-hash: 0e62c00d3b122115c882493823cdaa38d82aed94891faac8b29b80d6b1a32960
+            config-hash: 12d78cdd587a51bcb7ebf5af6c8872d7f1f8f4152175071dc503b226ba269583
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -45,7 +45,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -212,6 +212,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -223,9 +224,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -287,10 +288,10 @@
       template:
         metadata:
           annotations:
-            config-hash: b0c8193aca6eccd6282f680fa67313a44dd0ac24a73ea84906276482bde9c15e
+            config-hash: 80984f2c4c5a566db5f4dd7a3c86abb0733bb079165671ca808e888a3cd8f9af
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: c3de8d835a18146d0f59120a18513f20056efbb1cda896213ca789277d88a71b
+            supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
           labels:
             app: ranker-inference
         spec:
@@ -322,23 +323,23 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                failureThreshold: 10
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 8
+                httpGet:
+                  path: /alive
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               name: ranker-inference
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
               readinessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 30
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               resources:
                 limits:
                   nvidia.com/gpu: 1
@@ -483,9 +484,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
@@ -547,7 +548,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 17ef124814867fcbb6212c1851edc76e6acdb7802e42c7fef134a2fb6f3ec938
+            config-hash: ea698157e5a248cb307974eaf0b410f6b3b67dfa9c1de3ee0df957acbe0d63f9
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: a48af0c98c4a6d0aafa9d919d204e9d8b1c51e416a36f766644a6c8d11e48a90
@@ -579,6 +580,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -671,7 +674,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -682,18 +685,18 @@
 
                     rm /workspace/hf_models_cache/summary.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
@@ -740,9 +743,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-inference-supervisord-conf-map
               name: supervisord-volume
@@ -805,10 +808,10 @@
       template:
         metadata:
           annotations:
-            config-hash: 049c37fdbe18201176cad7589519f0abedd3f900a382056ce812fbb34445447f
+            config-hash: 1a3a2f023bfcd922f9e67fc1100bb4f5b34e3b03513c80d5de2226fbef681569
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -831,7 +834,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -997,6 +1000,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1008,9 +1012,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -1072,10 +1076,10 @@
       template:
         metadata:
           annotations:
-            config-hash: 10a2c3714245d327a2110a7f94d5a48581c81788dfb36f046ef6276be59e0061
+            config-hash: ac9291d84ab87466fb7f0b6f351533f5e84e0af9b65a4917346adef6cdd66621
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: c3de8d835a18146d0f59120a18513f20056efbb1cda896213ca789277d88a71b
+            supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
           labels:
             app: ranker-inference
         spec:
@@ -1107,23 +1111,23 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                failureThreshold: 10
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 8
+                httpGet:
+                  path: /alive
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               name: ranker-inference
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
               readinessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 30
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               resources:
                 limits:
                   nvidia.com/gpu: 1
@@ -1267,9 +1271,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
@@ -1331,7 +1335,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9b550f83fe615008fd7a3bd4fb324f3a3b8607943a72f3da1da21a0b31921ebc
+            config-hash: f19515bd35dbbf61aa32bae04e98da83bcb133856d7d855eed7f3c170e247b5f
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: a48af0c98c4a6d0aafa9d919d204e9d8b1c51e416a36f766644a6c8d11e48a90
@@ -1363,6 +1367,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1455,7 +1461,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -1466,18 +1472,18 @@
 
                     rm /workspace/hf_models_cache/summary.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
@@ -1523,9 +1529,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-inference-supervisord-conf-map
               name: supervisord-volume
@@ -1588,10 +1594,10 @@
       template:
         metadata:
           annotations:
-            config-hash: d2f8a61a500bc77e4c1e128cb58c29295ae9d683661b44342c038609ac387352
+            config-hash: 4adaae49d2cf5be77aaa3be5ed372c23dd728021f01803f2296142d9d2d04a6d
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -1614,7 +1620,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -1780,6 +1786,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1791,9 +1798,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -1855,10 +1862,10 @@
       template:
         metadata:
           annotations:
-            config-hash: d09038b15d81b45a3c91b675dba9421905acbd940eca1349b6af31098c98c043
+            config-hash: 90d8d3d124b674c0682da50361feded1ac99639c608b03372420c8d6942bc5cc
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: c3de8d835a18146d0f59120a18513f20056efbb1cda896213ca789277d88a71b
+            supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
           labels:
             app: ranker-inference
         spec:
@@ -1890,23 +1897,23 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                failureThreshold: 10
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 8
+                httpGet:
+                  path: /alive
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               name: ranker-inference
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
               readinessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 30
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               resources:
                 limits:
                   nvidia.com/gpu: 1
@@ -2050,9 +2057,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
@@ -2114,7 +2121,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 98ce5b024876419328628261ed1d43fb288560dba6cfc74a959b79cf197491ab
+            config-hash: 99f41ef2cfafc8c53d00c72d079fe6433f24db2e19f2e5ce76160425923f03b9
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: a48af0c98c4a6d0aafa9d919d204e9d8b1c51e416a36f766644a6c8d11e48a90
@@ -2146,6 +2153,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -2238,7 +2247,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -2249,18 +2258,18 @@
 
                     rm /workspace/hf_models_cache/summary.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
@@ -2306,9 +2315,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-inference-supervisord-conf-map
               name: supervisord-volume
@@ -2372,10 +2381,10 @@
       template:
         metadata:
           annotations:
-            config-hash: d2f8a61a500bc77e4c1e128cb58c29295ae9d683661b44342c038609ac387352
+            config-hash: 4adaae49d2cf5be77aaa3be5ed372c23dd728021f01803f2296142d9d2d04a6d
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -2398,7 +2407,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -2564,6 +2573,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2575,9 +2585,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -2639,10 +2649,10 @@
       template:
         metadata:
           annotations:
-            config-hash: d09038b15d81b45a3c91b675dba9421905acbd940eca1349b6af31098c98c043
+            config-hash: 90d8d3d124b674c0682da50361feded1ac99639c608b03372420c8d6942bc5cc
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: c3de8d835a18146d0f59120a18513f20056efbb1cda896213ca789277d88a71b
+            supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
           labels:
             app: ranker-inference
         spec:
@@ -2674,23 +2684,23 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                failureThreshold: 10
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 8
+                httpGet:
+                  path: /alive
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               name: ranker-inference
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
               readinessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 30
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               resources:
                 limits:
                   nvidia.com/gpu: 1
@@ -2834,9 +2844,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
@@ -2898,7 +2908,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 98ce5b024876419328628261ed1d43fb288560dba6cfc74a959b79cf197491ab
+            config-hash: 99f41ef2cfafc8c53d00c72d079fe6433f24db2e19f2e5ce76160425923f03b9
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: a48af0c98c4a6d0aafa9d919d204e9d8b1c51e416a36f766644a6c8d11e48a90
@@ -2930,6 +2940,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -3022,7 +3034,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -3033,18 +3045,18 @@
 
                     rm /workspace/hf_models_cache/summary.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
@@ -3090,9 +3102,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-inference-supervisord-conf-map
               name: supervisord-volume
@@ -3155,10 +3167,10 @@
       template:
         metadata:
           annotations:
-            config-hash: b06b20f2d0b0544c43eca2ac371f76b5837528a388f92d53a07c20e32c9a9d5b
+            config-hash: 5326560ebc335a832d5b084c947e691d3fc49492f37533e8796210d4722765a3
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -3181,7 +3193,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -3347,6 +3359,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3358,9 +3371,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -3422,10 +3435,10 @@
       template:
         metadata:
           annotations:
-            config-hash: 8e63ebfea1c0f60ac40bef43a8944a14369538ba8bb0421a10a4a0be5a804b9e
+            config-hash: 5d5ecc9ccedb41694e7a07b79380b55a743c3a46abd9252407f19567d8b8dbe9
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: c3de8d835a18146d0f59120a18513f20056efbb1cda896213ca789277d88a71b
+            supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
           labels:
             app: ranker-inference
         spec:
@@ -3457,23 +3470,23 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                failureThreshold: 10
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 8
+                httpGet:
+                  path: /alive
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               name: ranker-inference
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
               readinessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 30
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               resources:
                 limits:
                   nvidia.com/gpu: 1
@@ -3617,9 +3630,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
@@ -3682,10 +3695,10 @@
       template:
         metadata:
           annotations:
-            config-hash: cd27bb81927f5164f824cd11d7ddc53bf1ae2d7ca47d4608dfdd0eb9c5ad1637
+            config-hash: f5e125078762065d891bd7cc60044a2a0f4955fda12fd5fbabeac6ae132c0777
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -3708,7 +3721,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -3878,6 +3891,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3889,9 +3903,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -3938,269 +3952,6 @@
     kind: Deployment
     metadata:
       labels:
-        app: ranker-inference
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-inference
-      namespace: eyelevel
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: ranker-inference
-      template:
-        metadata:
-          annotations:
-            config-hash: b9925462022bebe3881e71f27efbc04bb7bfd6e0f9e2e70a62d76cfcc676d69d
-            config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
-            ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: c3de8d835a18146d0f59120a18513f20056efbb1cda896213ca789277d88a71b
-          labels:
-            app: ranker-inference
-        spec:
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: node
-                        operator: In
-                        values:
-                          - eyelevel-gpu-ranker
-                  - matchExpressions:
-                      - key: eyelevel_node
-                        operator: In
-                        values:
-                          - eyelevel-gpu-ranker
-          containers:
-            - command:
-                - /bin/sh
-                - -c
-                - |
-                  export PYTHONPATH=/workspace:$PYTHONPATH &&  supervisord -c /workspace/supervisord.conf
-              env:
-                - name: POD_NAME
-                  valueFrom:
-                    fieldRef:
-                      fieldPath: metadata.name
-              envFrom:
-                - secretRef:
-                    name: eyelevel-secret-credentials
-              image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
-              imagePullPolicy: IfNotPresent
-              livenessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                failureThreshold: 10
-                initialDelaySeconds: 60
-                periodSeconds: 30
-              name: ranker-inference
-              readinessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                initialDelaySeconds: 60
-                periodSeconds: 30
-              resources:
-                limits:
-                  nvidia.com/gpu: 1
-                requests:
-                  cpu: 1.5
-                  memory: 1Gi
-                  nvidia.com/gpu: 1
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 1001
-                runAsNonRoot: true
-                runAsUser: 1001
-                seccompProfile:
-                  type: RuntimeDefault
-              volumeMounts:
-                - mountPath: /workspace/config_models.py
-                  name: config-models
-                  subPath: config_models.py
-                - mountPath: /workspace/config.py
-                  name: config-volume
-                  subPath: config.py
-                - mountPath: /workspace/supervisord.conf
-                  name: supervisord-volume
-                  subPath: supervisord.conf
-                - mountPath: /workspace/hf_models_cache
-                  name: model-volume
-              workingDir: /workspace
-          initContainers:
-            - command:
-                - sh
-                - -c
-                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: IfNotPresent
-              name: wait-for-cache
-            - args:
-                - echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh
-              command:
-                - /bin/sh
-                - -c
-                - --
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: IfNotPresent
-              name: create-symlink
-              resources:
-                requests:
-                  cpu: 10m
-                  memory: 50Mi
-              securityContext:
-                privileged: true
-              volumeMounts:
-                - mountPath: /scripts/ldconfig_symlink.sh
-                  name: ranker-inference
-                  subPath: ldconfig_symlink.sh
-                - mountPath: /host-sbin
-                  name: host-sbin
-                - mountPath: /host-usr-sbin
-                  name: host-usr-sbin
-                - mountPath: /host-bin
-                  name: host-bin
-                - mountPath: /host-usr-bin
-                  name: host-usr-bin
-            - command:
-                - /bin/sh
-                - -c
-                - |
-                  download_and_extract_model() {
-                    echo "Model downloading started..."
-
-                    touch /workspace/hf_models_cache/downloading
-
-                    echo "00 01 02" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/ranker/model/current/model.tar.gz.part.$PART; \
-                      while [ $RETRIES -lt $MAX_RETRIES ]; do \
-                        echo "Download [attempt $RETRIES] ranker.tar.gz.part.$PART"; \
-                        wget -q -O /workspace/hf_models_cache/ranker.tar.gz.part.$PART $URL && { echo "Downloaded ranker.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
-                        echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
-                      done; \
-                      [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm /workspace/hf_models_cache/downloading; exit 1; }; \
-                      echo "Unzipping ranker.tar.gz.part.$PART..."; tar -xzf /workspace/hf_models_cache/ranker.tar.gz.part.$PART -C /workspace/hf_models_cache/; echo "Unzipping ranker.tar.gz.part.$PART complete...";'
-
-                    rm /workspace/hf_models_cache/ranker.tar.*
-                    rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.model
-                  }
-                  if [ ! -f /workspace/hf_models_cache/complete.model ]; then
-                    if [ ! -f /workspace/hf_models_cache/downloading ]; then
-                      download_and_extract_model
-                    else
-                      echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.model ]; do
-                        sleep $((3 + RANDOM % 2))
-                      done
-
-                      if [ ! -f /workspace/hf_models_cache/complete.model ]; then
-                        download_and_extract_model
-                      else
-                        echo "Model cache ready."
-                      fi
-                    fi
-                  else
-                    echo "Model cache already exists. Skipping download."
-                  fi
-
-                  echo "Model load done."
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: IfNotPresent
-              name: download-model
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 1001
-                runAsNonRoot: true
-                runAsUser: 1001
-                seccompProfile:
-                  type: RuntimeDefault
-              volumeMounts:
-                - mountPath: /workspace/hf_models_cache
-                  name: model-volume
-          securityContext:
-            fsGroup: 1001
-            fsGroupChangePolicy: OnRootMismatch
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
-            seccompProfile:
-              type: RuntimeDefault
-          serviceAccountName: existing-service-account
-          tolerations:
-            - effect: NoSchedule
-              key: node
-              value: eyelevel-gpu-ranker
-            - effect: NoSchedule
-              key: eyelevel_node
-              value: eyelevel-gpu-ranker
-          volumes:
-            - configMap:
-                name: config-models-map
-              name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
-            - configMap:
-                name: ranker-inference-supervisord-conf-map
-              name: supervisord-volume
-            - configMap:
-                defaultMode: 365
-                name: ldconfig-symlink-map
-              name: ranker-inference
-            - hostPath:
-                path: /sbin
-                type: Directory
-              name: host-sbin
-            - hostPath:
-                path: /usr/sbin
-                type: Directory
-              name: host-usr-sbin
-            - hostPath:
-                path: /bin
-                type: Directory
-              name: host-bin
-            - hostPath:
-                path: /usr/bin
-                type: Directory
-              name: host-usr-bin
-            - name: model-volume
-              persistentVolumeClaim:
-                claimName: ranker-model
-  4: |
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      labels:
-        app: ranker-inference
-      name: ranker-model
-      namespace: eyelevel
-    spec:
-      accessModes:
-        - ReadWriteMany
-      resources:
-        requests:
-          storage: 10Gi
-      storageClassName: eyelevel-pv
-  5: |
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      labels:
         app: summary-inference
         appVersion: 0.1.0
         chart: groundx-0.1.0
@@ -4216,7 +3967,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4219e04ff7ea14faa1eb8b710e1d62388ae5cc16d802bb65bd902a646bdcbcb4
+            config-hash: 1fe84656d42aeaadd42f108c33efed189e6cbe10a886b815e2733c0de6d3653e
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: a48af0c98c4a6d0aafa9d919d204e9d8b1c51e416a36f766644a6c8d11e48a90
@@ -4248,6 +3999,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
@@ -4343,7 +4096,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -4354,18 +4107,18 @@
 
                     rm /workspace/hf_models_cache/summary.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
@@ -4412,9 +4165,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-inference-supervisord-conf-map
               name: supervisord-volume
@@ -4441,7 +4194,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: summary-model
-  6: |
+  4: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -4477,10 +4230,10 @@
       template:
         metadata:
           annotations:
-            config-hash: 5c76b67f2bc7e2de68d10d8d00ba8610e5397db2016a1ef5398f139b3f716062
+            config-hash: 34ecf902bba4ab13212343c7738fba69995e865922a70ab1a4e53b6a782b105a
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -4503,7 +4256,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -4669,6 +4422,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4680,9 +4434,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -4729,265 +4483,6 @@
     kind: Deployment
     metadata:
       labels:
-        app: ranker-inference
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-inference
-      namespace: eyelevel
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: ranker-inference
-      template:
-        metadata:
-          annotations:
-            config-hash: 1c478ed103e29a5ca3e1fea4246d3385551c8f60f4141a412bdd8afdfa5115ab
-            config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
-            ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: c3de8d835a18146d0f59120a18513f20056efbb1cda896213ca789277d88a71b
-          labels:
-            app: ranker-inference
-        spec:
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: node
-                        operator: In
-                        values:
-                          - eyelevel-gpu-ranker
-                  - matchExpressions:
-                      - key: eyelevel_node
-                        operator: In
-                        values:
-                          - eyelevel-gpu-ranker
-          containers:
-            - command:
-                - /bin/sh
-                - -c
-                - |
-                  export PYTHONPATH=/workspace:$PYTHONPATH &&  supervisord -c /workspace/supervisord.conf
-              env:
-                - name: POD_NAME
-                  valueFrom:
-                    fieldRef:
-                      fieldPath: metadata.name
-              image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
-              imagePullPolicy: IfNotPresent
-              livenessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                failureThreshold: 10
-                initialDelaySeconds: 60
-                periodSeconds: 30
-              name: ranker-inference
-              readinessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                initialDelaySeconds: 60
-                periodSeconds: 30
-              resources:
-                limits:
-                  nvidia.com/gpu: 1
-                requests:
-                  cpu: 1.5
-                  memory: 1Gi
-                  nvidia.com/gpu: 1
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 1001
-                runAsNonRoot: true
-                runAsUser: 1001
-                seccompProfile:
-                  type: RuntimeDefault
-              volumeMounts:
-                - mountPath: /workspace/config_models.py
-                  name: config-models
-                  subPath: config_models.py
-                - mountPath: /workspace/config.py
-                  name: config-volume
-                  subPath: config.py
-                - mountPath: /workspace/supervisord.conf
-                  name: supervisord-volume
-                  subPath: supervisord.conf
-                - mountPath: /workspace/hf_models_cache
-                  name: model-volume
-              workingDir: /workspace
-          initContainers:
-            - command:
-                - sh
-                - -c
-                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: IfNotPresent
-              name: wait-for-cache
-            - args:
-                - echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh
-              command:
-                - /bin/sh
-                - -c
-                - --
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: IfNotPresent
-              name: create-symlink
-              resources:
-                requests:
-                  cpu: 10m
-                  memory: 50Mi
-              securityContext:
-                privileged: true
-              volumeMounts:
-                - mountPath: /scripts/ldconfig_symlink.sh
-                  name: ranker-inference
-                  subPath: ldconfig_symlink.sh
-                - mountPath: /host-sbin
-                  name: host-sbin
-                - mountPath: /host-usr-sbin
-                  name: host-usr-sbin
-                - mountPath: /host-bin
-                  name: host-bin
-                - mountPath: /host-usr-bin
-                  name: host-usr-bin
-            - command:
-                - /bin/sh
-                - -c
-                - |
-                  download_and_extract_model() {
-                    echo "Model downloading started..."
-
-                    touch /workspace/hf_models_cache/downloading
-
-                    echo "00 01 02" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/ranker/model/current/model.tar.gz.part.$PART; \
-                      while [ $RETRIES -lt $MAX_RETRIES ]; do \
-                        echo "Download [attempt $RETRIES] ranker.tar.gz.part.$PART"; \
-                        wget -q -O /workspace/hf_models_cache/ranker.tar.gz.part.$PART $URL && { echo "Downloaded ranker.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
-                        echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
-                      done; \
-                      [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm /workspace/hf_models_cache/downloading; exit 1; }; \
-                      echo "Unzipping ranker.tar.gz.part.$PART..."; tar -xzf /workspace/hf_models_cache/ranker.tar.gz.part.$PART -C /workspace/hf_models_cache/; echo "Unzipping ranker.tar.gz.part.$PART complete...";'
-
-                    rm /workspace/hf_models_cache/ranker.tar.*
-                    rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.model
-                  }
-                  if [ ! -f /workspace/hf_models_cache/complete.model ]; then
-                    if [ ! -f /workspace/hf_models_cache/downloading ]; then
-                      download_and_extract_model
-                    else
-                      echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.model ]; do
-                        sleep $((3 + RANDOM % 2))
-                      done
-
-                      if [ ! -f /workspace/hf_models_cache/complete.model ]; then
-                        download_and_extract_model
-                      else
-                        echo "Model cache ready."
-                      fi
-                    fi
-                  else
-                    echo "Model cache already exists. Skipping download."
-                  fi
-
-                  echo "Model load done."
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: IfNotPresent
-              name: download-model
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 1001
-                runAsNonRoot: true
-                runAsUser: 1001
-                seccompProfile:
-                  type: RuntimeDefault
-              volumeMounts:
-                - mountPath: /workspace/hf_models_cache
-                  name: model-volume
-          securityContext:
-            fsGroup: 1001
-            fsGroupChangePolicy: OnRootMismatch
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
-            seccompProfile:
-              type: RuntimeDefault
-          tolerations:
-            - effect: NoSchedule
-              key: node
-              value: eyelevel-gpu-ranker
-            - effect: NoSchedule
-              key: eyelevel_node
-              value: eyelevel-gpu-ranker
-          volumes:
-            - configMap:
-                name: config-models-map
-              name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
-            - configMap:
-                name: ranker-inference-supervisord-conf-map
-              name: supervisord-volume
-            - configMap:
-                defaultMode: 365
-                name: ldconfig-symlink-map
-              name: ranker-inference
-            - hostPath:
-                path: /sbin
-                type: Directory
-              name: host-sbin
-            - hostPath:
-                path: /usr/sbin
-                type: Directory
-              name: host-usr-sbin
-            - hostPath:
-                path: /bin
-                type: Directory
-              name: host-bin
-            - hostPath:
-                path: /usr/bin
-                type: Directory
-              name: host-usr-bin
-            - name: model-volume
-              persistentVolumeClaim:
-                claimName: ranker-model
-  4: |
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      labels:
-        app: ranker-inference
-      name: ranker-model
-      namespace: eyelevel
-    spec:
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 10Gi
-      storageClassName: ebs-gp3-rwo
-  5: |
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      labels:
         app: summary-inference
         appVersion: 0.1.0
         chart: groundx-0.1.0
@@ -5003,7 +4498,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e059715cac78edb91cf35e9d601b544d69549ff9efa79b4ca64efeb88b19f652
+            config-hash: 58a2df1961226517dde68430c4cde9ff29487e1dae3dcbf8c7027af93a9fd243
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             supervisord-hash: a48af0c98c4a6d0aafa9d919d204e9d8b1c51e416a36f766644a6c8d11e48a90
@@ -5035,6 +4530,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -5127,7 +4624,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -5138,18 +4635,18 @@
 
                     rm /workspace/hf_models_cache/summary.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
@@ -5195,9 +4692,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-inference-supervisord-conf-map
               name: supervisord-volume
@@ -5224,7 +4721,7 @@
             - name: model-volume
               persistentVolumeClaim:
                 claimName: summary-model
-  6: |
+  4: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -5260,10 +4757,10 @@
       template:
         metadata:
           annotations:
-            config-hash: cd27bb81927f5164f824cd11d7ddc53bf1ae2d7ca47d4608dfdd0eb9c5ad1637
+            config-hash: f5e125078762065d891bd7cc60044a2a0f4955fda12fd5fbabeac6ae132c0777
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -5286,7 +4783,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -5456,6 +4953,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -5467,9 +4965,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -5511,269 +5009,6 @@
         requests:
           storage: 20Gi
       storageClassName: eyelevel-pv
-  3: |
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      labels:
-        app: ranker-inference
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-inference
-      namespace: eyelevel
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: ranker-inference
-      template:
-        metadata:
-          annotations:
-            config-hash: b9925462022bebe3881e71f27efbc04bb7bfd6e0f9e2e70a62d76cfcc676d69d
-            config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
-            ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: c3de8d835a18146d0f59120a18513f20056efbb1cda896213ca789277d88a71b
-          labels:
-            app: ranker-inference
-        spec:
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: node
-                        operator: In
-                        values:
-                          - eyelevel-gpu-ranker
-                  - matchExpressions:
-                      - key: eyelevel_node
-                        operator: In
-                        values:
-                          - eyelevel-gpu-ranker
-          containers:
-            - command:
-                - /bin/sh
-                - -c
-                - |
-                  export PYTHONPATH=/workspace:$PYTHONPATH &&  supervisord -c /workspace/supervisord.conf
-              env:
-                - name: POD_NAME
-                  valueFrom:
-                    fieldRef:
-                      fieldPath: metadata.name
-              envFrom:
-                - secretRef:
-                    name: eyelevel-secret-credentials
-              image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
-              imagePullPolicy: IfNotPresent
-              livenessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                failureThreshold: 10
-                initialDelaySeconds: 60
-                periodSeconds: 30
-              name: ranker-inference
-              readinessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                initialDelaySeconds: 60
-                periodSeconds: 30
-              resources:
-                limits:
-                  nvidia.com/gpu: 1
-                requests:
-                  cpu: 1.5
-                  memory: 1Gi
-                  nvidia.com/gpu: 1
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 1001
-                runAsNonRoot: true
-                runAsUser: 1001
-                seccompProfile:
-                  type: RuntimeDefault
-              volumeMounts:
-                - mountPath: /workspace/config_models.py
-                  name: config-models
-                  subPath: config_models.py
-                - mountPath: /workspace/config.py
-                  name: config-volume
-                  subPath: config.py
-                - mountPath: /workspace/supervisord.conf
-                  name: supervisord-volume
-                  subPath: supervisord.conf
-                - mountPath: /workspace/hf_models_cache
-                  name: model-volume
-              workingDir: /workspace
-          initContainers:
-            - command:
-                - sh
-                - -c
-                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: IfNotPresent
-              name: wait-for-cache
-            - args:
-                - echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh
-              command:
-                - /bin/sh
-                - -c
-                - --
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: IfNotPresent
-              name: create-symlink
-              resources:
-                requests:
-                  cpu: 10m
-                  memory: 50Mi
-              securityContext:
-                privileged: true
-              volumeMounts:
-                - mountPath: /scripts/ldconfig_symlink.sh
-                  name: ranker-inference
-                  subPath: ldconfig_symlink.sh
-                - mountPath: /host-sbin
-                  name: host-sbin
-                - mountPath: /host-usr-sbin
-                  name: host-usr-sbin
-                - mountPath: /host-bin
-                  name: host-bin
-                - mountPath: /host-usr-bin
-                  name: host-usr-bin
-            - command:
-                - /bin/sh
-                - -c
-                - |
-                  download_and_extract_model() {
-                    echo "Model downloading started..."
-
-                    touch /workspace/hf_models_cache/downloading
-
-                    echo "00 01 02" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/ranker/model/current/model.tar.gz.part.$PART; \
-                      while [ $RETRIES -lt $MAX_RETRIES ]; do \
-                        echo "Download [attempt $RETRIES] ranker.tar.gz.part.$PART"; \
-                        wget -q -O /workspace/hf_models_cache/ranker.tar.gz.part.$PART $URL && { echo "Downloaded ranker.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
-                        echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
-                      done; \
-                      [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm /workspace/hf_models_cache/downloading; exit 1; }; \
-                      echo "Unzipping ranker.tar.gz.part.$PART..."; tar -xzf /workspace/hf_models_cache/ranker.tar.gz.part.$PART -C /workspace/hf_models_cache/; echo "Unzipping ranker.tar.gz.part.$PART complete...";'
-
-                    rm /workspace/hf_models_cache/ranker.tar.*
-                    rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.model
-                  }
-                  if [ ! -f /workspace/hf_models_cache/complete.model ]; then
-                    if [ ! -f /workspace/hf_models_cache/downloading ]; then
-                      download_and_extract_model
-                    else
-                      echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.model ]; do
-                        sleep $((3 + RANDOM % 2))
-                      done
-
-                      if [ ! -f /workspace/hf_models_cache/complete.model ]; then
-                        download_and_extract_model
-                      else
-                        echo "Model cache ready."
-                      fi
-                    fi
-                  else
-                    echo "Model cache already exists. Skipping download."
-                  fi
-
-                  echo "Model load done."
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: IfNotPresent
-              name: download-model
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 1001
-                runAsNonRoot: true
-                runAsUser: 1001
-                seccompProfile:
-                  type: RuntimeDefault
-              volumeMounts:
-                - mountPath: /workspace/hf_models_cache
-                  name: model-volume
-          securityContext:
-            fsGroup: 1001
-            fsGroupChangePolicy: OnRootMismatch
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
-            seccompProfile:
-              type: RuntimeDefault
-          serviceAccountName: existing-service-account
-          tolerations:
-            - effect: NoSchedule
-              key: node
-              value: eyelevel-gpu-ranker
-            - effect: NoSchedule
-              key: eyelevel_node
-              value: eyelevel-gpu-ranker
-          volumes:
-            - configMap:
-                name: config-models-map
-              name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
-            - configMap:
-                name: ranker-inference-supervisord-conf-map
-              name: supervisord-volume
-            - configMap:
-                defaultMode: 365
-                name: ldconfig-symlink-map
-              name: ranker-inference
-            - hostPath:
-                path: /sbin
-                type: Directory
-              name: host-sbin
-            - hostPath:
-                path: /usr/sbin
-                type: Directory
-              name: host-usr-sbin
-            - hostPath:
-                path: /bin
-                type: Directory
-              name: host-bin
-            - hostPath:
-                path: /usr/bin
-                type: Directory
-              name: host-usr-bin
-            - name: model-volume
-              persistentVolumeClaim:
-                claimName: ranker-model
-  4: |
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      labels:
-        app: ranker-inference
-      name: ranker-model
-      namespace: eyelevel
-    spec:
-      accessModes:
-        - ReadWriteMany
-      resources:
-        requests:
-          storage: 10Gi
-      storageClassName: eyelevel-pv
 'metadata: inference':
   1: |
     apiVersion: apps/v1
@@ -5795,11 +5030,11 @@
       template:
         metadata:
           annotations:
-            config-hash: 24b8fbd2f36aa9f97623483c8c28954253e4d7a331f1ddf9bb0e9bd38d415521
+            config-hash: 5b0e156bb86eaeb30efdafa27a00d9e17579a1ca9830fa03097d7d8133405f1b
             config-models-hash: 06ba464c30a765382364510ccee1e65088f7d2acbc11a746b7d14d84c220dd3b
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             prometheus.io/port: "8081"
-            supervisord-hash: b39bd7d75862c4a85780b4e3d76fe459b3beaa52f391376e7c95cb26ef6068ec
+            supervisord-hash: 64861f085534e94eab9679d4f0765de4e6822eea933ed51e5f89de4ee6ef588a
           labels:
             app: myapp-inference
             app.kubernetes.io/name: myapp
@@ -5818,7 +5053,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -5847,11 +5082,9 @@
               resources:
                 limits:
                   memory: 12Gi
-                  nvidia.com/gpu: 1
                 requests:
                   cpu: 500m
                   memory: 2Gi
-                  nvidia.com/gpu: 1
               securityContext:
                 readOnlyRootFilesystem: true
               volumeMounts:
@@ -5965,6 +5198,7 @@
           securityContext:
             fsGroup: 2000
           serviceAccountName: other-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -5976,9 +5210,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: myapp-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: myapp-config-py-map
             - configMap:
                 name: myapp-inference-supervisord-conf-map
               name: supervisord-volume
@@ -6040,10 +5274,10 @@
       template:
         metadata:
           annotations:
-            config-hash: db12e6d22be007fc52ee601f6989646694bae2a985f615c39bcfef2d46258a3e
+            config-hash: 341d44e61c7b48386a4bc1cb6bb40ea2b700340e1c5d76472f7c18777811f057
             config-models-hash: 06ba464c30a765382364510ccee1e65088f7d2acbc11a746b7d14d84c220dd3b
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: a16c30167d8dc53d033246f4104113e03f8726f3a97dc8a7bb0af9a936a58c80
+            supervisord-hash: 8464ec25dcc7b52084949079db8004277a72b0c6d49235247cb01f7d8fde7595
           labels:
             app: myapp-inference
         spec:
@@ -6075,23 +5309,23 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                failureThreshold: 10
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 8
+                httpGet:
+                  path: /alive
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               name: myapp-inference
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
               readinessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 30
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               resources:
                 limits:
                   nvidia.com/gpu: 1
@@ -6234,9 +5468,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: myapp-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: myapp-config-py-map
             - configMap:
                 name: myapp-inference-supervisord-conf-map
               name: supervisord-volume
@@ -6298,7 +5532,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 56c8f18fe0eff2755753436654dc07e20e637e6c2706f1c53014edcfd7ee498c
+            config-hash: e3e55899a2ad709cb04aae6178d9d39ba8089f3a82339d4541992a330e7d0246
             config-models-hash: 06ba464c30a765382364510ccee1e65088f7d2acbc11a746b7d14d84c220dd3b
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             prometheus.io/port: "8081"
@@ -6327,6 +5561,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               image: test.image:v1
               imagePullPolicy: Never
               livenessProbe:
@@ -6411,7 +5647,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/myapp/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/myapp/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] myapp.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/myapp.tar.gz.part.$PART $URL && { echo "Downloaded myapp.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -6422,18 +5658,18 @@
 
                     rm /workspace/hf_models_cache/myapp.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
@@ -6460,9 +5696,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: myapp-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: myapp-config-py-map
             - configMap:
                 name: myapp-inference-supervisord-conf-map
               name: supervisord-volume
@@ -6525,9 +5761,9 @@
       template:
         metadata:
           annotations:
-            config-hash: ebaefc6af0f1c9c3731fb790ce2235c0a0ed6224f8265c625fc8bb28f856298a
+            config-hash: 01a921a7559b4af85f56c800168663a3d26b0aec9bcd1a69af5452c25283d4e2
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -6550,7 +5786,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -6689,6 +5925,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -6700,9 +5937,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -6744,9 +5981,9 @@
       template:
         metadata:
           annotations:
-            config-hash: 10a2c3714245d327a2110a7f94d5a48581c81788dfb36f046ef6276be59e0061
+            config-hash: ac9291d84ab87466fb7f0b6f351533f5e84e0af9b65a4917346adef6cdd66621
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
-            supervisord-hash: c3de8d835a18146d0f59120a18513f20056efbb1cda896213ca789277d88a71b
+            supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
           labels:
             app: ranker-inference
         spec:
@@ -6778,23 +6015,23 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                failureThreshold: 10
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 8
+                httpGet:
+                  path: /alive
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               name: ranker-inference
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
               readinessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 30
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               resources:
                 limits:
                   nvidia.com/gpu: 1
@@ -6911,9 +6148,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
@@ -6955,7 +6192,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9b550f83fe615008fd7a3bd4fb324f3a3b8607943a72f3da1da21a0b31921ebc
+            config-hash: f19515bd35dbbf61aa32bae04e98da83bcb133856d7d855eed7f3c170e247b5f
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             supervisord-hash: a48af0c98c4a6d0aafa9d919d204e9d8b1c51e416a36f766644a6c8d11e48a90
           labels:
@@ -6986,6 +6223,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -7051,7 +6290,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -7062,18 +6301,18 @@
 
                     rm /workspace/hf_models_cache/summary.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
@@ -7119,9 +6358,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-inference-supervisord-conf-map
               name: supervisord-volume
@@ -7164,9 +6403,9 @@
       template:
         metadata:
           annotations:
-            config-hash: ebaefc6af0f1c9c3731fb790ce2235c0a0ed6224f8265c625fc8bb28f856298a
+            config-hash: 01a921a7559b4af85f56c800168663a3d26b0aec9bcd1a69af5452c25283d4e2
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -7189,7 +6428,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -7320,6 +6559,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -7331,9 +6571,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -7375,9 +6615,9 @@
       template:
         metadata:
           annotations:
-            config-hash: 10a2c3714245d327a2110a7f94d5a48581c81788dfb36f046ef6276be59e0061
+            config-hash: ac9291d84ab87466fb7f0b6f351533f5e84e0af9b65a4917346adef6cdd66621
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
-            supervisord-hash: c3de8d835a18146d0f59120a18513f20056efbb1cda896213ca789277d88a71b
+            supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
           labels:
             app: ranker-inference
         spec:
@@ -7409,23 +6649,23 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                failureThreshold: 10
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 8
+                httpGet:
+                  path: /alive
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               name: ranker-inference
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
               readinessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 30
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               resources:
                 limits:
                   nvidia.com/gpu: 1
@@ -7534,9 +6774,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
@@ -7578,7 +6818,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 9b550f83fe615008fd7a3bd4fb324f3a3b8607943a72f3da1da21a0b31921ebc
+            config-hash: f19515bd35dbbf61aa32bae04e98da83bcb133856d7d855eed7f3c170e247b5f
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             supervisord-hash: a48af0c98c4a6d0aafa9d919d204e9d8b1c51e416a36f766644a6c8d11e48a90
           labels:
@@ -7609,6 +6849,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -7672,7 +6914,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -7683,18 +6925,18 @@
 
                     rm /workspace/hf_models_cache/summary.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
@@ -7734,9 +6976,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-inference-supervisord-conf-map
               name: supervisord-volume
@@ -7779,9 +7021,9 @@
       template:
         metadata:
           annotations:
-            config-hash: 9cb086224bcbefcd195a92ba8c0903e63036900c20fb5797d656ce5dffe4bc0c
+            config-hash: 0fc6c0b783942d8aac8aa267423de4ee6b0b7483007a471480b0734f75629f0f
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -7804,7 +7046,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -7937,6 +7179,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -7948,9 +7191,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: layout-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: layout-config-py-map
             - configMap:
                 name: layout-inference-supervisord-conf-map
               name: supervisord-volume
@@ -7992,9 +7235,9 @@
       template:
         metadata:
           annotations:
-            config-hash: 8c8d3d4f45d68a2a23457d8db11374d236b3e1b2f01730bbb2426421e92af4e5
+            config-hash: 42531a5b3e71b2717e16ee81e69bd953744e418bbd246e89b45e1bc763d22bfb
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
-            supervisord-hash: c3de8d835a18146d0f59120a18513f20056efbb1cda896213ca789277d88a71b
+            supervisord-hash: 86ea24240aa27a359900fe41482e15acadf7fa84364ebc1698ce533efbfd9c85
           labels:
             app: ranker-inference
         spec:
@@ -8026,23 +7269,23 @@
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: Always
               livenessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                failureThreshold: 10
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 8
+                httpGet:
+                  path: /alive
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               name: ranker-inference
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
               readinessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - ps aux | grep 'ranker.celery.appSearch' | grep -v grep || exit 1
-                initialDelaySeconds: 60
-                periodSeconds: 30
+                failureThreshold: 30
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 15
               resources:
                 limits:
                   nvidia.com/gpu: 1
@@ -8153,9 +7396,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: ranker-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: ranker-config-py-map
             - configMap:
                 name: ranker-inference-supervisord-conf-map
               name: supervisord-volume
@@ -8197,7 +7440,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 1b1aead3ca98c3ddee0f7bd5b82db625856ebb4bd9fe5fe1cef654c9499d87fb
+            config-hash: 303137171c8c7bb69bfb0c4c4d1f73d31384a1fd40a4cf2ac410b059b2f270da
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             supervisord-hash: a48af0c98c4a6d0aafa9d919d204e9d8b1c51e416a36f766644a6c8d11e48a90
           labels:
@@ -8228,6 +7471,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: HF_HUB_OFFLINE
+                  value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
               imagePullPolicy: Always
               livenessProbe:
@@ -8296,7 +7541,7 @@
                     touch /workspace/hf_models_cache/downloading
 
                     echo "00 01 02 03 04" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b.tar.gz.part.$PART; \
+                      'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.$PART; \
                       while [ $RETRIES -lt $MAX_RETRIES ]; do \
                         echo "Download [attempt $RETRIES] summary.tar.gz.part.$PART"; \
                         wget -q -O /workspace/hf_models_cache/summary.tar.gz.part.$PART $URL && { echo "Downloaded summary.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
@@ -8307,18 +7552,18 @@
 
                     rm /workspace/hf_models_cache/summary.tar.*
                     rm /workspace/hf_models_cache/downloading
-                    touch /workspace/hf_models_cache/complete.g34b
+                    touch /workspace/hf_models_cache/complete.g34b-092526
                   }
-                  if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                  if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                     if [ ! -f /workspace/hf_models_cache/downloading ]; then
                       download_and_extract_model
                     else
                       echo "Download in progress by another pod. Waiting..."
-                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b ]; do
+                      while [ -f /workspace/hf_models_cache/downloading ] || [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; do
                         sleep $((3 + RANDOM % 2))
                       done
 
-                      if [ ! -f /workspace/hf_models_cache/complete.g34b ]; then
+                      if [ ! -f /workspace/hf_models_cache/complete.g34b-092526 ]; then
                         download_and_extract_model
                       else
                         echo "Model cache ready."
@@ -8358,9 +7603,9 @@
             - configMap:
                 name: config-models-map
               name: config-models
-            - configMap:
-                name: summary-config-py-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: summary-config-py-map
             - configMap:
                 name: summary-inference-supervisord-conf-map
               name: supervisord-volume

@@ -19,11 +19,31 @@ variable "environment" {
 variable "environment_internal" {
   description   = "Environment internal settings"
   type          = object({
-    eks_version = string
+    eks_version = optional(string)
   })
-  default       = {
-    eks_version = "1.35"
-  }
+  default       = {}
+}
+
+variable "node_diagnostics" {
+  description = "Optional EKS node diagnostics. Disabled unless explicitly enabled."
+  type = object({
+    enabled = optional(bool, false)
+  })
+  default = {}
+}
+
+variable "dns_observability" {
+  description = "Optional CoreDNS metrics collection. Disabled unless explicitly enabled."
+  type = object({
+    enabled = optional(bool, false)
+  })
+  default = {}
+}
+
+variable "eks_kms_source_policy_documents" {
+  description = "Optional existing policy documents to merge into the EKS cluster KMS key policy."
+  type        = list(string)
+  default     = []
 }
 
 variable "autoscaler_internal" {
@@ -238,12 +258,12 @@ variable "nodes" {
         ebs                     = {
           delete_on_termination = true
           encrypted             = true
-          iops                  = null
+          iops                  = 3000
           kms_key_id            = null
           snapshot_id           = null
-          throughput            = null
+          throughput            = 128
           volume_size           = 30
-          volume_type           = "gp2"
+          volume_type           = "gp3"
         }
         instance_types          = ["t3a.medium"]
         max_size                = 15
@@ -279,7 +299,7 @@ variable "nodes" {
           volume_size           = 75
           volume_type           = "gp2"
         }
-        instance_types          = ["g4dn.2xlarge"]
+        instance_types          = ["g6e.xlarge"]
         max_size                = 10
         min_size                = 1
       }

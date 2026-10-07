@@ -37,4 +37,3 @@ The chart SHALL fail template rendering, for the five API components' pathless (
   not created
 - **THEN** the template renders successfully with the user-supplied paths unchanged — the
   not-created-component guard is scoped to the pathless branch and does not fire here
-

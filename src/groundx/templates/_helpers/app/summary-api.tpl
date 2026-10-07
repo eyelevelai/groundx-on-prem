@@ -11,7 +11,7 @@
 {{- end }}
 
 {{- define "groundx.summary.api.create" -}}
-{{- $is := include "groundx.summary.create" . -}}
+{{- $is := include "groundx.summary.model.create" . -}}
 {{- if eq $is "false" -}}
 false
 {{- else -}}
@@ -180,6 +180,21 @@ true
 false
 {{- end }}
 
+{{- define "groundx.summary.api.probe" -}}
+{{- $b := .Values.summary | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- $pb := dig "probe" dict $in -}}
+{{- $lv := dig "liveness" dict $pb -}}
+{{- $rd := dig "readiness" dict $pb -}}
+{{- dict
+    "liveness"  (dict "timeoutSeconds" (dig "timeoutSeconds" 3 $lv))
+    "readiness" (dict
+      "failureThreshold" (dig "failureThreshold" 3 $rd)
+      "timeoutSeconds"   (dig "timeoutSeconds" 3 $rd)
+    )
+  | toYaml -}}
+{{- end }}
+
 {{- define "groundx.summary.api.threads" -}}
 {{- $b := .Values.summary | default dict -}}
 {{- $in := dig "api" dict $b -}}
@@ -239,6 +254,7 @@ false
 {{- $cfg := dict
   "cfg"          (printf "%s-config-py-map" $svc)
   "dependencies" $dpnd
+  "disruptionBudget" (dig "disruptionBudget" dict $in)
   "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
   "image"        (include "groundx.summary.api.image" .)
   "interface"    (include "groundx.summary.api.interface" .)
@@ -246,6 +262,7 @@ false
   "name"         (include "groundx.summary.api.serviceName" .)
   "node"         (include "groundx.summary.api.node" .)
   "port"         (include "groundx.summary.api.containerPort" .)
+  "probe"        (include "groundx.summary.api.probe" . | fromYaml)
   "pull"         (include "groundx.summary.api.imagePullPolicy" .)
   "replicas"     ($rep)
 -}}
@@ -275,6 +292,9 @@ false
 {{- end -}}
 {{- if and (hasKey $in "tolerations") (not (empty (get $in "tolerations"))) -}}
   {{- $_ := set $cfg "tolerations" (get $in "tolerations") -}}
+{{- end -}}
+{{- if and (hasKey $in "topologySpreadConstraints") (not (empty (get $in "topologySpreadConstraints"))) -}}
+  {{- $_ := set $cfg "topologySpreadConstraints" (get $in "topologySpreadConstraints") -}}
 {{- end -}}
 {{- $cfg | toYaml -}}
 {{- end }}

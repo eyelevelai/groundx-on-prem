@@ -1,3 +1,6 @@
+# Shared Google service-account file or existing Secret. See docs/agents/large-file-delivery.md.
+google: {}
+
 cluster:
   pvClass: eyelevel-pv
   # Prefer ReadWriteMany when the deployment has shared filesystem storage
@@ -12,9 +15,17 @@ cluster:
 cache:
   enabled: true
 
+  # set to authenticate to Redis (AUTH password / ACL username)
+  password: ""
+  username: ""
+
   metrics:
     enabled: true
     existing: {}
+
+    # metrics Redis credential; inherits cache.password/username only when metrics is disabled, otherwise set its own (a separate metrics instance, the default, is unauthenticated until set)
+    password: ""
+    username: ""
 
     resources:
       requests:
@@ -73,6 +84,8 @@ file:
 
 metrics:
   enabled: false
+  disruptionBudget:
+    enabled: false
 
   resources:
     requests:
@@ -102,9 +115,22 @@ stream:
 #    domain: kafka.mycorp.net
 #    port: 9092
 
+  # bundled (Mode-2) Kafka: prereqs/kafka-cluster/README.md namespace-pairing constraint:
+  # that subchart's -n <ns> must equal this chart's .Values.namespace
+
 summary:
   api:
     enabled: true
+
+    disruptionBudget:
+      enabled: false
+
+    probe:
+      liveness:
+        timeoutSeconds: 3
+      readiness:
+        failureThreshold: 3
+        timeoutSeconds: 3
 
     replicas:
       desired: 1
@@ -117,6 +143,8 @@ summary:
         memory: 256Mi
   inference:
     enabled: true
+    disruptionBudget:
+      enabled: false
 
     # specifies the amount of GPU memory to use, from 0 - 1.0
     deviceUtilize: 0.48
@@ -141,6 +169,9 @@ summary:
 groundx:
   enabled: true
 
+  disruptionBudget:
+    enabled: false
+
   replicas:
       desired: 1
       max: 24
@@ -155,6 +186,16 @@ layout:
   api:
     enabled: true
 
+    disruptionBudget:
+      enabled: false
+
+    probe:
+      liveness:
+        timeoutSeconds: 3
+      readiness:
+        failureThreshold: 3
+        timeoutSeconds: 3
+
     replicas:
       desired: 1
       max: 16
@@ -166,6 +207,8 @@ layout:
         memory: 256Mi
   correct:
     enabled: true
+    disruptionBudget:
+      enabled: false
 
     replicas:
       desired: 1
@@ -178,6 +221,8 @@ layout:
         memory: 1Gi
   inference:
     enabled: true
+    disruptionBudget:
+      enabled: false
 
     replicas:
       desired: 1
@@ -194,6 +239,8 @@ layout:
         nvidia.com/gpu: 1
   map:
     enabled: true
+    disruptionBudget:
+      enabled: false
 
     replicas:
       desired: 1
@@ -205,7 +252,10 @@ layout:
         cpu: 100m
         memory: 256Mi
   ocr:
+    # timeout: 120  # per-page Tesseract OCR timeout in seconds, 1-250; ignored when type is google
     enabled: true
+    disruptionBudget:
+      enabled: false
 
     replicas:
       desired: 1
@@ -217,7 +267,10 @@ layout:
         cpu: 1
         memory: 1Gi
   process:
+    # renderDiskBudgetMi: 2048  # per-worker-process render-temp disk budget in MiB; sizes the render-temp emptyDir and its ephemeral-storage request
     enabled: true
+    disruptionBudget:
+      enabled: false
 
     replicas:
       desired: 1
@@ -230,6 +283,8 @@ layout:
         memory: 1Gi
   save:
     enabled: true
+    disruptionBudget:
+      enabled: false
 
     replicas:
       desired: 1
@@ -243,6 +298,8 @@ layout:
 
 layoutWebhook:
   enabled: true
+  disruptionBudget:
+    enabled: false
 
   replicas:
     desired: 1
@@ -256,6 +313,8 @@ layoutWebhook:
 
 preProcess:
   enabled: true
+  disruptionBudget:
+    enabled: false
 
   replicas:
     desired: 1
@@ -269,6 +328,8 @@ preProcess:
 
 process:
   enabled: true
+  disruptionBudget:
+    enabled: false
 
   replicas:
     desired: 1
@@ -280,8 +341,15 @@ process:
       cpu: 200m
       memory: 256Mi
 
+largeFileDeliver:
+  enabled: false
+  disruptionBudget:
+    enabled: false
+
 queue:
   enabled: true
+  disruptionBudget:
+    enabled: false
 
   replicas:
     desired: 1
@@ -294,17 +362,36 @@ queue:
       memory: 128Mi
 
 ranker:
+  # Optional diagnostic logging switch. Empty is off; "1" enables ranker/search
+  # timing logs, and "2" may be used by callers that already emit deeper
+  # PERFORMANCE logs.
+  performance: ""
+
   # Optional ranker-only cache override. When addr is set, ranker API and
   # inference use this cache for searchBroker/searchResultBroker instead of
   # the global cache settings.
   cache: {}
     # addr: ranker-cache.mycorp.net
+    # isCluster: true
+    # password: ranker-p@ss
     # port: 6379
     # ssl: true
     # type: redis
+    # username: ranker-user
 
   api:
     enabled: true
+    batchSize: 3
+
+    disruptionBudget:
+      enabled: false
+
+    probe:
+      liveness:
+        timeoutSeconds: 3
+      readiness:
+        failureThreshold: 3
+        timeoutSeconds: 3
 
     resources:
       requests:
@@ -312,6 +399,12 @@ ranker:
         memory: 128Mi
   inference:
     enabled: true
+    disruptionBudget:
+      enabled: false
+
+    replicas:
+      desired: 1
+      throughput: 0
 
     resources:
       limits:
@@ -323,6 +416,8 @@ ranker:
 
 summaryClient:
   enabled: true
+  disruptionBudget:
+    enabled: false
 
   replicas:
     desired: 1
@@ -336,6 +431,8 @@ summaryClient:
 
 upload:
   enabled: true
+  disruptionBudget:
+    enabled: false
 
   replicas:
     desired: 1
@@ -353,6 +450,7 @@ workspace:
   # Required when enabled unless existingSecret provides WORKSPACE_RUNNER_TOKEN.
   token: ""
   existingSecret: ""
+  ownershipChecksEnabled: true
   publishDryRun: true
   gitProvider: github
   publishGithubWorkflowId: deploy.yml
@@ -362,6 +460,8 @@ workspace:
   managedData:
     enabled: false
     awsRegion: ""
+    # Existing ConfigMap name. The ConfigMap must contain key ca.pem.
+    mysqlSslCaConfigMap: ""
     dev:
       s3Bucket: ""
       redisEndpoint: ""
@@ -393,6 +493,14 @@ workspace:
 
   api:
     enabled: true
+    disruptionBudget:
+      enabled: false
+    probe:
+      liveness:
+        timeoutSeconds: 3
+      readiness:
+        failureThreshold: 3
+        timeoutSeconds: 3
     replicas:
       desired: 1
       max: 8
@@ -404,34 +512,62 @@ workspace:
 
   provision:
     enabled: true
+    disruptionBudget:
+      enabled: false
     replicas:
       desired: 1
 
   workspace:
     enabled: true
+    disruptionBudget:
+      enabled: false
     replicas:
       desired: 1
 
   command:
     enabled: true
+    disruptionBudget:
+      enabled: false
     replicas:
       desired: 1
 
   publish:
     enabled: true
+    disruptionBudget:
+      enabled: false
     replicas:
       desired: 1
 
   cleanup:
     enabled: true
+    disruptionBudget:
+      enabled: false
     replicas:
       desired: 1
 
 extract:
   enabled: false
+  terminalAgentTraceEnabled: false
 
   agent:
     enabled: false
+    dnsProbe:
+      enabled: false
+      image: public.ecr.aws/docker/library/python:3.12-alpine
+      intervalSeconds: 10
+      successLogEvery: 6
+      queryTimeoutSeconds: 2
+      slowThresholdSeconds: 2
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
+    rolloutStrategy: {}
+    disruptionBudget:
+      enabled: false
     maxTasksPerChild: 1
     imageTransport: data_url
     targetLongEdgePx: 1000
@@ -450,11 +586,21 @@ extract:
       limits:
         memory: 2Gi
       requests:
-        cpu: 500m
-        memory: 512Mi
+        cpu: 1400m
+        memory: 1Gi
 
   api:
     enabled: false
+
+    probe:
+      liveness:
+        timeoutSeconds: 3
+      readiness:
+        failureThreshold: 3
+        timeoutSeconds: 3
+
+    disruptionBudget:
+      enabled: false
 
     replicas:
       desired: 1
@@ -471,6 +617,9 @@ extract:
 
   download:
     enabled: false
+    disruptionBudget:
+      enabled: false
+    threads: 1
 
     replicas:
       desired: 1
@@ -482,11 +631,13 @@ extract:
         cpu: 1
         memory: 1Gi
       requests:
-        cpu: 200m
-        memory: 512Mi
+        cpu: 1
+        memory: 1Gi
 
   save:
     enabled: false
+    disruptionBudget:
+      enabled: false
 
     replicas:
       desired: 1
@@ -496,10 +647,14 @@ extract:
     resources:
       limits:
         cpu: 1
-        memory: 1Gi
+        memory: 2Gi
       requests:
         cpu: 200m
         memory: 512Mi
+
+integration:
+  extractionCaptureAccounts: []
+  extractionCaptureDomains: []
 
 throughput:
   tpm:

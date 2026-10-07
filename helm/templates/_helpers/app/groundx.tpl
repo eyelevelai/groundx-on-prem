@@ -234,6 +234,7 @@ false
 
 {{- $cfg := dict
   "dependencies" $dpnd
+  "disruptionBudget" (dig "disruptionBudget" dict $in)
   "image"        (include "groundx.groundx.image" .)
   "interface"    (include "groundx.groundx.interface" . | trim)
   "name"         (include "groundx.groundx.serviceName" .)
@@ -274,6 +275,9 @@ false
 {{- end -}}
 {{- if and (hasKey $in "tolerations") (not (empty (get $in "tolerations"))) -}}
   {{- $_ := set $cfg "tolerations" (get $in "tolerations") -}}
+{{- end -}}
+{{- if and (hasKey $in "topologySpreadConstraints") (not (empty (get $in "topologySpreadConstraints"))) -}}
+  {{- $_ := set $cfg "topologySpreadConstraints" (get $in "topologySpreadConstraints") -}}
 {{- end -}}
 {{- $cfg | toYaml -}}
 {{- end }}

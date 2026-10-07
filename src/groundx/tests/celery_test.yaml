@@ -4,6 +4,250 @@ chart:
   version: 0.1.0
 
 tests:
+  - it: "shared Google credentials: celery"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.google-shared.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: "OCR mounts the external shared Secret and selected key"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.google-shared.yaml
+    set:
+      google.credentials: null
+      google.existingSecret: "123"
+      google.secretKey: "true"
+    documentSelector:
+      path: metadata.name
+      value: layout-ocr
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: credentials-volume
+            secret:
+              secretName: "123"
+              items:
+                - key: "true"
+                  path: credentials.json
+  - it: "legacy OCR credentials override the shared source"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.google-shared.yaml
+    set:
+      layout.ocr.credentials: files/ocr/gcv-test.json
+    documentSelector:
+      path: metadata.name
+      value: layout-ocr
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: credentials-volume
+            secret:
+              secretName: layout-ocr-credentials-map
+  - it: "render-disk: layout-process gets the emptyDir volume, mount, and disk-budget env at chart defaults"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: TMPDIR
+            value: "/tmp/render"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LAYOUT_RENDER_DISK_BUDGET_MIB
+            value: "2048"
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: render-temp
+            emptyDir:
+              sizeLimit: 3072Mi
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: render-temp
+            mountPath: /tmp/render
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests["ephemeral-storage"]
+          value: 3072Mi
+  - it: "render-disk: a custom budget and workers scale sizeLimit, request, and env together, and the volume stays per-pod under replicas and HPA"
+    templates:
+      - ../templates/app/celery.yaml
+      - ../templates/resources/hpa.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.renderDiskBudgetMi: 4096
+      layout.process.workers: 2
+      cluster.hpa: true
+      layout.process.replicas.desired: 3
+      layout.process.replicas.min: 1
+      layout.process.replicas.max: 6
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: render-temp
+            emptyDir:
+              sizeLimit: 9216Mi
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: layout-process
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests["ephemeral-storage"]
+          value: 9216Mi
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: layout-process
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LAYOUT_RENDER_DISK_BUDGET_MIB
+            value: "4096"
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: layout-process
+      - equal:
+          path: spec.replicas
+          value: 3
+        template: ../templates/app/celery.yaml
+        documentSelector:
+          path: metadata.name
+          value: layout-process
+      - equal:
+          path: spec.minReplicas
+          value: 1
+        template: ../templates/resources/hpa.yaml
+        documentSelector:
+          path: metadata.name
+          value: layout-process-hpa
+      - equal:
+          path: spec.maxReplicas
+          value: 6
+        template: ../templates/resources/hpa.yaml
+        documentSelector:
+          path: metadata.name
+          value: layout-process-hpa
+  - it: "render-disk: an ephemeral-storage limit below the computed request is rejected before any resource renders"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.resources.limits.ephemeral-storage: 1Gi
+    asserts:
+      - failedTemplate:
+          errorPattern: 'layout\.process\.resources\.limits\["ephemeral-storage"\].*1Gi.*below the computed ephemeral-storage request of 3072Mi.*renderDiskBudgetMi'
+  - it: "render-disk: a user-supplied ephemeral-storage request is replaced, other resources keys survive, and a limit above the request renders unchanged"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.resources.requests.cpu: 250m
+      layout.process.resources.requests.memory: 2Gi
+      layout.process.resources.requests.ephemeral-storage: 500Mi
+      layout.process.resources.limits.ephemeral-storage: 4Gi
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests
+          value:
+            cpu: 250m
+            memory: 2Gi
+            ephemeral-storage: 3072Mi
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits["ephemeral-storage"]
+          value: 4Gi
+  - it: "render-disk: an ephemeral-storage limit accepts a decimal SI suffix (k)"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.resources.limits.ephemeral-storage: 4000000k
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits["ephemeral-storage"]
+          value: 4000000k
+  - it: "render-disk: an ephemeral-storage limit accepts exponent form"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.resources.limits.ephemeral-storage: "4e9"
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits["ephemeral-storage"]
+          value: "4e9"
+  - it: "render-disk: an unquoted numeric ephemeral-storage limit from a values file is accepted"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.render-disk-unquoted-storage.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits["ephemeral-storage"]
+          value: 4294967296
+  - it: "render-disk: an uppercase K suffix is rejected"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.resources.limits.ephemeral-storage: 5000000K
+    asserts:
+      - failedTemplate:
+          errorPattern: '"5000000K" is not a recognized Kubernetes storage quantity'
+  - it: "render-disk: negative workers is rejected before any resource renders"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.workers: -1
+    asserts:
+      - failedTemplate:
+          errorPattern: "layout\\.process\\.workers must be at least 1 \\(got -1\\)"
+  - it: "render-disk: negative threads is rejected before any resource renders"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.process.threads: -1
+    asserts:
+      - failedTemplate:
+          errorPattern: "layout\\.process\\.threads must be at least 1 \\(got -1\\)"
   - it: "default: celery"
     templates:
       - ../templates/app/celery.yaml
@@ -103,3 +347,328 @@ tests:
       - ./files/values.workspace.enabled.yaml
     asserts:
       - matchSnapshot: {}
+  - it: "google OCR enabled: hasOCR-true renders the credentials annotation, mount and volume on their own keys"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.ocr-google.yaml
+    asserts:
+      - isKind:
+          of: Deployment
+      - matchRegex:
+          path: spec.template.metadata.annotations["ocr-credentials-hash"]
+          pattern: "^[0-9a-f]{64}$"
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: credentials-volume
+            mountPath: /app/credentials.json
+            subPath: credentials.json
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: credentials-volume
+            secret:
+              secretName: layout-ocr-credentials-map
+  - it: "google OCR credentials set but layout.ocr disabled: must not mount, volume, or annotate a Secret that layout-ocr-credentials.yaml never creates"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.ocr-google-disabled.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-correct
+    asserts:
+      - isKind:
+          of: Deployment
+      - notExists:
+          path: spec.template.metadata.annotations["ocr-credentials-hash"]
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: credentials-volume
+            mountPath: /app/credentials.json
+            subPath: credentials.json
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: credentials-volume
+            secret:
+              secretName: layout-ocr-credentials-map
+  - it: "extract workers replace the shell with supervisord"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values/extract/values.yaml
+    documentSelector:
+      path: metadata.name
+      value: extract-download
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command[2]
+          value: "export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf\n"
+  - it: "workspace workers keep their existing startup command"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.workspace.enabled.yaml
+    documentSelector:
+      path: metadata.name
+      value: workspace-workspace
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command[2]
+          value: "export PYTHONPATH=/app && supervisord -c /app/supervisord.conf\n"
+  - &packaged_layout_credentials
+    it: "packaged layout OCR credentials with extraction and workspace workers enabled: layout-ocr keeps its annotation, mount and volume (regression, GX-49; must-not-block)"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.ocr-google.yaml
+    set:
+      layout.correct.enabled: true
+      layout.map.enabled: true
+      layout.process.enabled: true
+      layout.save.enabled: true
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.api.enabled: true
+      extract.download.enabled: true
+      extract.save.enabled: true
+      workspace.enabled: true
+      workspace.token: test-runner-token
+    documentSelector:
+      path: metadata.name
+      value: layout-ocr
+    asserts:
+      - isKind:
+          of: Deployment
+      - matchRegex:
+          path: spec.template.metadata.annotations["ocr-credentials-hash"]
+          pattern: "^[0-9a-f]{64}$"
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: credentials-volume
+            mountPath: /app/credentials.json
+            subPath: credentials.json
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: credentials-volume
+            secret:
+              secretName: layout-ocr-credentials-map
+  - <<: *packaged_layout_credentials
+    it: "packaged layout OCR credentials: layout-correct keeps its annotation, mount and volume (GX-49)"
+    documentSelector:
+      path: metadata.name
+      value: layout-correct
+  - <<: *packaged_layout_credentials
+    it: "packaged layout OCR credentials: layout-map keeps its annotation, mount and volume (GX-49)"
+    documentSelector:
+      path: metadata.name
+      value: layout-map
+  - <<: *packaged_layout_credentials
+    it: "packaged layout OCR credentials: layout-process keeps its annotation, mount and volume (GX-49)"
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+  - <<: *packaged_layout_credentials
+    it: "packaged layout OCR credentials: layout-save keeps its annotation, mount and volume (GX-49)"
+    documentSelector:
+      path: metadata.name
+      value: layout-save
+  - it: "packaged layout OCR credentials with extraction and workspace workers enabled: extract-download must not reference layout's OCR credentials Secret (regression, GX-49; catches)"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.ocr-google.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.api.enabled: true
+      extract.download.enabled: true
+      extract.save.enabled: true
+      workspace.enabled: true
+      workspace.token: test-runner-token
+    documentSelector:
+      path: metadata.name
+      value: extract-download
+    asserts:
+      - isKind:
+          of: Deployment
+      - notExists:
+          path: spec.template.metadata.annotations["ocr-credentials-hash"]
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: credentials-volume
+            mountPath: /app/credentials.json
+            subPath: credentials.json
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: credentials-volume
+            secret:
+              secretName: extract-ocr-credentials-map
+  - it: "packaged layout OCR credentials with extraction and workspace workers enabled: workspace-workspace must not reference layout's OCR credentials Secret (regression, GX-49; catches)"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.ocr-google.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.api.enabled: true
+      extract.download.enabled: true
+      extract.save.enabled: true
+      workspace.enabled: true
+      workspace.token: test-runner-token
+    documentSelector:
+      path: metadata.name
+      value: workspace-workspace
+    asserts:
+      - isKind:
+          of: Deployment
+      - notExists:
+          path: spec.template.metadata.annotations["ocr-credentials-hash"]
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: credentials-volume
+            mountPath: /app/credentials.json
+            subPath: credentials.json
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: credentials-volume
+            secret:
+              secretName: workspace-ocr-credentials-map
+  - it: "layout workers default to a 900 second grace period and replace the shell with supervisord"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    asserts:
+      - hasDocuments:
+          count: 5
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+      - equal:
+          path: spec.template.spec.containers[0].command[2]
+          value: "export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf\n"
+  - it: "layout gracePeriod overrides the grace period and stop wait on that service only"
+    templates:
+      - ../templates/app/celery.yaml
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.map.replicas.gracePeriod: 120
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 120
+        documentSelector:
+          path: metadata.name
+          value: layout-map
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+        documentSelector:
+          path: metadata.name
+          value: layout-correct
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "stopwaitsecs=90\\n"
+        documentSelector:
+          path: metadata.name
+          value: layout-map-supervisord-conf-map
+      - notMatchRegex:
+          path: data["supervisord.conf"]
+          pattern: "stopwaitsecs=90\\n"
+        documentSelector:
+          path: metadata.name
+          value: layout-correct-supervisord-conf-map
+  - it: "layout gracePeriod under 31 floors the stop wait at 1 second"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.correct.replicas.gracePeriod: 20
+      layout.inference.replicas.gracePeriod: 20
+      layout.map.replicas.gracePeriod: 20
+      layout.ocr.replicas.gracePeriod: 20
+      layout.process.replicas.gracePeriod: 20
+      layout.save.replicas.gracePeriod: 20
+    documentSelector:
+      path: metadata.name
+      value: layout-map-supervisord-conf-map
+    asserts:
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "stopwaitsecs=1\\n"
+  - it: "layout gracePeriod of zero fails schema validation"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.map.replicas.gracePeriod: 0
+    asserts:
+      - failedTemplate:
+          errorPattern: "layout/map/replicas/gracePeriod.*minimum: got 0, want 1"
+  - it: "layout supervisord defaults: 870 second stop wait on workers including layout-inference, none on monitor, one-worker group"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    asserts:
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)\\[program:celery_worker_1\\].*stopwaitsecs=870\\n"
+        documentSelector:
+          path: metadata.name
+          value: layout-correct-supervisord-conf-map
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)\\[program:celery_worker_1\\].*stopwaitsecs=870\\n"
+        documentSelector:
+          path: metadata.name
+          value: layout-inference-supervisord-conf-map
+      - notMatchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)\\[program:celery_monitor\\].*stopwaitsecs"
+        documentSelector:
+          path: metadata.name
+          value: layout-inference-supervisord-conf-map
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "\\[group:celery_workers\\]\\nprograms=celery_worker_1\\n"
+        documentSelector:
+          path: metadata.name
+          value: layout-inference-supervisord-conf-map
+  - it: "layout workers of a multi-worker pod are grouped so Supervisor stops them together"
+    templates:
+      - ../templates/resources/layout-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.map.workers: 2
+    documentSelector:
+      path: metadata.name
+      value: layout-map-supervisord-conf-map
+    asserts:
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)\\[program:celery_worker_2\\].*stopwaitsecs=870\\n"
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "\\[group:celery_workers\\]\\nprograms=celery_worker_1,celery_worker_2\\n"

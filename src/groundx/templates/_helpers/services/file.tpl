@@ -74,36 +74,49 @@ false
 {{ dig "password" "" $in }}
 {{- end }}
 
+{{- define "groundx.file.url.settings" -}}
+{{- $url := dig "url" "" . -}}
+{{- $parts := splitList "://" $url -}}
+{{- $domain := $url -}}
+{{- $scheme := "http" -}}
+{{- if and (kindIs "slice" $parts) (eq (len $parts) 2) -}}
+{{- $scheme = index $parts 0 -}}
+{{- $domain = index $parts 1 -}}
+{{- end -}}
+{{- $pparts := splitList ":" $domain -}}
+{{- $dependency := $domain -}}
+{{- if eq (len $pparts) 2 -}}{{- $dependency = index $pparts 0 -}}{{- end -}}
+{{- $rawPort := dig "port" "" . -}}
+{{- $port := -1 -}}
+{{- if kindIs "string" $rawPort -}}
+  {{- $port = int $rawPort -}}
+{{- else if kindIs "int" $rawPort -}}
+  {{- $port = $rawPort -}}
+{{- end -}}
+{{- $connectionPort := $port | toString -}}
+{{- if le $port 0 -}}
+  {{- if eq (len $pparts) 2 -}}
+    {{- $connectionPort = index $pparts 1 -}}
+  {{- else -}}
+    {{- $connectionPort = ternary "443" "80" (eq $scheme "https") -}}
+  {{- end -}}
+{{- end -}}
+{{- dict
+    "baseDomain" $domain
+    "bucketDomain" $domain
+    "bucketSSL" (eq $scheme "https")
+    "scheme" $scheme
+    "ssl" (eq $scheme "https")
+    "dependency" $dependency
+    "port" $connectionPort
+  | toYaml -}}
+{{- end }}
+
 {{- define "groundx.file.port" -}}
 {{- $in := .Values.file | default dict -}}
 {{- $ic := include "groundx.file.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
-{{- $ex := dig "existing" dict $in -}}
-{{- $url := dig "url" "" $ex -}}
-{{- $parts := splitList "://" $url -}}
-{{- $domain := $url -}}
-{{- $sch := "http" -}}
-{{- if and (kindIs "slice" $parts) (eq (len $parts) 2) -}}
-{{- $sch = index $parts 0 -}}
-{{- $domain = index $parts 1 -}}
-{{- end -}}
-{{- $pparts := splitList ":" $domain -}}
-{{- $rawPort := dig "port" "" $ex -}}
-{{- $port := -1 -}}
-{{- if (kindIs "string" $rawPort) }}
-{{- $port = (int $rawPort) -}}
-{{- else if (kindIs "int" $rawPort) }}
-  {{- $port = $rawPort -}}
-{{- end -}}
-{{- if gt $port 0 -}}
-{{ $port }}
-{{- else if and (kindIs "slice" $pparts) (eq (len $pparts) 2) -}}
-{{ index $pparts 1 }}
-{{- else if eq $sch "https" -}}
-443
-{{- else -}}
-80
-{{- end -}}
+{{- get (include "groundx.file.url.settings" (dig "existing" dict $in) | fromYaml) "port" -}}
 {{- else -}}
 {{ dig "port" 9000 $in }}
 {{- end -}}
@@ -152,18 +165,7 @@ minio
 {{- $in := .Values.file | default dict -}}
 {{- $ic := include "groundx.file.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
-{{- $ex := dig "existing" dict $in -}}
-{{- $url := dig "url" "" $ex -}}
-{{- $parts := splitList "://" $url -}}
-{{- $sch := "http" -}}
-{{- if and (kindIs "slice" $parts) (eq (len $parts) 2) -}}
-{{- $sch = index $parts 0 -}}
-{{- end -}}
-{{- if eq $sch "https" -}}
-true
-{{- else -}}
-false
-{{- end -}}
+{{- get (include "groundx.file.url.settings" (dig "existing" dict $in) | fromYaml) "ssl" -}}
 {{- else -}}
 false
 {{- end -}}

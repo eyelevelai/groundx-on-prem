@@ -19,6 +19,7 @@
 {{- $node := get $svcData "node" -}}
 {{- $nsl := get $svcData "nodeSelector" -}}
 {{- $cport := get $svcData "port" -}}
+{{- $pdb := get $svcData "disruptionBudget" | default dict -}}
 {{- $pull := get $svcData "pull" -}}
 {{- $rp := get $svcData "replicas" -}}
 {{- $rs := get $svcData "resources" -}}
@@ -32,6 +33,7 @@
 {{- end }}
 {{- $sct := get $svcData "securityContext" -}}
 {{- $tl := get $svcData "tolerations" -}}
+{{- $tsc := get $svcData "topologySpreadConstraints" -}}
 
 {{- $desired := get $rp "desired" -}}
 
@@ -61,6 +63,9 @@ spec:
 {{ toYaml $anns | nindent 8 }}
 {{- end }}
     spec:
+{{- if and $rp (hasKey $rp "gracePeriod") }}
+      terminationGracePeriodSeconds: {{ get $rp "gracePeriod" }}
+{{- end }}
 {{- if $san }}
       serviceAccountName: {{ $san }}
 {{- end }}
@@ -74,6 +79,7 @@ spec:
 {{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" $username "cfg" "spec") }}
 {{ include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
 {{ include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
+{{- include "groundx.renderTopologySpread" (dict "ctx" $tsc "indent" 6) }}
 {{- if not (empty $dpnd) }}
       initContainers:
 {{- if hasKey $dpnd "metrics" }}
@@ -155,13 +161,38 @@ spec:
             - name: config-volume
               mountPath: /home/{{ include "groundx.golang.home" $ }}/.cashbot/config.yaml
               subPath: config.yaml
+{{- with get $svcData "volumeMounts" }}
+{{ toYaml . | nindent 12 }}
+{{- end }}
       volumes:
         - name: config-volume
-          configMap:
-            name: config-yaml-map
+          secret:
+            secretName: config-yaml-map
+{{- with get $svcData "volumes" }}
+{{ toYaml . | nindent 8 }}
+{{- end }}
 
 {{- if $int }}
 {{ include "groundx.renderInterface" (dict "name" $svc "lb" $int "root" $) }}
+{{- end }}
+
+{{- if dig "enabled" false $pdb }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $svc }}
+  namespace: {{ include "groundx.ns" $ | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
+spec:
+  minAvailable: 1
+{{- if semverCompare ">=1.26-0" $.Capabilities.KubeVersion.Version }}
+  unhealthyPodEvictionPolicy: AlwaysAllow
+{{- end }}
+  selector:
+    matchLabels:
+      app: {{ $svc }}
 {{- end }}
 
 {{ end }}

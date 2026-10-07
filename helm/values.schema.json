@@ -2,6 +2,19 @@
   "type": "object",
   "properties": {
     "global": { "type": "object" },
+    "google": {
+      "type": "object",
+      "properties": {
+        "credentials": { "type": ["string", "null"], "minLength": 1 },
+        "existingSecret": { "type": ["string", "null"], "minLength": 1 },
+        "secretKey": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        { "not": { "required": ["credentials", "existingSecret"], "properties": { "credentials": { "type": "string" }, "existingSecret": { "type": "string" } } } },
+        { "if": { "required": ["secretKey"] }, "then": { "required": ["existingSecret"], "properties": { "existingSecret": { "type": "string" } } } }
+      ]
+    },
     "licenseKey": { "type": "string" },
     "namespace": { "type": "string", "minLength": 1 },
     "imageType": { "type": "string" },
@@ -22,10 +35,25 @@
       },
       "additionalProperties": false
     },
+    "cognito": {
+      "type": "object",
+      "properties": {
+        "mode": { "type": "string", "enum": ["cognito", "apiKeyOnly"] },
+        "clientId": { "type": "string" },
+        "clientSecret": { "type": "string" },
+        "poolId": { "type": "string" },
+        "region": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
     "cluster": {
       "type": "object",
       "properties": {
-        "hasMig": { "type": "boolean" },
+        "hasMig": {
+          "type": "boolean",
+          "deprecated": true,
+          "description": "Accepted for compatibility in chart 0.2.7; this field does not change rendered resources. Configure GPU resources through each workload's resources field."
+        },
         "hpa": { "type": "boolean" },
         "imagePullPolicy": { "type": "string" },
         "imagePullSecrets": {
@@ -65,7 +93,11 @@
         "tls": {
           "type": "object",
           "properties": {
-            "existingSecret": { "type": "string" }
+            "existingSecret": {
+              "type": "string",
+              "deprecated": true,
+              "description": "Accepted for compatibility in chart 0.2.7; this field does not change rendered resources or mount a Secret. Use each service's supported ingress.tls list for ingress TLS."
+            }
           },
           "additionalProperties": false
         },
@@ -96,6 +128,7 @@
             "baseUrl": { "type": "string" },
             "dataType": { "type": "string" },
             "engineId": { "type": "string" },
+            "maxImages": { "type": ["integer", "null"], "minimum": 1 },
             "maxInputTokens": { "type": "integer" },
             "maxOutputTokens": { "type": "integer" },
             "maxRequests": { "type": "integer" },
@@ -142,6 +175,7 @@
         "imagePullPolicy": { "type": "string" },
         "labels": { "type": "object" },
         "mountPath": { "type": "string" },
+        "password": { "type": "string" },
                 "persistence": {
                   "type": "object",
                   "properties": {
@@ -168,6 +202,7 @@
         "serviceAccountName": { "type": "string" },
         "serviceName": { "type": "string" },
         "tolerations": { "type": "array" },
+        "username": { "type": "string", "pattern": "^\\S*$" },
         "metrics": {
           "type": "object",
           "properties": {
@@ -192,6 +227,7 @@
             "mountPath": { "type": "string" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
+            "password": { "type": "string" },
             "port": { "type": "integer" },
             "replicas": {
               "type": "object",
@@ -207,7 +243,8 @@
             "securityContext": { "type": "object" },
             "serviceAccountName": { "type": "string" },
             "serviceName": { "type": "string" },
-            "tolerations": { "type": "array" }
+            "tolerations": { "type": "array" },
+            "username": { "type": "string", "pattern": "^\\S*$" }
           },
           "required": ["existing"],
           "additionalProperties": false
@@ -334,6 +371,68 @@
         "topics": {
           "type": "object",
           "properties": {
+            "largeFile": {
+              "type": "object",
+              "properties": {
+                "broker": {
+                  "type": "string"
+                },
+                "groupId": {
+                  "type": "string"
+                },
+                "key": {
+                  "type": "string"
+                },
+                "region": {
+                  "type": "string"
+                },
+                "secret": {
+                  "type": "string"
+                },
+                "token": {
+                  "type": "string"
+                },
+                "topic": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "kafka",
+                    "sqs"
+                  ]
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "type": {
+                        "const": "sqs"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ]
+                  },
+                  "then": {
+                    "required": [
+                      "url"
+                    ],
+                    "properties": {
+                      "url": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  }
+                }
+              ]
+            },
             "preProcess": {
               "type": "object",
               "properties": {
@@ -429,6 +528,14 @@
             "annotations": { "type": "object" },
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "enabled": { "type": "boolean" },
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
@@ -450,6 +557,27 @@
             "labels": { "type": "object" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
+            "probe": {
+              "type": "object",
+              "properties": {
+                "liveness": {
+                  "type": "object",
+                  "properties": {
+                    "timeoutSeconds": { "type": "integer", "minimum": 1 }
+                  },
+                  "additionalProperties": false
+                },
+                "readiness": {
+                  "type": "object",
+                  "properties": {
+                    "failureThreshold": { "type": "integer", "minimum": 1 },
+                    "timeoutSeconds": { "type": "integer", "minimum": 1 }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
             "replicas": {
               "type": "object",
               "properties": {
@@ -474,6 +602,7 @@
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -552,6 +681,15 @@
             },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "updateStrategy": { "type": "string" },
             "workers": { "type": "integer" }
           },
@@ -570,6 +708,14 @@
         "annotations": { "type": "object" },
         "containerPort": { "type": "integer" },
         "containerSecurityContext": { "type": "object" },
+        "disruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        },
         "enabled": { "type": "boolean" },
         "image": { "type": "string" },
         "imagePullPolicy": { "type": "string" },
@@ -613,7 +759,8 @@
         },
         "serviceName": { "type": "string" },
         "serviceType": { "type": "string" },
-        "tolerations": { "type": "array" }
+        "tolerations": { "type": "array" },
+        "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -628,6 +775,14 @@
             "annotations": { "type": "object" },
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "enabled": { "type": "boolean" },
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
@@ -648,6 +803,27 @@
             "labels": { "type": "object" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
+            "probe": {
+              "type": "object",
+              "properties": {
+                "liveness": {
+                  "type": "object",
+                  "properties": {
+                    "timeoutSeconds": { "type": "integer", "minimum": 1 }
+                  },
+                  "additionalProperties": false
+                },
+                "readiness": {
+                  "type": "object",
+                  "properties": {
+                    "failureThreshold": { "type": "integer", "minimum": 1 },
+                    "timeoutSeconds": { "type": "integer", "minimum": 1 }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
             "replicas": {
               "type": "object",
               "properties": {
@@ -672,6 +848,7 @@
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -695,6 +872,7 @@
               "type": "object",
               "properties": {
                 "desired": { "type": "integer" },
+                "gracePeriod": { "type": "integer", "minimum": 1 },
                 "max": { "type": "integer" },
                 "min": { "type": "integer" }
               },
@@ -713,6 +891,15 @@
             },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -732,11 +919,22 @@
             "labels": { "type": "object" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
+            "pvc": {
+              "type": "object",
+              "properties": {
+                "access": { "type": "string" },
+                "capacity": { "type": "string" },
+                "class": { "type": "string" },
+                "name": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
             "queue": { "type": "string" },
             "replicas": {
               "type": "object",
               "properties": {
                 "desired": { "type": "integer" },
+                "gracePeriod": { "type": "integer", "minimum": 1 },
                 "max": { "type": "integer" },
                 "min": { "type": "integer" }
               },
@@ -755,6 +953,15 @@
             },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "updateStrategy": { "type": "string" },
             "workers": { "type": "integer" }
           },
@@ -779,6 +986,7 @@
               "type": "object",
               "properties": {
                 "desired": { "type": "integer" },
+                "gracePeriod": { "type": "integer", "minimum": 1 },
                 "max": { "type": "integer" },
                 "min": { "type": "integer" }
               },
@@ -797,6 +1005,15 @@
             },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -822,6 +1039,7 @@
               "type": "object",
               "properties": {
                 "desired": { "type": "integer" },
+                "gracePeriod": { "type": "integer", "minimum": 1 },
                 "max": { "type": "integer" },
                 "min": { "type": "integer" }
               },
@@ -839,7 +1057,17 @@
               "additionalProperties": false
             },
             "threads": { "type": "integer" },
+            "timeout": { "type": "integer", "minimum": 1, "maximum": 250 },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "type": { "type": "string" },
             "workers": { "type": "integer" }
           },
@@ -862,10 +1090,12 @@
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
             "queue": { "type": "string" },
+            "renderDiskBudgetMi": { "type": "integer", "minimum": 1 },
             "replicas": {
               "type": "object",
               "properties": {
                 "desired": { "type": "integer" },
+                "gracePeriod": { "type": "integer", "minimum": 1 },
                 "max": { "type": "integer" },
                 "min": { "type": "integer" }
               },
@@ -884,6 +1114,15 @@
             },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -907,6 +1146,7 @@
               "type": "object",
               "properties": {
                 "desired": { "type": "integer" },
+                "gracePeriod": { "type": "integer", "minimum": 1 },
                 "max": { "type": "integer" },
                 "min": { "type": "integer" }
               },
@@ -925,6 +1165,15 @@
             },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -984,7 +1233,16 @@
         },
         "serviceName": { "type": "string" },
         "serviceType": { "type": "string" },
-        "tolerations": { "type": "array" }
+        "tolerations": { "type": "array" },
+        "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+        "disruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -1031,6 +1289,15 @@
         },
         "serviceName": { "type": "string" },
         "tolerations": { "type": "array" },
+        "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+        "disruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        },
         "useExisting": { "type": "boolean" }
       },
       "additionalProperties": false
@@ -1053,6 +1320,7 @@
           "type": "object",
           "properties": {
             "desired": { "type": "integer" },
+            "gracePeriod": { "type": "integer", "minimum": 1 },
             "max": { "type": "integer" },
             "min": { "type": "integer" }
           },
@@ -1070,7 +1338,16 @@
           "additionalProperties": false
         },
         "serviceName": { "type": "string" },
-        "tolerations": { "type": "array" }
+        "tolerations": { "type": "array" },
+        "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+        "disruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -1093,6 +1370,7 @@
           "type": "object",
           "properties": {
             "desired": { "type": "integer" },
+            "gracePeriod": { "type": "integer", "minimum": 1 },
             "max": { "type": "integer" },
             "min": { "type": "integer" }
           },
@@ -1110,10 +1388,229 @@
           "additionalProperties": false
         },
         "serviceName": { "type": "string" },
-        "tolerations": { "type": "array" }
+        "tolerations": { "type": "array" },
+        "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+        "disruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        }
       },
       "required": ["enabled"],
       "additionalProperties": false
+    },
+    "largeFileDeliver": {
+      "type": "object",
+      "properties": {
+        "affinity": {
+          "type": "object"
+        },
+        "annotations": {
+          "type": "object"
+        },
+        "containerPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "containerSecurityContext": {
+          "type": "object"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "imagePullPolicy": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "object"
+        },
+        "node": {
+          "type": "string"
+        },
+        "nodeSelector": {
+          "type": "object"
+        },
+        "replicas": {
+          "type": "object",
+          "properties": {
+            "desired": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": [
+                    "string",
+                    "number"
+                  ]
+                },
+                "memory": {
+                  "type": [
+                    "string",
+                    "number"
+                  ]
+                }
+              },
+              "required": [
+                "cpu",
+                "memory"
+              ],
+              "additionalProperties": true
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": [
+                    "string",
+                    "number"
+                  ]
+                },
+                "memory": {
+                  "type": [
+                    "string",
+                    "number"
+                  ]
+                }
+              },
+              "required": [
+                "cpu",
+                "memory"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "requests",
+            "limits"
+          ],
+          "additionalProperties": false
+        },
+        "securityContext": {
+          "type": "object"
+        },
+        "serviceAccount": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        "serviceName": {
+          "type": "string"
+        },
+        "tolerations": {
+          "type": "array"
+        },
+        "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+        "disruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        },
+        "concurrency": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxUploadDuration": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*(ms|s|m|h)$"
+        },
+        "counting": {
+          "type": "object",
+          "properties": {
+            "maxCountDuration": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]*(ms|s|m|h)$"
+            },
+            "tempDir": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "maxCountDuration"
+          ],
+          "additionalProperties": false
+        },
+        "credentials": {
+          "type": "object",
+          "minProperties": 1,
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]{0,62}$": {
+              "type": "object",
+              "properties": {
+                "sharedGoogle": {
+                  "type": "boolean",
+                  "const": true
+                },
+                "secretName": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "secretKey": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "oneOf": [
+                { "required": ["sharedGoogle"], "not": { "anyOf": [{ "required": ["secretName"] }, { "required": ["secretKey"] }] } },
+                { "required": ["secretName", "secretKey"], "not": { "required": ["sharedGoogle"] } }
+              ],
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            },
+            "required": [
+              "enabled"
+            ]
+          },
+          "then": {
+            "required": [
+              "image",
+              "concurrency",
+              "maxUploadDuration",
+              "counting",
+              "credentials",
+              "resources"
+            ]
+          }
+        }
+      ]
     },
     "queue": {
       "type": "object",
@@ -1133,6 +1630,7 @@
           "type": "object",
           "properties": {
             "desired": { "type": "integer" },
+            "gracePeriod": { "type": "integer", "minimum": 1 },
             "max": { "type": "integer" },
             "min": { "type": "integer" }
           },
@@ -1150,7 +1648,16 @@
           "additionalProperties": false
         },
         "serviceName": { "type": "string" },
-        "tolerations": { "type": "array" }
+        "tolerations": { "type": "array" },
+        "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+        "disruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -1162,19 +1669,32 @@
           "type": "object",
           "properties": {
             "addr": { "type": "string" },
+            "isCluster": { "type": "boolean" },
+            "password": { "type": "string" },
             "port": { "type": "integer" },
             "ssl": { "type": "boolean" },
-            "type": { "type": "string" }
+            "type": { "type": "string" },
+            "username": { "type": "string", "pattern": "^\\S*$" }
           },
           "additionalProperties": false
         },
+        "performance": { "type": ["string", "integer", "boolean"] },
         "api": {
           "type": "object",
           "properties": {
             "affinity": { "type": "object" },
             "annotations": { "type": "object" },
+            "batchSize": { "type": "integer", "minimum": 1 },
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "enabled": { "type": "boolean" },
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
@@ -1195,12 +1715,34 @@
             "labels": { "type": "object" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
+            "probe": {
+              "type": "object",
+              "properties": {
+                "liveness": {
+                  "type": "object",
+                  "properties": {
+                    "timeoutSeconds": { "type": "integer", "minimum": 1 }
+                  },
+                  "additionalProperties": false
+                },
+                "readiness": {
+                  "type": "object",
+                  "properties": {
+                    "failureThreshold": { "type": "integer", "minimum": 1 },
+                    "timeoutSeconds": { "type": "integer", "minimum": 1 }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
             "replicas": {
               "type": "object",
               "properties": {
                 "desired": { "type": "integer" },
                 "max": { "type": "integer" },
-                "min": { "type": "integer" }
+                "min": { "type": "integer" },
+                "target": { "type": "number" }
               },
               "required": ["desired"],
               "additionalProperties": false
@@ -1219,6 +1761,7 @@
             "threads": { "type": "integer" },
             "timeout": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -1229,6 +1772,7 @@
           "properties": {
             "affinity": { "type": "object" },
             "annotations": { "type": "object" },
+            "busyWindowSeconds": { "type": "integer", "minimum": 1 },
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
             "deviceType": { "type": "string" },
@@ -1252,9 +1796,15 @@
             "replicas": {
               "type": "object",
               "properties": {
+                "cooldown": { "type": "integer" },
                 "desired": { "type": "integer" },
+                "hpa": { "type": "boolean" },
                 "max": { "type": "integer" },
-                "min": { "type": "integer" }
+                "min": { "type": "integer" },
+                "target": { "type": "number" },
+                "threshold": { "type": "number" },
+                "throughput": { "type": "number" },
+                "upCooldown": { "type": "integer" }
               },
               "required": ["desired"],
               "additionalProperties": false
@@ -1271,6 +1821,15 @@
             },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "updateStrategy": { "type": "string" },
             "workers": { "type": "integer" }
           },
@@ -1300,6 +1859,7 @@
           "type": "object",
           "properties": {
             "desired": { "type": "integer" },
+            "gracePeriod": { "type": "integer", "minimum": 1 },
             "max": { "type": "integer" },
             "min": { "type": "integer" }
           },
@@ -1317,7 +1877,16 @@
           "additionalProperties": false
         },
         "serviceName": { "type": "string" },
-        "tolerations": { "type": "array" }
+        "tolerations": { "type": "array" },
+        "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+        "disruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -1340,6 +1909,7 @@
           "type": "object",
           "properties": {
             "desired": { "type": "integer" },
+            "gracePeriod": { "type": "integer", "minimum": 1 },
             "max": { "type": "integer" },
             "min": { "type": "integer" }
           },
@@ -1357,7 +1927,16 @@
           "additionalProperties": false
         },
         "serviceName": { "type": "string" },
-        "tolerations": { "type": "array" }
+        "tolerations": { "type": "array" },
+        "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+        "disruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "required": ["enabled"],
+          "additionalProperties": false
+        }
       },
       "required": ["enabled"],
       "additionalProperties": false
@@ -1373,6 +1952,14 @@
             "annotations": { "type": "object" },
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "enabled": { "type": "boolean" },
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
@@ -1394,6 +1981,27 @@
             "labels": { "type": "object" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
+            "probe": {
+              "type": "object",
+              "properties": {
+                "liveness": {
+                  "type": "object",
+                  "properties": {
+                    "timeoutSeconds": { "type": "integer", "minimum": 1 }
+                  },
+                  "additionalProperties": false
+                },
+                "readiness": {
+                  "type": "object",
+                  "properties": {
+                    "failureThreshold": { "type": "integer", "minimum": 1 },
+                    "timeoutSeconds": { "type": "integer", "minimum": 1 }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
             "replicas": {
               "type": "object",
               "properties": {
@@ -1421,6 +2029,7 @@
             "timeout": { "type": "integer" },
             "timeoutKeepAlive": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
             "workers": { "type": "integer" }
           },
           "additionalProperties": false
@@ -1486,6 +2095,7 @@
           "properties": {
             "enabled": { "type": "boolean" },
             "awsRegion": { "type": "string" },
+            "mysqlSslCaConfigMap": { "type": "string" },
             "dev": {
               "type": "object",
               "properties": {
@@ -1510,6 +2120,7 @@
         },
         "mysqlConnectTimeoutSeconds": { "type": "integer" },
         "node": { "type": "string" },
+        "ownershipChecksEnabled": { "type": "boolean" },
         "publishGithubWorkflowId": { "type": "string" },
         "pvc": {
           "type": "object",
@@ -1558,6 +2169,15 @@
             },
             "threads": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "workers": { "type": "integer" }
           },
           "additionalProperties": false
@@ -1595,6 +2215,27 @@
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
             "enabled": { "type": "boolean" },
+            "dnsProbe": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "image": { "type": "string" },
+                "intervalSeconds": { "type": "integer", "minimum": 1 },
+                "successLogEvery": { "type": "integer", "minimum": 1 },
+                "queryTimeoutSeconds": { "type": "number", "exclusiveMinimum": 0 },
+                "slowThresholdSeconds": { "type": "number", "exclusiveMinimum": 0 },
+                "resources": { "type": "object" }
+              },
+              "additionalProperties": false
+            },
+            "rolloutStrategy": {
+              "type": "object",
+              "properties": {
+                "maxSurge": { "type": "integer", "minimum": 0 },
+                "maxUnavailable": { "type": "integer", "minimum": 0 }
+              },
+              "additionalProperties": false
+            },
             "existingSecret": { "type": "boolean" },
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
@@ -1668,7 +2309,17 @@
               "minimum": 1
             },
             "threads": { "type": "integer" },
+            "terminalAgentTraceEnabled": { "type": "boolean" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -1681,6 +2332,14 @@
             "annotations": { "type": "object" },
             "containerPort": { "type": "integer" },
             "containerSecurityContext": { "type": "object" },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "enabled": { "type": "boolean" },
             "image": { "type": "string" },
             "imagePullPolicy": { "type": "string" },
@@ -1702,6 +2361,27 @@
             "labels": { "type": "object" },
             "node": { "type": "string" },
             "nodeSelector": { "type": "object" },
+            "probe": {
+              "type": "object",
+              "properties": {
+                "liveness": {
+                  "type": "object",
+                  "properties": {
+                    "timeoutSeconds": { "type": "integer", "minimum": 1 }
+                  },
+                  "additionalProperties": false
+                },
+                "readiness": {
+                  "type": "object",
+                  "properties": {
+                    "failureThreshold": { "type": "integer", "minimum": 1 },
+                    "timeoutSeconds": { "type": "integer", "minimum": 1 }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
             "replicas": {
               "type": "object",
               "properties": {
@@ -1728,8 +2408,10 @@
             },
             "serviceType": { "type": "string" },
             "threads": { "type": "integer" },
+            "terminalAgentTraceEnabled": { "type": "boolean" },
             "timeout": { "type": "integer" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -1777,13 +2459,24 @@
               "additionalProperties": false
             },
             "threads": { "type": "integer" },
+            "terminalAgentTraceEnabled": { "type": "boolean" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
           "additionalProperties": false
         },
         "enabled": { "type": "boolean" },
+        "terminalAgentTraceEnabled": { "type": "boolean" },
         "file": {
           "type": "object",
           "properties": {
@@ -1839,8 +2532,18 @@
               "additionalProperties": false
             },
             "threads": { "type": "integer" },
+            "terminalAgentTraceEnabled": { "type": "boolean" },
             "templateId": { "type": "string" },
             "tolerations": { "type": "array" },
+            "topologySpreadConstraints": { "type": "array", "items": { "type": "object" } },
+            "disruptionBudget": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              },
+              "required": ["enabled"],
+              "additionalProperties": false
+            },
             "workers": { "type": "integer" }
           },
           "required": ["enabled"],
@@ -1854,6 +2557,16 @@
     "integration": {
       "type": "object",
       "properties": {
+        "extractionCaptureAccounts": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "extractionCaptureDomains": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
         "search": {
           "type": "object",
           "properties": {

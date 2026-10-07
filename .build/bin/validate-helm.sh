@@ -4,23 +4,27 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${ROOT_DIR}"
 
-# Resolve a Python interpreter (the verifier scripts are python3; prefer it, fall back to python).
-# Works whether the host exposes it as python3 or python; fails fast if neither is present.
-PY="$(command -v python3 || command -v python)" || { echo "no python interpreter on PATH (need python3 or python)" >&2; exit 1; }
-
 RUN_JUNIT=0
+PY="$(command -v python3 || command -v python)" || { echo "no python interpreter on PATH (need python3 or python)" >&2; exit 1; }
 
 usage() {
   cat <<'USAGE'
 Usage: .build/bin/validate-helm.sh [--junit]
 
 Runs the GroundX Helm production chart gate from one stable entrypoint:
+  - chart source line-ending guard (see GX-22)
   - helm lint for both chart surfaces
-  - helm unittest for src/groundx
+  - pinned helm-unittest plugin version guard
+  - guard-script unit tests (stdlib scripts under .build/tests)
+  - helm unittest for src/groundx, the helm/ mirror, and the kafka-cluster subchart
+  - snapshot-rewrite-on-run guard (see GX-22)
+  - google OCR credentials render for both chart surfaces
+  - shared Google credential isolation, rotation and schema checks
   - snapshot label guard unit tests
   - snapshot label guard
   - workspace chart contract verifier
-  - storage chart and generated AWS values contract verifier
+  - storage chart, generated AWS values, and template-mirror contract verifier
+  - probe-mirror-drift guard (renders src/groundx and helm/ and compares the API-pod probe timing)
   - targeted render checks for both chart surfaces
   - git whitespace check
 
@@ -46,12 +50,248 @@ for arg in "$@"; do
   esac
 done
 
+# .gitattributes (see GX-22) only normalizes line endings for files checked out AFTER it lands --
+# an existing checkout with core.autocrlf=true can still have these files on disk as CRLF against
+# the LF blobs the committed snapshot hash annotations were computed from, which silently
+# reproduces this ticket's original symptom (helm unittest snapshot mismatches that look like a
+# real regression). `git add --renormalize .` alone does not fix this: it only rewrites the index,
+# not the working-tree bytes, so it can report "nothing to stage" while the files are still CRLF
+# on disk. Check the real files before anything else runs, so a stale checkout fails fast with the
+# actual fix instead of failing later with a confusing snapshot diff.
+echo "==> Verifying chart source line endings match .gitattributes (see GX-22)"
+# `grep -q` as the last stage of a pipe under `set -o pipefail` can make this check silently pass:
+# `-q` exits after the first match, which can SIGPIPE the upstream `git ls-files`/`grep` before they
+# finish writing, and pipefail then reports THAT non-zero exit instead of the match `if` needs to
+# see, so the `if` reads it as false. Confirmed to actually happen intermittently once the file list
+# is large enough that grep's early exit outruns the writer. `grep -c` reads its input to completion
+# either way, so this cannot happen.
+crlf_count="$(git ls-files --eol -- src/groundx helm 2>/dev/null | grep 'attr/text eol=lf' | grep -cE 'w/crlf|w/mixed' || true)"
+if [ "${crlf_count:-0}" -gt 0 ]; then
+  echo "chart files are checked out as CRLF against this repo's eol=lf .gitattributes pin (an existing checkout from before the pin, or core.autocrlf=true on this machine). helm unittest snapshot hashes will not match until the working tree is re-checked out." >&2
+  if ! git diff --quiet -- src/groundx helm 2>/dev/null || ! git diff --cached --quiet -- src/groundx helm 2>/dev/null; then
+    echo "You have uncommitted changes under src/groundx or helm -- commit or stash them first, the fix below discards uncommitted edits to those paths:" >&2
+  else
+    echo "Fix:" >&2
+  fi
+  echo "  git ls-files -z -- src/groundx helm | xargs -0 rm -f && git checkout -- src/groundx helm" >&2
+  exit 1
+fi
+
+# The Google-OCR tests render a credentials file that layout-ocr-credentials.yaml reads
+# via .Files.Get. That file must NOT ship in the packaged chart (files/ is packaged), so
+# generate a throwaway one for the duration of this gate and remove it on exit. The
+# gcv-*.json name is git-ignored, so it can never be committed by accident. We refuse to
+# overwrite a pre-existing file at that path and only ever delete files we created here,
+# so a developer's own credential file at that path is never clobbered or removed.
+OCR_TEST_CREDENTIALS="files/ocr/gcv-test.json"
+layout_pvc_values=""
+layout_pvc_render=""
+ocr_generated_files=()
+SNAPSHOT_STABILITY_HASHFILE="$(mktemp)"
+cleanup() {
+  if ((${#ocr_generated_files[@]})); then
+    rm -f "${ocr_generated_files[@]}"
+  fi
+  rmdir src/groundx/files/ocr src/groundx/files helm/files/ocr helm/files 2>/dev/null || true
+  rm -f "${layout_pvc_values}" "${layout_pvc_render}" "${SNAPSHOT_STABILITY_HASHFILE}"
+}
+trap cleanup EXIT
+for chart in src/groundx helm; do
+  ocr_target="${chart}/${OCR_TEST_CREDENTIALS}"
+  if [[ -e "${ocr_target}" ]]; then
+    echo "Refusing to overwrite existing ${ocr_target}; remove it and re-run the gate." >&2
+    exit 1
+  fi
+  mkdir -p "${chart}/files/ocr"
+  cat > "${ocr_target}" <<'JSON'
+{
+  "type": "service_account",
+  "project_id": "groundx-helm-test",
+  "private_key_id": "test",
+  "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",
+  "token_uri": "https://oauth2.googleapis.com/token"
+}
+JSON
+  ocr_generated_files+=("${ocr_target}")
+done
+
+run_helm_unittest_and_verify_stability() {
+  local marker_suffix="$1"; shift
+  helm unittest "$@" src/groundx helm src/groundx/prereqs/kafka-cluster
+  echo "==> Verifying helm unittest ${marker_suffix}did not rewrite committed snapshots as a side effect (see GX-22)"
+  "${PY}" .build/bin/verify-helm-snapshot-stability.py verify "${SNAPSHOT_STABILITY_HASHFILE}"
+}
+
+echo "==> Capturing snapshot state before running any Helm tooling (see GX-22)"
+"${PY}" .build/bin/verify-helm-snapshot-stability.py capture "${SNAPSHOT_STABILITY_HASHFILE}"
+
 echo "==> Linting Helm chart surfaces"
 helm lint src/groundx
 helm lint helm
 
+echo "==> Verifying pinned helm-unittest plugin version"
+"${PY}" .build/bin/verify-helm-unittest-plugin-version.py
+
+echo "==> Verifying every guard-script test file is referenced in validate-helm.sh"
+SELF_PATH="${ROOT_DIR}/.build/bin/validate-helm.sh"
+for test_file in .build/tests/test_*.py; do
+  base="$(basename "${test_file}")"
+  grep -qF "${base}" "${SELF_PATH}" || { echo "orphaned guard-script test file not referenced in validate-helm.sh: ${base}" >&2; exit 1; }
+done
+
+echo "==> Verifying every helm unittest invocation is guarded (see GX-22)"
+[[ "$(grep -cE '^[[:space:]]*helm unittest\b' "${SELF_PATH}")" == "1" ]] || { echo "expected exactly one guarded helm unittest invocation (inside run_helm_unittest_and_verify_stability) in validate-helm.sh" >&2; exit 1; }
+
+echo "==> Running guard-script unit tests"
+"${PY}" .build/tests/test_verify_helm_unittest_plugin_version.py
+"${PY}" .build/tests/test_verify_helm_snapshot_stability.py
+"${PY}" .build/tests/test_verify_storage_contract.py
+
 echo "==> Running Helm unit tests"
-helm unittest src/groundx
+run_helm_unittest_and_verify_stability ""
+
+echo "==> Verifying Google OCR credentials rendering for both chart surfaces"
+for chart in src/groundx helm; do
+  # Enabled: the credentials Secret resource must actually render. --show-only isolates
+  # that one resource, so this cannot be satisfied by the volume's mere reference to the
+  # same name (both carry the -ocr-credentials-map token in a full render).
+  ocr_configmap="$(helm template ocr-google "${chart}" -f src/groundx/tests/files/values.ocr-google.yaml --show-only templates/resources/layout-ocr-credentials.yaml 2>/dev/null || true)"
+  if ! grep -q 'kind: Secret' <<<"${ocr_configmap}" || ! grep -q -- '-ocr-credentials-map' <<<"${ocr_configmap}"; then
+    echo "${chart}: google OCR enabled render must create the -ocr-credentials-map Secret resource." >&2
+    exit 1
+  fi
+  # ...and the celery Deployment must mount that Secret and hash it.
+  ocr_enabled_render="$(helm template ocr-google "${chart}" -f src/groundx/tests/files/values.ocr-google.yaml)"
+  for expected in "ocr-credentials-hash" "credentials-volume"; do
+    if ! grep -q -- "${expected}" <<<"${ocr_enabled_render}"; then
+      echo "${chart}: google OCR enabled render is missing expected evidence: ${expected}" >&2
+      exit 1
+    fi
+  done
+  # Disabled (credentials set, layout.ocr.enabled=false): the Secret resource must NOT
+  # render (--show-only fails when the guard drops it to an empty document), and the
+  # Deployment must NOT mount a Secret that is never created (the F5 must-not-mount case).
+  if helm template ocr-google-disabled "${chart}" -f src/groundx/tests/files/values.ocr-google-disabled.yaml --show-only templates/resources/layout-ocr-credentials.yaml >/dev/null 2>&1; then
+    echo "${chart}: google OCR disabled render must not create the -ocr-credentials-map Secret." >&2
+    exit 1
+  fi
+  ocr_disabled_render="$(helm template ocr-google-disabled "${chart}" -f src/groundx/tests/files/values.ocr-google-disabled.yaml)"
+  if grep -q -- "credentials-volume" <<<"${ocr_disabled_render}"; then
+    echo "${chart}: google OCR disabled render must not mount a Secret that is never created." >&2
+    exit 1
+  fi
+  mixed_worker_render="$(helm template ocr-google-mixed "${chart}" \
+    -f src/groundx/tests/files/values.ocr-google.yaml \
+    --set extract.enabled=true \
+    --set extract.agent.enabled=true \
+    --set extract.api.enabled=true \
+    --set extract.download.enabled=true \
+    --set extract.save.enabled=true \
+    --set workspace.enabled=true \
+    --set workspace.token=test-runner-token)"
+  for unwanted in "extract-ocr-credentials-map" "workspace-ocr-credentials-map"; do
+    if grep -q -- "${unwanted}" <<<"${mixed_worker_render}"; then
+      echo "${chart}: packaged layout OCR credentials with extraction and workspace workers enabled must not reference ${unwanted}." >&2
+      exit 1
+    fi
+  done
+  for present in "name: extract-download" "name: extract-save" "name: workspace-workspace"; do
+    if ! grep -q -- "${present}" <<<"${mixed_worker_render}"; then
+      echo "${chart}: mixed-worker regression fixture must actually render ${present}, not vacuously pass by being disabled." >&2
+      exit 1
+    fi
+  done
+  for worker in layout-correct layout-map layout-ocr layout-process layout-save; do
+    if ! worker="${worker}" yq -e '
+      select(.kind == "Deployment" and .metadata.name == strenv(worker)) |
+      (.spec.template.metadata.annotations."ocr-credentials-hash" // "" | test("^[0-9a-f]{64}$")) and
+      ([.spec.template.spec.containers[0].volumeMounts[] | select(
+        .name == "credentials-volume" and
+        .mountPath == "/app/credentials.json" and
+        .subPath == "credentials.json"
+      )] | length == 1) and
+      ([.spec.template.spec.volumes[] | select(
+        .name == "credentials-volume" and
+        .secret.secretName == "layout-ocr-credentials-map"
+      )] | length == 1)
+    ' <<<"${mixed_worker_render}" >/dev/null; then
+      echo "${chart}: ${worker} must render with its OCR annotation, credentials mount and layout credentials Secret volume." >&2
+      exit 1
+    fi
+  done
+done
+
+echo "==> Verifying shared Google credential isolation and rotation"
+python - <<'PY'
+import json
+import re
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
+
+fixture = Path("src/groundx/tests/files/values.google-shared.yaml").resolve()
+
+def render(chart, *overrides):
+    command = ["helm", "template", "shared-google", str(chart), "-f", str(fixture)]
+    for override in overrides:
+        command += ["--set", override]
+    result = subprocess.run(command, capture_output=True, text=True)
+    if result.returncode:
+        raise AssertionError(result.stderr)
+    # Split rendered Kubernetes documents, not source templates. Snapshot tests
+    # separately assert structured mounts, Secret keys and configuration paths.
+    documents = {}
+    for document in result.stdout.split("\n---\n"):
+        kind = re.search(r"^kind: (.+)$", document, re.M)
+        name = re.search(r"^metadata:\n  name: (.+)$", document, re.M)
+        if kind and name:
+            key = (kind[1], name[1])
+            assert key not in documents, f"duplicate resource: {key}"
+            documents[key] = document
+    assert documents, "no rendered resources"
+    return documents
+
+for chart in (Path("src/groundx"), Path("helm")):
+    shared = render(chart, "extract.enabled=true", "extract.agent.enabled=true", "extract.api.enabled=true", "extract.download.enabled=true", "extract.save.enabled=true", "workspace.enabled=true", "workspace.token=test-runner-token")
+    assert ("Secret", "google-credentials") in shared
+    assert ("Secret", "layout-ocr-credentials-map") not in shared
+    for name in ("extract-agent", "extract-api", "extract-download", "extract-save"):
+        assert ("Deployment", name) in shared
+    assert ("Deployment", "workspace-workspace") in shared
+    for (kind, name), document in shared.items():
+        if (kind, name) != ("Secret", "google-credentials"):
+            assert "groundx-helm-test" not in document, f"credential bytes leaked to {name}"
+        if kind == "Deployment" and not (name.startswith("layout-") or name == "large-file-delivery"):
+            assert not re.search(r'secretName: "?google-credentials"?(?:\s|$)', document), f"credential mounted in {name}"
+
+    # Rotate only the fake file in a disposable copy; never rewrite operator files.
+    with tempfile.TemporaryDirectory(prefix="groundx-google-rotation-") as temporary:
+        copied = Path(temporary) / "chart"
+        shutil.copytree(chart, copied)
+        before = render(copied)
+        credential = copied / "files/ocr/gcv-test.json"
+        data = json.loads(credential.read_text())
+        data["private_key_id"] = "rotated-test-key"
+        credential.write_text(json.dumps(data))
+        after = render(copied)
+        assert before.keys() == after.keys()
+        changed = {key for key in before if before[key] != after[key]}
+        expected = {("Secret", "google-credentials")}
+        expected.update(key for key in before if key[0] == "Deployment" and (key[1].startswith("layout-") or key[1] == "large-file-delivery") and re.search(r'secretName: "?google-credentials"?(?:\s|$)', before[key]))
+        assert ("Deployment", "layout-ocr") in expected
+        assert ("Deployment", "large-file-delivery") in expected
+        assert changed == expected, f"{chart}: rotation changed {changed}, expected {expected}"
+
+    for invalid in (
+        "google.existingSecret=ambiguous-source",
+        "google.secretKey=key-without-external-secret",
+        "largeFileDeliver.credentials.operations-drive.secretName=ambiguous-source",
+    ):
+        result = subprocess.run(["helm", "template", "invalid-google", str(chart), "-f", str(fixture), "--set", invalid], capture_output=True, text=True)
+        assert result.returncode and "schema" in result.stderr, f"accepted ambiguous credentials: {invalid}"
+print("Shared Google credential isolation, rotation and schema checks passed")
+PY
 
 echo "==> Verifying extract-agent image settings validation"
 expect_helm_template_failure() {
@@ -98,15 +338,151 @@ for chart in src/groundx helm; do
   fi
 done
 
+echo "==> Verifying engine maxImages schema validation"
+expect_helm_lint_failure() {
+  local chart="$1"
+  local expected_description="$2"
+  local expected_regex="$3"
+  shift 3
+
+  local output
+  local status
+  set +e
+  output="$(helm lint "${chart}" --set engines.default.engineId=test-engine "$@" 2>&1)"
+  status=$?
+  set -e
+
+  if [[ "${status}" -eq 0 ]]; then
+    echo "Expected Helm lint to fail for ${chart}: $*" >&2
+    exit 1
+  fi
+  if [[ "${output}" != *"/engines/default/maxImages"* && "${output}" != *"engines.default.maxImages"* ]]; then
+    echo "Helm lint failed for ${chart}, but did not mention engines.default.maxImages." >&2
+    echo "${output}" >&2
+    exit 1
+  fi
+  if [[ ! "${output}" =~ ${expected_regex} ]]; then
+    echo "Helm lint failed for ${chart}, but did not mention ${expected_description}." >&2
+    echo "${output}" >&2
+    exit 1
+  fi
+}
+
+for chart in src/groundx helm; do
+  helm lint "${chart}" --set engines.default.engineId=test-engine --set-json engines.default.maxImages=null >/dev/null
+  helm lint "${chart}" --set engines.default.engineId=test-engine --set engines.default.maxImages=30 >/dev/null
+  expect_helm_lint_failure "${chart}" "a minimum-value failure" "greater than or equal to 1|minimum: got -?[0-9]+, want 1" --set engines.default.maxImages=0
+  expect_helm_lint_failure "${chart}" "a minimum-value failure" "greater than or equal to 1|minimum: got -?[0-9]+, want 1" --set engines.default.maxImages=-1
+  expect_helm_lint_failure "${chart}" "an invalid-type failure" "Invalid type|Expected:.*integer|got string, want null or integer" --set engines.default.maxImages=many
+done
+
+echo "==> Verifying layout inference PVC schema validation"
+layout_pvc_values="$(mktemp)"
+layout_pvc_render="$(mktemp)"
+cat > "${layout_pvc_values}" <<'YAML'
+layout:
+  inference:
+    pvc:
+      access: ReadWriteMany
+      capacity: 20Gi
+      class: eyelevel-efs
+      name: layout-model-efs
+    replicas:
+      desired: 2
+YAML
+
+for chart in src/groundx helm; do
+  helm lint "${chart}" -f "${layout_pvc_values}" >/dev/null
+  helm template layout-pvc "${chart}" -f "${layout_pvc_values}" > "${layout_pvc_render}"
+  for expected in \
+    "claimName: layout-model-efs" \
+    "storageClassName: eyelevel-efs" \
+    "storage: 20Gi" \
+    "ReadWriteMany"; do
+    if ! grep -q "${expected}" "${layout_pvc_render}"; then
+      echo "Rendered ${chart} output did not contain expected layout PVC evidence: ${expected}" >&2
+      exit 1
+    fi
+  done
+done
+
+echo "==> Verifying disruption budgets and spread render on all 30 workloads"
+drain_flags=(--set extract.enabled=true --set workspace.enabled=true --set workspace.token=test-runner-token)
+for svc in extract.agent extract.api extract.download extract.save layout.api layout.correct layout.inference layout.map layout.ocr layout.process layout.save ranker.api ranker.inference summary.api summary.inference workspace.api workspace.cleanup workspace.command workspace.provision workspace.publish workspace.workspace groundx largeFileDeliver layoutWebhook metrics preProcess process queue summaryClient upload; do
+  [[ "${svc}" == largeFileDeliver ]] || drain_flags+=(--set "${svc}.enabled=true")
+  drain_flags+=(--set "${svc}.disruptionBudget.enabled=true" \
+    --set-json "${svc}.topologySpreadConstraints=[{\"maxSkew\":1,\"topologyKey\":\"kubernetes.io/hostname\",\"whenUnsatisfiable\":\"ScheduleAnyway\",\"labelSelector\":{\"matchLabels\":{\"app\":\"x\"}}}]")
+done
+for chart in src/groundx helm; do
+  drain_render="$(helm template drain-all "${chart}" -f src/groundx/tests/files/values.large-file.yaml "${drain_flags[@]}")"
+  drain_pdbs="$(grep -c '^kind: PodDisruptionBudget$' <<<"${drain_render}" || true)"
+  drain_spreads="$(grep -c '^      topologySpreadConstraints:$' <<<"${drain_render}" || true)"
+  if [[ "${drain_pdbs}" != "30" || "${drain_spreads}" != "30" ]]; then
+    echo "${chart}: expected 30 PodDisruptionBudgets and 30 pod specs with topologySpreadConstraints, got ${drain_pdbs} and ${drain_spreads}." >&2
+    exit 1
+  fi
+done
+
+echo "==> Verifying deprecated compatibility values contract"
+python - <<'PY'
+import json
+from pathlib import Path
+
+for chart in (Path("src/groundx"), Path("helm")):
+    schema = json.loads((chart / "values.schema.json").read_text())
+    cluster = schema["properties"]["cluster"]["properties"]
+    fields = {
+        "cluster.hasMig": cluster["hasMig"],
+        "cluster.tls.existingSecret": cluster["tls"]["properties"]["existingSecret"],
+    }
+    for path, field in fields.items():
+        if field.get("deprecated") is not True:
+            raise SystemExit(f"{chart}: {path} must be marked deprecated")
+        description = field.get("description", "").lower()
+        if "accepted for compatibility" not in description or "does not change rendered resources" not in description:
+            raise SystemExit(f"{chart}: {path} must describe its inert compatibility behavior")
+PY
+
+for chart in src/groundx helm; do
+  if ! diff -q \
+    <(helm template deprecated-values "${chart}") \
+    <(helm template deprecated-values "${chart}" --set cluster.hasMig=true) \
+    >/dev/null; then
+    echo "${chart}: cluster.hasMig must remain an inert compatibility field in 0.2.7." >&2
+    exit 1
+  fi
+  if ! diff -q \
+    <(helm template deprecated-values "${chart}") \
+    <(helm template deprecated-values "${chart}" --set cluster.tls.existingSecret=legacy-tls) \
+    >/dev/null; then
+    echo "${chart}: cluster.tls.existingSecret must remain an inert compatibility field in 0.2.7." >&2
+    exit 1
+  fi
+done
+
+if grep -R -q 'define "groundx\.hasMig"' \
+  src/groundx/templates helm/templates; then
+  echo "The current chart must not retain an unused groundx.hasMig helper." >&2
+  exit 1
+fi
+if grep -R -q '\.Values\.tls\|cluster\.tls\.existingSecret' \
+  src/groundx/templates/NOTES.txt helm/templates/NOTES.txt; then
+  echo "Helm notes must not claim unsupported TLS Secret behavior." >&2
+  exit 1
+fi
+
 echo "==> Verifying Helm snapshots did not silently drop empty renders"
-"${PY}" .build/tests/test_verify_helm_snapshots.py
-"${PY}" .build/bin/verify-helm-snapshots.py
+python .build/tests/test_verify_helm_snapshots.py
+python .build/bin/verify-helm-snapshots.py
 
 echo "==> Verifying workspace chart contract"
-"${PY}" .build/bin/verify-workspace-chart.py
+python .build/bin/verify-workspace-chart.py
 
 echo "==> Verifying storage contract"
-"${PY}" .build/bin/verify-storage-contract.py
+python .build/bin/verify-storage-contract.py
+
+echo "==> Verifying src/groundx and helm/ probe-timing mirror stay in sync"
+bash src/groundx/tests/files/verify-probe-mirror-drift.sh
 
 echo "==> Rendering workspace chart fixtures"
 helm template workspace-contract src/groundx \
@@ -134,10 +510,17 @@ fi
 if [[ "${RUN_JUNIT}" == "1" ]]; then
   echo "==> Writing Helm unittest JUnit report"
   mkdir -p reports
-  helm unittest -o junit --output-file reports/helm-unittest.xml src/groundx
+  run_helm_unittest_and_verify_stability "(--junit) " -o junit --output-file reports/helm-unittest.xml
 fi
 
 echo "==> Checking diff whitespace"
+echo "==> Verifying database upgrade hook ships identically"
+cmp src/groundx/templates/app/schema-migration.yaml helm/templates/app/schema-migration.yaml
+for chart in src/groundx helm; do
+  helm template schema-upgrade "${chart}" --is-upgrade \
+    -f src/groundx/values/minikube/values.yaml >/dev/null
+done
+
 git diff --check
 
 echo "==> Helm chart checks passed"

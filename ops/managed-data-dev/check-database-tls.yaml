@@ -1,0 +1,87 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: check-database-tls-d952718
+  namespace: groundx-studio-dev
+  labels:
+    rollout: age-344
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 60
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app: check-database-tls
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      nodeSelector:
+        node.kubernetes.io/instance-type: t3a.medium
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+      containers:
+        - name: check
+          image: public.ecr.aws/c9r4x6y5/eyelevel/workspace-runner@sha256:e3169e4caf98de8693ef30cd6ad6fc730971185bc42288e73208cd5bb865cb55
+          command: [python, -c]
+          args:
+            - |
+              import json
+              import pymysql
+              from aws_managed_data import AwsManagedDataProvider
+              from repository import MySqlRepositoryStore
+              from settings import load_settings
+              settings = load_settings()
+              assert settings.mysql_ssl_ca_file
+              assert settings.managed_data_mysql_ssl_ca_file
+              store = object.__new__(MySqlRepositoryStore)
+              store.settings = settings
+              provider = AwsManagedDataProvider(settings)
+              url = "mysql://gx_dev_tls_probe:synthetic@dev-v3.ckr8voabdaub.us-east-1.rds.amazonaws.com:3306/mysql"
+              for name, connect in [
+                  ("metadata", store._connect),
+                  ("managed administration", lambda: provider._connect_mysql(url)),
+              ]:
+                  try:
+                      connection = connect()
+                  except pymysql.err.OperationalError as exc:
+                      if exc.args[0] != 1045:
+                          raise RuntimeError(f"{name} connection gate failed, code {exc.args[0]}") from None
+                  else:
+                      connection.close()
+                      raise RuntimeError("Synthetic probe credentials unexpectedly authenticated")
+                  print(json.dumps({"path": name, "verifiedTLS": True, "authenticated": False}))
+          env:
+            - name: MYSQL_HOST
+              value: dev-v3.ckr8voabdaub.us-east-1.rds.amazonaws.com
+            - name: MYSQL_DATABASE
+              value: mysql
+            - name: MYSQL_USERNAME
+              value: gx_dev_tls_probe
+            - name: MYSQL_PASSWORD
+              value: synthetic
+            - name: MYSQL_SSL_CA_FILE
+              value: /etc/workspace-db-ca/rds-us-east-1-bundle.pem
+            - name: MANAGED_DATA_MYSQL_SSL_CA_FILE
+              value: /etc/workspace-db-ca/rds-us-east-1-bundle.pem
+          volumeMounts:
+            - name: ca
+              mountPath: /etc/workspace-db-ca
+              readOnly: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 96Mi
+            limits:
+              cpu: 250m
+              memory: 192Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+      volumes:
+        - name: ca
+          configMap:
+            name: workspace-db-ca

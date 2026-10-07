@@ -22,6 +22,31 @@
 {{- (dig "username" "" $b) | trim -}}
 {{- end }}
 
+{{- define "groundx.cognito.mode" -}}
+{{- $b := .Values.cognito | default dict -}}
+{{- (dig "mode" "" $b) | trim -}}
+{{- end }}
+
+{{- define "groundx.cognito.clientId" -}}
+{{- $b := .Values.cognito | default dict -}}
+{{- (dig "clientId" "" $b) | trim -}}
+{{- end }}
+
+{{- define "groundx.cognito.clientSecret" -}}
+{{- $b := .Values.cognito | default dict -}}
+{{- dig "clientSecret" "" $b -}}
+{{- end }}
+
+{{- define "groundx.cognito.poolId" -}}
+{{- $b := .Values.cognito | default dict -}}
+{{- (dig "poolId" "" $b) | trim -}}
+{{- end }}
+
+{{- define "groundx.cognito.region" -}}
+{{- $b := .Values.cognito | default dict -}}
+{{- (dig "region" "" $b) | trim -}}
+{{- end }}
+
 {{- define "groundx.busybox.image" -}}
 {{- $in := .Values.busybox | default dict -}}
 {{- $repoPrefix := include "groundx.imageRepository" . | trim -}}
@@ -64,11 +89,6 @@
 
 {{- define "groundx.licenseKey" -}}
 {{ .Values.licenseKey | default "" }}
-{{- end }}
-
-{{- define "groundx.hasMig" -}}
-{{- $b := .Values.cluster | default dict -}}
-{{- dig "hasMig" false $b -}}
 {{- end }}
 
 {{- define "groundx.imagePullPolicy" -}}
@@ -192,4 +212,31 @@ extraPreDefaults:
 {{- define "groundx.validApiKeys" -}}
 {{- $b := .Values.cluster | default dict -}}
 {{- dig "validApiKeys" list $b -}}
+{{- end }}
+
+{{- define "groundx.disruptionBudget.warnings" -}}
+{{- $hpa := include "groundx.hpa" . | fromYaml | default dict -}}
+{{- $keys := dict -}}
+{{- range $list := list "groundx.api.services" "groundx.celery.process.services" "groundx.golang.services" "groundx.inference.services" -}}
+  {{- range $k, $v := (include $list $ | fromYaml | default dict) -}}
+    {{- $_ := set $keys $k $k -}}
+  {{- end -}}
+{{- end -}}
+{{- if ne (include "groundx.metrics.create" .) "false" -}}
+  {{- $_ := set $keys "metrics" "metrics" -}}
+{{- end -}}
+{{- $out := list -}}
+{{- range $k := keys $keys | sortAlpha -}}
+  {{- $s := include (printf "groundx.%s.settings" $k) $ | fromYaml | default dict -}}
+  {{- $pdb := get $s "disruptionBudget" | default dict -}}
+  {{- if dig "enabled" false $pdb -}}
+    {{- $rp := get $s "replicas" | default dict -}}
+    {{- $autoscaled := hasKey $hpa $k -}}
+    {{- $min := ternary (dig "min" 1 $rp) (dig "desired" 1 $rp) $autoscaled | int -}}
+    {{- if lt $min 2 -}}
+      {{- $out = append $out (printf "WARNING: %s has a disruption budget (minAvailable 1) but its %s is %d, so a node drain can be blocked until it scales up or is deleted. Set replicas.%s to 2 or more." (get $s "name") (ternary "autoscaling minimum (replicas.min)" "replica count (replicas.desired)" $autoscaled) $min (ternary "min" "desired" $autoscaled)) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- dict "warnings" $out | toYaml -}}
 {{- end }}

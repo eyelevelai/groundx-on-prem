@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: groundx-studio-dev
+  labels:
+    app.kubernetes.io/part-of: groundx-studio
+    environment: development
+    rollout: age-344
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: development-budget
+  namespace: groundx-studio-dev
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: 4Gi
+    limits.cpu: "4"
+    limits.memory: 6Gi
+    pods: "10"
+    services.loadbalancers: "0"
+    persistentvolumeclaims: "0"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: development-defaults
+  namespace: groundx-studio-dev
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 100m
+        memory: 128Mi
+      default:
+        cpu: "1"
+        memory: 512Mi

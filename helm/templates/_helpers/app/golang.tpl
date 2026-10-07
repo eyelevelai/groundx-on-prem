@@ -35,6 +35,7 @@ golang
   "preProcess"
   "process"
   "queue"
+  "largeFileDeliver"
   "summaryClient"
   "upload"
 -}}

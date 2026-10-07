@@ -1,0 +1,101 @@
+suite: file connection settings
+tests:
+  - it: extraction uses an override URL and its embedded port
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.file.url: https://extract-storage.example.com:9443
+      file.existing.url: http://account-storage.example.com:9001
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[1].command[2]
+          value: "until nc -z extract-storage.example.com 9443; do echo waiting for file storage; sleep 2; done"
+  - it: extraction HTTP override does not inherit account HTTPS or port
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.file.url: http://extract-storage.example.com
+      file.existing.url: https://account-storage.example.com:9443
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[1].command[2]
+          value: "until nc -z extract-storage.example.com 80; do echo waiting for file storage; sleep 2; done"
+  - it: extraction inherits the account storage embedded port
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      file.existing.url: https://account-storage.example.com:9443
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[1].command[2]
+          value: "until nc -z account-storage.example.com 9443; do echo waiting for file storage; sleep 2; done"
+  - it: extraction inherits the account local storage wait address
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      file.port: 9002
+      file.customDomain: downloads.example.com
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[1].command[2]
+          value: "until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9002; do echo waiting for file storage; sleep 2; done"
+  - it: extraction upload settings use the override scheme and domain
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.file.url: https://extract-storage.example.com:9443
+      file.existing.url: http://account-storage.example.com:9001
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'url="https://extract-storage.example.com:9443/eyelevel/"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'ssl=True'
+  - it: extraction HTTP upload override disables inherited SSL
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.file.url: http://extract-storage.example.com
+      file.existing.url: https://account-storage.example.com:9443
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'url="http://extract-storage.example.com/eyelevel/"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'ssl=False'

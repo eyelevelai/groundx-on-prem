@@ -11,15 +11,17 @@
 {{- end }}
 
 {{- define "groundx.ranker.api.create" -}}
-{{- $b := .Values.ranker | default dict -}}
-{{- $in := dig "api" dict $b -}}
 {{- $io := include "groundx.ingestOnly" . -}}
-{{- if hasKey $in "enabled" -}}
-  {{- if (dig "enabled" false $in) -}}true{{- else -}}false{{- end -}}
-{{- else if eq $io "true" -}}
+{{- if eq $io "true" -}}
 false
 {{- else -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- if hasKey $in "enabled" -}}
+  {{- if (dig "enabled" false $in) -}}true{{- else -}}false{{- end -}}
+{{- else -}}
 true
+{{- end -}}
 {{- end -}}
 {{- end }}
 
@@ -46,6 +48,12 @@ true
 
 {{- define "groundx.ranker.api.port" -}}
 80
+{{- end }}
+
+{{- define "groundx.ranker.api.batchSize" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{ dig "batchSize" 1 $in }}
 {{- end }}
 
 {{- define "groundx.ranker.api.serviceAccountName" -}}
@@ -178,6 +186,21 @@ true
 false
 {{- end }}
 
+{{- define "groundx.ranker.api.probe" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- $pb := dig "probe" dict $in -}}
+{{- $lv := dig "liveness" dict $pb -}}
+{{- $rd := dig "readiness" dict $pb -}}
+{{- dict
+    "liveness"  (dict "timeoutSeconds" (dig "timeoutSeconds" 3 $lv))
+    "readiness" (dict
+      "failureThreshold" (dig "failureThreshold" 3 $rd)
+      "timeoutSeconds"   (dig "timeoutSeconds" 3 $rd)
+    )
+  | toYaml -}}
+{{- end }}
+
 {{- define "groundx.ranker.api.threads" -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "api" dict $b -}}
@@ -232,6 +255,7 @@ false
 {{- $cfg := dict
   "cfg"          (printf "%s-config-py-map" $svc)
   "cache"        (include "groundx.ranker.cache.settings" . | fromYaml)
+  "disruptionBudget" (dig "disruptionBudget" dict $in)
   "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
   "image"        (include "groundx.ranker.api.image" .)
   "interface"    (include "groundx.ranker.api.interface" .)
@@ -239,6 +263,7 @@ false
   "name"         (include "groundx.ranker.api.serviceName" .)
   "node"         (include "groundx.ranker.api.node" .)
   "port"         (include "groundx.ranker.api.containerPort" .)
+  "probe"        (include "groundx.ranker.api.probe" . | fromYaml)
   "pull"         (include "groundx.ranker.api.imagePullPolicy" .)
   "replicas"     ($rep)
 -}}
@@ -268,6 +293,9 @@ false
 {{- end -}}
 {{- if and (hasKey $in "tolerations") (not (empty (get $in "tolerations"))) -}}
   {{- $_ := set $cfg "tolerations" (get $in "tolerations") -}}
+{{- end -}}
+{{- if and (hasKey $in "topologySpreadConstraints") (not (empty (get $in "topologySpreadConstraints"))) -}}
+  {{- $_ := set $cfg "topologySpreadConstraints" (get $in "topologySpreadConstraints") -}}
 {{- end -}}
 {{- $cfg | toYaml -}}
 {{- end }}

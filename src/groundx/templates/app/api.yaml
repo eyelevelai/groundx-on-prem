@@ -14,6 +14,7 @@
 {{- $cachePort := coalesce (get $cache "port") (include "groundx.cache.port" $) -}}
 {{- $csct := get $svcData "containerSecurityContext" -}}
 {{- $dpnd := get $svcData "dependencies" | default dict -}}
+{{- $env := get $svcData "env" | default dict -}}
 {{- $guni := get $svcData "gunicorn" -}}
 {{- $image := get $svcData "image" -}}
 {{- $int := get $svcData "interface" -}}
@@ -22,6 +23,8 @@
 {{- $mapPrefix := get $svcData "mapPrefix" -}}
 {{- $node := get $svcData "node" -}}
 {{- $nsl := get $svcData "nodeSelector" -}}
+{{- $pdb := get $svcData "disruptionBudget" | default dict -}}
+{{- $probe := get $svcData "probe" | default dict -}}
 {{- $pvc := get $svcData "pvc" | default dict -}}
 {{- $rp := get $svcData "replicas" -}}
 {{- $rs := get $svcData "resources" -}}
@@ -37,6 +40,7 @@
 {{- $sct := get $svcData "securityContext" -}}
 {{- $svc := get $svcData "name" -}}
 {{- $tl := get $svcData "tolerations" -}}
+{{- $tsc := get $svcData "topologySpreadConstraints" -}}
 {{- $vm := get $svcData "volumeMounts" | default list -}}
 {{- $vol := get $svcData "volumes" | default list -}}
 
@@ -85,6 +89,7 @@ spec:
 {{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" $ "user" $username "cfg" "spec") }}
 {{- include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
 {{- include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
+{{- include "groundx.renderTopologySpread" (dict "ctx" $tsc "indent" 6) }}
       initContainers:
         - name: wait-for-cache
           image: {{ include "groundx.busybox.image" $ }}
@@ -120,6 +125,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+{{- range $envName, $envValue := $env }}
+            - name: {{ $envName }}
+              value: {{ $envValue | quote }}
+{{- end }}
 {{- if gt (len $scr) 0 }}
           envFrom:
 {{- range $kk, $vv := $scr }}
@@ -141,12 +150,15 @@ spec:
             initialDelaySeconds: 10
             failureThreshold: 12
             periodSeconds: 30
+            timeoutSeconds: {{ dig "liveness" "timeoutSeconds" 3 $probe }}
           readinessProbe:
             httpGet:
               path: /health
               port: {{ $cport }}
             initialDelaySeconds: 10
             periodSeconds: 30
+            timeoutSeconds: {{ dig "readiness" "timeoutSeconds" 3 $probe }}
+            failureThreshold: {{ dig "readiness" "failureThreshold" 3 $probe }}
 {{- include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
           volumeMounts:
             - name: config-volume
@@ -160,8 +172,8 @@ spec:
 {{- end }}
       volumes:
         - name: config-volume
-          configMap:
-            name: {{ $cfg }}
+          secret:
+            secretName: {{ $cfg }}
         - name: gunicorn-conf-volume
           configMap:
             name: {{ $guni }}
@@ -173,6 +185,25 @@ spec:
 
 {{- if not (empty $pvc) }}
 {{ include "groundx.renderPVC" (dict "ctx" $pvc "app" $svc "root" $) }}
+{{- end }}
+
+{{- if dig "enabled" false $pdb }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $svc }}
+  namespace: {{ include "groundx.ns" $ | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
+spec:
+  minAvailable: 1
+{{- if semverCompare ">=1.26-0" $.Capabilities.KubeVersion.Version }}
+  unhealthyPodEvictionPolicy: AlwaysAllow
+{{- end }}
+  selector:
+    matchLabels:
+      app: {{ $svc }}
 {{- end }}
 
 {{ end }}

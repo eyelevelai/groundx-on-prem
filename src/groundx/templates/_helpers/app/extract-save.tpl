@@ -229,12 +229,17 @@ GCP_CREDENTIALS
   (include "groundx.extract.save.secretName" .) (include "groundx.extract.save.secretName" .)
 -}}
 {{- $apiKey := include "groundx.extract.agent.apiKey" . -}}
-{{- if ne $apiKey "" -}}
+{{- $existingSecret := include "groundx.extract.agent.existingSecret" . -}}
+{{- if or (ne $apiKey "") (eq $existingSecret "true") -}}
 {{- $_ := set $data (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .) -}}
 {{- end -}}
+{{- $env := dict
+  "EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED" (include "groundx.extract.terminalAgentTraceEnabled" (dict "root" . "pod" "save"))
+-}}
 {{- $cfg := dict
   "celery"       ("celery_agents")
   "dependencies" $dpnd
+  "env"          $env
   "fileDomain"   (include "groundx.extract.file.serviceDependency" .)
   "filePort"     (include "groundx.extract.file.port" .)
   "image"        (include "groundx.extract.save.image" .)
@@ -278,6 +283,12 @@ GCP_CREDENTIALS
 {{- end -}}
 {{- if and (hasKey $in "tolerations") (not (empty (get $in "tolerations"))) -}}
   {{- $_ := set $cfg "tolerations" (get $in "tolerations") -}}
+{{- end -}}
+{{- if and (hasKey $in "topologySpreadConstraints") (not (empty (get $in "topologySpreadConstraints"))) -}}
+  {{- $_ := set $cfg "topologySpreadConstraints" (get $in "topologySpreadConstraints") -}}
+{{- end -}}
+{{- if hasKey $in "disruptionBudget" -}}
+  {{- $_ := set $cfg "disruptionBudget" (get $in "disruptionBudget") -}}
 {{- end -}}
 {{- $cfg | toYaml -}}
 {{- end }}

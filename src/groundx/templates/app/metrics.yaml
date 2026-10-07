@@ -27,6 +27,8 @@
 {{- $scr := include "groundx.secrets" . | fromYaml | default dict -}}
 {{- $sct := get $svcData "securityContext" -}}
 {{- $tl := get $svcData "tolerations" -}}
+{{- $tsc := get $svcData "topologySpreadConstraints" -}}
+{{- $pdb := get $svcData "disruptionBudget" | default dict -}}
 
 {{- $desired := get $rp "desired" -}}
 {{- $metricsName := include "groundx.metrics.serviceName" . -}}
@@ -134,6 +136,7 @@ spec:
 {{ include "groundx.renderSecurityContext" (dict "ctx" $sct "indent" 6 "root" . "user" $username "cfg" "spec") }}
 {{ include "groundx.renderNodeSelector" (dict "ctx" $nsl "node" $node "indent" 6 "root" $) }}
 {{ include "groundx.renderTolerations" (dict "ctx" $tl "node" $node "indent" 6 "root" $) }}
+{{- include "groundx.renderTopologySpread" (dict "ctx" $tsc "indent" 6) }}
 {{- if not (empty $dpnd) }}
       initContainers:
 {{- if hasKey $dpnd "cache" }}
@@ -201,11 +204,30 @@ spec:
               readOnly: true
       volumes:
         - name: config-volume
-          configMap:
-            name: config-yaml-map
+          secret:
+            secretName: config-yaml-map
         - name: tls-volume
           secret:
             secretName: {{ $tlsSecretName }}
+
+{{- if dig "enabled" false $pdb }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $svc }}
+  namespace: {{ include "groundx.ns" $ | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
+spec:
+  minAvailable: 1
+{{- if semverCompare ">=1.26-0" $.Capabilities.KubeVersion.Version }}
+  unhealthyPodEvictionPolicy: AlwaysAllow
+{{- end }}
+  selector:
+    matchLabels:
+      app: {{ $svc }}
+{{- end }}
 
 ---
 apiVersion: v1

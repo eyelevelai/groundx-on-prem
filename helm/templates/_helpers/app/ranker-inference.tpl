@@ -11,16 +11,24 @@
 {{- end }}
 
 {{- define "groundx.ranker.inference.create" -}}
+{{- $io := include "groundx.ingestOnly" . -}}
+{{- if eq $io "true" -}}
+false
+{{- else -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "inference" dict $b -}}
-{{- $io := include "groundx.ingestOnly" . -}}
 {{- if hasKey $in "enabled" -}}
   {{- if (dig "enabled" false $in) -}}true{{- else -}}false{{- end -}}
-{{- else if eq $io "true" -}}
-false
 {{- else -}}
 true
 {{- end -}}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.ranker.inference.containerPort" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{ dig "containerPort" 8080 $in }}
 {{- end }}
 
 {{- define "groundx.ranker.inference.deviceType" -}}
@@ -61,12 +69,12 @@ true
 
 {{/* fraction of threshold */}}
 {{- define "groundx.ranker.inference.target.default" -}}
-1
+0.5
 {{- end }}
 
-{{/* tokens per minute per worker per thread */}}
+{{/* queue message backlog */}}
 {{- define "groundx.ranker.inference.threshold.default" -}}
-20000
+10
 {{- end }}
 
 {{/* tokens per minute per worker per thread */}}
@@ -103,14 +111,19 @@ true
 {{- end -}}
 {{- $name := (include "groundx.ranker.inference.serviceName" .) -}}
 {{- $cld := dig "cooldown" 60 $rep -}}
+{{- $upCl := dig "upCooldown" $cld $rep -}}
+{{- $throughputMetric := "0" -}}
+{{- if gt (dig "throughput" 0 $rep | float64) 0.0 -}}
+  {{- $throughputMetric = printf "%s:throughput" $name -}}
+{{- end -}}
 {{- $cfg := dict
   "downCooldown" (mul $cld 2)
   "enabled"      $enabled
   "metric"       (printf "%s:inference" $name)
   "name"         $name
   "replicas"     $rep
-  "throughput"   (printf "%s:throughput" $name)
-  "upCooldown"   $cld
+  "throughput"   $throughputMetric
+  "upCooldown"   $upCl
 -}}
 {{- $cfg | toYaml -}}
 {{- end }}
@@ -119,6 +132,18 @@ true
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "inference" dict $b -}}
 {{ (dig "queue" "inference_queue" $in) }}
+{{- end }}
+
+{{- define "groundx.ranker.inference.busyWindowSeconds" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "inference" dict $b -}}
+{{- $rep := (include "groundx.ranker.inference.replicas" . | fromYaml) -}}
+{{- $ic := include "groundx.ranker.inference.create" . -}}
+{{- if and (eq $ic "true") (dig "hpa" false $rep) -}}
+{{ dig "busyWindowSeconds" 60 $in }}
+{{- else -}}
+0
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.ranker.inference.replicas" -}}
@@ -145,7 +170,7 @@ true
   {{- $_ := set $in "throughput" (mul $dflt $threads $workers) -}}
 {{- end -}}
 {{- if not (hasKey $in "threshold") -}}
-  {{- $_ := set $in "threshold" (dig "throughput" 0 $in) -}}
+  {{- $_ := set $in "threshold" (include "groundx.ranker.inference.threshold.default" .) -}}
 {{- end -}}
 {{- if not (hasKey $in "min") -}}
   {{- if hasKey $in "desired" -}}
@@ -197,7 +222,6 @@ true
 {{- $cfg := dict
   "baseName"       ($svc)
   "cache"          (include "groundx.ranker.cache.settings" . | fromYaml)
-  "celery"         ("ranker.celery.appSearch")
   "cfg"            (printf "%s-config-py-map" $svc)
   "image"          (include "groundx.ranker.inference.image" .)
   "mapPrefix"      ("ranker")
@@ -205,6 +229,7 @@ true
   "modelVersion"   ("model")
   "name"           (include "groundx.ranker.inference.serviceName" .)
   "node"           (include "groundx.ranker.inference.node" .)
+  "port"           (include "groundx.ranker.inference.containerPort" .)
   "pull"           (include "groundx.ranker.inference.imagePullPolicy" .)
   "pvc"            (include "groundx.ranker.inference.pvc" . | fromYaml)
   "replicas"       ($rep)
@@ -238,6 +263,12 @@ true
 {{- end -}}
 {{- if and (hasKey $in "tolerations") (not (empty (get $in "tolerations"))) -}}
   {{- $_ := set $cfg "tolerations" (get $in "tolerations") -}}
+{{- end -}}
+{{- if and (hasKey $in "topologySpreadConstraints") (not (empty (get $in "topologySpreadConstraints"))) -}}
+  {{- $_ := set $cfg "topologySpreadConstraints" (get $in "topologySpreadConstraints") -}}
+{{- end -}}
+{{- if hasKey $in "disruptionBudget" -}}
+  {{- $_ := set $cfg "disruptionBudget" (get $in "disruptionBudget") -}}
 {{- end -}}
 {{- $cfg | toYaml -}}
 {{- end }}

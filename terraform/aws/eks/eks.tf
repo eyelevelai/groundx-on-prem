@@ -1,5 +1,146 @@
 locals {
-  should_create = var.environment.vpc_id != "" && length(var.environment.subnets) > 0
+  should_create                   = var.environment.vpc_id != "" && length(var.environment.subnets) > 0
+  eks_kms_source_policy_documents = var.eks_kms_source_policy_documents
+
+  cloudwatch_configuration = {
+    manager = {
+      applicationSignals = {
+        autoMonitor = { monitorAllServices = false, restartPods = false }
+      }
+    }
+    agents = concat([
+      {
+        name = "cloudwatch-agent"
+        config = {
+          agent = { region = var.environment.region }
+          logs = {
+            metrics_collected = {
+              kubernetes = {
+                cluster_name                = local.cluster_name
+                enhanced_container_insights = true
+              }
+            }
+          }
+        }
+      }
+      ], var.dns_observability.enabled ? [
+      {
+        name = "coredns-metrics"
+        mode = "deployment"
+        nodeSelector = {
+          eyelevel_node = local.cpu_only_label
+        }
+        tolerations = [
+          { key = "node", operator = "Equal", value = local.cpu_only_label, effect = "NoSchedule" },
+          { key = "eyelevel_node", operator = "Equal", value = local.cpu_only_label, effect = "NoSchedule" }
+        ]
+        config = {
+          agent = { region = var.environment.region }
+          logs = {
+            metrics_collected = {
+              prometheus = {
+                prometheus_config_path = "/etc/prometheusconfig/prometheus.yaml"
+                emf_processor = {
+                  metric_declaration = [
+                    {
+                      source_labels    = ["Namespace", "Pod"]
+                      label_matcher    = "kube-system;coredns-.+"
+                      dimensions       = [["Namespace", "Pod", "type"]]
+                      metric_selectors = ["^coredns_dns_requests_total$"]
+                    },
+                    {
+                      source_labels    = ["Namespace", "Pod"]
+                      label_matcher    = "kube-system;coredns-.+"
+                      dimensions       = [["Namespace", "Pod", "rcode"]]
+                      metric_selectors = ["^coredns_dns_responses_total$"]
+                    },
+                    {
+                      source_labels = ["Namespace", "Pod"]
+                      label_matcher = "kube-system;coredns-.+"
+                      dimensions    = [["Namespace", "Pod"]]
+                      metric_selectors = [
+                        "^up$",
+                        "^coredns_dns_request_duration_seconds_(sum|count)$",
+                        "^coredns_forward_healthcheck_broken_total$"
+                      ]
+                    },
+                    {
+                      source_labels    = ["Namespace", "Pod"]
+                      label_matcher    = "kube-system;coredns-.+"
+                      dimensions       = [["Namespace", "Pod", "to"]]
+                      metric_selectors = ["^coredns_proxy_healthcheck_failures_total$"]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+        prometheus = {
+          config = {
+            global = { scrape_interval = "30s", scrape_timeout = "5s" }
+            scrape_configs = [
+              {
+                job_name              = "coredns"
+                kubernetes_sd_configs = [{ role = "pod", namespaces = { names = ["kube-system"] } }]
+                relabel_configs = [
+                  { source_labels = ["__meta_kubernetes_pod_label_k8s_app", "__meta_kubernetes_pod_container_port_name"], action = "keep", regex = "kube-dns;metrics" },
+                  { source_labels = ["__meta_kubernetes_namespace"], target_label = "Namespace" },
+                  { source_labels = ["__meta_kubernetes_pod_name"], target_label = "Pod" }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ] : [])
+  }
+
+  cluster_addons = merge(
+    {
+      amazon-cloudwatch-observability = {
+        addon_version               = var.dns_observability.enabled ? "v5.4.0-eksbuild.1" : null
+        configuration_values        = jsonencode(local.cloudwatch_configuration)
+        resolve_conflicts_on_create = "OVERWRITE"
+        resolve_conflicts_on_update = "OVERWRITE"
+      }
+    },
+    var.node_diagnostics.enabled ? {
+      eks-node-monitoring-agent = {
+        addon_version = "v1.7.0-eksbuild.1"
+        preserve      = false
+        configuration_values = jsonencode({
+          nodeAgent = {
+            affinity = {
+              nodeAffinity = {
+                requiredDuringSchedulingIgnoredDuringExecution = {
+                  nodeSelectorTerms = [{
+                    matchExpressions = [{
+                      key      = "eyelevel_node"
+                      operator = "In"
+                      values   = [local.cpu_only_label, local.cpu_memory_label]
+                    }]
+                  }]
+                }
+              }
+            }
+            monitors = {
+              nvidia = {
+                enabled = false
+              }
+            }
+          }
+          dcgmAgent = {
+            nodeSelector = {
+              "diagnostics.groundx.ai/dcgm" = "disabled"
+            }
+          }
+        })
+        resolve_conflicts_on_create = "OVERWRITE"
+        resolve_conflicts_on_update = "OVERWRITE"
+      }
+    } : {}
+  )
 
   access_entries = merge({
     for entry in var.environment.cluster_role_arns : entry.name => {
@@ -137,6 +278,7 @@ locals {
         max_size                                            = local.cpu_only_max_size
         min_size                                            = local.cpu_only_min_size
 
+        update_config                                       = { max_unavailable = 1 }
         ebs_optimized                                       = true
         block_device_mappings                               = {
           xvda                                              = {
@@ -199,6 +341,14 @@ locals {
           "eyelevel_node"                                   = local.gpu_layout_label
         }
 
+        taints                                              = {
+          eyelevel_node                                      = {
+            key                                             = "eyelevel_node"
+            value                                           = local.gpu_layout_label
+            effect                                          = "NO_SCHEDULE"
+          }
+        }
+
         tags                                                = {
           Environment                                       = var.environment.stage
           Name                                              = local.gpu_layout_label
@@ -238,6 +388,14 @@ locals {
 
         labels                                              = {
           "eyelevel_node"                                   = local.gpu_summary_label
+        }
+
+        taints                                              = {
+          eyelevel_node                                      = {
+            key                                             = "eyelevel_node"
+            value                                           = local.gpu_summary_label
+            effect                                          = "NO_SCHEDULE"
+          }
         }
 
         tags                                                = {
@@ -283,6 +441,14 @@ locals {
           "eyelevel_node"                                   = local.gpu_ranker_label
         }
 
+        taints                                              = {
+          eyelevel_node                                      = {
+            key                                             = "eyelevel_node"
+            value                                           = local.gpu_ranker_label
+            effect                                          = "NO_SCHEDULE"
+          }
+        }
+
         tags                                                = {
           Environment                                       = var.environment.stage
           Name                                              = local.gpu_ranker_label
@@ -298,11 +464,12 @@ module "eyelevel_eks" {
   count = local.should_create ? 1 : 0
 
   source                                   = "terraform-aws-modules/eks/aws"
-  version                                  = "~> 20.0"
+  version                                  = "20.37.2"
 
   enable_irsa                              = true
 
   cluster_name                             = local.cluster_name
+  cluster_version                          = var.environment_internal.eks_version
   iam_role_name                            = "${local.cluster_name}-cluster-role"
 
   cluster_endpoint_private_access          = true
@@ -322,12 +489,8 @@ module "eyelevel_eks" {
 
   eks_managed_node_groups                  = local.node_groups
 
-  cluster_addons = {
-    amazon-cloudwatch-observability = {
-      resolve_conflicts_on_create = "OVERWRITE"
-      resolve_conflicts_on_update = "OVERWRITE"
-    }
-  }
+  cluster_addons                           = local.cluster_addons
+  kms_key_source_policy_documents          = local.eks_kms_source_policy_documents
 }
 
 resource "null_resource" "wait_for_eks" {

@@ -175,6 +175,21 @@ true
 false
 {{- end }}
 
+{{- define "groundx.layout.api.probe" -}}
+{{- $b := .Values.layout | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- $pb := dig "probe" dict $in -}}
+{{- $lv := dig "liveness" dict $pb -}}
+{{- $rd := dig "readiness" dict $pb -}}
+{{- dict
+    "liveness"  (dict "timeoutSeconds" (dig "timeoutSeconds" 3 $lv))
+    "readiness" (dict
+      "failureThreshold" (dig "failureThreshold" 3 $rd)
+      "timeoutSeconds"   (dig "timeoutSeconds" 3 $rd)
+    )
+  | toYaml -}}
+{{- end }}
+
 {{- define "groundx.layout.api.threads" -}}
 {{- $b := .Values.layout | default dict -}}
 {{- $in := dig "api" dict $b -}}
@@ -232,6 +247,7 @@ false
 {{- $cfg := dict
   "cfg"          (printf "%s-config-py-map" $svc)
   "dependencies" $dpnd
+  "disruptionBudget" (dig "disruptionBudget" dict $in)
   "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
   "image"        (include "groundx.layout.api.image" .)
   "interface"    (include "groundx.layout.api.interface" .)
@@ -239,6 +255,7 @@ false
   "name"         (include "groundx.layout.api.serviceName" .)
   "node"         (include "groundx.layout.api.node" .)
   "port"         (include "groundx.layout.api.containerPort" .)
+  "probe"        (include "groundx.layout.api.probe" . | fromYaml)
   "pull"         (include "groundx.layout.api.imagePullPolicy" .)
   "replicas"     ($rep)
 -}}
@@ -268,6 +285,9 @@ false
 {{- end -}}
 {{- if and (hasKey $in "tolerations") (not (empty (get $in "tolerations"))) -}}
   {{- $_ := set $cfg "tolerations" (get $in "tolerations") -}}
+{{- end -}}
+{{- if and (hasKey $in "topologySpreadConstraints") (not (empty (get $in "topologySpreadConstraints"))) -}}
+  {{- $_ := set $cfg "topologySpreadConstraints" (get $in "topologySpreadConstraints") -}}
 {{- end -}}
 {{- $cfg | toYaml -}}
 {{- end }}

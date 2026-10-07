@@ -19,7 +19,8 @@ Helm test or render check when it can prove the consequential deployment
 behavior; add a new case only when the existing coverage cannot. Keep required
 render, snapshot, and approval checks.
 
-- Run `helm unittest src/groundx` for chart logic or snapshot changes.
+- Run `.build/bin/validate-helm.sh` for chart logic or snapshot changes. It creates
+  the temporary OCR test credentials and verifies the pinned test plugin.
 - Run `helm template` or an existing focused render command for values/template
   changes.
 - For docs-only changes, run `git diff --check` before pushing.

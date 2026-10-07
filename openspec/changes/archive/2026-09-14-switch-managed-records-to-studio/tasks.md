@@ -1,0 +1,6 @@
+- [x] Verify consumers, identity, pushed refs, and allocation preconditions.
+- [x] Test dedicated Studio administrator and actual provider allocation before switching.
+- [x] Restrict only Studio database access and enable deletion protection; verify Sterling.
+- [x] Switch only production managed-record settings and verify all six Workspace deployments.
+- [x] Verify disposable app storage lifecycle and remove disposable resources.
+- [x] Remove obsolete managed administrator, verify unchanged services and settings, hand off sanitized evidence, and close local artifacts.

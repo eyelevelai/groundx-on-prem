@@ -4,7 +4,8 @@
 
 {{- $il := include "groundx.extract.agent.create" . -}}
 {{- $es := include "groundx.extract.agent.existingSecret" . -}}
-{{- if and (eq $il "true") (eq $es "false") -}}
+{{- $ak := include "groundx.extract.agent.apiKey" . -}}
+{{- if and (eq $il "true") (eq $es "false") (ne $ak "") -}}
 {{- $_ := set $svcs "extract.agent" "extract.agent" -}}
 {{- end -}}
 

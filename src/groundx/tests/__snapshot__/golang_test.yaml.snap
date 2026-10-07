@@ -1,3 +1,81 @@
+'OpenShift: database migration':
+  1: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      annotations:
+        helm.sh/hook: pre-upgrade
+        helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        helm.sh/hook-weight: "-5"
+      labels:
+        app: RELEASE-NAME-schema-migration
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: RELEASE-NAME-schema-migration
+      namespace: eyelevel
+    spec:
+      activeDeadlineSeconds: 900
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app: RELEASE-NAME-schema-migration
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - args:
+                - -migrate-only
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+              imagePullPolicy: IfNotPresent
+              name: migrate
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  readOnly: true
+                  subPath: config.yaml
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: RELEASE-NAME-schema-migration
 'aws: golang':
   1: |
     apiVersion: apps/v1
@@ -19,7 +97,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 37dc7cdaccbf17a1d3732da3afbbe45d7667acd6841b9e2a936506e41be472fc
+            config-hash: f7b04d0659bd52beb5a773b45f1790d8cbc7b8e93476a6b4a05a3384ccb9f526
           labels:
             app: groundx
         spec:
@@ -120,9 +198,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -159,7 +237,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 37dc7cdaccbf17a1d3732da3afbbe45d7667acd6841b9e2a936506e41be472fc
+            config-hash: f7b04d0659bd52beb5a773b45f1790d8cbc7b8e93476a6b4a05a3384ccb9f526
           labels:
             app: layout-webhook
         spec:
@@ -239,9 +317,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -278,7 +356,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 37dc7cdaccbf17a1d3732da3afbbe45d7667acd6841b9e2a936506e41be472fc
+            config-hash: f7b04d0659bd52beb5a773b45f1790d8cbc7b8e93476a6b4a05a3384ccb9f526
           labels:
             app: pre-process
         spec:
@@ -358,9 +436,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -381,7 +459,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 37dc7cdaccbf17a1d3732da3afbbe45d7667acd6841b9e2a936506e41be472fc
+            config-hash: f7b04d0659bd52beb5a773b45f1790d8cbc7b8e93476a6b4a05a3384ccb9f526
           labels:
             app: process
         spec:
@@ -461,9 +539,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -484,7 +562,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 37dc7cdaccbf17a1d3732da3afbbe45d7667acd6841b9e2a936506e41be472fc
+            config-hash: f7b04d0659bd52beb5a773b45f1790d8cbc7b8e93476a6b4a05a3384ccb9f526
           labels:
             app: queue
         spec:
@@ -564,9 +642,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -587,7 +665,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 37dc7cdaccbf17a1d3732da3afbbe45d7667acd6841b9e2a936506e41be472fc
+            config-hash: f7b04d0659bd52beb5a773b45f1790d8cbc7b8e93476a6b4a05a3384ccb9f526
           labels:
             app: summary-client
         spec:
@@ -667,9 +745,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -690,7 +768,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 37dc7cdaccbf17a1d3732da3afbbe45d7667acd6841b9e2a936506e41be472fc
+            config-hash: f7b04d0659bd52beb5a773b45f1790d8cbc7b8e93476a6b4a05a3384ccb9f526
           labels:
             app: upload
         spec:
@@ -770,9 +848,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'cloud: golang':
   1: |
     apiVersion: apps/v1
@@ -794,7 +872,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d5a1b077cd8e7462c27d29d016be44ccf342cc948917da07fa0754761efc1ec4
+            config-hash: bb4d8556e9ebf4bbc3476da1c80120551a710b3e6630e732824ba90739d4acf9
           labels:
             app: groundx
         spec:
@@ -901,9 +979,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -940,7 +1018,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d5a1b077cd8e7462c27d29d016be44ccf342cc948917da07fa0754761efc1ec4
+            config-hash: bb4d8556e9ebf4bbc3476da1c80120551a710b3e6630e732824ba90739d4acf9
           labels:
             app: layout-webhook
         spec:
@@ -1019,9 +1097,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -1058,7 +1136,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d5a1b077cd8e7462c27d29d016be44ccf342cc948917da07fa0754761efc1ec4
+            config-hash: bb4d8556e9ebf4bbc3476da1c80120551a710b3e6630e732824ba90739d4acf9
           labels:
             app: pre-process
         spec:
@@ -1137,9 +1215,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -1160,7 +1238,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d5a1b077cd8e7462c27d29d016be44ccf342cc948917da07fa0754761efc1ec4
+            config-hash: bb4d8556e9ebf4bbc3476da1c80120551a710b3e6630e732824ba90739d4acf9
           labels:
             app: process
         spec:
@@ -1239,9 +1317,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -1262,7 +1340,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d5a1b077cd8e7462c27d29d016be44ccf342cc948917da07fa0754761efc1ec4
+            config-hash: bb4d8556e9ebf4bbc3476da1c80120551a710b3e6630e732824ba90739d4acf9
           labels:
             app: queue
         spec:
@@ -1341,9 +1419,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -1364,7 +1442,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d5a1b077cd8e7462c27d29d016be44ccf342cc948917da07fa0754761efc1ec4
+            config-hash: bb4d8556e9ebf4bbc3476da1c80120551a710b3e6630e732824ba90739d4acf9
           labels:
             app: summary-client
         spec:
@@ -1443,9 +1521,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -1466,7 +1544,7 @@
       template:
         metadata:
           annotations:
-            config-hash: d5a1b077cd8e7462c27d29d016be44ccf342cc948917da07fa0754761efc1ec4
+            config-hash: bb4d8556e9ebf4bbc3476da1c80120551a710b3e6630e732824ba90739d4acf9
           labels:
             app: upload
         spec:
@@ -1545,9 +1623,93 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+'database migration blocks upgrades before new Go workloads':
+  1: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      annotations:
+        helm.sh/hook: pre-upgrade
+        helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        helm.sh/hook-weight: "-5"
+      labels:
+        app: upgrade-test-schema-migration
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: upgrade-test-schema-migration
+      namespace: eyelevel
+    spec:
+      activeDeadlineSeconds: 900
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app: upgrade-test-schema-migration
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - args:
+                - -migrate-only
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+              imagePullPolicy: IfNotPresent
+              name: migrate
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  readOnly: true
+                  subPath: config.yaml
+          restartPolicy: Never
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: upgrade-test-schema-migration
 'default: golang':
   1: |
     apiVersion: apps/v1
@@ -1569,7 +1731,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0c942c5668042fb37bf899b57c07304ac08580bb5224363783c866aa8394c7
+            config-hash: 6bf5374fe6457c0f1481b01709593caf2302ada9c40d3ff57f19ae8206a29b3f
           labels:
             app: groundx
         spec:
@@ -1676,9 +1838,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -1715,7 +1877,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0c942c5668042fb37bf899b57c07304ac08580bb5224363783c866aa8394c7
+            config-hash: 6bf5374fe6457c0f1481b01709593caf2302ada9c40d3ff57f19ae8206a29b3f
           labels:
             app: layout-webhook
         spec:
@@ -1794,9 +1956,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -1833,7 +1995,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0c942c5668042fb37bf899b57c07304ac08580bb5224363783c866aa8394c7
+            config-hash: 6bf5374fe6457c0f1481b01709593caf2302ada9c40d3ff57f19ae8206a29b3f
           labels:
             app: pre-process
         spec:
@@ -1912,9 +2074,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -1935,7 +2097,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0c942c5668042fb37bf899b57c07304ac08580bb5224363783c866aa8394c7
+            config-hash: 6bf5374fe6457c0f1481b01709593caf2302ada9c40d3ff57f19ae8206a29b3f
           labels:
             app: process
         spec:
@@ -2014,9 +2176,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2037,7 +2199,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0c942c5668042fb37bf899b57c07304ac08580bb5224363783c866aa8394c7
+            config-hash: 6bf5374fe6457c0f1481b01709593caf2302ada9c40d3ff57f19ae8206a29b3f
           labels:
             app: queue
         spec:
@@ -2116,9 +2278,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2139,7 +2301,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0c942c5668042fb37bf899b57c07304ac08580bb5224363783c866aa8394c7
+            config-hash: 6bf5374fe6457c0f1481b01709593caf2302ada9c40d3ff57f19ae8206a29b3f
           labels:
             app: summary-client
         spec:
@@ -2218,9 +2380,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2241,7 +2403,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0c942c5668042fb37bf899b57c07304ac08580bb5224363783c866aa8394c7
+            config-hash: 6bf5374fe6457c0f1481b01709593caf2302ada9c40d3ff57f19ae8206a29b3f
           labels:
             app: upload
         spec:
@@ -2320,9 +2482,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'disabled: golang':
 'empty: golang':
   1: |
@@ -2345,7 +2507,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0c942c5668042fb37bf899b57c07304ac08580bb5224363783c866aa8394c7
+            config-hash: 6bf5374fe6457c0f1481b01709593caf2302ada9c40d3ff57f19ae8206a29b3f
           labels:
             app: groundx
         spec:
@@ -2452,9 +2614,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -2491,7 +2653,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0c942c5668042fb37bf899b57c07304ac08580bb5224363783c866aa8394c7
+            config-hash: 6bf5374fe6457c0f1481b01709593caf2302ada9c40d3ff57f19ae8206a29b3f
           labels:
             app: layout-webhook
         spec:
@@ -2570,9 +2732,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -2609,7 +2771,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0c942c5668042fb37bf899b57c07304ac08580bb5224363783c866aa8394c7
+            config-hash: 6bf5374fe6457c0f1481b01709593caf2302ada9c40d3ff57f19ae8206a29b3f
           labels:
             app: pre-process
         spec:
@@ -2688,9 +2850,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2711,7 +2873,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0c942c5668042fb37bf899b57c07304ac08580bb5224363783c866aa8394c7
+            config-hash: 6bf5374fe6457c0f1481b01709593caf2302ada9c40d3ff57f19ae8206a29b3f
           labels:
             app: process
         spec:
@@ -2790,9 +2952,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2813,7 +2975,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0c942c5668042fb37bf899b57c07304ac08580bb5224363783c866aa8394c7
+            config-hash: 6bf5374fe6457c0f1481b01709593caf2302ada9c40d3ff57f19ae8206a29b3f
           labels:
             app: queue
         spec:
@@ -2892,9 +3054,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2915,7 +3077,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0c942c5668042fb37bf899b57c07304ac08580bb5224363783c866aa8394c7
+            config-hash: 6bf5374fe6457c0f1481b01709593caf2302ada9c40d3ff57f19ae8206a29b3f
           labels:
             app: summary-client
         spec:
@@ -2994,9 +3156,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -3017,7 +3179,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5b0c942c5668042fb37bf899b57c07304ac08580bb5224363783c866aa8394c7
+            config-hash: 6bf5374fe6457c0f1481b01709593caf2302ada9c40d3ff57f19ae8206a29b3f
           labels:
             app: upload
         spec:
@@ -3096,9 +3258,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'existing: golang':
   1: |
     apiVersion: apps/v1
@@ -3120,7 +3282,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 653466bd3e667be021bb8068aeca0541b975ee913d6ae9d38bc51d16dd91b455
+            config-hash: 31e71d37cc170b1dc50d7c144e79ecf7fd9136c94cb14379221becb410adabf0
           labels:
             app: groundx
         spec:
@@ -3227,9 +3389,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -3266,7 +3428,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 653466bd3e667be021bb8068aeca0541b975ee913d6ae9d38bc51d16dd91b455
+            config-hash: 31e71d37cc170b1dc50d7c144e79ecf7fd9136c94cb14379221becb410adabf0
           labels:
             app: layout-webhook
         spec:
@@ -3345,9 +3507,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -3384,7 +3546,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 653466bd3e667be021bb8068aeca0541b975ee913d6ae9d38bc51d16dd91b455
+            config-hash: 31e71d37cc170b1dc50d7c144e79ecf7fd9136c94cb14379221becb410adabf0
           labels:
             app: pre-process
         spec:
@@ -3463,9 +3625,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -3486,7 +3648,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 653466bd3e667be021bb8068aeca0541b975ee913d6ae9d38bc51d16dd91b455
+            config-hash: 31e71d37cc170b1dc50d7c144e79ecf7fd9136c94cb14379221becb410adabf0
           labels:
             app: process
         spec:
@@ -3565,9 +3727,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -3588,7 +3750,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 653466bd3e667be021bb8068aeca0541b975ee913d6ae9d38bc51d16dd91b455
+            config-hash: 31e71d37cc170b1dc50d7c144e79ecf7fd9136c94cb14379221becb410adabf0
           labels:
             app: queue
         spec:
@@ -3667,9 +3829,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -3690,7 +3852,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 653466bd3e667be021bb8068aeca0541b975ee913d6ae9d38bc51d16dd91b455
+            config-hash: 31e71d37cc170b1dc50d7c144e79ecf7fd9136c94cb14379221becb410adabf0
           labels:
             app: summary-client
         spec:
@@ -3769,9 +3931,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -3792,7 +3954,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 653466bd3e667be021bb8068aeca0541b975ee913d6ae9d38bc51d16dd91b455
+            config-hash: 31e71d37cc170b1dc50d7c144e79ecf7fd9136c94cb14379221becb410adabf0
           labels:
             app: upload
         spec:
@@ -3871,9 +4033,93 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+'external DB: database migration':
+  1: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      annotations:
+        helm.sh/hook: pre-upgrade
+        helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        helm.sh/hook-weight: "-5"
+      labels:
+        app: RELEASE-NAME-schema-migration
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: RELEASE-NAME-schema-migration
+      namespace: eyelevel
+    spec:
+      activeDeadlineSeconds: 900
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app: RELEASE-NAME-schema-migration
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - args:
+                - -migrate-only
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+              imagePullPolicy: IfNotPresent
+              name: migrate
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  readOnly: true
+                  subPath: config.yaml
+          restartPolicy: Never
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: RELEASE-NAME-schema-migration
 'extract: golang':
   1: |
     apiVersion: apps/v1
@@ -3895,7 +4141,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 75511657d9c9f7d70816f937d53e22f1366dce22d3e5eb3a4a742f93d3748501
+            config-hash: 240682d490ee480abb716edfe8f71b0c9e7ab1e8c5603adf07bb611b4396acdb
           labels:
             app: groundx
         spec:
@@ -3992,9 +4238,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -4031,7 +4277,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 75511657d9c9f7d70816f937d53e22f1366dce22d3e5eb3a4a742f93d3748501
+            config-hash: 240682d490ee480abb716edfe8f71b0c9e7ab1e8c5603adf07bb611b4396acdb
           labels:
             app: layout-webhook
         spec:
@@ -4114,9 +4360,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -4153,7 +4399,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 75511657d9c9f7d70816f937d53e22f1366dce22d3e5eb3a4a742f93d3748501
+            config-hash: 240682d490ee480abb716edfe8f71b0c9e7ab1e8c5603adf07bb611b4396acdb
           labels:
             app: pre-process
         spec:
@@ -4236,9 +4482,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -4259,7 +4505,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 75511657d9c9f7d70816f937d53e22f1366dce22d3e5eb3a4a742f93d3748501
+            config-hash: 240682d490ee480abb716edfe8f71b0c9e7ab1e8c5603adf07bb611b4396acdb
           labels:
             app: process
         spec:
@@ -4342,9 +4588,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -4365,7 +4611,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 75511657d9c9f7d70816f937d53e22f1366dce22d3e5eb3a4a742f93d3748501
+            config-hash: 240682d490ee480abb716edfe8f71b0c9e7ab1e8c5603adf07bb611b4396acdb
           labels:
             app: queue
         spec:
@@ -4448,9 +4694,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -4471,7 +4717,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 75511657d9c9f7d70816f937d53e22f1366dce22d3e5eb3a4a742f93d3748501
+            config-hash: 240682d490ee480abb716edfe8f71b0c9e7ab1e8c5603adf07bb611b4396acdb
           labels:
             app: summary-client
         spec:
@@ -4554,9 +4800,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -4577,7 +4823,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 75511657d9c9f7d70816f937d53e22f1366dce22d3e5eb3a4a742f93d3748501
+            config-hash: 240682d490ee480abb716edfe8f71b0c9e7ab1e8c5603adf07bb611b4396acdb
           labels:
             app: upload
         spec:
@@ -4660,9 +4906,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'extract.ingest: golang':
   1: |
     apiVersion: apps/v1
@@ -4684,7 +4930,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c51dec83ab3e7f09721c34b8755389c201876037226aeeafc40cddc4fb4b1d24
+            config-hash: feabc040a38d9892f10ece1334a8b447c42af350493f759d9fc686ed72c854cb
           labels:
             app: groundx
         spec:
@@ -4777,9 +5023,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -4816,7 +5062,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c51dec83ab3e7f09721c34b8755389c201876037226aeeafc40cddc4fb4b1d24
+            config-hash: feabc040a38d9892f10ece1334a8b447c42af350493f759d9fc686ed72c854cb
           labels:
             app: layout-webhook
         spec:
@@ -4895,9 +5141,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -4934,7 +5180,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c51dec83ab3e7f09721c34b8755389c201876037226aeeafc40cddc4fb4b1d24
+            config-hash: feabc040a38d9892f10ece1334a8b447c42af350493f759d9fc686ed72c854cb
           labels:
             app: pre-process
         spec:
@@ -5013,9 +5259,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -5036,7 +5282,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c51dec83ab3e7f09721c34b8755389c201876037226aeeafc40cddc4fb4b1d24
+            config-hash: feabc040a38d9892f10ece1334a8b447c42af350493f759d9fc686ed72c854cb
           labels:
             app: process
         spec:
@@ -5115,9 +5361,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -5138,7 +5384,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c51dec83ab3e7f09721c34b8755389c201876037226aeeafc40cddc4fb4b1d24
+            config-hash: feabc040a38d9892f10ece1334a8b447c42af350493f759d9fc686ed72c854cb
           labels:
             app: queue
         spec:
@@ -5217,9 +5463,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -5240,7 +5486,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c51dec83ab3e7f09721c34b8755389c201876037226aeeafc40cddc4fb4b1d24
+            config-hash: feabc040a38d9892f10ece1334a8b447c42af350493f759d9fc686ed72c854cb
           labels:
             app: summary-client
         spec:
@@ -5319,9 +5565,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -5342,7 +5588,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c51dec83ab3e7f09721c34b8755389c201876037226aeeafc40cddc4fb4b1d24
+            config-hash: feabc040a38d9892f10ece1334a8b447c42af350493f759d9fc686ed72c854cb
           labels:
             app: upload
         spec:
@@ -5421,9 +5667,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'extract.oai: golang':
   1: |
     apiVersion: apps/v1
@@ -5445,7 +5691,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5a19af20014f7e64d3332d477a59acd52afecab0853ce7a28f6248db9e1af954
+            config-hash: cb75239e9e4d01fc6b1ccb6ae656ba41a9654d3312f7725fb78903a1995cb37b
           labels:
             app: groundx
         spec:
@@ -5542,9 +5788,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -5581,7 +5827,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5a19af20014f7e64d3332d477a59acd52afecab0853ce7a28f6248db9e1af954
+            config-hash: cb75239e9e4d01fc6b1ccb6ae656ba41a9654d3312f7725fb78903a1995cb37b
           labels:
             app: layout-webhook
         spec:
@@ -5664,9 +5910,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -5703,7 +5949,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5a19af20014f7e64d3332d477a59acd52afecab0853ce7a28f6248db9e1af954
+            config-hash: cb75239e9e4d01fc6b1ccb6ae656ba41a9654d3312f7725fb78903a1995cb37b
           labels:
             app: pre-process
         spec:
@@ -5786,9 +6032,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -5809,7 +6055,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5a19af20014f7e64d3332d477a59acd52afecab0853ce7a28f6248db9e1af954
+            config-hash: cb75239e9e4d01fc6b1ccb6ae656ba41a9654d3312f7725fb78903a1995cb37b
           labels:
             app: process
         spec:
@@ -5892,9 +6138,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -5915,7 +6161,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5a19af20014f7e64d3332d477a59acd52afecab0853ce7a28f6248db9e1af954
+            config-hash: cb75239e9e4d01fc6b1ccb6ae656ba41a9654d3312f7725fb78903a1995cb37b
           labels:
             app: queue
         spec:
@@ -5998,9 +6244,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -6021,7 +6267,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5a19af20014f7e64d3332d477a59acd52afecab0853ce7a28f6248db9e1af954
+            config-hash: cb75239e9e4d01fc6b1ccb6ae656ba41a9654d3312f7725fb78903a1995cb37b
           labels:
             app: summary-client
         spec:
@@ -6104,9 +6350,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -6127,7 +6373,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5a19af20014f7e64d3332d477a59acd52afecab0853ce7a28f6248db9e1af954
+            config-hash: cb75239e9e4d01fc6b1ccb6ae656ba41a9654d3312f7725fb78903a1995cb37b
           labels:
             app: upload
         spec:
@@ -6210,9 +6456,1856 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+'large-file kafka: golang':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: groundx
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: groundx
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: groundx
+      template:
+        metadata:
+          annotations:
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
+          labels:
+            app: groundx
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: groundx
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+            - command:
+                - sh
+                - -c
+                - until nc -z opensearch-cluster-master.eyelevel.svc.cluster.local 9200; do echo waiting for search; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-search
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+            - command:
+                - sh
+                - -c
+                - until nc -z stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local 9092; do echo waiting for stream; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-stream
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: groundx
+      name: groundx
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: groundx
+      type: ClusterIP
+  3: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: large-file-delivery
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: large-file-delivery
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: large-file-delivery
+      template:
+        metadata:
+          annotations:
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
+          labels:
+            app: large-file-delivery
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: test.invalid/large-file-delivery:local
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: large-file-delivery
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                limits:
+                  cpu: 1
+                  memory: 256Mi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+                - mountPath: /var/run/groundx/large-file/operations-drive
+                  name: large-file-credential-0
+                  readOnly: true
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+            - name: large-file-credential-0
+              secret:
+                items:
+                  - key: service-account.json
+                    path: credentials.json
+                secretName: large-file-drive
+  4: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: layout-webhook
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-webhook
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: layout-webhook
+      template:
+        metadata:
+          annotations:
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
+          labels:
+            app: layout-webhook
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: layout-webhook
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  5: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: layout-webhook
+      name: layout-webhook
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: layout-webhook
+      type: ClusterIP
+  6: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: pre-process
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: pre-process
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: pre-process
+      template:
+        metadata:
+          annotations:
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
+          labels:
+            app: pre-process
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: pre-process
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 1Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-memory
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: process
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: process
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: process
+      template:
+        metadata:
+          annotations:
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
+          labels:
+            app: process
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: process
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  8: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: queue
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: queue
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: queue
+      template:
+        metadata:
+          annotations:
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
+          labels:
+            app: queue
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: queue
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  9: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: summary-client
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-client
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: summary-client
+      template:
+        metadata:
+          annotations:
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
+          labels:
+            app: summary-client
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: summary-client
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  10: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: upload
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: upload
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: upload
+      template:
+        metadata:
+          annotations:
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
+          labels:
+            app: upload
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: upload
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+'large-file sqs: golang':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: groundx
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: groundx
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: groundx
+      template:
+        metadata:
+          annotations:
+            config-hash: b3201b59e3d5d88a1d9d2f505c506ef7fe5e335f8d475e675253d823c554ca30
+          labels:
+            app: groundx
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: groundx
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+            - command:
+                - sh
+                - -c
+                - until nc -z opensearch-cluster-master.eyelevel.svc.cluster.local 9200; do echo waiting for search; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-search
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+            - command:
+                - sh
+                - -c
+                - until nc -z stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local 9092; do echo waiting for stream; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-stream
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: groundx
+      name: groundx
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: groundx
+      type: ClusterIP
+  3: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: large-file-delivery
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: large-file-delivery
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: large-file-delivery
+      template:
+        metadata:
+          annotations:
+            config-hash: b3201b59e3d5d88a1d9d2f505c506ef7fe5e335f8d475e675253d823c554ca30
+          labels:
+            app: large-file-delivery
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: test.invalid/large-file-delivery:local
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: large-file-delivery
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                limits:
+                  cpu: 1
+                  memory: 256Mi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+                - mountPath: /var/run/groundx/large-file/operations-drive
+                  name: large-file-credential-0
+                  readOnly: true
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+            - name: large-file-credential-0
+              secret:
+                items:
+                  - key: service-account.json
+                    path: credentials.json
+                secretName: large-file-drive
+  4: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: layout-webhook
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-webhook
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: layout-webhook
+      template:
+        metadata:
+          annotations:
+            config-hash: b3201b59e3d5d88a1d9d2f505c506ef7fe5e335f8d475e675253d823c554ca30
+          labels:
+            app: layout-webhook
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: layout-webhook
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  5: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: layout-webhook
+      name: layout-webhook
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: layout-webhook
+      type: ClusterIP
+  6: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: pre-process
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: pre-process
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: pre-process
+      template:
+        metadata:
+          annotations:
+            config-hash: b3201b59e3d5d88a1d9d2f505c506ef7fe5e335f8d475e675253d823c554ca30
+          labels:
+            app: pre-process
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: pre-process
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 1Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-memory
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: process
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: process
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: process
+      template:
+        metadata:
+          annotations:
+            config-hash: b3201b59e3d5d88a1d9d2f505c506ef7fe5e335f8d475e675253d823c554ca30
+          labels:
+            app: process
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: process
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  8: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: queue
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: queue
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: queue
+      template:
+        metadata:
+          annotations:
+            config-hash: b3201b59e3d5d88a1d9d2f505c506ef7fe5e335f8d475e675253d823c554ca30
+          labels:
+            app: queue
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: queue
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  9: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: summary-client
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-client
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: summary-client
+      template:
+        metadata:
+          annotations:
+            config-hash: b3201b59e3d5d88a1d9d2f505c506ef7fe5e335f8d475e675253d823c554ca30
+          labels:
+            app: summary-client
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: summary-client
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  10: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: upload
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: upload
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: upload
+      template:
+        metadata:
+          annotations:
+            config-hash: b3201b59e3d5d88a1d9d2f505c506ef7fe5e335f8d475e675253d823c554ca30
+          labels:
+            app: upload
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: upload
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+'metadata: database migration':
+  1: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      annotations:
+        helm.sh/hook: pre-upgrade
+        helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        helm.sh/hook-weight: "-5"
+      labels:
+        app: RELEASE-NAME-schema-migration
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: RELEASE-NAME-schema-migration
+      namespace: eyelevel
+    spec:
+      activeDeadlineSeconds: 900
+      backoffLimit: 0
+      template:
+        metadata:
+          annotations:
+            prometheus.io/port: "8081"
+          labels:
+            app: RELEASE-NAME-schema-migration
+            app.kubernetes.io/name: myapp
+        spec:
+          affinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - myapp
+                topologyKey: kubernetes.io/hostname
+          containers:
+            - args:
+                - -migrate-only
+              image: test.image:v1
+              imagePullPolicy: Never
+              name: migrate
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                readOnlyRootFilesystem: true
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  readOnly: true
+                  subPath: config.yaml
+          nodeSelector:
+            disktype: ssd
+          restartPolicy: Never
+          securityContext:
+            fsGroup: 2000
+          serviceAccountName: other-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: workload-type
+              operator: Equal
+              value: batch
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: RELEASE-NAME-schema-migration
 'metadata: golang':
   1: |
     apiVersion: apps/v1
@@ -6234,7 +8327,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5c7232aa811d2b57e16a1589816f6b527dd1033714515c2e8fc5d8473dd1b415
+            config-hash: 2e57c60229c1c6afb428ea687e382fc35757458cba590ad66bb5240e68a4a44d
             prometheus.io/port: "8081"
           labels:
             app: myapp
@@ -6325,9 +8418,9 @@
               operator: Equal
               value: batch
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -6364,7 +8457,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5c7232aa811d2b57e16a1589816f6b527dd1033714515c2e8fc5d8473dd1b415
+            config-hash: 2e57c60229c1c6afb428ea687e382fc35757458cba590ad66bb5240e68a4a44d
           labels:
             app: layout-webhook
         spec:
@@ -6442,9 +8535,9 @@
               operator: Equal
               value: batch
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -6481,7 +8574,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5c7232aa811d2b57e16a1589816f6b527dd1033714515c2e8fc5d8473dd1b415
+            config-hash: 2e57c60229c1c6afb428ea687e382fc35757458cba590ad66bb5240e68a4a44d
           labels:
             app: pre-process
         spec:
@@ -6563,9 +8656,9 @@
               key: eyelevel_node
               value: test-label-1
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -6586,7 +8679,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5c7232aa811d2b57e16a1589816f6b527dd1033714515c2e8fc5d8473dd1b415
+            config-hash: 2e57c60229c1c6afb428ea687e382fc35757458cba590ad66bb5240e68a4a44d
           labels:
             app: process
         spec:
@@ -6666,9 +8759,9 @@
               key: eyelevel_node
               value: test-label-1
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -6689,7 +8782,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5c7232aa811d2b57e16a1589816f6b527dd1033714515c2e8fc5d8473dd1b415
+            config-hash: 2e57c60229c1c6afb428ea687e382fc35757458cba590ad66bb5240e68a4a44d
           labels:
             app: queue
         spec:
@@ -6748,9 +8841,9 @@
               type: RuntimeDefault
           serviceAccountName: other-service-account
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -6771,7 +8864,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5c7232aa811d2b57e16a1589816f6b527dd1033714515c2e8fc5d8473dd1b415
+            config-hash: 2e57c60229c1c6afb428ea687e382fc35757458cba590ad66bb5240e68a4a44d
           labels:
             app: summary-client
         spec:
@@ -6835,9 +8928,9 @@
               operator: Equal
               value: batch
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -6858,7 +8951,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5c7232aa811d2b57e16a1589816f6b527dd1033714515c2e8fc5d8473dd1b415
+            config-hash: 2e57c60229c1c6afb428ea687e382fc35757458cba590ad66bb5240e68a4a44d
           labels:
             app: upload
         spec:
@@ -6919,9 +9012,93 @@
               type: RuntimeDefault
           serviceAccountName: other-service-account
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+'minikube: database migration':
+  1: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      annotations:
+        helm.sh/hook: pre-upgrade
+        helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        helm.sh/hook-weight: "-5"
+      labels:
+        app: RELEASE-NAME-schema-migration
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: RELEASE-NAME-schema-migration
+      namespace: eyelevel
+    spec:
+      activeDeadlineSeconds: 900
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app: RELEASE-NAME-schema-migration
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - args:
+                - -migrate-only
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+              imagePullPolicy: IfNotPresent
+              name: migrate
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  readOnly: true
+                  subPath: config.yaml
+          restartPolicy: Never
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: RELEASE-NAME-schema-migration
 'minikube: golang':
   1: |
     apiVersion: apps/v1
@@ -6943,7 +9120,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4b45e848f6bb1021aba943eccbc141d5dc7d4a5a604ae8d0c10ac56d97f864e1
+            config-hash: 155a8c0fe9d3f3a8f6c39e210e3e6813515ad5f552d0df33fb9eecba8ef22b3c
           labels:
             app: groundx
         spec:
@@ -7050,9 +9227,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -7089,7 +9266,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4b45e848f6bb1021aba943eccbc141d5dc7d4a5a604ae8d0c10ac56d97f864e1
+            config-hash: 155a8c0fe9d3f3a8f6c39e210e3e6813515ad5f552d0df33fb9eecba8ef22b3c
           labels:
             app: layout-webhook
         spec:
@@ -7168,9 +9345,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -7207,7 +9384,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4b45e848f6bb1021aba943eccbc141d5dc7d4a5a604ae8d0c10ac56d97f864e1
+            config-hash: 155a8c0fe9d3f3a8f6c39e210e3e6813515ad5f552d0df33fb9eecba8ef22b3c
           labels:
             app: pre-process
         spec:
@@ -7286,9 +9463,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -7309,7 +9486,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4b45e848f6bb1021aba943eccbc141d5dc7d4a5a604ae8d0c10ac56d97f864e1
+            config-hash: 155a8c0fe9d3f3a8f6c39e210e3e6813515ad5f552d0df33fb9eecba8ef22b3c
           labels:
             app: process
         spec:
@@ -7388,9 +9565,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -7411,7 +9588,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4b45e848f6bb1021aba943eccbc141d5dc7d4a5a604ae8d0c10ac56d97f864e1
+            config-hash: 155a8c0fe9d3f3a8f6c39e210e3e6813515ad5f552d0df33fb9eecba8ef22b3c
           labels:
             app: queue
         spec:
@@ -7490,9 +9667,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -7513,7 +9690,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4b45e848f6bb1021aba943eccbc141d5dc7d4a5a604ae8d0c10ac56d97f864e1
+            config-hash: 155a8c0fe9d3f3a8f6c39e210e3e6813515ad5f552d0df33fb9eecba8ef22b3c
           labels:
             app: summary-client
         spec:
@@ -7592,9 +9769,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -7615,7 +9792,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4b45e848f6bb1021aba943eccbc141d5dc7d4a5a604ae8d0c10ac56d97f864e1
+            config-hash: 155a8c0fe9d3f3a8f6c39e210e3e6813515ad5f552d0df33fb9eecba8ef22b3c
           labels:
             app: upload
         spec:
@@ -7694,9 +9871,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'openshift: golang':
   1: |
     apiVersion: apps/v1
@@ -7718,7 +9895,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4b45e848f6bb1021aba943eccbc141d5dc7d4a5a604ae8d0c10ac56d97f864e1
+            config-hash: 155a8c0fe9d3f3a8f6c39e210e3e6813515ad5f552d0df33fb9eecba8ef22b3c
           labels:
             app: groundx
         spec:
@@ -7819,9 +9996,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -7858,7 +10035,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4b45e848f6bb1021aba943eccbc141d5dc7d4a5a604ae8d0c10ac56d97f864e1
+            config-hash: 155a8c0fe9d3f3a8f6c39e210e3e6813515ad5f552d0df33fb9eecba8ef22b3c
           labels:
             app: layout-webhook
         spec:
@@ -7931,9 +10108,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -7970,7 +10147,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4b45e848f6bb1021aba943eccbc141d5dc7d4a5a604ae8d0c10ac56d97f864e1
+            config-hash: 155a8c0fe9d3f3a8f6c39e210e3e6813515ad5f552d0df33fb9eecba8ef22b3c
           labels:
             app: pre-process
         spec:
@@ -8043,9 +10220,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -8066,7 +10243,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4b45e848f6bb1021aba943eccbc141d5dc7d4a5a604ae8d0c10ac56d97f864e1
+            config-hash: 155a8c0fe9d3f3a8f6c39e210e3e6813515ad5f552d0df33fb9eecba8ef22b3c
           labels:
             app: process
         spec:
@@ -8139,9 +10316,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -8162,7 +10339,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4b45e848f6bb1021aba943eccbc141d5dc7d4a5a604ae8d0c10ac56d97f864e1
+            config-hash: 155a8c0fe9d3f3a8f6c39e210e3e6813515ad5f552d0df33fb9eecba8ef22b3c
           labels:
             app: queue
         spec:
@@ -8235,9 +10412,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -8258,7 +10435,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4b45e848f6bb1021aba943eccbc141d5dc7d4a5a604ae8d0c10ac56d97f864e1
+            config-hash: 155a8c0fe9d3f3a8f6c39e210e3e6813515ad5f552d0df33fb9eecba8ef22b3c
           labels:
             app: summary-client
         spec:
@@ -8331,9 +10508,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -8354,7 +10531,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 4b45e848f6bb1021aba943eccbc141d5dc7d4a5a604ae8d0c10ac56d97f864e1
+            config-hash: 155a8c0fe9d3f3a8f6c39e210e3e6813515ad5f552d0df33fb9eecba8ef22b3c
           labels:
             app: upload
         spec:
@@ -8427,9 +10604,9 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'phoenix: golang':
   1: |
     apiVersion: apps/v1
@@ -8451,7 +10628,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0a3c152f5d304ef3b1f135d0d3f85782a9197b493f272d4c7c8b79d612e387ae
+            config-hash: 50c0c4e194ce7d958ff5069980d931dc179baf4ab4fcb3847665c7c9a1fc661e
           labels:
             app: groundx-service
         spec:
@@ -8554,9 +10731,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   2: |
     apiVersion: v1
     kind: Service
@@ -8593,7 +10770,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0a3c152f5d304ef3b1f135d0d3f85782a9197b493f272d4c7c8b79d612e387ae
+            config-hash: 50c0c4e194ce7d958ff5069980d931dc179baf4ab4fcb3847665c7c9a1fc661e
           labels:
             app: layout-webhook
         spec:
@@ -8668,9 +10845,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   4: |
     apiVersion: v1
     kind: Service
@@ -8707,7 +10884,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0a3c152f5d304ef3b1f135d0d3f85782a9197b493f272d4c7c8b79d612e387ae
+            config-hash: 50c0c4e194ce7d958ff5069980d931dc179baf4ab4fcb3847665c7c9a1fc661e
           labels:
             app: pre-process
         spec:
@@ -8782,9 +10959,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   6: |
     apiVersion: apps/v1
     kind: Deployment
@@ -8805,7 +10982,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0a3c152f5d304ef3b1f135d0d3f85782a9197b493f272d4c7c8b79d612e387ae
+            config-hash: 50c0c4e194ce7d958ff5069980d931dc179baf4ab4fcb3847665c7c9a1fc661e
           labels:
             app: process
         spec:
@@ -8880,9 +11057,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   7: |
     apiVersion: apps/v1
     kind: Deployment
@@ -8903,7 +11080,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0a3c152f5d304ef3b1f135d0d3f85782a9197b493f272d4c7c8b79d612e387ae
+            config-hash: 50c0c4e194ce7d958ff5069980d931dc179baf4ab4fcb3847665c7c9a1fc661e
           labels:
             app: queue
         spec:
@@ -8978,9 +11155,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -9001,7 +11178,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0a3c152f5d304ef3b1f135d0d3f85782a9197b493f272d4c7c8b79d612e387ae
+            config-hash: 50c0c4e194ce7d958ff5069980d931dc179baf4ab4fcb3847665c7c9a1fc661e
           labels:
             app: summary-client
         spec:
@@ -9076,9 +11253,9 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
   9: |
     apiVersion: apps/v1
     kind: Deployment
@@ -9099,7 +11276,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0a3c152f5d304ef3b1f135d0d3f85782a9197b493f272d4c7c8b79d612e387ae
+            config-hash: 50c0c4e194ce7d958ff5069980d931dc179baf4ab4fcb3847665c7c9a1fc661e
           labels:
             app: upload
         spec:
@@ -9174,7 +11351,1001 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
-            - configMap:
-                name: config-yaml-map
-              name: config-volume
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+'shared Google credentials: golang':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: groundx
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: groundx
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: groundx
+      template:
+        metadata:
+          annotations:
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
+          labels:
+            app: groundx
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: groundx
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z cache.eyelevel.svc.cluster.local 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z minio-tenant-hl.eyelevel.svc.cluster.local 9000; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+            - command:
+                - sh
+                - -c
+                - until nc -z opensearch-cluster-master.eyelevel.svc.cluster.local 9200; do echo waiting for search; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-search
+            - command:
+                - sh
+                - -c
+                - until nc -z db-cluster-haproxy-replicas.eyelevel.svc.cluster.local 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+            - command:
+                - sh
+                - -c
+                - until nc -z stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local 9092; do echo waiting for stream; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-stream
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: groundx
+      name: groundx
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: groundx
+      type: ClusterIP
+  3: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: large-file-delivery
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: large-file-delivery
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: large-file-delivery
+      template:
+        metadata:
+          annotations:
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
+            google-credentials-hash: 72a44514058cb545a86c2bc6895318ca8cce3322655796071dbc9a0addfe58ba
+          labels:
+            app: large-file-delivery
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: test.invalid/large-file-delivery:local
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: large-file-delivery
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                limits:
+                  cpu: 1
+                  memory: 256Mi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+                - mountPath: /var/run/groundx/large-file/operations-drive
+                  name: large-file-credential-0
+                  readOnly: true
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+            - name: large-file-credential-0
+              secret:
+                items:
+                  - key: credentials.json
+                    path: credentials.json
+                secretName: google-credentials
+  4: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: layout-webhook
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-webhook
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: layout-webhook
+      template:
+        metadata:
+          annotations:
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
+          labels:
+            app: layout-webhook
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: layout-webhook
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  5: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: layout-webhook
+      name: layout-webhook
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: layout-webhook
+      type: ClusterIP
+  6: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: pre-process
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: pre-process
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: pre-process
+      template:
+        metadata:
+          annotations:
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
+          labels:
+            app: pre-process
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: pre-process
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 1Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-memory
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: process
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: process
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: process
+      template:
+        metadata:
+          annotations:
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
+          labels:
+            app: process
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: process
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  8: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: queue
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: queue
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: queue
+      template:
+        metadata:
+          annotations:
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
+          labels:
+            app: queue
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: queue
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  9: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: summary-client
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-client
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: summary-client
+      template:
+        metadata:
+          annotations:
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
+          labels:
+            app: summary-client
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: summary-client
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  10: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: upload
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: upload
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: upload
+      template:
+        metadata:
+          annotations:
+            config-hash: 572e09d21ad64b4da25aa813fc71df08adbac9e4c42cdc8c7c111b097596b645
+          labels:
+            app: upload
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: upload
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+'summaryClient gracePeriod: golang':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: summary-client
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-client
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: summary-client
+      template:
+        metadata:
+          annotations:
+            config-hash: f713bc70c1446faa4637822e2eae64c8e14379c04e1024eceda9ff2adf0460f9
+          labels:
+            app: summary-client
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: summary-client
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
 'workspace-enabled: golang':

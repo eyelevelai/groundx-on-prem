@@ -172,6 +172,20 @@ true
 false
 {{- end }}
 
+{{- define "groundx.workspace.api.probe" -}}
+{{- $in := include "groundx.workspace.api.values" . | fromYaml -}}
+{{- $pb := dig "probe" dict $in -}}
+{{- $lv := dig "liveness" dict $pb -}}
+{{- $rd := dig "readiness" dict $pb -}}
+{{- dict
+    "liveness"  (dict "timeoutSeconds" (dig "timeoutSeconds" 3 $lv))
+    "readiness" (dict
+      "failureThreshold" (dig "failureThreshold" 3 $rd)
+      "timeoutSeconds"   (dig "timeoutSeconds" 3 $rd)
+    )
+  | toYaml -}}
+{{- end }}
+
 {{- define "groundx.workspace.api.threads" -}}
 {{- $in := include "groundx.workspace.api.values" . | fromYaml -}}
 {{ dig "threads" 2 $in }}
@@ -240,6 +254,7 @@ false
 {{- $cfg := dict
   "cfg" (printf "%s-config-py-map" $svc)
   "dependencies" (dict "cache" "cache" "db" "db")
+  "disruptionBudget" (dig "disruptionBudget" dict $in)
   "gunicorn" (printf "%s-gunicorn-conf-py-map" $svc)
   "image" (include "groundx.workspace.api.image" .)
   "interface" (include "groundx.workspace.api.interface" .)
@@ -247,6 +262,7 @@ false
   "name" $apiSvc
   "node" (include "groundx.workspace.api.node" .)
   "port" (include "groundx.workspace.api.containerPort" .)
+  "probe" (include "groundx.workspace.api.probe" . | fromYaml)
   "pull" (include "groundx.workspace.api.imagePullPolicy" .)
   "replicas" $rep
   "volumeMounts" (include "groundx.workspace.volumeMounts" . | fromYamlArray)
@@ -258,7 +274,7 @@ false
   {{- $_ := set $cfg "gracePeriod" (dig "gracePeriod" nil $rep) -}}
 {{- end -}}
 {{- if and $san (ne $san "") }}{{- $_ := set $cfg "serviceAccountName" $san -}}{{- end -}}
-{{- range $k := list "affinity" "annotations" "containerSecurityContext" "labels" "nodeSelector" "resources" "securityContext" "tolerations" }}
+{{- range $k := list "affinity" "annotations" "containerSecurityContext" "labels" "nodeSelector" "resources" "securityContext" "tolerations" "topologySpreadConstraints" }}
 {{- if and (hasKey $in $k) (not (empty (get $in $k))) }}{{- $_ := set $cfg $k (get $in $k) -}}{{- end -}}
 {{- end -}}
 {{- $cfg | toYaml -}}

@@ -180,6 +180,21 @@ false
 false
 {{- end }}
 
+{{- define "groundx.extract.api.probe" -}}
+{{- $b := .Values.extract | default dict -}}
+{{- $in := dig "api" dict $b -}}
+{{- $pb := dig "probe" dict $in -}}
+{{- $lv := dig "liveness" dict $pb -}}
+{{- $rd := dig "readiness" dict $pb -}}
+{{- dict
+    "liveness"  (dict "timeoutSeconds" (dig "timeoutSeconds" 3 $lv))
+    "readiness" (dict
+      "failureThreshold" (dig "failureThreshold" 3 $rd)
+      "timeoutSeconds"   (dig "timeoutSeconds" 3 $rd)
+    )
+  | toYaml -}}
+{{- end }}
+
 {{- define "groundx.extract.api.threads" -}}
 {{- $b := .Values.extract | default dict -}}
 {{- $in := dig "api" dict $b -}}
@@ -244,9 +259,14 @@ false
 {{- if ne $apiKey "" -}}
 {{- $_ := set $data (include "groundx.extract.agent.secretName" .) (include "groundx.extract.agent.secretName" .) -}}
 {{- end -}}
+{{- $env := dict
+  "EXTRACTION_TERMINAL_AGENT_TRACE_ENABLED" (include "groundx.extract.terminalAgentTraceEnabled" (dict "root" . "pod" "api"))
+-}}
 {{- $cfg := dict
   "cfg"          (printf "%s-config-py-map" $svc)
   "dependencies" $dpnd
+  "disruptionBudget" (dig "disruptionBudget" dict $in)
+  "env"          $env
   "fileDomain"   (include "groundx.extract.file.serviceDependency" .)
   "filePort"     (include "groundx.extract.file.port" .)
   "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
@@ -256,6 +276,7 @@ false
   "name"         (include "groundx.extract.api.serviceName" .)
   "node"         (include "groundx.extract.api.node" .)
   "port"         (include "groundx.extract.api.containerPort" .)
+  "probe"        (include "groundx.extract.api.probe" . | fromYaml)
   "pull"         (include "groundx.extract.api.imagePullPolicy" .)
   "replicas"     ($rep)
   "secrets"      ($data)
@@ -294,6 +315,9 @@ false
 {{- end -}}
 {{- if and (hasKey $in "tolerations") (not (empty (get $in "tolerations"))) -}}
   {{- $_ := set $cfg "tolerations" (get $in "tolerations") -}}
+{{- end -}}
+{{- if and (hasKey $in "topologySpreadConstraints") (not (empty (get $in "topologySpreadConstraints"))) -}}
+  {{- $_ := set $cfg "topologySpreadConstraints" (get $in "topologySpreadConstraints") -}}
 {{- end -}}
 {{- $cfg | toYaml -}}
 {{- end }}

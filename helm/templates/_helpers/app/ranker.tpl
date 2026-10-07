@@ -39,6 +39,21 @@
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.ranker.cache.isCluster" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "cache" dict $b -}}
+{{- if eq (include "groundx.ranker.cache.existing" .) "true" -}}
+{{ dig "isCluster" "true" $in }}
+{{- else -}}
+{{ include "groundx.cache.isCluster" . }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.ranker.cache.notCluster" -}}
+{{- $ic := include "groundx.ranker.cache.isCluster" . | trim | lower -}}
+{{- if eq $ic "true" -}}false{{- else -}}true{{- end -}}
+{{- end }}
+
 {{- define "groundx.ranker.cache.scheme" -}}
 {{- $ssl := include "groundx.ranker.cache.ssl" . | trim | lower -}}
 {{- if eq $ssl "true" -}}rediss{{- else -}}redis{{- end -}}
@@ -51,6 +66,37 @@
 {{ dig "type" "redis" $in }}
 {{- else -}}
 {{ include "groundx.cache.type" . }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.ranker.cache.password" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "cache" dict $b -}}
+{{- if eq (include "groundx.ranker.cache.existing" .) "true" -}}
+{{ dig "password" "" $in }}
+{{- else -}}
+{{ include "groundx.cache.password" . }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.ranker.cache.username" -}}
+{{- $b := .Values.ranker | default dict -}}
+{{- $in := dig "cache" dict $b -}}
+{{- if eq (include "groundx.ranker.cache.existing" .) "true" -}}
+{{ dig "username" "" $in }}
+{{- else -}}
+{{ include "groundx.cache.username" . }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.ranker.cache.userinfo" -}}
+{{- $p := include "groundx.ranker.cache.password" . -}}
+{{- $u := include "groundx.ranker.cache.username" . -}}
+{{- if eq $p "" -}}
+{{- else if eq $u "" -}}
+{{- printf ":%s@" (urlquery $p | replace "+" "%20") -}}
+{{- else -}}
+{{- printf "%s:%s@" (urlquery $u | replace "+" "%20") (urlquery $p | replace "+" "%20") -}}
 {{- end -}}
 {{- end }}
 

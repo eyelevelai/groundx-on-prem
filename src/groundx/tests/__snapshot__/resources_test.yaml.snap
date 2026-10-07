@@ -24,7 +24,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: X.X.us-east-2.rds.amazonaws.com
@@ -78,6 +87,8 @@
           google/gemma-3-4b-it:
             engineID: "google/gemma-3-4b-it"
             service: eyelevel
+            apiKey: 00000000-0000-0000-0000-000000000000
+            baseURL: http://summary-api.eyelevel.svc.cluster.local
             maxInputTokens: 100000
             maxRequests: 4
             requestLimit: 4
@@ -130,7 +141,7 @@
             - name: layout-inference
               tokensPerMinute: 360000
             - name: ranker-inference
-              tokensPerMinute: 840000
+              busyWindowSeconds: 60
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -202,8 +213,6 @@
               tokensPerMinute: 100000
             - name: ranker-api
               tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -299,18 +308,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: layout-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         env = dict(
             accessKey="",
@@ -330,6 +339,7 @@
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
             ocrProject="",
+            ocrTimeout=120,
             ocrType="tesseract",
             podMemory="2Gi",
             queueType="kafka",
@@ -348,15 +358,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -400,10 +401,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -429,11 +435,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
 
+
+        [group:celery_workers]
+        programs=celery_worker_1
         [program:celery_monitor]
         command=python /app/document_monitor.py
         environment=
@@ -481,10 +491,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -509,10 +524,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -537,10 +557,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -565,10 +590,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -609,12 +639,23 @@
       namespace: eyelevel
   12: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
             brokerType="redis",
             metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
+            metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
             searchBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
             searchLog="ranker",
             searchResultBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
@@ -625,15 +666,6 @@
             ],
             workers=14,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
   13: |
     apiVersion: v1
     data:
@@ -851,6 +883,31 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [program:celery_monitor]
+        command=python /workspace/ranker_monitor.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_health]
+        command=python /workspace/ranker_health.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
     kind: ConfigMap
     metadata:
       labels:
@@ -862,7 +919,16 @@
       namespace: eyelevel
   15: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -879,15 +945,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-config-py-map
-      namespace: eyelevel
   16: |
     apiVersion: v1
     data:
@@ -995,7 +1052,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: db-cluster-haproxy-replicas.eyelevel.svc.cluster.local
@@ -1047,6 +1113,8 @@
           google/gemma-3-4b-it:
             engineID: "google/gemma-3-4b-it"
             service: eyelevel
+            apiKey: 00000000-0000-0000-0000-000000000000
+            baseURL: http://summary-api.eyelevel.svc.cluster.local
             maxInputTokens: 100000
             maxRequests: 4
             requestLimit: 4
@@ -1098,7 +1166,7 @@
             - name: layout-inference
               tokensPerMinute: 360000
             - name: ranker-inference
-              tokensPerMinute: 840000
+              busyWindowSeconds: 60
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -1158,7 +1226,7 @@
             - name: extract-api
               tokensPerMinute: 200000
             - name: extract-download
-              tokensPerMinute: 180000
+              tokensPerMinute: 90000
             - name: extract-save
               tokensPerMinute: 100000
             - name: groundx
@@ -1187,8 +1255,6 @@
               tokensPerMinute: 100000
             - name: ranker-api
               tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -1299,18 +1365,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: extract-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         from groundx.extract import (
             AgentSettings,
@@ -1319,8 +1385,13 @@
             GroundXSettings,
         )
 
+        agent_queue = "agent_queue"
+        download_queue = "download_queue"
+        save_queue = "save_agents_queue"
+
         agent_settings = AgentSettings(
             image_transport="data_url",
+            service="openai",
         )
 
         container_settings = ContainerSettings(
@@ -1353,15 +1424,6 @@
           api_key="00000000-0000-0000-0000-000000000000",
           base_url="http://groundx.eyelevel.svc.cluster.local/api",
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: extract-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -1429,7 +1491,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -1482,7 +1544,16 @@
       namespace: eyelevel
   8: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             accessKey="awsKey",
@@ -1502,6 +1573,7 @@
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
             ocrProject="",
+            ocrTimeout=120,
             ocrType="tesseract",
             podMemory="2Gi",
             queueType="kafka",
@@ -1520,15 +1592,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   9: |
     apiVersion: v1
     data:
@@ -1572,10 +1635,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -1601,11 +1669,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
 
+
+        [group:celery_workers]
+        programs=celery_worker_1
         [program:celery_monitor]
         command=python /app/document_monitor.py
         environment=
@@ -1653,10 +1725,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -1681,10 +1758,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -1709,10 +1791,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -1737,10 +1824,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -1781,12 +1873,23 @@
       namespace: eyelevel
   17: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
             brokerType="redis",
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
+            metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
@@ -1797,15 +1900,6 @@
             ],
             workers=14,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
   18: |
     apiVersion: v1
     data:
@@ -2023,6 +2117,31 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [program:celery_monitor]
+        command=python /workspace/ranker_monitor.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_health]
+        command=python /workspace/ranker_health.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
     kind: ConfigMap
     metadata:
       labels:
@@ -2062,7 +2181,16 @@
     type: Opaque
   22: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -2079,15 +2207,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-config-py-map
-      namespace: eyelevel
   23: |
     apiVersion: v1
     data:
@@ -2169,6 +2288,305 @@
         version: 0.1.0
       name: summary-inference-supervisord-conf-map
       namespace: eyelevel
+'database migration uses target database config in a separate hook Secret':
+  1: |
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      annotations:
+        helm.sh/hook: pre-upgrade
+        helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        helm.sh/hook-weight: "-10"
+      labels:
+        app: migration-config-schema-migration
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: migration-config-schema-migration
+      namespace: eyelevel
+    stringData:
+      config.yaml: |
+        _mysql: &mysql
+          ro_addr: db-ro.existing.com
+          rw_addr: db-rw.existing.com
+          user: "myuser"
+          password: "mypass"
+          database: mydb
+          maxIdle: 5
+          maxOpen: 10
+
+        admin:
+          apiKey: 00000000-0000-0000-0000-000000000000
+          email: "support@mycorp.net"
+          licenseKey: 00000000-0000-0000-0000-000000000000
+          password: "password"
+          username: 00000000-0000-0000-0000-000000000000
+
+        ai:
+          aws:
+            search:
+              baseURL: https://search.existing.com
+              index: other-1
+              languages:
+                - en
+              username: "myuser"
+              password: "mypass"
+          extract:
+            client:
+              apiKey: 00000000-0000-0000-0000-000000000000
+              baseURL: http://extract-api.eyelevel.svc.cluster.local
+              callbackURL: http://layout-webhook.eyelevel.svc.cluster.local
+          eyelevelSearch:
+            apiKey: 00000000-0000-0000-0000-000000000000
+            baseURL: http://ranker-api.eyelevel.svc.cluster.local
+          layout:
+            client:
+              apiKey: 00000000-0000-0000-0000-000000000000
+              baseURL: http://layout-api.eyelevel.svc.cluster.local
+              callbackURL: http://layout-webhook.eyelevel.svc.cluster.local
+          openai:
+            apiKey: openai-api-key
+            defaultKitId: 0
+          summaryType: summary
+          searchIndexes:
+            other-1:
+              languages:
+                - en
+
+        engines:
+          gpt-5-mini:
+            engineID: "gpt-5-mini"
+            service: openai
+            apiKey: openai-api-key
+            reasoningEffort: low
+            vision: true
+
+        environment: prod
+
+        groundxServer:
+          baseURL: http://groundx.eyelevel.svc.cluster.local
+          port: 8080
+          serviceName: groundx
+
+        init:
+          ingestOnly: false
+          mysql:
+            user: "admin"
+            password: "root"
+          search:
+            password: "admin"
+            searchModel: all_access
+            username: "root"
+
+        integrationTests:
+          search:
+            duration: 3660
+            fileId: "ey-mtr6hapxq7d94zigammwir6xz4"
+            modelId: 1
+
+        layoutWebhookServer:
+          baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          port: 8080
+          serviceName: layout-webhook
+
+        metrics:
+          active: true
+          api:
+            - name: groundx
+              threshold: 4000
+            - name: layout-api
+              threshold: 4000
+            - name: layout-webhook
+              threshold: 4000
+            - name: ranker-api
+              threshold: 4000
+          document:
+            tokensPerMinute: 12500
+          extractRequest:
+            tokensPerMinute: 6000
+          inference:
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: ranker-inference
+              busyWindowSeconds: 60
+          namespace: eyelevel
+          page:
+            tokensPerMinute: 1000
+          queue:
+            - name: pre-process
+              target: pre-process
+              threshold: 10
+            - name: process
+              target: process
+              threshold: 10
+            - name: queue
+              target: queue
+              threshold: 10
+            - name: upload
+              target: upload
+              threshold: 10
+            - name: summary-client
+              target: summary-client
+              threshold: 10
+          session:
+            addr: metrics-cache.existing.com:6379
+            notCluster: true
+            ssl: true
+            password: "metrics-p@ss:w0rd"
+          summaryRequest:
+            tokensPerMinute: 625
+          task:
+            - name: layout-correct
+              target: correct_queue
+              threshold: 10
+            - name: layout-map
+              target: map_queue
+              threshold: 10
+            - name: layout-ocr
+              target: ocr_queue
+              threshold: 10
+            - name: layout-process
+              target: process_queue
+              threshold: 10
+            - name: layout-save
+              target: save_queue,celery
+              threshold: 10
+          throughput:
+            - name: groundx
+              tokensPerMinute: 150000
+            - name: layout-api
+              tokensPerMinute: 180000
+            - name: layout-correct
+              tokensPerMinute: 100000
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: layout-map
+              tokensPerMinute: 100000
+            - name: layout-ocr
+              tokensPerMinute: 100000
+            - name: layout-process
+              tokensPerMinute: 100000
+            - name: layout-save
+              tokensPerMinute: 150000
+            - name: layout-webhook
+              tokensPerMinute: 150000
+            - name: pre-process
+              tokensPerMinute: 100000
+            - name: process
+              tokensPerMinute: 150000
+            - name: queue
+              tokensPerMinute: 100000
+            - name: ranker-api
+              tokensPerMinute: 270000
+            - name: summary-client
+              tokensPerMinute: 54000
+            - name: upload
+              tokensPerMinute: 100000
+
+        owner:
+          baseURL: http://groundx.eyelevel.svc.cluster.local/api/v1
+          name: on-prem
+          type: all
+          username: 00000000-0000-0000-0000-000000000000
+
+        preProcessFileServer:
+          baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: pre-process
+
+        processFileServer:
+          baseURL: http://process.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: process
+
+        processors:
+          convert: [11]
+          extract: [13]
+          layout: [3]
+          map: [4]
+          saveFile: [2]
+          skipConvert: [12]
+          skipGenerate: [1]
+          skipLayout: [5]
+          skipMap: [6]
+          skipSummarize: [7]
+          summarize: [8]
+          summarizeChunks: [10]
+          summarizeSections: [9]
+
+        queueFileServer:
+          baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          pollTime: 1
+          port: 8080
+          serviceName: queue
+
+        queues:
+          filePreProcess:
+            broker: kafka.existing.com:9001
+            groupId: my-kafka
+            topic: my-pre-process
+            type: kafka
+          fileProcess:
+            broker: other-kafka.existing.com:9002
+            groupId: my-kafka
+            topic: my-process
+            type: kafka
+          fileSummaryDev:
+            broker: kafka.existing.com:9001
+            groupId: my-summary
+            topic: my-summary
+            type: kafka
+          fileSummaryProd:
+            broker: kafka.existing.com:9001
+            groupId: my-summary
+            topic: my-summary
+            type: kafka
+          fileUpdate:
+            key: awsKey
+            region: us-east-2
+            secret: awsSecret
+            type: sqs
+            url: https://sqs.us-east-2.amazonaws.com/X/file-update
+          fileUpload:
+            broker: kafka.existing.com:9001
+            groupId: my-kafka
+            topic: my-upload
+            type: kafka
+
+        rec:
+          mysql: *mysql
+          session:
+            addr: cache.existing.com:6379
+            notCluster: true
+            ssl: true
+            username: "cache-acl-user"
+            password: "cache-p@ss:w0rd"
+
+        summaryServer:
+          baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 3
+          port: 8080
+          serviceName: summary-client
+
+        upload:
+          baseDomain: file.existing.com:9000
+          baseUrl: https://file.existing.com:9000
+          bucket: mybucket
+          bucketUrl: https://file.existing.com:9000
+          id: "myuser"
+          secret: "mypass"
+          service: minio
+          ssl: true
+
+        uploadFileServer:
+          baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: upload
 'default: resources':
   1: |
     apiVersion: v1
@@ -2195,7 +2613,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: db-cluster-haproxy-replicas.eyelevel.svc.cluster.local
@@ -2236,6 +2663,7 @@
           google/gemma-3-4b-it:
             engineID: "google/gemma-3-4b-it"
             service: eyelevel
+            baseURL: http://summary-api.eyelevel.svc.cluster.local
             maxInputTokens: 100000
             maxRequests: 4
             requestLimit: 4
@@ -2285,7 +2713,7 @@
             - name: layout-inference
               tokensPerMinute: 360000
             - name: ranker-inference
-              tokensPerMinute: 840000
+              busyWindowSeconds: 60
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -2357,8 +2785,6 @@
               tokensPerMinute: 100000
             - name: ranker-api
               tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -2465,18 +2891,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: layout-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         env = dict(
             accessKey="",
@@ -2496,6 +2922,7 @@
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
             ocrProject="",
+            ocrTimeout=120,
             ocrType="tesseract",
             podMemory="2Gi",
             queueType="kafka",
@@ -2512,15 +2939,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -2564,10 +2982,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -2593,11 +3016,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
 
+
+        [group:celery_workers]
+        programs=celery_worker_1
         [program:celery_monitor]
         command=python /app/document_monitor.py
         environment=
@@ -2645,10 +3072,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -2673,10 +3105,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -2701,10 +3138,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -2729,10 +3171,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -2773,21 +3220,7 @@
       namespace: eyelevel
   12: |
     apiVersion: v1
-    data:
-      config.py: |
-        env = dict(
-            deviceType="cuda",
-            brokerType="redis",
-            metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
-            searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
-            searchLog="ranker",
-            searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
-            service="ranker",
-            validAPIKeys=[
-            ],
-            workers=14,
-        )
-    kind: ConfigMap
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
@@ -2796,6 +3229,22 @@
         version: 0.1.0
       name: ranker-config-py-map
       namespace: eyelevel
+    stringData:
+      config.py: |
+        env = dict(
+            deviceType="cuda",
+            brokerType="redis",
+            metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
+            metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
+            searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            searchLog="ranker",
+            searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            service="ranker",
+            validAPIKeys=[
+            ],
+            workers=14,
+        )
   13: |
     apiVersion: v1
     data:
@@ -3013,6 +3462,31 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [program:celery_monitor]
+        command=python /workspace/ranker_monitor.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_health]
+        command=python /workspace/ranker_health.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
     kind: ConfigMap
     metadata:
       labels:
@@ -3024,7 +3498,16 @@
       namespace: eyelevel
   15: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -3039,15 +3522,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-config-py-map
-      namespace: eyelevel
   16: |
     apiVersion: v1
     data:
@@ -3156,7 +3630,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: db-cluster-haproxy-replicas.eyelevel.svc.cluster.local
@@ -3197,6 +3680,7 @@
           google/gemma-3-4b-it:
             engineID: "google/gemma-3-4b-it"
             service: eyelevel
+            baseURL: http://summary-api.eyelevel.svc.cluster.local
             maxInputTokens: 100000
             maxRequests: 4
             requestLimit: 4
@@ -3246,7 +3730,7 @@
             - name: layout-inference
               tokensPerMinute: 360000
             - name: ranker-inference
-              tokensPerMinute: 840000
+              busyWindowSeconds: 60
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -3318,8 +3802,6 @@
               tokensPerMinute: 100000
             - name: ranker-api
               tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -3426,18 +3908,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: layout-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         env = dict(
             accessKey="",
@@ -3457,6 +3939,7 @@
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
             ocrProject="",
+            ocrTimeout=120,
             ocrType="tesseract",
             podMemory="2Gi",
             queueType="kafka",
@@ -3473,15 +3956,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -3525,10 +3999,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -3554,11 +4033,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
 
+
+        [group:celery_workers]
+        programs=celery_worker_1
         [program:celery_monitor]
         command=python /app/document_monitor.py
         environment=
@@ -3606,10 +4089,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -3634,10 +4122,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -3662,10 +4155,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -3690,10 +4188,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -3734,21 +4237,7 @@
       namespace: eyelevel
   12: |
     apiVersion: v1
-    data:
-      config.py: |
-        env = dict(
-            deviceType="cuda",
-            brokerType="redis",
-            metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
-            searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
-            searchLog="ranker",
-            searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
-            service="ranker",
-            validAPIKeys=[
-            ],
-            workers=14,
-        )
-    kind: ConfigMap
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
@@ -3757,6 +4246,22 @@
         version: 0.1.0
       name: ranker-config-py-map
       namespace: eyelevel
+    stringData:
+      config.py: |
+        env = dict(
+            deviceType="cuda",
+            brokerType="redis",
+            metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
+            metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
+            searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            searchLog="ranker",
+            searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
+            service="ranker",
+            validAPIKeys=[
+            ],
+            workers=14,
+        )
   13: |
     apiVersion: v1
     data:
@@ -3974,6 +4479,31 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [program:celery_monitor]
+        command=python /workspace/ranker_monitor.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_health]
+        command=python /workspace/ranker_health.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
     kind: ConfigMap
     metadata:
       labels:
@@ -3985,7 +4515,16 @@
       namespace: eyelevel
   15: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -4000,15 +4539,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-config-py-map
-      namespace: eyelevel
   16: |
     apiVersion: v1
     data:
@@ -4116,7 +4646,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: db-ro.existing.com
@@ -4169,6 +4708,7 @@
           gpt-5-mini:
             engineID: "gpt-5-mini"
             service: openai
+            apiKey: openai-api-key
             reasoningEffort: low
             vision: true
 
@@ -4219,7 +4759,7 @@
             - name: layout-inference
               tokensPerMinute: 360000
             - name: ranker-inference
-              tokensPerMinute: 840000
+              busyWindowSeconds: 60
           namespace: eyelevel
           page:
             tokensPerMinute: 1000
@@ -4243,6 +4783,7 @@
             addr: metrics-cache.existing.com:6379
             notCluster: true
             ssl: true
+            password: "metrics-p@ss:w0rd"
           summaryRequest:
             tokensPerMinute: 625
           task:
@@ -4288,8 +4829,6 @@
               tokensPerMinute: 100000
             - name: ranker-api
               tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-client
               tokensPerMinute: 54000
             - name: upload
@@ -4374,6 +4913,8 @@
             addr: cache.existing.com:6379
             notCluster: true
             ssl: true
+            username: "cache-acl-user"
+            password: "cache-p@ss:w0rd"
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
@@ -4396,18 +4937,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: layout-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         env = dict(
             accessKey="myuser",
@@ -4419,14 +4960,15 @@
             deviceType="cuda",
             env="prod",
             includeLS=False,
-            layoutBroker="rediss://cache.existing.com:6379/0",
+            layoutBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache.existing.com:6379/0",
             layoutLogger="layout",
-            layoutResultBroker="rediss://cache.existing.com:6379/0",
-            metricsBroker="rediss://metrics-cache.existing.com:6379/0",
+            layoutResultBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache.existing.com:6379/0",
+            metricsBroker="rediss://:metrics-p%40ss%3Aw0rd@metrics-cache.existing.com:6379/0",
             minBatchSize=40,
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
             ocrProject="",
+            ocrTimeout=120,
             ocrType="tesseract",
             podMemory="2Gi",
             queueType="kafka",
@@ -4445,15 +4987,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -4497,10 +5030,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -4526,11 +5064,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
 
+
+        [group:celery_workers]
+        programs=celery_worker_1
         [program:celery_monitor]
         command=python /app/document_monitor.py
         environment=
@@ -4578,10 +5120,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -4606,10 +5153,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -4634,10 +5186,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -4662,10 +5219,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -4706,23 +5268,7 @@
       namespace: eyelevel
   12: |
     apiVersion: v1
-    data:
-      config.py: |
-        env = dict(
-            deviceType="cuda",
-            brokerType="redis",
-            metricsBroker="rediss://metrics-cache.existing.com:6379/0",
-            searchBroker="rediss://cache.existing.com:6379/0",
-            searchLog="ranker",
-            searchResultBroker="rediss://cache.existing.com:6379/0",
-            service="ranker",
-            validAPIKeys=[
-              "00000000-0000-0000-0000-000000000000",
-              "00000000-0000-0000-0000-000000000000",
-            ],
-            workers=14,
-        )
-    kind: ConfigMap
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
@@ -4731,6 +5277,24 @@
         version: 0.1.0
       name: ranker-config-py-map
       namespace: eyelevel
+    stringData:
+      config.py: |
+        env = dict(
+            deviceType="cuda",
+            brokerType="redis",
+            metricsBroker="rediss://:metrics-p%40ss%3Aw0rd@metrics-cache.existing.com:6379/0",
+            metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
+            searchBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache.existing.com:6379/0",
+            searchLog="ranker",
+            searchResultBroker="rediss://cache-acl-user:cache-p%40ss%3Aw0rd@cache.existing.com:6379/0",
+            service="ranker",
+            validAPIKeys=[
+              "00000000-0000-0000-0000-000000000000",
+              "00000000-0000-0000-0000-000000000000",
+            ],
+            workers=14,
+        )
   13: |
     apiVersion: v1
     data:
@@ -4948,6 +5512,31 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [program:celery_monitor]
+        command=python /workspace/ranker_monitor.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_health]
+        command=python /workspace/ranker_health.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
     kind: ConfigMap
     metadata:
       labels:
@@ -4983,7 +5572,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: X.X.us-east-2.rds.amazonaws.com
@@ -5024,6 +5622,7 @@
           google/gemma-3-4b-it:
             engineID: "google/gemma-3-4b-it"
             service: eyelevel
+            baseURL: http://summary-api.eyelevel.svc.cluster.local
             maxInputTokens: 100000
             maxRequests: 4
             requestLimit: 4
@@ -5065,8 +5664,6 @@
               threshold: 4000
             - name: layout-webhook
               threshold: 4000
-            - name: ranker-api
-              threshold: 4000
           document:
             tokensPerMinute: 12500
           extractRequest:
@@ -5074,8 +5671,6 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -5135,7 +5730,7 @@
             - name: extract-api
               tokensPerMinute: 200000
             - name: extract-download
-              tokensPerMinute: 180000
+              tokensPerMinute: 90000
             - name: extract-save
               tokensPerMinute: 100000
             - name: groundx
@@ -5162,10 +5757,6 @@
               tokensPerMinute: 150000
             - name: queue
               tokensPerMinute: 100000
-            - name: ranker-api
-              tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -5266,18 +5857,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: extract-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         from groundx.extract import (
             AgentSettings,
@@ -5286,10 +5877,15 @@
             GroundXSettings,
         )
 
+        agent_queue = "agent_queue"
+        download_queue = "download_queue"
+        save_queue = "save_agents_queue"
+
         agent_settings = AgentSettings(
             api_base="http://summary-api.eyelevel.svc.cluster.local",
             model_id="google/gemma-3-4b-it",
             image_transport="data_url",
+            service="eyelevel",
         )
 
         container_settings = ContainerSettings(
@@ -5317,15 +5913,6 @@
         groundx_settings = GroundXSettings(
           base_url="http://groundx.eyelevel.svc.cluster.local/api",
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: extract-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -5393,7 +5980,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -5446,7 +6033,16 @@
       namespace: eyelevel
   8: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             accessKey="",
@@ -5466,6 +6062,7 @@
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
             ocrProject="",
+            ocrTimeout=120,
             ocrType="tesseract",
             podMemory="2Gi",
             queueType="kafka",
@@ -5482,15 +6079,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   9: |
     apiVersion: v1
     data:
@@ -5534,10 +6122,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -5563,11 +6156,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
 
+
+        [group:celery_workers]
+        programs=celery_worker_1
         [program:celery_monitor]
         command=python /app/document_monitor.py
         environment=
@@ -5615,10 +6212,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -5643,10 +6245,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -5671,10 +6278,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -5699,10 +6311,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -5744,257 +6361,6 @@
   17: |
     apiVersion: v1
     data:
-      config.py: |
-        env = dict(
-            deviceType="cuda",
-            brokerType="redis",
-            metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
-            searchBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
-            searchLog="ranker",
-            searchResultBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
-            service="ranker",
-            validAPIKeys=[
-            ],
-            workers=14,
-        )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
-  18: |
-    apiVersion: v1
-    data:
-      gunicorn_conf.py: |
-        infolog = "-"
-        accesslog = "-"
-        errorlog = "-"
-
-        loglevel = "info"
-        workers = 1
-        threads = 3
-        timeout = 120
-        timeout_keep_alive = 15
-
-        worker_class = "uvicorn.workers.UvicornWorker"
-
-        bind = "0.0.0.0:8080"
-
-        wsgi_app = "ranker_server:app"
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-gunicorn-conf-py-map
-      namespace: eyelevel
-  19: |
-    apiVersion: v1
-    data:
-      supervisord.conf: |
-        [supervisord]
-        nodaemon=true
-        logfile=/dev/null
-
-        [program:celery_worker_1]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_2]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w2 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w2",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_3]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w3 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w3",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_4]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w4 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w4",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_5]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w5 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w5",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_6]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w6 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w6",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_7]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w7 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w7",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_8]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w8 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w8",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_9]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w9 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w9",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_10]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w10 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w10",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_11]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w11 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w11",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_12]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w12 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w12",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_13]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w13 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w13",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_14]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w14 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w14",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-inference-supervisord-conf-map
-      namespace: eyelevel
-  20: |
-    apiVersion: v1
-    data:
       GCP_CREDENTIALS: PG5vIHZhbHVlPg==
     kind: Secret
     metadata:
@@ -6006,9 +6372,18 @@
       name: extract-save-secret
       namespace: eyelevel
     type: Opaque
-  21: |
+  18: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -6023,16 +6398,7 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-config-py-map
-      namespace: eyelevel
-  22: |
+  19: |
     apiVersion: v1
     data:
       gunicorn_conf.py: |
@@ -6060,7 +6426,7 @@
         version: 0.1.0
       name: summary-gunicorn-conf-py-map
       namespace: eyelevel
-  23: |
+  20: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -6139,7 +6505,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: X.X.us-east-2.rds.amazonaws.com
@@ -6193,6 +6568,8 @@
           google/gemma-3-4b-it:
             engineID: "google/gemma-3-4b-it"
             service: eyelevel
+            apiKey: 00000000-0000-0000-0000-000000000000
+            baseURL: http://summary-api.eyelevel.svc.cluster.local
             maxInputTokens: 100000
             maxRequests: 4
             requestLimit: 4
@@ -6237,8 +6614,6 @@
               threshold: 4000
             - name: layout-webhook
               threshold: 4000
-            - name: ranker-api
-              threshold: 4000
           document:
             tokensPerMinute: 12500
           extractRequest:
@@ -6246,8 +6621,6 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -6307,7 +6680,7 @@
             - name: extract-api
               tokensPerMinute: 200000
             - name: extract-download
-              tokensPerMinute: 180000
+              tokensPerMinute: 90000
             - name: extract-save
               tokensPerMinute: 100000
             - name: groundx
@@ -6334,10 +6707,6 @@
               tokensPerMinute: 150000
             - name: queue
               tokensPerMinute: 100000
-            - name: ranker-api
-              tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -6460,18 +6829,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: extract-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         from groundx.extract import (
             AgentSettings,
@@ -6480,10 +6849,15 @@
             GroundXSettings,
         )
 
+        agent_queue = "agent_queue"
+        download_queue = "download_queue"
+        save_queue = "save_agents_queue"
+
         agent_settings = AgentSettings(
             api_base="http://summary-api.eyelevel.svc.cluster.local",
             model_id="google/gemma-3-4b-it",
             image_transport="data_url",
+            service="eyelevel",
             reasoning_effort=None,
             model_kwargs={
               "max_tokens": 2000,
@@ -6518,15 +6892,6 @@
           api_key="00000000-0000-0000-0000-000000000000",
           base_url="http://groundx.eyelevel.svc.cluster.local/api",
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: extract-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -6594,7 +6959,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -6647,7 +7012,16 @@
       namespace: eyelevel
   8: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             accessKey="awsKey",
@@ -6667,6 +7041,7 @@
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
             ocrProject="",
+            ocrTimeout=120,
             ocrType="tesseract",
             podMemory="2Gi",
             queueType="kafka",
@@ -6685,15 +7060,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   9: |
     apiVersion: v1
     data:
@@ -6737,10 +7103,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -6766,11 +7137,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
 
+
+        [group:celery_workers]
+        programs=celery_worker_1
         [program:celery_monitor]
         command=python /app/document_monitor.py
         environment=
@@ -6818,10 +7193,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -6846,10 +7226,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -6874,10 +7259,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -6902,10 +7292,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -6946,260 +7341,16 @@
       namespace: eyelevel
   17: |
     apiVersion: v1
-    data:
-      config.py: |
-        env = dict(
-            deviceType="cuda",
-            brokerType="redis",
-            metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
-            searchBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
-            searchLog="ranker",
-            searchResultBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
-            service="ranker",
-            validAPIKeys=[
-              "00000000-0000-0000-0000-000000000000",
-              "00000000-0000-0000-0000-000000000000",
-            ],
-            workers=14,
-        )
-    kind: ConfigMap
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: ranker-config-py-map
+      name: summary-config-py-map
       namespace: eyelevel
-  18: |
-    apiVersion: v1
-    data:
-      gunicorn_conf.py: |
-        infolog = "-"
-        accesslog = "-"
-        errorlog = "-"
-
-        loglevel = "info"
-        workers = 1
-        threads = 3
-        timeout = 120
-        timeout_keep_alive = 15
-
-        worker_class = "uvicorn.workers.UvicornWorker"
-
-        bind = "0.0.0.0:8080"
-
-        wsgi_app = "ranker_server:app"
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-gunicorn-conf-py-map
-      namespace: eyelevel
-  19: |
-    apiVersion: v1
-    data:
-      supervisord.conf: |
-        [supervisord]
-        nodaemon=true
-        logfile=/dev/null
-
-        [program:celery_worker_1]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_2]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w2 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w2",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_3]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w3 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w3",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_4]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w4 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w4",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_5]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w5 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w5",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_6]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w6 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w6",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_7]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w7 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w7",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_8]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w8 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w8",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_9]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w9 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w9",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_10]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w10 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w10",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_11]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w11 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w11",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_12]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w12 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w12",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_13]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w13 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w13",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_14]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w14 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w14",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-inference-supervisord-conf-map
-      namespace: eyelevel
-  20: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -7216,16 +7367,7 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-config-py-map
-      namespace: eyelevel
-  21: |
+  18: |
     apiVersion: v1
     data:
       gunicorn_conf.py: |
@@ -7253,7 +7395,7 @@
         version: 0.1.0
       name: summary-gunicorn-conf-py-map
       namespace: eyelevel
-  22: |
+  19: |
     apiVersion: v1
     data:
       supervisord.conf: |
@@ -7332,7 +7474,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: X.X.us-east-2.rds.amazonaws.com
@@ -7411,8 +7562,6 @@
               threshold: 4000
             - name: layout-webhook
               threshold: 4000
-            - name: ranker-api
-              threshold: 4000
           document:
             tokensPerMinute: 12500
           extractRequest:
@@ -7420,8 +7569,6 @@
           inference:
             - name: layout-inference
               tokensPerMinute: 360000
-            - name: ranker-inference
-              tokensPerMinute: 840000
           namespace: eyelevel
           page:
             tokensPerMinute: 1000
@@ -7478,7 +7625,7 @@
             - name: extract-api
               tokensPerMinute: 200000
             - name: extract-download
-              tokensPerMinute: 180000
+              tokensPerMinute: 90000
             - name: extract-save
               tokensPerMinute: 100000
             - name: groundx
@@ -7505,10 +7652,6 @@
               tokensPerMinute: 150000
             - name: queue
               tokensPerMinute: 100000
-            - name: ranker-api
-              tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-client
               tokensPerMinute: 54000
             - name: upload
@@ -7605,18 +7748,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: extract-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         from groundx.extract import (
             AgentSettings,
@@ -7625,8 +7768,13 @@
             GroundXSettings,
         )
 
+        agent_queue = "agent_queue"
+        download_queue = "download_queue"
+        save_queue = "save_agents_queue"
+
         agent_settings = AgentSettings(
             image_transport="data_url",
+            service="openai",
             reasoning_effort="high",
         )
 
@@ -7655,15 +7803,6 @@
         groundx_settings = GroundXSettings(
           base_url="http://groundx.eyelevel.svc.cluster.local/api",
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: extract-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -7731,7 +7870,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -7784,7 +7923,16 @@
       namespace: eyelevel
   8: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             accessKey="",
@@ -7804,6 +7952,7 @@
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
             ocrProject="",
+            ocrTimeout=120,
             ocrType="tesseract",
             podMemory="2Gi",
             queueType="kafka",
@@ -7820,15 +7969,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   9: |
     apiVersion: v1
     data:
@@ -7872,10 +8012,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -7901,11 +8046,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
 
+
+        [group:celery_workers]
+        programs=celery_worker_1
         [program:celery_monitor]
         command=python /app/document_monitor.py
         environment=
@@ -7953,10 +8102,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -7981,10 +8135,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -8009,10 +8168,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -8037,10 +8201,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -8082,257 +8251,6 @@
   17: |
     apiVersion: v1
     data:
-      config.py: |
-        env = dict(
-            deviceType="cuda",
-            brokerType="redis",
-            metricsBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
-            searchBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
-            searchLog="ranker",
-            searchResultBroker="rediss://X.X.X.use2.cache.amazonaws.com:6379/0",
-            service="ranker",
-            validAPIKeys=[
-            ],
-            workers=14,
-        )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
-  18: |
-    apiVersion: v1
-    data:
-      gunicorn_conf.py: |
-        infolog = "-"
-        accesslog = "-"
-        errorlog = "-"
-
-        loglevel = "info"
-        workers = 1
-        threads = 3
-        timeout = 120
-        timeout_keep_alive = 15
-
-        worker_class = "uvicorn.workers.UvicornWorker"
-
-        bind = "0.0.0.0:8080"
-
-        wsgi_app = "ranker_server:app"
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-gunicorn-conf-py-map
-      namespace: eyelevel
-  19: |
-    apiVersion: v1
-    data:
-      supervisord.conf: |
-        [supervisord]
-        nodaemon=true
-        logfile=/dev/null
-
-        [program:celery_worker_1]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_2]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w2 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w2",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_3]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w3 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w3",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_4]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w4 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w4",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_5]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w5 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w5",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_6]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w6 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w6",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_7]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w7 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w7",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_8]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w8 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w8",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_9]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w9 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w9",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_10]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w10 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w10",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_11]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w11 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w11",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_12]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w12 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w12",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_13]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w13 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w13",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-
-        [program:celery_worker_14]
-        command=celery -A ranker.celery.appSearch worker -n %(ENV_POD_NAME)s-w14 --loglevel=INFO --concurrency=1 --queues=inference_queue
-        environment=
-          CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w14",
-          LOCAL="0",
-          PYTHONUNBUFFERED="1"
-        autostart=true
-        autorestart=true
-        stdout_logfile=/dev/stdout
-        stdout_logfile_maxbytes=0
-        stderr_logfile=/dev/stderr
-        stderr_logfile_maxbytes=0
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-inference-supervisord-conf-map
-      namespace: eyelevel
-  20: |
-    apiVersion: v1
-    data:
       GCP_CREDENTIALS: PG5vIHZhbHVlPg==
     kind: Secret
     metadata:
@@ -8344,6 +8262,603 @@
       name: extract-save-secret
       namespace: eyelevel
     type: Opaque
+'large-file kafka: resources':
+  1: |
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
+      config.yaml: |
+        _mysql: &mysql
+          ro_addr: db-cluster-haproxy-replicas.eyelevel.svc.cluster.local
+          rw_addr: db-cluster-haproxy.eyelevel.svc.cluster.local
+          database: eyelevel
+          maxIdle: 5
+          maxOpen: 10
+
+        ai:
+          aws:
+            search:
+              baseURL: https://opensearch-cluster-master.eyelevel.svc.cluster.local:9200
+              index: prod-1
+              languages:
+                - en
+              username: "eyelevel"
+              password: "R0otb_*t!kazs"
+          extract:
+            client:
+              baseURL: http://extract-api.eyelevel.svc.cluster.local
+              callbackURL: http://layout-webhook.eyelevel.svc.cluster.local
+          eyelevelSearch:
+            baseURL: http://ranker-api.eyelevel.svc.cluster.local
+          layout:
+            client:
+              baseURL: http://layout-api.eyelevel.svc.cluster.local
+              callbackURL: http://layout-webhook.eyelevel.svc.cluster.local
+          openai:
+            baseURL: http://summary-api.eyelevel.svc.cluster.local
+            defaultKitId: 0
+          summaryType: summary
+          searchIndexes:
+            prod-1:
+              languages:
+                - en
+
+        engines:
+          google/gemma-3-4b-it:
+            engineID: "google/gemma-3-4b-it"
+            service: eyelevel
+            baseURL: http://summary-api.eyelevel.svc.cluster.local
+            maxInputTokens: 100000
+            maxRequests: 4
+            requestLimit: 4
+            vision: true
+
+        environment: prod
+
+        groundxServer:
+          baseURL: http://groundx.eyelevel.svc.cluster.local
+          port: 8080
+          serviceName: groundx
+
+        init:
+          ingestOnly: false
+          search:
+            password: "R0otb_*t!kazs"
+            searchModel: all_access
+            username: "admin"
+
+        integrationTests:
+          search:
+            duration: 3660
+            fileId: "ey-mtr6hapxq7d94zigammwir6xz4"
+            modelId: 1
+
+        layoutWebhookServer:
+          baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          port: 8080
+          serviceName: layout-webhook
+
+        metrics:
+          active: true
+          api:
+            - name: groundx
+              threshold: 4000
+            - name: layout-api
+              threshold: 4000
+            - name: layout-webhook
+              threshold: 4000
+            - name: ranker-api
+              threshold: 4000
+          document:
+            tokensPerMinute: 12500
+          extractRequest:
+            tokensPerMinute: 6000
+          inference:
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: ranker-inference
+              busyWindowSeconds: 60
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 1600
+            - name: summary-client
+              tokensPerMinute: 9600
+          namespace: eyelevel
+          page:
+            tokensPerMinute: 1000
+          queue:
+            - name: pre-process
+              target: pre-process
+              threshold: 10
+            - name: process
+              target: process
+              threshold: 10
+            - name: queue
+              target: queue
+              threshold: 10
+            - name: upload
+              target: upload
+              threshold: 10
+          session:
+            addr: cache-metrics.eyelevel.svc.cluster.local:6379
+            notCluster: true
+            ssl: false
+          summaryRequest:
+            tokensPerMinute: 625
+          task:
+            - name: layout-correct
+              target: correct_queue
+              threshold: 10
+            - name: layout-map
+              target: map_queue
+              threshold: 10
+            - name: layout-ocr
+              target: ocr_queue
+              threshold: 10
+            - name: layout-process
+              target: process_queue
+              threshold: 10
+            - name: layout-save
+              target: save_queue,celery
+              threshold: 10
+          throughput:
+            - name: groundx
+              tokensPerMinute: 150000
+            - name: layout-api
+              tokensPerMinute: 180000
+            - name: layout-correct
+              tokensPerMinute: 100000
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: layout-map
+              tokensPerMinute: 100000
+            - name: layout-ocr
+              tokensPerMinute: 100000
+            - name: layout-process
+              tokensPerMinute: 100000
+            - name: layout-save
+              tokensPerMinute: 150000
+            - name: layout-webhook
+              tokensPerMinute: 150000
+            - name: pre-process
+              tokensPerMinute: 100000
+            - name: process
+              tokensPerMinute: 150000
+            - name: queue
+              tokensPerMinute: 100000
+            - name: ranker-api
+              tokensPerMinute: 270000
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 1600
+            - name: summary-client
+              tokensPerMinute: 9600
+            - name: upload
+              tokensPerMinute: 100000
+
+        owner:
+          baseURL: http://groundx.eyelevel.svc.cluster.local/api/v1
+          name: on-prem
+          type: all
+
+        preProcessFileServer:
+          baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: pre-process
+
+        processFileServer:
+          baseURL: http://process.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: process
+
+        processors:
+          convert: [11]
+          extract: [13]
+          layout: [3]
+          map: [4]
+          saveFile: [2]
+          skipConvert: [12]
+          skipGenerate: [1]
+          skipLayout: [5]
+          skipMap: [6]
+          skipSummarize: [7]
+          summarize: [8]
+          summarizeChunks: [10]
+          summarizeSections: [9]
+
+        queueFileServer:
+          baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          pollTime: 1
+          port: 8080
+          serviceName: queue
+        largeFileRouting:
+          maxCountDuration: 10s
+          tempDir: /tmp
+        largeFileDelivery:
+          maxUploadDuration: "30s"
+          concurrency: 2
+          credentials:
+            operations-drive:
+              credentialsFile: /var/run/groundx/large-file/operations-drive/credentials.json
+        largeFileDeliveryServer:
+          maxConcurrent: 2
+          port: 8080
+          serviceName: large-file-delivery
+
+        queues:
+          filePreProcess:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-pre-process
+            topic: file-pre-process
+            type: kafka
+          fileProcess:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-process
+            topic: file-process
+            type: kafka
+          fileSummaryDev:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-summary
+            topic: file-summary
+            type: kafka
+          fileSummaryProd:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-summary
+            topic: file-summary
+            type: kafka
+          fileUpdate:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-update
+            topic: file-update
+            type: kafka
+          fileUpload:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-upload
+            topic: file-upload
+            type: kafka
+          largeFile:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: large-file
+            topic: large-file
+            type: kafka
+
+        rec:
+          mysql: *mysql
+          session:
+            addr: cache.eyelevel.svc.cluster.local:6379
+            notCluster: true
+            ssl: false
+
+        summaryServer:
+          baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 3
+          port: 8080
+          serviceName: summary-client
+
+        upload:
+          baseDomain: minio.eyelevel.svc.cluster.local
+          baseUrl: http://minio.eyelevel.svc.cluster.local
+          bucket: eyelevel
+          bucketUrl: http://minio.eyelevel.svc.cluster.local
+          service: minio
+          ssl: false
+
+        uploadFileServer:
+          baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: upload
+'large-file sqs: resources':
+  1: |
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
+      config.yaml: |
+        _mysql: &mysql
+          ro_addr: db-cluster-haproxy-replicas.eyelevel.svc.cluster.local
+          rw_addr: db-cluster-haproxy.eyelevel.svc.cluster.local
+          database: eyelevel
+          maxIdle: 5
+          maxOpen: 10
+
+        ai:
+          aws:
+            search:
+              baseURL: https://opensearch-cluster-master.eyelevel.svc.cluster.local:9200
+              index: prod-1
+              languages:
+                - en
+              username: "eyelevel"
+              password: "R0otb_*t!kazs"
+          extract:
+            client:
+              baseURL: http://extract-api.eyelevel.svc.cluster.local
+              callbackURL: http://layout-webhook.eyelevel.svc.cluster.local
+          eyelevelSearch:
+            baseURL: http://ranker-api.eyelevel.svc.cluster.local
+          layout:
+            client:
+              baseURL: http://layout-api.eyelevel.svc.cluster.local
+              callbackURL: http://layout-webhook.eyelevel.svc.cluster.local
+          openai:
+            baseURL: http://summary-api.eyelevel.svc.cluster.local
+            defaultKitId: 0
+          summaryType: summary
+          searchIndexes:
+            prod-1:
+              languages:
+                - en
+
+        engines:
+          google/gemma-3-4b-it:
+            engineID: "google/gemma-3-4b-it"
+            service: eyelevel
+            baseURL: http://summary-api.eyelevel.svc.cluster.local
+            maxInputTokens: 100000
+            maxRequests: 4
+            requestLimit: 4
+            vision: true
+
+        environment: prod
+
+        groundxServer:
+          baseURL: http://groundx.eyelevel.svc.cluster.local
+          port: 8080
+          serviceName: groundx
+
+        init:
+          ingestOnly: false
+          search:
+            password: "R0otb_*t!kazs"
+            searchModel: all_access
+            username: "admin"
+
+        integrationTests:
+          search:
+            duration: 3660
+            fileId: "ey-mtr6hapxq7d94zigammwir6xz4"
+            modelId: 1
+
+        layoutWebhookServer:
+          baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          port: 8080
+          serviceName: layout-webhook
+
+        metrics:
+          active: true
+          api:
+            - name: groundx
+              threshold: 4000
+            - name: layout-api
+              threshold: 4000
+            - name: layout-webhook
+              threshold: 4000
+            - name: ranker-api
+              threshold: 4000
+          document:
+            tokensPerMinute: 12500
+          extractRequest:
+            tokensPerMinute: 6000
+          inference:
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: ranker-inference
+              busyWindowSeconds: 60
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 1600
+            - name: summary-client
+              tokensPerMinute: 9600
+          namespace: eyelevel
+          page:
+            tokensPerMinute: 1000
+          queue:
+            - name: pre-process
+              target: pre-process
+              threshold: 10
+            - name: process
+              target: process
+              threshold: 10
+            - name: queue
+              target: queue
+              threshold: 10
+            - name: upload
+              target: upload
+              threshold: 10
+          session:
+            addr: cache-metrics.eyelevel.svc.cluster.local:6379
+            notCluster: true
+            ssl: false
+          summaryRequest:
+            tokensPerMinute: 625
+          task:
+            - name: layout-correct
+              target: correct_queue
+              threshold: 10
+            - name: layout-map
+              target: map_queue
+              threshold: 10
+            - name: layout-ocr
+              target: ocr_queue
+              threshold: 10
+            - name: layout-process
+              target: process_queue
+              threshold: 10
+            - name: layout-save
+              target: save_queue,celery
+              threshold: 10
+          throughput:
+            - name: groundx
+              tokensPerMinute: 150000
+            - name: layout-api
+              tokensPerMinute: 180000
+            - name: layout-correct
+              tokensPerMinute: 100000
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: layout-map
+              tokensPerMinute: 100000
+            - name: layout-ocr
+              tokensPerMinute: 100000
+            - name: layout-process
+              tokensPerMinute: 100000
+            - name: layout-save
+              tokensPerMinute: 150000
+            - name: layout-webhook
+              tokensPerMinute: 150000
+            - name: pre-process
+              tokensPerMinute: 100000
+            - name: process
+              tokensPerMinute: 150000
+            - name: queue
+              tokensPerMinute: 100000
+            - name: ranker-api
+              tokensPerMinute: 270000
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 1600
+            - name: summary-client
+              tokensPerMinute: 9600
+            - name: upload
+              tokensPerMinute: 100000
+
+        owner:
+          baseURL: http://groundx.eyelevel.svc.cluster.local/api/v1
+          name: on-prem
+          type: all
+
+        preProcessFileServer:
+          baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: pre-process
+
+        processFileServer:
+          baseURL: http://process.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: process
+
+        processors:
+          convert: [11]
+          extract: [13]
+          layout: [3]
+          map: [4]
+          saveFile: [2]
+          skipConvert: [12]
+          skipGenerate: [1]
+          skipLayout: [5]
+          skipMap: [6]
+          skipSummarize: [7]
+          summarize: [8]
+          summarizeChunks: [10]
+          summarizeSections: [9]
+
+        queueFileServer:
+          baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          pollTime: 1
+          port: 8080
+          serviceName: queue
+        largeFileRouting:
+          maxCountDuration: 10s
+          tempDir: /tmp
+        largeFileDelivery:
+          maxUploadDuration: "30s"
+          concurrency: 2
+          credentials:
+            operations-drive:
+              credentialsFile: /var/run/groundx/large-file/operations-drive/credentials.json
+        largeFileDeliveryServer:
+          maxConcurrent: 2
+          port: 8080
+          serviceName: large-file-delivery
+
+        queues:
+          filePreProcess:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-pre-process
+            topic: file-pre-process
+            type: kafka
+          fileProcess:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-process
+            topic: file-process
+            type: kafka
+          fileSummaryDev:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-summary
+            topic: file-summary
+            type: kafka
+          fileSummaryProd:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-summary
+            topic: file-summary
+            type: kafka
+          fileUpdate:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-update
+            topic: file-update
+            type: kafka
+          fileUpload:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-upload
+            topic: file-upload
+            type: kafka
+          largeFile:
+            region: us-west-2
+            type: sqs
+            url: https://sqs.us-west-2.amazonaws.com/123456789012/large-file
+
+        rec:
+          mysql: *mysql
+          session:
+            addr: cache.eyelevel.svc.cluster.local:6379
+            notCluster: true
+            ssl: false
+
+        summaryServer:
+          baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 3
+          port: 8080
+          serviceName: summary-client
+
+        upload:
+          baseDomain: minio.eyelevel.svc.cluster.local
+          baseUrl: http://minio.eyelevel.svc.cluster.local
+          bucket: eyelevel
+          bucketUrl: http://minio.eyelevel.svc.cluster.local
+          service: minio
+          ssl: false
+
+        uploadFileServer:
+          baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: upload
 'metadata: resources':
   1: |
     apiVersion: v1
@@ -8370,7 +8885,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: db-cluster-haproxy-replicas.eyelevel.svc.cluster.local
@@ -8411,6 +8935,7 @@
           google/gemma-3-8b-it:
             engineID: "google/gemma-3-8b-it"
             service: eyelevel
+            baseURL: http://myapp-api.eyelevel.svc.cluster.local
             maxInputTokens: 50000
             maxRequests: 2
             requestLimit: 2
@@ -8460,9 +8985,9 @@
             - name: myapp-inference
               tokensPerMinute: 240000
             - name: myapp-inference
-              tokensPerMinute: 480000
+              busyWindowSeconds: 60
             - name: myapp-api
-              tokensPerMinute: 9600
+              tokensPerMinute: 4800
             - name: myapp-inference
               tokensPerMinute: 6400
             - name: summary-client
@@ -8532,8 +9057,6 @@
               tokensPerMinute: 100000
             - name: myapp-api
               tokensPerMinute: 720000
-            - name: myapp-inference
-              tokensPerMinute: 480000
             - name: myapp-api
               tokensPerMinute: 9600
             - name: myapp-inference
@@ -8642,18 +9165,18 @@
           maxConcurrent: 2
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: myapp-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         env = dict(
             accessKey="minio",
@@ -8673,6 +9196,7 @@
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
             ocrProject="test-project",
+            ocrTimeout=120,
             ocrType="google",
             podMemory="2Gi",
             queueType="kafka",
@@ -8689,15 +9213,6 @@
             ],
             workers=2,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: myapp-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -8741,6 +9256,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -8753,6 +9269,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -8765,6 +9282,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -8777,10 +9295,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1,celery_worker_2,celery_worker_3,celery_worker_4
     kind: ConfigMap
     metadata:
       labels:
@@ -8806,6 +9329,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -8819,11 +9343,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
 
+
+        [group:celery_workers]
+        programs=celery_worker_1,celery_worker_2
         [program:celery_monitor]
         command=python /app/document_monitor.py
         environment=
@@ -8871,6 +9399,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -8883,10 +9412,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1,celery_worker_2
     kind: ConfigMap
     metadata:
       labels:
@@ -8911,6 +9445,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -8923,10 +9458,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1,celery_worker_2
     kind: ConfigMap
     metadata:
       labels:
@@ -8951,6 +9491,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -8963,10 +9504,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1,celery_worker_2
     kind: ConfigMap
     metadata:
       labels:
@@ -8991,6 +9537,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -9003,10 +9550,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1,celery_worker_2
     kind: ConfigMap
     metadata:
       labels:
@@ -9047,21 +9599,7 @@
       namespace: eyelevel
   12: |
     apiVersion: v1
-    data:
-      config.py: |
-        env = dict(
-            deviceType="cpu",
-            brokerType="redis",
-            metricsBroker="redis://myapp-myapp.eyelevel.svc.cluster.local:8082/0",
-            searchBroker="redis://myapp.eyelevel.svc.cluster.local:8082/0",
-            searchLog="myapp",
-            searchResultBroker="redis://myapp.eyelevel.svc.cluster.local:8082/0",
-            service="myapp",
-            validAPIKeys=[
-            ],
-            workers=4,
-        )
-    kind: ConfigMap
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
@@ -9070,6 +9608,22 @@
         version: 0.1.0
       name: myapp-config-py-map
       namespace: eyelevel
+    stringData:
+      config.py: |
+        env = dict(
+            deviceType="cpu",
+            brokerType="redis",
+            metricsBroker="redis://myapp-myapp.eyelevel.svc.cluster.local:8082/0",
+            metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
+            searchBroker="redis://myapp.eyelevel.svc.cluster.local:8082/0",
+            searchLog="myapp",
+            searchResultBroker="redis://myapp.eyelevel.svc.cluster.local:8082/0",
+            service="myapp",
+            validAPIKeys=[
+            ],
+            workers=4,
+        )
   13: |
     apiVersion: v1
     data:
@@ -9157,6 +9711,31 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [program:celery_monitor]
+        command=python /workspace/ranker_monitor.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_health]
+        command=python /workspace/ranker_health.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
     kind: ConfigMap
     metadata:
       labels:
@@ -9168,7 +9747,16 @@
       namespace: eyelevel
   15: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: myapp-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cpu",
@@ -9183,15 +9771,6 @@
             ],
             workers=2,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: myapp-config-py-map
-      namespace: eyelevel
   16: |
     apiVersion: v1
     data:
@@ -9312,7 +9891,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: db-cluster-haproxy-replicas.eyelevel.svc.cluster.local
@@ -9364,6 +9952,8 @@
           google/gemma-3-4b-it:
             engineID: "google/gemma-3-4b-it"
             service: eyelevel
+            apiKey: 00000000-0000-0000-0000-000000000000
+            baseURL: http://summary-api.eyelevel.svc.cluster.local
             maxInputTokens: 100000
             maxRequests: 4
             requestLimit: 4
@@ -9413,7 +10003,7 @@
             - name: layout-inference
               tokensPerMinute: 360000
             - name: ranker-inference
-              tokensPerMinute: 840000
+              busyWindowSeconds: 60
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -9485,8 +10075,6 @@
               tokensPerMinute: 100000
             - name: ranker-api
               tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -9594,18 +10182,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: layout-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         env = dict(
             accessKey="",
@@ -9625,6 +10213,7 @@
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
             ocrProject="",
+            ocrTimeout=120,
             ocrType="tesseract",
             podMemory="2Gi",
             queueType="kafka",
@@ -9643,15 +10232,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -9695,10 +10275,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -9724,11 +10309,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
 
+
+        [group:celery_workers]
+        programs=celery_worker_1
         [program:celery_monitor]
         command=python /app/document_monitor.py
         environment=
@@ -9776,10 +10365,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -9804,10 +10398,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -9832,10 +10431,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -9860,10 +10464,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -9875,12 +10484,23 @@
       namespace: eyelevel
   11: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
             brokerType="redis",
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
+            metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
@@ -9891,15 +10511,6 @@
             ],
             workers=14,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
   12: |
     apiVersion: v1
     data:
@@ -10117,6 +10728,31 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [program:celery_monitor]
+        command=python /workspace/ranker_monitor.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_health]
+        command=python /workspace/ranker_health.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
     kind: ConfigMap
     metadata:
       labels:
@@ -10128,7 +10764,16 @@
       namespace: eyelevel
   14: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -10145,15 +10790,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-config-py-map
-      namespace: eyelevel
   15: |
     apiVersion: v1
     data:
@@ -10261,7 +10897,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: db-cluster-haproxy-replicas.eyelevel.svc.cluster.local
@@ -10313,6 +10958,8 @@
           google/gemma-3-4b-it:
             engineID: "google/gemma-3-4b-it"
             service: eyelevel
+            apiKey: 00000000-0000-0000-0000-000000000000
+            baseURL: http://summary-api.eyelevel.svc.cluster.local
             maxInputTokens: 100000
             maxRequests: 4
             requestLimit: 4
@@ -10362,7 +11009,7 @@
             - name: layout-inference
               tokensPerMinute: 360000
             - name: ranker-inference
-              tokensPerMinute: 840000
+              busyWindowSeconds: 60
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -10434,8 +11081,6 @@
               tokensPerMinute: 100000
             - name: ranker-api
               tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -10543,18 +11188,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: layout-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         env = dict(
             accessKey="",
@@ -10574,6 +11219,7 @@
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
             ocrProject="",
+            ocrTimeout=120,
             ocrType="tesseract",
             podMemory="2Gi",
             queueType="kafka",
@@ -10592,15 +11238,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -10644,10 +11281,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -10673,11 +11315,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
 
+
+        [group:celery_workers]
+        programs=celery_worker_1
         [program:celery_monitor]
         command=python /app/document_monitor.py
         environment=
@@ -10725,10 +11371,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -10753,10 +11404,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -10781,10 +11437,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -10809,10 +11470,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -10824,12 +11490,23 @@
       namespace: eyelevel
   11: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
             brokerType="redis",
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
+            metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
@@ -10840,15 +11517,6 @@
             ],
             workers=14,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
   12: |
     apiVersion: v1
     data:
@@ -11066,6 +11734,31 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [program:celery_monitor]
+        command=python /workspace/ranker_monitor.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_health]
+        command=python /workspace/ranker_health.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
     kind: ConfigMap
     metadata:
       labels:
@@ -11077,7 +11770,16 @@
       namespace: eyelevel
   14: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -11094,15 +11796,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-config-py-map
-      namespace: eyelevel
   15: |
     apiVersion: v1
     data:
@@ -11210,7 +11903,16 @@
       namespace: eyelevel
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
       config.yaml: |
         _mysql: &mysql
           ro_addr: db-ro.existing.com
@@ -11264,6 +11966,8 @@
           google/gemma-3-4b-it:
             engineID: "google/gemma-3-4b-it"
             service: eyelevel
+            apiKey: 00000000-0000-0000-0000-000000000000
+            baseURL: http://summary-api.eyelevel.svc.cluster.local
             maxInputTokens: 100000
             maxRequests: 48
             requestLimit: 48
@@ -11318,7 +12022,7 @@
             - name: layout-inference
               tokensPerMinute: 360000
             - name: ranker-inference
-              tokensPerMinute: 840000
+              busyWindowSeconds: 60
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -11378,7 +12082,7 @@
             - name: extract-api
               tokensPerMinute: 200000
             - name: extract-download
-              tokensPerMinute: 180000
+              tokensPerMinute: 90000
             - name: extract-save
               tokensPerMinute: 100000
             - name: groundx-service
@@ -11407,8 +12111,6 @@
               tokensPerMinute: 100000
             - name: ranker-api
               tokensPerMinute: 270000
-            - name: ranker-inference
-              tokensPerMinute: 840000
             - name: summary-api
               tokensPerMinute: 9600
             - name: summary-inference
@@ -11518,18 +12220,18 @@
           maxConcurrent: 4
           port: 8080
           serviceName: upload
-    kind: ConfigMap
+  3: |
+    apiVersion: v1
+    kind: Secret
     metadata:
       labels:
         appVersion: 0.1.0
         chart: groundx-0.1.0
         heritage: Helm
         version: 0.1.0
-      name: config-yaml-map
+      name: extract-config-py-map
       namespace: eyelevel
-  3: |
-    apiVersion: v1
-    data:
+    stringData:
       config.py: |
         from groundx.extract import (
             AgentSettings,
@@ -11538,8 +12240,13 @@
             GroundXSettings,
         )
 
+        agent_queue = "agent_queue"
+        download_queue = "download_queue"
+        save_queue = "save_agents_queue"
+
         agent_settings = AgentSettings(
             image_transport="data_url",
+            service="openai",
         )
 
         container_settings = ContainerSettings(
@@ -11573,15 +12280,6 @@
           api_key="00000000-0000-0000-0000-000000000001",
           base_url="https://api.groundx.ai/api",
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: extract-config-py-map
-      namespace: eyelevel
   4: |
     apiVersion: v1
     data:
@@ -11649,7 +12347,7 @@
         logfile=/dev/null
 
         [program:celery_worker_1]
-        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=2 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
+        command=celery -A celery_agents.app worker -n %(ENV_POD_NAME)s-w1 --loglevel=INFO --concurrency=1 --queues=download_queue --prefetch-multiplier=1 --max-tasks-per-child=100
         environment=
           CELERY_WORKER_NAME="%(ENV_POD_NAME)s-w1",
           LOCAL="0",
@@ -11702,7 +12400,16 @@
       namespace: eyelevel
   8: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             accessKey="minio",
@@ -11722,6 +12429,7 @@
             ocrBase="layout/raw/",
             ocrCredentials="credentials.json",
             ocrProject="",
+            ocrTimeout=120,
             ocrType="tesseract",
             podMemory="2Gi",
             queueType="kafka",
@@ -11741,15 +12449,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-config-py-map
-      namespace: eyelevel
   9: |
     apiVersion: v1
     data:
@@ -11793,10 +12492,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -11822,11 +12526,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
 
+
+        [group:celery_workers]
+        programs=celery_worker_1
         [program:celery_monitor]
         command=python /app/document_monitor.py
         environment=
@@ -11874,10 +12582,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -11902,10 +12615,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -11930,10 +12648,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -11958,10 +12681,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -11973,12 +12701,23 @@
       namespace: eyelevel
   16: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: ranker-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
             brokerType="redis",
             metricsBroker="redis://cache-metrics.eyelevel.svc.cluster.local:6379/0",
+            metricsBusyWindowSeconds=60,
+            rankerBatchSize=3,
             searchBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
             searchLog="ranker",
             searchResultBroker="redis://cache.eyelevel.svc.cluster.local:6379/0",
@@ -11990,15 +12729,6 @@
             ],
             workers=14,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: ranker-config-py-map
-      namespace: eyelevel
   17: |
     apiVersion: v1
     data:
@@ -12216,6 +12946,31 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [program:celery_monitor]
+        command=python /workspace/ranker_monitor.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
+
+        [program:celery_health]
+        command=python /workspace/ranker_health.py
+        environment=
+          LOCAL="0",
+          PYTHONUNBUFFERED="1"
+        autostart=true
+        autorestart=true
+        stdout_logfile=/dev/stdout
+        stdout_logfile_maxbytes=0
+        stderr_logfile=/dev/stderr
+        stderr_logfile_maxbytes=0
     kind: ConfigMap
     metadata:
       labels:
@@ -12255,7 +13010,16 @@
     type: Opaque
   21: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         env = dict(
             deviceType="cuda",
@@ -12273,15 +13037,6 @@
             ],
             workers=1,
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-config-py-map
-      namespace: eyelevel
   22: |
     apiVersion: v1
     data:
@@ -12363,6 +13118,620 @@
         version: 0.1.0
       name: summary-inference-supervisord-conf-map
       namespace: eyelevel
+'shared Google credentials: resources':
+  1: |
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
+      config.yaml: |
+        _mysql: &mysql
+          ro_addr: db-cluster-haproxy-replicas.eyelevel.svc.cluster.local
+          rw_addr: db-cluster-haproxy.eyelevel.svc.cluster.local
+          database: eyelevel
+          maxIdle: 5
+          maxOpen: 10
+
+        ai:
+          aws:
+            search:
+              baseURL: https://opensearch-cluster-master.eyelevel.svc.cluster.local:9200
+              index: prod-1
+              languages:
+                - en
+              username: "eyelevel"
+              password: "R0otb_*t!kazs"
+          extract:
+            client:
+              baseURL: http://extract-api.eyelevel.svc.cluster.local
+              callbackURL: http://layout-webhook.eyelevel.svc.cluster.local
+          eyelevelSearch:
+            baseURL: http://ranker-api.eyelevel.svc.cluster.local
+          layout:
+            client:
+              baseURL: http://layout-api.eyelevel.svc.cluster.local
+              callbackURL: http://layout-webhook.eyelevel.svc.cluster.local
+          openai:
+            baseURL: http://summary-api.eyelevel.svc.cluster.local
+            defaultKitId: 0
+          summaryType: summary
+          searchIndexes:
+            prod-1:
+              languages:
+                - en
+
+        engines:
+          google/gemma-3-4b-it:
+            engineID: "google/gemma-3-4b-it"
+            service: eyelevel
+            baseURL: http://summary-api.eyelevel.svc.cluster.local
+            maxInputTokens: 100000
+            maxRequests: 4
+            requestLimit: 4
+            vision: true
+
+        environment: prod
+
+        groundxServer:
+          baseURL: http://groundx.eyelevel.svc.cluster.local
+          port: 8080
+          serviceName: groundx
+
+        init:
+          ingestOnly: false
+          search:
+            password: "R0otb_*t!kazs"
+            searchModel: all_access
+            username: "admin"
+
+        integrationTests:
+          search:
+            duration: 3660
+            fileId: "ey-mtr6hapxq7d94zigammwir6xz4"
+            modelId: 1
+
+        layoutWebhookServer:
+          baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          port: 8080
+          serviceName: layout-webhook
+
+        metrics:
+          active: true
+          api:
+            - name: groundx
+              threshold: 4000
+            - name: layout-api
+              threshold: 4000
+            - name: layout-webhook
+              threshold: 4000
+            - name: ranker-api
+              threshold: 4000
+          document:
+            tokensPerMinute: 12500
+          extractRequest:
+            tokensPerMinute: 6000
+          inference:
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: ranker-inference
+              busyWindowSeconds: 60
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 1600
+            - name: summary-client
+              tokensPerMinute: 9600
+          namespace: eyelevel
+          page:
+            tokensPerMinute: 1000
+          queue:
+            - name: pre-process
+              target: pre-process
+              threshold: 10
+            - name: process
+              target: process
+              threshold: 10
+            - name: queue
+              target: queue
+              threshold: 10
+            - name: upload
+              target: upload
+              threshold: 10
+          session:
+            addr: cache-metrics.eyelevel.svc.cluster.local:6379
+            notCluster: true
+            ssl: false
+          summaryRequest:
+            tokensPerMinute: 625
+          task:
+            - name: layout-correct
+              target: correct_queue
+              threshold: 10
+            - name: layout-map
+              target: map_queue
+              threshold: 10
+            - name: layout-ocr
+              target: ocr_queue
+              threshold: 10
+            - name: layout-process
+              target: process_queue
+              threshold: 10
+            - name: layout-save
+              target: save_queue,celery
+              threshold: 10
+          throughput:
+            - name: groundx
+              tokensPerMinute: 150000
+            - name: layout-api
+              tokensPerMinute: 180000
+            - name: layout-correct
+              tokensPerMinute: 100000
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: layout-map
+              tokensPerMinute: 100000
+            - name: layout-ocr
+              tokensPerMinute: 100000
+            - name: layout-process
+              tokensPerMinute: 100000
+            - name: layout-save
+              tokensPerMinute: 150000
+            - name: layout-webhook
+              tokensPerMinute: 150000
+            - name: pre-process
+              tokensPerMinute: 100000
+            - name: process
+              tokensPerMinute: 150000
+            - name: queue
+              tokensPerMinute: 100000
+            - name: ranker-api
+              tokensPerMinute: 270000
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 1600
+            - name: summary-client
+              tokensPerMinute: 9600
+            - name: upload
+              tokensPerMinute: 100000
+
+        owner:
+          baseURL: http://groundx.eyelevel.svc.cluster.local/api/v1
+          name: on-prem
+          type: all
+
+        preProcessFileServer:
+          baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: pre-process
+
+        processFileServer:
+          baseURL: http://process.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: process
+
+        processors:
+          convert: [11]
+          extract: [13]
+          layout: [3]
+          map: [4]
+          saveFile: [2]
+          skipConvert: [12]
+          skipGenerate: [1]
+          skipLayout: [5]
+          skipMap: [6]
+          skipSummarize: [7]
+          summarize: [8]
+          summarizeChunks: [10]
+          summarizeSections: [9]
+
+        queueFileServer:
+          baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          pollTime: 1
+          port: 8080
+          serviceName: queue
+        largeFileRouting:
+          maxCountDuration: 10s
+          tempDir: /tmp
+        largeFileDelivery:
+          maxUploadDuration: "30s"
+          concurrency: 2
+          credentials:
+            operations-drive:
+              credentialsFile: /var/run/groundx/large-file/operations-drive/credentials.json
+        largeFileDeliveryServer:
+          maxConcurrent: 2
+          port: 8080
+          serviceName: large-file-delivery
+
+        queues:
+          filePreProcess:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-pre-process
+            topic: file-pre-process
+            type: kafka
+          fileProcess:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-process
+            topic: file-process
+            type: kafka
+          fileSummaryDev:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-summary
+            topic: file-summary
+            type: kafka
+          fileSummaryProd:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-summary
+            topic: file-summary
+            type: kafka
+          fileUpdate:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-update
+            topic: file-update
+            type: kafka
+          fileUpload:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-upload
+            topic: file-upload
+            type: kafka
+          largeFile:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: large-file
+            topic: large-file
+            type: kafka
+
+        rec:
+          mysql: *mysql
+          session:
+            addr: cache.eyelevel.svc.cluster.local:6379
+            notCluster: true
+            ssl: false
+
+        summaryServer:
+          baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 3
+          port: 8080
+          serviceName: summary-client
+
+        upload:
+          baseDomain: minio.eyelevel.svc.cluster.local
+          baseUrl: http://minio.eyelevel.svc.cluster.local
+          bucket: eyelevel
+          bucketUrl: http://minio.eyelevel.svc.cluster.local
+          service: minio
+          ssl: false
+
+        uploadFileServer:
+          baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: upload
+  2: |
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: google-credentials
+      namespace: eyelevel
+    stringData:
+      credentials.json: |
+        {
+          "type": "service_account",
+          "project_id": "groundx-helm-test",
+          "private_key_id": "test",
+          "client_email": "test@groundx-helm-test.iam.gserviceaccount.com",
+          "token_uri": "https://oauth2.googleapis.com/token"
+        }
+'summaryClient gracePeriod: resources':
+  1: |
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: config-yaml-map
+      namespace: eyelevel
+    stringData:
+      config.yaml: |
+        _mysql: &mysql
+          ro_addr: db-cluster-haproxy-replicas.eyelevel.svc.cluster.local
+          rw_addr: db-cluster-haproxy.eyelevel.svc.cluster.local
+          database: eyelevel
+          maxIdle: 5
+          maxOpen: 10
+
+        admin:
+          apiKey: 00000000-0000-0000-0000-000000000000
+          email: "support@mycorp.net"
+          licenseKey: 00000000-0000-0000-0000-000000000000
+          password: "password"
+          username: 00000000-0000-0000-0000-000000000000
+
+        ai:
+          aws:
+            search:
+              baseURL: https://opensearch-cluster-master.eyelevel.svc.cluster.local:9200
+              index: prod-1
+              languages:
+                - en
+              username: "eyelevel"
+              password: "R0otb_*t!kazs"
+          extract:
+            client:
+              apiKey: 00000000-0000-0000-0000-000000000000
+              baseURL: http://extract-api.eyelevel.svc.cluster.local
+              callbackURL: http://layout-webhook.eyelevel.svc.cluster.local
+          eyelevelSearch:
+            apiKey: 00000000-0000-0000-0000-000000000000
+            baseURL: http://ranker-api.eyelevel.svc.cluster.local
+          layout:
+            client:
+              apiKey: 00000000-0000-0000-0000-000000000000
+              baseURL: http://layout-api.eyelevel.svc.cluster.local
+              callbackURL: http://layout-webhook.eyelevel.svc.cluster.local
+          openai:
+            apiKey: 00000000-0000-0000-0000-000000000000
+            baseURL: http://summary-api.eyelevel.svc.cluster.local
+            defaultKitId: 0
+          summaryType: summary
+          searchIndexes:
+            prod-1:
+              languages:
+                - en
+
+        engines:
+          google/gemma-3-4b-it:
+            engineID: "google/gemma-3-4b-it"
+            service: eyelevel
+            apiKey: 00000000-0000-0000-0000-000000000000
+            baseURL: http://summary-api.eyelevel.svc.cluster.local
+            maxInputTokens: 100000
+            maxRequests: 4
+            requestLimit: 4
+            vision: true
+
+        environment: prod
+
+        groundxServer:
+          baseURL: http://groundx.eyelevel.svc.cluster.local
+          port: 8080
+          serviceName: groundx
+
+        init:
+          ingestOnly: false
+          search:
+            password: "R0otb_*t!kazs"
+            searchModel: all_access
+            username: "admin"
+
+        integrationTests:
+          search:
+            duration: 3660
+            fileId: "ey-mtr6hapxq7d94zigammwir6xz4"
+            modelId: 1
+
+        layoutWebhookServer:
+          baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          port: 8080
+          serviceName: layout-webhook
+
+        metrics:
+          active: true
+          api:
+            - name: groundx
+              threshold: 4000
+            - name: layout-api
+              threshold: 4000
+            - name: layout-webhook
+              threshold: 4000
+            - name: ranker-api
+              threshold: 4000
+          document:
+            tokensPerMinute: 12500
+          extractRequest:
+            tokensPerMinute: 6000
+          inference:
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: ranker-inference
+              busyWindowSeconds: 60
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 1600
+            - name: summary-client
+              tokensPerMinute: 9600
+          namespace: eyelevel
+          page:
+            tokensPerMinute: 1000
+          queue:
+            - name: pre-process
+              target: pre-process
+              threshold: 10
+            - name: process
+              target: process
+              threshold: 10
+            - name: queue
+              target: queue
+              threshold: 10
+            - name: upload
+              target: upload
+              threshold: 10
+          session:
+            addr: cache-metrics.eyelevel.svc.cluster.local:6379
+            notCluster: true
+            ssl: false
+          summaryRequest:
+            tokensPerMinute: 625
+          task:
+            - name: layout-correct
+              target: correct_queue
+              threshold: 10
+            - name: layout-map
+              target: map_queue
+              threshold: 10
+            - name: layout-ocr
+              target: ocr_queue
+              threshold: 10
+            - name: layout-process
+              target: process_queue
+              threshold: 10
+            - name: layout-save
+              target: save_queue,celery
+              threshold: 10
+          throughput:
+            - name: groundx
+              tokensPerMinute: 150000
+            - name: layout-api
+              tokensPerMinute: 180000
+            - name: layout-correct
+              tokensPerMinute: 100000
+            - name: layout-inference
+              tokensPerMinute: 360000
+            - name: layout-map
+              tokensPerMinute: 100000
+            - name: layout-ocr
+              tokensPerMinute: 100000
+            - name: layout-process
+              tokensPerMinute: 100000
+            - name: layout-save
+              tokensPerMinute: 150000
+            - name: layout-webhook
+              tokensPerMinute: 150000
+            - name: pre-process
+              tokensPerMinute: 100000
+            - name: process
+              tokensPerMinute: 150000
+            - name: queue
+              tokensPerMinute: 100000
+            - name: ranker-api
+              tokensPerMinute: 270000
+            - name: summary-api
+              tokensPerMinute: 9600
+            - name: summary-inference
+              tokensPerMinute: 1600
+            - name: summary-client
+              tokensPerMinute: 9600
+            - name: upload
+              tokensPerMinute: 100000
+
+        owner:
+          baseURL: http://groundx.eyelevel.svc.cluster.local/api/v1
+          name: on-prem
+          type: all
+          username: 00000000-0000-0000-0000-000000000000
+
+        preProcessFileServer:
+          baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: pre-process
+
+        processFileServer:
+          baseURL: http://process.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: process
+
+        processors:
+          convert: [11]
+          extract: [13]
+          layout: [3]
+          map: [4]
+          saveFile: [2]
+          skipConvert: [12]
+          skipGenerate: [1]
+          skipLayout: [5]
+          skipMap: [6]
+          skipSummarize: [7]
+          summarize: [8]
+          summarizeChunks: [10]
+          summarizeSections: [9]
+
+        queueFileServer:
+          baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          pollTime: 1
+          port: 8080
+          serviceName: queue
+
+        queues:
+          filePreProcess:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-pre-process
+            topic: file-pre-process
+            type: kafka
+          fileProcess:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-process
+            topic: file-process
+            type: kafka
+          fileSummaryDev:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-summary
+            topic: file-summary
+            type: kafka
+          fileSummaryProd:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-summary
+            topic: file-summary
+            type: kafka
+          fileUpdate:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-update
+            topic: file-update
+            type: kafka
+          fileUpload:
+            broker: stream-cluster-kafka-bootstrap.eyelevel.svc.cluster.local:9092
+            groupId: file-upload
+            topic: file-upload
+            type: kafka
+
+        rec:
+          mysql: *mysql
+          session:
+            addr: cache.eyelevel.svc.cluster.local:6379
+            notCluster: true
+            ssl: false
+
+        summaryServer:
+          baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
+          maxConcurrent: 3
+          port: 8080
+          serviceName: summary-client
+
+        upload:
+          baseDomain: minio.eyelevel.svc.cluster.local
+          baseUrl: http://minio.eyelevel.svc.cluster.local
+          bucket: eyelevel
+          bucketUrl: http://minio.eyelevel.svc.cluster.local
+          service: minio
+          ssl: false
+
+        uploadFileServer:
+          baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          maxConcurrent: 4
+          port: 8080
+          serviceName: upload
 'workspace-enabled: resources':
   1: |
     apiVersion: v1
@@ -12380,7 +13749,16 @@
     type: Opaque
   2: |
     apiVersion: v1
-    data:
+    kind: Secret
+    metadata:
+      labels:
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: workspace-config-py-map
+      namespace: eyelevel
+    stringData:
       config.py: |
         from pathlib import Path
 
@@ -12414,6 +13792,7 @@
             mysql_password="",
             mysql_port=3306,
             mysql_username="",
+            workspace_ownership_checks_enabled=True,
             publish_dry_run=True,
             publish_github_workflow_id="deploy.yml",
             runner_token="test-runner-token",
@@ -12422,15 +13801,6 @@
             workspace_min_free_percent=0,
             workspace_root=Path("/tmp/workspaces"),
         )
-    kind: ConfigMap
-    metadata:
-      labels:
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: workspace-config-py-map
-      namespace: eyelevel
   3: |
     apiVersion: v1
     data:

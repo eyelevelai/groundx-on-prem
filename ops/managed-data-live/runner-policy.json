@@ -1,0 +1,62 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DevelopmentAppObjectIdentities",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetUser", "iam:CreateUser", "iam:DeleteUser",
+        "iam:ListAccessKeys", "iam:CreateAccessKey", "iam:DeleteAccessKey",
+        "iam:PutUserPolicy", "iam:DeleteUserPolicy"
+      ],
+      "Resource": ["arn:aws:iam::903713046261:user/gx-*-dev", "arn:aws:iam::903713046261:user/gx-*-prod"]
+    },
+    {
+      "Sid": "DevelopmentObjects",
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": "arn:aws:s3:::groundx-studio-managed-data-dev-903713046261",
+      "Condition": {"StringLike": {"s3:prefix": ["projects/*/dev/*"]}}
+    },
+    {
+      "Sid": "DevelopmentObjectDeletion",
+      "Effect": "Allow",
+      "Action": ["s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::groundx-studio-managed-data-dev-903713046261/projects/*/dev/*"
+    },
+    {
+      "Sid": "ProductionObjects",
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": "arn:aws:s3:::groundx-studio-managed-data-prod-903713046261",
+      "Condition": {"StringLike": {"s3:prefix": ["projects/*/prod/*"]}}
+    },
+    {
+      "Sid": "ProductionObjectDeletion",
+      "Effect": "Allow",
+      "Action": ["s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::groundx-studio-managed-data-prod-903713046261/projects/*/prod/*"
+    },
+    {
+      "Sid": "ProductionCacheIdentities",
+      "Effect": "Allow",
+      "Action": ["elasticache:CreateUser", "elasticache:ModifyUser", "elasticache:DeleteUser"],
+      "Resource": "arn:aws:elasticache:us-west-2:903713046261:user:gx-*-prod"
+    },
+    {
+      "Sid": "ProductionCacheMembership",
+      "Effect": "Allow",
+      "Action": ["elasticache:ModifyUserGroup"],
+      "Resource": [
+        "arn:aws:elasticache:us-west-2:903713046261:usergroup:gx-managed-data-prod",
+        "arn:aws:elasticache:us-west-2:903713046261:user:gx-*-prod"
+      ]
+    },
+    {
+      "Sid": "CacheReadiness",
+      "Effect": "Allow",
+      "Action": ["elasticache:DescribeUsers", "elasticache:DescribeUserGroups"],
+      "Resource": "*"
+    }
+  ]
+}

@@ -11,7 +11,7 @@
 {{- end }}
 
 {{- define "groundx.summary.inference.create" -}}
-{{- $is := include "groundx.summary.create" . -}}
+{{- $is := include "groundx.summary.model.create" . -}}
 {{- if eq $is "false" -}}
 false
 {{- else -}}
@@ -119,10 +119,6 @@ true
   "upCooldown"   $cld
 -}}
 {{- $cfg | toYaml -}}
-{{- end }}
-
-{{- define "groundx.summary.inference.model.kwargs" -}}
-{{- toYaml dict -}}
 {{- end }}
 
 {{- define "groundx.summary.inference.model.maxInputTokens" -}}
@@ -285,7 +281,7 @@ true
   "image"          (include "groundx.summary.inference.image" .)
   "mapPrefix"      ("summary")
   "modelParts"     ("00 01 02 03 04")
-  "modelVersion"   ("g34b")
+  "modelVersion"   ("g34b-092526")
   "name"           (include "groundx.summary.inference.serviceName" .)
   "node"           (include "groundx.summary.inference.node" .)
   "port"           (include "groundx.summary.inference.containerPort" .)
@@ -325,6 +321,12 @@ true
 {{- end -}}
 {{- if and (hasKey $in "tolerations") (not (empty (get $in "tolerations"))) -}}
   {{- $_ := set $cfg "tolerations" (get $in "tolerations") -}}
+{{- end -}}
+{{- if and (hasKey $in "topologySpreadConstraints") (not (empty (get $in "topologySpreadConstraints"))) -}}
+  {{- $_ := set $cfg "topologySpreadConstraints" (get $in "topologySpreadConstraints") -}}
+{{- end -}}
+{{- if hasKey $in "disruptionBudget" -}}
+  {{- $_ := set $cfg "disruptionBudget" (get $in "disruptionBudget") -}}
 {{- end -}}
 {{- $cfg | toYaml -}}
 {{- end }}

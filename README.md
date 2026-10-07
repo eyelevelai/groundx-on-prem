@@ -60,8 +60,10 @@
 - [Use the SDKs](#use-the-sdks)
 - [Use the APIs](#use-the-apis)
 
-**[Legacy Terraform Deployment](#legacy-terraform-deployment)**
+**[Terraform Deployment (terraform/aws/)](#terraform-deployment-terraformaws)**
 - [Accessing Legacy Scripts](#accessing-legacy-scripts)
+- [Optional EKS Node Diagnostics](#optional-eks-node-diagnostics)
+- [EKS Cluster Version Configuration](#eks-cluster-version-configuration)
 
 # What is GroundX On-Prem?
 
@@ -384,13 +386,15 @@ The `workspace` service family is optional and disabled by default. Enable it wh
 
 Set `workspace.enabled: true` and provide either `workspace.token` or `workspace.existingSecret`. When `workspace.token` is provided, the chart renders it into the generated GroundX `config.yaml` as `workspace.token`, renders it into the runner `config.py` as `runner_token`, and creates a `workspace-secret` containing `WORKSPACE_RUNNER_TOKEN` as the environment fallback. When `workspace.existingSecret` is provided, that secret must contain `WORKSPACE_RUNNER_TOKEN`; both the Partner API and workspace runner fall back to that environment value because the config files intentionally render the token empty. The internal runner URL is derived into GroundX `config.yaml` as `workspace.baseURL`, not stored as a secret.
 
-The runner follows the standard Python microservice deployment pattern. The API uses the shared Gunicorn deployment template and the workers use the shared supervisord Celery deployment template. Workspace-specific ConfigMaps provide `/app/config.py`, `/app/gunicorn_conf.py`, and one supervisord config per queue: provision, workspace, command, publish, and cleanup. API knobs such as `threads`, `workers`, `timeout`, `timeoutKeepAlive`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under `workspace.api`, matching the other Python API services. Worker knobs such as `queue`, `threads`, `workers`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under each worker section: `provision`, `workspace`, `command`, `publish`, and `cleanup`.
+The runner follows the standard Python microservice deployment pattern. The API uses the shared Gunicorn deployment template and the workers use the shared supervisord Celery deployment template. Workspace-specific resources provide `/app/config.py` (a `Secret`, since it carries credentials — see GX-17), `/app/gunicorn_conf.py` (a `ConfigMap`), and one supervisord config per queue (ConfigMaps): provision, workspace, command, publish, and cleanup. API knobs such as `threads`, `workers`, `timeout`, `timeoutKeepAlive`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under `workspace.api`, matching the other Python API services. Worker knobs such as `queue`, `threads`, `workers`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under each worker section: `provision`, `workspace`, `command`, `publish`, and `cleanup`.
 
 Workspace project metadata and operation state are stored in MySQL. The primary path creates a managed GitHub or GitLab repository from the scaffold, returns a short-lived repo-scoped git session, and expects agents to clone, edit, commit, and push locally. The optional secondary file API uses `/tmp/workspaces` only as a disposable checkout cache for server-side reads, writes, patches, commands, and diffs; Git remains the source of truth and cache loss is recoverable. By default the chart renders this cache as `emptyDir`. Set `workspace.pvc.enabled: true` only when you want a persistent cache for repeated secondary file API work. When enabled, the PVC follows the same helper pattern as inference services: `cluster.pvClass` sets the storage class and `cluster.pvAccessMode` sets the access mode. Prefer `ReadWriteMany` when multiple workspace pods need to share the cache. The runner waits on Redis/Valkey and MySQL but does not wait on file storage because workspace artifacts are not part of the GroundX document file store. Runtime config rendered into `/app/config.py` uses chart helpers for MySQL, Redis/Valkey, command, and workspace defaults, with `workspace.publishDryRun` exposed as the normal safety toggle.
 
+`workspace.ownershipChecksEnabled` defaults to `true`. Setting it to `false` skips runner ownership comparisons and project-list filtering, but leaves runner authentication and operation safety checks active. The shared ConfigMap change rolls the workspace API and every worker. Deploy a compatible workspace-runner image before using a chart version that renders this setting. Restore `true` before offering Workspace outside internal use.
+
 Publish is dry-run by default. To enable real publish, set `workspace.publishDryRun: false`, configure the provider credentials owned by the runner service, and set the workflow or pipeline to trigger. For GitHub Actions:
 
-Managed project data is also disabled by default. For the hosted AWS path, set `workspace.managedData.enabled: true`, its AWS region, and the dev and prod S3 bucket, Redis endpoint, and Redis user-group values. Use `workspace.existingSecret`; it must contain `WORKSPACE_RUNNER_TOKEN`, `MANAGED_DATA_RDS_ADMIN_CONNECTION_DEV`, and `MANAGED_DATA_RDS_ADMIN_CONNECTION_PROD`. Keep the RDS administrator URLs out of values files. Grant every Workspace component service account the least-privilege AWS permissions needed to manage the configured S3 prefixes, IAM users, and ElastiCache users. Enable dev first and verify allocation, republish, isolation, and confirmed deletion before enabling prod. Disabling the setting stops new reconciliation but does not delete existing app data.
+Managed project data is also disabled by default. For the hosted AWS path, set `workspace.managedData.enabled: true`, its AWS region, and the dev and prod S3 bucket, Redis endpoint, and Redis user-group values. To verify managed MySQL certificates with a public CA, set `workspace.managedData.mysqlSslCaConfigMap` to an existing ConfigMap containing the fixed key `ca.pem`; the chart mounts it read-only at `/var/run/config/workspace/mysql/ca.pem` in the Workspace API and all five workers. Use `workspace.existingSecret`; it must contain `WORKSPACE_RUNNER_TOKEN`, `MANAGED_DATA_RDS_ADMIN_CONNECTION_DEV`, and `MANAGED_DATA_RDS_ADMIN_CONNECTION_PROD`. Keep the RDS administrator URLs out of values files. Grant every Workspace component service account the least-privilege AWS permissions needed to manage the configured S3 prefixes, IAM users, and ElastiCache users. Enable dev first and verify allocation, republish, isolation, and confirmed deletion before enabling prod. Disabling the setting stops new reconciliation but does not delete existing app data.
 
 ```yaml
 workspace:
@@ -608,6 +612,16 @@ For AWS EKS, `terraform/aws/setup-eks` generates `src/groundx/prereqs/storagecla
 
 ### Helm Installation
 
+When deploying from this checkout with an environment-specific values file, use the local source chart:
+
+```bash
+helm upgrade --install groundx src/groundx -n eyelevel -f values.ranker-only-eks.yaml
+```
+
+Replace `values.ranker-only-eks.yaml` with the values file for your target cluster. Do not set image
+tags manually for a normal release; workloads that do not override their image tag use the chart
+`appVersion` from `src/groundx/Chart.yaml`.
+
 To install GroundX, add the chart repo to helm by running the following commands:
 
 ```bash
@@ -685,6 +699,10 @@ Every autoscaled pod scales on **two metrics**:
    - **task**: Celery task backlog (default target **10**)
    - **inference**: model request throughput (scales when requests exceed per-replica capacity)
 
+For GPU inference, HPA scale-up also depends on node readiness. If each inference
+pod uses a full GPU node, every additional replica needs both a new pod and a new
+GPU node before it can absorb traffic.
+
 ## Enabling the Custom Metrics Server
 
 The custom metrics server exposes:
@@ -730,6 +748,28 @@ extract:
 ```
 
 When set, pods use simulated LLM responses instead of external model providers.
+
+## Terminal Extract Diagnostics
+
+Terminal extract diagnostics are disabled by default. Enable the same value on
+the extract API, agent, download, and save pods with:
+
+```yaml
+extract:
+  terminalAgentTraceEnabled: true
+```
+
+Override one pod by setting `extract.api.terminalAgentTraceEnabled`,
+`extract.agent.terminalAgentTraceEnabled`,
+`extract.download.terminalAgentTraceEnabled`, or
+`extract.save.terminalAgentTraceEnabled`. An explicit pod value wins over the
+shared value, including `false`.
+
+Use this only with an Internal Arcadia image that implements the
+[AGE-272 terminal diagnostics contract](https://github.com/eyelevelai/internal-arcadia-agents/pull/101).
+The runtime keeps successful work unchanged, publishes Celery failure callbacks
+before terminal persistence, and applies the rollout's storage, access,
+lifecycle, and failure-budget gates.
 
 # Using GroundX On-Prem
 
@@ -782,9 +822,75 @@ The [API endpoint](#get-the-api-endpoint), in conjuction with the `admin.api_key
 
 All of the methods and operations described in the [GroundX documentation](https://documentation.groundx.ai/reference) are supported with your On-Prem instance of GroundX. You simply have to substitute `https://api.groundx.ai` with your [API endpoint](#get-the-api-endpoint).
 
-# Legacy Terraform Deployment
+# Terraform Deployment (terraform/aws/)
 
-As of November 4, 2025, we have migrated to a pure helm release deployment. The previous hybrid terraform-helm approach is no longer supported.
+`terraform/aws/` is an optional path for provisioning AWS infrastructure (a VPC and/or an EKS
+cluster) ahead of the Helm install described above — see [Deployment](#what-is-groundx-on-prem)
+step 1. It is also the supported path for maintaining AWS infrastructure already provisioned
+through it. As of November 4, 2025, the previous **hybrid terraform-helm approach to deploying the
+GroundX application itself** was retired in favor of a pure Helm release; that change is about how
+the application is installed onto a cluster, not about Terraform's role in provisioning the
+cluster, which is unaffected and remains supported for both new and existing AWS installs.
 
 ## Accessing Legacy Scripts
 If you would like to access the legacy terraform scripts, they can be pulled from [legacy-terraform-deployment](https://github.com/eyelevelai/groundx-on-prem/releases/tag/legacy-terraform-deployment).
+
+## EKS CPU and monitoring cost controls
+
+CPU-only nodes default to gp3 disks and one unavailable node per update. CloudWatch keeps enhanced Container Insights enabled and Application Signals disabled. See [EKS cost controls](docs/agents/eks-cost-controls.md) before applying these settings to an existing cluster.
+
+## Optional EKS Node Diagnostics
+
+AWS EKS deployments managed by the bundled Terraform (new or existing) can enable default-off
+diagnostics with one setting. See [EKS Node Diagnostics](docs/eks-node-diagnostics.md).
+
+## EKS Cluster Version Configuration
+
+`terraform/aws/variables.tf`'s `environment_internal.eks_version` key controls the Kubernetes
+version requested for a new EKS cluster (via `terraform/aws/eks/eks.tf`'s
+`module "eyelevel_eks".cluster_version`). Leaving the key unset (the default) passes `null` to
+the module, so AWS creates the cluster at the AWS default version rather than a version this repo
+selects — see the [EKS `CreateCluster` API
+reference](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html) for what
+"the AWS default version" means; it is not necessarily the newest version EKS offers.
+
+**Owner and bump process.** The declared default in `terraform/aws/env.tfvars.example` (currently
+`1.35`) is owned by whoever maintains `groundx-on-prem`. Bump it when the currently-declared
+version approaches the end of its [AWS EKS standard support
+window](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-version-support.html), so new
+installs land on a version still inside standard support.
+
+**What happens when standard support ends.** This module does not set an [EKS upgrade
+policy](https://docs.aws.amazon.com/eks/latest/APIReference/API_UpgradePolicyRequest.html), so the
+outcome depends on the policy the cluster ends up with (AWS's own default for newly created
+clusters is `EXTENDED`; an existing cluster this Terraform now maintains may already carry a
+different policy set outside this repo):
+
+- **`EXTENDED`** — the cluster keeps running its current version past standard support, at an
+  additional per-cluster hourly cost ([EKS pricing](https://aws.amazon.com/eks/pricing/)), until it
+  reaches its extended-support end date.
+- **`STANDARD`** — there is no paid extended-support period; AWS force-upgrades the cluster to the
+  next supported version once standard support ends, whether or not that upgrade was planned.
+
+Know which policy your cluster has (`aws eks describe-cluster --name <cluster> --query
+cluster.upgradePolicy`) so you know which of these two outcomes to expect, and budget for it.
+
+**Adopting the key on an existing cluster.** `setup-eks` writes the key automatically: it reads
+Terraform state (`terraform show -json`) to find an existing cluster, then looks up that cluster's
+actual running version via `aws eks describe-cluster` — the declared default is only used when
+state shows no cluster at all. If a cluster is found in state but its running version cannot be
+resolved (bad credentials, missing IAM permission, wrong region, throttling), `setup-eks` aborts
+rather than silently falling back to the declared default and risking an unattended downgrade — a
+normal re-run is safe, an unresolvable one stops instead of guessing. An operator hand-editing
+`env.tfvars` for an existing cluster must instead:
+
+1. Read the cluster's actual running version first: `aws eks describe-cluster --name <cluster>
+   --query cluster.version --output text`. EKS does not support control-plane downgrades, so
+   setting a lower version than what is running is rejected.
+2. Know that this same value also drives every EKS-managed node group's AMI release selection
+   (`groundx-on-prem`'s node groups don't override it, so they inherit the cluster's resolved
+   version) — changing it can trigger a managed-node-group rollout, not just a control-plane
+   change.
+3. Review `terraform -chdir=terraform/aws/eks plan` before applying. `bin/environment eks` calls
+   `terraform apply --auto-approve` with no confirmation gate, so the plan output is the only
+   review point before a version change takes effect.

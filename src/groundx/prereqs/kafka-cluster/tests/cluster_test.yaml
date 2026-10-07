@@ -1,0 +1,72 @@
+suite: "kafka-cluster Kafka CR renders the Strimzi v1 shape"
+templates:
+  - ../templates/cluster.yaml
+
+tests:
+  - it: "default: Kafka CR renders on v1 with no replicas, storage, version, or metadataVersion fields"
+    asserts:
+      - equal:
+          path: apiVersion
+          value: kafka.strimzi.io/v1
+      - notExists:
+          path: spec.kafka.replicas
+      - notExists:
+          path: spec.kafka.storage
+      - notExists:
+          path: spec.kafka.version
+      - notExists:
+          path: spec.kafka.metadataVersion
+
+  - it: "an explicit version override renders both fields verbatim on v1"
+    set:
+      cluster.version: 4.0.0
+      cluster.metaVersion: "4.0"
+    asserts:
+      - equal:
+          path: apiVersion
+          value: kafka.strimzi.io/v1
+      - equal:
+          path: spec.kafka.version
+          value: 4.0.0
+      - equal:
+          path: spec.kafka.metadataVersion
+          value: "4.0"
+
+  - it: "default namespace install lands the Kafka CR in the Helm release namespace"
+    release:
+      namespace: groundx-default-ns
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: groundx-default-ns
+
+  - it: "non-default namespace install lands the Kafka CR in that namespace, not eyelevel"
+    release:
+      namespace: groundx-validation
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: groundx-validation
+      - notEqual:
+          path: metadata.namespace
+          value: eyelevel
+
+  - it: "cluster.replicas exceeding nodepool.replicas fails the render"
+    set:
+      cluster.replicas: 3
+      nodepool.replicas: 1
+    asserts:
+      - failedTemplate:
+          errorMessage: "cluster.replicas (3) must not exceed nodepool.replicas (1)"
+
+  - it: "cluster.replicas at or below nodepool.replicas renders the replication-factor config"
+    set:
+      cluster.replicas: 1
+      nodepool.replicas: 1
+    asserts:
+      - equal:
+          path: spec.kafka.config["default.replication.factor"]
+          value: 1
+      - equal:
+          path: spec.kafka.config["min.insync.replicas"]
+          value: 1

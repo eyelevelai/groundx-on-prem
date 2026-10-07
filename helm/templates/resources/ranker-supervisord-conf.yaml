@@ -32,4 +32,28 @@ data:
     stderr_logfile=/dev/stderr
     stderr_logfile_maxbytes=0
     {{ end }}
+
+    [program:celery_monitor]
+    command=python /workspace/ranker_monitor.py
+    environment=
+      LOCAL="0",
+      PYTHONUNBUFFERED="1"
+    autostart=true
+    autorestart=true
+    stdout_logfile=/dev/stdout
+    stdout_logfile_maxbytes=0
+    stderr_logfile=/dev/stderr
+    stderr_logfile_maxbytes=0
+
+    [program:celery_health]
+    command=python /workspace/ranker_health.py
+    environment=
+      LOCAL="0",
+      PYTHONUNBUFFERED="1"
+    autostart=true
+    autorestart=true
+    stdout_logfile=/dev/stdout
+    stdout_logfile_maxbytes=0
+    stderr_logfile=/dev/stderr
+    stderr_logfile_maxbytes=0
 {{- end }}

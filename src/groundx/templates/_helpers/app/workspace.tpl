@@ -37,7 +37,8 @@ false
 
 {{- define "groundx.workspace.celeryBrokerUrl" -}}
 {{- $in := include "groundx.workspace.values" . | fromYaml -}}
-{{- $fallback := printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) -}}
+{{- $userinfo := include "groundx.cache.userinfo" . -}}
+{{- $fallback := printf "%s://%s%s:%v/0" (include "groundx.cache.scheme" .) $userinfo (include "groundx.cache.addr" .) (include "groundx.cache.port" .) -}}
 {{ coalesce (dig "celeryBrokerUrl" "" $in) $fallback }}
 {{- end }}
 
@@ -48,7 +49,8 @@ false
 
 {{- define "groundx.workspace.celeryResultBackend" -}}
 {{- $in := include "groundx.workspace.values" . | fromYaml -}}
-{{- $fallback := printf "%s://%s:%v/0" (include "groundx.cache.scheme" .) (include "groundx.cache.addr" .) (include "groundx.cache.port" .) -}}
+{{- $userinfo := include "groundx.cache.userinfo" . -}}
+{{- $fallback := printf "%s://%s%s:%v/0" (include "groundx.cache.scheme" .) $userinfo (include "groundx.cache.addr" .) (include "groundx.cache.port" .) -}}
 {{ coalesce (dig "celeryResultBackend" "" $in) $fallback }}
 {{- end }}
 
@@ -70,6 +72,11 @@ false
 {{- define "groundx.workspace.mysqlConnectTimeoutSeconds" -}}
 {{- $in := include "groundx.workspace.values" . | fromYaml -}}
 {{ dig "mysqlConnectTimeoutSeconds" 10 $in }}
+{{- end }}
+
+{{- define "groundx.workspace.ownershipChecksEnabled" -}}
+{{- $in := include "groundx.workspace.values" . | fromYaml -}}
+{{ dig "ownershipChecksEnabled" true $in }}
 {{- end }}
 
 {{- define "groundx.workspace.publishDryRun" -}}
@@ -202,6 +209,15 @@ false
 {{ dig "awsRegion" "" $in }}
 {{- end }}
 
+{{- define "groundx.workspace.managedData.mysqlSslCaConfigMap" -}}
+{{- $in := include "groundx.workspace.managedData" . | fromYaml -}}
+{{ dig "mysqlSslCaConfigMap" "" $in }}
+{{- end }}
+
+{{- define "groundx.workspace.managedData.mysqlSslCaFile" -}}
+/var/run/config/workspace/mysql/ca.pem
+{{- end }}
+
 {{- define "groundx.workspace.managedData.environment" -}}
 {{- $managed := include "groundx.workspace.managedData" .root | fromYaml -}}
 {{ dig .environment dict $managed | toYaml }}
@@ -326,6 +342,31 @@ workspace-data
 workspace-github-private-key
 {{- end }}
 
+{{- define "groundx.workspace.managedData.mysqlSslCaVolumeName" -}}
+workspace-managed-data-mysql-ca
+{{- end }}
+
+{{- define "groundx.workspace.managedData.mysqlSslCaVolume" -}}
+{{- $configMap := include "groundx.workspace.managedData.mysqlSslCaConfigMap" . -}}
+{{- if and (eq (include "groundx.workspace.managedData.enabled" .) "true") (ne $configMap "") -}}
+- name: {{ include "groundx.workspace.managedData.mysqlSslCaVolumeName" . }}
+  configMap:
+    name: {{ $configMap }}
+    items:
+      - key: ca.pem
+        path: ca.pem
+{{- end }}
+{{- end }}
+
+{{- define "groundx.workspace.managedData.mysqlSslCaVolumeMount" -}}
+{{- $configMap := include "groundx.workspace.managedData.mysqlSslCaConfigMap" . -}}
+{{- if and (eq (include "groundx.workspace.managedData.enabled" .) "true") (ne $configMap "") -}}
+- name: {{ include "groundx.workspace.managedData.mysqlSslCaVolumeName" . }}
+  mountPath: /var/run/config/workspace/mysql
+  readOnly: true
+{{- end }}
+{{- end }}
+
 {{- define "groundx.workspace.githubPrivateKeyVolume" -}}
 {{- $secretName := include "groundx.workspace.github.privateKeySecretName" . -}}
 {{- if ne $secretName "" -}}
@@ -372,12 +413,14 @@ workspace-gitlab-token
 
 {{- define "groundx.workspace.volumeMounts" -}}
 {{ include "groundx.workspace.workspaceVolumeMount" . }}
+{{ include "groundx.workspace.managedData.mysqlSslCaVolumeMount" . }}
 {{ include "groundx.workspace.githubPrivateKeyVolumeMount" . }}
 {{ include "groundx.workspace.gitlabTokenVolumeMount" . }}
 {{- end }}
 
 {{- define "groundx.workspace.volumes" -}}
 {{ include "groundx.workspace.workspaceVolume" . }}
+{{ include "groundx.workspace.managedData.mysqlSslCaVolume" . }}
 {{ include "groundx.workspace.githubPrivateKeyVolume" . }}
 {{ include "groundx.workspace.gitlabTokenVolume" . }}
 {{- end }}
