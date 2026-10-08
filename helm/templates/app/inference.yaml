@@ -80,6 +80,9 @@ spec:
 {{ toYaml $anns | nindent 8 }}
 {{- end }}
     spec:
+{{- if eq $mapPrefix "layout" }}
+      terminationGracePeriodSeconds: {{ dig "gracePeriod" 900 $rp }}
+{{- end }}
 {{- if $rt }}
       runtimeClassName: {{ $rt }}
 {{- end }}
@@ -320,6 +323,9 @@ metadata:
 {{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
 spec:
   minAvailable: 1
+{{- if semverCompare ">=1.26-0" $.Capabilities.KubeVersion.Version }}
+  unhealthyPodEvictionPolicy: AlwaysAllow
+{{- end }}
   selector:
     matchLabels:
       app: {{ $svc }}

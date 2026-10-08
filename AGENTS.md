@@ -3,17 +3,21 @@
 ## What this repo is
 
 `groundx-on-prem` is the **infra** repo of the GroundX workspace: a **Helm chart** (version and
-image app version come from `src/groundx/Chart.yaml`, Helm 3.8+ / Go templating) plus a Bash operator CLI and a **legacy, deprecated** Terraform
-path that package the commercial **GroundX RAG platform** (document ingestion + hybrid text/vector
+image app version come from `src/groundx/Chart.yaml`, Helm 3.8+ / Go templating) plus a Bash operator CLI and an optional Terraform
+path (`terraform/aws/`, for provisioning AWS infrastructure ahead of the Helm install, and for
+maintaining AWS infrastructure already provisioned through it — see the note below) that package the commercial **GroundX RAG platform** (document ingestion + hybrid text/vector
 search + re-ranking + LLM summarization) for **self-hosted / air-gapped Kubernetes**. There is **no
 application source code here** — the product ships as **pre-built private container images**
 (`public.ecr.aws/c9r4x6y5` by default); this repo only contains the chart, example configs, operator
-tooling, and legacy Terraform that install and scale those images. The contract this repo exposes is
+tooling, and the `terraform/aws/` path that provisions and maintains the AWS infrastructure those
+images run on. The contract this repo exposes is
 its **deployment surface** (`values.yaml` + `values.schema.json`), not an app API. K8s targets:
 `eks`, `aks`, `gke`, `openshift`, `minikube` (selected via `cluster.type`). It has **no in-tree code
 dependency on any other `groundx-*` repo** (verified).
 
 ## How to run and test
+
+Follow [CONTRIBUTING.md](CONTRIBUTING.md) for focused regression coverage and PR guidance.
 
 - **Lint / render:** `helm lint src/groundx` · `helm template src/groundx -f src/groundx/values/minikube/values.yaml`
 - **Test:** `.build/bin/validate-helm.sh` runs the full local gate (lint + `helm unittest` +
@@ -96,7 +100,13 @@ without explicit human authorization.**
     `helm-tests.yml` CI asserts rendered output matches these snapshots.
   - **`helm-releases/*.tgz`** — build outputs of `src/build.sh` (`helm package`). Never edit.
   - **`terraform/**/.terraform.lock.hcl`** — generated lockfiles. Never edit.
-- **`terraform/`** is **legacy / deprecated** (2025-11-04). Don't build on it; prefer the Helm path.
+- **`terraform/aws/`** is an optional path for provisioning AWS infrastructure (VPC and/or EKS
+  cluster) ahead of the Helm install, and the supported path for maintaining AWS infrastructure
+  already provisioned through it. The 2025-11-04 migration retired the previous hybrid
+  terraform-helm approach to deploying the *application* (now a pure Helm release); it did not
+  retire Terraform's role in provisioning or maintaining the AWS infrastructure — see README.md's
+  "Terraform Deployment (terraform/aws/)" section, including the EKS cluster-version configuration
+  it documents.
 
 ## Where specs live
 
@@ -183,3 +193,7 @@ See [the operator guide](docs/agents/large-file-delivery.md) for the optional wo
 ## Database upgrades
 
 See [the migration gate](docs/agents/database-upgrades.md) for the pre-upgrade Job, compatible image requirement, fresh-install ordering and rollback.
+
+## EKS cost controls
+
+See [the operator guide](docs/agents/eks-cost-controls.md) for CPU disk defaults, node replacement, and CloudWatch configuration.

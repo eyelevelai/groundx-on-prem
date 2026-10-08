@@ -17,6 +17,8 @@
 {{- $paths := dig "paths" list $svcData -}}
 {{- $portKey := printf "groundx.%s.port" $entry -}}
 {{- $port := include $portKey $ -}}
+{{- $backendKey := printf "groundx.%s.serviceName" $entry -}}
+{{- $backend := include $backendKey $ -}}
 {{- $tls := dig "tls" list $svcData -}}
 {{- $vs := dig "apiVersion" "networking.k8s.io/v1" $svcData -}}
 ---
@@ -45,12 +47,12 @@ spec:
       - backend:
 {{- if eq $vs "networking.k8s.io/v1" }}
           service:
-            name: {{ $name }}
+            name: {{ $backend }}
             port:
               number: {{ $port }}
         pathType: ImplementationSpecific
 {{- else }}
-          serviceName: {{ $name }}
+          serviceName: {{ $backend }}
           servicePort: {{ $port }}
 {{- end }}
 {{- if ne $path "" }}

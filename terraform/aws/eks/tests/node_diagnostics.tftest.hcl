@@ -71,12 +71,12 @@ run "dns_collection_is_disabled_by_default" {
   command = plan
 
   assert {
-    condition     = var.dns_observability.enabled == false && local.cluster_addons["amazon-cloudwatch-observability"].configuration_values == null && local.cluster_addons["amazon-cloudwatch-observability"].addon_version == null
-    error_message = "The existing CloudWatch add-on must have no custom configuration by default."
+    condition     = var.dns_observability.enabled == false && length(local.cloudwatch_configuration.agents) == 1 && local.cluster_addons["amazon-cloudwatch-observability"].addon_version == null
+    error_message = "DNS collection must remain off without removing the main CloudWatch agent."
   }
 }
 
-run "dns_collection_keeps_default_agent_and_scrapes_coredns_once" {
+run "dns_collection_keeps_container_insights_and_scrapes_coredns_once" {
   command = plan
 
   variables {
@@ -89,19 +89,22 @@ run "dns_collection_keeps_default_agent_and_scrapes_coredns_once" {
   }
 
   assert {
-    condition = jsondecode(local.cluster_addons["amazon-cloudwatch-observability"].configuration_values).agents[0] == {
-      name = "cloudwatch-agent"
-    }
-    error_message = "The existing CloudWatch agent must retain its defaults."
+    condition     = local.cloudwatch_configuration.agents[0].config.logs.metrics_collected.kubernetes.enhanced_container_insights
+    error_message = "Detailed Container Insights must remain enabled with DNS collection."
   }
 
   assert {
-    condition     = jsondecode(local.cluster_addons["amazon-cloudwatch-observability"].configuration_values).agents[1].mode == "deployment"
+    condition     = length(local.cloudwatch_configuration.agents) == 2 && !local.cloudwatch_configuration.manager.applicationSignals.autoMonitor.monitorAllServices && !local.cloudwatch_configuration.manager.applicationSignals.autoMonitor.restartPods
+    error_message = "DNS collection must retain the cost controls and add exactly one collector."
+  }
+
+  assert {
+    condition     = local.cloudwatch_configuration.agents[1].mode == "deployment"
     error_message = "CoreDNS metrics must be scraped by only one collector deployment."
   }
 
   assert {
-    condition     = jsondecode(local.cluster_addons["amazon-cloudwatch-observability"].configuration_values).agents[1].prometheus.config.scrape_configs[0].kubernetes_sd_configs[0].namespaces.names[0] == "kube-system"
+    condition     = local.cloudwatch_configuration.agents[1].prometheus.config.scrape_configs[0].kubernetes_sd_configs[0].namespaces.names[0] == "kube-system"
     error_message = "The collector must discover CoreDNS in kube-system."
   }
 }
@@ -181,5 +184,61 @@ run "kms_source_policy_documents_pass_through" {
   assert {
     condition     = local.eks_kms_source_policy_documents == var.eks_kms_source_policy_documents
     error_message = "Configured EKS KMS source policy documents must pass through unchanged."
+  }
+}
+
+run "unset_version_resolves_to_null" {
+  command = plan
+
+  variables {
+    environment_internal = {}
+  }
+
+  assert {
+    condition     = var.environment_internal.eks_version == null
+    error_message = "An unset version key must resolve to null, not any implicit default."
+  }
+}
+
+run "cpu_only_disks_use_gp3_without_changing_other_pools" {
+  command = plan
+
+  assert {
+    condition     = local.node_groups.cpu_only_nodes.block_device_mappings.xvda.ebs.volume_type == "gp3" && local.node_groups.cpu_only_nodes.block_device_mappings.xvda.ebs.iops == 3000 && local.node_groups.cpu_only_nodes.block_device_mappings.xvda.ebs.throughput == 128
+    error_message = "The CPU-only launch template must use gp3 with 3000 IOPS and 128 MiB/s."
+  }
+
+  assert {
+    condition     = local.node_groups.cpu_only_nodes.block_device_mappings.xvda.ebs.encrypted && local.node_groups.cpu_only_nodes.block_device_mappings.xvda.ebs.delete_on_termination && tonumber(var.nodes.node_groups.cpu_only_nodes.ebs.volume_size) == 30
+    error_message = "CPU root disk size, encryption, and deletion behavior must be preserved."
+  }
+
+  assert {
+    condition     = local.node_groups.cpu_only_nodes.update_config.max_unavailable == 1 && !contains(keys(local.node_groups.cpu_only_nodes.update_config), "max_unavailable_percentage")
+    error_message = "Only one old CPU node may be unavailable during an update."
+  }
+
+  assert {
+    condition     = alltrue([for name, group in local.node_groups : group.block_device_mappings.xvda.ebs.volume_type == "gp2" if name != "cpu_only_nodes"])
+    error_message = "Other node groups must retain their existing disk types."
+  }
+}
+
+run "cloudwatch_cost_settings_apply_without_dns_collection" {
+  command = plan
+
+  assert {
+    condition     = !local.cloudwatch_configuration.manager.applicationSignals.autoMonitor.monitorAllServices && !local.cloudwatch_configuration.manager.applicationSignals.autoMonitor.restartPods
+    error_message = "Application Signals auto-monitoring and automatic application restarts must be disabled."
+  }
+
+  assert {
+    condition     = local.cloudwatch_configuration.agents[0].config.logs.metrics_collected.kubernetes.enhanced_container_insights
+    error_message = "Detailed Container Insights must remain enabled."
+  }
+
+  assert {
+    condition     = keys(local.cloudwatch_configuration.agents[0].config.logs.metrics_collected) == ["kubernetes"] && !contains(keys(local.cloudwatch_configuration.agents[0].config), "traces") && !contains(keys(local.cloudwatch_configuration.agents[0].config), "metrics")
+    error_message = "CloudWatch agent config must not contain Application Signals collection."
   }
 }

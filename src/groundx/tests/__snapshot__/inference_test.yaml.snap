@@ -22,7 +22,7 @@
             config-hash: 12d78cdd587a51bcb7ebf5af6c8872d7f1f8f4152175071dc503b226ba269583
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -45,7 +45,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -212,6 +212,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -810,7 +811,7 @@
             config-hash: 1a3a2f023bfcd922f9e67fc1100bb4f5b34e3b03513c80d5de2226fbef681569
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -833,7 +834,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -999,6 +1000,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1595,7 +1597,7 @@
             config-hash: 4adaae49d2cf5be77aaa3be5ed372c23dd728021f01803f2296142d9d2d04a6d
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -1618,7 +1620,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -1784,6 +1786,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2381,7 +2384,7 @@
             config-hash: 4adaae49d2cf5be77aaa3be5ed372c23dd728021f01803f2296142d9d2d04a6d
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -2404,7 +2407,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -2570,6 +2573,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3166,7 +3170,7 @@
             config-hash: 5326560ebc335a832d5b084c947e691d3fc49492f37533e8796210d4722765a3
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -3189,7 +3193,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -3355,6 +3359,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3693,7 +3698,7 @@
             config-hash: f5e125078762065d891bd7cc60044a2a0f4955fda12fd5fbabeac6ae132c0777
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -3716,7 +3721,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -3886,6 +3891,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4227,7 +4233,7 @@
             config-hash: 34ecf902bba4ab13212343c7738fba69995e865922a70ab1a4e53b6a782b105a
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -4250,7 +4256,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -4416,6 +4422,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4753,7 +4760,7 @@
             config-hash: f5e125078762065d891bd7cc60044a2a0f4955fda12fd5fbabeac6ae132c0777
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -4776,7 +4783,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -4946,6 +4953,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -5026,7 +5034,7 @@
             config-models-hash: 06ba464c30a765382364510ccee1e65088f7d2acbc11a746b7d14d84c220dd3b
             ldconfig-symlink-hash: 9958a113394211878ece8f9030f4c08a1860e77aa75b5852bfa0691fc3faf32f
             prometheus.io/port: "8081"
-            supervisord-hash: b39bd7d75862c4a85780b4e3d76fe459b3beaa52f391376e7c95cb26ef6068ec
+            supervisord-hash: 64861f085534e94eab9679d4f0765de4e6822eea933ed51e5f89de4ee6ef588a
           labels:
             app: myapp-inference
             app.kubernetes.io/name: myapp
@@ -5045,7 +5053,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -5190,6 +5198,7 @@
           securityContext:
             fsGroup: 2000
           serviceAccountName: other-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -5754,7 +5763,7 @@
           annotations:
             config-hash: 01a921a7559b4af85f56c800168663a3d26b0aec9bcd1a69af5452c25283d4e2
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -5777,7 +5786,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -5916,6 +5925,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -6395,7 +6405,7 @@
           annotations:
             config-hash: 01a921a7559b4af85f56c800168663a3d26b0aec9bcd1a69af5452c25283d4e2
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -6418,7 +6428,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -6549,6 +6559,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -7012,7 +7023,7 @@
           annotations:
             config-hash: 0fc6c0b783942d8aac8aa267423de4ee6b0b7483007a471480b0734f75629f0f
             config-models-hash: 529542d6881ddf622683f3bc8516205a5707660e0a921243b32fd51fd3573f4f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-inference
         spec:
@@ -7035,7 +7046,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -7168,6 +7179,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
