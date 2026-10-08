@@ -157,3 +157,17 @@ None outstanding — D1-D3 generalize an existing in-repo pattern
 D4 is a self-contained addition reusing D3's lookup call, and D5/D6 are mechanical (mirror sync,
 version bump, contract hand-off). No `superpowers:brainstorming` session was needed, consistent
 with the planner's source-of-truth note.
+
+## Amendments
+
+### 2026-10-08: D4 updated after review
+
+- D4's warning now covers every parameter, not only `encrypted`. It builds the parameter set the chart
+  would render (same filtering as `templates/storageclass.yaml`, so EBS-only keys are ignored for a
+  non-EBS provisioner), compares it with the live class's `parameters`, and names each parameter that
+  differs, for example `kmsKeyId` or `type`. A value that is `false` or empty for an EBS-only key on an
+  EBS class counts as absent on both sides.
+- D4's verification limitation no longer applies to the unit suite: `helm-unittest`'s
+  `kubernetesProvider` mocks the live class, so the lookup-hit warning is covered by
+  `tests/notes_test.yaml`. `helm template` still cannot exercise it. The real-cluster check (task 4.4)
+  was run on the groundx-validation EKS cluster on 2026-10-07.

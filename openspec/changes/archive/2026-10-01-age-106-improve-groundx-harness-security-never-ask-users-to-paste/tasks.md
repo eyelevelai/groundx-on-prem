@@ -27,24 +27,27 @@
   `templates/storageclass.yaml`: when it hits, render the live class's `parameters` verbatim
   instead of computing them from `.Values`; when it misses, fall through to the slice-1/2/3
   defaulting path, per design.md D3
-  check: n/a -- human cluster-verification (lookup always resolves empty under `helm template` and
-  `helm unittest`; see the follow-up step below and design.md D3's limitation)
-- [x] 4.2 Add `src/groundx/prereqs/storageclass/templates/NOTES.txt`: on a lookup hit where the
-  supplied (normalized) `encrypted` value disagrees with the live class's `parameters.encrypted`,
-  print a one-line warning that the live class's parameters are authoritative and the supplied
-  value was not applied; on a lookup miss, print nothing, per design.md D4
-  check: python3 -c "import importlib.util; spec=importlib.util.spec_from_file_location('vsc','.build/bin/verify-storage-contract.py'); m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m); [m.verify_notes_lookup_miss_renders_without_warning(c) for c in m.STORAGE_CHARTS]"
+  check: helm unittest src/groundx/prereqs/storageclass
+  (the lookup-hit branch is exercised by task 4.3a's suite, which mocks the live class with
+  `kubernetesProvider`; `helm template` still resolves `lookup` empty, see design.md D3's limitation,
+  and real-cluster confirmation is task 4.4)
+- [x] 4.2 Add `src/groundx/prereqs/storageclass/templates/NOTES.txt`: on a lookup hit where any
+  supplied (normalized) parameter differs from the live class's `parameters`, print a one-line warning
+  that the live class's parameters are authoritative and naming each parameter that was not applied;
+  on a lookup miss, print nothing, per design.md D4
+  check: helm unittest src/groundx/prereqs/storageclass
 - [x] 4.3 Sync `templates/storageclass.yaml` and the new `templates/NOTES.txt` into the `helm/`
   mirror
   check: python3 -c "import importlib.util; spec=importlib.util.spec_from_file_location('vsc','.build/bin/verify-storage-contract.py'); m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m); m.verify_mirrors()"
 - [x] 4.3a (added in review round 1, F5) Add a `helm-unittest` suite for the storageclass chart,
   using `kubernetesProvider` to mock an existing live StorageClass: (a) an unencrypted EBS class
   preserves its exact `parameters` on render, and a class with no recorded `parameters` renders no
-  `parameters` block; (b) NOTES.txt's divergence warning fires when the supplied value disagrees
-  with the live EBS class, stays silent when it agrees, and never fires for a non-EBS provisioner
-  even when parameters disagree. Wired into `.build/bin/validate-helm.sh`.
+  `parameters` block; (b) NOTES.txt's divergence warning fires and names each parameter
+  (`encrypted`, `kmsKeyId`, `type`, or a provisioner-specific one) when the supplied value differs from
+  the live class, stays silent when they agree, and never reports the chart's EBS-only defaults for a
+  non-EBS provisioner. Wired into `.build/bin/validate-helm.sh`.
   check: helm unittest src/groundx/prereqs/storageclass
-- [ ] 4.4 Human cluster-verification follow-up: confirm the above against a real cluster (`helm
+- [x] 4.4 Human cluster-verification follow-up: confirm the above against a real cluster (`helm
   upgrade --install` against the existing class renders its live `parameters` unchanged and
   succeeds; the NOTES.txt divergence warning behavior matches). The lookup-hit branch and NOTES.txt
   divergence warning are now exercised by task 4.3a's `helm-unittest` suite, so this step is a true
@@ -155,3 +158,19 @@ It was removed. The same case is now the `EBS lookup miss (class not in the clus
 `src/groundx/prereqs/storageclass/tests/notes_test.yaml`, which runs against a mocked provider. The
 verifier's helm calls also pin `KUBECONFIG` to a nonexistent file so they never read ambient cluster
 credentials. The task 5.x check that named the removed function is superseded by that unit test.
+
+### 2026-10-08: review comment fixes
+
+- Task 4.1's check now points at the `helm-unittest` suite from task 4.3a instead of `n/a`; the suite
+  exercises the lookup-hit branch with a mocked provider. Task 4.2's check and task 4.3a's text are
+  aligned with the same behavior.
+- The divergence warning in `templates/NOTES.txt` now compares every parameter the chart would render
+  against the live class (using the same filtering as `storageclass.yaml`) and names each one that
+  differs, so a changed `kmsKeyId` or `type` is reported, not only `encrypted`. EBS-only defaults are
+  not reported for a non-EBS provisioner.
+- Task 4.4 was confirmed on the groundx-validation EKS cluster on 2026-10-07: a real `helm upgrade`
+  of a 0.1.1 class to 0.1.2 left the class unchanged and printed the warning, and a new install
+  created a volume AWS reports as encrypted (an `encrypted=false` install created an unencrypted one).
+- The README GitOps note is qualified: setting `encrypted: "false"` keeps a class that 0.1.1 created
+  without an explicit value, but does not help a class that 0.1.1 created with an explicit
+  `encrypted: "false"`, because 0.1.2 never renders an explicit `false`.

@@ -1,4 +1,4 @@
-suite: "storageclass NOTES.txt warns on an EBS lookup-hit encryption disagreement, and only there"
+suite: "storageclass NOTES.txt warns when a supplied parameter differs from the live class, and only then"
 templates:
   - ../templates/NOTES.txt
 kubernetesProvider:
@@ -69,7 +69,42 @@ tests:
       - equalRaw:
           value: ""
 
-  - it: "non-EBS lookup hit never warns, even though the supplied and live parameters disagree"
+  - it: "EBS lookup hit, a different kmsKeyId is supplied: warns and names kmsKeyId"
+    set:
+      storageClassName: existing-ebs-encrypted
+      parameters.kmsKeyId: arn:aws:kms:us-east-2:111122223333:key/example
+    asserts:
+      - matchRegexRaw:
+          pattern: "not applied: kmsKeyId\\."
+
+  - it: "EBS lookup hit, a different type is supplied: warns and names type"
+    set:
+      storageClassName: existing-ebs-encrypted
+      parameters.type: io2
+    asserts:
+      - matchRegexRaw:
+          pattern: "not applied: type\\."
+
+  - it: "EBS lookup hit, several parameters differ: warns once and names each of them"
+    set:
+      storageClassName: existing-ebs-unencrypted
+      parameters.type: io2
+    asserts:
+      - matchRegexRaw:
+          pattern: "not applied: encrypted, type\\."
+
+  - it: "non-EBS lookup hit with matching parameters stays silent (chart EBS defaults are not reported)"
+    set:
+      storageClassName: existing-efs
+      provisioner: efs.csi.aws.com
+      parameters.provisioningMode: efs-ap
+      parameters.fileSystemId: fs-0123456789abcdef0
+      parameters.basePath: /eyelevel
+    asserts:
+      - equalRaw:
+          value: ""
+
+  - it: "non-EBS lookup hit warns on a real parameter difference and names only that parameter"
     set:
       storageClassName: existing-efs
       provisioner: efs.csi.aws.com
@@ -77,7 +112,5 @@ tests:
       parameters.fileSystemId: fs-REPLACE_ME
       parameters.basePath: /eyelevel
     asserts:
-      - notMatchRegexRaw:
-          pattern: "already exists"
-      - equalRaw:
-          value: ""
+      - matchRegexRaw:
+          pattern: "not applied: fileSystemId\\."
