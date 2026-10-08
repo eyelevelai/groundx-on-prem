@@ -26,6 +26,8 @@
 {{- $lic := include "groundx.layout.inference.threshold" . | trim -}}
 {{- $ribw := include "groundx.ranker.inference.busyWindowSeconds" . | trim -}}
 {{- $sac := include "groundx.summary.api.threshold" . | trim -}}
+{{- $saw := max 1 (include "groundx.summary.api.workers" . | int) -}}
+{{- $sacw := max 1 (div ($sac | int) $saw) -}}
 {{- $sic := include "groundx.summary.inference.threshold" . | trim -}}
 {{- $scc := include "groundx.summaryClient.threshold" . | trim -}}
 {{- $sce := include "groundx.summary.create" . -}}
@@ -320,7 +322,7 @@ stringData:
         {{- end }}
         {{- if ne $sac "0" }}
         - name: {{ include "groundx.summary.api.serviceName" . }}
-          tokensPerMinute: {{ $sac }}
+          tokensPerMinute: {{ $sacw }}
         {{- end }}
         {{- if ne $sic "0" }}
         - name: {{ include "groundx.summary.serviceName" . }}-inference

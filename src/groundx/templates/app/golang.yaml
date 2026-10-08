@@ -187,6 +187,9 @@ metadata:
 {{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
 spec:
   minAvailable: 1
+{{- if semverCompare ">=1.26-0" $.Capabilities.KubeVersion.Version }}
+  unhealthyPodEvictionPolicy: AlwaysAllow
+{{- end }}
   selector:
     matchLabels:
       app: {{ $svc }}

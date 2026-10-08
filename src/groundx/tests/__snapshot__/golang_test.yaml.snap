@@ -1626,7 +1626,7 @@
             - name: config-volume
               secret:
                 secretName: config-yaml-map
-'database migration blocks upgrades before new Go workloads':
+database migration blocks upgrades before new Go workloads:
   1: |
     apiVersion: batch/v1
     kind: Job
@@ -2485,7 +2485,6 @@
             - name: config-volume
               secret:
                 secretName: config-yaml-map
-'disabled: golang':
 'empty: golang':
   1: |
     apiVersion: apps/v1
@@ -4120,795 +4119,6 @@
             - name: config-volume
               secret:
                 secretName: RELEASE-NAME-schema-migration
-'extract: golang':
-  1: |
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      labels:
-        app: groundx
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: groundx
-      namespace: eyelevel
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: groundx
-      template:
-        metadata:
-          annotations:
-            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
-          labels:
-            app: groundx
-        spec:
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: node
-                        operator: In
-                        values:
-                          - eyelevel-cpu-only
-                  - matchExpressions:
-                      - key: eyelevel_node
-                        operator: In
-                        values:
-                          - eyelevel-cpu-only
-          containers:
-            - envFrom:
-                - secretRef:
-                    name: eyelevel-secret-credentials
-              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
-              imagePullPolicy: IfNotPresent
-              livenessProbe:
-                httpGet:
-                  path: /health
-                  port: 8080
-                initialDelaySeconds: 30
-                periodSeconds: 30
-              name: groundx
-              ports:
-                - containerPort: 8080
-                  protocol: TCP
-              readinessProbe:
-                httpGet:
-                  path: /health
-                  port: 8080
-                initialDelaySeconds: 10
-                periodSeconds: 30
-              resources:
-                requests:
-                  cpu: 100m
-                  memory: 128Mi
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 1001
-                runAsNonRoot: true
-                runAsUser: 1001
-                seccompProfile:
-                  type: RuntimeDefault
-              volumeMounts:
-                - mountPath: /home/golang/.cashbot/config.yaml
-                  name: config-volume
-                  subPath: config.yaml
-          initContainers:
-            - command:
-                - sh
-                - -c
-                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: IfNotPresent
-              name: wait-for-cache
-            - command:
-                - sh
-                - -c
-                - until nc -z X.s3.us-west-2.amazonaws.com 443; do echo waiting for file storage; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: IfNotPresent
-              name: wait-for-file-storage
-            - command:
-                - sh
-                - -c
-                - until nc -z X.X.us-east-2.rds.amazonaws.com 3306; do echo waiting for database; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: IfNotPresent
-              name: wait-for-database
-          securityContext:
-            fsGroup: 1001
-            fsGroupChangePolicy: OnRootMismatch
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
-            seccompProfile:
-              type: RuntimeDefault
-          serviceAccountName: existing-service-account
-          tolerations:
-            - effect: NoSchedule
-              key: node
-              value: eyelevel-cpu-only
-            - effect: NoSchedule
-              key: eyelevel_node
-              value: eyelevel-cpu-only
-          volumes:
-            - name: config-volume
-              secret:
-                secretName: config-yaml-map
-  2: |
-    apiVersion: v1
-    kind: Service
-    metadata:
-      labels:
-        app: groundx
-      name: groundx
-      namespace: eyelevel
-    spec:
-      ports:
-        - port: 80
-          protocol: TCP
-          targetPort: 8080
-      selector:
-        app: groundx
-      type: ClusterIP
-  3: |
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      labels:
-        app: layout-webhook
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: layout-webhook
-      namespace: eyelevel
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: layout-webhook
-      template:
-        metadata:
-          annotations:
-            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
-          labels:
-            app: layout-webhook
-        spec:
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: node
-                        operator: In
-                        values:
-                          - eyelevel-cpu-only
-                  - matchExpressions:
-                      - key: eyelevel_node
-                        operator: In
-                        values:
-                          - eyelevel-cpu-only
-          containers:
-            - envFrom:
-                - secretRef:
-                    name: eyelevel-secret-credentials
-              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
-              imagePullPolicy: IfNotPresent
-              livenessProbe:
-                httpGet:
-                  path: /health
-                  port: 8080
-                initialDelaySeconds: 30
-                periodSeconds: 30
-              name: layout-webhook
-              ports:
-                - containerPort: 8080
-                  protocol: TCP
-              readinessProbe:
-                httpGet:
-                  path: /health
-                  port: 8080
-                initialDelaySeconds: 10
-                periodSeconds: 30
-              resources:
-                requests:
-                  cpu: 100m
-                  memory: 128Mi
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 1001
-                runAsNonRoot: true
-                runAsUser: 1001
-                seccompProfile:
-                  type: RuntimeDefault
-              volumeMounts:
-                - mountPath: /home/golang/.cashbot/config.yaml
-                  name: config-volume
-                  subPath: config.yaml
-          initContainers:
-            - command:
-                - sh
-                - -c
-                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: IfNotPresent
-              name: wait-for-groundx
-          securityContext:
-            fsGroup: 1001
-            fsGroupChangePolicy: OnRootMismatch
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
-            seccompProfile:
-              type: RuntimeDefault
-          serviceAccountName: existing-service-account
-          tolerations:
-            - effect: NoSchedule
-              key: node
-              value: eyelevel-cpu-only
-            - effect: NoSchedule
-              key: eyelevel_node
-              value: eyelevel-cpu-only
-          volumes:
-            - name: config-volume
-              secret:
-                secretName: config-yaml-map
-  4: |
-    apiVersion: v1
-    kind: Service
-    metadata:
-      labels:
-        app: layout-webhook
-      name: layout-webhook
-      namespace: eyelevel
-    spec:
-      ports:
-        - port: 80
-          protocol: TCP
-          targetPort: 8080
-      selector:
-        app: layout-webhook
-      type: ClusterIP
-  5: |
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      labels:
-        app: pre-process
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: pre-process
-      namespace: eyelevel
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: pre-process
-      template:
-        metadata:
-          annotations:
-            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
-          labels:
-            app: pre-process
-        spec:
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: node
-                        operator: In
-                        values:
-                          - eyelevel-cpu-memory
-                  - matchExpressions:
-                      - key: eyelevel_node
-                        operator: In
-                        values:
-                          - eyelevel-cpu-memory
-          containers:
-            - envFrom:
-                - secretRef:
-                    name: eyelevel-secret-credentials
-              image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
-              imagePullPolicy: IfNotPresent
-              livenessProbe:
-                httpGet:
-                  path: /health
-                  port: 8080
-                initialDelaySeconds: 30
-                periodSeconds: 30
-              name: pre-process
-              ports:
-                - containerPort: 8080
-                  protocol: TCP
-              readinessProbe:
-                httpGet:
-                  path: /health
-                  port: 8080
-                initialDelaySeconds: 10
-                periodSeconds: 30
-              resources:
-                requests:
-                  cpu: 200m
-                  memory: 1Gi
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 1001
-                runAsNonRoot: true
-                runAsUser: 1001
-                seccompProfile:
-                  type: RuntimeDefault
-              volumeMounts:
-                - mountPath: /home/golang/.cashbot/config.yaml
-                  name: config-volume
-                  subPath: config.yaml
-          initContainers:
-            - command:
-                - sh
-                - -c
-                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: IfNotPresent
-              name: wait-for-groundx
-          securityContext:
-            fsGroup: 1001
-            fsGroupChangePolicy: OnRootMismatch
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
-            seccompProfile:
-              type: RuntimeDefault
-          serviceAccountName: existing-service-account
-          tolerations:
-            - effect: NoSchedule
-              key: node
-              value: eyelevel-cpu-memory
-            - effect: NoSchedule
-              key: eyelevel_node
-              value: eyelevel-cpu-memory
-          volumes:
-            - name: config-volume
-              secret:
-                secretName: config-yaml-map
-  6: |
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      labels:
-        app: process
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: process
-      namespace: eyelevel
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: process
-      template:
-        metadata:
-          annotations:
-            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
-          labels:
-            app: process
-        spec:
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: node
-                        operator: In
-                        values:
-                          - eyelevel-cpu-only
-                  - matchExpressions:
-                      - key: eyelevel_node
-                        operator: In
-                        values:
-                          - eyelevel-cpu-only
-          containers:
-            - envFrom:
-                - secretRef:
-                    name: eyelevel-secret-credentials
-              image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
-              imagePullPolicy: IfNotPresent
-              livenessProbe:
-                httpGet:
-                  path: /health
-                  port: 8080
-                initialDelaySeconds: 30
-                periodSeconds: 30
-              name: process
-              ports:
-                - containerPort: 8080
-                  protocol: TCP
-              readinessProbe:
-                httpGet:
-                  path: /health
-                  port: 8080
-                initialDelaySeconds: 10
-                periodSeconds: 30
-              resources:
-                requests:
-                  cpu: 200m
-                  memory: 256Mi
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 1001
-                runAsNonRoot: true
-                runAsUser: 1001
-                seccompProfile:
-                  type: RuntimeDefault
-              volumeMounts:
-                - mountPath: /home/golang/.cashbot/config.yaml
-                  name: config-volume
-                  subPath: config.yaml
-          initContainers:
-            - command:
-                - sh
-                - -c
-                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: IfNotPresent
-              name: wait-for-groundx
-          securityContext:
-            fsGroup: 1001
-            fsGroupChangePolicy: OnRootMismatch
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
-            seccompProfile:
-              type: RuntimeDefault
-          serviceAccountName: existing-service-account
-          tolerations:
-            - effect: NoSchedule
-              key: node
-              value: eyelevel-cpu-only
-            - effect: NoSchedule
-              key: eyelevel_node
-              value: eyelevel-cpu-only
-          volumes:
-            - name: config-volume
-              secret:
-                secretName: config-yaml-map
-  7: |
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      labels:
-        app: queue
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: queue
-      namespace: eyelevel
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: queue
-      template:
-        metadata:
-          annotations:
-            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
-          labels:
-            app: queue
-        spec:
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: node
-                        operator: In
-                        values:
-                          - eyelevel-cpu-only
-                  - matchExpressions:
-                      - key: eyelevel_node
-                        operator: In
-                        values:
-                          - eyelevel-cpu-only
-          containers:
-            - envFrom:
-                - secretRef:
-                    name: eyelevel-secret-credentials
-              image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
-              imagePullPolicy: IfNotPresent
-              livenessProbe:
-                httpGet:
-                  path: /health
-                  port: 8080
-                initialDelaySeconds: 30
-                periodSeconds: 30
-              name: queue
-              ports:
-                - containerPort: 8080
-                  protocol: TCP
-              readinessProbe:
-                httpGet:
-                  path: /health
-                  port: 8080
-                initialDelaySeconds: 10
-                periodSeconds: 30
-              resources:
-                requests:
-                  cpu: 100m
-                  memory: 128Mi
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 1001
-                runAsNonRoot: true
-                runAsUser: 1001
-                seccompProfile:
-                  type: RuntimeDefault
-              volumeMounts:
-                - mountPath: /home/golang/.cashbot/config.yaml
-                  name: config-volume
-                  subPath: config.yaml
-          initContainers:
-            - command:
-                - sh
-                - -c
-                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: IfNotPresent
-              name: wait-for-groundx
-          securityContext:
-            fsGroup: 1001
-            fsGroupChangePolicy: OnRootMismatch
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
-            seccompProfile:
-              type: RuntimeDefault
-          serviceAccountName: existing-service-account
-          tolerations:
-            - effect: NoSchedule
-              key: node
-              value: eyelevel-cpu-only
-            - effect: NoSchedule
-              key: eyelevel_node
-              value: eyelevel-cpu-only
-          volumes:
-            - name: config-volume
-              secret:
-                secretName: config-yaml-map
-  8: |
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      labels:
-        app: summary-client
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: summary-client
-      namespace: eyelevel
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: summary-client
-      template:
-        metadata:
-          annotations:
-            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
-          labels:
-            app: summary-client
-        spec:
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: node
-                        operator: In
-                        values:
-                          - eyelevel-cpu-only
-                  - matchExpressions:
-                      - key: eyelevel_node
-                        operator: In
-                        values:
-                          - eyelevel-cpu-only
-          containers:
-            - envFrom:
-                - secretRef:
-                    name: eyelevel-secret-credentials
-              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
-              imagePullPolicy: IfNotPresent
-              livenessProbe:
-                httpGet:
-                  path: /health
-                  port: 8080
-                initialDelaySeconds: 30
-                periodSeconds: 30
-              name: summary-client
-              ports:
-                - containerPort: 8080
-                  protocol: TCP
-              readinessProbe:
-                httpGet:
-                  path: /health
-                  port: 8080
-                initialDelaySeconds: 10
-                periodSeconds: 30
-              resources:
-                requests:
-                  cpu: 100m
-                  memory: 512Mi
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 1001
-                runAsNonRoot: true
-                runAsUser: 1001
-                seccompProfile:
-                  type: RuntimeDefault
-              volumeMounts:
-                - mountPath: /home/golang/.cashbot/config.yaml
-                  name: config-volume
-                  subPath: config.yaml
-          initContainers:
-            - command:
-                - sh
-                - -c
-                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: IfNotPresent
-              name: wait-for-groundx
-          securityContext:
-            fsGroup: 1001
-            fsGroupChangePolicy: OnRootMismatch
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
-            seccompProfile:
-              type: RuntimeDefault
-          serviceAccountName: existing-service-account
-          tolerations:
-            - effect: NoSchedule
-              key: node
-              value: eyelevel-cpu-only
-            - effect: NoSchedule
-              key: eyelevel_node
-              value: eyelevel-cpu-only
-          volumes:
-            - name: config-volume
-              secret:
-                secretName: config-yaml-map
-  9: |
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      labels:
-        app: upload
-        appVersion: 0.1.0
-        chart: groundx-0.1.0
-        heritage: Helm
-        version: 0.1.0
-      name: upload
-      namespace: eyelevel
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: upload
-      template:
-        metadata:
-          annotations:
-            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
-          labels:
-            app: upload
-        spec:
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: node
-                        operator: In
-                        values:
-                          - eyelevel-cpu-only
-                  - matchExpressions:
-                      - key: eyelevel_node
-                        operator: In
-                        values:
-                          - eyelevel-cpu-only
-          containers:
-            - envFrom:
-                - secretRef:
-                    name: eyelevel-secret-credentials
-              image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
-              imagePullPolicy: IfNotPresent
-              livenessProbe:
-                httpGet:
-                  path: /health
-                  port: 8080
-                initialDelaySeconds: 30
-                periodSeconds: 30
-              name: upload
-              ports:
-                - containerPort: 8080
-                  protocol: TCP
-              readinessProbe:
-                httpGet:
-                  path: /health
-                  port: 8080
-                initialDelaySeconds: 10
-                periodSeconds: 30
-              resources:
-                requests:
-                  cpu: 100m
-                  memory: 128Mi
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 1001
-                runAsNonRoot: true
-                runAsUser: 1001
-                seccompProfile:
-                  type: RuntimeDefault
-              volumeMounts:
-                - mountPath: /home/golang/.cashbot/config.yaml
-                  name: config-volume
-                  subPath: config.yaml
-          initContainers:
-            - command:
-                - sh
-                - -c
-                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
-              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
-              imagePullPolicy: IfNotPresent
-              name: wait-for-groundx
-          securityContext:
-            fsGroup: 1001
-            fsGroupChangePolicy: OnRootMismatch
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
-            seccompProfile:
-              type: RuntimeDefault
-          serviceAccountName: existing-service-account
-          tolerations:
-            - effect: NoSchedule
-              key: node
-              value: eyelevel-cpu-only
-            - effect: NoSchedule
-              key: eyelevel_node
-              value: eyelevel-cpu-only
-          volumes:
-            - name: config-volume
-              secret:
-                secretName: config-yaml-map
 'extract.ingest: golang':
   1: |
     apiVersion: apps/v1
@@ -6374,6 +5584,795 @@
         metadata:
           annotations:
             config-hash: 03dbd7e13800e694c13b97c4f80da7217c8924d4667ed0f4a7424e7ae4dfc934
+          labels:
+            app: upload
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - envFrom:
+                - secretRef:
+                    name: eyelevel-secret-credentials
+              image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: upload
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+'extract: golang':
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: groundx
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: groundx
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: groundx
+      template:
+        metadata:
+          annotations:
+            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
+          labels:
+            app: groundx
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - envFrom:
+                - secretRef:
+                    name: eyelevel-secret-credentials
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: groundx
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.X.use2.cache.amazonaws.com 6379; do echo waiting for cache; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-cache
+            - command:
+                - sh
+                - -c
+                - until nc -z X.s3.us-west-2.amazonaws.com 443; do echo waiting for file storage; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-file-storage
+            - command:
+                - sh
+                - -c
+                - until nc -z X.X.us-east-2.rds.amazonaws.com 3306; do echo waiting for database; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-database
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: groundx
+      name: groundx
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: groundx
+      type: ClusterIP
+  3: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: layout-webhook
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: layout-webhook
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: layout-webhook
+      template:
+        metadata:
+          annotations:
+            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
+          labels:
+            app: layout-webhook
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - envFrom:
+                - secretRef:
+                    name: eyelevel-secret-credentials
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: layout-webhook
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: layout-webhook
+      name: layout-webhook
+      namespace: eyelevel
+    spec:
+      ports:
+        - port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: layout-webhook
+      type: ClusterIP
+  5: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: pre-process
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: pre-process
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: pre-process
+      template:
+        metadata:
+          annotations:
+            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
+          labels:
+            app: pre-process
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-memory
+          containers:
+            - envFrom:
+                - secretRef:
+                    name: eyelevel-secret-credentials
+              image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: pre-process
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 1Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-memory
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-memory
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  6: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: process
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: process
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: process
+      template:
+        metadata:
+          annotations:
+            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
+          labels:
+            app: process
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - envFrom:
+                - secretRef:
+                    name: eyelevel-secret-credentials
+              image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: process
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  7: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: queue
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: queue
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: queue
+      template:
+        metadata:
+          annotations:
+            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
+          labels:
+            app: queue
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - envFrom:
+                - secretRef:
+                    name: eyelevel-secret-credentials
+              image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: queue
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  8: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: summary-client
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: summary-client
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: summary-client
+      template:
+        metadata:
+          annotations:
+            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
+          labels:
+            app: summary-client
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+                  - matchExpressions:
+                      - key: eyelevel_node
+                        operator: In
+                        values:
+                          - eyelevel-cpu-only
+          containers:
+            - envFrom:
+                - secretRef:
+                    name: eyelevel-secret-credentials
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              name: summary-client
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /home/golang/.cashbot/config.yaml
+                  name: config-volume
+                  subPath: config.yaml
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - until wget -T 5 -qO- http://groundx.eyelevel.svc.cluster.local/health; do echo waiting for groundx; sleep 2; done
+              image: public.ecr.aws/c9r4x6y5/eyelevel/busybox:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: wait-for-groundx
+          securityContext:
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: existing-service-account
+          tolerations:
+            - effect: NoSchedule
+              key: node
+              value: eyelevel-cpu-only
+            - effect: NoSchedule
+              key: eyelevel_node
+              value: eyelevel-cpu-only
+          volumes:
+            - name: config-volume
+              secret:
+                secretName: config-yaml-map
+  9: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: upload
+        appVersion: 0.1.0
+        chart: groundx-0.1.0
+        heritage: Helm
+        version: 0.1.0
+      name: upload
+      namespace: eyelevel
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: upload
+      template:
+        metadata:
+          annotations:
+            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
           labels:
             app: upload
         spec:
@@ -8327,7 +8326,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c0772b4e9441774667f76e9969cadbb2750c0497de74a3f2582c55d635809031
+            config-hash: f7d710fb2cf02a2cf9322273656f7ac4413ffc12225aa320715e11129121b542
             prometheus.io/port: "8081"
           labels:
             app: myapp
@@ -8457,7 +8456,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c0772b4e9441774667f76e9969cadbb2750c0497de74a3f2582c55d635809031
+            config-hash: f7d710fb2cf02a2cf9322273656f7ac4413ffc12225aa320715e11129121b542
           labels:
             app: layout-webhook
         spec:
@@ -8574,7 +8573,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c0772b4e9441774667f76e9969cadbb2750c0497de74a3f2582c55d635809031
+            config-hash: f7d710fb2cf02a2cf9322273656f7ac4413ffc12225aa320715e11129121b542
           labels:
             app: pre-process
         spec:
@@ -8679,7 +8678,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c0772b4e9441774667f76e9969cadbb2750c0497de74a3f2582c55d635809031
+            config-hash: f7d710fb2cf02a2cf9322273656f7ac4413ffc12225aa320715e11129121b542
           labels:
             app: process
         spec:
@@ -8782,7 +8781,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c0772b4e9441774667f76e9969cadbb2750c0497de74a3f2582c55d635809031
+            config-hash: f7d710fb2cf02a2cf9322273656f7ac4413ffc12225aa320715e11129121b542
           labels:
             app: queue
         spec:
@@ -8864,7 +8863,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c0772b4e9441774667f76e9969cadbb2750c0497de74a3f2582c55d635809031
+            config-hash: f7d710fb2cf02a2cf9322273656f7ac4413ffc12225aa320715e11129121b542
           labels:
             app: summary-client
         spec:
@@ -8951,7 +8950,7 @@
       template:
         metadata:
           annotations:
-            config-hash: c0772b4e9441774667f76e9969cadbb2750c0497de74a3f2582c55d635809031
+            config-hash: f7d710fb2cf02a2cf9322273656f7ac4413ffc12225aa320715e11129121b542
           labels:
             app: upload
         spec:
@@ -12348,4 +12347,3 @@
             - name: config-volume
               secret:
                 secretName: config-yaml-map
-'workspace-enabled: golang':
