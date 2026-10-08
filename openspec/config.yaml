@@ -67,7 +67,7 @@ context: |
       fails without it), and this repo's other chart contract verifiers. This IS what
       .github/workflows/helm-tests.yml runs; prefer it over hand-assembling the steps below.
     - helm unittest src/groundx (snapshot tests — the CI gate, enforced in helm-tests.yml)
-    - helm template src/groundx -f values/minikube/values.yaml -f tests/files/values.search-credentials.yaml (render check; the fixture is required because the chart has no default search passwords)
+    - helm template src/groundx -f values/minikube/values.yaml -f tests/files/values.search-credentials.yaml (render check; the fixture supplies explicit test search credentials)
     - helm lint (declared in repos.yml run.lint)
     - verify_mirrors() in .build/bin/verify-storage-contract.py enforces the full templates/ tree on every gate run (drift IS checked). The remaining gap is the absence of a regen script — nothing auto-syncs helm/ from src/groundx/, so a human still mirrors edits by hand.
   
