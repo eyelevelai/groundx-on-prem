@@ -11,11 +11,22 @@ provisioner: {{ .Values.provisioner }}
 {{- with .Values.reclaimPolicy }}
 reclaimPolicy: {{ . }}
 {{- end }}
+{{- $existing := lookup "storage.k8s.io/v1" "StorageClass" "" .Values.storageClassName }}
+{{- $ebsOnlyKeys := list "type" "encrypted" "kmsKeyId" }}
+{{- if $existing }}
+{{- if $existing.parameters }}
+parameters:
+{{- range $key, $value := $existing.parameters }}
+  {{ $key }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+{{- else }}
 {{- with .Values.parameters }}
 parameters:
 {{- range $key, $value := . }}
-{{- if and $value (ne (toString $value) "") (or (ne $key "type") (eq $.Values.provisioner "ebs.csi.aws.com")) }}
+{{- if and $value (ne (toString $value) "") (or (not (has $key $ebsOnlyKeys)) (ne (toString $value) "false")) (or (not (has $key $ebsOnlyKeys)) (eq $.Values.provisioner "ebs.csi.aws.com")) }}
   {{ $key }}: {{ $value | quote }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

@@ -1,0 +1,116 @@
+suite: "storageclass NOTES.txt warns when a supplied parameter differs from the live class, and only then"
+templates:
+  - ../templates/NOTES.txt
+kubernetesProvider:
+  scheme:
+    "storage.k8s.io/v1/StorageClass":
+      gvr:
+        group: "storage.k8s.io"
+        version: "v1"
+        resource: "storageclasses"
+      namespaced: false
+  objects:
+    - kind: StorageClass
+      apiVersion: storage.k8s.io/v1
+      metadata:
+        name: existing-ebs-unencrypted
+      parameters:
+        type: gp3
+        encrypted: "false"
+    - kind: StorageClass
+      apiVersion: storage.k8s.io/v1
+      metadata:
+        name: existing-ebs-encrypted
+      parameters:
+        type: gp3
+        encrypted: "true"
+    - kind: StorageClass
+      apiVersion: storage.k8s.io/v1
+      metadata:
+        name: existing-efs
+      parameters:
+        provisioningMode: efs-ap
+        fileSystemId: fs-0123456789abcdef0
+        basePath: /eyelevel
+
+tests:
+  - it: "EBS lookup hit, supplied encrypted disagrees with the live class: warns that the supplied value was not applied"
+    set:
+      storageClassName: existing-ebs-unencrypted
+    asserts:
+      - matchRegexRaw:
+          pattern: "already exists"
+
+  - it: "EBS lookup hit, supplied encrypted agrees with the live class: stays silent"
+    set:
+      storageClassName: existing-ebs-encrypted
+    asserts:
+      - notMatchRegexRaw:
+          pattern: "already exists"
+      - equalRaw:
+          value: ""
+
+  - it: "EBS lookup hit, supplied encrypted \"false\" agrees with a live class already \"false\": stays silent"
+    set:
+      storageClassName: existing-ebs-unencrypted
+      parameters.encrypted: "false"
+    asserts:
+      - notMatchRegexRaw:
+          pattern: "already exists"
+      - equalRaw:
+          value: ""
+
+  - it: "EBS lookup miss (class not in the cluster): NOTES.txt renders silent"
+    set:
+      storageClassName: no-such-class
+    asserts:
+      - notMatchRegexRaw:
+          pattern: "already exists"
+      - equalRaw:
+          value: ""
+
+  - it: "EBS lookup hit, a different kmsKeyId is supplied: warns and names kmsKeyId"
+    set:
+      storageClassName: existing-ebs-encrypted
+      parameters.kmsKeyId: arn:aws:kms:us-east-2:111122223333:key/example
+    asserts:
+      - matchRegexRaw:
+          pattern: "not applied: kmsKeyId\\."
+
+  - it: "EBS lookup hit, a different type is supplied: warns and names type"
+    set:
+      storageClassName: existing-ebs-encrypted
+      parameters.type: io2
+    asserts:
+      - matchRegexRaw:
+          pattern: "not applied: type\\."
+
+  - it: "EBS lookup hit, several parameters differ: warns once and names each of them"
+    set:
+      storageClassName: existing-ebs-unencrypted
+      parameters.type: io2
+    asserts:
+      - matchRegexRaw:
+          pattern: "not applied: encrypted, type\\."
+
+  - it: "non-EBS lookup hit with matching parameters stays silent (chart EBS defaults are not reported)"
+    set:
+      storageClassName: existing-efs
+      provisioner: efs.csi.aws.com
+      parameters.provisioningMode: efs-ap
+      parameters.fileSystemId: fs-0123456789abcdef0
+      parameters.basePath: /eyelevel
+    asserts:
+      - equalRaw:
+          value: ""
+
+  - it: "non-EBS lookup hit warns on a real parameter difference and names only that parameter"
+    set:
+      storageClassName: existing-efs
+      provisioner: efs.csi.aws.com
+      parameters.provisioningMode: efs-ap
+      parameters.fileSystemId: fs-REPLACE_ME
+      parameters.basePath: /eyelevel
+    asserts:
+      - matchRegexRaw:
+          pattern: "not applied: fileSystemId\\."

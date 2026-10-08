@@ -1,0 +1,26 @@
+{{- $existing := lookup "storage.k8s.io/v1" "StorageClass" "" .Values.storageClassName }}
+{{- if $existing }}
+{{- $ebsOnlyKeys := list "type" "encrypted" "kmsKeyId" }}
+{{- $isEbs := eq .Values.provisioner "ebs.csi.aws.com" }}
+{{- $supplied := dict }}
+{{- range $key, $value := (.Values.parameters | default dict) }}
+{{- if and $value (ne (toString $value) "") (or (not (has $key $ebsOnlyKeys)) (and $isEbs (ne (toString $value) "false"))) }}
+{{- $_ := set $supplied $key (toString $value) }}
+{{- end }}
+{{- end }}
+{{- $live := dict }}
+{{- range $key, $value := ($existing.parameters | default dict) }}
+{{- if not (and $isEbs (has $key $ebsOnlyKeys) (or (eq (toString $value) "") (eq (toString $value) "false"))) }}
+{{- $_ := set $live $key (toString $value) }}
+{{- end }}
+{{- end }}
+{{- $differing := list }}
+{{- range $key := (concat (keys $supplied) (keys $live) | uniq | sortAlpha) }}
+{{- if ne (get $supplied $key) (get $live $key) }}
+{{- $differing = append $differing $key }}
+{{- end }}
+{{- end }}
+{{- if $differing }}
+StorageClass {{ .Values.storageClassName }} already exists -- its live parameters are authoritative and the supplied values for these parameters were not applied: {{ join ", " $differing }}.
+{{- end }}
+{{- end }}

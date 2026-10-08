@@ -582,6 +582,14 @@ bin/uuid
 
 ### Persistent Storage
 
+**Chart publication status:** as of this writing, only `groundx-storageclass` `0.1.1` is published to
+`registry.groundx.ai/helm` -- `helm search repo` and a plain `helm install`/`helm upgrade` with no
+`--version` pin resolve to `0.1.1`, which has no `lookup`-based upgrade-safety guard and does not
+default `parameters.encrypted` to `"true"`. The `0.1.2` behavior described in the upgrade note below
+(encrypted-by-default EBS installs, existing-class preservation on upgrade) applies only once `0.1.2`
+is published; until then, pin `--version 0.1.2` explicitly once it is available, and do not assume an
+unpinned install already has these defaults.
+
 GroundX uses one app-wide persistent storage abstraction. Set `cluster.pvClass` to the Kubernetes storage class name and `cluster.pvAccessMode` to the access mode that class supports. Services that need PVCs, including summary inference, ranker inference, layout inference, and workspace when `workspace.pvc.enabled: true`, inherit those values unless their local `pvc` block explicitly overrides them.
 
 Prefer a shared filesystem class with `ReadWriteMany` when available:
@@ -609,6 +617,8 @@ cluster:
 An EKS/EBS example is available at `src/groundx/prereqs/storageclass/values.ebs.example.yaml`. With `ReadWriteOnce`, any pod family sharing the same PVC must be scheduled in a compatible shape because the volume cannot be mounted freely across nodes.
 
 For AWS EKS, `terraform/aws/setup-eks` generates `src/groundx/prereqs/storageclass/values.aws.local.yaml` and `src/groundx/values.aws.local.yaml` from Terraform outputs. Use `STORAGE_DRIVER=efs` for the shared EFS path or `STORAGE_DRIVER=ebs` for EBS. The generated Helm commands printed by the script do not require manually editing the EFS filesystem ID.
+
+**Upgrade note (EBS encryption default):** starting with `groundx-storageclass` `0.1.2`, a new EBS install renders `parameters.encrypted: "true"` by default -- an operator opting out sets `encrypted: "false"` explicitly (unquoted `false`, `null`, and `""` are equivalent opt-out spellings). An already-installed StorageClass is never changed by a real `helm upgrade --install`: the chart reads the live class via Helm's `lookup` function and, when the class already exists, renders its current live `parameters` verbatim instead of the chart's new defaults -- `helm upgrade` never attempts to change a StorageClass's `parameters`, which Kubernetes treats as immutable once the object is created. When the class exists and any supplied parameter (`encrypted`, `kmsKeyId`, `type`, or a provisioner-specific one) differs from the live class, the chart's install notes print one line naming each parameter that was not applied. This `lookup` guard only sees a live cluster: `helm template`, a client-side dry run, and GitOps renderers have no live cluster to query, so those flows always render the new-install defaults -- an operator managing an existing class that `0.1.1` created without an explicit `encrypted` value must set `encrypted: "false"` explicitly to keep it unchanged. This does not work for a class that `0.1.1` created with an explicit `encrypted: "false"`: `0.1.2` never renders an explicit `false`, so a no-live-cluster render omits the key, the rendered class then differs from the live one, and the apply fails on an immutable parameter. For that class, use a live-cluster `helm upgrade --install` (the `lookup` keeps the live value), stay on `0.1.1` in that flow, or create a new StorageClass. Changing an existing class's actual encryption requires creating a new StorageClass, because `parameters` cannot be updated in place. **Pin the version explicitly** (`helm install groundx-storageclass groundx/groundx-storageclass --version 0.1.2 ...`) once `0.1.2` is published -- an unpinned install resolves to whatever `helm search repo` currently reports (see the chart publication status note above), which may still be `0.1.1` and carries none of this behavior.
 
 ### Helm Installation
 
