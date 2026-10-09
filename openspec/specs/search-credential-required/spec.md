@@ -74,7 +74,7 @@ The README `### OpenSearch` install step SHALL take an operator-supplied admin p
 - each search credential can be set via values or via the Secret (`SEARCH_PASSWORD`, `SEARCH_INIT_PASSWORD`), as the `MYSQL_*` keys in the sample Secret do for `db`;
 - the Secret route requires `cluster.secrets` to list `eyelevel-secret-credentials`;
 - passwords delivered through the Secret are not render-validated by the chart, because the published-default check sees values only;
-- the Secret route applies to the direct-helm route, and the Terraform operator still takes both passwords as values.
+- the Secret route applies to the direct-helm route, and the Terraform operator still takes both passwords as values when `cluster.search` is true (an ingest-only install, `cluster.search = false`, needs neither).
 
 The README SHALL carry a migration note for existing installs: an existing OpenSearch keeps the admin password it was first initialised with, so, when those are non-default, set the admin password (`search.privilegedPassword` or `SEARCH_INIT_PASSWORD`) to the current admin password and the application password (`search.password` or `SEARCH_PASSWORD`) to the current application password, then rotate (if either current value is a published default the chart rejects it when it is supplied through values, so rotate the admin off it first and choose a new application password); a wrong admin password makes the GroundX API crash-loop at startup when it has to create or update its user (a first install or an application-password change), and is otherwise silent rather than fail the render.
 
@@ -91,22 +91,26 @@ The README SHALL carry a migration note for existing installs: an existing OpenS
 #### Scenario: README states the Secret route and its limits (polarity: reject before state)
 - **WHEN** the README `### Configuration` section is read
 - **THEN** it names `SEARCH_PASSWORD`, `SEARCH_INIT_PASSWORD` and `cluster.secrets`
-- **AND** it states that Secret-delivered passwords are not render-validated and that the Terraform operator still takes the passwords as values
+- **AND** it states that Secret-delivered passwords are not render-validated and that the Terraform operator still takes the passwords as values when `cluster.search` is true
 
-### Requirement: Terraform operator requires both search passwords
-The Terraform operator module SHALL define `variable "search"` with no default and a validation that rejects an empty `password` or an empty `root_password`; `index` and `user` therefore also become required. The values SHALL still flow to the generated GroundX config and to the OpenSearch release. `env.tfvars.example` and `env.tfvars.example-openshift` SHALL show placeholders for all four fields, with no colon in a placeholder.
+### Requirement: Terraform operator requires both search passwords when search is enabled
+The Terraform operator module SHALL define `variable "search"` with a default whose `password` and `root_password` are empty strings, and validations that reject an empty or angle-bracket-placeholder `password` or `root_password` only when `cluster.search` is true. An ingest-only install (`cluster.search = false`) SHALL NOT be required to supply either password. The module SHALL declare `required_version = ">= 1.9"` because the validations reference `var.cluster`. The values SHALL still flow to the generated GroundX config and to the OpenSearch release. `env.tfvars.example` and `env.tfvars.example-openshift` SHALL show placeholders for all four fields, with no colon in a placeholder.
 
-#### Scenario: Missing search variable is rejected (polarity: reject before state)
-- **WHEN** Terraform evaluates the `search` variable with no value supplied
-- **THEN** evaluation fails because there is no default
+#### Scenario: Missing search variable is rejected when search is enabled (polarity: reject before state)
+- **WHEN** `cluster.search` is true and Terraform evaluates the `search` variable with no value supplied
+- **THEN** validation fails on the empty default `password`
+
+#### Scenario: Ingest-only install needs no search passwords (polarity: accept and enqueue; must not block)
+- **WHEN** `cluster.search` is false and `search.password` and `search.root_password` are empty
+- **THEN** variable validation passes
 
 #### Scenario: Empty password strings are rejected (polarity: reject before state; catches)
-- **WHEN** `search.password` is an empty string, and separately when `search.root_password` is an empty string
+- **WHEN** `cluster.search` is true and `search.password` is an empty string, and separately when `search.root_password` is an empty string or an angle-bracket placeholder
 - **THEN** variable validation fails in each case
 - **AND** an empty string is not treated as "supplied"
 
 #### Scenario: Supplied passwords are accepted (polarity: accept and enqueue; must not block)
-- **WHEN** all four fields are non-empty
+- **WHEN** `cluster.search` is true and `password` and `root_password` are non-empty, non-placeholder values
 - **THEN** variable validation passes and the values reach `init/config/golang.tf` and `services/search/opensearch.tf`
 
 ### Requirement: Every render gate supplies test-only search passwords from one fixture
