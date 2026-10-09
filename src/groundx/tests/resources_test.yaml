@@ -3,12 +3,20 @@ chart:
   appVersion: 0.1.0
   version: 0.1.0
 
+set:
+  search:
+    password: fixture-app-credential
+    privilegedPassword: fixture-admin-credential
+
 tests:
   - it: "database migration uses target database config in a separate hook Secret"
     templates:
       - ../templates/app/schema-migration.yaml
     values:
       - ../values/values.existing.yaml
+    set:
+      search.password: mypass
+      search.privilegedPassword: admin
     release:
       name: migration-config
       upgrade: true
@@ -364,6 +372,9 @@ tests:
       - ../templates/resources/workspace-supervisord-conf.yaml
     values:
       - ../values/values.existing.yaml
+    set:
+      search.password: mypass
+      search.privilegedPassword: admin
     asserts:
       - matchSnapshot: {}
   - it: "metadata: resources"

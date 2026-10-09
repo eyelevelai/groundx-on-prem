@@ -69,7 +69,7 @@ There is no runtime "main" in this repo. The operational entry points are:
 
 ```bash
 # Lint/render the chart
-helm template src/groundx -f src/groundx/values/minikube/values.yaml
+helm template src/groundx -f src/groundx/tests/files/values.search-credentials.yaml -f src/groundx/values/minikube/values.yaml
 
 # Full local gate (what CI runs — .github/workflows/helm-tests.yml)
 # plugin version pinned at .build/HELM_UNITTEST_VERSION

@@ -33,6 +33,12 @@ jobs:
                   terraform -chdir=terraform/aws/eks validate
                   terraform -chdir=terraform/aws/eks test -filter=tests/node_diagnostics.tftest.hcl
 
+            - name: Test operator search credential validation
+              run: |
+                  touch terraform/groundx-operator/operator/env.tfvars
+                  terraform -chdir=terraform/groundx-operator/operator/services/search init -backend=false -input=false
+                  terraform -chdir=terraform/groundx-operator/operator/services/search test
+
             - name: Validate DNS probe
               run: python3 -m unittest discover -s src/groundx/tests -p 'test_dns_probe.py' -v
 
@@ -138,6 +144,7 @@ jobs:
           run: |
             helm template groundx src/groundx \
               -f src/groundx/values/minikube/values.yaml \
+              -f src/groundx/tests/files/values.search-credentials.yaml \
               --set namespace="${KIND_NAMESPACE}" \
               --show-only templates/services/stream-topics.yaml \
               | kubectl apply -n "${KIND_NAMESPACE}" -f -
@@ -210,6 +217,7 @@ jobs:
           run: |
             helm template groundx src/groundx \
               -f src/groundx/values/minikube/values.yaml \
+              -f src/groundx/tests/files/values.search-credentials.yaml \
               --set namespace="${KIND_NAMESPACE}" \
               --show-only templates/services/stream-topics.yaml \
               | sed 's#^apiVersion: kafka.strimzi.io/v1$#apiVersion: kafka.strimzi.io/v1beta2#' \

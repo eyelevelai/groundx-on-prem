@@ -91,13 +91,25 @@ true
 {{- end }}
 
 {{- define "groundx.search.password" -}}
+{{- if ne (include "groundx.mode" .) "ingest" -}}
 {{- $in := .Values.search | default dict -}}
-{{ dig "password" "R0otb_*t!kazs" $in }}
+{{- $v := dig "password" "" $in -}}
+{{- if has (sha256sum $v) (dig "bannedPasswordHashes" (list "00b9c0a93f3fa37affc9ad8c77cb6cca46b91f39c1539aeb732a59af6c6b771f") $in) -}}
+{{- fail "search.password must not be a published default password; choose a new password" -}}
+{{- end -}}
+{{ $v }}
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.search.privilegedPassword" -}}
+{{- if ne (include "groundx.mode" .) "ingest" -}}
 {{- $in := .Values.search | default dict -}}
-{{ dig "privilegedPassword" "R0otb_*t!kazs" $in }}
+{{- $v := dig "privilegedPassword" "" $in -}}
+{{- if has (sha256sum $v) (dig "bannedPasswordHashes" (list "00b9c0a93f3fa37affc9ad8c77cb6cca46b91f39c1539aeb732a59af6c6b771f") $in) -}}
+{{- fail "search.privilegedPassword must not be a published default password; choose a new password" -}}
+{{- end -}}
+{{ $v }}
+{{- end -}}
 {{- end }}
 
 {{- define "groundx.search.privilegedUsername" -}}

@@ -2,6 +2,10 @@ suite: "generated ingress backend must exist, but custom paths are never blocked
 chart:
   appVersion: 0.1.0
   version: 0.1.0
+set:
+  search:
+    password: fixture-app-credential
+    privilegedPassword: fixture-admin-credential
 
 tests:
   - it: "enabled: workspace api ingress with custom paths must not block, even when workspace.api is not created"

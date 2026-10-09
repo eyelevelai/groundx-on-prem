@@ -88,7 +88,7 @@ GroundX On-Prem requires Kubernetes cluster `v1.18+`.
 Please ensure you also have the following software tools installed before proceeding:
 
 - `bash` shell (version 4.0 or later recommended. AWS Cloud Shell has insufficient resources.)
-- `terraform` ([Setup Docs](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli))
+- `terraform` v1.9 or later, because the operator module validates inputs across variables, which needs 1.9 ([Setup Docs](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli))
 - `kubectl` ([Setup Docs](https://kubernetes.io/docs/tasks/tools/))
 
 If you will be using the Terraform scripts to set up infrastructure in AWS, you will also need:
