@@ -1,19 +1,19 @@
 ## 1. Thin slice: an empty search credential renders in `src/groundx`
 
-The suite `src/groundx/tests/search_credentials_test.yaml` is the acceptance stub for this group; it was written first and, run at `858753ac` on 2026-10-08, failed with "search.password is required unless mode is ingest". The old "fails when empty" cases were moved out of `src/groundx/tests/resources_test.yaml` into it and reversed.
+The suite `src/groundx/tests/search_credentials_test.yaml` is the acceptance stub for this group; it was written first and, run on 2026-10-08 before the template change, failed with "search.password is required unless mode is ingest". The old "fails when empty" cases were moved out of `src/groundx/tests/resources_test.yaml` into it and reversed.
 
 - [x] 1.1 In `src/groundx/templates/_helpers/services/search.tpl`, remove the empty-value `fail` from `groundx.search.password` and `groundx.search.privilegedPassword`; keep the `bannedPasswordHashes` rejection and the `mode: ingest` exemption unchanged and add no fallback value
-  check: export HELM319_DIR="${HELM319_DIR:-/private/tmp/claude-502/-Users-nitin-projects-groundx-engineering-context/110b2fa7-73d0-45bb-a6c1-fe7ebe563c1a/scratchpad/helm319/darwin-arm64}"; export PATH="$HELM319_DIR:$PATH" GX_ON_PREM_HELM="$HELM319_DIR/helm"; helm unittest -f tests/search_credentials_test.yaml src/groundx
+  check: export HELM319_DIR="${HELM319_DIR:?set HELM319_DIR to a helm v3.19.0 bin dir (the gate pins v3.19.0)}"; export PATH="$HELM319_DIR:$PATH" GX_ON_PREM_HELM="$HELM319_DIR/helm"; helm unittest -f tests/search_credentials_test.yaml src/groundx
 
 ## 2. Mirror to the published chart
 
 - [x] 2.1 Mirror the `search.tpl` change by hand into `helm/templates/_helpers/services/search.tpl` so the two trees stay byte-identical
-  check: export HELM319_DIR="${HELM319_DIR:-/private/tmp/claude-502/-Users-nitin-projects-groundx-engineering-context/110b2fa7-73d0-45bb-a6c1-fe7ebe563c1a/scratchpad/helm319/darwin-arm64}"; export PATH="$HELM319_DIR:$PATH" GX_ON_PREM_HELM="$HELM319_DIR/helm"; cmp src/groundx/templates/_helpers/services/search.tpl helm/templates/_helpers/services/search.tpl && helm template mirror helm --set search.password= --set search.privilegedPassword= -s templates/resources/config-yaml.yaml > /dev/null
+  check: export HELM319_DIR="${HELM319_DIR:?set HELM319_DIR to a helm v3.19.0 bin dir (the gate pins v3.19.0)}"; export PATH="$HELM319_DIR:$PATH" GX_ON_PREM_HELM="$HELM319_DIR/helm"; cmp src/groundx/templates/_helpers/services/search.tpl helm/templates/_helpers/services/search.tpl && helm template mirror helm --set search.password= --set search.privilegedPassword= -s templates/resources/config-yaml.yaml > /dev/null
 
 ## 3. Sample cluster credentials Secret
 
 - [x] 3.1 Add `SEARCH_PASSWORD` and `SEARCH_INIT_PASSWORD` with empty string values to `src/groundx/prereqs/secret/values.yaml` and the identical `helm/prereqs/secret/values.yaml`; a non-empty value would be a working credential the chart cannot validate
-  check: export HELM319_DIR="${HELM319_DIR:-/private/tmp/claude-502/-Users-nitin-projects-groundx-engineering-context/110b2fa7-73d0-45bb-a6c1-fe7ebe563c1a/scratchpad/helm319/darwin-arm64}"; export PATH="$HELM319_DIR:$PATH" GX_ON_PREM_HELM="$HELM319_DIR/helm"; grep -qx '  SEARCH_PASSWORD: ""' src/groundx/prereqs/secret/values.yaml && grep -qx '  SEARCH_INIT_PASSWORD: ""' src/groundx/prereqs/secret/values.yaml && cmp src/groundx/prereqs/secret/values.yaml helm/prereqs/secret/values.yaml && helm template sample src/groundx/prereqs/secret | grep -q 'SEARCH_INIT_PASSWORD'
+  check: export HELM319_DIR="${HELM319_DIR:?set HELM319_DIR to a helm v3.19.0 bin dir (the gate pins v3.19.0)}"; export PATH="$HELM319_DIR:$PATH" GX_ON_PREM_HELM="$HELM319_DIR/helm"; grep -qx '  SEARCH_PASSWORD: ""' src/groundx/prereqs/secret/values.yaml && grep -qx '  SEARCH_INIT_PASSWORD: ""' src/groundx/prereqs/secret/values.yaml && cmp src/groundx/prereqs/secret/values.yaml helm/prereqs/secret/values.yaml && helm template sample src/groundx/prereqs/secret | grep -q 'SEARCH_INIT_PASSWORD'
 
 ## 4. Documentation
 
