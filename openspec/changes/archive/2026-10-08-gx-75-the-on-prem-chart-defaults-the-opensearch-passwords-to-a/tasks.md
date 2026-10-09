@@ -17,7 +17,7 @@ The suite `src/groundx/tests/search_credentials_test.yaml` is the acceptance stu
 
 ## 4. Documentation
 
-- [x] 4.1 Update `README.md`: the `### Configuration` minimal-keys block and the paragraph after it (values or Secret; `SEARCH_PASSWORD` and `SEARCH_INIT_PASSWORD`; `cluster.secrets` must list `eyelevel-secret-credentials`; Secret-delivered passwords are not render-validated; direct-helm route only, the Terraform operator still takes both as values), the `### OpenSearch` admin-password sentence and the migration note, per the README requirement in the spec
+- [x] 4.1 Update `README.md`: the `### Configuration` minimal-keys block and the paragraph after it (values or Secret; `SEARCH_PASSWORD` and `SEARCH_INIT_PASSWORD`; `cluster.secrets` must list `eyelevel-secret-credentials`; Secret-delivered passwords are not render-validated; direct-helm route only, the Terraform operator still takes both as values when `cluster.search` is true), the `### OpenSearch` admin-password sentence and the migration note, per the README requirement in the spec
   check: grep -q 'SEARCH_INIT_PASSWORD' README.md && grep -q 'SEARCH_PASSWORD' README.md && grep -q 'cluster\.secrets' README.md && ! grep -q 'rendering fails until both' README.md
 
 - [x] 4.2 Reword the `openspec/config.yaml` context line that says the search fixture "is required because the chart has no default search passwords" to say the fixture supplies explicit test credentials
@@ -28,4 +28,4 @@ The suite `src/groundx/tests/search_credentials_test.yaml` is the acceptance stu
 - [x] 5.1 Run `.build/bin/validate-helm.sh` with the pinned helm; if any snapshot differs, hand-patch it and verify without `-u` followed by `verify-helm-snapshots.py` (`AGENTS.md`, GX-59), never regenerate
   check: n/a — verification run of the CI gate in the verify phase; the behavior it guards is checked by tasks 1.1, 2.1 and 3.1
 
-See workspace `openspec/changes/` for cross-service coordination (the cashbot-go change that reads `SEARCH_PASSWORD` and `SEARCH_INIT_PASSWORD`, the Terraform operator staying on values, the harness follow-up) and deferred items.
+See workspace `openspec/changes/` for cross-service coordination (the cashbot-go change that reads `SEARCH_PASSWORD` and `SEARCH_INIT_PASSWORD`, the Terraform operator staying on values (required only when `cluster.search` is true), the harness follow-up) and deferred items.
