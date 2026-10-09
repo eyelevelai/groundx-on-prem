@@ -80,6 +80,56 @@ run "search_enabled_rejects_placeholder_root_password" {
   expect_failures = [var.search]
 }
 
+run "search_enabled_rejects_default_search_variable" {
+  command = plan
+
+  expect_failures = [var.search]
+}
+
+run "search_enabled_rejects_empty_root_password" {
+  command = plan
+
+  variables {
+    search = {
+      index         = "prod-1"
+      password      = "app-secret"
+      root_password = ""
+      user          = "eyelevel"
+    }
+  }
+
+  expect_failures = [var.search]
+}
+
+run "search_enabled_rejects_placeholder_password" {
+  command = plan
+
+  variables {
+    search = {
+      index         = "prod-1"
+      password      = "<opensearch-password>"
+      root_password = "root-secret"
+      user          = "eyelevel"
+    }
+  }
+
+  expect_failures = [var.search]
+}
+
+run "ingest_only_accepts_placeholder_search_passwords" {
+  command = plan
+
+  variables {
+    cluster = merge(var.cluster, { search = false })
+    search = {
+      index         = "prod-1"
+      password      = "<opensearch-password>"
+      root_password = "<opensearch-admin-password>"
+      user          = "eyelevel"
+    }
+  }
+}
+
 run "search_enabled_accepts_real_passwords" {
   command = plan
 
