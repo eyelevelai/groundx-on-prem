@@ -14,7 +14,7 @@
 
 ## 3. Gate
 
-- [ ] 3.1 Push gate: `validate-helm.sh` (lint, helm unittest, contract verifiers) runs through the repo's pre-push hook on the feature branch
+- [x] 3.1 Push gate: `validate-helm.sh` (lint, helm unittest, contract verifiers) runs through the repo's pre-push hook on the feature branch
   check: n/a — validate-helm.sh runs only through the repo's own pre-push hook, never by hand
 
 See workspace `openspec/changes/gx-63-upload-messages-stay-hidden-for-15-minutes-after-a-worker/tasks.md` for cross-service coordination and deferred items.
