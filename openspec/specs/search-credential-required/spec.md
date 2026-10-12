@@ -24,7 +24,7 @@ Invariant: the chart never renders a search credential that it chose itself or t
 - **AND** neither the `ai.aws.search` block nor the `init.search` block carries a `password:` line (the counterexample that satisfies "the failure was removed" while a helper default re-introduces a built-in password)
 
 #### Scenario: A published default is still rejected next to an empty credential (polarity: reject before state; catches)
-- **WHEN** the chart is rendered with `mode` not `ingest`, one search password set to a value whose SHA-256 is in `search.bannedPasswordHashes`, and the other search password empty
+- **WHEN** the chart is rendered with `mode` not `ingest`, one search password set to a value whose SHA-256 is the built-in published-default hash or is in `search.bannedPasswordHashes`, and the other search password empty
 - **THEN** the render fails naming the key that holds the published default
 - **AND** no `config-yaml-map` Secret is produced
 - **AND** the same holds when every Golang service is disabled, because the check does not depend on a service being rendered
@@ -35,15 +35,20 @@ Invariant: the chart never renders a search credential that it chose itself or t
 - **AND** an existing install that sets both keys to its current non-default OpenSearch credentials renders the same configuration it rendered before the upgrade
 
 ### Requirement: A published default search password is rejected
-When `mode` is not `ingest`, the chart SHALL fail the render if `search.password` or `search.privilegedPassword` is a published default password, so that an upgrade which silently keeps the old default (for example `helm upgrade --reuse-values`) does not deploy. The rejected set SHALL be matched by SHA-256 against `search.bannedPasswordHashes` (default: the published default's hash), so no tracked file stores the password itself. This applies to `src/groundx` and to the `helm/` mirror.
+When `mode` is not `ingest`, the chart SHALL fail the render if `search.password` or `search.privilegedPassword` is a published default password, so that an upgrade which silently keeps the old default (for example `helm upgrade --reuse-values`) does not deploy. The rejected set SHALL be matched by SHA-256: the built-in published-default hash is always checked, and `search.bannedPasswordHashes` (default: an empty list) adds extra hashes on top of it and cannot remove or replace the built-in one, so no tracked file stores the password itself. This applies to `src/groundx` and to the `helm/` mirror.
 
 #### Scenario: A published default is rejected (polarity: reject before state; catches)
-- **WHEN** the chart is rendered with `mode` not `ingest` and `search.password` (or `search.privilegedPassword`) set to a value whose SHA-256 is in `search.bannedPasswordHashes`
+- **WHEN** the chart is rendered with `mode` not `ingest` and `search.password` (or `search.privilegedPassword`) set to a value whose SHA-256 is the built-in published-default hash or is in `search.bannedPasswordHashes`
 - **THEN** the render fails with a message that the password must not be a published default
 - **AND** no `config-yaml-map` Secret is produced
 
+#### Scenario: An empty or replaced list still rejects the built-in published default (polarity: reject before state; catches)
+- **WHEN** the chart is rendered with `mode` not `ingest`, `search.bannedPasswordHashes` set to an empty list, and `search.password` (or `search.privilegedPassword`) set to the published default
+- **THEN** the render fails naming the key that holds the published default
+- **AND** no `config-yaml-map` Secret is produced
+
 #### Scenario: A non-default password renders (polarity: accept and enqueue; must not block)
-- **WHEN** the chart is rendered with `mode` not `ingest` and both passwords set to non-empty values not present in `search.bannedPasswordHashes`
+- **WHEN** the chart is rendered with `mode` not `ingest` and both passwords set to non-empty values that are neither the built-in published default nor in `search.bannedPasswordHashes`, including when `search.bannedPasswordHashes` is overridden with a different list or an empty list
 - **THEN** the render succeeds
 
 ### Requirement: Ingest mode renders no search password
@@ -74,6 +79,7 @@ The README `### OpenSearch` install step SHALL take an operator-supplied admin p
 - each search credential can be set via values or via the Secret (`SEARCH_PASSWORD`, `SEARCH_INIT_PASSWORD`), as the `MYSQL_*` keys in the sample Secret do for `db`;
 - the Secret route requires `cluster.secrets` to list `eyelevel-secret-credentials`;
 - passwords delivered through the Secret are not render-validated by the chart, because the published-default check sees values only;
+- the Secret route needs a GroundX API image that reads `SEARCH_PASSWORD` and `SEARCH_INIT_PASSWORD`: the default image is tagged with the chart's `appVersion`, images up to 0.2.7 do not read these keys, and until the chart ships one that does the operator either sets both passwords in values or sets `groundx.image` to an image built from cashbot-go with this change (EyeLevel-ai/cashbot-go#1809), otherwise the API has no search password and crash-loops;
 - the Secret route applies to the direct-helm route, and the Terraform operator still takes both passwords as values when `cluster.search` is true (an ingest-only install, `cluster.search = false`, needs neither).
 
 The README SHALL carry a migration note for existing installs: an existing OpenSearch keeps the admin password it was first initialised with, so, when those are non-default, set the admin password (`search.privilegedPassword` or `SEARCH_INIT_PASSWORD`) to the current admin password and the application password (`search.password` or `SEARCH_PASSWORD`) to the current application password, then rotate (if either current value is a published default the chart rejects it when it is supplied through values, so rotate the admin off it first and choose a new application password); a wrong admin password makes the GroundX API crash-loop at startup when it has to create or update its user (a first install or an application-password change), and is otherwise silent rather than fail the render.

@@ -94,7 +94,7 @@ true
 {{- if ne (include "groundx.mode" .) "ingest" -}}
 {{- $in := .Values.search | default dict -}}
 {{- $v := dig "password" "" $in -}}
-{{- if has (sha256sum $v) (dig "bannedPasswordHashes" (list "00b9c0a93f3fa37affc9ad8c77cb6cca46b91f39c1539aeb732a59af6c6b771f") $in) -}}
+{{- if has (sha256sum $v) (concat (list "00b9c0a93f3fa37affc9ad8c77cb6cca46b91f39c1539aeb732a59af6c6b771f") (dig "bannedPasswordHashes" (list) $in)) -}}
 {{- fail "search.password must not be a published default password; choose a new password" -}}
 {{- end -}}
 {{ $v }}
@@ -105,7 +105,7 @@ true
 {{- if ne (include "groundx.mode" .) "ingest" -}}
 {{- $in := .Values.search | default dict -}}
 {{- $v := dig "privilegedPassword" "" $in -}}
-{{- if has (sha256sum $v) (dig "bannedPasswordHashes" (list "00b9c0a93f3fa37affc9ad8c77cb6cca46b91f39c1539aeb732a59af6c6b771f") $in) -}}
+{{- if has (sha256sum $v) (concat (list "00b9c0a93f3fa37affc9ad8c77cb6cca46b91f39c1539aeb732a59af6c6b771f") (dig "bannedPasswordHashes" (list) $in)) -}}
 {{- fail "search.privilegedPassword must not be a published default password; choose a new password" -}}
 {{- end -}}
 {{ $v }}
