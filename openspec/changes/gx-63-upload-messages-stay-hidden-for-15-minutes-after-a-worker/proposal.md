@@ -23,7 +23,7 @@ None.
 
 ### Modified Capabilities
 
-None. No spec-level requirement changes; this is documentation inside a values file.
+- `values-contract-semantics`: adds one requirement recording the documentation contract of the AWS example values (upload holds in-flight messages for 5 min, the other SQS queues keep 10+ min, src and helm identical). No runtime requirement changes; the requirement exists to give this documentation-only change a spec home.
 
 ## Impact
 
