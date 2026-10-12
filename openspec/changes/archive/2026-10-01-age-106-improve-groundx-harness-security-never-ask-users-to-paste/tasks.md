@@ -174,3 +174,16 @@ credentials. The task 5.x check that named the removed function is superseded by
 - The README GitOps note is qualified: setting `encrypted: "false"` keeps a class that 0.1.1 created
   without an explicit value, but does not help a class that 0.1.1 created with an explicit
   `encrypted: "false"`, because 0.1.2 never renders an explicit `false`.
+
+### 2026-10-12: review comment fix (legacy EBS provisioner)
+
+- The EBS-only parameter filter in `templates/storageclass.yaml` and the divergence warning in
+  `templates/NOTES.txt` treated only `ebs.csi.aws.com` as EBS. A class using the legacy in-tree
+  provisioner `kubernetes.io/aws-ebs` therefore rendered an empty `parameters:` block, dropping `type`,
+  `encrypted` and `kmsKeyId`, where the previous chart kept them. Both templates now treat
+  `kubernetes.io/aws-ebs` as EBS too, so `encrypted: "true"` is the default for it and a chosen
+  `kmsKeyId` is still requested. EFS, Azure and GKE provisioners are unchanged.
+- Added render tests for the legacy provisioner (new install, opt-out, and the lookup-hit warning) to the
+  existing helm-unittest files, and a `verify_legacy_ebs_provisioner` check to
+  `.build/bin/verify-storage-contract.py` that covers both chart copies. The three unit tests fail against
+  the previous templates.

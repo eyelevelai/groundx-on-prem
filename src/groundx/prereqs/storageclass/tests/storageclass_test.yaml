@@ -51,3 +51,29 @@ tests:
     asserts:
       - notExists:
           path: parameters
+
+  - it: "legacy in-tree EBS provisioner (kubernetes.io/aws-ebs): a new install keeps type, encrypted and kmsKeyId"
+    set:
+      provisioner: kubernetes.io/aws-ebs
+      parameters.kmsKeyId: arn:aws:kms:us-east-2:111122223333:key/example
+    asserts:
+      - equal:
+          path: parameters.type
+          value: gp3
+      - equal:
+          path: parameters.encrypted
+          value: "true"
+      - equal:
+          path: parameters.kmsKeyId
+          value: arn:aws:kms:us-east-2:111122223333:key/example
+
+  - it: "legacy in-tree EBS provisioner: the encrypted opt-out still omits the key and keeps type"
+    set:
+      provisioner: kubernetes.io/aws-ebs
+      parameters.encrypted: "false"
+    asserts:
+      - equal:
+          path: parameters.type
+          value: gp3
+      - notExists:
+          path: parameters.encrypted

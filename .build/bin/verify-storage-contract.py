@@ -267,6 +267,21 @@ def verify_provisioner_isolation(chart: Path) -> typing.List[str]:
     return successes
 
 
+def verify_legacy_ebs_provisioner(chart: Path) -> typing.List[str]:
+    rendered = run(
+        [
+            "helm", "template", "legacy-ebs", str(chart),
+            "--set", "provisioner=kubernetes.io/aws-ebs",
+            "--set-string", "parameters.encrypted=true",
+            "--set", "parameters.kmsKeyId=test-key",
+        ]
+    )
+    require(rendered, r'encrypted:\s+"true"', f"{chart.relative_to(ROOT)} legacy kubernetes.io/aws-ebs keeps encrypted")
+    require(rendered, r'kmsKeyId:\s+"test-key"', f"{chart.relative_to(ROOT)} legacy kubernetes.io/aws-ebs keeps kmsKeyId")
+    require(rendered, r'type:\s+"gp3"', f"{chart.relative_to(ROOT)} legacy kubernetes.io/aws-ebs keeps type")
+    return [f"{chart.relative_to(ROOT)} legacy kubernetes.io/aws-ebs provisioner keeps its EBS parameters passed"]
+
+
 OPTOUT_SPELLINGS: typing.Dict[str, str] = {
     "quoted-false": 'parameters:\n  encrypted: "false"\n',
     "unquoted-false": "parameters:\n  encrypted: false\n",
@@ -547,6 +562,7 @@ def main() -> int:
         lambda: [item for driver, spec in GENERATED.items() for item in verify_driver(driver, spec)],
         verify_setup_script_contract,
         lambda: [item for chart in STORAGE_CHARTS for item in verify_provisioner_isolation(chart)],
+        lambda: [item for chart in STORAGE_CHARTS for item in verify_legacy_ebs_provisioner(chart)],
         lambda: [item for chart in STORAGE_CHARTS for item in verify_optout_normalization(chart)],
         lambda: [item for chart in STORAGE_CHARTS for item in verify_non_ebs_false_value_survives(chart)],
     )

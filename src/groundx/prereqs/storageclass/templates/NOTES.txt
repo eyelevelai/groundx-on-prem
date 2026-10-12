@@ -1,7 +1,7 @@
 {{- $existing := lookup "storage.k8s.io/v1" "StorageClass" "" .Values.storageClassName }}
 {{- if $existing }}
 {{- $ebsOnlyKeys := list "type" "encrypted" "kmsKeyId" }}
-{{- $isEbs := eq .Values.provisioner "ebs.csi.aws.com" }}
+{{- $isEbs := has .Values.provisioner (list "ebs.csi.aws.com" "kubernetes.io/aws-ebs") }}
 {{- $supplied := dict }}
 {{- range $key, $value := (.Values.parameters | default dict) }}
 {{- if and $value (ne (toString $value) "") (or (not (has $key $ebsOnlyKeys)) (and $isEbs (ne (toString $value) "false"))) }}

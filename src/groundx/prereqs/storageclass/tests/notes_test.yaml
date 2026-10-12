@@ -93,6 +93,14 @@ tests:
       - matchRegexRaw:
           pattern: "not applied: encrypted, type\\."
 
+  - it: "legacy in-tree EBS provisioner, lookup hit: a differing encrypted value is reported like any other EBS class"
+    set:
+      storageClassName: existing-ebs-unencrypted
+      provisioner: kubernetes.io/aws-ebs
+    asserts:
+      - matchRegexRaw:
+          pattern: "not applied: encrypted\\."
+
   - it: "non-EBS lookup hit with matching parameters stays silent (chart EBS defaults are not reported)"
     set:
       storageClassName: existing-efs

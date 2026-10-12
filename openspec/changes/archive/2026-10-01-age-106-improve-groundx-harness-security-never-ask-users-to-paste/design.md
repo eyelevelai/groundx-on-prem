@@ -171,3 +171,10 @@ with the planner's source-of-truth note.
   `kubernetesProvider` mocks the live class, so the lookup-hit warning is covered by
   `tests/notes_test.yaml`. `helm template` still cannot exercise it. The real-cluster check (task 4.4)
   was run on the groundx-validation EKS cluster on 2026-10-07.
+
+### 2026-10-12: legacy EBS provisioner
+
+D1's EBS-only key filter and D4's warning now treat `kubernetes.io/aws-ebs` as EBS alongside
+`ebs.csi.aws.com`. The in-tree plugin supports `type`, `encrypted` and `kmsKeyId`, and CSI migration still
+honors them, so dropping them silently would have left encryption to the AWS account default and ignored a
+chosen KMS key.
