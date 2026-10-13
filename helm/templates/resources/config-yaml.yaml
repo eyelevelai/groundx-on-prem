@@ -632,7 +632,15 @@ stringData:
     {{- include "groundx.largeFileDeliver.config" . | nindent 4 }}
     {{- end }}
 
+    {{- if eq (include "groundx.postProcess.create" .) "true" }}
+    {{- include "groundx.postProcess.config" . | nindent 4 }}
+    {{- end }}
+
     queues:
+      {{- if eq (include "groundx.postProcess.create" .) "true" }}
+      filePostProcess:
+        {{- include "groundx.stream.topic.postProcess" . | nindent 8 }}
+      {{- end }}
       filePreProcess:
         {{- $ppq | toYaml | nindent 8 }}
       fileProcess:

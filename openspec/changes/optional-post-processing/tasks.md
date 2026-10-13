@@ -1,0 +1,4 @@
+- [x] Add enabled/disabled values/schema and consumer helper using existing Go workload pattern.
+- [x] Add stream topic/Kafka-presence/provisioning and matching generated queue/server YAML.
+- [x] Sync shipping mirror, add operator examples and migration instructions.
+- [x] Test disabled, enabled Kafka/SQS, custom overrides and invalid config; run Helm and Go config boundary gates.
