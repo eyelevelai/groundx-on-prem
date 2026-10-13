@@ -371,6 +371,72 @@
         "topics": {
           "type": "object",
           "properties": {
+            "postProcess": {
+              "type": "object",
+              "properties": {
+                "broker": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "groupId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "key": {
+                  "type": "string"
+                },
+                "region": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "secret": {
+                  "type": "string"
+                },
+                "token": {
+                  "type": "string"
+                },
+                "topic": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "kafka",
+                    "sqs"
+                  ]
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "type": {
+                        "const": "sqs"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ]
+                  },
+                  "then": {
+                    "required": [
+                      "url"
+                    ],
+                    "properties": {
+                      "url": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  }
+                }
+              ]
+            },
             "largeFile": {
               "type": "object",
               "properties": {
@@ -1401,6 +1467,198 @@
       },
       "required": ["enabled"],
       "additionalProperties": false
+    },
+    "postProcess": {
+      "type": "object",
+      "properties": {
+        "affinity": {
+          "type": "object"
+        },
+        "annotations": {
+          "type": "object"
+        },
+        "containerPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "containerSecurityContext": {
+          "type": "object"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "imagePullPolicy": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "object"
+        },
+        "node": {
+          "type": "string"
+        },
+        "nodeSelector": {
+          "type": "object"
+        },
+        "replicas": {
+          "type": "object",
+          "properties": {
+            "desired": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": [
+                    "string",
+                    "number"
+                  ]
+                },
+                "memory": {
+                  "type": [
+                    "string",
+                    "number"
+                  ]
+                }
+              },
+              "required": [
+                "cpu",
+                "memory"
+              ],
+              "additionalProperties": true
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": [
+                    "string",
+                    "number"
+                  ]
+                },
+                "memory": {
+                  "type": [
+                    "string",
+                    "number"
+                  ]
+                }
+              },
+              "required": [
+                "cpu",
+                "memory"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "requests",
+            "limits"
+          ],
+          "additionalProperties": false
+        },
+        "securityContext": {
+          "type": "object"
+        },
+        "serviceAccount": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        "serviceName": {
+          "type": "string"
+        },
+        "tolerations": {
+          "type": "array"
+        },
+        "topologySpreadConstraints": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "disruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "additionalProperties": false
+        },
+        "concurrency": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "retryEnabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            },
+            "required": [
+              "enabled"
+            ]
+          },
+          "then": {
+            "required": [
+              "image",
+              "concurrency",
+              "resources"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "retryEnabled": {
+                "const": true
+              }
+            },
+            "required": [
+              "retryEnabled"
+            ]
+          },
+          "then": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            },
+            "required": [
+              "enabled"
+            ]
+          }
+        }
+      ]
     },
     "largeFileDeliver": {
       "type": "object",
