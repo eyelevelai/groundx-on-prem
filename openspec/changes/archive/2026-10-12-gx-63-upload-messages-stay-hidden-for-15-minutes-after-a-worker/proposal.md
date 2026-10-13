@@ -9,7 +9,7 @@ for the upload topic.
 ## What Changes
 
 - Edit the comment at line 59 of `src/groundx/values/values.aws.services.yaml` so it states that
-  upload holds in-flight messages for 5 minutes (the upload consumer's lease, set in cashbot-go
+  upload re-hides in-flight messages for 5 minutes, renewed every minute, and a DLQ on the upload queue needs maxReceiveCount of 4 or more (the upload consumer's lease, set in cashbot-go
   under GX-63), while the other SQS queues keep the 10+ minute requirement.
 - Apply the identical edit to the manual mirror `helm/values/values.aws.services.yaml` (same
   line), editing `src/` first and then syncing `helm/`.
@@ -23,7 +23,7 @@ None.
 
 ### Modified Capabilities
 
-- `values-contract-semantics`: adds one requirement recording the documentation contract of the AWS example values (upload holds in-flight messages for 5 min, the other SQS queues keep 10+ min, src and helm identical). No runtime requirement changes; the requirement exists to give this documentation-only change a spec home.
+- `values-contract-semantics`: adds one requirement recording the documentation contract of the AWS example values (upload re-hides in-flight messages for 5 min renewed every minute, a DLQ on upload needs maxReceiveCount 4+, SQS queues keep 10+ min, src and helm identical). No runtime requirement changes; the requirement exists to give this documentation-only change a spec home.
 
 ## Impact
 

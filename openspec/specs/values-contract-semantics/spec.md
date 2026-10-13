@@ -31,12 +31,13 @@ The `src/groundx` source chart and `helm` publication mirror SHALL expose the sa
 - **THEN** it validates schema metadata and render equivalence for both chart surfaces
 
 ### Requirement: AWS example values state the upload queue hold
-The AWS services example values SHALL state, in the comment above the `stream.topics` block, that the 10+ minute visibility timeout applies to every SQS queue except upload, and that upload holds in-flight messages for 5 minutes. The comment SHALL NOT change any key, value, default, or rendered manifest. The statement SHALL be identical in `src/groundx/values/values.aws.services.yaml` and its published mirror `helm/values/values.aws.services.yaml`.
+The AWS services example values SHALL state, in the comment above the `stream.topics` block, that the 10+ minute visibility timeout applies to every SQS queue, that upload re-hides its in-flight messages for 5 minutes renewed every minute, and that a DLQ on the upload queue needs a maxReceiveCount of 4 or more. The comment SHALL NOT change any key, value, default, or rendered manifest. The statement SHALL be identical in `src/groundx/values/values.aws.services.yaml` and its published mirror `helm/values/values.aws.services.yaml`.
 
 #### Scenario: Both surfaces carry the upload exception
 - **WHEN** an operator reads `values.aws.services.yaml` in `src/groundx` or in `helm`
-- **THEN** the comment says upload holds in-flight messages for 5 minutes
-- **AND** it still says the other SQS queues need a 10+ minute visibility timeout
+- **THEN** the comment says upload re-hides its in-flight messages for 5 minutes, renewed every minute
+- **AND** it says a DLQ on the upload queue needs a maxReceiveCount of 4 or more
+- **AND** it still says SQS queues need a 10+ minute visibility timeout
 
 #### Scenario: Other queues keep the 10+ minute requirement
 - **WHEN** an operator sizes the `preProcess`, `process`, `summary`, or `update` SQS queues from the comment
