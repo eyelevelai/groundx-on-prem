@@ -70,6 +70,8 @@
 
 `README.md` SHALL contain `#### Upgrading an Existing MinIO Install to AIStor` after the fresh-install section. The section SHALL state that the upgrade cannot be reversed, require Helm 3.17 or later, and give, in order: a `VolumeSnapshot` of the tenant volume before any `helm uninstall`; stopping uploads; installing `aistor-operator` with `--take-ownership` and the license; backing up the tenant; running `operator-migration generate-helm` from the image pinned by digest `sha256:4ac3380d75aa92ca3c03454af2362a649ce4ddee866c962044e4b6e6d118b957`, never `:latest`; copying the tenant's `config.env` into a new Secret and setting `secrets.existingSecret: true` (with `helm/values/aistor/values.objectstore.upgrade.yaml` as the example); uninstalling the tenant; installing `aistor-objectstore` with `--take-ownership`; confirming `Initialized`; and, optionally, running `protect-crds` before uninstalling the old operator. It SHALL state that a multi-server tenant needs a paid license.
 
+The section SHALL also name the snapshot prerequisites, a snapshot controller and a `VolumeSnapshotClass`, which GroundX's bundled EKS Terraform does not install. The backup SHALL write the Tenant and the Secrets to separate files and append nothing with `>>`, SHALL save both community releases' values with `helm get values minio-cluster` and `helm get values minio-operator` and warn that the tenant values hold the root credentials, and SHALL record the tenant's claim name, StorageClass, size, and the Tenant's `.spec.image` for the restore. It SHALL give `operator-migration` a kubeconfig made with `kubectl config view --flatten --minify` that works inside the container, and SHALL say that a kubeconfig logging in through an exec plugin such as `aws eks get-token` is not verified.
+
 #### Scenario: Snapshot comes before any uninstall (reject before state)
 - **GIVEN** the upgrade section
 - **WHEN** the first `VolumeSnapshot` line and the first `helm uninstall` line are compared
@@ -83,14 +85,31 @@
 - **WHEN** the README is searched for `operator-migration:latest`
 - **THEN** there is no match, and the upgrade section names `quay.io/minio/aistor/operator-migration` with the pinned digest
 
+#### Scenario: The backup stays readable and holds what the restore needs (reject before state)
+- **GIVEN** the upgrade section
+- **WHEN** it is searched for `>>`
+- **THEN** there is no match, so the Secrets list is never appended to the Tenant backup, where the two would parse as one document whose `.kind` is `List`
+- **AND** the section contains `helm get values minio-cluster`, `helm get values minio-operator`, `storageClassName`, `.spec.image`, `--flatten`, and `VolumeSnapshotClass`
+
 ### Requirement: The README restores community MinIO from the pre-upgrade snapshot
 
 `README.md` SHALL contain `#### Restoring Community MinIO from the Pre-Upgrade Snapshot` after the upgrade section. It SHALL restore the tenant volume from the `VolumeSnapshot` and start a community MinIO tenant on it with the customer's own registry copy of the tenant's MinIO server image when they have one, otherwise `ghcr.io/coollabsio/minio@sha256:69b55a1c1c5dc285ce04db96689f5b2102317fc77a50680a1874ca6efd1c87f9`. It SHALL state that objects written after the snapshot are not restored. No part of the README SHALL reference `helm/values/minio/`.
 
+The section SHALL require Helm 3.17 or later and give, in order: uninstalling the AIStor object store release; deleting ServiceAccount `minio-tenant-sa`, which AIStor leaves behind; deleting the AIStor-era claim and creating a claim with the same name from the `VolumeSnapshot`, with the StorageClass and size recorded before the upgrade; installing community operator chart 7.1.1 with `--take-ownership` and the saved operator values, marked untested; and installing community tenant chart 7.1.1 as release `minio-cluster` with the saved tenant values and the image override (the mirror as `tenant.image.repository` plus `tenant.image.digest`, the customer's copy as repository plus tag, marked untested). It SHALL recommend deleting the other AIStor leftovers in `eyelevel` (RoleBinding `minio-tenant-eyelevel-binding`, Secrets `minio-tenant-generated`, `minio-license`, and `minio-tenant-env-configuration`), and it SHALL NOT tell the reader to wait for the restored claim to bind, because GroundX's StorageClass binds only when a pod uses the claim.
+
 #### Scenario: Restore names a pullable image and no deleted file (finalize success)
 - **GIVEN** the restore section
-- **THEN** it contains `VolumeSnapshot`, the word `registry` for the customer's own copy, and the digest-pinned mirror image
+- **THEN** it contains `VolumeSnapshot`, the word `registry` for the customer's own copy, the digest-pinned mirror image, `--take-ownership`, and `3.17`
 - **AND** the README contains no `helm/values/minio/`
+
+#### Scenario: The leftover ServiceAccount is deleted before the community tenant is installed (reject before state)
+- **GIVEN** the restore section
+- **WHEN** the first line that deletes `minio-tenant-sa` and the first line that installs `minio-cluster` are compared
+- **THEN** a deletion line exists and comes first, so the community operator cannot reuse the ServiceAccount AIStor left behind
+
+#### Scenario: The restore does not wait for the claim to bind (reject before state)
+- **WHEN** the restore section is searched for a `wait` command whose `--for` condition is `Bound`
+- **THEN** there is no match, so a reader on GroundX's StorageClass is not left waiting on a claim that binds only when the tenant pod starts
 
 ### Requirement: The README documents staying on community MinIO and its risk
 
