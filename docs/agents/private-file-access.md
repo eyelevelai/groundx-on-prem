@@ -33,7 +33,9 @@ backend's release gates pass.
 - For MinIO, AIStor and S4, `storageCredentialsSecretName` is required and
   references an existing Secret in the GroundX namespace with `GROUNDX_ACCESS_KEY_ID` and `GROUNDX_SECRET_ACCESS_KEY` (and
   `GROUNDX_SESSION_TOKEN` for a temporary session where supported). The same Secret
-  reaches Go, Python and schema-migration consumers through `envFrom`. Enabled
+  reaches Go storage clients, layout and extraction workloads, and the schema-migration
+  hook through `envFrom`. Ranker, summary API/inference, workspace and metrics receive
+  no implicit storage Secret; explicit operator `cluster.secrets` retain global scope. Enabled
   generated upload configuration omits inline credentials so these values win.
   Use store credentials, never shared account API keys. Native AWS S3 may omit
   this Secret and use the standard AWS credential chain, including IRSA.
@@ -52,8 +54,11 @@ backend's release gates pass.
   consumers after rotating credentials or trust Secrets; env imports and existing
   TLS client pools do not reload through the config hash.
 - `tlsSecretName` is required for a chart-managed gateway ingress. Set
-  `fileAccess.ingress.enabled` and the controller's `ingressClassName`. Disable
-  the former `file.ingress` to prevent a second route to the same file host.
+  `fileAccess.ingress.enabled` and the controller's `ingressClassName`. Native
+  `file.ingress` may remain on a separate signing/store hostname. Its effective
+  templated hostname must differ from `publicUrl` and an enabled chart gateway
+  hostname. The public host remains protected with external gateway ingress;
+  a disabled unused chart ingress hostname may name the native store route.
   `fileAccess.ingress.hostName` optionally selects a separately verified origin DNS
   name, defaulting to the public URL host. The ingress route and TLS hosts both
   use this name; provision a certificate covering it. This supports an HTTPS CDN

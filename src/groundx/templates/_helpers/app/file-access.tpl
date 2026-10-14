@@ -38,7 +38,14 @@
 {{- end -}}
 {{- $ingressHost := "" -}}
 {{- if dig "enabled" false $in.ingress -}}
-  {{- $ingressHost = lower (dig "hostName" "" $in.ingress) -}}
+  {{- $ingressHost = lower (tpl (dig "hostName" "" $in.ingress) .) -}}
+{{- end -}}
+{{- $nativeIngress := include "groundx.file.ingress" . | fromYaml | default dict -}}
+{{- if dig "enabled" false $nativeIngress -}}
+  {{- $nativeHost := lower (tpl (dig "data" "hostName" "" $nativeIngress) .) -}}
+  {{- if or (eq $nativeHost (lower $public.hostname)) (and (not (empty $ingressHost)) (eq $nativeHost $ingressHost)) -}}
+    {{- fail "file.ingress host must not use a fileAccess delivery host" -}}
+  {{- end -}}
 {{- end -}}
 {{- range $key := list "publicUrl" "storageEndpoint" "signingEndpoint" -}}
   {{- $raw := required (printf "fileAccess.%s is required" $key) (get $in $key) -}}
@@ -72,9 +79,6 @@
 {{- end -}}
 {{- if dig "enabled" false $in.ingress -}}
   {{- $_ := required "fileAccess.tlsSecretName is required for ingress" $in.tlsSecretName -}}
-  {{- if dig "enabled" false (dig "ingress" dict .Values.file) -}}
-    {{- fail "disable file.ingress when fileAccess.ingress is enabled" -}}
-  {{- end -}}
   {{- range $key, $value := dig "annotations" dict $in.ingress -}}
     {{- if regexMatch "(?i)(rewrite|cache|snippet|auth-|upstream-vhost)" $key -}}
       {{- fail (printf "fileAccess.ingress annotation %s can change file authorization, paths or response freshness" $key) -}}
@@ -148,9 +152,9 @@ fileAccessServer:
 {{- end }}
 
 {{- define "groundx.fileAccess.ingress" -}}
+{{- include "groundx.fileAccess.validate" . -}}
 {{- $in := .Values.fileAccess | default dict -}}
 {{- if and (eq (include "groundx.fileAccess.create" .) "true") (dig "ingress" "enabled" false $in) -}}
-{{- include "groundx.fileAccess.validate" . -}}
 {{- $public := urlParse $in.publicUrl -}}
 {{- $host := coalesce (dig "ingress" "hostName" "" $in) $public.hostname -}}
 {{- $anns := deepCopy (dig "ingress" "annotations" dict $in) -}}
@@ -192,4 +196,15 @@ enabled: false
       - key: ca.crt
         path: ca.crt
 {{- end }}
+{{- end }}
+
+{{- define "groundx.fileAccess.workloadSecrets" -}}
+{{- $root := .root -}}
+{{- $secrets := include "groundx.secrets" $root | fromYaml | default dict -}}
+{{- $consumers := list "groundx" "fileAccess" "layoutWebhook" "preProcess" "process" "queue" "largeFileDeliver" "summaryClient" "upload" "layout.api" "layout.inference" "layout.correct" "layout.map" "layout.ocr" "layout.process" "layout.save" "extract.api" "extract.agent" "extract.download" "extract.save" -}}
+{{- if and (eq (include "groundx.fileAccess.create" $root) "true") (has .service $consumers) -}}
+  {{- $name := $root.Values.fileAccess.storageCredentialsSecretName -}}
+  {{- if $name -}}{{- $_ := set $secrets $name $name -}}{{- end -}}
+{{- end -}}
+{{- $secrets | toYaml -}}
 {{- end }}

@@ -31,7 +31,7 @@
 {{- $pull := get $svcData "pull" -}}
 {{- $san := get $svcData "serviceAccountName" -}}
 {{- $scr := get $svcData "secrets" | default dict -}}
-{{- $globalSecrets := include "groundx.secrets" $ | fromYaml | default dict -}}
+{{- $globalSecrets := include "groundx.fileAccess.workloadSecrets" (dict "root" $ "service" $entry) | fromYaml | default dict -}}
 {{- if gt (len $globalSecrets) 0 }}
   {{- range $k, $v := $globalSecrets }}
     {{- $_ := set $scr $k $v -}}

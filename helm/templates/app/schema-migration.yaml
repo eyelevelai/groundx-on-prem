@@ -4,7 +4,7 @@
 {{- $cfg := include "groundx.groundx.settings" . | fromYaml -}}
 {{- $username := include "groundx.container.username" . -}}
 {{- $config := include (print .Template.BasePath "/resources/config-yaml.yaml") . | fromYaml -}}
-{{- $secrets := include "groundx.secrets" . | fromYaml -}}
+{{- $secrets := include "groundx.fileAccess.workloadSecrets" (dict "root" . "service" "groundx") | fromYaml -}}
 {{- $pullSecrets := include "groundx.imagePullSecrets" . | fromYaml -}}
 apiVersion: v1
 kind: Secret

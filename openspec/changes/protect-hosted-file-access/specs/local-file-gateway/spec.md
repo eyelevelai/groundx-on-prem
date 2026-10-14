@@ -44,3 +44,35 @@ Local store support SHALL require the selected backend's passing exact-version i
 - **GIVEN** passing MinIO local gates and incomplete S4 tests
 - **WHEN** local MinIO or hosted cloud release is evaluated
 - **THEN** S4 remains unadvertised and its outstanding work does not block those independently verified releases.
+
+### Requirement: Native ingress cannot bypass delivery authorization
+The chart SHALL reject legacy native store ingress using the public delivery host or an enabled chart gateway host whenever file access is enabled. It SHALL resolve templated ingress hostnames as the ingress renderer does and SHALL permit separate native signing/store routes.
+
+#### Scenario: External gateway and templated native ingress collision
+- **GIVEN** file access is enabled, its chart ingress is disabled and a legacy native ingress hostname expands to the public delivery host
+- **WHEN** either chart surface renders
+- **THEN** rendering fails before a native storage route can bypass the gateway.
+
+#### Scenario: Separate native signing route
+- **GIVEN** file access is enabled and native ingress uses a distinct signing hostname
+- **WHEN** managed or external gateway ingress renders
+- **THEN** the native storage backend, TLS and route paths remain available.
+
+#### Scenario: Disabled unused gateway hostname names the native signing route
+- **GIVEN** file access is enabled, chart gateway ingress is disabled and its unused hostname matches a distinct native signing/store ingress
+- **WHEN** either chart surface renders
+- **THEN** the native route remains available without changing public delivery routing.
+
+### Requirement: Feature credentials reach only storage consumers
+The chart SHALL import the feature storage Secret only into verified Go, migration, layout and extraction consumers. Explicit operator global and workload Secret imports SHALL retain their existing scope.
+
+#### Scenario: Storage consumers without dependency wait containers
+- **GIVEN** file access has a storage Secret and no operator global Secrets
+- **WHEN** workloads render
+- **THEN** the gateway, upload and other Go storage clients, migration hook, layout and extraction receive that Secret
+- **AND** ranker API/inference, summary API/inference, workspace and metrics do not.
+
+#### Scenario: Operator global Secret and ambient AWS credentials
+- **GIVEN** an explicit operator global Secret or native S3 with an empty feature storage Secret
+- **WHEN** workloads render
+- **THEN** operator global imports remain available to every workload, duplicate imports are absent and ambient S3 creates no empty Secret reference.

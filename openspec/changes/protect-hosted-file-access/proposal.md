@@ -19,3 +19,7 @@ None.
 ## Impact
 
 The source is `src/groundx`, with matching published `helm` mirror changes. [Cashbot](related-changes.md#cashbot-go) supplies the gateway/shared policy and client endpoint configuration. [ai-server](related-changes.md#ai-server) supplies private bucket initialization and worker storage endpoint support. This change introduces no AWS dependency and performs no deployment during planning.
+
+## Ingress and credential admission
+
+Enabled file access rejects native storage ingress on the public delivery host or an enabled chart gateway host. The public host remains protected for external gateway routing. Distinct native signing ingress remains supported. Limit the feature storage Secret to verified storage consumers; preserve operator `cluster.secrets`. Invalid colliding configurations fail before rollout, and removing unused Secret imports changes the affected pod specifications. No stateful resources or stored URLs change. Rollback retains private storage and active policy enforcement.
