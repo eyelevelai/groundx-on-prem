@@ -137,8 +137,8 @@ without explicit human authorization.**
 - **The `api.groundx.ai` callback is opt-in and air-gap-safe by default** — `extract.callbackUrl`
   defaults to the in-cluster `groundx` `/api`; it only leaves the cluster if a user sets it explicitly.
   It is the **only** edge that can phone home to hosted GroundX.
-- **Plaintext secret defaults in example values** (OpenSearch password, MinIO `minio123`) — example
-  only, but a footgun if copied to prod.
+- **Plaintext secret defaults in example values** (OpenSearch password; `minio123` in the Chainguard
+  sample `values/chainguard/values.yaml`) — example only, but a footgun if copied to prod.
 - **Credential-bearing config maps render as `Secret`s, not `ConfigMap`s** (GX-17): `config-yaml-map`,
   the `*-config-py-map`s (extract/ranker/summary/layout/workspace), and `*-ocr-credentials-map` are
   `kind: Secret` (mounted as file volumes exactly as before) so workload credentials never sit in a

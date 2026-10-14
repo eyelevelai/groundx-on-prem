@@ -34,10 +34,15 @@
   - [MySQL](#mysql)
     - [Using an Existing MySQL Cluster](#using-an-existing-mysql-cluster)
     - [Deploying a Dedicated MySQL Cluster](#deploying-a-dedicated-mysql-cluster)
-  - [MinIO](#minio)
+  - [MinIO AIStor](#minio-aistor)
     - [Using an Existing MinIO Cluster](#using-an-existing-minio-cluster)
     - [Using AWS S3](#using-aws-s3)
-    - [Deploying a Dedicated MinIO Cluster](#deploying-a-dedicated-minio-cluster)
+    - [Using S4](#using-s4)
+    - [Deploying a Dedicated AIStor Object Store](#deploying-a-dedicated-aistor-object-store)
+    - [Object Keys That Start with a Slash](#object-keys-that-start-with-a-slash)
+    - [Upgrading an Existing MinIO Install to AIStor](#upgrading-an-existing-minio-install-to-aistor)
+    - [Restoring Community MinIO from the Pre-Upgrade Snapshot](#restoring-community-minio-from-the-pre-upgrade-snapshot)
+    - [Staying on Community MinIO](#staying-on-community-minio)
   - [OpenSearch](#opensearch)
     - [Using an Existing OpenSearch Cluster](#using-an-existing-opensearch-cluster)
     - [Deploying a Dedicated OpenSearch Cluster](#deploying-a-dedicated-opensearch-cluster)
@@ -468,32 +473,421 @@ helm install db-cluster \
   -f helm/values/percona/values.cluster.yaml
 ```
 
-### MinIO
+### MinIO AIStor
+
+GroundX stores files in one S3-compatible bucket (`file.bucketName`, default `eyelevel`). This guide installs MinIO AIStor, MinIO's maintained product, which runs under your own AIStor license. S4 is a license-free alternative. Community MinIO, which earlier versions of this guide installed, is archived, and as of 2026-10-14 its default server image no longer downloads anonymously. Existing community MinIO installs can [upgrade to AIStor in place](#upgrading-an-existing-minio-install-to-aistor) or [stay on community MinIO](#staying-on-community-minio).
 
 #### Using an Existing MinIO Cluster
 
-If you wish to use an existing MinIO cluster, you must configure the `file.existing` parameters in your `values.yaml`.
+If you wish to use an existing MinIO or AIStor cluster, you must configure the `file.existing` parameters in your `values.yaml`.
 
 #### Using AWS S3
 
 If you wish to use an existing AWS S3 bucket, you must configure the `file.existing` parameters in your `values.yaml` **and** set `file.serviceType` to `s3`.
 
-#### Deploying a Dedicated MinIO Cluster
+#### Using S4
 
-If you'd like to install MinIO to your cluster, use the following commands below:
+[S4](https://github.com/rh-aiservices-bu/s4) is a license-free, S3-compatible store that runs in one container on Ceph's experimental standalone gateway. GroundX connects to it with storage type `s4`, which needs GroundX chart 0.2.8 or later with its default image tags: older service images do not know `s4` and send files to AWS S3 or fail extraction at start. S4 suits small installs; for production, use [MinIO AIStor](#deploying-a-dedicated-aistor-object-store).
+
+Limits of S4 0.3.2:
+
+- One replica, so no high availability ([chart values](https://github.com/rh-aiservices-bu/s4/blob/797911cbaa1b44fcaecfdfe69145a6a904ef7463/charts/s4/values.yaml#L4)).
+- Thousands to tens of thousands of objects per bucket ([S4 FAQ](https://github.com/rh-aiservices-bu/s4/blob/797911cbaa1b44fcaecfdfe69145a6a904ef7463/docs/operations/faq.md#how-many-objects-can-s4-handle)).
+- The image is built for `linux/amd64` only.
+- Kubernetes health checks cover only the web UI port (5000), not the S3 port (7480) that GroundX uses.
+- In S4 mode, large-file import and review (large-file delivery, off by default) refuse files larger than 5 GiB, the largest single upload S4 accepts, before uploading them. They also spool each upload to a temporary file in the pod's `TMPDIR` on top of the importer's own copy, so they need temporary pod disk of about twice the largest file for each upload in flight.
+- Long file names fail. In GroundX's tests, S4 stored a 204-byte file name and refused a 250-byte one in a single upload; in a multipart upload it stored a 120-byte name and refused a 204-byte one.
+- Bucket creation outside region `us-east-1` fails. GroundX services always use `us-east-1` for `s4` and ignore a configured region.
+
+Install S4 from its git tag; the chart is not published to a Helm repository. First replace the four `REPLACE_WITH_...` credentials in `helm/values/s4/values.yaml`, or pass your own with `--set`. The release name `s4` gives the Service the name `s4`, which the URL below uses.
 
 ```bash
-helm repo add minio-operator https://operator.min.io/
+git clone --depth 1 --branch v0.3.2 https://github.com/rh-aiservices-bu/s4 s4-v0.3.2
+
+helm install s4 \
+  s4-v0.3.2/charts/s4 \
+  -n eyelevel \
+  -f helm/values/s4/values.yaml
+```
+
+The values pin the tested image by digest, keep S4 inside the cluster (`ClusterIP` Service, OpenShift Route off), and set the pod's `fsGroup` to 1001, the user ID the image runs as. The data volume uses the chart's default size (`storage.data.size`, 10Gi); set it for your data. To keep the credentials out of the values file, create a Secret holding `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `UI_USERNAME`, and `UI_PASSWORD`, and set `s3.existingSecret` to its name; the chart then creates no Secret.
+
+Connect GroundX to S4 with the S4 access key and secret key as `file.username` and `file.password`. The URL is `http://<s4-service>.<namespace>.svc.cluster.local:7480`; leave `file.existing.region` unset, because S4 always uses `us-east-1`.
+
+```yaml
+file:
+  username: <s4-access-key>
+  password: <s4-secret-key>
+  existing:
+    serviceType: s4
+    url: http://s4.eyelevel.svc.cluster.local:7480
+```
+
+To move an existing MinIO store to S4, copy every object with the same keys, then set the public-read policy. GroundX's file, X-Ray, and page-image links are unsigned and rely on that policy, and GroundX sets it only when it creates the bucket itself. The copy carries neither object tags (GroundX does not read them back) nor the bucket policy, and a file whose name is too long for S4 fails to copy.
+
+1. Stop uploads to GroundX.
+2. Copy the bucket with [rclone](https://rclone.org/) from a machine that can reach both stores. The S4 bucket is created in `us-east-1`:
+
+   ```bash
+   export RCLONE_CONFIG_SRC_TYPE=s3 RCLONE_CONFIG_SRC_PROVIDER=Minio
+   export RCLONE_CONFIG_SRC_ENDPOINT=<minio-url>
+   export RCLONE_CONFIG_SRC_ACCESS_KEY_ID=<minio-access-key> RCLONE_CONFIG_SRC_SECRET_ACCESS_KEY=<minio-secret-key>
+   export RCLONE_CONFIG_DST_TYPE=s3 RCLONE_CONFIG_DST_PROVIDER=Ceph RCLONE_CONFIG_DST_REGION=us-east-1
+   export RCLONE_CONFIG_DST_ENDPOINT=<s4-url>
+   export RCLONE_CONFIG_DST_ACCESS_KEY_ID=<s4-access-key> RCLONE_CONFIG_DST_SECRET_ACCESS_KEY=<s4-secret-key>
+
+   rclone mkdir dst:eyelevel
+   rclone copy src:eyelevel dst:eyelevel --metadata
+   ```
+
+3. Allow anonymous `s3:GetObject` on the bucket's objects, the same policy GroundX sets on a bucket it creates:
+
+   ```bash
+   cat > public-read.json <<'EOF'
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Principal": {"AWS": ["*"]},
+         "Action": ["s3:GetObject"],
+         "Resource": ["arn:aws:s3:::eyelevel/*"]
+       }
+     ]
+   }
+   EOF
+   AWS_ACCESS_KEY_ID=<s4-access-key> AWS_SECRET_ACCESS_KEY=<s4-secret-key> \
+     aws s3api put-bucket-policy --endpoint-url <s4-url> --region us-east-1 \
+     --bucket eyelevel --policy file://public-read.json
+   ```
+
+4. Point `file.existing` at S4 as shown above, upgrade GroundX, and resume uploads.
+
+To go back, restore your previous `file` settings and upgrade GroundX again. The copy leaves the MinIO store unchanged, but files written only to S4 after the switch are not on MinIO.
+
+#### Deploying a Dedicated AIStor Object Store
+
+If you'd like to install MinIO AIStor to your cluster, you need an AIStor license. GroundX does not ship one. The AIStor Free license covers a single server and allows commercial use but not redistribution; a store with more than one server needs a paid license ([AIStor Free agreement](https://www.min.io/legal/aistor-free-agreement), read 2026-10-13).
+
+These steps install the AIStor operator in namespace `aistor` and an object store named `minio-tenant` in `eyelevel`. With that name and TLS off, the store serves the hosts GroundX uses by default (`minio` and `minio-tenant-hl`), so GroundX needs no `file` settings other than the store's credentials. The chart versions are pinned to the ones GroundX tested (`aistor-operator` 6.0.0 and `aistor-objectstore` 1.1.0); the AIStor repository published newer charts on 2026-10-14.
+
+Add the AIStor repository, store your license as Secret `minio-license` (key `minio.license`) in the operator's namespace, and install the operator:
+
+```bash
+helm repo add minio https://helm.min.io/
 helm repo update
 
-helm install minio-operator \
-  minio-operator/operator \
+kubectl create namespace aistor
+kubectl -n aistor create secret generic minio-license \
+  --from-file=minio.license=<path-to-your-license-file>
+
+helm install aistor-operator \
+  minio/aistor-operator \
+  --version 6.0.0 \
+  -n aistor \
+  -f helm/values/aistor/values.operator.yaml
+```
+
+The operator values run the operators on the `eyelevel-cpu-only` nodes and turn off the operator's cluster-wide pod webhook and its automatic certificate approval; installs and upgrades worked without them in GroundX's tests.
+
+Choose the object store's root credentials and put them in Secret `minio-tenant-env-configuration`. The object store values read the credentials from this Secret, which keeps them out of the Helm release; the chart also refuses to create the Secret itself with the well-known pair `minio`/`minio123`.
+
+```bash
+cat > config.env <<'EOF'
+export MINIO_ROOT_USER=<access-key>
+export MINIO_ROOT_PASSWORD=<secret-key>
+EOF
+kubectl -n eyelevel create secret generic minio-tenant-env-configuration \
+  --from-file=config.env
+rm config.env
+```
+
+Set GroundX's `file.username` and `file.password` to the same two values. Then install the object store:
+
+```bash
+helm install minio-tenant \
+  minio/aistor-objectstore \
+  --version 1.1.0 \
   -n eyelevel \
-  -f helm/values/minio/values.operator.yaml
-helm install minio-cluster \
-  minio-operator/tenant \
-  -n eyelevel \
-  -f helm/values/minio/values.tenant.yaml
+  -f helm/values/aistor/values.objectstore.yaml
+```
+
+Confirm that the store started with the license in place:
+
+```bash
+kubectl -n eyelevel get objectstore minio-tenant
+```
+
+The install is complete when `STATE` reads `Initialized` and `HEALTH` reads `green`. Without the `minio-license` Secret, the operator does not create the object store: no store pods or services appear, the state reports that Secret `minio-license` was not found, and GroundX keeps waiting for storage. Creating the Secret in `aistor` is enough; in GroundX's tests the store started about a minute later without a reinstall.
+
+#### Object Keys That Start with a Slash
+
+This applies only to a store connected as `serviceType: minio` that keeps a leading `/` in object keys, such as an S3-compatible store other than MinIO or AIStor. MinIO and AIStor drop the leading `/` when they store an object, so their keys need no change, and AWS S3 (`serviceType: s3`) is not affected.
+
+GroundX 0.2.7 services wrote some keys with a leading `/`. In chart 0.2.8, the `groundx`, `upload`, `pre-process`, `process`, `queue`, and `summary-client` services remove the leading `/` from every key and prefix, so on a store that kept the slash they no longer find those objects. Before upgrading GroundX to chart 0.2.8, list the keys that start with `/` and rename each one without it. These commands use the AWS CLI, which works against S3-compatible stores; GroundX's tests did not run them.
+
+```bash
+export AWS_ACCESS_KEY_ID=<store-access-key> AWS_SECRET_ACCESS_KEY=<store-secret-key>
+STORE=<store-url>
+BUCKET=eyelevel
+
+aws s3api list-objects-v2 --endpoint-url "$STORE" --bucket "$BUCKET" \
+  --prefix / --query 'Contents[].[Key]' --output text > slash-keys.txt
+```
+
+If `slash-keys.txt` is empty or holds only `None`, there is nothing to rename. Otherwise copy each object to its key without the slash, compare sizes, and delete the original only when they match:
+
+```bash
+while IFS= read -r key; do
+  [ "$key" = None ] && continue
+  new="${key#/}"
+  aws s3api copy-object --endpoint-url "$STORE" --bucket "$BUCKET" \
+    --copy-source "$BUCKET/$key" --key "$new" > /dev/null || break
+  old_size="$(aws s3api head-object --endpoint-url "$STORE" --bucket "$BUCKET" --key "$key" --query ContentLength)"
+  new_size="$(aws s3api head-object --endpoint-url "$STORE" --bucket "$BUCKET" --key "$new" --query ContentLength)"
+  [ "$old_size" = "$new_size" ] || { echo "size mismatch: $key"; break; }
+  aws s3api delete-object --endpoint-url "$STORE" --bucket "$BUCKET" --key "$key"
+done < slash-keys.txt
+```
+
+To roll back to chart 0.2.7, reverse the rename for the keys in `slash-keys.txt`: copy each key without the slash back to its `/` form, compare sizes, and delete the copy without the slash. Objects those services wrote on chart 0.2.8 are stored without the slash and are not in that list, so 0.2.7 services may not find them.
+
+#### Upgrading an Existing MinIO Install to AIStor
+
+These steps move a community MinIO tenant installed by earlier versions of this guide (operator release `minio-operator` and tenant release `minio-cluster`, both in `eyelevel`) to AIStor on the same disk. GroundX tested them with chart 7.1.1 of both releases; `helm list -n eyelevel` shows your versions. MinIO's guide is tested against operator charts 6.x and 7.x and refers earlier versions to MinIO support. The steps follow MinIO's [upgrade guide](https://docs.min.io/aistor/administration/upgrade-aistor-server/open-source-minio/kubernetes/) (read 2026-10-14), with the changes GroundX's tests needed. The store keeps its name, hosts, and credentials, so GroundX needs no setting change. In GroundX's tests on minikube, storage was unavailable for under a minute.
+
+MinIO states that the upgrade is permanent and cannot be reversed. The first step therefore snapshots the tenant's disk, which [Restoring Community MinIO from the Pre-Upgrade Snapshot](#restoring-community-minio-from-the-pre-upgrade-snapshot) uses to go back. Before you start:
+
+- Use Helm 3.17 or later (`helm version`), as MinIO's guide requires.
+- Have your AIStor license ready (see [Deploying a Dedicated AIStor Object Store](#deploying-a-dedicated-aistor-object-store)). A tenant with more than one server needs a paid license; the Free license covers one server.
+- The `VolumeSnapshot` step needs a CSI snapshot controller and a `VolumeSnapshotClass` for your storage driver. GroundX's bundled EKS Terraform installs neither. On EKS that means the snapshot controller add-on and a `VolumeSnapshotClass` for the EBS CSI driver, which GroundX has not verified. Without CSI snapshot support, snapshot the disk with your provider's tools instead.
+- Docker, to run MinIO's migration tool.
+
+1. Record the tenant's volume claim name, StorageClass, and size, which a restore needs, then snapshot the claim. With the 0.2.7 sample values the tenant has one claim, `data0-minio-tenant-minio-tenant-pool-0-0`; `kubectl -n eyelevel get pvc` lists yours. `kubectl get volumesnapshotclass` lists the snapshot classes.
+
+   ```bash
+   kubectl -n eyelevel get pvc data0-minio-tenant-minio-tenant-pool-0-0 \
+     -o jsonpath='{.spec.storageClassName}{" "}{.spec.resources.requests.storage}{"\n"}'
+
+   cat <<'EOF' | kubectl apply -f -
+   apiVersion: snapshot.storage.k8s.io/v1
+   kind: VolumeSnapshot
+   metadata:
+     name: minio-pre-aistor
+     namespace: eyelevel
+   spec:
+     volumeSnapshotClassName: <snapshot-class>
+     source:
+       persistentVolumeClaimName: data0-minio-tenant-minio-tenant-pool-0-0
+   EOF
+   kubectl -n eyelevel wait --for=jsonpath='{.status.readyToUse}'=true \
+     volumesnapshot/minio-pre-aistor --timeout=10m
+   ```
+
+2. Stop uploads to GroundX. Anything written after the snapshot is not in it.
+
+3. Install the AIStor operator with your license. Add the AIStor repository as in the first block of [Deploying a Dedicated AIStor Object Store](#deploying-a-dedicated-aistor-object-store), then run:
+
+   ```bash
+   kubectl create namespace aistor
+   kubectl -n aistor create secret generic minio-license \
+     --from-file=minio.license=<path-to-your-license-file>
+
+   helm install aistor-operator \
+     minio/aistor-operator \
+     --version 6.0.0 \
+     -n aistor \
+     --take-ownership \
+     -f helm/values/aistor/values.operator.yaml
+   ```
+
+   `--take-ownership` lets the AIStor operator take over CRD `policybindings.sts.min.io`, which the community operator also installed.
+
+4. Back up the tenant. MinIO's guide appends the Secrets to the Tenant file, which then no longer reads back as a Tenant, so these commands write them to separate files. They also save both community releases' values, which a restore needs, and print the image the tenant runs; write it down.
+
+   ```bash
+   kubectl -n eyelevel get tenant minio-tenant -o yaml > tenant-backup.yaml
+   kubectl -n eyelevel get secrets -o yaml > tenant-secrets-backup.yaml
+   helm get values minio-cluster -n eyelevel -o yaml > minio-cluster-values.yaml
+   helm get values minio-operator -n eyelevel -o yaml > minio-operator-values.yaml
+   kubectl -n eyelevel get tenant minio-tenant -o jsonpath='{.spec.image}{"\n"}'
+   ```
+
+   Keep these files somewhere safe. `tenant-secrets-backup.yaml` holds every Secret in the `eyelevel` namespace, GroundX's own included, and `minio-cluster-values.yaml` holds the store's root credentials.
+
+5. Generate the AIStor object store values with MinIO's migration tool, pinned to the image MinIO's `latest` tag pointed to when GroundX tested the upgrade. The tool runs in a container and reads only the kubeconfig mounted into it, so the first command writes one with the current context's credentials inline. The server address in that file must be reachable from inside the container.
+
+   ```bash
+   kubectl config view --flatten --minify > aistor-migration-kubeconfig
+
+   docker run --rm \
+     -v "$PWD/aistor-migration-kubeconfig:/root/.kube/config:ro" \
+     quay.io/minio/aistor/operator-migration:RELEASE.2026-05-06T15-08-11Z@sha256:4ac3380d75aa92ca3c03454af2362a649ce4ddee866c962044e4b6e6d118b957 \
+     generate-helm --namespace eyelevel > aistor-objectstore-values.yaml
+   ```
+
+   `aistor-migration-kubeconfig` holds your cluster credentials; delete it after the last step. GroundX ran this on minikube, with the file's server set to the minikube node address (`https://<minikube-ip>:8443`) and `--network <minikube-profile>` added to `docker run`. A kubeconfig that logs in through an exec plugin, such as `aws eks get-token` on EKS, has not been verified inside the container.
+
+6. Move the credentials to a Secret the object store can keep. The tool writes the tenant's credentials into the generated file, and the AIStor chart refuses the 0.2.7 sample pair `minio`/`minio123`. Copy the tenant's `config.env` into a new Secret now: the old Secret, `myminio-env-configuration`, belongs to the tenant's Helm release and is deleted with it.
+
+   ```bash
+   kubectl -n eyelevel get secret myminio-env-configuration \
+     -o jsonpath='{.data.config\.env}' | base64 -d \
+     | kubectl -n eyelevel create secret generic minio-tenant-env-configuration \
+       --from-file=config.env=/dev/stdin
+   ```
+
+   Then replace the `secrets` block of `aistor-objectstore-values.yaml` with:
+
+   ```yaml
+   secrets:
+     name: minio-tenant-env-configuration
+     existingSecret: true
+   ```
+
+   Review the rest of the generated file, including any `TODO` remarks the tool adds, and keep its pool name: it is what makes the object store reuse the existing volume claim. For a tenant installed from the 0.2.7 sample values, the result matches `helm/values/aistor/values.objectstore.upgrade.yaml`. Install from your generated file, which reflects your tenant; the example is only for comparison.
+
+7. Uninstall the community tenant release. Storage is unavailable from here until the next step finishes; the volume claim stays.
+
+   ```bash
+   helm uninstall minio-cluster -n eyelevel
+   ```
+
+8. Install the AIStor object store:
+
+   ```bash
+   helm install minio-tenant \
+     minio/aistor-objectstore \
+     --version 1.1.0 \
+     -n eyelevel \
+     --take-ownership \
+     -f aistor-objectstore-values.yaml
+   ```
+
+9. Confirm the upgrade, then resume uploads. `STATE` must read `Initialized` and `HEALTH` `green`:
+
+   ```bash
+   kubectl -n eyelevel get objectstore minio-tenant
+   ```
+
+10. Optional: remove the community operator. Run the migration tool's `protect-crds` first; uninstalling the community operator without it deletes CRD `policybindings.sts.min.io`, which AIStor now uses.
+
+    ```bash
+    docker run --rm \
+      -v "$PWD/aistor-migration-kubeconfig:/root/.kube/config:ro" \
+      quay.io/minio/aistor/operator-migration:RELEASE.2026-05-06T15-08-11Z@sha256:4ac3380d75aa92ca3c03454af2362a649ce4ddee866c962044e4b6e6d118b957 \
+      protect-crds --namespace eyelevel --release minio-operator
+    helm uninstall minio-operator -n eyelevel
+    rm aistor-migration-kubeconfig
+    ```
+
+#### Restoring Community MinIO from the Pre-Upgrade Snapshot
+
+These steps go back from AIStor to community MinIO using the `VolumeSnapshot` taken in step 1 of the upgrade. Objects written after the snapshot are lost, including everything written while the store ran on AIStor. GroundX tested this order on minikube on 2026-10-14, starting after the upgrade's optional last step (community operator removed); other starting points were not tested. The steps reinstall chart 7.1.1; restoring a tenant that ran another chart version was not tested. You need Helm 3.17 or later, the files saved in the upgrade's backup step, and the claim name, StorageClass, and size recorded in its first step.
+
+1. Uninstall the AIStor object store. Storage is unavailable until step 7.
+
+   ```bash
+   helm uninstall minio-tenant -n eyelevel
+   ```
+
+2. Delete the ServiceAccount `minio-tenant-sa` that AIStor leaves behind. This step is required: the community operator reuses an existing ServiceAccount with that name, and with the one AIStor left, the tenant pod did not start (`Init:CrashLoopBackOff` in GroundX's test).
+
+   ```bash
+   kubectl -n eyelevel delete serviceaccount minio-tenant-sa
+   ```
+
+3. Recommended: delete the other objects AIStor leaves in `eyelevel`. The `minio-license` Secret there is the AIStor operator's copy of your license Secret.
+
+   ```bash
+   kubectl -n eyelevel delete rolebinding minio-tenant-eyelevel-binding
+   kubectl -n eyelevel delete secret minio-tenant-generated minio-license minio-tenant-env-configuration
+   ```
+
+4. Replace the AIStor-era volume claim with one restored from the snapshot, using the claim name, StorageClass, and size you recorded. Do not wait for the new claim to bind: GroundX's StorageClass binds a claim only when a pod uses it, which happens when the tenant starts in step 6.
+
+   ```bash
+   kubectl -n eyelevel delete pvc data0-minio-tenant-minio-tenant-pool-0-0
+
+   cat <<'EOF' | kubectl apply -f -
+   apiVersion: v1
+   kind: PersistentVolumeClaim
+   metadata:
+     name: data0-minio-tenant-minio-tenant-pool-0-0
+     namespace: eyelevel
+   spec:
+     storageClassName: <recorded-storage-class>
+     accessModes:
+       - ReadWriteOnce
+     resources:
+       requests:
+         storage: <recorded-size>
+     dataSource:
+       apiGroup: snapshot.storage.k8s.io
+       kind: VolumeSnapshot
+       name: minio-pre-aistor
+   EOF
+   ```
+
+5. Reinstall the community operator 7.1.1 with the operator values you saved. `--take-ownership` is required: the AIStor operator now owns CRD `policybindings.sts.min.io`, and a plain install fails with an ownership error. GroundX's test passed the 0.2.7 sample operator values file directly; installing from the saved `minio-operator-values.yaml`, which for an install from the 0.2.7 guide holds the same values, was not tested.
+
+   ```bash
+   helm repo add minio-operator https://operator.min.io/
+   helm repo update
+
+   helm install minio-operator \
+     minio-operator/operator \
+     --version 7.1.1 \
+     -n eyelevel \
+     --take-ownership \
+     -f minio-operator-values.yaml
+   ```
+
+6. Install the community tenant 7.1.1 as release `minio-cluster` with the tenant values you saved and a server image you can pull. As of 2026-10-14 the default server image of tenant chart 7.1.1 no longer downloads anonymously. Chart 7.1.1 builds the image reference from `tenant.image.repository` followed by `tenant.image.digest`, or by `tenant.image.tag` when no digest is set.
+
+   If you have no copy of your own, use the mirror GroundX tested, `ghcr.io/coollabsio/minio@sha256:69b55a1c1c5dc285ce04db96689f5b2102317fc77a50680a1874ca6efd1c87f9`, set as a repository ending in `@sha256` plus the digest:
+
+   ```bash
+   helm install minio-cluster \
+     minio-operator/tenant \
+     --version 7.1.1 \
+     -n eyelevel \
+     -f minio-cluster-values.yaml \
+     --set tenant.image.repository=ghcr.io/coollabsio/minio@sha256 \
+     --set tenant.image.digest=69b55a1c1c5dc285ce04db96689f5b2102317fc77a50680a1874ca6efd1c87f9
+   ```
+
+   If you keep a copy of the image the tenant ran (recorded in the backup step) in your own registry, set it as repository and tag instead, and clear the digest so a digest left in the saved values does not win over the tag. GroundX did not test this form.
+
+   ```bash
+   helm install minio-cluster \
+     minio-operator/tenant \
+     --version 7.1.1 \
+     -n eyelevel \
+     -f minio-cluster-values.yaml \
+     --set tenant.image.repository=<your-registry>/<image> \
+     --set tenant.image.tag=<tag> \
+     --set tenant.image.digest=
+   ```
+
+7. Confirm the restore: `STATE` must read `Initialized` and `HEALTH` `green`. The tenant serves the same hosts with the credentials from the saved values, so GroundX needs no setting change.
+
+   ```bash
+   kubectl -n eyelevel get tenant minio-tenant
+   ```
+
+8. Optional: uninstall the AIStor operator. In GroundX's test the tenant stayed healthy, and Helm kept the AIStor CRDs. It leaves Secret `minio-license`, your license, in namespace `aistor`; deleting that Secret was not tested.
+
+   ```bash
+   helm uninstall aistor-operator -n aistor
+   ```
+
+#### Staying on Community MinIO
+
+You can keep an existing community MinIO tenant, and its GroundX settings do not change, but it receives no fixes: MinIO archived the community server and operator repositories. As of 2026-10-14 the default server image of tenant chart 7.1.1, `quay.io/minio/minio:RELEASE.2025-04-08T15-41-24Z`, no longer downloads anonymously, so a tenant pod rescheduled to a node that does not already hold the image may not start. Keep a copy of the server image your tenant runs in your own registry, and point the tenant's image at that copy. This prints the image the tenant runs:
+
+```bash
+kubectl -n eyelevel get tenant minio-tenant -o jsonpath='{.spec.image}{"\n"}'
 ```
 
 ### OpenSearch
