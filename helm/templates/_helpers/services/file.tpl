@@ -113,6 +113,10 @@ false
 {{- end }}
 
 {{- define "groundx.file.port" -}}
+{{- if eq (include "groundx.fileAccess.create" .) "true" -}}
+{{- $endpoint := urlParse .Values.fileAccess.storageEndpoint -}}
+{{- regexFind ":[0-9]+$" $endpoint.host | trimPrefix ":" | default "443" -}}
+{{- else -}}
 {{- $in := .Values.file | default dict -}}
 {{- $ic := include "groundx.file.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
@@ -120,6 +124,7 @@ false
 {{- else -}}
 {{ dig "port" 9000 $in }}
 {{- end -}}
+{{- end }}
 {{- end }}
 
 {{- define "groundx.file.region" -}}
@@ -129,6 +134,9 @@ false
 {{- end }}
 
 {{- define "groundx.file.serviceDependency" -}}
+{{- if eq (include "groundx.fileAccess.create" .) "true" -}}
+{{- (urlParse .Values.fileAccess.storageEndpoint).hostname -}}
+{{- else -}}
 {{- $ic := include "groundx.file.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
 {{- $domain := include "groundx.file.domain" . -}}
@@ -143,6 +151,7 @@ false
 {{- $name := include "groundx.file.serviceName" . -}}
 {{- printf "%s-tenant-hl.%s.svc.cluster.local" $name $ns -}}
 {{- end -}}
+{{- end }}
 {{- end }}
 
 {{- define "groundx.file.serviceType" -}}
@@ -185,6 +194,20 @@ false
 {{- $in := .Values.file | default dict -}}
 {{- $ing := dig "ingress" dict $in -}}
 {{- dig "ingress" dict $in | toYaml -}}
+{{- end }}
+
+{{- define "groundx.file.presentationUrl" -}}
+{{- $fs := .settings -}}
+{{- $domain := get $fs "baseDomain" -}}
+{{- $scheme := get $fs "scheme" -}}
+{{- $suffix := printf "%s/" (get $fs "bucketName") -}}
+{{- if eq (get $fs "storageType") "s3" -}}{{- $suffix = "" -}}{{- end -}}
+{{- if eq (include "groundx.fileAccess.create" .root) "true" -}}
+  {{- $domain = trimSuffix "/" $domain -}}
+  {{- $scheme = (urlParse .root.Values.fileAccess.publicUrl).scheme -}}
+  {{- if hasSuffix (printf "/%s" (get $fs "bucketName")) $domain -}}{{- $suffix = "" -}}{{- end -}}
+{{- end -}}
+{{- printf "%s://%s/%s" $scheme $domain $suffix -}}
 {{- end }}
 
 {{- define "groundx.file.settings" -}}

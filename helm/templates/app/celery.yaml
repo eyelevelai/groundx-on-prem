@@ -150,6 +150,9 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+{{- with include "groundx.fileAccess.caEnv" $ }}
+{{ . | nindent 12 }}
+{{- end }}
 {{- range $envName, $envValue := $env }}
             - name: {{ $envName }}
               value: {{ $envValue | quote }}
@@ -190,6 +193,9 @@ spec:
             periodSeconds: 30
 {{ include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
           volumeMounts:
+{{- with include "groundx.fileAccess.caMount" $ }}
+{{ . | nindent 12 }}
+{{- end }}
             - name: config-volume
               mountPath: /app/config.py
               subPath: config.py
@@ -247,6 +253,9 @@ spec:
               readOnly: true
 {{- end }}
       volumes:
+{{- with include "groundx.fileAccess.caVolume" $ }}
+{{ . | nindent 8 }}
+{{- end }}
         - name: config-volume
           secret:
             secretName: {{ $svc }}-config-py-map

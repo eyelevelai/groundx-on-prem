@@ -201,6 +201,10 @@ extraPreDefaults:
 {{- range $arr }}
   {{- $_ := set $dict . . -}}
 {{- end }}
+{{- if eq (include "groundx.fileAccess.create" .) "true" -}}
+  {{- $name := .Values.fileAccess.storageCredentialsSecretName -}}
+  {{- if $name -}}{{- $_ := set $dict $name $name -}}{{- end -}}
+{{- end -}}
 {{ $dict | toYaml }}
 {{- end }}
 

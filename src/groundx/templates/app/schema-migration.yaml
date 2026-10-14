@@ -62,6 +62,10 @@ spec:
           image: {{ get $cfg "image" | quote }}
           imagePullPolicy: {{ get $cfg "pull" | quote }}
           args: ["-migrate-only"]
+{{- if include "groundx.fileAccess.caEnv" . }}
+          env:
+{{ include "groundx.fileAccess.caEnv" . | indent 12 }}
+{{- end }}
 {{- if gt (len $secrets) 0 }}
           envFrom:
 {{- range $secrets }}
@@ -72,11 +76,17 @@ spec:
 {{ include "groundx.renderSecurityContext" (dict "ctx" (get $cfg "containerSecurityContext") "indent" 10 "root" $ "user" $username "cfg" "container") }}
 {{ include "groundx.renderContainerResources" (dict "ctx" (get $cfg "resources") "indent" 10) }}
           volumeMounts:
+{{- with include "groundx.fileAccess.caMount" . }}
+{{ . | nindent 12 }}
+{{- end }}
             - name: config-volume
               mountPath: /home/{{ include "groundx.golang.home" . }}/.cashbot/config.yaml
               subPath: config.yaml
               readOnly: true
       volumes:
+{{- with include "groundx.fileAccess.caVolume" . }}
+{{ . | nindent 8 }}
+{{- end }}
         - name: config-volume
           secret:
             secretName: {{ $name }}

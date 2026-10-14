@@ -1,0 +1,199 @@
+suite: optional private file gateway
+tests:
+  - it: gateway uses the shared Go workload with private secret and CA references
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.file-access.yaml
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: file-access
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 2
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /readyz
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: file-store-credentials
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SSL_CERT_FILE
+            value: /var/run/groundx/file-access/ca.crt
+  - it: delivery ingress preserves the root path without rewriting queries or caching
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    documentSelector:
+      path: metadata.name
+      value: file-access
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: downloads.example.com
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: file-access
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /
+      - notExists:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/rewrite-target"]
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/proxy-buffering"]
+          value: "off"
+  - it: disabled gateway renders no Go workload in a disabled installation
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.disabled.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: gateway ingress requires the TLS certificate reference
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.tlsSecretName: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.tlsSecretName is required for ingress"
+  - it: gateway ingress rejects response cache overrides
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.ingress.annotations:
+        nginx.ingress.kubernetes.io/proxy-cache: "on"
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.ingress annotation nginx.ingress.kubernetes.io/proxy-cache can change file authorization, paths or response freshness"
+  - it: layout separates private storage from its existing presentation roots
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      file.username: ignored-inline-key
+      file.password: ignored-inline-secret
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadStorageEndpoint="https://store.internal.example.com:9443"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadPublicRead=False'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadBaseURL="minio.eyelevel.svc.cluster.local"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadURL="https://downloads.example.com/eyelevel/"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'accessKey=""'
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'ignored-inline'
+  - it: migration job receives the same credential and trust references on upgrades
+    templates:
+      - ../templates/app/schema-migration.yaml
+    values:
+      - ./files/values.file-access.yaml
+    release:
+      upgrade: true
+    documentSelector:
+      path: kind
+      value: Job
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: file-store-credentials
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SSL_CERT_FILE
+            value: /var/run/groundx/file-access/ca.crt
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: file-access-ca
+            secret:
+              secretName: file-store-ca
+              items:
+                - key: ca.crt
+                  path: ca.crt
+  - it: gateway creates its annotated service account only when requested
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.serviceAccount.create: true
+      fileAccess.serviceAccount.name: private-files
+      fileAccess.serviceAccount.annotations:
+        eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/private-files
+    documentSelector:
+      path: kind
+      value: ServiceAccount
+    asserts:
+      - equal:
+          path: metadata.name
+          value: private-files
+      - equal:
+          path: metadata.annotations["eks.amazonaws.com/role-arn"]
+          value: arn:aws:iam::123456789012:role/private-files
+  - it: native AWS storage uses ambient credentials without an empty Secret
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      file.enabled: false
+      file.existing.url: https://downloads.example.com
+      file.existing.serviceType: s3
+      file.existing.region: us-east-1
+      fileAccess.storageCredentialsSecretName: ""
+      fileAccess.serviceAccount.name: private-files
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: file-access
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: private-files
+      - notExists:
+          path: spec.template.spec.containers[0].envFrom
+  - it: a verified origin hostname changes ingress routing and TLS without changing public URLs
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.ingress.hostName: verified-origin.example.com
+    documentSelector:
+      path: metadata.name
+      value: file-access
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: verified-origin.example.com
+      - equal:
+          path: spec.tls[0].hosts[0]
+          value: verified-origin.example.com
+      - equal:
+          path: spec.tls[0].secretName
+          value: downloads-tls
+      - notExists:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/rewrite-target"]

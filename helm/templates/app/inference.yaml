@@ -203,6 +203,9 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+{{- with include "groundx.fileAccess.caEnv" $ }}
+{{ . | nindent 12 }}
+{{- end }}
 {{- if eq $mapPrefix "summary" }}
             - name: HF_HUB_OFFLINE
               value: "1"
@@ -260,6 +263,9 @@ spec:
 {{- end }}
 {{ include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
           volumeMounts:
+{{- with include "groundx.fileAccess.caMount" $ }}
+{{ . | nindent 12 }}
+{{- end }}
             - name: config-models
               mountPath: {{ $wd }}/config_models.py
               subPath: config_models.py
@@ -274,6 +280,9 @@ spec:
               mountPath: {{ $wd }}/hf_models_cache
 {{- end }}
       volumes:
+{{- with include "groundx.fileAccess.caVolume" $ }}
+{{ . | nindent 8 }}
+{{- end }}
         - name: config-models
           configMap:
             name: config-models-map
