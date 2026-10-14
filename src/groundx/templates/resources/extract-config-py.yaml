@@ -46,6 +46,10 @@ stringData:
         ContainerUploadSettings,
         GroundXSettings,
     )
+    {{- if .Values.fileAccess.enabled }}
+    if not {"public_read", "storage_endpoint"}.issubset(ContainerUploadSettings.model_fields):
+        raise RuntimeError("private extraction storage requires a compatible GroundX SDK")
+    {{- end }}
 
     agent_queue = {{ include "groundx.extract.agent.queue" . | quote }}
     download_queue = {{ include "groundx.extract.download.queue" . | quote }}

@@ -170,6 +170,12 @@ tests:
           pattern: 'public_read=False'
       - matchRegex:
           path: stringData["config.py"]
+          pattern: 'issubset\(ContainerUploadSettings.model_fields\)'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'private extraction storage requires a compatible GroundX SDK'
+      - matchRegex:
+          path: stringData["config.py"]
           pattern: 'url="https://downloads.example.com/eyelevel/"'
       - matchRegex:
           path: stringData["config.py"]

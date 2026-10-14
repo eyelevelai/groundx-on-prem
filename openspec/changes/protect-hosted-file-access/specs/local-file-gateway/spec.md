@@ -13,6 +13,12 @@ The chart SHALL preserve disabled legacy behavior and SHALL deploy local file au
 - **WHEN** configuration is admitted
 - **THEN** admission fails rather than routing worker reads recursively.
 
+#### Scenario: Extraction SDK silently ignores private fields
+- **GIVEN** file access is enabled and an installed extraction SDK lacks `public_read` or `storage_endpoint`
+- **WHEN** generated configuration executes
+- **THEN** it raises a safe compatibility error before constructing settings, storage clients or buckets
+- **AND** public configuration with file access disabled retains its existing initialization.
+
 #### Scenario: Native sharing route
 - **GIVEN** a reachable native S3 API and protected resource
 - **WHEN** a standard share URL is returned
