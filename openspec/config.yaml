@@ -104,6 +104,22 @@ context: |
       `.build/bin/validate-helm.sh`. This is the established pattern for a new chart-level
       correctness check — prefer it over embedding check logic inline in the shell script or adding
       a parallel bash test harness.
+  - CONVENTIONS DISCOVERED DURING GX-88 (store sample values and third-party chart checks):
+    - Backing-store sample values live in src/groundx/values/<store>/ and helm/values/<store>/ and
+      must be byte-identical. verify_mirrors() covers only templates/ and the storageclass prereqs,
+      so a task check compares other mirrored values files with `cmp`.
+    - A check that renders a third-party chart (operators, object stores) pulls the pinned chart
+      version into a `mktemp -d` directory with HELM_CACHE_HOME and HELM_REPOSITORY_CONFIG pointed
+      inside it, reads named fields with `yq`, and never prints the render (renders can carry
+      credentials).
+    - CI pins helm v3.19.0; local checks use GX_ON_PREM_HELM when PATH helm is another version.
+      validate-helm.sh calls bare `helm` and `python`, so a check that runs it puts both on a
+      temporary PATH directory (helm v3.19.0, python3) and proves the interpreter runs first.
+    - groundx-studio-harness scripts/scans/scan-on-prem.mjs check 9 compares a README install code
+      block with the harness doc, locating it by the first match of a marker line. Keep each
+      mirrored install block's marker line unique in README.md.
+    - The helm-unittest suites pin chart.appVersion 0.1.0, so a Chart.yaml version bump alone does
+      not change snapshots.
 
   - KNOWN GAPS / OPEN QUESTIONS:
     - helm/ <-> src/groundx duplication: no regen script (manual sync required); a drift check DOES exist (verify_mirrors() in .build/bin/verify-storage-contract.py fails the gate on mismatch) — the remaining gap is only the absence of a regen script, not the absence of a check.
