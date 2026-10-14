@@ -8,6 +8,9 @@
 {{- if not $in.originsPrivate -}}
 {{- fail "fileAccess.originsPrivate must be true after operator verification of all storage aliases" -}}
 {{- end -}}
+{{- if not $in.frontProxyTLSVerified -}}
+{{- fail "fileAccess.frontProxyTLSVerified must be true after operator verification of HTTPS termination and encrypted trusted gateway backplane" -}}
+{{- end -}}
 {{- $publicURL := required "fileAccess.publicUrl is required" $in.publicUrl -}}
 {{- if contains "@" $publicURL -}}
   {{- fail "fileAccess.publicUrl must not contain credentials" -}}
@@ -122,6 +125,7 @@
 {{- $in := .Values.fileAccess -}}
 fileAccess:
   enabled: true
+  frontProxyTLSVerified: {{ $in.frontProxyTLSVerified }}
   publicUrl: {{ $in.publicUrl | quote }}
   {{- with $in.trustedOrigins }}
   trustedOrigins:

@@ -328,12 +328,13 @@ done
 echo "==> Verifying optional FileAccess storage and ingress contracts on both chart surfaces"
 for chart in src/groundx helm; do
   file_access_output="$(helm template private-files "${chart}" -f src/groundx/tests/files/values.file-access.yaml)"
-  for expected in 'name: file-access' 'storageEndpoint: "https://store.internal.example.com:9443"' 'signingEndpoint: "https://s3.example.com"' 'uploadStorageEndpoint="https://store.internal.example.com:9443"' 'uploadPublicRead=False' 'name: file-store-credentials' 'secretName: "file-store-ca"' 'secretName: downloads-tls'; do
+  for expected in 'name: file-access' 'frontProxyTLSVerified: true' 'storageEndpoint: "https://store.internal.example.com:9443"' 'signingEndpoint: "https://s3.example.com"' 'uploadStorageEndpoint="https://store.internal.example.com:9443"' 'uploadPublicRead=False' 'name: file-store-credentials' 'secretName: "file-store-ca"' 'secretName: downloads-tls'; do
     if [[ "${file_access_output}" != *"${expected}"* ]]; then
       echo "${chart}: FileAccess render is missing ${expected}" >&2
       exit 1
     fi
   done
+  expect_helm_template_failure "${chart}" "fileAccess.frontProxyTLSVerified must be true" -f src/groundx/tests/files/values.file-access.yaml --set fileAccess.frontProxyTLSVerified=false
   expect_helm_template_failure "${chart}" "fileAccess.originsPrivate must be true" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=false --set fileAccess.originsPrivate=false
   expect_helm_template_failure "${chart}" "fileAccess.storageEndpoint must not use the delivery host" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=false --set fileAccess.storageEndpoint=https://downloads.example.com
   expect_helm_template_failure "${chart}" "fileAccess.signingEndpoint must not use the delivery host" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=false --set fileAccess.signingEndpoint=https://downloads.example.com

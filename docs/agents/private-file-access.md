@@ -83,6 +83,15 @@ artifact URLs or append a second bucket to a configured presentation root.
 
 ## Activation and rollback gates
 
+`frontProxyTLSVerified` defaults to `false`. The chart exposes the gateway's
+plain HTTP service behind operator-provisioned HTTPS termination; enablement
+requires this assertion after verifying the complete HTTPS route and an encrypted
+trusted or service-mesh backplane from that terminator to the gateway. An ingress
+TLS Secret reference alone does not verify the backplane. Kubernetes networking
+alone is not encrypted. The assertion is passed to the gateway, whose startup
+refuses plaintext file service without it. Configure and verify the encrypted
+backplane outside this chart before setting it to `true`.
+
 `originsPrivate=true` is an operator assertion, not an automatic policy change or
 an observed readiness test. Set it only after anonymous GET and HEAD are denied
 on every native store alias, credentialed processing succeeds, network transport

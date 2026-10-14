@@ -197,3 +197,22 @@ tests:
           value: downloads-tls
       - notExists:
           path: metadata.annotations["nginx.ingress.kubernetes.io/rewrite-target"]
+  - it: a TLS ingress reference cannot replace verified front proxy transport
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.frontProxyTLSVerified: false
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.frontProxyTLSVerified must be true after operator verification of HTTPS termination and encrypted trusted gateway backplane"
+  - it: verified front proxy transport reaches the gateway config
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.file-access.yaml
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'frontProxyTLSVerified: true'

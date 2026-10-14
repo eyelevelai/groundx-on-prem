@@ -21,6 +21,7 @@ Add the following optional values to source values/schema and published mirror. 
 | fileAccess.publicUrl | Required when enabled | Existing stable file URL root, routed to gateway |
 | fileAccess.trustedOrigins | Empty, at most 32 HTTPS origins | Operator-declared saved-reference aliases in the same storage namespace |
 | fileAccess.ingress.hostName | publicUrl hostname | Optional verified origin DNS route and TLS hostname without changing public presentation URLs |
+| fileAccess.frontProxyTLSVerified | false | Operator assertion of verified HTTPS termination and encrypted trusted gateway backplane, required before chart enablement |
 | fileAccess.tlsSecretName | Required for external ingress when enabled | TLS certificate secret reference |
 | fileAccess.storageEndpoint | Required when enabled | Private S3 API URL for workers and gateway reads |
 | fileAccess.signingEndpoint | Required when enabled | Native S3 API URL reachable by recipients, signed as delivered |
