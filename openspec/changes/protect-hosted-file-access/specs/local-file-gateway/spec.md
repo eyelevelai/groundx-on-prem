@@ -9,7 +9,7 @@ The chart SHALL preserve disabled legacy behavior and SHALL deploy local file au
 - **THEN** existing storage/configuration/ingress behavior is preserved.
 
 #### Scenario: Endpoint loop
-- **GIVEN** an enabled gateway whose storage endpoint resolves to its delivery route
+- **GIVEN** an enabled gateway whose storage or signing endpoint names the public delivery host or an enabled fileAccess ingress hostname
 - **WHEN** configuration is admitted
 - **THEN** admission fails rather than routing worker reads recursively.
 

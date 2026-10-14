@@ -219,3 +219,50 @@ tests:
       - matchRegex:
           path: stringData["config.yaml"]
           pattern: 'frontProxyTLSVerified: true'
+  - it: rejects storageEndpoint pointing at the enabled gateway ingress host
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.ingress.hostName: verified-origin.example.com
+      fileAccess.storageEndpoint: https://VERIFIED-ORIGIN.example.com:9443
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.storageEndpoint must not use the delivery host"
+  - it: rejects signingEndpoint pointing at the enabled gateway ingress host
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.ingress.hostName: verified-origin.example.com
+      fileAccess.signingEndpoint: https://VERIFIED-ORIGIN.example.com:9443
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.signingEndpoint must not use the delivery host"
+  - it: disabled ingress allows a storage endpoint sharing an unused ingress hostname
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.ingress.enabled: false
+      fileAccess.ingress.hostName: store.internal.example.com
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'storageEndpoint: "https://store.internal.example.com:9443"'
+  - it: disabled gateway ignores ingress endpoint loop settings
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      fileAccess.enabled: false
+      fileAccess.ingress.enabled: true
+      fileAccess.ingress.hostName: store.internal.example.com
+      fileAccess.storageEndpoint: https://store.internal.example.com
+    asserts:
+      - hasDocuments:
+          count: 0

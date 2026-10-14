@@ -36,6 +36,10 @@
     {{- fail "extract.file.url host must match fileAccess.publicUrl when the gateway is enabled" -}}
   {{- end -}}
 {{- end -}}
+{{- $ingressHost := "" -}}
+{{- if dig "enabled" false $in.ingress -}}
+  {{- $ingressHost = lower (dig "hostName" "" $in.ingress) -}}
+{{- end -}}
 {{- range $key := list "publicUrl" "storageEndpoint" "signingEndpoint" -}}
   {{- $raw := required (printf "fileAccess.%s is required" $key) (get $in $key) -}}
   {{- if contains "@" $raw -}}
@@ -46,7 +50,7 @@
     {{- fail (printf "fileAccess.%s must be an HTTPS URL without credentials, query or fragment" $key) -}}
   {{- end -}}
   {{- if ne $key "publicUrl" -}}
-    {{- if eq (lower $url.hostname) (lower $public.hostname) -}}
+    {{- if or (eq (lower $url.hostname) (lower $public.hostname)) (and (not (empty $ingressHost)) (eq (lower $url.hostname) $ingressHost)) -}}
       {{- fail (printf "fileAccess.%s must not use the delivery host" $key) -}}
     {{- end -}}
     {{- if ne $url.path "" -}}
