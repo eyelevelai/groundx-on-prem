@@ -659,9 +659,11 @@ while IFS= read -r key; do
 done < slash-keys.txt
 ```
 
-After the upgrade, before you resume uploads, keep `slash-keys.txt` under another name and run the listing again in the same shell. Any key it finds was written by a 0.2.7 service before the upgrade finished: rename it with the same loop, and keep both lists for a rollback.
+`copy-object` copies at most 5 GB per object, so the loop stops (`|| break`) at a larger object. Copy that object to its key without the slash using a tool that copies in parts, such as `aws s3 cp`, compare sizes, and delete the original. Then keep `slash-keys.txt` under another name, run the listing again, and run the loop on the new list; keep every list for a rollback, where an object over 5 GB needs the same tool. This step is derived from the AWS CLI documentation and GroundX has not tested it.
 
-To roll back to chart 0.2.7, reverse the rename for the keys in both lists: copy each key without the slash back to its `/` form, compare sizes, and delete the copy without the slash. Objects those services wrote on chart 0.2.8 are stored without the slash and are not in either list, so 0.2.7 services may not find them.
+After the upgrade, before you resume uploads, keep `slash-keys.txt` under another name and run the listing again in the same shell. Any key it finds was written by a 0.2.7 service before the upgrade finished: rename it with the same loop, and keep every list for a rollback.
+
+To roll back to chart 0.2.7, reverse the rename once for each key in the lists you kept: copy each key without the slash back to its `/` form, compare sizes, and delete the copy without the slash. Objects those services wrote on chart 0.2.8 are stored without the slash and are not in any list, so 0.2.7 services may not find them.
 
 #### Upgrading an Existing MinIO Install to AIStor
 
