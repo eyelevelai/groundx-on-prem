@@ -132,7 +132,7 @@ The section SHALL require Helm 3.17 or later and give, in order: uninstalling th
 
 ### Requirement: Community MinIO sample values stop shipping while installed stores keep working
 
-The community MinIO operator and tenant sample values SHALL no longer ship: `src/groundx/values/minio/` and `helm/values/minio/` are deleted. Installed MinIO tenants (separate Helm releases), the `minio` storage-type value, the chart's default store hosts and credentials comments, every chart template and default, the helm-unittest snapshots, and the Chainguard MinIO seeds SHALL remain unchanged.
+The community MinIO operator and tenant sample values SHALL no longer ship: `src/groundx/values/minio/` and `helm/values/minio/` are deleted. Installed MinIO tenants (separate Helm releases), the `minio` storage-type value, the chart's default store hosts and credentials comments, every chart template other than the Bedrock storage check that capability `extract-bedrock-storage` removes, every default, the helm-unittest snapshots, and the Chainguard MinIO seeds SHALL remain unchanged.
 
 #### Scenario: Legacy sample files are gone and nothing points at them (finalize success)
 - **WHEN** the working tree is checked
