@@ -513,7 +513,7 @@ helm install s4 \
 
 The values pin the tested image by digest, keep S4 inside the cluster (`ClusterIP` Service, OpenShift Route off), and set the pod's `fsGroup` to 1001, the user ID the image runs as. The data volume uses the chart's default size (`storage.data.size`, 10Gi); set it for your data. To keep the credentials out of the values file, create a Secret holding `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `UI_USERNAME`, and `UI_PASSWORD`, and set `s3.existingSecret` to its name; the chart then creates no Secret.
 
-Connect GroundX to S4 with the S4 access key and secret key as `file.username` and `file.password`. The URL is `http://<s4-service>.<namespace>.svc.cluster.local:7480`; leave `file.existing.region` unset, because S4 always uses `us-east-1`.
+Connect a new GroundX install to S4 with the S4 access key and secret key as `file.username` and `file.password`. The URL is `http://<s4-service>.<namespace>.svc.cluster.local:7480`; leave `file.existing.region` unset, because S4 always uses `us-east-1`. To replace an existing MinIO store, follow the migration steps below instead: they keep MinIO's URL.
 
 ```yaml
 file:
@@ -524,9 +524,11 @@ file:
     url: http://s4.eyelevel.svc.cluster.local:7480
 ```
 
-To move an existing MinIO store to S4, copy every object with the same keys, then set the public-read policy. GroundX's file, X-Ray, and page-image links are unsigned and rely on that policy, and GroundX sets it only when it creates the bucket itself. The copy carries neither object tags (GroundX does not read them back) nor the bucket policy, and a file whose name is too long for S4 fails to copy. GroundX ran the commands in steps 2 to 4 as written on 2026-10-15, copying from community MinIO to S4 0.3.2 in local containers; it has not run this migration on a cluster.
+To move an existing MinIO store to S4, S4 must take over MinIO's URL as well as its objects. GroundX saves each file's full URL, including the store's host, with the document and inside processed files, and it reads and copies only files whose URL starts with its storage URL. Connected at `s4.eyelevel.svc.cluster.local:7480`, GroundX could no longer open or copy any document stored before the move. These steps copy every object with the same keys, set the public-read policy, and then hand Service `minio`, which GroundX's default storage URL `http://minio.eyelevel.svc.cluster.local` reaches, from MinIO to S4. GroundX's file, X-Ray, and page-image links are unsigned and rely on that policy, and GroundX sets it only when it creates the bucket itself. The copy carries neither object tags (GroundX does not read them back) nor the bucket policy, and a file whose name is too long for S4 fails to copy.
 
-1. Stop uploads to GroundX, then wait until no documents are still processing. Processing keeps writing files to MinIO, and a file written after the copy is not on S4. If you cannot confirm that nothing is processing, run the copy in step 2 and the check in step 4 again just before you switch in step 5. This wait follows from how GroundX writes processing results; GroundX has not tested it.
+The steps cover a store installed by this guide, with `file.existing.url` and `file.customDomain` unset in your GroundX values, and S4 installed as release `s4` as above. If your values set either one, S4 must answer at exactly that scheme, host, and port instead; GroundX has not tested that.
+
+1. Stop uploads to GroundX, then wait until no documents are still processing. Keep uploads stopped until step 7. Processing keeps writing files to MinIO, and a file written after the copy is not on S4 and is lost at the switch. If you cannot confirm that nothing is processing, do not migrate. This wait follows from how GroundX writes processing results; GroundX has not tested it.
 2. Copy the bucket with [rclone](https://rclone.org/) from a machine that can reach both stores. The S4 bucket is created in `us-east-1`:
 
    ```bash
@@ -570,9 +572,48 @@ To move an existing MinIO store to S4, copy every object with the same keys, the
 
    It exits 1 whenever a file name is too long for S4, because that file never copies. Read its output, and switch only if every difference it reports is a file whose name is too long for S4 and that you accept losing. Otherwise stay on MinIO and deal with the listed files first. A notice that some hashes could not be checked refers to objects MinIO stored in parts, which rclone compares by size only; it is not a difference.
 
-5. Point `file.existing` at S4 as shown above, upgrade GroundX, and resume uploads.
+5. Hand Service `minio` to S4. Save the MinIO store release's values, which going back needs, then uninstall the release; its volume claim and data stay. The release is `minio-cluster` for community MinIO installed by earlier versions of this guide and `minio-tenant` for AIStor; `helm list -n eyelevel` shows it. Storage is unavailable until the new Service exists.
 
-To go back, restore your previous `file` settings and upgrade GroundX again. The copy leaves the MinIO store unchanged, but files written only to S4 after the switch are not on MinIO.
+   ```bash
+   STORE_RELEASE=minio-cluster
+   helm get values "$STORE_RELEASE" -n eyelevel -o yaml > minio-store-values.yaml
+   helm uninstall "$STORE_RELEASE" -n eyelevel
+   kubectl -n eyelevel wait --for=delete service/minio --timeout=5m
+
+   cat <<'EOF' | kubectl apply -f -
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: minio
+     namespace: eyelevel
+   spec:
+     type: ClusterIP
+     selector:
+       app.kubernetes.io/name: s4
+       app.kubernetes.io/instance: s4
+     ports:
+       - name: s3-api
+         port: 80
+         targetPort: 7480
+   EOF
+   ```
+
+   `minio-store-values.yaml` holds the store's root credentials; keep it somewhere safe.
+
+6. Point GroundX at S4 through the MinIO URL, then upgrade GroundX. Leave the port out of the URL: GroundX saved its URLs without one, and they must match exactly.
+
+   ```yaml
+   file:
+     username: <s4-access-key>
+     password: <s4-secret-key>
+     existing:
+       serviceType: s4
+       url: http://minio.eyelevel.svc.cluster.local
+   ```
+
+7. Open a file, X-Ray, or page-image link of a document ingested before the move; it must load. Then resume uploads.
+
+To go back, stop uploads, delete Service `minio`, install the store release again from `minio-store-values.yaml` (for community MinIO, chart 7.1.1 with a server image you can pull, as in step 6 of [Restoring Community MinIO from the Pre-Upgrade Snapshot](#restoring-community-minio-from-the-pre-upgrade-snapshot)), restore your previous `file` settings, and upgrade GroundX. The store comes back on its kept volume claim, but files written only to S4 after the switch are not on MinIO.
 
 #### Deploying a Dedicated AIStor Object Store
 
