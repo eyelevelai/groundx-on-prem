@@ -357,6 +357,9 @@ tests:
         path: spec.rules[0].http.paths[0].backend.service.name
         value: minio
     - equal:
+        path: spec.rules[0].http.paths[0].backend.service.port.number
+        value: 9000
+    - equal:
         path: spec.rules[0].http.paths[0].path
         value: /eyelevel
     - equal:
@@ -397,6 +400,9 @@ tests:
     - equal:
         path: spec.rules[0].http.paths[0].backend.service.name
         value: minio
+    - equal:
+        path: spec.rules[0].http.paths[0].backend.service.port.number
+        value: 9000
     - equal:
         path: spec.rules[0].http.paths[0].path
         value: /eyelevel
@@ -698,5 +704,95 @@ tests:
         path: spec.rules[0].http.paths[0].backend.service.name
         value: minio
     - equal:
+        path: spec.rules[0].http.paths[0].backend.service.port.number
+        value: 9000
+    - equal:
         path: spec.tls[0].secretName
         value: store-tls
+
+  - it: generated native ingress keeps Service port 9000 with private HTTPS port 9443
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+      - ./files/values.file-native-signing.yaml
+    documentSelector:
+      path: metadata.name
+      value: native-files
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 9000
+      - equal:
+          path: spec.tls[0].secretName
+          value: store-tls
+
+  - it: generated native ingress keeps Service port 9000 with HTTPS port 443 and an unused gateway hostname
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+      - ./files/values.file-native-signing.yaml
+    set:
+      fileAccess.storageEndpoint: https://s3.example.com
+      fileAccess.ingress.enabled: false
+      fileAccess.ingress.hostName: s3.example.com
+    documentSelector:
+      path: metadata.name
+      value: native-files
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 9000
+      - equal:
+          path: spec.rules[0].host
+          value: s3.example.com
+
+  - it: generated legacy native ingress keeps Service port 9000 with private HTTPS port 9443
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+      - ./files/values.file-native-signing.yaml
+    set:
+      file.ingress.data.apiVersion: extensions/v1beta1
+    documentSelector:
+      path: metadata.name
+      value: native-files
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.servicePort
+          value: 9000
+
+  - it: generated native ingress retains its Service port with file access disabled
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+      - ./files/values.file-native-signing.yaml
+    set:
+      fileAccess.enabled: false
+    documentSelector:
+      path: metadata.name
+      value: native-files
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 9000
+
+  - it: generated native ingress retains external storage port resolution with file access disabled
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+      - ./files/values.file-native-signing.yaml
+    set:
+      fileAccess.enabled: false
+      file.existing.url: https://external.example.com:9444
+    documentSelector:
+      path: metadata.name
+      value: native-files
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 9444

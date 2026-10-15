@@ -112,11 +112,7 @@ false
   | toYaml -}}
 {{- end }}
 
-{{- define "groundx.file.port" -}}
-{{- if eq (include "groundx.fileAccess.create" .) "true" -}}
-{{- $endpoint := urlParse .Values.fileAccess.storageEndpoint -}}
-{{- regexFind ":[0-9]+$" $endpoint.host | trimPrefix ":" | default "443" -}}
-{{- else -}}
+{{- define "groundx.file.nativePort" -}}
 {{- $in := .Values.file | default dict -}}
 {{- $ic := include "groundx.file.existing" . | trim | lower -}}
 {{- if eq $ic "true" -}}
@@ -124,6 +120,14 @@ false
 {{- else -}}
 {{ dig "port" 9000 $in }}
 {{- end -}}
+{{- end }}
+
+{{- define "groundx.file.port" -}}
+{{- if eq (include "groundx.fileAccess.create" .) "true" -}}
+{{- $endpoint := urlParse .Values.fileAccess.storageEndpoint -}}
+{{- regexFind ":[0-9]+$" $endpoint.host | trimPrefix ":" | default "443" -}}
+{{- else -}}
+{{- include "groundx.file.nativePort" . -}}
 {{- end }}
 {{- end }}
 

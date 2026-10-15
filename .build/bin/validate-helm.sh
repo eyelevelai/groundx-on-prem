@@ -340,11 +340,13 @@ for chart in src/groundx helm; do
       expect_helm_template_failure "${chart}" "file.ingress host must not use a fileAccess delivery host" -f src/groundx/tests/files/values.file-access.yaml -f "src/groundx/tests/files/values.file-native-${native_host}.yaml" --set "fileAccess.ingress.enabled=${gateway_ingress}" --set fileAccess.ingress.hostName=origin.example.com
     done
   done
-  native_ingress_output="$(helm template native-files "${chart}" -f src/groundx/tests/files/values.file-access.yaml -f src/groundx/tests/files/values.file-native-origin.yaml --set fileAccess.ingress.enabled=false --set fileAccess.ingress.hostName=s3.example.com -s templates/resources/ingress.yaml)"
-  if [[ "${native_ingress_output}" != *'host: "s3.example.com"'* || "${native_ingress_output}" != *'name: minio'* ]]; then
-    echo "${chart}: disabled unused gateway hostname must preserve the native store ingress." >&2
-    exit 1
-  fi
+  for storage_endpoint in https://store.internal.example.com:9443 https://s3.example.com; do
+    native_ingress_output="$(helm template native-files "${chart}" -f src/groundx/tests/files/values.file-access.yaml -f src/groundx/tests/files/values.file-native-signing.yaml --set fileAccess.ingress.enabled=false --set fileAccess.ingress.hostName=s3.example.com --set "fileAccess.storageEndpoint=${storage_endpoint}" -s templates/resources/ingress.yaml)"
+    if [[ "${native_ingress_output}" != *'host: "s3.example.com"'* || "${native_ingress_output}" != *'name: minio'* || "${native_ingress_output}" != *'number: 9000'* || "${native_ingress_output}" != *'secretName: store-tls'* ]]; then
+      echo "${chart}: native ingress must retain Service port 9000 and TLS independently of the private HTTPS endpoint port." >&2
+      exit 1
+    fi
+  done
   expect_helm_template_failure "${chart}" "fileAccess.frontProxyTLSVerified must be true" -f src/groundx/tests/files/values.file-access.yaml --set fileAccess.frontProxyTLSVerified=false
   expect_helm_template_failure "${chart}" "fileAccess.originsPrivate must be true" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=false --set fileAccess.originsPrivate=false
   expect_helm_template_failure "${chart}" "fileAccess.storageEndpoint must not use the delivery host" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=false --set fileAccess.storageEndpoint=https://downloads.example.com

@@ -63,6 +63,17 @@ The chart SHALL reject legacy native store ingress using the public delivery hos
 - **WHEN** either chart surface renders
 - **THEN** the native route remains available without changing public delivery routing.
 
+#### Scenario: Native ingress Service port differs from private HTTPS origin
+- **GIVEN** file access is enabled, the private HTTPS origin uses port 443 or 9443 and the native MinIO Service uses port 9000
+- **WHEN** either chart surface renders a generated native signing ingress backend
+- **THEN** that backend targets Service port 9000 for both supported Ingress API shapes
+- **AND** storage dependency checks and client configuration retain the private origin's host and port.
+
+#### Scenario: Native port compatibility
+- **GIVEN** disabled file access, existing external storage or explicit custom native ingress paths
+- **WHEN** either chart surface renders
+- **THEN** existing port resolution and explicit custom backends are preserved.
+
 ### Requirement: Feature credentials reach only storage consumers
 The chart SHALL import the feature storage Secret only into verified Go, migration, layout and extraction consumers. Explicit operator global and workload Secret imports SHALL retain their existing scope.
 

@@ -3,7 +3,7 @@
 - [x] 1.1 Specify endpoint separation, optional values, upstream config fields, store matrix, S4 constraints and release/rollback gates.
 - [x] 1.2 Add values/schema/helpers and gateway Deployment/Service/probes/ingress. Extend existing file-settings tests to prove disabled compatibility, endpoint-loop and missing-readiness rejection, HTTPS presentation and single bucket paths. Generated ingress preserves Host/path/query; actual request behavior remains gated by 1.5.
 - [ ] 1.3 Render compatible Cashbot and ai-server configuration together, including uploadStorageEndpoint and uploadPublicRead=false when enabled. Configuration, extraction SDK fields and credential/trust references are covered by chart tests. Exact API/gateway/worker image adoption and migration-hook runtime compatibility remain unverified release gates.
-- [x] 1.4 Sync changed source files to helm; run .build/bin/validate-helm.sh and explicit source/mirror renders, never regenerate unrelated snapshots. The full gate passes with 458 tests and 850 unchanged snapshots; disabled default/minikube/cloud/extract profiles are byte-identical on both surfaces.
+- [x] 1.4 Sync changed source files to helm; run .build/bin/validate-helm.sh and explicit source/mirror renders, never regenerate unrelated snapshots. The full gate passes with 463 tests and 850 unchanged snapshots; disabled default/minikube/cloud/extract profiles are byte-identical on both surfaces.
 - [ ] 1.5 Pin exact MinIO/AIStor versions/digests and the specified S4 chart/image digest. Run the identical public/authenticated/wrong-owner/share/expiry/PUT/range/HEAD/conditional/TLS/encryption and large X-Ray view=links suite on every advertised store. Preserve that query and keep transformed views fresh/no-store.
 - [ ] 1.6 Verify private worker ingest, extraction, copy and callback transport; run Arcadia legacy, Arcadia v1, generic v1 and ADP v1 when transport is touched. Retain exact output bytes and answer keys.
 - [ ] 1.7 Load-test cold mappings, hot scopes and concurrent large downloads, record hardware/store limits and Redis headroom, and enforce the documented availability envelope including S4's single replica.
@@ -23,3 +23,9 @@
 - [x] 3.1 Reject effective legacy native ingress collisions with the public host and enabled chart gateway hosts for managed and external gateway ingress; preserve distinct native signing/store routes and disabled behavior.
 - [x] 3.2 Scope feature storage credentials to verified Go, migration, layout and extraction consumers; preserve explicit global/per-service Secret imports and ambient S3 behavior.
 - [x] 3.3 Prove the new Helm regressions fail before implementation and pass afterward; mirror exact template bytes, run the full chart gate and source/mirror minikube renders.
+
+## 4. Native ingress port separation
+
+- [x] 4.1 Add generated native ingress regressions for Service port 9000 with private HTTPS origins on 443 and 9443, legacy Ingress API rendering and disabled unused gateway hostnames. Prove the port assertions fail before the fix; retain disabled, external storage and explicit custom-path controls.
+- [x] 4.2 Factor native port resolution into `groundx.file.nativePort` and select it only for the native file ingress. Preserve storage waits, extraction settings and client configuration; mirror both templates.
+- [x] 4.3 Run focused tests, both chart render surfaces, the full pinned Helm gate, minikube renders, OpenSpec validation and whitespace/line-ending checks. Keep live transport and backend compatibility gates open.
