@@ -120,6 +120,13 @@ context: |
       mirrored install block's marker line unique in README.md.
     - The helm-unittest suites pin chart.appVersion 0.1.0, so a Chart.yaml version bump alone does
       not change snapshots.
+    - values.schema.json rejects an out-of-range extract.agent.imageTransport, maxRequestImages, or
+      jpegQualities before any template runs, so a failedTemplate test of
+      groundx.extract.agent.validateImageSettings can only reach the minLongEdgePx/targetLongEdgePx
+      check. Helm stops at the first failing template, which for extract agent settings is
+      templates/resources/extract-supervisord-conf.yaml; assert there.
+    - A task check that runs one helm-unittest suite copies src/groundx to a mktemp -d directory and
+      runs `helm unittest -f tests/<suite>.yaml` on the copy, never in the worktree.
 
   - KNOWN GAPS / OPEN QUESTIONS:
     - helm/ <-> src/groundx duplication: no regen script (manual sync required); a drift check DOES exist (verify_mirrors() in .build/bin/verify-storage-contract.py fails the gate on mismatch) — the remaining gap is only the absence of a regen script, not the absence of a check.
