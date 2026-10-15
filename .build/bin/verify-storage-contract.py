@@ -140,6 +140,7 @@ PVC_FIXTURES: typing.Dict[str, PvcFixtureSpec] = {
     },
 }
 MIRRORED_FILES = (
+    "prereqs/storageclass/.helmignore",
     "prereqs/storageclass/Chart.yaml",
     "prereqs/storageclass/templates/storageclass.yaml",
     "prereqs/storageclass/templates/NOTES.txt",
