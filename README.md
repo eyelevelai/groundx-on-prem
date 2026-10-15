@@ -674,7 +674,7 @@ MinIO states that the upgrade is permanent and cannot be reversed. The first ste
 - The `VolumeSnapshot` step needs a CSI snapshot controller and a `VolumeSnapshotClass` for your storage driver. GroundX's bundled EKS Terraform installs neither. On EKS that means the snapshot controller add-on and a `VolumeSnapshotClass` for the EBS CSI driver, which GroundX has not verified. Without CSI snapshot support, snapshot the disk with your provider's tools instead.
 - Docker, to run MinIO's migration tool.
 
-1. Record the tenant's volume claim name, StorageClass, and size, which a restore needs, then snapshot the claim. With the 0.2.7 sample values the tenant has one claim, `data0-minio-tenant-minio-tenant-pool-0-0`; `kubectl -n eyelevel get pvc` lists yours. `kubectl get volumesnapshotclass` lists the snapshot classes.
+1. Stop uploads to GroundX, then wait until no documents are still processing. Processing keeps writing files to MinIO, and anything written after the snapshot is not in it. Uploads stay stopped until step 8. This wait follows from how GroundX writes processing results; GroundX has not tested it. Then record the tenant's volume claim name, StorageClass, and size, which a restore needs, and snapshot the claim. With the 0.2.7 sample values the tenant has one claim, `data0-minio-tenant-minio-tenant-pool-0-0`; `kubectl -n eyelevel get pvc` lists yours. `kubectl get volumesnapshotclass` lists the snapshot classes.
 
    ```bash
    kubectl -n eyelevel get pvc data0-minio-tenant-minio-tenant-pool-0-0 \
@@ -695,9 +695,7 @@ MinIO states that the upgrade is permanent and cannot be reversed. The first ste
      volumesnapshot/minio-pre-aistor --timeout=10m
    ```
 
-2. Stop uploads to GroundX. Anything written after the snapshot is not in it.
-
-3. Install the AIStor operator with your license. Add the AIStor repository as in the first block of [Deploying a Dedicated AIStor Object Store](#deploying-a-dedicated-aistor-object-store), then run:
+2. Install the AIStor operator with your license. Add the AIStor repository as in the first block of [Deploying a Dedicated AIStor Object Store](#deploying-a-dedicated-aistor-object-store), then run:
 
    ```bash
    kubectl create namespace aistor
@@ -714,7 +712,7 @@ MinIO states that the upgrade is permanent and cannot be reversed. The first ste
 
    `--take-ownership` lets the AIStor operator take over CRD `policybindings.sts.min.io`, which the community operator also installed.
 
-4. Back up the tenant. MinIO's guide appends the Secrets to the Tenant file, which then no longer reads back as a Tenant, so these commands write them to separate files. They also save both community releases' values, which a restore needs, and print the image the tenant runs; write it down.
+3. Back up the tenant. MinIO's guide appends the Secrets to the Tenant file, which then no longer reads back as a Tenant, so these commands write them to separate files. They also save both community releases' values, which a restore needs, and print the image the tenant runs; write it down.
 
    ```bash
    kubectl -n eyelevel get tenant minio-tenant -o yaml > tenant-backup.yaml
@@ -726,7 +724,7 @@ MinIO states that the upgrade is permanent and cannot be reversed. The first ste
 
    Keep these files somewhere safe. `tenant-secrets-backup.yaml` holds every Secret in the `eyelevel` namespace, GroundX's own included, and `minio-cluster-values.yaml` holds the store's root credentials.
 
-5. Generate the AIStor object store values with MinIO's migration tool, pinned to the image MinIO's `latest` tag pointed to when GroundX tested the upgrade. The tool runs in a container and reads only the kubeconfig mounted into it, so the first command writes one with the current context's credentials inline. The server address in that file must be reachable from inside the container.
+4. Generate the AIStor object store values with MinIO's migration tool, pinned to the image MinIO's `latest` tag pointed to when GroundX tested the upgrade. The tool runs in a container and reads only the kubeconfig mounted into it, so the first command writes one with the current context's credentials inline. The server address in that file must be reachable from inside the container.
 
    ```bash
    kubectl config view --flatten --minify > aistor-migration-kubeconfig
@@ -739,7 +737,7 @@ MinIO states that the upgrade is permanent and cannot be reversed. The first ste
 
    `aistor-migration-kubeconfig` holds your cluster credentials; delete it after the last step. GroundX ran this on minikube, with the file's server set to the minikube node address (`https://<minikube-ip>:8443`) and `--network <minikube-profile>` added to `docker run`. A kubeconfig that logs in through an exec plugin, such as `aws eks get-token` on EKS, has not been verified inside the container.
 
-6. Move the credentials to a Secret the object store can keep. The tool writes the tenant's credentials into the generated file, and the AIStor chart refuses the 0.2.7 sample pair `minio`/`minio123`. Copy the tenant's `config.env` into a new Secret now: the old Secret, `myminio-env-configuration`, belongs to the tenant's Helm release and is deleted with it.
+5. Move the credentials to a Secret the object store can keep. The tool writes the tenant's credentials into the generated file, and the AIStor chart refuses the 0.2.7 sample pair `minio`/`minio123`. Copy the tenant's `config.env` into a new Secret now: the old Secret, `myminio-env-configuration`, belongs to the tenant's Helm release and is deleted with it.
 
    ```bash
    kubectl -n eyelevel get secret myminio-env-configuration \
@@ -766,13 +764,13 @@ MinIO states that the upgrade is permanent and cannot be reversed. The first ste
 
    GroundX ran this check against `helm/values/aistor/values.objectstore.upgrade.yaml`, not during its upgrade test.
 
-7. Uninstall the community tenant release. Storage is unavailable from here until the next step finishes; the volume claim stays.
+6. Uninstall the community tenant release. Storage is unavailable from here until the next step finishes; the volume claim stays.
 
    ```bash
    helm uninstall minio-cluster -n eyelevel
    ```
 
-8. Install the AIStor object store:
+7. Install the AIStor object store:
 
    ```bash
    helm install minio-tenant \
@@ -783,26 +781,26 @@ MinIO states that the upgrade is permanent and cannot be reversed. The first ste
      -f aistor-objectstore-values.yaml
    ```
 
-9. Confirm the upgrade, then resume uploads. `STATE` must read `Initialized` and `HEALTH` `green`:
+8. Confirm the upgrade, then resume uploads. `STATE` must read `Initialized` and `HEALTH` `green`:
 
    ```bash
    kubectl -n eyelevel get objectstore minio-tenant
    ```
 
-10. Optional: remove the community operator. Run the migration tool's `protect-crds` first; uninstalling the community operator without it deletes CRD `policybindings.sts.min.io`, which AIStor now uses.
+9. Optional: remove the community operator. Run the migration tool's `protect-crds` first; uninstalling the community operator without it deletes CRD `policybindings.sts.min.io`, which AIStor now uses.
 
-    ```bash
-    docker run --rm \
-      -v "$PWD/aistor-migration-kubeconfig:/root/.kube/config:ro" \
-      quay.io/minio/aistor/operator-migration:RELEASE.2026-05-06T15-08-11Z@sha256:4ac3380d75aa92ca3c03454af2362a649ce4ddee866c962044e4b6e6d118b957 \
-      protect-crds --namespace eyelevel --release minio-operator
-    helm uninstall minio-operator -n eyelevel
-    rm aistor-migration-kubeconfig
-    ```
+   ```bash
+   docker run --rm \
+     -v "$PWD/aistor-migration-kubeconfig:/root/.kube/config:ro" \
+     quay.io/minio/aistor/operator-migration:RELEASE.2026-05-06T15-08-11Z@sha256:4ac3380d75aa92ca3c03454af2362a649ce4ddee866c962044e4b6e6d118b957 \
+     protect-crds --namespace eyelevel --release minio-operator
+   helm uninstall minio-operator -n eyelevel
+   rm aistor-migration-kubeconfig
+   ```
 
 #### Restoring Community MinIO from the Pre-Upgrade Snapshot
 
-These steps go back from AIStor to community MinIO using the `VolumeSnapshot` taken in step 1 of the upgrade. Objects written after the snapshot are lost, including everything written while the store ran on AIStor. GroundX tested this order on minikube on 2026-10-14, starting after the upgrade's optional last step (community operator removed); other starting points were not tested. The steps reinstall chart 7.1.1; restoring a tenant that ran another chart version was not tested. You need Helm 3.17 or later, the files saved in the upgrade's backup step, and the claim name, StorageClass, and size recorded in its first step.
+These steps go back from AIStor to community MinIO using the `VolumeSnapshot` taken in step 1 of the upgrade. Objects written after the snapshot are lost, including everything written while the store ran on AIStor. The restore does not touch GroundX's database or search index, so documents ingested after the snapshot stay listed in GroundX without their files, X-Ray and page images, and must be re-ingested. This consequence follows from where GroundX keeps its data and was not tested. GroundX tested this order on minikube on 2026-10-14, starting after the upgrade's optional last step (community operator removed); other starting points were not tested. The steps reinstall chart 7.1.1; restoring a tenant that ran another chart version was not tested. You need Helm 3.17 or later, the files saved in the upgrade's backup step, and the claim name, StorageClass, and size recorded in its first step.
 
 First confirm that the snapshot is ready to restore from. This must print `true`. If it prints anything else, stop: step 4 deletes the AIStor-era volume claim and replaces it with one created from this snapshot.
 
@@ -811,6 +809,8 @@ kubectl -n eyelevel get volumesnapshot minio-pre-aistor -o jsonpath='{.status.re
 ```
 
 If you snapshotted the disk with your provider's tools instead of a `VolumeSnapshot`, this check and step 4 do not apply: restore the disk with your provider's own restore steps, which GroundX has not tested.
+
+Then stop uploads to GroundX and wait until no documents are still processing, because GroundX cannot write files while storage is down in steps 1 to 7. This wait follows from how GroundX writes processing results; GroundX has not tested it.
 
 1. Uninstall the AIStor object store. Storage is unavailable until step 7.
 
@@ -897,7 +897,7 @@ If you snapshotted the disk with your provider's tools instead of a `VolumeSnaps
      --set tenant.image.digest=
    ```
 
-7. Confirm the restore: `STATE` must read `Initialized` and `HEALTH` `green`. The tenant serves the same hosts with the credentials from the saved values, so GroundX needs no setting change.
+7. Confirm the restore, then resume uploads. `STATE` must read `Initialized` and `HEALTH` `green`. The tenant serves the same hosts with the credentials from the saved values, so GroundX needs no setting change.
 
    ```bash
    kubectl -n eyelevel get tenant minio-tenant
