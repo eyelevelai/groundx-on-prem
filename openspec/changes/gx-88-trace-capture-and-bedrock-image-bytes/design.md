@@ -58,7 +58,7 @@ Alternative considered: an `errorPattern` on the schema error for `imageTranspor
 
 The archived S4 change's MinIO sweep allowlist allows only `object-store-install-and-upgrade` and `s4-storage-type` under `openspec/specs/` (`openspec/changes/archive/2026-10-14-gx-88-migrate-minio-to-s4/design.md`, "MinIO sweep allowlist"). Archiving this change creates `openspec/specs/extract-bedrock-storage/spec.md`.
 
-The new spec therefore names "the chart's default storage type" in prose. The literal `type=` value appears only in `extract_test.yaml`, which is already on that allowlist. Task 1.2 enforces this.
+The new spec therefore names "the chart's default storage type" in prose. The literal `type=` value appears only in `extract_test.yaml`, which is already on that allowlist. Task 2.1 enforces this.
 
 The MODIFIED deltas to the two allowlisted specs can name it freely.
 
