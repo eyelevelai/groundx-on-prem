@@ -136,7 +136,7 @@ The community MinIO operator and tenant sample values SHALL no longer ship: `src
 
 #### Scenario: Legacy sample files are gone and nothing points at them (finalize success)
 - **WHEN** the working tree is checked
-- **THEN** neither `values/minio/` directory exists and no file outside `openspec/changes/`, `bin/operator`, and `terraform/groundx-operator/` contains `values/minio/`
+- **THEN** neither `values/minio/` directory exists and no file outside `openspec/changes/`, `openspec/specs/`, `bin/operator`, and `terraform/groundx-operator/` contains `values/minio/`
 
 #### Scenario: Existing installs render the same objects (finalize success)
 - **GIVEN** the base commit's chart with this change's `Chart.yaml` copied in, and this change's chart
@@ -145,7 +145,7 @@ The community MinIO operator and tenant sample values SHALL no longer ship: `src
 
 ### Requirement: No community-MinIO install text remains outside the allowed places
 
-After the change, a reader following any document in this repo to install a store SHALL be pointed at AIStor or S4, never at community MinIO. Community-MinIO install markers (`operator.min.io`, `minio-operator/operator`, `minio-operator/tenant`, `values/minio/`, `quay.io/minio/minio:`) SHALL appear only in the README from `#### Upgrading an Existing MinIO Install to AIStor` to the next `### ` heading, and in the unchanged out-of-scope files (`bin/operator`, `terraform/groundx-operator/**`, `*/values/chainguard/**`). Every file whose path or content contains `minio` (case-insensitive), outside `openspec/changes/**` and `src/groundx/tests/__snapshot__/**`, SHALL be on the allowlist recorded in this change's design.md.
+After the change, a reader following any document in this repo to install a store SHALL be pointed at AIStor or S4, never at community MinIO. Community-MinIO install markers (`operator.min.io`, `minio-operator/operator`, `minio-operator/tenant`, `values/minio/`, `quay.io/minio/minio:`) SHALL appear only in the README from `#### Upgrading an Existing MinIO Install to AIStor` to the next `### ` heading, in the unchanged out-of-scope files (`bin/operator`, `terraform/groundx-operator/**`, `*/values/chainguard/**`), and in the OpenSpec records (`openspec/changes/**`, `openspec/specs/**`), which quote the markers to state this rule. Every file whose path or content contains `minio` (case-insensitive), outside `openspec/changes/**` and `src/groundx/tests/__snapshot__/**`, SHALL be on the allowlist recorded in this change's design.md.
 
 #### Scenario: A legacy install command under the AIStor heading is caught (finalize failure)
 - **GIVEN** a README where `helm repo add minio-operator https://operator.min.io/` sits under `#### Deploying a Dedicated AIStor Object Store`

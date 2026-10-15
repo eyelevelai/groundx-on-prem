@@ -498,8 +498,9 @@ Limits of S4 0.3.2:
 - In S4 mode, large-file import and review (large-file delivery, off by default) refuse files larger than 5 GiB, the largest single upload S4 accepts, before uploading them. They also spool each upload to a temporary file in the pod's `TMPDIR` on top of the importer's own copy, so they need temporary pod disk of about twice the largest file for each upload in flight.
 - Long file names fail. In GroundX's tests, S4 stored a 204-byte file name and refused a 250-byte one in a single upload; in a multipart upload it stored a 120-byte name and refused a 204-byte one.
 - Bucket creation outside region `us-east-1` fails. GroundX services always use `us-east-1` for `s4` and ignore a configured region.
+- Write-once (creating an object only if its key is absent) holds only for writers that do not overlap in time. In GroundX's tests, when eight writers created the same new key at once, two of them both succeeded in 3 of 40 rounds: both were told they had created the object, and only one writer's content was kept.
 
-Install S4 from its git tag; the chart is not published to a Helm repository. First replace the four `REPLACE_WITH_...` credentials in `helm/values/s4/values.yaml`, or pass your own with `--set`. The release name `s4` gives the Service the name `s4`, which the URL below uses.
+Install S4 from its git tag; the chart is not published to a Helm repository. GroundX has not run this install on a cluster; it checked `helm/values/s4/values.yaml` only by rendering the chart with it. First replace the four `REPLACE_WITH_...` credentials in `helm/values/s4/values.yaml`, or pass your own with `--set`. The release name `s4` gives the Service the name `s4`, which the URL below uses.
 
 ```bash
 git clone --depth 1 --branch v0.3.2 https://github.com/rh-aiservices-bu/s4 s4-v0.3.2
@@ -523,9 +524,9 @@ file:
     url: http://s4.eyelevel.svc.cluster.local:7480
 ```
 
-To move an existing MinIO store to S4, copy every object with the same keys, then set the public-read policy. GroundX's file, X-Ray, and page-image links are unsigned and rely on that policy, and GroundX sets it only when it creates the bucket itself. The copy carries neither object tags (GroundX does not read them back) nor the bucket policy, and a file whose name is too long for S4 fails to copy.
+To move an existing MinIO store to S4, copy every object with the same keys, then set the public-read policy. GroundX's file, X-Ray, and page-image links are unsigned and rely on that policy, and GroundX sets it only when it creates the bucket itself. The copy carries neither object tags (GroundX does not read them back) nor the bucket policy, and a file whose name is too long for S4 fails to copy. GroundX ran the commands in steps 2 to 4 as written on 2026-10-15, copying from community MinIO to S4 0.3.2 in local containers; it has not run this migration on a cluster.
 
-1. Stop uploads to GroundX.
+1. Stop uploads to GroundX, then wait until no documents are still processing. Processing keeps writing files to MinIO, and a file written after the copy is not on S4. If you cannot confirm that nothing is processing, run the copy in step 2 and the check in step 4 again just before you switch in step 5. This wait follows from how GroundX writes processing results; GroundX has not tested it.
 2. Copy the bucket with [rclone](https://rclone.org/) from a machine that can reach both stores. The S4 bucket is created in `us-east-1`:
 
    ```bash
@@ -561,7 +562,15 @@ To move an existing MinIO store to S4, copy every object with the same keys, the
      --bucket eyelevel --policy file://public-read.json
    ```
 
-4. Point `file.existing` at S4 as shown above, upgrade GroundX, and resume uploads.
+4. Check the copy, in the same shell so that the `RCLONE_CONFIG_...` variables from step 2 are still set:
+
+   ```bash
+   rclone check src:eyelevel dst:eyelevel
+   ```
+
+   It exits 1 whenever a file name is too long for S4, because that file never copies. Read its output, and switch only if every difference it reports is a file whose name is too long for S4 and that you accept losing. Otherwise stay on MinIO and deal with the listed files first. A notice that some hashes could not be checked refers to objects MinIO stored in parts, which rclone compares by size only; it is not a difference.
+
+5. Point `file.existing` at S4 as shown above, upgrade GroundX, and resume uploads.
 
 To go back, restore your previous `file` settings and upgrade GroundX again. The copy leaves the MinIO store unchanged, but files written only to S4 after the switch are not on MinIO.
 
@@ -624,7 +633,7 @@ The install is complete when `STATE` reads `Initialized` and `HEALTH` reads `gre
 
 This applies only to a store connected as `serviceType: minio` that keeps a leading `/` in object keys, such as an S3-compatible store other than MinIO or AIStor. MinIO and AIStor drop the leading `/` when they store an object, so their keys need no change, and AWS S3 (`serviceType: s3`) is not affected.
 
-GroundX 0.2.7 services wrote some keys with a leading `/`. In chart 0.2.8, the `groundx`, `upload`, `pre-process`, `process`, `queue`, and `summary-client` services remove the leading `/` from every key and prefix, so on a store that kept the slash they no longer find those objects. Before upgrading GroundX to chart 0.2.8, list the keys that start with `/` and rename each one without it. These commands use the AWS CLI, which works against S3-compatible stores; GroundX's tests did not run them.
+GroundX 0.2.7 services wrote some keys with a leading `/`. In chart 0.2.8, the `groundx`, `upload`, `pre-process`, `process`, `queue`, and `summary-client` services remove the leading `/` from every key and prefix, so on a store that kept the slash they no longer find those objects. Before upgrading GroundX to chart 0.2.8, stop uploads and wait until no documents are still processing, so that 0.2.7 services write no new keys. Then list the keys that start with `/`, rename each one without it, and upgrade GroundX straight after the rename. These commands use the AWS CLI, which works against S3-compatible stores; GroundX's tests did not run them.
 
 ```bash
 export AWS_ACCESS_KEY_ID=<store-access-key> AWS_SECRET_ACCESS_KEY=<store-secret-key>
@@ -650,7 +659,9 @@ while IFS= read -r key; do
 done < slash-keys.txt
 ```
 
-To roll back to chart 0.2.7, reverse the rename for the keys in `slash-keys.txt`: copy each key without the slash back to its `/` form, compare sizes, and delete the copy without the slash. Objects those services wrote on chart 0.2.8 are stored without the slash and are not in that list, so 0.2.7 services may not find them.
+After the upgrade, before you resume uploads, keep `slash-keys.txt` under another name and run the listing again in the same shell. Any key it finds was written by a 0.2.7 service before the upgrade finished: rename it with the same loop, and keep both lists for a rollback.
+
+To roll back to chart 0.2.7, reverse the rename for the keys in both lists: copy each key without the slash back to its `/` form, compare sizes, and delete the copy without the slash. Objects those services wrote on chart 0.2.8 are stored without the slash and are not in either list, so 0.2.7 services may not find them.
 
 #### Upgrading an Existing MinIO Install to AIStor
 
@@ -747,6 +758,14 @@ MinIO states that the upgrade is permanent and cannot be reversed. The first ste
 
    Review the rest of the generated file, including any `TODO` remarks the tool adds, and keep its pool name: it is what makes the object store reuse the existing volume claim. For a tenant installed from the 0.2.7 sample values, the result matches `helm/values/aistor/values.objectstore.upgrade.yaml`. Install from your generated file, which reflects your tenant; the example is only for comparison.
 
+   Before you uninstall anything, check that the AIStor chart accepts the edited file. Stop unless this command succeeds:
+
+   ```bash
+   helm template minio-tenant minio/aistor-objectstore --version 1.1.0 -n eyelevel -f aistor-objectstore-values.yaml > /dev/null
+   ```
+
+   GroundX ran this check against `helm/values/aistor/values.objectstore.upgrade.yaml`, not during its upgrade test.
+
 7. Uninstall the community tenant release. Storage is unavailable from here until the next step finishes; the volume claim stays.
 
    ```bash
@@ -784,6 +803,14 @@ MinIO states that the upgrade is permanent and cannot be reversed. The first ste
 #### Restoring Community MinIO from the Pre-Upgrade Snapshot
 
 These steps go back from AIStor to community MinIO using the `VolumeSnapshot` taken in step 1 of the upgrade. Objects written after the snapshot are lost, including everything written while the store ran on AIStor. GroundX tested this order on minikube on 2026-10-14, starting after the upgrade's optional last step (community operator removed); other starting points were not tested. The steps reinstall chart 7.1.1; restoring a tenant that ran another chart version was not tested. You need Helm 3.17 or later, the files saved in the upgrade's backup step, and the claim name, StorageClass, and size recorded in its first step.
+
+First confirm that the snapshot is ready to restore from. This must print `true`. If it prints anything else, stop: step 4 deletes the AIStor-era volume claim and replaces it with one created from this snapshot.
+
+```bash
+kubectl -n eyelevel get volumesnapshot minio-pre-aistor -o jsonpath='{.status.readyToUse}'
+```
+
+If you snapshotted the disk with your provider's tools instead of a `VolumeSnapshot`, this check and step 4 do not apply: restore the disk with your provider's own restore steps, which GroundX has not tested.
 
 1. Uninstall the AIStor object store. Storage is unavailable until step 7.
 
@@ -845,7 +872,7 @@ These steps go back from AIStor to community MinIO using the `VolumeSnapshot` ta
 
 6. Install the community tenant 7.1.1 as release `minio-cluster` with the tenant values you saved and a server image you can pull. As of 2026-10-14 the default server image of tenant chart 7.1.1 no longer downloads anonymously. Chart 7.1.1 builds the image reference from `tenant.image.repository` followed by `tenant.image.digest`, or by `tenant.image.tag` when no digest is set.
 
-   If you have no copy of your own, use the mirror GroundX tested, `ghcr.io/coollabsio/minio@sha256:69b55a1c1c5dc285ce04db96689f5b2102317fc77a50680a1874ca6efd1c87f9`, set as a repository ending in `@sha256` plus the digest:
+   If you have no copy of your own, use the image GroundX tested, `ghcr.io/coollabsio/minio@sha256:69b55a1c1c5dc285ce04db96689f5b2102317fc77a50680a1874ca6efd1c87f9`. It is a third-party image of MinIO `RELEASE.2025-10-15T17-29-55Z`, published under `ghcr.io/coollabsio` and not by MinIO, so it is not an official MinIO image. It is also a newer server release than the chart's default, `quay.io/minio/minio:RELEASE.2025-04-08T15-41-24Z`. GroundX tested the restore only with a tenant that already ran this image; restoring a tenant that ran a different server release onto it was not tested. Set it as a repository ending in `@sha256` plus the digest:
 
    ```bash
    helm install minio-cluster \

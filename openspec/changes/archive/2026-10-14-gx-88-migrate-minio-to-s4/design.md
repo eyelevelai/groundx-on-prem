@@ -67,7 +67,7 @@ The motivation and blast radius are in `proposal.md`; this file records how the 
      - `service.type: ClusterIP`, explicit although it is the default (`:111`);
      - `podSecurityContext` with `runAsNonRoot: true` and `fsGroup: 1001`;
      - `nodeSelector.node: eyelevel-cpu-only`, like every other store in this repo.
-   - fsGroup: the image runs as UID 1001 (`docker/Dockerfile:106` at `797911cb`; registry config `User: 1001`, `architecture: amd64`, read 2026-10-14). The chart sets no fsGroup (`charts/s4/values.yaml:202-204`), although its README table lists a default of `0` (`charts/s4/README.md:167`). `1001` avoids the root group. GX-88 test M6 proves the volume is writable.
+   - fsGroup: the image runs as UID 1001 (`docker/Dockerfile:106` at `797911cb`; registry config `User: 1001`, `architecture: amd64`, read 2026-10-14). The chart sets no fsGroup (`charts/s4/values.yaml:202-204`), although its README table lists a default of `0` (`charts/s4/README.md:167`). `1001` avoids the root group. As of 2026-10-15 no test had shown that the volume is writable with this `fsGroup`: GX-88 minikube test M6, which installs S4 from the README, had not run.
    - The README documents `s3.existingSecret` as the alternative and lists all four keys that Secret must hold. With it, the chart renders no Secret at all (`templates/secret.yaml:1`).
 
 7. **README structure.** Headings and their order are fixed because the task checks and the harness mirror read them:
@@ -100,6 +100,7 @@ The motivation and blast radius are in `proposal.md`; this file records how the 
      - **Records the restore needs.** Before anything changes, the backup records the tenant's claim name, its StorageClass and size, and the Tenant's `.spec.image`, and saves both community releases' values: `helm get values minio-cluster -n eyelevel -o yaml` and `helm get values minio-operator -n eyelevel -o yaml`. The README warns that the tenant values file holds the root credentials. The spike saved and reused the tenant values (`03-backup-snapshot.sh`, `07-restore-corrected.sh` step R8); it passed the 0.2.7 operator values file directly instead of saved operator values, so the saved operator values are untested (decision 9).
      - **A kubeconfig the migration tool can use inside its container.** `operator-migration` runs in a container and reads only the kubeconfig mounted into it, so the README writes one with `kubectl config view --flatten --minify` (current context only, certificates inline), and its server address must be reachable from inside the container. Only the minikube form ran: the flattened file with its server rewritten to the minikube node address and the container on the minikube network (`04-upgrade.sh`). On EKS, a kubeconfig that logs in through the `aws eks get-token` exec plugin likely fails inside the container; this is not verified here and is checked in EKS test E6.
      - **Snapshot prerequisites.** The `VolumeSnapshot` step needs a snapshot controller and a `VolumeSnapshotClass` for the cluster's CSI driver. GroundX's bundled EKS Terraform installs neither: `git grep -i snapshot -- terraform/aws` at `07d332fc` finds only the node groups' root-volume `snapshot_id` settings (`terraform/aws/eks/eks.tf:249`). The README names the prerequisite (on EKS, the snapshot-controller add-on and a `VolumeSnapshotClass` for the EBS CSI driver) and says the EKS specifics are not verified here. The spike used minikube's `volumesnapshots` and `csi-hostpath-driver` add-ons (`00-cluster.sh`).
+   - Amended 2026-10-15 (review fix): before the community tenant is uninstalled, the README renders the edited values with `helm template minio-tenant minio/aistor-objectstore --version 1.1.0 -n eyelevel -f aistor-objectstore-values.yaml > /dev/null` and tells the reader to stop unless it succeeds. This check was not part of the tested upgrade run. On 2026-10-15, with helm v3.19.0, it exited 0 for `values/aistor/values.objectstore.upgrade.yaml` and 1 for the same file with the chart's refused `minio`/`minio123` pair added, and for malformed YAML.
 
 9. **Snapshot and restore.**
    - The snapshot is a Kubernetes `VolumeSnapshot` of the tenant's volume claim (prerequisites in decision 8). Clusters without CSI snapshot support use their provider's disk snapshot, and the README says so.
@@ -115,19 +116,23 @@ The motivation and blast radius are in `proposal.md`; this file records how the 
      7. Confirm the tenant reports `Initialized` and health `green`.
      8. Optional: uninstall the AIStor operator. Tested safe (step R11): the tenant stayed `Initialized` and green and passed all 24 checks; `policybindings.sts.min.io` stayed with `minio-operator`, and Helm kept the AIStor CRDs under their resource policy. It leaves Secret `minio-license` in `aistor`, which `kubectl` created; deleting that Secret was not tested.
    - Deviations from the tested run, each named in the README: the operator values come from the saved `helm get values minio-operator` file, where the spike passed the 0.2.7 sample file (`values/minio/values.operator.yaml` at `07d332fc`, deleted by task 5.1) directly; the registry-copy image form; and no wait for the claim to bind. `helm get values` prints the values supplied at install, which the spike showed for the tenant release (`logs/03-backup-snapshot.log`), so for an install from the 0.2.7 README the saved operator values are that file's content.
+   - Amended 2026-10-15 (review fix):
+     - Before step 1, the README checks that `VolumeSnapshot` `minio-pre-aistor` reports `readyToUse` `true` and tells the reader to stop otherwise, as the tested sequence read it at its step R1 (`07-restore-corrected.sh`; `logs/07-restore-corrected.log` prints `readyToUse=true`). A snapshot taken with a provider's tools needs that provider's own restore steps, which were not tested.
+     - Step 6 discloses that the mirror is a third-party image of MinIO `RELEASE.2025-10-15T17-29-55Z` (its `org.opencontainers.image.version` and `org.opencontainers.image.source` labels, read from the image by digest on 2026-10-15), published under `ghcr.io/coollabsio` and not by MinIO. It is newer than the tenant chart 7.1.1 default, `quay.io/minio/minio:RELEASE.2025-04-08T15-41-24Z` (`helm/tenant/values.yaml:31-33` at minio/operator `v7.1.1`). The spike's tenant already ran the mirror before the upgrade (`logs/03-backup-snapshot.log`), so a restore of a tenant that ran another server release was not tested.
 
 10. **Object keys with a leading slash.**
     - The section applies to stores connected as `serviceType: minio` that keep a leading `/`. Keys written that way by 0.2.7 services are unreachable once 0.2.8 services trim the slash.
     - MinIO and AIStor store such writes without the slash, so their keys are unaffected (the MinIO-family leading-slash entry of the external-semantics list the user approved at the plan gate, workspace `design.md` Decisions, 2026-10-14).
     - The README lists keys under prefix `/` with the AWS CLI (`s3api list-objects-v2 --endpoint-url ...`), then copies each to the trimmed key, compares sizes, and deletes the original. The AWS CLI works against any S3-compatible store.
     - Rolling back to chart 0.2.7 reverses the rename.
+    - Amended 2026-10-15 (review fix): the README stops uploads and waits for processing to finish before the listing, upgrades GroundX straight after the rename, and runs the listing again after the upgrade, keeping both lists for a rollback. This follows from when 0.2.7 services write keys; like the rest of the section, it was not tested.
 
 11. **S4 README content.** Each limit the README states has a source:
     - one replica: `charts/s4/values.yaml:4` at `797911cb`;
     - object count per bucket: `docs/operations/faq.md:366` at `797911cb`;
     - amd64 only: registry config, decision 6;
     - health checks only on the web UI port: `templates/deployment.yaml:70-71,78-79`;
-    - the 5 GiB large-file limit: the cashbot-go `s4` reader refuses more than 5 GiB without uploading (cashbot-go `openspec/changes/gx-88-migrate-minio-to-s4/specs/s4-object-storage/spec.md:45-47` at `b87a3706c`), the single-PUT ceiling in minio-go v7.0.100 `constants.go:39`;
+    - the 5 GiB large-file limit: the cashbot-go `s4` reader refuses more than 5 GiB without uploading (cashbot-go `openspec/changes/archive/2026-10-14-gx-88-migrate-minio-to-s4/design.md`, decision 4: "Refusing before the upload gives a clear error instead of a failed request after up to 5 GiB has been sent."), the single-PUT ceiling in minio-go v7.0.100 `constants.go:39`;
     - the file-name length limit: the S4 name-limit entry of the external-semantics list the user approved at the plan gate (workspace `design.md` Decisions, 2026-10-14).
 
     Credential-rotation behavior is stated only if GX-88 test C7 confirms it.
@@ -137,6 +142,11 @@ The motivation and blast radius are in `proposal.md`; this file records how the 
     - Then set the public-read policy for `s3:GetObject` on `arn:aws:s3:::<bucket>/*`. ai-server sets this policy only when it creates the bucket (`document/upload_minio.py:86-105` at ai-server `d7a174d1`), so a bucket created for the copy needs it set by hand.
     - Object tags are not copied.
     - Cutback points `file.existing` back at the unchanged MinIO store.
+    - Amended 2026-10-15 (review fix), with evidence in the workspace GX-88 evidence `s4-readme-copy/` and `c2-cashbot-go/`:
+      - The README's copy commands (the six rclone environment-variable remotes, `rclone mkdir`, `rclone copy --metadata`, the policy step, and `rclone check`) ran as written against S4 0.3.2 in local containers on 2026-10-15, and the README says so. The S4 `helm install` has not run on a cluster, and the README says that too.
+      - `rclone check src:eyelevel dst:eyelevel` runs before the switch. It exits 1 whenever a file name is too long for S4, so the reader switches only if every reported difference is such a name. It compares objects MinIO stored in parts by size only.
+      - The first step waits for processing to finish before the copy, or re-runs the copy and the check just before the switch. This is derived, not tested.
+      - One more limit: write-once holds only for writers that do not overlap in time. Eight concurrent conditional single PUTs to one new key gave two successes in 3 of 40 rounds, with one writer's content kept.
 
     The minimum GroundX version is chart 0.2.8 (plan-gate decision; explicitly pinned image tags are an accepted gap).
 
@@ -169,7 +179,7 @@ The motivation and blast radius are in `proposal.md`; this file records how the 
     - The render checks need helm v3.19.0 (via `GX_ON_PREM_HELM` or PATH) and fail closed on any other helm version; the third-party chart checks also need network access to `helm.min.io` or `github.com`.
     - Helm runs with a temporary `HELM_CACHE_HOME` and `HELM_REPOSITORY_CONFIG`, so no user cache or repository list is touched. Renders are never printed.
     - The chart-bump check runs `.build/bin/validate-helm.sh` with `helm` and `python` resolved to helm v3.19.0 and `python3` through a temporary PATH directory. The script calls bare `helm` and `python`, and the check proves the interpreter runs before trusting the gate.
-    - The checks prove that the files say and render what the specs require. They do not prove the runbooks work on a cluster. The GX-88 container and minikube tests (C6, C7, C9, M1 to M7) and the validation EKS states execute the documented commands as written.
+    - The checks prove that the files say and render what the specs require. They do not prove the runbooks work on a cluster. Running the documented commands on a store is left to the GX-88 container, minikube, and validation EKS tests in the workspace test plan. As of 2026-10-15, minikube tests M6 (the README's S4 install and its copy from MinIO) and M7 (any air-gapped steps) had not run.
 
 ### MinIO sweep allowlist
 
@@ -193,7 +203,7 @@ Inventory point: `07d332fc` (44 files with `minio` in content). Excluded from th
 
 `values/aistor/values.operator.yaml`, `values/s4/values.yaml`, and `sample.values.yaml` are deliberately absent. They must not contain `minio`.
 
-**Section level.** The legacy install markers are `operator.min.io`, `minio-operator/operator`, `minio-operator/tenant`, `values/minio/`, and `quay.io/minio/minio:`. In `README.md` they may appear only from `#### Upgrading an Existing MinIO Install to AIStor` to the next `### ` heading. Elsewhere they may appear only in `bin/operator`, `terraform/groundx-operator/**`, and `*/values/chainguard/**`. `values/minio/` may not appear anywhere outside `openspec/changes/**` and those out-of-scope files, the README included.
+**Section level.** The legacy install markers are `operator.min.io`, `minio-operator/operator`, `minio-operator/tenant`, `values/minio/`, and `quay.io/minio/minio:`. In `README.md` they may appear only from `#### Upgrading an Existing MinIO Install to AIStor` to the next `### ` heading. Elsewhere they may appear only in `bin/operator`, `terraform/groundx-operator/**`, `*/values/chainguard/**`, and the OpenSpec records (`openspec/changes/**`, `openspec/specs/**`), which quote the markers to state this rule. `values/minio/` may not appear anywhere outside those OpenSpec records and out-of-scope files, the README included. Amended 2026-10-15 (review fix): archiving this change created `openspec/specs/object-store-install-and-upgrade/spec.md`, which quotes the markers, so tasks 5.1 and 7.2 now exclude `openspec/specs/**` as well; task 7.1 still allows only this change's two specs there.
 
 The closure checks are tasks 7.1 (file level) and 7.2 (section level). Task 7.2 first runs its scan on a counterexample, which must fail, and on the upgrade and restore shape, which must pass, before scanning the repo.
 
