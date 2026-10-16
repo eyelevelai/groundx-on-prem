@@ -67,7 +67,7 @@ context: |
       fails without it), and this repo's other chart contract verifiers. This IS what
       .github/workflows/helm-tests.yml runs; prefer it over hand-assembling the steps below.
     - helm unittest src/groundx (snapshot tests — the CI gate, enforced in helm-tests.yml)
-    - helm template src/groundx -f values/minikube/values.yaml (render check)
+    - helm template src/groundx -f values/minikube/values.yaml -f tests/files/values.search-credentials.yaml (render check; the fixture supplies explicit test search credentials)
     - helm lint (declared in repos.yml run.lint)
     - verify_mirrors() in .build/bin/verify-storage-contract.py enforces the full templates/ tree on every gate run (drift IS checked). The remaining gap is the absence of a regen script — nothing auto-syncs helm/ from src/groundx/, so a human still mirrors edits by hand.
   
@@ -104,6 +104,12 @@ context: |
       `.build/bin/validate-helm.sh`. This is the established pattern for a new chart-level
       correctness check — prefer it over embedding check logic inline in the shell script or adding
       a parallel bash test harness.
+
+  - CONVENTIONS DISCOVERED DURING GX-75 (helm-unittest suites and the credentials Secret):
+    - helm-unittest 1.1.2: a suite-level `templates:` key stops the chart's `_helpers` templates from resolving ("no template groundx.golang.services"); list `templates:` on each test instead.
+    - A `documentSelector` on `metadata.name` for a Go service matches both its Service and its Deployment ("multiple indexes found"); select on `spec.template.metadata.labels.app`.
+    - A filtered `helm unittest -f <suite>` run of a suite that holds snapshots rewrote that suite's `.snap` without `-u` when some tests errored (the Google OCR fixture was missing). Put new non-snapshot cases in their own suite, and restore any `.snap` a run rewrote with `git checkout -- <file>`.
+    - Extra Secrets reach the Golang pods as `envFrom` only through `cluster.secrets`, which has no default; the sample credentials Secret (`src/groundx/prereqs/secret/values.yaml`, mirrored byte-for-byte in `helm/prereqs/secret/values.yaml` outside the templates drift check) is opt-in. Keep search keys in that sample empty: a non-empty sample value would become an unvalidated working credential.
 
   - KNOWN GAPS / OPEN QUESTIONS:
     - helm/ <-> src/groundx duplication: no regen script (manual sync required); a drift check DOES exist (verify_mirrors() in .build/bin/verify-storage-contract.py fails the gate on mismatch) — the remaining gap is only the absence of a regen script, not the absence of a check.
