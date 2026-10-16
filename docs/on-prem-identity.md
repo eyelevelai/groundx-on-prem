@@ -50,6 +50,60 @@ cognito:
 - `cognito.adminPassword` is not a supported chart key (rejected by `values.schema.json`); it has
   no rendering path on-prem and is unrelated to the separate, unchanged `admin.password` key.
 
+## Optional: `local`
+
+`local` mode lets customers sign in to GroundX and the MCP authorize page with an email and
+password stored in your own database, with no external identity provider. The behavior below
+applies only to a cashbot-go image that includes GX-83; an older image does not have it.
+
+### Login lockout
+
+- Three failed password attempts within 15 minutes locks that email for 15 minutes, counted from
+  the third failure.
+- A locked email and a wrong password get the same generic error, so a caller cannot tell
+  whether an email exists or is locked.
+- A successful login or an admin password reset clears the failure count.
+- A Redis restart or failover can reset the failure count. This only gives an attacker a fresh set
+  of attempts and is not a security boundary change.
+
+### Sustained lockout
+
+Anyone who knows a customer's email can keep that account locked by repeatedly failing logins.
+The defence is a per-source-IP rate limit at the ingress: set the limit annotations for your
+ingress controller under `groundx.ingress.annotations`, which the chart renders onto the Ingress.
+Recovery for a locked customer is an admin password reset, which clears the lock.
+
+### MCP sign-in
+
+- The MCP authorize page has a `Sign in with an API key` option, for customers who have no
+  password.
+- MCP sign-in on chart installs needs GX-112. Until that lands, the sign-up link is hidden on
+  chart installs. This chart does not yet expose the values it needs.
+
+### Password reset and MCP sessions
+
+An admin password reset ends that customer's MCP sessions only. Their API keys and app sessions
+are not touched. After a suspected compromise, also delete the customer's API keys or disable
+the account.
+
+### Redis
+
+MCP session revocation relies on Redis.
+
+- Accepted edge case: a Redis failover right after a password reset can revive the MCP sessions
+  that reset ended.
+- Set the Redis `maxmemory-policy` to `noeviction` or a `volatile-*` policy. Under an `allkeys-*`
+  policy the reset marker can be evicted, which revives MCP sessions that an earlier reset ended.
+  Future resets still work.
+- The chart's Redis takes its policy from the image's `/etc/redis.conf`, which
+  `groundx.cache.confContent` includes. For customer-managed Redis the policy is unknown, so
+  check it.
+
+### Upgrading
+
+After upgrading to a GX-83 image, existing local-mode MCP sessions must re-authorize once.
+Sessions issued before GX-83 have no owning customer and are rejected.
+
 ## Rollback
 
 Do not run `helm rollback` to a chart version before GX-20 for an installation using
