@@ -527,9 +527,9 @@ file:
 
 To move an existing MinIO store to S4, S4 must take over MinIO's URL as well as its objects. GroundX saves each file's full URL, including the store's host, with the document and inside processed files, and it reads and copies only files whose URL starts with its storage URL. Connected at `s4.eyelevel.svc.cluster.local:7480`, GroundX could no longer open or copy any document stored before the move. These steps copy every object with the same keys, set the public-read policy, and then hand Service `minio`, which GroundX's default storage URL `http://minio.eyelevel.svc.cluster.local` reaches, from MinIO to S4. GroundX's file, X-Ray, and page-image links are unsigned and rely on that policy, and GroundX sets it only when it creates the bucket itself. The copy carries neither object tags (GroundX does not read them back) nor the bucket policy, and a file whose name is too long for S4 fails to copy.
 
-The steps cover a store installed by this guide, with `file.existing.url` and `file.customDomain` unset in your GroundX values, and S4 installed as release `s4` as above. If your values set either one, S4 must answer at exactly that scheme, host, and port instead; GroundX has not tested that.
+The steps cover a store installed by this guide, with `file.existing.url`, `file.customDomain`, and `file.serviceName` unset in your GroundX values, and S4 installed as release `s4` as above. If your values set any of them, S4 must answer at exactly the scheme, host, and port GroundX uses today instead; GroundX has not tested that.
 
-GroundX tested these steps on minikube on 2026-10-15 and 2026-10-16, from a community MinIO tenant and from an AIStor object store, without GroundX itself installed. Steps 2 to 5 ran as written. With the settings of step 6, GroundX's Go storage client, which the upload and copy services use, then opened and copied files stored before the move; the layout and extract services' storage clients were not run through the switch. Storage was unavailable for a few seconds during step 5 in the community MinIO test. Going back, below, also worked: the store came back on its kept volume claim with its data after about 13 seconds.
+GroundX tested these steps on minikube on 2026-10-15 and 2026-10-16, from a community MinIO tenant and from an AIStor object store, without GroundX itself installed. Steps 2 to 5 ran as written. With the settings of step 6, the Go storage client that all of GroundX's Go services share then opened and copied files stored before the move; the layout and extract services' storage clients were not run through the switch. Storage was unavailable for a few seconds during step 5 in the community MinIO test. Going back, below, also worked: the store came back on its kept volume claim with its data after about 13 seconds.
 
 1. Stop uploads to GroundX, then wait until no documents are still processing. Keep uploads stopped until step 7. Processing keeps writing files to MinIO, and a file written after the copy is not on S4 and is lost at the switch. If you cannot confirm that nothing is processing, do not migrate. This wait follows from how GroundX writes processing results; GroundX has not tested it.
 2. Copy the bucket with [rclone](https://rclone.org/) from a machine that can reach both stores. The S4 bucket is created in `us-east-1`:
@@ -614,9 +614,9 @@ GroundX tested these steps on minikube on 2026-10-15 and 2026-10-16, from a comm
        url: http://minio.eyelevel.svc.cluster.local
    ```
 
-7. Open a file, X-Ray, or page-image link of a document ingested before the move; it must load. Then resume uploads.
+7. Open a file, X-Ray, or page-image link of a document ingested before the move; it must load. That link does not use GroundX's S4 keys, so also ingest one small test document and check that it finishes processing. Then resume uploads.
 
-To go back, stop uploads, delete Service `minio`, install the store release again under its old name from `minio-store-values.yaml` with the chart version you noted in step 5 (for AIStor installed by this guide, `minio/aistor-objectstore` 1.1.0; for community MinIO, chart 7.1.1 with a server image you can pull, as in step 6 of [Restoring Community MinIO from the Pre-Upgrade Snapshot](#restoring-community-minio-from-the-pre-upgrade-snapshot), with `minio-store-values.yaml` in place of `minio-cluster-values.yaml`), restore your previous `file` settings, and upgrade GroundX. The store comes back on its kept volume claim, but files written only to S4 after the switch are not on MinIO.
+To go back, stop uploads, delete Service `minio`, install the store release again under its old name from `minio-store-values.yaml` with the chart version you noted in step 5 (for AIStor installed by this guide, `minio/aistor-objectstore` 1.1.0; for community MinIO, the tenant chart with a server image you can pull, where the tested form is chart 7.1.1 as in step 6 of [Restoring Community MinIO from the Pre-Upgrade Snapshot](#restoring-community-minio-from-the-pre-upgrade-snapshot), with `minio-store-values.yaml` in place of `minio-cluster-values.yaml`), restore your previous `file` settings, and upgrade GroundX. The store comes back on its kept volume claim, but files written only to S4 after the switch are not on MinIO.
 
 #### Deploying a Dedicated AIStor Object Store
 
@@ -688,7 +688,7 @@ aws s3api list-objects-v2 --endpoint-url "$STORE" --bucket "$BUCKET" \
   --prefix / --query 'Contents[].[Key]' --output text > slash-keys.txt
 ```
 
-If `slash-keys.txt` is empty or holds only `None`, there is nothing to rename. Otherwise copy each object to its key without the slash, compare sizes, and delete the original only when they match:
+If `slash-keys.txt` is empty or holds only `None`, there is nothing to rename. Otherwise copy each object to its key without the slash, compare sizes, and delete the original only when they match. Compare sizes with `head-object`, as the loop does: S4's listing can show an object it has just copied as 0 bytes.
 
 ```bash
 while IFS= read -r key; do
