@@ -529,7 +529,7 @@ To move an existing MinIO store to S4, S4 must take over MinIO's URL as well as 
 
 The steps cover a store installed by this guide in namespace `eyelevel`, with `file.existing.url`, `file.customDomain`, `file.serviceName`, and `file.bucketName` unset in your GroundX values, and S4 installed as release `s4` as above. If your values set any of them, S4 must answer at exactly the scheme, host, and port GroundX uses today instead; GroundX has not tested that.
 
-GroundX tested these steps on minikube on 2026-10-15 and 2026-10-16, from a community MinIO tenant and from an AIStor object store, and on EKS on 2026-10-16 from a community MinIO tenant in a namespace other than `eyelevel`. Steps 2 to 5 ran as written. After step 6, files stored before the move opened and copied through S4 at MinIO's URL, and on EKS GroundX ingested, searched, and extracted new documents on S4. The layout and extract services' storage clients also read and wrote files through a stand-in for Service `minio` in local containers. Storage was unavailable for a few seconds during step 5. Going back, below, also worked: the store came back on its kept volume claim with its data after about 13 seconds on minikube and about 25 seconds on EKS.
+GroundX tested these steps on minikube on 2026-10-15 and 2026-10-16, from a community MinIO tenant and from an AIStor object store, and on EKS on 2026-10-16 from a community MinIO tenant in a namespace other than `eyelevel`. Steps 2 to 5 ran as written. After step 6, files stored before the move opened and copied through S4 at MinIO's URL, and on EKS a new document was ingested, searched, and extracted on S4. The layout and extract services' storage clients also read and wrote files through a stand-in for Service `minio` in local containers. In the community MinIO tests, storage was unavailable for a few seconds during step 5. Going back, below, also worked: the store came back on its kept volume claim with its data after about 13 seconds on minikube and about 25 seconds on EKS.
 
 1. Stop uploads to GroundX, then wait until no documents are still processing. Keep uploads stopped until step 7. Processing keeps writing files to MinIO, and a file written after the copy is not on S4 and is lost at the switch. If you cannot confirm that nothing is processing, do not migrate. This wait follows from how GroundX writes processing results; GroundX has not tested it.
 2. Copy the bucket with [rclone](https://rclone.org/) from a machine that can reach both stores. The S4 bucket is created in `us-east-1`:
@@ -776,13 +776,13 @@ MinIO states that the upgrade is permanent and cannot be reversed. The first ste
    kubectl config view --flatten --minify > aistor-migration-kubeconfig
    ```
 
-   On EKS, a kubeconfig written by `aws eks update-kubeconfig` logs in through the `aws eks get-token` exec plugin, which the container cannot run (`It looks like you are trying to use a client-go credential plugin that is not installed`). Replace that login in the file with a token, using yq v4. The token expires after 15 minutes, so run the tool straight after:
+   On EKS, a kubeconfig written by `aws eks update-kubeconfig` logs in through the `aws eks get-token` exec plugin, which the container cannot run (`It looks like you are trying to use a client-go credential plugin that is not installed`). Replace that login in the file with a token, using yq v4; if you ran `aws eks update-kubeconfig` with `--profile` or `--role-arn`, pass the same option to `aws eks get-token`. The token expires after 15 minutes, so run the tool straight after:
 
    ```bash
    yq -i ".users[0].user = {\"token\": \"$(aws eks get-token --cluster-name <cluster-name> --region <region> --query status.token --output text)\"}" aistor-migration-kubeconfig
    ```
 
-   On minikube, set the file's server to the minikube node address (`https://<minikube-ip>:8443`) and add `--network <minikube-profile>` to the `docker run` below. Then generate the values:
+   On minikube, set the file's server to the minikube node address (`https://<minikube-ip>:8443`) and add `--network <minikube-profile>` to the `docker run` below. Keep the file for step 9; it holds your cluster credentials, so delete it if you skip step 9. Then generate the values:
 
    ```bash
    docker run --rm \
@@ -843,19 +843,13 @@ MinIO states that the upgrade is permanent and cannot be reversed. The first ste
    kubectl -n eyelevel get objectstore minio-tenant
    ```
 
-9. Optional: remove the community operator. Run the migration tool's `protect-crds` first; uninstalling the community operator without it deletes CRD `policybindings.sts.min.io`, which AIStor now uses. The uninstall below runs only if `protect-crds` succeeds. Write the kubeconfig again:
-
-   ```bash
-   kubectl config view --flatten --minify > aistor-migration-kubeconfig
-   ```
-
-   On EKS the token from step 4 has likely expired, so set a new one, as in step 4:
+9. Optional: remove the community operator. Run the migration tool's `protect-crds` first; uninstalling the community operator without it deletes CRD `policybindings.sts.min.io`, which AIStor now uses. The uninstall below runs only if `protect-crds` succeeds. It uses the `aistor-migration-kubeconfig` file from step 4. On EKS the token from step 4 has likely expired, so set a new one, as in step 4:
 
    ```bash
    yq -i ".users[0].user = {\"token\": \"$(aws eks get-token --cluster-name <cluster-name> --region <region> --query status.token --output text)\"}" aistor-migration-kubeconfig
    ```
 
-   Then protect the CRD and uninstall:
+   On minikube, add `--network <minikube-profile>` to the `docker run`, as in step 4. Then protect the CRD and uninstall:
 
    ```bash
    docker run --rm \
