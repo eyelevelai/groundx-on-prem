@@ -99,3 +99,156 @@ tests:
       - matchRegex:
           path: stringData["config.py"]
           pattern: 'ssl=False'
+  - it: private gateway uses separate storage and native signing endpoints
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.file-access.yaml
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'storageEndpoint: "https://store.internal.example.com:9443"'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'signingEndpoint: "https://s3.example.com"'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'originsPrivate: true'
+  - it: private gateway rejects public storage origins
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.originsPrivate: false
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.originsPrivate must be true after operator verification of all storage aliases"
+  - it: private gateway rejects a storage loop
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.storageEndpoint: https://downloads.example.com
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.storageEndpoint must not use the delivery host"
+  - it: private IPv6 storage preserves the explicit connection port
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.storageEndpoint: "https://[2001:db8::1]:9443"
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers
+          any: true
+          content:
+            name: wait-for-file-storage
+            command: ['sh', '-c', "until nc -z 2001:db8::1 9443; do echo waiting for file storage; sleep 2; done"]
+  - it: extraction separates private storage from its existing presentation root
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      extract.file.url: http://downloads.example.com
+      file.username: ignored-inline-key
+      file.password: ignored-inline-secret
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'storage_endpoint="https://store.internal.example.com:9443"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'public_read=False'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'issubset\(ContainerUploadSettings.model_fields\)'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'private extraction storage requires a compatible GroundX SDK'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'url="https://downloads.example.com/eyelevel/"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'key=""'
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'ignored-inline'
+  - it: extraction waits for private storage even with a presentation override
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.file.url: http://downloads.example.com
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers
+          any: true
+          content:
+            name: wait-for-file-storage
+            command: ['sh', '-c', "until nc -z store.internal.example.com 9443; do echo waiting for file storage; sleep 2; done"]
+  - it: private presentations retain a configured bucket path exactly once
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      file.customDomain: downloads.example.com/eyelevel/
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadURL="https://downloads.example.com/eyelevel/"'
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadURL=.*eyelevel/eyelevel'
+  - it: private presentation rejects an unrelated file host
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      file.customDomain: other-files.example.com
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.publicUrl host must match the existing file presentation host"
+  - it: gateway renders explicit saved-reference aliases
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.trustedOrigins:
+        - https://legacy-files.example.com
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'trustedOrigins:'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'https://legacy-files.example.com'
+  - it: gateway rejects a trusted alias with a bucket path
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.trustedOrigins:
+        - https://legacy-files.example.com/other-bucket
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.trustedOrigins entries must be HTTPS origins without credentials, query, fragment or nonroot path"

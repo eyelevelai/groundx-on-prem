@@ -284,6 +284,188 @@
       ],
       "additionalProperties": false
     },
+    "fileAccess": {
+      "type": "object",
+      "properties": {
+        "publicUrl": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "storageEndpoint": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "signingEndpoint": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "storageCredentialsSecretName": {
+          "type": "string"
+        },
+        "caSecretName": {
+          "type": "string"
+        },
+        "tlsSecretName": {
+          "type": "string"
+        },
+        "serviceName": {
+          "type": "string"
+        },
+        "node": {
+          "type": "string"
+        },
+        "imagePullPolicy": {
+          "type": "string"
+        },
+        "replicas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "policyCacheTtlSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "mappingCacheTtlSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxLookupConcurrency": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxPresentationBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxConcurrentPresentations": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "frontProxyTLSVerified": {
+          "type": "boolean"
+        },
+        "originsPrivate": {
+          "type": "boolean"
+        },
+        "lookupTimeout": {
+          "type": "string",
+          "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|\u00b5s|ms|s|m|h))+$"
+        },
+        "containerPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "image": {
+          "type": "object",
+          "properties": {
+            "repository": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "ingress": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "ingressClassName": {
+              "type": "string"
+            },
+            "annotations": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "hostName": {
+              "type": "string",
+              "maxLength": 253,
+              "pattern": "^$|^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)*[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "resources": {
+          "type": "object"
+        },
+        "affinity": {
+          "type": "object"
+        },
+        "annotations": {
+          "type": "object"
+        },
+        "containerSecurityContext": {
+          "type": "object"
+        },
+        "labels": {
+          "type": "object"
+        },
+        "nodeSelector": {
+          "type": "object"
+        },
+        "securityContext": {
+          "type": "object"
+        },
+        "serviceAccount": {
+          "type": "object",
+          "properties": {
+            "create": {
+              "type": "boolean"
+            },
+            "name": {
+              "type": "string"
+            },
+            "annotations": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "disruptionBudget": {
+          "type": "object"
+        },
+        "tolerations": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "maxItems": 64
+        },
+        "topologySpreadConstraints": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "maxItems": 64
+        },
+        "trustedOrigins": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "uniqueItems": true,
+          "maxItems": 32
+        }
+      },
+      "additionalProperties": false
+    },
     "file": {
       "type": "object",
       "properties": {
