@@ -529,7 +529,7 @@ To move an existing MinIO store to S4, S4 must take over MinIO's URL as well as 
 
 The steps cover a store installed by this guide, with `file.existing.url` and `file.customDomain` unset in your GroundX values, and S4 installed as release `s4` as above. If your values set either one, S4 must answer at exactly that scheme, host, and port instead; GroundX has not tested that.
 
-GroundX tested these steps on minikube on 2026-10-15 and 2026-10-16, from a community MinIO tenant and from an AIStor object store, without GroundX itself installed. Steps 2 to 5 ran as written. With the settings of step 6, GroundX's own storage code then opened and copied files stored before the move. Storage was unavailable for about a second during step 5 in the community MinIO test. Going back, below, also worked: the store came back on its kept volume claim with its data after about 13 seconds.
+GroundX tested these steps on minikube on 2026-10-15 and 2026-10-16, from a community MinIO tenant and from an AIStor object store, without GroundX itself installed. Steps 2 to 5 ran as written. With the settings of step 6, GroundX's Go storage client, which the upload and copy services use, then opened and copied files stored before the move; the layout and extract services' storage clients were not run through the switch. Storage was unavailable for a few seconds during step 5 in the community MinIO test. Going back, below, also worked: the store came back on its kept volume claim with its data after about 13 seconds.
 
 1. Stop uploads to GroundX, then wait until no documents are still processing. Keep uploads stopped until step 7. Processing keeps writing files to MinIO, and a file written after the copy is not on S4 and is lost at the switch. If you cannot confirm that nothing is processing, do not migrate. This wait follows from how GroundX writes processing results; GroundX has not tested it.
 2. Copy the bucket with [rclone](https://rclone.org/) from a machine that can reach both stores. The S4 bucket is created in `us-east-1`:
@@ -575,10 +575,10 @@ GroundX tested these steps on minikube on 2026-10-15 and 2026-10-16, from a comm
 
    It exits 1 whenever a file name is too long for S4, because that file never copies. Read its output, and switch only if every difference it reports is a file whose name is too long for S4 and that you accept losing. Otherwise stay on MinIO and deal with the listed files first. A notice that some hashes could not be checked refers to objects MinIO stored in parts, which rclone compares by size only; it is not a difference.
 
-5. Hand Service `minio` to S4. Save the MinIO store release's values, which going back needs, then uninstall the release; its volume claim and data stay. The release is `minio-cluster` for community MinIO installed by earlier versions of this guide and `minio-tenant` for AIStor; `helm list -n eyelevel` shows it. Storage is unavailable until the new Service exists.
+5. Hand Service `minio` to S4. Save the MinIO store release's values, which going back needs, then uninstall the release; its volume claim and data stay. Set `STORE_RELEASE` to the release: `minio-cluster` for community MinIO installed by earlier versions of this guide, or `minio-tenant` for AIStor. `helm list -n eyelevel` shows it and its chart version, which going back needs; note both. Storage is unavailable until the new Service exists, and GroundX cannot read stored files until its upgrade in step 6 finishes, so run step 6 straight after this step.
 
    ```bash
-   STORE_RELEASE=minio-cluster
+   STORE_RELEASE=<store-release>
    helm get values "$STORE_RELEASE" -n eyelevel -o yaml > minio-store-values.yaml
    helm uninstall "$STORE_RELEASE" -n eyelevel
    kubectl -n eyelevel wait --for=delete service/minio --timeout=5m
@@ -616,7 +616,7 @@ GroundX tested these steps on minikube on 2026-10-15 and 2026-10-16, from a comm
 
 7. Open a file, X-Ray, or page-image link of a document ingested before the move; it must load. Then resume uploads.
 
-To go back, stop uploads, delete Service `minio`, install the store release again from `minio-store-values.yaml` (for community MinIO, chart 7.1.1 with a server image you can pull, as in step 6 of [Restoring Community MinIO from the Pre-Upgrade Snapshot](#restoring-community-minio-from-the-pre-upgrade-snapshot)), restore your previous `file` settings, and upgrade GroundX. The store comes back on its kept volume claim, but files written only to S4 after the switch are not on MinIO.
+To go back, stop uploads, delete Service `minio`, install the store release again under its old name from `minio-store-values.yaml` with the chart version you noted in step 5 (for AIStor installed by this guide, `minio/aistor-objectstore` 1.1.0; for community MinIO, chart 7.1.1 with a server image you can pull, as in step 6 of [Restoring Community MinIO from the Pre-Upgrade Snapshot](#restoring-community-minio-from-the-pre-upgrade-snapshot), with `minio-store-values.yaml` in place of `minio-cluster-values.yaml`), restore your previous `file` settings, and upgrade GroundX. The store comes back on its kept volume claim, but files written only to S4 after the switch are not on MinIO.
 
 #### Deploying a Dedicated AIStor Object Store
 
@@ -677,7 +677,7 @@ The install is complete when `STATE` reads `Initialized` and `HEALTH` reads `gre
 
 This applies only to a store connected as `serviceType: minio` that keeps a leading `/` in object keys, such as an S3-compatible store other than MinIO or AIStor. MinIO and AIStor drop the leading `/` when they store an object, so their keys need no change, and AWS S3 (`serviceType: s3`) is not affected.
 
-GroundX 0.2.7 services wrote some keys with a leading `/`. In chart 0.2.8, the `groundx`, `upload`, `pre-process`, `process`, `queue`, and `summary-client` services remove the leading `/` from every key and prefix, so on a store that kept the slash they no longer find those objects. Before upgrading GroundX to chart 0.2.8, stop uploads and wait until no documents are still processing, so that 0.2.7 services write no new keys. Then list the keys that start with `/`, rename each one without it, and upgrade GroundX straight after the rename. These commands use the AWS CLI, which works against S3-compatible stores. GroundX ran them against S4, which keeps the slash, on 2026-10-15 and 2026-10-16: before the rename GroundX's 0.2.8 Go storage client could not read the slash keys, and after it every key read back with unchanged content.
+GroundX 0.2.7 services wrote some keys with a leading `/`. In chart 0.2.8, the `groundx`, `upload`, `pre-process`, `process`, `queue`, and `summary-client` services remove the leading `/` from every key and prefix, so on a store that kept the slash they no longer find those objects. Before upgrading GroundX to chart 0.2.8, stop uploads and wait until no documents are still processing, so that 0.2.7 services write no new keys. Then list the keys that start with `/`, rename each one without it, and upgrade GroundX straight after the rename. These commands use the AWS CLI, which works against S3-compatible stores. GroundX ran them against S4, which keeps the slash, on 2026-10-15 and 2026-10-16 (UTC): before the rename GroundX's updated Go storage client could not read the slash keys, and after it every key read back with unchanged content.
 
 ```bash
 export AWS_ACCESS_KEY_ID=<store-access-key> AWS_SECRET_ACCESS_KEY=<store-secret-key>
@@ -703,11 +703,11 @@ while IFS= read -r key; do
 done < slash-keys.txt
 ```
 
-`copy-object` copies at most 5 GB per object, so the loop stops (`|| break`) at a larger object. Copy that object to its key without the slash using a tool that copies in parts, such as `aws s3 cp`, compare sizes, and delete the original. Then keep `slash-keys.txt` under another name, run the listing again, and run the loop on the new list; keep every list for a rollback, where an object over 5 GB needs the same tool. This step is derived from the AWS CLI documentation and GroundX has not tested it.
+`copy-object` copies at most 5 GB per object, so the loop stops (`|| break`) at a larger object. Copy that object to its key without the slash using a tool that copies in parts, such as `aws s3 cp`, compare sizes, and delete the original. Then keep `slash-keys.txt` under another name, run the listing again, and run the loop on the new list; keep every list for a rollback, where an object over 5 GB needs the same tool. GroundX tested this step against S4 with a 5.5 GiB object: the loop stopped at it, `aws s3 cp` copied it in parts, and a second listing and loop finished the rename with every object unchanged.
 
 After the upgrade, before you resume uploads, keep `slash-keys.txt` under another name and run the listing again in the same shell. Any key it finds was written by a 0.2.7 service before the upgrade finished: rename it with the same loop, and keep every list for a rollback.
 
-To roll back to chart 0.2.7, reverse the rename once for each key in the lists you kept: copy each key without the slash back to its `/` form, compare sizes, and delete the copy without the slash. Objects those services wrote on chart 0.2.8 are stored without the slash and are not in any list, so 0.2.7 services may not find them.
+To roll back to chart 0.2.7, reverse the rename once for each key in the lists you kept: copy each key without the slash back to its `/` form, compare sizes, and delete the copy without the slash. A key can appear in more than one list; reverse it only once. Objects those services wrote on chart 0.2.8 are stored without the slash and are not in any list, so 0.2.7 services may not find them. GroundX tested this reverse rename against S4, including an object over 5 GB copied back with `aws s3 cp`; every object returned with unchanged content.
 
 #### Upgrading an Existing MinIO Install to AIStor
 

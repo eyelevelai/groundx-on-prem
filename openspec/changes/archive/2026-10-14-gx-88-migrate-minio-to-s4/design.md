@@ -132,7 +132,8 @@ The motivation and blast radius are in `proposal.md`; this file records how the 
     - The README lists keys under prefix `/` with the AWS CLI (`s3api list-objects-v2 --endpoint-url ...`), then copies each to the trimmed key, compares sizes, and deletes the original. The AWS CLI works against any S3-compatible store.
     - Rolling back to chart 0.2.7 reverses the rename.
     - Amended 2026-10-15 (review fix): the README stops uploads and waits for processing to finish before the listing, upgrades GroundX straight after the rename, and runs the listing again after the upgrade, keeping both lists for a rollback. This follows from when 0.2.7 services write keys; like the rest of the section, it was not tested.
-    - Amended 2026-10-15 (review fix, round 3): `s3api copy-object` copies at most 5 GB per object (`awscli/botocore/data/s3/2006-03-01/service-2.json`, the CopyObject documentation, at aws-cli tag `2.35.15`), so the rename loop stops at a larger object. The README tells the reader to copy that object with a tool that copies in parts, such as `aws s3 cp`, compare sizes, delete the original, list again and run the loop on the new list, and notes the same limit for a rollback. Because a stopped run can leave more than two lists, the README now keeps every list and reverses each key once across them on a rollback, instead of "both lists". This is derived from the AWS CLI documentation and was not tested.
+    - Amended 2026-10-15 (review fix, round 3): `s3api copy-object` copies at most 5 GB per object (`awscli/botocore/data/s3/2006-03-01/service-2.json`, the CopyObject documentation, at aws-cli tag `2.35.15`), so the rename loop stops at a larger object. The README tells the reader to copy that object with a tool that copies in parts, such as `aws s3 cp`, compare sizes, delete the original, list again and run the loop on the new list, and notes the same limit for a rollback. Because a stopped run can leave more than two lists, the README now keeps every list and reverses each key once across them on a rollback, instead of "both lists". This is derived from the AWS CLI documentation; see the 2026-10-16 amendment for the test.
+    - Amended 2026-10-16 (local tests, workspace GX-88 evidence `local-c9-cashbot-go/` and `local-c9b-slash-large-rollback/`): the listing and the loop ran as written against S4, which keeps the slash; GroundX's updated Go storage client read every key after the rename and none before it. With a 5.5 GiB object the loop stopped at it, `aws s3 cp` copied it in parts, and a second listing and loop finished. The rollback reverse rename, written from the README's prose, restored every key unchanged, the large one through `aws s3 cp`. A key can sit in more than one kept list, so the README says to reverse it once. The README states these results and no longer calls the section untested.
 
 11. **S4 README content.** Each limit the README states has a source:
     - one replica: `charts/s4/values.yaml:4` at `797911cb`;
@@ -140,23 +141,24 @@ The motivation and blast radius are in `proposal.md`; this file records how the 
     - amd64 only: registry config, decision 6;
     - health checks only on the web UI port: `templates/deployment.yaml:70-71,78-79`;
     - the 5 GiB large-file limit: the cashbot-go `s4` reader refuses more than 5 GiB without uploading (cashbot-go `openspec/changes/archive/2026-10-14-gx-88-migrate-minio-to-s4/design.md`, decision 4: "Refusing before the upload gives a clear error instead of a failed request after up to 5 GiB has been sent."), the single-PUT ceiling in minio-go v7.0.100 `constants.go:39`;
-    - the file-name length limit: the S4 name-limit entry of the external-semantics list the user approved at the plan gate (workspace `design.md` Decisions, 2026-10-14).
+    - the file-name length limit: the S4 name-limit entry of the external-semantics list the user approved at the plan gate (workspace `design.md` Decisions, 2026-10-14); amended 2026-10-16: replaced by GX-88 test C7's measurements (single upload 207 bytes stored, 208 refused; multipart 172 and 173; 3-byte UTF-8 names 66 and 54 bytes stored), workspace GX-88 evidence `local-c7/`.
 
-    Credential-rotation behavior is stated only if GX-88 test C7 confirms it.
+    Credential-rotation behavior is stated only if GX-88 test C7 confirms it. Amended 2026-10-16: C7 confirmed it (a restart with new credentials refuses them and keeps the first-start keys), and the README lists it as a limit.
 
     Migration:
     - Copy every object with the same keys using `rclone`, the tool the research copy used.
     - Then set the public-read policy for `s3:GetObject` on `arn:aws:s3:::<bucket>/*`. ai-server sets this policy only when it creates the bucket (`document/upload_minio.py:86-105` at ai-server `d7a174d1`), so a bucket created for the copy needs it set by hand.
     - Object tags are not copied.
-    - Cutback points `file.existing` back at the unchanged MinIO store.
+    - Cutback deletes Service `minio`, installs the store release again from its saved values on the kept volume claim, and restores the previous `file` settings (amended 2026-10-16; it first pointed `file.existing` back at an unchanged MinIO store).
     - Amended 2026-10-15 (review fix), with evidence in the workspace GX-88 evidence `s4-readme-copy/` and `c2-cashbot-go/`:
-      - The README's copy commands (the six rclone environment-variable remotes, `rclone mkdir`, `rclone copy --metadata`, the policy step, and `rclone check`) ran as written against S4 0.3.2 in local containers on 2026-10-15, and the README says so. The S4 `helm install` has not run on a cluster, and the README says that too.
+      - The README's copy commands (the six rclone environment-variable remotes, `rclone mkdir`, `rclone copy --metadata`, the policy step, and `rclone check`) ran as written against S4 0.3.2 in local containers on 2026-10-15, and the README says so. The S4 `helm install` had not run on a cluster then; amended 2026-10-16: it ran on minikube, see below.
       - `rclone check src:eyelevel dst:eyelevel` runs before the switch. It exits 1 whenever a file name is too long for S4, so the reader switches only if every reported difference is such a name. It compares objects MinIO stored in parts by size only.
-      - The first step waits for processing to finish before the copy, or re-runs the copy and the check just before the switch. This is derived, not tested.
+      - The first step waits for processing to finish before the copy. This is derived, not tested. (A fallback that re-ran the copy just before the switch was removed on 2026-10-16, below.)
     - Amended 2026-10-16 (cross-family review, two P1 findings):
       - GroundX saves each file's full URL, including the store's host, on the document and inside processed files (cashbot-go `pkg/processor/post.go:169`, `pkg/processor/cached.go:268-277`), and `Copier.CopyTraining` refuses a URL that does not start with the configured base (`pkg/copy/copy.go:389-393`). Connecting S4 at `s4.eyelevel.svc.cluster.local:7480` therefore broke every document stored before the move. The migration now keeps MinIO's URL: after the copy it uninstalls the MinIO store release (its volume claim stays), creates Service `minio` sending port 80 to S4's port 7480 (selector of S4 release `s4`), and connects GroundX with `serviceType: s4` and `url: http://minio.eyelevel.svc.cluster.local`. With those values every storage URL the chart renders for cashbot-go, layout, and extract is byte-identical to the default install's; only the startup wait moves from `minio-tenant-hl:9000` to `minio:80`. It covers a store installed by this guide with `file.existing.url` and `file.customDomain` unset; any other store must keep its exact scheme, host, and port, untested.
       - The fallback that re-ran the copy just before the switch is removed: a write after the final check would still be missing from S4. Uploads stay stopped and processing finished through the copy, the check, and the switch; if that cannot be confirmed, the reader does not migrate.
       - Cutback installs the store release again from its saved values on the kept volume claim.
+      - Tested on minikube on 2026-10-15 and 2026-10-16 (workspace GX-88 evidence `local-l3-minikube/`), from a community MinIO tenant and from an AIStor object store, without GroundX installed: the S4 install and steps 2 to 5 ran as written; afterwards GroundX's Go storage client, configured as step 6 sets it, opened and copied files stored before the move, while the same client at `s4...:7480` failed with `copyTraining not internal URL`; going back restored each store on its kept claim. The layout and extract storage clients were not run through the switch. Step 5 now takes the release name as `<store-release>`, says GroundX cannot read stored files until step 6 finishes, and the way back names the chart version to reinstall.
       - One more limit: write-once holds only for writers that do not overlap in time. Eight concurrent conditional single PUTs to one new key gave two successes in 3 of 40 rounds, with one writer's content kept.
 
     The minimum GroundX version is chart 0.2.8 (plan-gate decision; explicitly pinned image tags are an accepted gap).
@@ -240,9 +242,9 @@ The closure checks are tasks 7.1 (file level) and 7.2 (section level). Task 7.2 
    - Stores connected as `serviceType: minio` that keep a leading `/` rename those keys before upgrading the GroundX chart.
 3. Manual operator actions the README introduces: the AIStor license Secret, the object-store credentials Secret, the pre-upgrade snapshot and backup, and the S4 credentials and bucket policy.
 4. Rollback:
-   - Chart: back to 0.2.7. An install on `s4` must first point back at MinIO or AIStor, and a slash-key rename must be reversed.
+   - Chart: back to 0.2.7. An install on `s4` must first go back to MinIO or AIStor (S4 below), and a slash-key rename must be reversed.
    - AIStor upgrade: restore the snapshot into a community MinIO tenant.
-   - S4: point `file.existing` back at the unchanged MinIO store.
+   - S4: delete Service `minio`, install the store release again from its saved values on the kept volume claim, and restore the previous `file` settings.
 
 ## Open Questions
 
