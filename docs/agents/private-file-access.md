@@ -124,3 +124,29 @@ compatible gateway version that enforces all active policies; return temporary
 errors rather than restore anonymous access. Incomplete AIStor or S4 evidence
 leaves those backends unadvertised and does not block independently verified
 backends or the separate hosted release.
+
+## API and agent usage
+
+The chart deploys the existing GroundX API and file gateway, not a separate policy
+API. Compatible API images accept an initial `fileAccess` on bucket creation and
+each ingested document. Omitted/null inherits. Later changes use the current policy
+revision. The same ancestor restrictions and private staging rules apply on-prem;
+a protected local file in a public bucket needs a private reservation before bytes.
+
+Use the configured local GroundX API URL for policy/link/upload control requests and
+the configured native signing endpoint for exact presigned PUT/GET requests. Never
+use the hosted public upload broker for private on-prem data. Keep API credentials
+out of native requests. Stable public links do not expire; protected stable reads
+require current API authentication. Temporary bearer links expire and can be
+forwarded until then.
+
+The Studio Harness `groundx-api` file-access reference and standalone `groundx-mcp`
+file-access workflow own agent instructions. MCP support needs a compatible local
+API image and verified route/auth/issuer configuration. Hosted OAuth URLs are not
+an air-gapped configuration. Discovery/schema success is not live transport proof.
+SDK model/method availability must match the selected client version; use the
+documented REST flow when the installed SDK lacks a method.
+
+Capability changes must assess these operator instructions, Fern human docs, Harness
+references, MCP and SDK examples together. Record image/client identities and the
+selected storage vendor's acceptance result before advertising support.
