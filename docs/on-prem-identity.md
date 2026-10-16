@@ -86,8 +86,10 @@ reset, which clears the lock.
 ### Password reset and MCP sessions
 
 An admin password reset ends that customer's MCP sessions only. Their API keys and app sessions
-are not touched. After a suspected compromise, disable the account. Deleting API keys alone does not help,
-because the username itself still works as a credential (GX-113).
+are not touched. After a suspected compromise, disable the account and reset its password; the
+reset ends its MCP sessions at once. Disabling can take up to an hour to reach cached credentials,
+because cashbot-go caches API-key lookups for up to 60 minutes. Deleting API keys alone does not
+help, because the username itself still works as a credential (GX-113).
 
 ### Redis
 
@@ -117,6 +119,7 @@ for installations that did not enable Cognito.
 
 ## Air-gapped installs
 
-Air-gapped installs must use `apiKeyOnly` — reaching AWS Cognito to validate a login is not
-possible without outbound network access to `cognito-idp.<region>.amazonaws.com`, so
-`mode: cognito` is not a valid choice for an air-gapped cluster.
+Air-gapped installs cannot use `mode: cognito` — reaching AWS Cognito to validate a login is not
+possible without outbound network access to `cognito-idp.<region>.amazonaws.com`. An air-gapped
+cluster uses `apiKeyOnly`, or `local` for password login, which needs no external identity
+provider. `local` is subject to the chart release that adds `cognito.mode: local` (GX-53, PR #123).

@@ -23,9 +23,9 @@
 
 ## 4. Stale text and whole-change validation
 
-- [x] 4.1 Ensure the stale pre-GX-83 statements are absent, and the `apiKeyOnly`, `cognito`, rollback and air-gapped sections are unchanged
-  check: ! grep -qE 'Nothing throttles password attempts|cannot authorize' docs/on-prem-identity.md && grep -q 'locks that email for 15 minutes' docs/on-prem-identity.md && grep -q '^## Air-gapped installs' docs/on-prem-identity.md && grep -q '^## Rollback' docs/on-prem-identity.md
-- [x] 4.2 Run `openspec validate --type change gx-83-local-mode-password-login-hardening-throttling-session`
-  check: grep -q 'must re-authorize once' docs/on-prem-identity.md && openspec validate --type change gx-83-local-mode-password-login-hardening-throttling-session
+- [x] 4.1 Ensure the stale pre-GX-83 statements are absent, and the removed wording is absent, and the `apiKeyOnly`, `cognito` and rollback sections are unchanged
+  check: ! grep -qE 'Nothing throttles password attempts|cannot authorize|Sign in with an API key|are the defence|cannot tell whether|also delete the' docs/on-prem-identity.md && grep -q 'locks that email for 15 minutes' docs/on-prem-identity.md && grep -q '^## Air-gapped installs' docs/on-prem-identity.md && grep -q '^## Rollback' docs/on-prem-identity.md
+- [x] 4.2 Run `openspec validate --specs`
+  check: grep -q 'must re-authorize once' docs/on-prem-identity.md && openspec validate --specs
 
 See workspace `openspec/changes/gx-83-local-mode-password-login-hardening-throttling-session/tasks.md` for cross-service coordination and deferred items.
