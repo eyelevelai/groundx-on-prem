@@ -5,7 +5,7 @@
 
 ## 2. Operator guidance
 
-- [x] 2.1 Add the sustained-lockout warning with per-source-IP ingress rate limits via `groundx.ingress.annotations` as the defence and admin reset as recovery
+- [x] 2.1 Add the sustained-lockout warning with per-source-IP ingress rate limits via `groundx.ingress.annotations` as slowing brute-force guessing but no defence against a targeted lockout (accepted residual), and admin reset as recovery
   check: grep -q 'Sustained lockout' docs/on-prem-identity.md && grep -q 'groundx.ingress.annotations' docs/on-prem-identity.md
 - [x] 2.2 Document the MCP authorize-page API-key option for customers with no password
   check: grep -q 'Or use a GroundX API key' docs/on-prem-identity.md

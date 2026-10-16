@@ -6,7 +6,7 @@ GX-53 adds `cognito.mode: local` (bcrypt passwords in MySQL) for on-prem GroundX
 
 - Rewrite the `local` section of `docs/on-prem-identity.md` to cover:
   - the per-email lock (3 failed attempts, 15-minute lock, the same generic error as any failed login, count cleared by a successful login or an admin reset);
-  - a sustained-lockout warning (anyone who knows an email can re-lock it every 15 minutes), with per-source-IP ingress rate limits via `groundx.ingress.annotations` as the defence and an admin password reset as recovery;
+  - a sustained-lockout warning (anyone who knows an email can re-lock it every 15 minutes), with per-source-IP ingress rate limits via `groundx.ingress.annotations` slowing brute-force guessing but no defence against a targeted lockout (accepted residual), and an admin password reset as recovery;
   - the API-key option on the MCP authorize page for customers who have no password yet;
   - a password reset ends that customer's MCP sessions only (after a compromise, disable the account and reset its password);
   - the Redis failover edge case (accepted residual): a Redis failover right after a password reset can lose the revocation-marker advance and revive the MCP sessions that reset ended; a restart or failover resetting the attempt count is only a minor secondary note; plus a Redis eviction recommendation (`noeviction` or `volatile-*`; under `allkeys-*` a revocation marker can be evicted, reviving sessions an earlier reset ended);

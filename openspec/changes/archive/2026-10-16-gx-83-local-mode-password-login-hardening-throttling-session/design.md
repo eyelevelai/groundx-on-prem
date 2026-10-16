@@ -14,7 +14,7 @@ On `main`, `docs/on-prem-identity.md` has no `local` section (it exists only on 
 
 ### Document the lock as operators experience it
 
-State: three failed attempts lock the email for 15 minutes; locked and failed attempts get the same generic error; success or admin reset clears the count. Do not document Redis keys, Lua or counting internals; those live in cashbot-go. The sustained-lockout warning is stated plainly with its defence (per-source-IP ingress rate limits via `groundx.ingress.annotations`, which the chart renders onto the Ingress; `templates/resources/ingress.yaml`) and recovery (admin reset).
+State: three failed attempts lock the email for 15 minutes; locked and failed attempts get the same generic error; success or admin reset clears the count. Do not document Redis keys, Lua or counting internals; those live in cashbot-go. The sustained-lockout warning is stated plainly: per-source-IP ingress rate limits via `groundx.ingress.annotations` (which the chart renders onto the Ingress; `templates/resources/ingress.yaml`) slow brute-force guessing but are no defence against a targeted lockout (accepted residual), and admin reset is the recovery.
 
 ### Reset scope is stated narrowly
 
@@ -46,4 +46,4 @@ Each task's `check:` is a `grep` against `docs/on-prem-identity.md` for a litera
 
 - 2026-10-16: After review, `docs/on-prem-identity.md` was corrected. The ingress rate limit slows brute-force guessing and bcrypt load but is no defence against a targeted lockout of a known email, and `groundx.ingress.annotations` apply to every route of the API Ingress. The compromise action is disabling the account, because the username still works as a credential (GX-113). The Redis eviction policy is checked with `redis-cli CONFIG GET maxmemory-policy`; the chart has no setting for it. The authorize-page control is the "Or use a GroundX API key" field. Task 4.2's `openspec validate --type change` cannot run after archive; `openspec validate --specs` passed (38 passed, 0 failed) on the archived state.
 - 2026-10-16 (review round 2): air-gapped names local; compromise = disable + reset password (disable can take up to an hour via cached credentials); 4.1 negation extended; 4.2 check is openspec validate --specs.
-- 2026-10-16 (review round 3): task 2.3, the reset-scope decision, the proposal and the anchor list now match the shipped doc (disable and reset after a compromise; the authorize-page field is "Or use a GroundX API key").
+- 2026-10-16 (review round 3): task 2.3, the reset-scope decision, the proposal and the anchor list now match the shipped doc (disable and reset after a compromise; the authorize-page field is "Or use a GroundX API key"; ingress rate limits slow guessing but are no defence against a targeted lockout).
