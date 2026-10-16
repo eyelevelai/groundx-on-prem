@@ -41,3 +41,7 @@ Each task's `check:` is a `grep` against `docs/on-prem-identity.md` for a litera
 - Grep anchors prove the wording is present, not that it is accurate; accuracy is checked at review against the plan.
 - Reconciling with PR #123 at merge may conflict textually in the `local` section; accepted by the human decision above.
 - The pre-push gate (`.build/bin/validate-helm.sh`) runs at hand-off by the orchestrator; nothing under `bin/` or `terraform/` is executed or edited.
+
+## Amendments
+
+- 2026-10-16: After review, `docs/on-prem-identity.md` was corrected. The ingress rate limit slows brute-force guessing and bcrypt load but is no defence against a targeted lockout of a known email, and `groundx.ingress.annotations` apply to every route of the API Ingress. The compromise action is disabling the account, because the username still works as a credential (GX-113). The Redis eviction policy is checked with `redis-cli CONFIG GET maxmemory-policy`; the chart has no setting for it. The authorize-page control is the "Or use a GroundX API key" field. Task 4.2's `openspec validate --type change` cannot run after archive; `openspec validate --specs` passed (38 passed, 0 failed) on the archived state.

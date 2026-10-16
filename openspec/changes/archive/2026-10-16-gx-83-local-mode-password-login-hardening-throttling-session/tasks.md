@@ -8,7 +8,7 @@
 - [x] 2.1 Add the sustained-lockout warning with per-source-IP ingress rate limits via `groundx.ingress.annotations` as the defence and admin reset as recovery
   check: grep -q 'Sustained lockout' docs/on-prem-identity.md && grep -q 'groundx.ingress.annotations' docs/on-prem-identity.md
 - [x] 2.2 Document the MCP authorize-page API-key option for customers with no password
-  check: grep -q 'Sign in with an API key' docs/on-prem-identity.md
+  check: grep -q 'Or use a GroundX API key' docs/on-prem-identity.md
 - [x] 2.3 State that a reset ends that customer's MCP sessions only, and that after a compromise the operator also deletes the API keys or disables the account
   check: grep -q 'MCP sessions only' docs/on-prem-identity.md
 
