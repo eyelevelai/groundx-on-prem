@@ -107,6 +107,82 @@ tests:
       - notMatchRegex:
           path: stringData["config.py"]
           pattern: 'ignored-inline'
+  - it: enabled gateway rejects a separate extraction bucket
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      extract.file.bucketName: extraction-output
+    asserts:
+      - failedTemplate:
+          errorMessage: "extract.file.bucketName must match file.bucketName when fileAccess is enabled"
+  - it: private extraction inherits the gateway bucket
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      file.bucketName: account-bucket
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'bucket="account-bucket"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'url="https://downloads.example.com/account-bucket/"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'public_read=False'
+  - it: private extraction accepts an explicit matching bucket
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      extract.file.bucketName: account-bucket
+      file.bucketName: account-bucket
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'bucket="account-bucket"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'url="https://downloads.example.com/account-bucket/"'
+  - it: disabled file access preserves a separate extraction bucket
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      extract.file.bucketName: extraction-output
+      fileAccess.enabled: false
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'bucket="extraction-output"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'url="http://downloads.example.com/extraction-output/"'
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'public_read=False|storage_endpoint='
+  - it: disabled extraction does not reserve its unused bucket
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: false
+      extract.file.bucketName: extraction-output
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'bucket: eyelevel'
   - it: migration job receives the same credential and trust references on upgrades
     templates:
       - ../templates/app/schema-migration.yaml

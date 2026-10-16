@@ -27,6 +27,9 @@
 {{- if ne (lower $presentation.host) (lower $public.host) -}}
   {{- fail "fileAccess.publicUrl host must match the existing file presentation host" -}}
 {{- end -}}
+{{- if and (eq (include "groundx.extract.create" .) "true") (ne (include "groundx.extract.file.bucketName" .) (include "groundx.file.bucketName" .)) -}}
+  {{- fail "extract.file.bucketName must match file.bucketName when fileAccess is enabled" -}}
+{{- end -}}
 {{- $extractURL := dig "file" "url" "" (.Values.extract | default dict) -}}
 {{- if and (eq (include "groundx.extract.create" .) "true") (not (empty $extractURL)) -}}
   {{- if contains "@" $extractURL -}}

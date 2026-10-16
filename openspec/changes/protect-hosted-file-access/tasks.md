@@ -29,3 +29,9 @@
 - [x] 4.1 Add generated native ingress regressions for Service port 9000 with private HTTPS origins on 443 and 9443, legacy Ingress API rendering and disabled unused gateway hostnames. Prove the port assertions fail before the fix; retain disabled, external storage and explicit custom-path controls.
 - [x] 4.2 Factor native port resolution into `groundx.file.nativePort` and select it only for the native file ingress. Preserve storage waits, extraction settings and client configuration; mirror both templates.
 - [x] 4.3 Run focused tests, both chart render surfaces, the full pinned Helm gate, minikube renders, OpenSpec validation and whitespace/line-ending checks. Keep live transport and backend compatibility gates open.
+
+## 5. Extraction bucket admission
+
+- [x] 5.1 Reproduce the separate-bucket failure with production-rendered configuration, SDK bucket provisioning/upload and Cashbot gateway, extraction API and native-link paths. Retain disabled separate-bucket and enabled matching-bucket positive controls.
+- [x] 5.2 Add an enabled-only effective extraction bucket equality guard, mirror the helper and retain inherited, explicitly matching, disabled file-access and disabled extraction configurations. Add failing-first coverage to the existing file-access Helm suite and source/mirror admission checks.
+- [x] 5.3 Run the focused Helm suites, full pinned chart gate, source/mirror minikube renders, OpenSpec and whitespace/line-ending checks. Retain independent backend activation and protected transport gates.

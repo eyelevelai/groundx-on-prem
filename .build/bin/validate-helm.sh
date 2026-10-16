@@ -352,6 +352,7 @@ for chart in src/groundx helm; do
   expect_helm_template_failure "${chart}" "fileAccess.storageEndpoint must not use the delivery host" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=false --set fileAccess.storageEndpoint=https://downloads.example.com
   expect_helm_template_failure "${chart}" "fileAccess.signingEndpoint must not use the delivery host" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=false --set fileAccess.signingEndpoint=https://downloads.example.com
   expect_helm_template_failure "${chart}" "fileAccess.storageCredentialsSecretName is required" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=false --set fileAccess.storageCredentialsSecretName=
+  expect_helm_template_failure "${chart}" "extract.file.bucketName must match file.bucketName when fileAccess is enabled" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=true --set extract.file.bucketName=extraction-output
 done
 
 echo "==> Verifying generated Ingress backend routing"

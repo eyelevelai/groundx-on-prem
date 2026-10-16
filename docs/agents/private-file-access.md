@@ -80,6 +80,14 @@ no-store`. Controller-global caching cannot be proven by a Helm render.
 
 Layout configuration adds `uploadStorageEndpoint` and `uploadPublicRead=False`.
 Extraction SDK settings add `storage_endpoint` and `public_read=False`.
+When extraction and file access are enabled, the effective extraction bucket must
+match `file.bucketName`. Omit `extract.file.bucketName` to inherit it, or set the
+same value explicitly. The gateway and native-link signer use one storage bucket;
+a separate private extraction bucket cannot be served through that gateway.
+Rendering rejects the mismatch. Separate extraction buckets remain available with
+file access disabled, and an unused extraction setting is ignored while extraction
+is disabled. The guard does not migrate existing objects.
+
 The existing `uploadBaseURL`, `uploadReplaceURL`, bucket and region remain
 presentation settings. Enabled public presentation URLs use the HTTPS scheme
 from `publicUrl` and preserve the existing host, path and bucket exactly once.

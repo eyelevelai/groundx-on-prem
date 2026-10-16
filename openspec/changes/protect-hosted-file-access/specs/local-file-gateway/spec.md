@@ -24,6 +24,24 @@ The chart SHALL preserve disabled legacy behavior and SHALL deploy local file au
 - **WHEN** a standard share URL is returned
 - **THEN** Host/path/query are unchanged and storage validates its signature independently of GroundX or S4 web UI auth.
 
+### Requirement: Private extraction uses the gateway bucket
+When extraction and file access are enabled, the chart SHALL reject an effective extraction bucket that differs from the configured file gateway bucket. It SHALL preserve inherited and explicitly matching buckets without changing rendered configuration for valid deployments.
+
+#### Scenario: Separate private extraction bucket
+- **GIVEN** extraction and file access are enabled and `extract.file.bucketName` differs from `file.bucketName`
+- **WHEN** either chart surface renders
+- **THEN** rendering fails before private extraction output can become inaccessible through the gateway, extraction API and native sharing.
+
+#### Scenario: Matching extraction bucket
+- **GIVEN** extraction and file access are enabled and the extraction bucket is inherited or explicitly matches `file.bucketName`
+- **WHEN** either chart surface renders
+- **THEN** its existing extraction configuration is preserved.
+
+#### Scenario: Separate bucket without enabled protection or extraction
+- **GIVEN** `extract.file.bucketName` differs from `file.bucketName` and file access or extraction is disabled
+- **WHEN** either chart surface renders
+- **THEN** the unused gateway bucket constraint does not change the existing deployment behavior.
+
 ### Requirement: Proven store compatibility and private origins
 An enabled deployment SHALL verify private origins, TLS and at-rest encryption and SHALL claim compatibility only for observed passing store versions.
 
