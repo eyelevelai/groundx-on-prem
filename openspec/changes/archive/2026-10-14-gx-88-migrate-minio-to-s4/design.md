@@ -192,7 +192,7 @@ The motivation and blast radius are in `proposal.md`; this file records how the 
     - The render checks need helm v3.19.0 (via `GX_ON_PREM_HELM` or PATH) and fail closed on any other helm version; the third-party chart checks also need network access to `helm.min.io` or `github.com`.
     - Helm runs with a temporary `HELM_CACHE_HOME` and `HELM_REPOSITORY_CONFIG`, so no user cache or repository list is touched. Renders are never printed.
     - The chart-bump check runs `.build/bin/validate-helm.sh` with `helm` and `python` resolved to helm v3.19.0 and `python3` through a temporary PATH directory. The script calls bare `helm` and `python`, and the check proves the interpreter runs before trusting the gate.
-    - The checks prove that the files say and render what the specs require. They do not prove the runbooks work on a cluster. Running the documented commands on a store is left to the GX-88 container, minikube, and validation EKS tests in the workspace test plan. As of 2026-10-15, minikube tests M6 (the README's S4 install and its copy from MinIO) and M7 (any air-gapped steps) had not run.
+    - The checks prove that the files say and render what the specs require. They do not prove the runbooks work on a cluster. Running the documented commands on a store is left to the GX-88 container, minikube, and validation EKS tests in the workspace test plan. As of 2026-10-15, minikube tests M6 (the README's S4 install and its copy from MinIO) and M7 (any air-gapped steps) had not run. Amended 2026-10-16: M1, M4, M5, M6 and M6x ran on minikube (workspace GX-88 evidence `local-l3-minikube/`); M7 had not.
 
 ### MinIO sweep allowlist
 
