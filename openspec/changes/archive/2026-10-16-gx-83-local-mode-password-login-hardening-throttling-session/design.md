@@ -18,7 +18,7 @@ State: three failed attempts lock the email for 15 minutes; locked and failed at
 
 ### Reset scope is stated narrowly
 
-A reset ends that customer's MCP sessions only. API keys and app sessions are untouched, so after a compromise the operator also deletes the API keys or disables the account. The doc must not say a reset revokes more.
+A reset ends that customer's MCP sessions only. API keys and app sessions are untouched, so after a compromise the operator disables the account and resets its password. Deleting API keys alone does not help, because the username still works as a credential (GX-113). The doc must not say a reset revokes more.
 
 ### Redis caveats are stated as accepted residuals with a recommendation
 
@@ -34,7 +34,7 @@ After upgrading to a GX-83 image, existing local-mode MCP sessions must re-autho
 
 ### Verification is grep-anchored
 
-Each task's `check:` is a `grep` against `docs/on-prem-identity.md` for a literal anchor phrase that the implementation must write verbatim and that is absent on today's text, so the RED baseline fails. Anchors: `locks that email for 15 minutes`, `Sustained lockout`, `groundx.ingress.annotations`, `Sign in with an API key`, `MCP sessions only`, `noeviction`, `GX-112`, `GX-83 image`, `must re-authorize once`. Producer contract shapes are not applicable (INDEPENDENT, no runtime contract).
+Each task's `check:` is a `grep` against `docs/on-prem-identity.md` for a literal anchor phrase that the implementation must write verbatim and that is absent on today's text, so the RED baseline fails. Anchors: `locks that email for 15 minutes`, `Sustained lockout`, `groundx.ingress.annotations`, `Or use a GroundX API key`, `MCP sessions only`, `noeviction`, `GX-112`, `GX-83 image`, `must re-authorize once`. Producer contract shapes are not applicable (INDEPENDENT, no runtime contract).
 
 ## Risks / Trade-offs
 
@@ -46,3 +46,4 @@ Each task's `check:` is a `grep` against `docs/on-prem-identity.md` for a litera
 
 - 2026-10-16: After review, `docs/on-prem-identity.md` was corrected. The ingress rate limit slows brute-force guessing and bcrypt load but is no defence against a targeted lockout of a known email, and `groundx.ingress.annotations` apply to every route of the API Ingress. The compromise action is disabling the account, because the username still works as a credential (GX-113). The Redis eviction policy is checked with `redis-cli CONFIG GET maxmemory-policy`; the chart has no setting for it. The authorize-page control is the "Or use a GroundX API key" field. Task 4.2's `openspec validate --type change` cannot run after archive; `openspec validate --specs` passed (38 passed, 0 failed) on the archived state.
 - 2026-10-16 (review round 2): air-gapped names local; compromise = disable + reset password (disable can take up to an hour via cached credentials); 4.1 negation extended; 4.2 check is openspec validate --specs.
+- 2026-10-16 (review round 3): task 2.3, the reset-scope decision, the proposal and the anchor list now match the shipped doc (disable and reset after a compromise; the authorize-page field is "Or use a GroundX API key").

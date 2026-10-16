@@ -9,7 +9,7 @@
   check: grep -q 'Sustained lockout' docs/on-prem-identity.md && grep -q 'groundx.ingress.annotations' docs/on-prem-identity.md
 - [x] 2.2 Document the MCP authorize-page API-key option for customers with no password
   check: grep -q 'Or use a GroundX API key' docs/on-prem-identity.md
-- [x] 2.3 State that a reset ends that customer's MCP sessions only, and that after a compromise the operator also deletes the API keys or disables the account
+- [x] 2.3 State that a reset ends that customer's MCP sessions only, and that after a compromise the operator disables the account and resets its password
   check: grep -q 'MCP sessions only' docs/on-prem-identity.md
 
 ## 3. Redis, chart dependency and upgrade notes
