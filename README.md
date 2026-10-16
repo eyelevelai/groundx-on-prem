@@ -843,11 +843,21 @@ MinIO states that the upgrade is permanent and cannot be reversed. The first ste
    kubectl -n eyelevel get objectstore minio-tenant
    ```
 
-9. Optional: remove the community operator. Run the migration tool's `protect-crds` first; uninstalling the community operator without it deletes CRD `policybindings.sts.min.io`, which AIStor now uses. The uninstall below runs only if `protect-crds` succeeds. On EKS the token from step 4 has likely expired, so write the kubeconfig again and set a new token as in step 4 first.
+9. Optional: remove the community operator. Run the migration tool's `protect-crds` first; uninstalling the community operator without it deletes CRD `policybindings.sts.min.io`, which AIStor now uses. The uninstall below runs only if `protect-crds` succeeds. Write the kubeconfig again:
 
    ```bash
    kubectl config view --flatten --minify > aistor-migration-kubeconfig
+   ```
 
+   On EKS the token from step 4 has likely expired, so set a new one, as in step 4:
+
+   ```bash
+   yq -i ".users[0].user = {\"token\": \"$(aws eks get-token --cluster-name <cluster-name> --region <region> --query status.token --output text)\"}" aistor-migration-kubeconfig
+   ```
+
+   Then protect the CRD and uninstall:
+
+   ```bash
    docker run --rm \
      -v "$PWD/aistor-migration-kubeconfig:/root/.kube/config:ro" \
      quay.io/minio/aistor/operator-migration:RELEASE.2026-05-06T15-08-11Z@sha256:4ac3380d75aa92ca3c03454af2362a649ce4ddee866c962044e4b6e6d118b957 \
