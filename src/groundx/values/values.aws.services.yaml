@@ -56,7 +56,8 @@ search:
 stream:
   enabled: false
 
-  # visibility timeout must be 10+ min for all SQS queues
+  # visibility timeout must be 10+ min for all SQS queues. Upload re-hides its in-flight messages for 5 min, renewed every minute, so a crashed upload pod's messages return about 5 min after their last renewal.
+  # If the upload queue has a DLQ, maxReceiveCount must be at least 4, since delivery 4 is the first one that errors the document; 3 or less sends it to the DLQ first.
   topics:
     preProcess:
       type: sqs
