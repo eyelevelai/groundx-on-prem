@@ -85,9 +85,6 @@ tests:
       - ../templates/resources/layout-config-py.yaml
     values:
       - ./files/values.file-access.yaml
-    set:
-      file.username: ignored-inline-key
-      file.password: ignored-inline-secret
     asserts:
       - matchRegex:
           path: stringData["config.py"]
@@ -104,9 +101,6 @@ tests:
       - matchRegex:
           path: stringData["config.py"]
           pattern: 'accessKey=""'
-      - notMatchRegex:
-          path: stringData["config.py"]
-          pattern: 'ignored-inline'
   - it: enabled gateway rejects a separate extraction bucket
     templates:
       - ../templates/resources/ingress.yaml
@@ -179,6 +173,8 @@ tests:
     set:
       extract.enabled: false
       extract.file.bucketName: extraction-output
+      extract.file.username: unused-inline-key
+      extract.file.password: unused-inline-secret
     asserts:
       - matchRegex:
           path: stringData["config.yaml"]
@@ -872,3 +868,127 @@ tests:
       - equal:
           path: spec.rules[0].http.paths[0].backend.service.port.number
           value: 9444
+  - it: enabled file access rejects ignored file.username with a storage Secret
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      file.username: ignored-inline-value
+    asserts:
+      - failedTemplate:
+          errorMessage: "file.username is ignored when fileAccess is enabled; remove it and use fileAccess.storageCredentialsSecretName or native S3 ambient credentials"
+  - it: enabled file access rejects ignored file.password with a storage Secret
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      file.password: ignored-inline-value
+    asserts:
+      - failedTemplate:
+          errorMessage: "file.password is ignored when fileAccess is enabled; remove it and use fileAccess.storageCredentialsSecretName or native S3 ambient credentials"
+  - it: enabled file access rejects ignored file.token with a storage Secret
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      file.token: ignored-inline-value
+    asserts:
+      - failedTemplate:
+          errorMessage: "file.token is ignored when fileAccess is enabled; remove it and use fileAccess.storageCredentialsSecretName or native S3 ambient credentials"
+  - it: enabled file access rejects ignored extract.file.username with a storage Secret
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      extract.file.username: ignored-inline-value
+    asserts:
+      - failedTemplate:
+          errorMessage: "extract.file.username is ignored when fileAccess is enabled; remove it and use fileAccess.storageCredentialsSecretName or native S3 ambient credentials"
+  - it: enabled file access rejects ignored extract.file.password with a storage Secret
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      extract.file.password: ignored-inline-value
+    asserts:
+      - failedTemplate:
+          errorMessage: "extract.file.password is ignored when fileAccess is enabled; remove it and use fileAccess.storageCredentialsSecretName or native S3 ambient credentials"
+  - it: ambient S3 rejects ignored inline credentials without requiring a Secret
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      file.enabled: false
+      file.existing.url: https://downloads.example.com
+      file.existing.serviceType: s3
+      fileAccess.storageCredentialsSecretName: ""
+      file.username: ignored-inline-value
+    asserts:
+      - failedTemplate:
+          errorMessage: "file.username is ignored when fileAccess is enabled; remove it and use fileAccess.storageCredentialsSecretName or native S3 ambient credentials"
+  - it: disabled file access retains inline Go upload credentials
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.enabled: false
+      file.username: legacy-key
+      file.password: legacy-secret
+      file.token: legacy-token
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'id: "legacy-key"'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'secret: "legacy-secret"'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'token: legacy-token'
+  - it: disabled file access retains inline layout credentials
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.enabled: false
+      file.username: legacy-key
+      file.password: legacy-secret
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'accessKey="legacy-key"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'accessSecret="legacy-secret"'
+  - it: disabled file access retains extraction inline overrides
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.enabled: false
+      extract.enabled: true
+      file.username: main-key
+      file.password: main-secret
+      extract.file.username: extraction-key
+      extract.file.password: extraction-secret
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'key="extraction-key"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'secret="extraction-secret"'

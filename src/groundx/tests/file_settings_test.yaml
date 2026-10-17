@@ -159,8 +159,6 @@ tests:
     set:
       extract.enabled: true
       extract.file.url: http://downloads.example.com
-      file.username: ignored-inline-key
-      file.password: ignored-inline-secret
     asserts:
       - matchRegex:
           path: stringData["config.py"]
@@ -180,9 +178,6 @@ tests:
       - matchRegex:
           path: stringData["config.py"]
           pattern: 'key=""'
-      - notMatchRegex:
-          path: stringData["config.py"]
-          pattern: 'ignored-inline'
   - it: extraction waits for private storage even with a presentation override
     templates:
       - ../templates/app/celery.yaml

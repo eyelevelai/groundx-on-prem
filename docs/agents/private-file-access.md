@@ -39,6 +39,10 @@ backend's release gates pass.
   generated upload configuration omits inline credentials so these values win.
   Use store credentials, never shared account API keys. Native AWS S3 may omit
   this Secret and use the standard AWS credential chain, including IRSA.
+  Remove nonempty `file.username`, `file.password` and `file.token` before enabling
+  file access. Also remove `extract.file.username` and `extract.file.password` when
+  extraction is enabled. Rendering rejects these inputs because enabled upload
+  configuration would discard them, even when a storage Secret is configured.
 - `serviceAccount.name` selects the gateway ServiceAccount. Set
   `fileAccess.serviceAccount.create=true` to create it and supply
   `fileAccess.serviceAccount.annotations`, including `eks.amazonaws.com/role-arn`

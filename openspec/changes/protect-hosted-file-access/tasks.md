@@ -35,3 +35,9 @@
 - [x] 5.1 Reproduce the separate-bucket failure with production-rendered configuration, SDK bucket provisioning/upload and Cashbot gateway, extraction API and native-link paths. Retain disabled separate-bucket and enabled matching-bucket positive controls.
 - [x] 5.2 Add an enabled-only effective extraction bucket equality guard, mirror the helper and retain inherited, explicitly matching, disabled file-access and disabled extraction configurations. Add failing-first coverage to the existing file-access Helm suite and source/mirror admission checks.
 - [x] 5.3 Run the focused Helm suites, full pinned chart gate, source/mirror minikube renders, OpenSpec and whitespace/line-ending checks. Retain independent backend activation and protected transport gates.
+
+## 6. Inline credential admission
+
+- [x] 6.1 Extend existing Helm and source/mirror render checks to reject each ignored inline file credential and enabled-extraction override. Prove rejection cases fail before implementation; retain feature-off inline, unused disabled-extraction, Secret and ambient S3 controls.
+- [x] 6.2 Reject nonempty ignored fields in the existing enabled file-access validator with a safe migration message. Mirror the helper and document the credential migration.
+- [x] 6.3 Run focused tests, full pinned Helm gate, source/mirror minikube renders, OpenSpec and whitespace checks without regenerating snapshots. Record local evidence and retain live backend and protected extraction activation gates.

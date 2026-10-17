@@ -11,6 +11,19 @@
 {{- if not $in.frontProxyTLSVerified -}}
 {{- fail "fileAccess.frontProxyTLSVerified must be true after operator verification of HTTPS termination and encrypted trusted gateway backplane" -}}
 {{- end -}}
+{{- range $key := list "username" "password" "token" -}}
+  {{- if not (empty (get $.Values.file $key)) -}}
+    {{- fail (printf "file.%s is ignored when fileAccess is enabled; remove it and use fileAccess.storageCredentialsSecretName or native S3 ambient credentials" $key) -}}
+  {{- end -}}
+{{- end -}}
+{{- if eq (include "groundx.extract.create" .) "true" -}}
+  {{- $extractFile := dig "file" dict (.Values.extract | default dict) -}}
+  {{- range $key := list "username" "password" -}}
+    {{- if not (empty (get $extractFile $key)) -}}
+      {{- fail (printf "extract.file.%s is ignored when fileAccess is enabled; remove it and use fileAccess.storageCredentialsSecretName or native S3 ambient credentials" $key) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
 {{- $publicURL := required "fileAccess.publicUrl is required" $in.publicUrl -}}
 {{- if contains "@" $publicURL -}}
   {{- fail "fileAccess.publicUrl must not contain credentials" -}}

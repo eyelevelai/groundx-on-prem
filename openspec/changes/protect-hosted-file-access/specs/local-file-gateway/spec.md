@@ -105,3 +105,16 @@ The chart SHALL import the feature storage Secret only into verified Go, migrati
 - **GIVEN** an explicit operator global Secret or native S3 with an empty feature storage Secret
 - **WHEN** workloads render
 - **THEN** operator global imports remain available to every workload, duplicate imports are absent and ambient S3 creates no empty Secret reference.
+
+### Requirement: Enabled file access rejects ignored inline credentials
+When file access is enabled, the chart SHALL reject nonempty `file.username`, `file.password` and `file.token`, and nonempty `extract.file.username` or `extract.file.password` when extraction is enabled. The error SHALL identify the field without disclosing its value and direct migration to the feature storage Secret or native S3 ambient credentials.
+
+#### Scenario: Inline credentials with a Secret or ambient S3
+- **GIVEN** enabled file access and any ignored nonempty inline credential, with either a feature Secret or native S3 ambient credentials
+- **WHEN** either chart surface renders
+- **THEN** rendering fails before deployment instead of discarding the input.
+
+#### Scenario: Supported credential sources and inactive settings
+- **GIVEN** empty inline values with a feature Secret or native S3 ambient credentials, disabled file access with inline credentials, or disabled extraction with unused extraction credentials
+- **WHEN** either chart surface renders
+- **THEN** existing configuration and credential imports are preserved.

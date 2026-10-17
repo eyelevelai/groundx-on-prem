@@ -353,6 +353,9 @@ for chart in src/groundx helm; do
   expect_helm_template_failure "${chart}" "fileAccess.signingEndpoint must not use the delivery host" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=false --set fileAccess.signingEndpoint=https://downloads.example.com
   expect_helm_template_failure "${chart}" "fileAccess.storageCredentialsSecretName is required" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=false --set fileAccess.storageCredentialsSecretName=
   expect_helm_template_failure "${chart}" "extract.file.bucketName must match file.bucketName when fileAccess is enabled" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=true --set extract.file.bucketName=extraction-output
+  for inline_credential in file.username file.password file.token extract.file.username extract.file.password; do
+    expect_helm_template_failure "${chart}" "${inline_credential} is ignored when fileAccess is enabled; remove it and use fileAccess.storageCredentialsSecretName or native S3 ambient credentials" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=true --set "${inline_credential}=ignored-inline-value"
+  done
 done
 
 echo "==> Verifying generated Ingress backend routing"
