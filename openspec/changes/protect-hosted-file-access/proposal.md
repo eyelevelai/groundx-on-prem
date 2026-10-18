@@ -4,7 +4,7 @@ Private file access must operate wholly inside a customer Kubernetes deployment,
 
 ## What Changes
 
-Add optional local gateway deployment and separate stable delivery, internal storage and external native signing endpoints. Use existing storage and GroundX authentication libraries. New uploads in an enabled deployment are private; explicit per-resource protection is still opt-in. Preserve existing values when disabled. Open design questions: none; exact-version compatibility and encryption evidence are release gates.
+Add optional local gateway deployment and separate stable delivery, internal storage and external native signing endpoints. Use existing storage and GroundX authentication libraries. Protected uploads use private reservations. Public uploads retain legacy staging without a PUT-derived ingest deadline, even when the feature is enabled. Explicit per-resource protection remains opt-in. Preserve existing values when disabled. Open design questions: none; exact-version compatibility and encryption evidence are release gates.
 
 ## Capabilities
 

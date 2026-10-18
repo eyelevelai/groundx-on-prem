@@ -144,6 +144,9 @@ API. Compatible API images accept an initial `fileAccess` on bucket creation and
 each ingested document. Omitted/null inherits. Later changes use the current policy
 revision. The same ancestor restrictions and private staging rules apply on-prem;
 a protected local file in a public bucket needs a private reservation before bytes.
+Only effective-protected uploads reserve private staging. Public uploads retain
+legacy staging even when the feature is enabled; PUT expiry does not expire their
+uploaded sources or impose an ingest deadline.
 
 Use the configured local GroundX API URL for policy/link/upload control requests and
 the configured native signing endpoint for exact presigned PUT/GET requests. Never
