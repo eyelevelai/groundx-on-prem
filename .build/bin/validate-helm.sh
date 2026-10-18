@@ -325,6 +325,39 @@ for chart in src/groundx helm; do
   expect_helm_template_failure "${chart}" "workspace.api.ingress is enabled but workspace.api is not created" --set workspace.api.ingress.enabled=true
 done
 
+echo "==> Verifying optional FileAccess storage and ingress contracts on both chart surfaces"
+for chart in src/groundx helm; do
+  file_access_output="$(helm template private-files "${chart}" -f src/groundx/tests/files/values.file-access.yaml)"
+  for expected in 'name: file-access' 'frontProxyTLSVerified: true' 'storageEndpoint: "https://store.internal.example.com:9443"' 'signingEndpoint: "https://s3.example.com"' 'uploadStorageEndpoint="https://store.internal.example.com:9443"' 'uploadPublicRead=False' 'name: file-store-credentials' 'secretName: "file-store-ca"' 'secretName: downloads-tls'; do
+    if [[ "${file_access_output}" != *"${expected}"* ]]; then
+      echo "${chart}: FileAccess render is missing ${expected}" >&2
+      exit 1
+    fi
+  done
+  for gateway_ingress in true false; do
+    for native_host in delivery origin; do
+      if [[ "${gateway_ingress}" == false && "${native_host}" == origin ]]; then continue; fi
+      expect_helm_template_failure "${chart}" "file.ingress host must not use a fileAccess delivery host" -f src/groundx/tests/files/values.file-access.yaml -f "src/groundx/tests/files/values.file-native-${native_host}.yaml" --set "fileAccess.ingress.enabled=${gateway_ingress}" --set fileAccess.ingress.hostName=origin.example.com
+    done
+  done
+  for storage_endpoint in https://store.internal.example.com:9443 https://s3.example.com; do
+    native_ingress_output="$(helm template native-files "${chart}" -f src/groundx/tests/files/values.file-access.yaml -f src/groundx/tests/files/values.file-native-signing.yaml --set fileAccess.ingress.enabled=false --set fileAccess.ingress.hostName=s3.example.com --set "fileAccess.storageEndpoint=${storage_endpoint}" -s templates/resources/ingress.yaml)"
+    if [[ "${native_ingress_output}" != *'host: "s3.example.com"'* || "${native_ingress_output}" != *'name: minio'* || "${native_ingress_output}" != *'number: 9000'* || "${native_ingress_output}" != *'secretName: store-tls'* ]]; then
+      echo "${chart}: native ingress must retain Service port 9000 and TLS independently of the private HTTPS endpoint port." >&2
+      exit 1
+    fi
+  done
+  expect_helm_template_failure "${chart}" "fileAccess.frontProxyTLSVerified must be true" -f src/groundx/tests/files/values.file-access.yaml --set fileAccess.frontProxyTLSVerified=false
+  expect_helm_template_failure "${chart}" "fileAccess.originsPrivate must be true" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=false --set fileAccess.originsPrivate=false
+  expect_helm_template_failure "${chart}" "fileAccess.storageEndpoint must not use the delivery host" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=false --set fileAccess.storageEndpoint=https://downloads.example.com
+  expect_helm_template_failure "${chart}" "fileAccess.signingEndpoint must not use the delivery host" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=false --set fileAccess.signingEndpoint=https://downloads.example.com
+  expect_helm_template_failure "${chart}" "fileAccess.storageCredentialsSecretName is required" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=false --set fileAccess.storageCredentialsSecretName=
+  expect_helm_template_failure "${chart}" "extract.file.bucketName must match file.bucketName when fileAccess is enabled" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=true --set extract.file.bucketName=extraction-output
+  for inline_credential in file.username file.password file.token extract.file.username extract.file.password; do
+    expect_helm_template_failure "${chart}" "${inline_credential} is ignored when fileAccess is enabled; remove it and use fileAccess.storageCredentialsSecretName or native S3 ambient credentials" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=true --set "${inline_credential}=ignored-inline-value"
+  done
+done
+
 echo "==> Verifying generated Ingress backend routing"
 for chart in src/groundx helm; do
   ingress_output="$(helm template phoenix-check "${chart}" -f src/groundx/tests/files/values.phoenix.yaml -s templates/resources/ingress.yaml)"

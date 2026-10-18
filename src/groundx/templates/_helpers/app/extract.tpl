@@ -105,6 +105,10 @@ false
   {{- $url := include "groundx.file.url.settings" $file | fromYaml -}}
   {{- range $key, $value := $url -}}{{- $_ := set $settings $key $value -}}{{- end -}}
 {{- end -}}
+{{- if eq (include "groundx.fileAccess.create" .) "true" -}}
+  {{- $_ := set $settings "dependency" ((urlParse .Values.fileAccess.storageEndpoint).hostname) -}}
+  {{- $_ := set $settings "port" (include "groundx.file.port" .) -}}
+{{- end -}}
 {{- $_ := set $settings "serviceType" (get $settings "storageType") -}}
 {{- $settings | toYaml -}}
 {{- end }}

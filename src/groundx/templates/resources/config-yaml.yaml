@@ -687,23 +687,38 @@ stringData:
       port: {{ include "groundx.summaryClient.containerPort" . }}
       serviceName: {{ include "groundx.summaryClient.serviceName" . }}
 
+    {{- if eq (include "groundx.fileAccess.create" .) "true" }}
+{{ include "groundx.fileAccess.config" . | indent 4 }}
+    {{- end }}
+
     upload:
+      {{- if eq (include "groundx.fileAccess.create" .) "true" }}
+      storageEndpoint: {{ .Values.fileAccess.storageEndpoint | quote }}
+      signingEndpoint: {{ .Values.fileAccess.signingEndpoint | quote }}
+      {{- else if .Values.file.signingEndpoint }}
+      signingEndpoint: {{ .Values.file.signingEndpoint | quote }}
+      {{- end }}
+      {{- if eq (include "groundx.fileAccess.create" .) "true" }}
+      baseDomain: {{ (urlParse .Values.fileAccess.publicUrl).host | quote }}
+      baseUrl: {{ trimSuffix "/" .Values.fileAccess.publicUrl | quote }}
+      {{- else }}
       baseDomain: {{ get $fs "baseDomain" }}
       baseUrl: {{ printf "%s://%s" (get $fs "scheme") (get $fs "baseDomain") }}
+      {{- end }}
       bucket: {{ get $fs "bucketName" }}
       bucketUrl: {{ printf "%s://%s" (get $fs "bucketScheme") (get $fs "bucketDomain") }}
-      {{- if and (hasKey $fs "username") (ne (get $fs "username") "") }}
+      {{- if and (eq (include "groundx.fileAccess.create" .) "false") (hasKey $fs "username") (ne (get $fs "username") "") }}
       id: {{ get $fs "username" | quote }}
       {{- end }}
       {{- if and (hasKey $fs "region") (ne (get $fs "region") "") }}
       region: {{ get $fs "region" }}
       {{- end }}
-      {{- if and (hasKey $fs "password") (ne (get $fs "password") "") }}
+      {{- if and (eq (include "groundx.fileAccess.create" .) "false") (hasKey $fs "password") (ne (get $fs "password") "") }}
       secret: {{ get $fs "password" | quote }}
       {{- end }}
       service: {{ get $fs "storageType" }}
       ssl: {{ get $fs "ssl" }}
-      {{- if and (hasKey $fs "token") (ne (get $fs "token") "") }}
+      {{- if and (eq (include "groundx.fileAccess.create" .) "false") (hasKey $fs "token") (ne (get $fs "token") "") }}
       token: {{ get $fs "token" }}
       {{- end }}
 

@@ -31,6 +31,7 @@ golang
 
 {{- $services := list
   "groundx"
+  "fileAccess"
   "layoutWebhook"
   "preProcess"
   "process"
