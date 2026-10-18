@@ -23,3 +23,7 @@ The source is `src/groundx`, with matching published `helm` mirror changes. [Cas
 ## Ingress and credential admission
 
 Enabled file access rejects native storage ingress on the public delivery host or an enabled chart gateway host. The public host remains protected for external gateway routing. Distinct native signing ingress remains supported. Limit the feature storage Secret to verified storage consumers; preserve operator `cluster.secrets`. Invalid colliding configurations fail before rollout, and removing unused Secret imports changes the affected pod specifications. No stateful resources or stored URLs change. Rollback retains private storage and active policy enforcement.
+
+## Unified upload signing
+
+The existing GroundX API signs public and protected uploads against the configured local file store. Add optional file.signingEndpoint for a recipient-reachable native origin independently of fileAccess.enabled; enabled protection retains fileAccess.signingEndpoint and its current safety gates. Preserve existing inline/ambient credentials when protection is disabled. No new service, queue, database adapter, table or hosted upload dependency is introduced.

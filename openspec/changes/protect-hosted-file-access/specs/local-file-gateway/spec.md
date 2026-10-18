@@ -118,3 +118,16 @@ When file access is enabled, the chart SHALL reject nonempty `file.username`, `f
 - **GIVEN** empty inline values with a feature Secret or native S3 ambient credentials, disabled file access with inline credentials, or disabled extraction with unused extraction credentials
 - **WHEN** either chart surface renders
 - **THEN** existing configuration and credential imports are preserved.
+
+### Requirement: Public upload signing without gateway enrollment
+The chart SHALL configure public native upload signing independently of fileAccess.enabled using the existing GroundX API and selected storage implementation.
+
+#### Scenario: Local public native origin
+- **GIVEN** fileAccess is disabled and file.signingEndpoint names a reachable MinIO-compatible origin
+- **WHEN** the shared configuration is rendered
+- **THEN** upload.signingEndpoint carries that exact origin and existing inline credentials remain present without a file gateway.
+
+#### Scenario: Enabled protection
+- **GIVEN** fileAccess is enabled with verified native signing settings
+- **WHEN** an additional public file.signingEndpoint is configured
+- **THEN** the protected fileAccess.signingEndpoint remains authoritative.

@@ -41,3 +41,19 @@
 - [x] 6.1 Extend existing Helm and source/mirror render checks to reject each ignored inline file credential and enabled-extraction override. Prove rejection cases fail before implementation; retain feature-off inline, unused disabled-extraction, Secret and ambient S3 controls.
 - [x] 6.2 Reject nonempty ignored fields in the existing enabled file-access validator with a safe migration message. Mirror the helper and document the credential migration.
 - [x] 6.3 Run focused tests, full pinned Helm gate, source/mirror minikube renders, OpenSpec and whitespace checks without regenerating snapshots. Record local evidence and retain live backend and protected extraction activation gates.
+
+## Unified upload signing
+
+- [x] Use one authenticated bucket upload operation for public and protected uploads; preserve explicit legacy compatibility.
+- [x] Update owning implementation and human/agent instructions without new CI scripts.
+- [x] Extend existing storage/render/widget tests for protection disabled, local/non-AWS storage and failure without hosted fallback.
+- [ ] Refresh generated mirrors and run existing validators; record deployment tests separately.
+
+The source and published chart render public signing independently of protection,
+preserve legacy inline credentials, and retain the protected signing endpoint's
+precedence. File settings and gateway tests are consolidated in the existing
+file_settings_test.yaml with every pre-existing test case unchanged. Both chart
+lints, exact public/protected configuration renders, mirror equality, strict
+OpenSpec and whitespace checks pass. Full validate-helm stops before tests because
+the installed helm-unittest is 1.0.3 and the repository requires verified 1.1.2.
+No live deployment or vendor certification was performed.

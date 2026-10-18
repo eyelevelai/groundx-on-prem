@@ -687,6 +687,8 @@ stringData:
       {{- if eq (include "groundx.fileAccess.create" .) "true" }}
       storageEndpoint: {{ .Values.fileAccess.storageEndpoint | quote }}
       signingEndpoint: {{ .Values.fileAccess.signingEndpoint | quote }}
+      {{- else if .Values.file.signingEndpoint }}
+      signingEndpoint: {{ .Values.file.signingEndpoint | quote }}
       {{- end }}
       {{- if eq (include "groundx.fileAccess.create" .) "true" }}
       baseDomain: {{ (urlParse .Values.fileAccess.publicUrl).host | quote }}

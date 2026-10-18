@@ -162,3 +162,26 @@ documented REST flow when the installed SDK lacks a method.
 Capability changes must assess these operator instructions, Fern human docs, Harness
 references, MCP and SDK examples together. Record image/client identities and the
 selected storage vendor's acceptance result before advertising support.
+
+## Unified upload signing
+
+The existing GroundX API issues upload URLs for public and protected buckets,
+including installations with `fileAccess.enabled=false`. It uses the configured
+S3 or MinIO-compatible store. MinIO, AIStor and S4 use the existing compatible
+storage implementation; vendor acceptance remains a release gate. File bytes go
+directly to storage. No hosted upload broker, extra signing service, queue or
+database provider is needed.
+
+Set optional `file.signingEndpoint` to the native origin reachable by upload clients
+when it differs from the existing file endpoint. Public local installations may
+retain HTTP; use HTTPS for sensitive content. Existing inline credentials and the
+ambient credential chain remain supported while protection is disabled. With
+protection enabled, `fileAccess.signingEndpoint` and its existing HTTPS, private
+origin, credential and schema gates remain authoritative. This setting does not
+enable the gateway or enroll public uploads in file-access policies.
+
+Use the local API base for SDK, widget and MCP upload issuance. New clients do not
+fall back to the hosted FileUpload service. Existing anonymous `/upload/{type}`
+request and response formats remain compatibility adapters to the same signing
+implementation. Hosted routing and retirement of the standalone Lambda require a
+separate deployment after all legacy routes are verified.
