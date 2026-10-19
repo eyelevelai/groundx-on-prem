@@ -59,7 +59,7 @@ contracts:
 agent_boundaries:
   - zone: helm/ (near-duplicate published copy of src/groundx, tests/ removed)
     rule: "do NOT hand-edit — it's a mirror of src/groundx; edit src/, not helm/"
-    gate: NONE — no in-repo script regenerates it, no check asserts they match (latent drift, prime cleanup target)
+    gate: "verify_mirrors() in .build/bin/verify-storage-contract.py byte-compares the full src/groundx/templates <-> helm/templates tree on every gate run — regen is still manual (no in-repo script syncs helm/ from src/groundx/), but drift fails the gate"
   - zone: "src/groundx/tests/__snapshot__/*.snap"
     rule: do not hand-edit; regenerate with helm unittest -u
     gate: helm-tests.yml (CI asserts rendered output matches snapshots) — THE check guarding template changes
@@ -80,7 +80,7 @@ conversion:
   upstream_to_convert_first: []         # infra; convert when the services it deploys are stable
   known_gaps:
     - "PRIVILEGED: bin/operator can DESTROY Helm releases incl. stateful stores (db/file/search); bin/environment can create/destroy AWS VPCs+EKS via terraform --auto-approve; build.sh has publish rights to the public chart bucket"
-    - "helm/ <-> src/groundx duplication has NO regen script and enforcement is only PARTIAL — the five API-pod probe-timing fields (FRA-145) are drift-guarded by validate-helm.sh; every other field pair is still manual sync, latent drift (good early-win conversion target)"
+    - "helm/ <-> src/groundx duplication has NO regen script — manual sync required. Two drift checks exist: verify_mirrors() in .build/bin/verify-storage-contract.py byte-compares the full templates tree and fails the gate on any mismatch; the five API-pod probe-timing fields (FRA-145) are separately drift-guarded by validate-helm.sh's rendered-output comparison. Writing the regen script remains a good early-win conversion target."
     - "upload.groundx.ai model-weight download is hardcoded + air-gap blocker; wget|tar supply-chain surface"
     - "plaintext secret defaults in example values (OpenSearch pw, minio123) — footgun if copied to prod"
     - "groundx.extract config binding is unschematized — image field rename silently breaks rendering"

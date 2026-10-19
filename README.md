@@ -60,9 +60,10 @@
 - [Use the SDKs](#use-the-sdks)
 - [Use the APIs](#use-the-apis)
 
-**[Legacy Terraform Deployment](#legacy-terraform-deployment)**
+**[Terraform Deployment (terraform/aws/)](#terraform-deployment-terraformaws)**
 - [Accessing Legacy Scripts](#accessing-legacy-scripts)
 - [Optional EKS Node Diagnostics](#optional-eks-node-diagnostics)
+- [EKS Cluster Version Configuration](#eks-cluster-version-configuration)
 
 # What is GroundX On-Prem?
 
@@ -581,6 +582,14 @@ bin/uuid
 
 ### Persistent Storage
 
+**Chart publication status:** as of this writing, only `groundx-storageclass` `0.1.1` is published to
+`registry.groundx.ai/helm` -- `helm search repo` and a plain `helm install`/`helm upgrade` with no
+`--version` pin resolve to `0.1.1`, which has no `lookup`-based upgrade-safety guard and does not
+default `parameters.encrypted` to `"true"`. The `0.1.2` behavior described in the upgrade note below
+(encrypted-by-default EBS installs, existing-class preservation on upgrade) applies only once `0.1.2`
+is published; until then, pin `--version 0.1.2` explicitly once it is available, and do not assume an
+unpinned install already has these defaults.
+
 GroundX uses one app-wide persistent storage abstraction. Set `cluster.pvClass` to the Kubernetes storage class name and `cluster.pvAccessMode` to the access mode that class supports. Services that need PVCs, including summary inference, ranker inference, layout inference, and workspace when `workspace.pvc.enabled: true`, inherit those values unless their local `pvc` block explicitly overrides them.
 
 Prefer a shared filesystem class with `ReadWriteMany` when available:
@@ -608,6 +617,8 @@ cluster:
 An EKS/EBS example is available at `src/groundx/prereqs/storageclass/values.ebs.example.yaml`. With `ReadWriteOnce`, any pod family sharing the same PVC must be scheduled in a compatible shape because the volume cannot be mounted freely across nodes.
 
 For AWS EKS, `terraform/aws/setup-eks` generates `src/groundx/prereqs/storageclass/values.aws.local.yaml` and `src/groundx/values.aws.local.yaml` from Terraform outputs. Use `STORAGE_DRIVER=efs` for the shared EFS path or `STORAGE_DRIVER=ebs` for EBS. The generated Helm commands printed by the script do not require manually editing the EFS filesystem ID.
+
+**Upgrade note (EBS encryption default):** starting with `groundx-storageclass` `0.1.2`, a new EBS install (provisioner `ebs.csi.aws.com`, or the legacy in-tree `kubernetes.io/aws-ebs`) renders `parameters.encrypted: "true"` by default -- an operator opting out sets `encrypted: "false"` explicitly (unquoted `false`, `null`, and `""` are equivalent opt-out spellings). An already-installed StorageClass is never changed by a real `helm upgrade --install`: the chart reads the live class via Helm's `lookup` function and, when the class already exists, renders its current live `parameters` verbatim instead of the chart's new defaults -- `helm upgrade` never attempts to change a StorageClass's `parameters`, which Kubernetes treats as immutable once the object is created. When the class exists and any supplied parameter (`encrypted`, `kmsKeyId`, `type`, or a provisioner-specific one) differs from the live class, the chart's install notes print one line naming each parameter that was not applied. This `lookup` guard only sees a live cluster: `helm template`, a client-side dry run, and GitOps renderers have no live cluster to query, so those flows always render the new-install defaults -- an operator managing an existing class that `0.1.1` created without an explicit `encrypted` value must set `encrypted: "false"` explicitly to keep it unchanged. This does not work for a class that `0.1.1` created with an explicit `encrypted: "false"`: `0.1.2` never renders an explicit `false`, so a no-live-cluster render omits the key, the rendered class then differs from the live one, and the apply fails on an immutable parameter. For that class, use a live-cluster `helm upgrade --install` (the `lookup` keeps the live value), stay on `0.1.1` in that flow, or create a new StorageClass. Changing an existing class's actual encryption requires creating a new StorageClass, because `parameters` cannot be updated in place. **Pin the version explicitly** (`helm install groundx-storageclass groundx/groundx-storageclass --version 0.1.2 ...`) once `0.1.2` is published -- an unpinned install resolves to whatever `helm search repo` currently reports (see the chart publication status note above), which may still be `0.1.1` and carries none of this behavior.
 
 ### Helm Installation
 
@@ -821,15 +832,75 @@ The [API endpoint](#get-the-api-endpoint), in conjuction with the `admin.api_key
 
 All of the methods and operations described in the [GroundX documentation](https://documentation.groundx.ai/reference) are supported with your On-Prem instance of GroundX. You simply have to substitute `https://api.groundx.ai` with your [API endpoint](#get-the-api-endpoint).
 
-# Legacy Terraform Deployment
+# Terraform Deployment (terraform/aws/)
 
-As of November 4, 2025, we have migrated to a pure helm release deployment. The previous hybrid terraform-helm approach is no longer supported.
+`terraform/aws/` is an optional path for provisioning AWS infrastructure (a VPC and/or an EKS
+cluster) ahead of the Helm install described above — see [Deployment](#what-is-groundx-on-prem)
+step 1. It is also the supported path for maintaining AWS infrastructure already provisioned
+through it. As of November 4, 2025, the previous **hybrid terraform-helm approach to deploying the
+GroundX application itself** was retired in favor of a pure Helm release; that change is about how
+the application is installed onto a cluster, not about Terraform's role in provisioning the
+cluster, which is unaffected and remains supported for both new and existing AWS installs.
 
 ## Accessing Legacy Scripts
 If you would like to access the legacy terraform scripts, they can be pulled from [legacy-terraform-deployment](https://github.com/eyelevelai/groundx-on-prem/releases/tag/legacy-terraform-deployment).
 
+## EKS CPU and monitoring cost controls
+
+CPU-only nodes default to gp3 disks and one unavailable node per update. CloudWatch keeps enhanced Container Insights enabled and Application Signals disabled. See [EKS cost controls](docs/agents/eks-cost-controls.md) before applying these settings to an existing cluster.
+
 ## Optional EKS Node Diagnostics
 
-Existing AWS EKS deployments still managed by the bundled Terraform can enable
-default-off diagnostics with one setting. See
-[EKS Node Diagnostics](docs/eks-node-diagnostics.md).
+AWS EKS deployments managed by the bundled Terraform (new or existing) can enable default-off
+diagnostics with one setting. See [EKS Node Diagnostics](docs/eks-node-diagnostics.md).
+
+## EKS Cluster Version Configuration
+
+`terraform/aws/variables.tf`'s `environment_internal.eks_version` key controls the Kubernetes
+version requested for a new EKS cluster (via `terraform/aws/eks/eks.tf`'s
+`module "eyelevel_eks".cluster_version`). Leaving the key unset (the default) passes `null` to
+the module, so AWS creates the cluster at the AWS default version rather than a version this repo
+selects — see the [EKS `CreateCluster` API
+reference](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html) for what
+"the AWS default version" means; it is not necessarily the newest version EKS offers.
+
+**Owner and bump process.** The declared default in `terraform/aws/env.tfvars.example` (currently
+`1.35`) is owned by whoever maintains `groundx-on-prem`. Bump it when the currently-declared
+version approaches the end of its [AWS EKS standard support
+window](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-version-support.html), so new
+installs land on a version still inside standard support.
+
+**What happens when standard support ends.** This module does not set an [EKS upgrade
+policy](https://docs.aws.amazon.com/eks/latest/APIReference/API_UpgradePolicyRequest.html), so the
+outcome depends on the policy the cluster ends up with (AWS's own default for newly created
+clusters is `EXTENDED`; an existing cluster this Terraform now maintains may already carry a
+different policy set outside this repo):
+
+- **`EXTENDED`** — the cluster keeps running its current version past standard support, at an
+  additional per-cluster hourly cost ([EKS pricing](https://aws.amazon.com/eks/pricing/)), until it
+  reaches its extended-support end date.
+- **`STANDARD`** — there is no paid extended-support period; AWS force-upgrades the cluster to the
+  next supported version once standard support ends, whether or not that upgrade was planned.
+
+Know which policy your cluster has (`aws eks describe-cluster --name <cluster> --query
+cluster.upgradePolicy`) so you know which of these two outcomes to expect, and budget for it.
+
+**Adopting the key on an existing cluster.** `setup-eks` writes the key automatically: it reads
+Terraform state (`terraform show -json`) to find an existing cluster, then looks up that cluster's
+actual running version via `aws eks describe-cluster` — the declared default is only used when
+state shows no cluster at all. If a cluster is found in state but its running version cannot be
+resolved (bad credentials, missing IAM permission, wrong region, throttling), `setup-eks` aborts
+rather than silently falling back to the declared default and risking an unattended downgrade — a
+normal re-run is safe, an unresolvable one stops instead of guessing. An operator hand-editing
+`env.tfvars` for an existing cluster must instead:
+
+1. Read the cluster's actual running version first: `aws eks describe-cluster --name <cluster>
+   --query cluster.version --output text`. EKS does not support control-plane downgrades, so
+   setting a lower version than what is running is rejected.
+2. Know that this same value also drives every EKS-managed node group's AMI release selection
+   (`groundx-on-prem`'s node groups don't override it, so they inherit the cluster's resolved
+   version) — changing it can trigger a managed-node-group rollout, not just a control-plane
+   change.
+3. Review `terraform -chdir=terraform/aws/eks plan` before applying. `bin/environment eks` calls
+   `terraform apply --auto-approve` with no confirmation gate, so the plan output is the only
+   review point before a version change takes effect.

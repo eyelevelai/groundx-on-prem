@@ -1,0 +1,28 @@
+suite: "generated ingress backend must exist, but custom paths are never blocked"
+chart:
+  appVersion: 0.1.0
+  version: 0.1.0
+
+tests:
+  - it: "enabled: workspace api ingress with custom paths must not block, even when workspace.api is not created"
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.workspace-ingress-custom-paths.yaml
+    asserts:
+      - isKind:
+          of: Ingress
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: custom-workspace-svc
+
+  - it: "enabled: pathless extract api ingress on a component that is not created fails the render"
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.extract-ingress-orphan.yaml
+    asserts:
+      - failedTemplate:
+          errorMessage: "extract.api.ingress is enabled but extract.api is not created; enable extract.api or remove the ingress"

@@ -19,8 +19,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 27319637c17dae4a9a05683d0e2c16fb2a2f3428ed8ee62f15295009a659fa99
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 12d78cdd587a51bcb7ebf5af6c8872d7f1f8f4152175071dc503b226ba269583
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-correct
         spec:
@@ -43,7 +43,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -114,6 +114,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -148,8 +149,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 27319637c17dae4a9a05683d0e2c16fb2a2f3428ed8ee62f15295009a659fa99
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 12d78cdd587a51bcb7ebf5af6c8872d7f1f8f4152175071dc503b226ba269583
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-map
         spec:
@@ -172,7 +173,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -243,6 +244,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -277,8 +279,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 27319637c17dae4a9a05683d0e2c16fb2a2f3428ed8ee62f15295009a659fa99
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 12d78cdd587a51bcb7ebf5af6c8872d7f1f8f4152175071dc503b226ba269583
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-ocr
         spec:
@@ -301,7 +303,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -372,6 +374,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -406,8 +409,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 27319637c17dae4a9a05683d0e2c16fb2a2f3428ed8ee62f15295009a659fa99
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 12d78cdd587a51bcb7ebf5af6c8872d7f1f8f4152175071dc503b226ba269583
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-process
         spec:
@@ -430,12 +433,16 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -458,6 +465,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -476,6 +484,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -501,6 +511,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -515,6 +526,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   5: |
     apiVersion: apps/v1
     kind: Deployment
@@ -535,8 +549,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 27319637c17dae4a9a05683d0e2c16fb2a2f3428ed8ee62f15295009a659fa99
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 12d78cdd587a51bcb7ebf5af6c8872d7f1f8f4152175071dc503b226ba269583
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-save
         spec:
@@ -559,7 +573,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -630,6 +644,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1121,8 +1136,8 @@
       template:
         metadata:
           annotations:
-            config-hash: ac64ede8ede164dcea7675a7bc1abe41d057a51a4ab9eebbebdd705b70bc81ce
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 1a3a2f023bfcd922f9e67fc1100bb4f5b34e3b03513c80d5de2226fbef681569
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-correct
         spec:
@@ -1145,7 +1160,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -1215,6 +1230,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1249,8 +1265,8 @@
       template:
         metadata:
           annotations:
-            config-hash: ac64ede8ede164dcea7675a7bc1abe41d057a51a4ab9eebbebdd705b70bc81ce
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 1a3a2f023bfcd922f9e67fc1100bb4f5b34e3b03513c80d5de2226fbef681569
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-map
         spec:
@@ -1273,7 +1289,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -1343,6 +1359,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1377,8 +1394,8 @@
       template:
         metadata:
           annotations:
-            config-hash: ac64ede8ede164dcea7675a7bc1abe41d057a51a4ab9eebbebdd705b70bc81ce
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 1a3a2f023bfcd922f9e67fc1100bb4f5b34e3b03513c80d5de2226fbef681569
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-ocr
         spec:
@@ -1401,7 +1418,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -1471,6 +1488,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1505,8 +1523,8 @@
       template:
         metadata:
           annotations:
-            config-hash: ac64ede8ede164dcea7675a7bc1abe41d057a51a4ab9eebbebdd705b70bc81ce
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 1a3a2f023bfcd922f9e67fc1100bb4f5b34e3b03513c80d5de2226fbef681569
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-process
         spec:
@@ -1529,12 +1547,16 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1557,6 +1579,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -1575,6 +1598,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -1599,6 +1624,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1613,6 +1639,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -1633,8 +1662,8 @@
       template:
         metadata:
           annotations:
-            config-hash: ac64ede8ede164dcea7675a7bc1abe41d057a51a4ab9eebbebdd705b70bc81ce
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 1a3a2f023bfcd922f9e67fc1100bb4f5b34e3b03513c80d5de2226fbef681569
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-save
         spec:
@@ -1657,7 +1686,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -1727,6 +1756,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1762,8 +1792,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 4adaae49d2cf5be77aaa3be5ed372c23dd728021f01803f2296142d9d2d04a6d
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-correct
         spec:
@@ -1786,7 +1816,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -1856,6 +1886,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1890,8 +1921,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 4adaae49d2cf5be77aaa3be5ed372c23dd728021f01803f2296142d9d2d04a6d
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-map
         spec:
@@ -1914,7 +1945,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -1984,6 +2015,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2018,8 +2050,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 4adaae49d2cf5be77aaa3be5ed372c23dd728021f01803f2296142d9d2d04a6d
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-ocr
         spec:
@@ -2042,7 +2074,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -2112,6 +2144,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2146,8 +2179,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 4adaae49d2cf5be77aaa3be5ed372c23dd728021f01803f2296142d9d2d04a6d
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-process
         spec:
@@ -2170,12 +2203,16 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -2198,6 +2235,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -2216,6 +2254,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -2240,6 +2280,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2254,6 +2295,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   5: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2274,8 +2318,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 4adaae49d2cf5be77aaa3be5ed372c23dd728021f01803f2296142d9d2d04a6d
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-save
         spec:
@@ -2298,7 +2342,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -2368,6 +2412,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2404,8 +2449,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 4adaae49d2cf5be77aaa3be5ed372c23dd728021f01803f2296142d9d2d04a6d
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-correct
         spec:
@@ -2428,7 +2473,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -2498,6 +2543,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2532,8 +2578,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 4adaae49d2cf5be77aaa3be5ed372c23dd728021f01803f2296142d9d2d04a6d
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-map
         spec:
@@ -2556,7 +2602,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -2626,6 +2672,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2660,8 +2707,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 4adaae49d2cf5be77aaa3be5ed372c23dd728021f01803f2296142d9d2d04a6d
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-ocr
         spec:
@@ -2684,7 +2731,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -2754,6 +2801,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2788,8 +2836,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 4adaae49d2cf5be77aaa3be5ed372c23dd728021f01803f2296142d9d2d04a6d
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-process
         spec:
@@ -2812,12 +2860,16 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -2840,6 +2892,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -2858,6 +2911,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -2882,6 +2937,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2896,6 +2952,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   5: |
     apiVersion: apps/v1
     kind: Deployment
@@ -2916,8 +2975,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 32079dc06a2684c74e87eaec2e7a217fbb5f3d6f9dba906abca74a35dba7ec33
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 4adaae49d2cf5be77aaa3be5ed372c23dd728021f01803f2296142d9d2d04a6d
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-save
         spec:
@@ -2940,7 +2999,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -3010,6 +3069,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3045,8 +3105,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 0657d45173ddea52f3f0e63b880df20c943f8f62c848b986d374f03758e08135
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 5326560ebc335a832d5b084c947e691d3fc49492f37533e8796210d4722765a3
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-correct
         spec:
@@ -3069,7 +3129,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -3139,6 +3199,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3173,8 +3234,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 0657d45173ddea52f3f0e63b880df20c943f8f62c848b986d374f03758e08135
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 5326560ebc335a832d5b084c947e691d3fc49492f37533e8796210d4722765a3
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-map
         spec:
@@ -3197,7 +3258,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -3267,6 +3328,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3301,8 +3363,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 0657d45173ddea52f3f0e63b880df20c943f8f62c848b986d374f03758e08135
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 5326560ebc335a832d5b084c947e691d3fc49492f37533e8796210d4722765a3
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-ocr
         spec:
@@ -3325,7 +3387,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -3395,6 +3457,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3429,8 +3492,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 0657d45173ddea52f3f0e63b880df20c943f8f62c848b986d374f03758e08135
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 5326560ebc335a832d5b084c947e691d3fc49492f37533e8796210d4722765a3
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-process
         spec:
@@ -3453,12 +3516,16 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -3481,6 +3548,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -3499,6 +3567,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -3523,6 +3593,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3537,6 +3608,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   5: |
     apiVersion: apps/v1
     kind: Deployment
@@ -3557,8 +3631,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 0657d45173ddea52f3f0e63b880df20c943f8f62c848b986d374f03758e08135
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 5326560ebc335a832d5b084c947e691d3fc49492f37533e8796210d4722765a3
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-save
         spec:
@@ -3581,7 +3655,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -3651,6 +3725,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4145,8 +4220,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: f5e125078762065d891bd7cc60044a2a0f4955fda12fd5fbabeac6ae132c0777
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-correct
         spec:
@@ -4169,7 +4244,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -4243,6 +4318,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4277,8 +4353,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: f5e125078762065d891bd7cc60044a2a0f4955fda12fd5fbabeac6ae132c0777
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-map
         spec:
@@ -4301,7 +4377,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -4375,6 +4451,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4409,8 +4486,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: f5e125078762065d891bd7cc60044a2a0f4955fda12fd5fbabeac6ae132c0777
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-ocr
         spec:
@@ -4433,7 +4510,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -4507,6 +4584,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4541,8 +4619,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: f5e125078762065d891bd7cc60044a2a0f4955fda12fd5fbabeac6ae132c0777
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-process
         spec:
@@ -4565,12 +4643,16 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
@@ -4596,6 +4678,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -4614,6 +4697,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -4639,6 +4724,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4653,6 +4739,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -4673,8 +4762,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: f5e125078762065d891bd7cc60044a2a0f4955fda12fd5fbabeac6ae132c0777
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-save
         spec:
@@ -4697,7 +4786,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -4771,6 +4860,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -5262,8 +5352,8 @@
       template:
         metadata:
           annotations:
-            config-hash: e836b26fff276f9e1ebed3b1eef5c3003c1fd50adcb280c94fda20becddcceb4
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 34ecf902bba4ab13212343c7738fba69995e865922a70ab1a4e53b6a782b105a
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-correct
         spec:
@@ -5286,7 +5376,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -5356,6 +5446,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -5390,8 +5481,8 @@
       template:
         metadata:
           annotations:
-            config-hash: e836b26fff276f9e1ebed3b1eef5c3003c1fd50adcb280c94fda20becddcceb4
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 34ecf902bba4ab13212343c7738fba69995e865922a70ab1a4e53b6a782b105a
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-map
         spec:
@@ -5414,7 +5505,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -5484,6 +5575,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -5518,8 +5610,8 @@
       template:
         metadata:
           annotations:
-            config-hash: e836b26fff276f9e1ebed3b1eef5c3003c1fd50adcb280c94fda20becddcceb4
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 34ecf902bba4ab13212343c7738fba69995e865922a70ab1a4e53b6a782b105a
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-ocr
         spec:
@@ -5542,7 +5634,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -5612,6 +5704,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -5646,8 +5739,8 @@
       template:
         metadata:
           annotations:
-            config-hash: e836b26fff276f9e1ebed3b1eef5c3003c1fd50adcb280c94fda20becddcceb4
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 34ecf902bba4ab13212343c7738fba69995e865922a70ab1a4e53b6a782b105a
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-process
         spec:
@@ -5670,12 +5763,16 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -5698,6 +5795,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -5716,6 +5814,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -5740,6 +5840,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -5754,6 +5855,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -5774,8 +5878,8 @@
       template:
         metadata:
           annotations:
-            config-hash: e836b26fff276f9e1ebed3b1eef5c3003c1fd50adcb280c94fda20becddcceb4
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 34ecf902bba4ab13212343c7738fba69995e865922a70ab1a4e53b6a782b105a
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-save
         spec:
@@ -5798,7 +5902,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -5868,6 +5972,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -6362,8 +6467,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: f5e125078762065d891bd7cc60044a2a0f4955fda12fd5fbabeac6ae132c0777
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-correct
         spec:
@@ -6386,7 +6491,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -6460,6 +6565,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -6494,8 +6600,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: f5e125078762065d891bd7cc60044a2a0f4955fda12fd5fbabeac6ae132c0777
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-map
         spec:
@@ -6518,7 +6624,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -6592,6 +6698,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -6626,8 +6733,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: f5e125078762065d891bd7cc60044a2a0f4955fda12fd5fbabeac6ae132c0777
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-ocr
         spec:
@@ -6650,7 +6757,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -6724,6 +6831,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -6758,8 +6866,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: f5e125078762065d891bd7cc60044a2a0f4955fda12fd5fbabeac6ae132c0777
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-process
         spec:
@@ -6782,12 +6890,16 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
@@ -6813,6 +6925,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -6831,6 +6944,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -6856,6 +6971,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -6870,6 +6986,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -6890,8 +7009,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 39da5516c3d45a3c2883d8e5db19e3d572cfbe8e66f315d09339cd18d52dc644
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: f5e125078762065d891bd7cc60044a2a0f4955fda12fd5fbabeac6ae132c0777
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-save
         spec:
@@ -6914,7 +7033,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -6988,6 +7107,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -7023,8 +7143,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 9b1da618fb9cb28d7e067e866353abe6fc6b6f7ccdd5938ae44029cd78062e34
-            supervisord-hash: b39bd7d75862c4a85780b4e3d76fe459b3beaa52f391376e7c95cb26ef6068ec
+            config-hash: 5b0e156bb86eaeb30efdafa27a00d9e17579a1ca9830fa03097d7d8133405f1b
+            supervisord-hash: 64861f085534e94eab9679d4f0765de4e6822eea933ed51e5f89de4ee6ef588a
           labels:
             app: myapp-correct
         spec:
@@ -7047,7 +7167,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -7118,6 +7238,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: other-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -7152,9 +7273,9 @@
       template:
         metadata:
           annotations:
-            config-hash: 9b1da618fb9cb28d7e067e866353abe6fc6b6f7ccdd5938ae44029cd78062e34
+            config-hash: 5b0e156bb86eaeb30efdafa27a00d9e17579a1ca9830fa03097d7d8133405f1b
             prometheus.io/port: "8081"
-            supervisord-hash: b39bd7d75862c4a85780b4e3d76fe459b3beaa52f391376e7c95cb26ef6068ec
+            supervisord-hash: 64861f085534e94eab9679d4f0765de4e6822eea933ed51e5f89de4ee6ef588a
           labels:
             app: myapp-map
             app.kubernetes.io/name: myapp
@@ -7173,7 +7294,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -7230,6 +7351,7 @@
           securityContext:
             fsGroup: 2000
           serviceAccountName: other-service-account
+          terminationGracePeriodSeconds: 900
           volumes:
             - name: config-volume
               secret:
@@ -7257,8 +7379,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 9b1da618fb9cb28d7e067e866353abe6fc6b6f7ccdd5938ae44029cd78062e34
-            supervisord-hash: b39bd7d75862c4a85780b4e3d76fe459b3beaa52f391376e7c95cb26ef6068ec
+            config-hash: 5b0e156bb86eaeb30efdafa27a00d9e17579a1ca9830fa03097d7d8133405f1b
+            supervisord-hash: 64861f085534e94eab9679d4f0765de4e6822eea933ed51e5f89de4ee6ef588a
           labels:
             app: myapp-ocr
         spec:
@@ -7267,7 +7389,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -7340,6 +7462,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: other-service-account
+          terminationGracePeriodSeconds: 900
           volumes:
             - name: config-volume
               secret:
@@ -7367,8 +7490,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 9b1da618fb9cb28d7e067e866353abe6fc6b6f7ccdd5938ae44029cd78062e34
-            supervisord-hash: b39bd7d75862c4a85780b4e3d76fe459b3beaa52f391376e7c95cb26ef6068ec
+            config-hash: 5b0e156bb86eaeb30efdafa27a00d9e17579a1ca9830fa03097d7d8133405f1b
+            supervisord-hash: 64861f085534e94eab9679d4f0765de4e6822eea933ed51e5f89de4ee6ef588a
           labels:
             app: myapp-process
         spec:
@@ -7377,12 +7500,16 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -7405,6 +7532,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 9216Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -7423,6 +7551,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -7448,6 +7578,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: other-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: workload-type
@@ -7460,6 +7591,9 @@
             - configMap:
                 name: myapp-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 9216Mi
+              name: render-temp
   5: |
     apiVersion: apps/v1
     kind: Deployment
@@ -7480,8 +7614,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 9b1da618fb9cb28d7e067e866353abe6fc6b6f7ccdd5938ae44029cd78062e34
-            supervisord-hash: b39bd7d75862c4a85780b4e3d76fe459b3beaa52f391376e7c95cb26ef6068ec
+            config-hash: 5b0e156bb86eaeb30efdafa27a00d9e17579a1ca9830fa03097d7d8133405f1b
+            supervisord-hash: 64861f085534e94eab9679d4f0765de4e6822eea933ed51e5f89de4ee6ef588a
           labels:
             app: myapp-save
         spec:
@@ -7504,7 +7638,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -7575,6 +7709,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: other-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -7610,8 +7745,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 01a921a7559b4af85f56c800168663a3d26b0aec9bcd1a69af5452c25283d4e2
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-correct
         spec:
@@ -7634,7 +7769,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -7704,6 +7839,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -7738,8 +7874,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 01a921a7559b4af85f56c800168663a3d26b0aec9bcd1a69af5452c25283d4e2
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-map
         spec:
@@ -7762,7 +7898,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -7832,6 +7968,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -7866,8 +8003,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 01a921a7559b4af85f56c800168663a3d26b0aec9bcd1a69af5452c25283d4e2
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-ocr
         spec:
@@ -7890,7 +8027,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -7960,6 +8097,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -7994,8 +8132,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 01a921a7559b4af85f56c800168663a3d26b0aec9bcd1a69af5452c25283d4e2
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-process
         spec:
@@ -8018,12 +8156,16 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -8046,6 +8188,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -8064,6 +8207,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -8088,6 +8233,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -8102,6 +8248,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   5: |
     apiVersion: apps/v1
     kind: Deployment
@@ -8122,8 +8271,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 01a921a7559b4af85f56c800168663a3d26b0aec9bcd1a69af5452c25283d4e2
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-save
         spec:
@@ -8146,7 +8295,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -8216,6 +8365,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -8251,8 +8401,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 01a921a7559b4af85f56c800168663a3d26b0aec9bcd1a69af5452c25283d4e2
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-correct
         spec:
@@ -8275,7 +8425,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -8339,6 +8489,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -8373,8 +8524,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 01a921a7559b4af85f56c800168663a3d26b0aec9bcd1a69af5452c25283d4e2
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-map
         spec:
@@ -8397,7 +8548,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -8461,6 +8612,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -8495,8 +8647,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 01a921a7559b4af85f56c800168663a3d26b0aec9bcd1a69af5452c25283d4e2
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-ocr
         spec:
@@ -8519,7 +8671,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -8583,6 +8735,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -8617,8 +8770,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 01a921a7559b4af85f56c800168663a3d26b0aec9bcd1a69af5452c25283d4e2
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-process
         spec:
@@ -8641,12 +8794,16 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -8669,6 +8826,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -8685,6 +8843,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -8705,6 +8865,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -8719,6 +8880,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   5: |
     apiVersion: apps/v1
     kind: Deployment
@@ -8739,8 +8903,8 @@
       template:
         metadata:
           annotations:
-            config-hash: 816ef8ccbb8a4ebd3792888169527a1892017c68a3bd08fa132a9cb9acb4d39f
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 01a921a7559b4af85f56c800168663a3d26b0aec9bcd1a69af5452c25283d4e2
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-save
         spec:
@@ -8763,7 +8927,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -8827,6 +8991,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -9306,8 +9471,8 @@
       template:
         metadata:
           annotations:
-            config-hash: c46fd29f427efea3f2e374c353f6d3ad42ae56b2936cafdb64187b5c5f0d8d03
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 0fc6c0b783942d8aac8aa267423de4ee6b0b7483007a471480b0734f75629f0f
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-correct
         spec:
@@ -9330,7 +9495,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -9396,6 +9561,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -9430,8 +9596,8 @@
       template:
         metadata:
           annotations:
-            config-hash: c46fd29f427efea3f2e374c353f6d3ad42ae56b2936cafdb64187b5c5f0d8d03
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 0fc6c0b783942d8aac8aa267423de4ee6b0b7483007a471480b0734f75629f0f
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-map
         spec:
@@ -9454,7 +9620,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -9520,6 +9686,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -9554,8 +9721,8 @@
       template:
         metadata:
           annotations:
-            config-hash: c46fd29f427efea3f2e374c353f6d3ad42ae56b2936cafdb64187b5c5f0d8d03
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 0fc6c0b783942d8aac8aa267423de4ee6b0b7483007a471480b0734f75629f0f
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-ocr
         spec:
@@ -9578,7 +9745,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -9644,6 +9811,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -9678,8 +9846,8 @@
       template:
         metadata:
           annotations:
-            config-hash: c46fd29f427efea3f2e374c353f6d3ad42ae56b2936cafdb64187b5c5f0d8d03
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 0fc6c0b783942d8aac8aa267423de4ee6b0b7483007a471480b0734f75629f0f
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-process
         spec:
@@ -9702,12 +9870,16 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: Always
               livenessProbe:
@@ -9730,6 +9902,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -9746,6 +9919,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           imagePullSecrets:
             - name: ecr-public-pull
@@ -9768,6 +9943,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -9782,6 +9958,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   8: |
     apiVersion: apps/v1
     kind: Deployment
@@ -9802,8 +9981,8 @@
       template:
         metadata:
           annotations:
-            config-hash: c46fd29f427efea3f2e374c353f6d3ad42ae56b2936cafdb64187b5c5f0d8d03
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            config-hash: 0fc6c0b783942d8aac8aa267423de4ee6b0b7483007a471480b0734f75629f0f
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-save
         spec:
@@ -9826,7 +10005,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -9892,6 +10071,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -9927,9 +10107,9 @@
       template:
         metadata:
           annotations:
-            config-hash: e4a311f996cb75a691dc2e7c93b097018e385a5d13d15df5e5d781599bad006e
+            config-hash: 48a6a9312e9046fce6d430dd341bed71343301db69c49c7a3208c19b36f7609b
             ocr-credentials-hash: 72a44514058cb545a86c2bc6895318ca8cce3322655796071dbc9a0addfe58ba
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-correct
         spec:
@@ -9952,7 +10132,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -10026,6 +10206,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -10066,9 +10247,9 @@
       template:
         metadata:
           annotations:
-            config-hash: e4a311f996cb75a691dc2e7c93b097018e385a5d13d15df5e5d781599bad006e
+            config-hash: 48a6a9312e9046fce6d430dd341bed71343301db69c49c7a3208c19b36f7609b
             ocr-credentials-hash: 72a44514058cb545a86c2bc6895318ca8cce3322655796071dbc9a0addfe58ba
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-map
         spec:
@@ -10091,7 +10272,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -10165,6 +10346,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -10205,9 +10387,9 @@
       template:
         metadata:
           annotations:
-            config-hash: e4a311f996cb75a691dc2e7c93b097018e385a5d13d15df5e5d781599bad006e
+            config-hash: 48a6a9312e9046fce6d430dd341bed71343301db69c49c7a3208c19b36f7609b
             ocr-credentials-hash: 72a44514058cb545a86c2bc6895318ca8cce3322655796071dbc9a0addfe58ba
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-ocr
         spec:
@@ -10230,7 +10412,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -10304,6 +10486,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -10344,9 +10527,9 @@
       template:
         metadata:
           annotations:
-            config-hash: e4a311f996cb75a691dc2e7c93b097018e385a5d13d15df5e5d781599bad006e
+            config-hash: 48a6a9312e9046fce6d430dd341bed71343301db69c49c7a3208c19b36f7609b
             ocr-credentials-hash: 72a44514058cb545a86c2bc6895318ca8cce3322655796071dbc9a0addfe58ba
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-process
         spec:
@@ -10369,12 +10552,16 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: LAYOUT_RENDER_DISK_BUDGET_MIB
+                  value: "2048"
+                - name: TMPDIR
+                  value: /tmp/render
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -10397,6 +10584,7 @@
               resources:
                 requests:
                   cpu: 100m
+                  ephemeral-storage: 3072Mi
                   memory: 1Gi
               securityContext:
                 allowPrivilegeEscalation: false
@@ -10419,6 +10607,8 @@
                 - mountPath: /app/supervisord.conf
                   name: supervisord-volume
                   subPath: supervisord.conf
+                - mountPath: /tmp/render
+                  name: render-temp
               workingDir: /app
           initContainers:
             - command:
@@ -10443,6 +10633,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -10463,6 +10654,9 @@
             - configMap:
                 name: layout-process-supervisord-conf-map
               name: supervisord-volume
+            - emptyDir:
+                sizeLimit: 3072Mi
+              name: render-temp
   5: |
     apiVersion: apps/v1
     kind: Deployment
@@ -10483,9 +10677,9 @@
       template:
         metadata:
           annotations:
-            config-hash: e4a311f996cb75a691dc2e7c93b097018e385a5d13d15df5e5d781599bad006e
+            config-hash: 48a6a9312e9046fce6d430dd341bed71343301db69c49c7a3208c19b36f7609b
             ocr-credentials-hash: 72a44514058cb545a86c2bc6895318ca8cce3322655796071dbc9a0addfe58ba
-            supervisord-hash: 389d025411e33663295cbafcb9d7241d27e1d8736153cd1d14fa9c1b056107fe
+            supervisord-hash: 20daeaa634a51975dc71331eada4a924a10b16b167fbae7fc87a8359e486e289
           labels:
             app: layout-save
         spec:
@@ -10508,7 +10702,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -10582,6 +10776,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node

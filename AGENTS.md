@@ -3,26 +3,33 @@
 ## What this repo is
 
 `groundx-on-prem` is the **infra** repo of the GroundX workspace: a **Helm chart** (version and
-image app version come from `src/groundx/Chart.yaml`, Helm 3.8+ / Go templating) plus a Bash operator CLI and a **legacy, deprecated** Terraform
-path that package the commercial **GroundX RAG platform** (document ingestion + hybrid text/vector
+image app version come from `src/groundx/Chart.yaml`, Helm 3.8+ / Go templating) plus a Bash operator CLI and an optional Terraform
+path (`terraform/aws/`, for provisioning AWS infrastructure ahead of the Helm install, and for
+maintaining AWS infrastructure already provisioned through it — see the note below) that package the commercial **GroundX RAG platform** (document ingestion + hybrid text/vector
 search + re-ranking + LLM summarization) for **self-hosted / air-gapped Kubernetes**. There is **no
 application source code here** — the product ships as **pre-built private container images**
 (`public.ecr.aws/c9r4x6y5` by default); this repo only contains the chart, example configs, operator
-tooling, and legacy Terraform that install and scale those images. The contract this repo exposes is
+tooling, and the `terraform/aws/` path that provisions and maintains the AWS infrastructure those
+images run on. The contract this repo exposes is
 its **deployment surface** (`values.yaml` + `values.schema.json`), not an app API. K8s targets:
 `eks`, `aks`, `gke`, `openshift`, `minikube` (selected via `cluster.type`). It has **no in-tree code
 dependency on any other `groundx-*` repo** (verified).
 
 ## How to run and test
 
+Follow [CONTRIBUTING.md](CONTRIBUTING.md) for focused regression coverage and PR guidance.
+
 - **Lint / render:** `helm lint src/groundx` · `helm template src/groundx -f src/groundx/values/minikube/values.yaml`
 - **Test:** `.build/bin/validate-helm.sh` runs the full local gate (lint + `helm unittest` +
   dual-surface render checks) and is the entrypoint to prefer. It generates the throwaway
   Google-OCR credentials fixture the OCR unit tests need; a bare `helm unittest src/groundx` fails
   the `celery` OCR case with `layout.ocr.credentials file not found` unless that fixture exists, so
-  generate it first or run the gate. It requires the `helm-unittest` plugin:
-  `helm plugin install https://github.com/helm-unittest/helm-unittest.git`, and `yq` (mikefarah v4
-  line) for the `probe-mirror-drift` guard's field-level renders
+  generate it first or run the gate. It requires the `helm-unittest` plugin, pinned at
+  `.build/HELM_UNITTEST_VERSION` (see GX-22 — the gate also byte-verifies the installed binary
+  against `.build/HELM_UNITTEST_BINARY_SHA256`, not just the declared version, since the plugin's
+  own installer can leave a stale binary behind a correct-looking version string):
+  `helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "$(cat .build/HELM_UNITTEST_VERSION)"`,
+  and `yq` (mikefarah v4 line) for the `probe-mirror-drift` guard's field-level renders
   (`src/groundx/tests/files/verify-probe-mirror-drift.sh`). Do not regenerate the `__snapshot__`
   golden files with `helm unittest -u src/groundx` — see the "Agent boundaries" section below for
   why and for the correct method.
@@ -93,7 +100,13 @@ without explicit human authorization.**
     `helm-tests.yml` CI asserts rendered output matches these snapshots.
   - **`helm-releases/*.tgz`** — build outputs of `src/build.sh` (`helm package`). Never edit.
   - **`terraform/**/.terraform.lock.hcl`** — generated lockfiles. Never edit.
-- **`terraform/`** is **legacy / deprecated** (2025-11-04). Don't build on it; prefer the Helm path.
+- **`terraform/aws/`** is an optional path for provisioning AWS infrastructure (VPC and/or EKS
+  cluster) ahead of the Helm install, and the supported path for maintaining AWS infrastructure
+  already provisioned through it. The 2025-11-04 migration retired the previous hybrid
+  terraform-helm approach to deploying the *application* (now a pure Helm release); it did not
+  retire Terraform's role in provisioning or maintaining the AWS infrastructure — see README.md's
+  "Terraform Deployment (terraform/aws/)" section, including the EKS cluster-version configuration
+  it documents.
 
 ## Where specs live
 
@@ -103,12 +116,14 @@ without explicit human authorization.**
 
 ## Repo-specific gotchas
 
-- **`helm/` ↔ `src/groundx/` duplication has no regen script and no general drift check** — the
-  single most important hazard. A change to `src/groundx/` that isn't mirrored into `helm/` silently
-  ships stale templates. Sync both, every time. The one exception is the five API-pod probe-timing
-  fields, which `.build/bin/validate-helm.sh` gates via
-  `src/groundx/tests/files/verify-probe-mirror-drift.sh` (FRA-145) — everything else in the mirror
-  is still unchecked.
+- **`helm/` ↔ `src/groundx/` duplication has no regen script** — the single most important hazard.
+  A change to `src/groundx/` that isn't mirrored into `helm/` silently ships stale templates until
+  the gate catches it. Sync both, every time. There IS a drift check: `verify_mirrors()` in
+  `.build/bin/verify-storage-contract.py` byte-compares the full `src/groundx/templates` tree
+  against `helm/templates` on every gate run and fails on any mismatch (see GX-22). The five
+  API-pod probe-timing fields are separately drift-guarded by
+  `src/groundx/tests/files/verify-probe-mirror-drift.sh` (FRA-145), a narrower rendered-output
+  check that predates and still complements the full-tree one.
 - **`upload.groundx.ai` model-weight download is HARDCODED** in inference init-containers — an
   **air-gap blocker**; weights must be mirrored for offline installs (mechanism not documented in-repo).
 - **Hosted ranker-only EKS is migration-state, not generic chart truth.** As of 2026-07-23,
@@ -178,3 +193,7 @@ See [the operator guide](docs/agents/large-file-delivery.md) for the optional wo
 ## Database upgrades
 
 See [the migration gate](docs/agents/database-upgrades.md) for the pre-upgrade Job, compatible image requirement, fresh-install ordering and rollback.
+
+## EKS cost controls
+
+See [the operator guide](docs/agents/eks-cost-controls.md) for CPU disk defaults, node replacement, and CloudWatch configuration.

@@ -319,6 +319,27 @@ tests:
       - notMatchRegex:
           path: stringData["config.yaml"]
           pattern: "maxImages:"
+  - it: "layout OCR timeout override renders unquoted in layout config.py"
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.ocr.timeout: 187
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: "ocrTimeout=187,"
+  - it: "layout OCR timeout above the ceiling fails schema validation"
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.ocr.timeout: 251
+    asserts:
+      - failedTemplate:
+          errorPattern: "layout/ocr/timeout.*maximum: got 251, want 250"
   - it: "existing: resources"
     templates:
       - ../templates/resources/config-models.yaml
@@ -662,6 +683,20 @@ tests:
       - notMatchRegex:
           path: stringData["config.yaml"]
           pattern: "drainSeconds"
+  - it: "summary-api inference capacity is per gunicorn process while throughput stays per pod"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      summary.api.workers: 2
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "\n  inference:\n(?:    .*\n)*?    - name: summary-api\n      tokensPerMinute: 9600\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "\n  throughput:\n(?:    .*\n)*?    - name: summary-api\n      tokensPerMinute: 19200\n"
   - it: "workspace-enabled: resources"
     templates:
       - ../templates/resources/config-models.yaml
