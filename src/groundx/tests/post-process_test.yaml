@@ -1,0 +1,56 @@
+suite: optional post-processing
+tests:
+  - it: creates the dedicated worker with shared probes and image
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.post-process.yaml
+    documentSelector:
+      path: metadata.name
+      value: post-process
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: test.invalid/post-process:local
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /health
+      - equal:
+          path: spec.replicas
+          value: 1
+  - it: adds no topic when disabled
+    templates:
+      - ../templates/services/stream-topics.yaml
+    asserts:
+      - hasDocuments:
+          count: 5
+  - it: creates the configured Kafka topic and worker partitions
+    templates:
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ./files/values.post-process.yaml
+    set:
+      postProcess.replicas.desired: 3
+      stream.topics.postProcess.topic: custom-post-process
+      stream.topics.postProcess.groupId: custom-consumer
+    documentSelector:
+      path: metadata.name
+      value: custom-post-process
+    asserts:
+      - isKind:
+          of: KafkaTopic
+      - equal:
+          path: spec.partitions
+          value: 3
+  - it: adds no Kafka topic for SQS
+    templates:
+      - ../templates/services/stream-topics.yaml
+    values:
+      - ./files/values.post-process.yaml
+    set:
+      stream.topics.postProcess.type: sqs
+      stream.topics.postProcess.url: https://sqs.us-west-2.amazonaws.com/123456789012/post-process
+      stream.topics.postProcess.region: us-west-2
+    asserts:
+      - hasDocuments:
+          count: 5

@@ -31,11 +31,13 @@ golang
 
 {{- $services := list
   "groundx"
+  "fileAccess"
   "layoutWebhook"
   "preProcess"
   "process"
   "queue"
   "largeFileDeliver"
+  "postProcess"
   "summaryClient"
   "upload"
 -}}

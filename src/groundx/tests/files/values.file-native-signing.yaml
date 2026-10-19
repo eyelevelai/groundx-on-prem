@@ -1,0 +1,12 @@
+file:
+  port: 9000
+  ingress:
+    enabled: true
+    name: native-files
+    data:
+      hostName: s3.example.com
+      path: /
+      tls:
+        - hosts:
+            - s3.example.com
+          secretName: store-tls
