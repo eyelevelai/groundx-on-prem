@@ -22,8 +22,8 @@ metadata:
 stringData:
   config.py: |
     env = dict(
-        accessKey={{ include "groundx.file.username" . | quote }},
-        accessSecret={{ include "groundx.file.password" . | quote }},
+        accessKey={{ if eq (include "groundx.fileAccess.create" .) "true" }}""{{ else }}{{ include "groundx.file.username" . | quote }}{{ end }},
+        accessSecret={{ if eq (include "groundx.fileAccess.create" .) "true" }}""{{ else }}{{ include "groundx.file.password" . | quote }}{{ end }},
         annotationBase="layout/processed/",
         brokerType={{ include "groundx.cache.type" . | quote }},
         cacheDir="/app/hf_models_cache",
@@ -45,13 +45,17 @@ stringData:
         queueType="kafka",
         service={{ include "groundx.layout.serviceName" . | quote }},
         uploadBase="layout/processed/",
+        {{- if eq (include "groundx.fileAccess.create" .) "true" }}
+        uploadStorageEndpoint={{ .Values.fileAccess.storageEndpoint | quote }},
+        uploadPublicRead=False,
+        {{- end }}
         uploadBaseURL={{ get $fs "bucketDomain" | quote }},
         uploadBucket={{ get $fs "bucketName" | quote }},
         uploadRegion={{ get $fs "region" | quote }},
         uploadReplaceURL={{ printf "%s://%s/%s" (get $fs "bucketScheme") (get $fs "bucketDomain") $bucketSuffix | quote }},
         uploadSSL={{ if eq (printf "%v" (get $fs "bucketSSL")) "true" }}True{{ else }}False{{ end }},
         uploadType={{ $st | quote }},
-        uploadURL={{ printf "%s://%s/%s" (get $fs "scheme") ($baseDomain) $bucketSuffix | quote }},
+        uploadURL={{ include "groundx.file.presentationUrl" (dict "root" . "settings" $fs) | quote }},
         validAPIKeys=[
         {{- $apiKey := include "groundx.admin.apiKey" . -}}
         {{- if ne $apiKey "" }}

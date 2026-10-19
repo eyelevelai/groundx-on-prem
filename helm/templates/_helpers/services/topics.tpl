@@ -8,7 +8,11 @@
 {{- if eq (include "groundx.largeFileDeliver.create" .) "true" -}}
 {{- $t6 = (include "groundx.stream.topic.largeFile" . | fromYaml) -}}
 {{- end -}}
-{{- if or (eq (dig "type" "" $t6) "kafka") (eq (dig "type" "" $t1) "kafka") (eq (dig "type" "" $t2) "kafka") (eq (dig "type" "" $t3) "kafka") (eq (dig "type" "" $t4) "kafka") (eq (dig "type" "" $t5) "kafka") -}}
+{{- $t7 := dict -}}
+{{- if eq (include "groundx.postProcess.create" .) "true" -}}
+{{- $t7 = (include "groundx.stream.topic.postProcess" . | fromYaml) -}}
+{{- end -}}
+{{- if or (eq (dig "type" "" $t7) "kafka") (eq (dig "type" "" $t6) "kafka") (eq (dig "type" "" $t1) "kafka") (eq (dig "type" "" $t2) "kafka") (eq (dig "type" "" $t3) "kafka") (eq (dig "type" "" $t4) "kafka") (eq (dig "type" "" $t5) "kafka") -}}
 true
 {{- else -}}
 false
@@ -285,6 +289,61 @@ false
 {{- $cfg | toYaml -}}
 {{- end }}
 
+{{- define "groundx.stream.topic.postProcess" -}}
+{{- $in := .Values.stream | default dict -}}
+{{- $topics := dig "topics" dict $in -}}
+{{- $topic := dig "postProcess" dict $topics -}}
+{{- $broker := printf "%s:%v" (include "groundx.stream.domain" .) (include "groundx.stream.port" .) -}}
+{{- $key := coalesce (dig "key" "" $topic | trim) (include "groundx.stream.key" .) -}}
+{{- $region := coalesce (dig "region" "" $topic | trim) (include "groundx.stream.region" .) -}}
+{{- $secret := coalesce (dig "secret" "" $topic | trim) (include "groundx.stream.secret" .) -}}
+{{- $token := coalesce (dig "token" "" $topic | trim) (include "groundx.stream.token" .) -}}
+{{- $ty := (dig "type" "kafka" $topic) | lower -}}
+
+{{- $cfg := dict
+  "type"    ($ty)
+-}}
+
+{{- if eq $ty "kafka" -}}
+  {{- $name := dig "topic" "file-post-process" $topic -}}
+  {{- $_ := set $cfg "broker" (dig "broker" $broker $topic) -}}
+  {{- $_ := set $cfg "groupId" (dig "groupId" $name $topic) -}}
+  {{- $_ := set $cfg "topic" $name -}}
+{{- end -}}
+
+{{- if and $key (ne $key "") -}}
+  {{- $_ := set $cfg "key" $key -}}
+{{- end -}}
+
+{{- if and $region (ne $region "") -}}
+  {{- $_ := set $cfg "region" $region -}}
+{{- end -}}
+
+{{- if and $secret (ne $secret "") -}}
+  {{- $_ := set $cfg "secret" $secret -}}
+{{- end -}}
+
+{{- if and $token (ne $token "") -}}
+  {{- $_ := set $cfg "token" $token -}}
+{{- end -}}
+
+{{- if hasKey $topic "url" -}}
+  {{- $_ := set $cfg "url" (dig "url" "" $topic) -}}
+{{- end -}}
+
+{{- if eq $ty "kafka" -}}
+  {{- $_ := required "postProcess Kafka broker is required" (get $cfg "broker") -}}
+  {{- $_ := required "postProcess Kafka topic is required" (get $cfg "topic") -}}
+  {{- $_ := required "postProcess Kafka groupId is required" (get $cfg "groupId") -}}
+{{- else if eq $ty "sqs" -}}
+  {{- $_ := required "postProcess SQS URL is required" (get $cfg "url") -}}
+  {{- $_ := required "postProcess SQS region is required" (get $cfg "region") -}}
+{{- else -}}
+  {{- fail "postProcess queue type must be kafka or sqs" -}}
+{{- end -}}
+{{- $cfg | toYaml -}}
+{{- end }}
+
 {{- define "groundx.stream.topics" -}}
 {{- $cfg := dict -}}
 
@@ -327,6 +386,14 @@ false
 {{- $pp := (include "groundx.stream.topic.largeFile" . | fromYaml) -}}
 {{- if eq (dig "type" "" $pp) "kafka" -}}
   {{- $rep := (include "groundx.largeFileDeliver.replicas" . | fromYaml) -}}
+  {{- $_ := set $cfg (index $pp "topic") (int (dig "desired" 1 $rep)) -}}
+{{- end -}}
+{{- end -}}
+
+{{- if eq (include "groundx.postProcess.create" .) "true" -}}
+{{- $pp := (include "groundx.stream.topic.postProcess" . | fromYaml) -}}
+{{- if eq (dig "type" "" $pp) "kafka" -}}
+  {{- $rep := (include "groundx.postProcess.replicas" . | fromYaml) -}}
   {{- $_ := set $cfg (index $pp "topic") (int (dig "desired" 1 $rep)) -}}
 {{- end -}}
 {{- end -}}

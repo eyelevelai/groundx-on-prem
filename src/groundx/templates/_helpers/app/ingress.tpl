@@ -10,6 +10,7 @@
 
 {{- $services := list
   "file"
+  "fileAccess"
   "extract.api"
   "layout.api"
   "layoutWebhook"
