@@ -54,11 +54,23 @@ Every value in that block and in the tested-scope sentence that comes from the v
 
 ### Requirement: README covers several summary GPU nodes and autoscaling
 
-The summary section SHALL tell operators that with several summary GPU nodes, or with `cluster.hpa: true` and `summary.inference.replicas.max` above 1, copies can land on the same GPU; that they should add a GPU request through `summary.inference.resources` (`nvidia.com/gpu: 1`) or spread copies with `summary.inference.topologySpreadConstraints`; and that `summary.inference.replicas.max` should stay at or below the number of copies the summary GPU nodes can hold.
+The summary section SHALL tell operators that with several summary GPU nodes, or with `cluster.hpa: true` and `summary.inference.replicas.max` above 1, copies can land on the same GPU; that they should add a GPU request through `summary.inference.resources` (`nvidia.com/gpu: 1`) or spread copies with `summary.inference.topologySpreadConstraints`; that `summary.inference.replicas.max` should stay at or below the number of copies the summary GPU nodes can hold; and that, because every copy mounts the one summary model volume claim, whose access mode, class and name default to `cluster.pvAccessMode`, `cluster.pvClass` and `summary-model` unless `summary.inference.pvc` overrides them (`src/groundx/templates/_helpers/app/summary-inference.tpl`, `groundx.summary.inference.pvc`), copies on more than one node need ReadWriteMany storage for that claim, set with `summary.inference.pvc.access: ReadWriteMany` and a ReadWriteMany class in `summary.inference.pvc.class`. The section SHALL NOT tell operators to change `cluster.pvAccessMode` for this, because that re-specs every chart claim. It SHALL say that an existing claim cannot change its access mode, so an existing install also sets a new `summary.inference.pvc.name` and the model is downloaded again into the new claim; and that with ReadWriteOnce storage summary should stay on one node.
 
 #### Scenario: Multi-node and HPA guidance is present [finalize success]
 - **WHEN** the summary section is read
 - **THEN** it names `cluster.hpa`, `summary.inference.replicas.max`, `summary.inference.resources`, and `summary.inference.topologySpreadConstraints`
+
+#### Scenario: Several-nodes guidance states the model volume access-mode requirement [finalize success]
+- **GIVEN** every summary copy mounts the one summary model volume claim, whose access mode and name come from `summary.inference.pvc` over the `cluster.pvAccessMode` and `summary-model` defaults
+- **WHEN** the several-nodes paragraph of the summary section is read
+- **THEN** it says copies on more than one node need ReadWriteMany storage and names `summary.inference.pvc.access: ReadWriteMany`, `summary.inference.pvc.class`, and `summary.inference.pvc.name` (for an existing install)
+- **AND** it says that with ReadWriteOnce storage summary stays on one node
+- **AND** it does not contain `cluster.pvAccessMode: ReadWriteMany`
+
+#### Scenario: Spreading copies across nodes without the storage caveat is caught [reject before state]
+- **GIVEN** the several-nodes paragraph recommends spreading copies across nodes but does not state the ReadWriteMany requirement (the text at 043bfd0c)
+- **WHEN** the access-mode check runs
+- **THEN** the check exits non-zero
 
 ### Requirement: README recommends Recreate for the 48 GB defaults as derived advice
 
