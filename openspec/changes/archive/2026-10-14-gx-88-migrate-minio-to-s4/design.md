@@ -249,3 +249,7 @@ The closure checks are tasks 7.1 (file level) and 7.2 (section level). Task 7.2 
 ## Open Questions
 
 None. The snapshot-restore spike held on 2026-10-14, and decision 9 records the commands it fixed.
+
+## Amendment 2026-10-19
+
+The line about trace files over 5 MiB at decision 4's S4 limits entry names groundx 4.0.10. groundx-python main shipped 4.1.0 and 4.1.1 on 2026-10-18 without GX-88, so the groundx release carrying the single-PUT `S4Client` is planned as 4.1.2, and internal-arcadia-agents pins `groundx==4.1.2`. The line is kept as written.
