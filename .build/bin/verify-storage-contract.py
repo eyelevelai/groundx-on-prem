@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import filecmp
+import os
 import re
 import subprocess
 import sys
@@ -59,6 +60,7 @@ STORAGE_EXAMPLES: typing.Dict[str, StorageExampleSpec] = {
             r"provisioner:\s+ebs\.csi\.aws\.com",
             r'reclaimPolicy:\s+Delete',
             r'type:\s+"gp3"',
+            r'encrypted:\s+"true"',
         ),
         "must_not": (r'type:\s+""', r"parameters:\s+\{\}"),
     },
@@ -68,6 +70,7 @@ STORAGE_EXAMPLES: typing.Dict[str, StorageExampleSpec] = {
             r"provisioner:\s+ebs\.csi\.aws\.com",
             r'reclaimPolicy:\s+Delete',
             r'type:\s+"gp3"',
+            r'encrypted:\s+"true"',
         ),
         "must_not": (r'type:\s+""', r"parameters:\s+\{\}"),
     },
@@ -137,8 +140,10 @@ PVC_FIXTURES: typing.Dict[str, PvcFixtureSpec] = {
     },
 }
 MIRRORED_FILES = (
+    "prereqs/storageclass/.helmignore",
     "prereqs/storageclass/Chart.yaml",
     "prereqs/storageclass/templates/storageclass.yaml",
+    "prereqs/storageclass/templates/NOTES.txt",
     "prereqs/storageclass/values.yaml",
     "prereqs/storageclass/values.ebs.example.yaml",
     "prereqs/storageclass/values.efs.example.yaml",
@@ -155,7 +160,8 @@ STALE_PATTERNS = (
 
 
 def run(command: typing.List[str]) -> str:
-    result = subprocess.run(command, cwd=ROOT, check=False, capture_output=True, text=True)
+    env = {**os.environ, "KUBECONFIG": str(ROOT / ".build" / "no-such-kubeconfig")}
+    result = subprocess.run(command, cwd=ROOT, check=False, capture_output=True, text=True, env=env)
     if result.returncode != 0:
         raise RuntimeError(f"{' '.join(command)} failed:\n{result.stderr}")
     return result.stdout
@@ -234,6 +240,92 @@ def verify_mirrors() -> typing.List[str]:
     return successes
 
 
+NON_EBS_EXAMPLES = ("efs", "azure-files", "gke-filestore")
+
+
+def verify_provisioner_isolation(chart: Path) -> typing.List[str]:
+    successes: typing.List[str] = []
+    with tempfile.TemporaryDirectory(prefix="groundx-isolation-values-") as temp:
+        override = write_values(
+            Path(temp),
+            "values.isolation.override.yaml",
+            "parameters:\n  encrypted: \"true\"\n  kmsKeyId: \"test-key\"\n",
+        )
+        for name in NON_EBS_EXAMPLES:
+            spec = STORAGE_EXAMPLES[name]
+            command = ["helm", "template", f"isolation-{name}", str(chart)]
+            values_file = spec["file"]
+            if values_file is not None:
+                command.extend(("-f", str(chart / values_file)))
+            command.extend(("-f", str(override)))
+            rendered = run(command)
+
+            require(rendered, r"kind:\s+StorageClass", f"{name} provisioner isolation (StorageClass rendered)")
+            require(rendered, r"parameters:", f"{name} provisioner isolation (parameters block survives)")
+            reject(rendered, r"encrypted:", f"{name} provisioner isolation (encrypted leaked)")
+            reject(rendered, r"kmsKeyId:", f"{name} provisioner isolation (kmsKeyId leaked)")
+            successes.append(f"{chart.relative_to(ROOT)} {name} provisioner isolation passed")
+    return successes
+
+
+def verify_legacy_ebs_provisioner(chart: Path) -> typing.List[str]:
+    rendered = run(
+        [
+            "helm", "template", "legacy-ebs", str(chart),
+            "--set", "provisioner=kubernetes.io/aws-ebs",
+            "--set-string", "parameters.encrypted=true",
+            "--set", "parameters.kmsKeyId=test-key",
+        ]
+    )
+    require(rendered, r'encrypted:\s+"true"', f"{chart.relative_to(ROOT)} legacy kubernetes.io/aws-ebs keeps encrypted")
+    require(rendered, r'kmsKeyId:\s+"test-key"', f"{chart.relative_to(ROOT)} legacy kubernetes.io/aws-ebs keeps kmsKeyId")
+    require(rendered, r'type:\s+"gp3"', f"{chart.relative_to(ROOT)} legacy kubernetes.io/aws-ebs keeps type")
+    return [f"{chart.relative_to(ROOT)} legacy kubernetes.io/aws-ebs provisioner keeps its EBS parameters passed"]
+
+
+OPTOUT_SPELLINGS: typing.Dict[str, str] = {
+    "quoted-false": 'parameters:\n  encrypted: "false"\n',
+    "unquoted-false": "parameters:\n  encrypted: false\n",
+    "null": "parameters:\n  encrypted: null\n",
+    "empty-string": 'parameters:\n  encrypted: ""\n',
+}
+
+
+def verify_optout_normalization(chart: Path) -> typing.List[str]:
+    successes: typing.List[str] = []
+    with tempfile.TemporaryDirectory(prefix="groundx-optout-values-") as temp:
+        temp_dir = Path(temp)
+        for spelling, body in OPTOUT_SPELLINGS.items():
+            values = write_values(temp_dir, f"values.optout.{spelling}.yaml", body)
+            command = ["helm", "template", f"optout-{spelling}", str(chart), "-f", str(values)]
+            rendered = run(command)
+            require(rendered, r"kind:\s+StorageClass", f"opt-out spelling '{spelling}' (StorageClass rendered)")
+            require(rendered, r'type:\s+"gp3"', f"opt-out spelling '{spelling}' (other EBS parameters survive)")
+            reject(rendered, r"encrypted:", f"opt-out spelling '{spelling}'")
+            successes.append(f"{chart.relative_to(ROOT)} opt-out spelling '{spelling}' passed")
+    return successes
+
+
+def verify_non_ebs_false_value_survives(chart: Path) -> typing.List[str]:
+    successes: typing.List[str] = []
+    with tempfile.TemporaryDirectory(prefix="groundx-nonebs-false-values-") as temp:
+        override = write_values(
+            Path(temp),
+            "values.nonebs.false.override.yaml",
+            'parameters:\n  ensureUniqueDirectory: "false"\n',
+        )
+        spec = STORAGE_EXAMPLES["efs"]
+        command = ["helm", "template", "nonebs-false", str(chart), "-f", str(chart / spec["file"]), "-f", str(override)]
+        rendered = run(command)
+        require(
+            rendered,
+            r'ensureUniqueDirectory:\s+"false"',
+            f"{chart.relative_to(ROOT)} non-EBS 'false' parameter survival",
+        )
+        successes.append(f"{chart.relative_to(ROOT)} non-EBS 'false' parameter survival passed")
+    return successes
+
+
 def verify_no_stale_strings() -> typing.List[str]:
     files = [
         *(ROOT / "src" / "groundx" / "prereqs" / "storageclass").glob("values*.yaml"),
@@ -299,7 +391,7 @@ workspace:
             r'fileSystemId:\s+"fs-0123456789abcdef0"',
             r'basePath:\s+"/eyelevel"',
         ),
-        "storage_must_not": (r'type:\s+"gp3"', r'type:\s+""'),
+        "storage_must_not": (r'type:\s+"gp3"', r'type:\s+""', r"encrypted:", r"kmsKeyId:"),
         "access": "ReadWriteMany",
     },
     "ebs": {
@@ -326,6 +418,7 @@ workspace:
         "storage_must": (
             r"provisioner:\s+ebs\.csi\.aws\.com",
             r'type:\s+"gp3"',
+            r'encrypted:\s+"true"',
         ),
         "storage_must_not": (r'type:\s+""',),
         "access": "ReadWriteOnce",
@@ -469,6 +562,10 @@ def main() -> int:
         verify_setup_eks,
         lambda: [item for driver, spec in GENERATED.items() for item in verify_driver(driver, spec)],
         verify_setup_script_contract,
+        lambda: [item for chart in STORAGE_CHARTS for item in verify_provisioner_isolation(chart)],
+        lambda: [item for chart in STORAGE_CHARTS for item in verify_legacy_ebs_provisioner(chart)],
+        lambda: [item for chart in STORAGE_CHARTS for item in verify_optout_normalization(chart)],
+        lambda: [item for chart in STORAGE_CHARTS for item in verify_non_ebs_false_value_survives(chart)],
     )
     for check in checks:
         try:

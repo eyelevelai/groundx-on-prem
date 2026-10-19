@@ -16,7 +16,7 @@ Runs the GroundX Helm production chart gate from one stable entrypoint:
   - helm lint for both chart surfaces
   - pinned helm-unittest plugin version guard
   - guard-script unit tests (stdlib scripts under .build/tests)
-  - helm unittest for src/groundx, the helm/ mirror, and the kafka-cluster subchart
+  - helm unittest for src/groundx, the helm/ mirror, the kafka-cluster subchart, and the storageclass chart
   - snapshot-rewrite-on-run guard (see GX-22)
   - google OCR credentials render for both chart surfaces
   - shared Google credential isolation, rotation and schema checks
@@ -117,7 +117,7 @@ done
 
 run_helm_unittest_and_verify_stability() {
   local marker_suffix="$1"; shift
-  helm unittest "$@" src/groundx helm src/groundx/prereqs/kafka-cluster
+  helm unittest "$@" src/groundx helm src/groundx/prereqs/kafka-cluster src/groundx/prereqs/storageclass
   echo "==> Verifying helm unittest ${marker_suffix}did not rewrite committed snapshots as a side effect (see GX-22)"
   "${PY}" .build/bin/verify-helm-snapshot-stability.py verify "${SNAPSHOT_STABILITY_HASHFILE}"
 }
