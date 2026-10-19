@@ -7,8 +7,8 @@ cashbot-go's `config.yaml`; cashbot-go's own startup validation decides what the
 ## Default: `apiKeyOnly`
 
 This is the default when the `cognito` section is omitted from `values.yaml` entirely, or `mode`
-is set to `apiKeyOnly`. The chart's `values.schema.json` accepts only `cognito` or `apiKeyOnly`
-for `cognito.mode`; any other value is rejected at render time.
+is set to `apiKeyOnly`. The chart's `values.schema.json` accepts only `cognito`, `apiKeyOnly`, or
+`local` for `cognito.mode`; any other value is rejected at render time.
 
 - Identity is limited to the seeded admin API key (`admin.apiKey`) plus durable, DB-backed
   customer/API-key rows created by the admin — no password login.
@@ -50,6 +50,38 @@ cognito:
 - `cognito.adminPassword` is not a supported chart key (rejected by `values.schema.json`); it has
   no rendering path on-prem and is unrelated to the separate, unchanged `admin.password` key.
 
+## Optional: `local`
+
+Set `cognito.mode: local`:
+
+```yaml
+cognito:
+  mode: local
+```
+
+- The chart renders `mode: "local"` into `config.yaml` with no other `cognito.*` key required —
+  the render is the same single-key `cognito.mode` pass-through the `apiKeyOnly` default uses.
+- `local` requires a cashbot-go image that supports it; the chart itself does not validate the
+  image version and does not implement the local password-login behavior — that is entirely
+  cashbot-go's runtime concern.
+
+Operating an install in `local` mode:
+
+- **Nobody has a password right after enabling `local`.** `admin.password` is not used, and
+  customers created under `apiKeyOnly` have no stored password. Use the admin API key to set one
+  with `POST customer/password/reset` (a customer's own partner key also works for its customers),
+  or create the customer through `customer/register` with a password.
+- **Login and register need a partner or admin key.** `customer/login` and `customer/register`
+  are called with a partner or admin API key plus the customer's email and password; they are not
+  open to anonymous callers.
+- **MCP sign-in asks for email and password.** Under `local`, the MCP authorize page shows email
+  and password fields instead of an API-key field, so a user without a password cannot authorize an
+  MCP client from it until one is set.
+- **Nothing throttles password attempts.** Neither cashbot-go nor this chart limits failed logins.
+  If the API is reachable by untrusted clients, add rate limits at your ingress; the Ingress
+  template passes `annotations` through, for example
+  `nginx.ingress.kubernetes.io/limit-rps` on ingress-nginx.
+
 ## Rollback
 
 Do not run `helm rollback` to a chart version before GX-20 for an installation using
@@ -59,8 +91,21 @@ is no Cognito-preserving rollback to a chart without this configuration surface.
 fix on a GX-20-compatible chart/image instead. Ordinary Helm rollback remains appropriate only
 for installations that did not enable Cognito.
 
+For `mode: local`, a rollback turns password login off instead of failing. `helm rollback`
+restores the older revision's saved values, and a revision from before `local` was enabled has
+`cognito.mode` set to `cognito`, `apiKeyOnly`, or unset. The rollback succeeds, cashbot-go starts in
+that older mode, and local password login stops working. Only `helm upgrade --version <older>`
+with the current values fails, because the older chart's schema rejects `cognito.mode: local`.
+
+Roll forward, not back, for an install using `local`. If a rollback is unavoidable, roll back only
+to a revision that already ran a `local`-compatible chart and cashbot-go image with
+`cognito.mode: local` set. A rollback does not remove the stored passwords, so they work again once
+the install is back on `local`.
+
 ## Air-gapped installs
 
-Air-gapped installs must use `apiKeyOnly` — reaching AWS Cognito to validate a login is not
-possible without outbound network access to `cognito-idp.<region>.amazonaws.com`, so
-`mode: cognito` is not a valid choice for an air-gapped cluster.
+Air-gapped installs can use `apiKeyOnly` or `local`. Both authenticate entirely within the
+cluster — `local` verifies passwords against bcrypt hashes stored in MySQL and makes no outbound
+calls. Only `mode: cognito` is unavailable: validating a login against AWS Cognito needs outbound
+network access to `cognito-idp.<region>.amazonaws.com`, so it is not a valid choice for an
+air-gapped cluster.
