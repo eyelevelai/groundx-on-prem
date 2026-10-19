@@ -489,6 +489,8 @@ If you wish to use an existing AWS S3 bucket, you must configure the `file.exist
 
 [S4](https://github.com/rh-aiservices-bu/s4) is a license-free, S3-compatible store that runs in one container on Ceph's experimental standalone gateway. GroundX connects to it with storage type `s4`, which needs GroundX chart 0.2.8 or later with its default image tags: older service images do not know `s4` and send files to AWS S3 or fail extraction at start. S4 suits small installs; for production, use [MinIO AIStor](#deploying-a-dedicated-aistor-object-store).
 
+These steps assume `fileAccess.enabled` is false, the chart default; with it on, the chart refuses `file.username` and `file.password`.
+
 Limits of S4 0.3.2:
 
 - One replica, so no high availability ([chart values](https://github.com/rh-aiservices-bu/s4/blob/797911cbaa1b44fcaecfdfe69145a6a904ef7463/charts/s4/values.yaml#L4)).
@@ -623,6 +625,8 @@ To go back, stop uploads, delete Service `minio`, install the store release agai
 If you'd like to install MinIO AIStor to your cluster, you need an AIStor license. GroundX does not ship one. The AIStor Free license covers a single server and allows commercial use but not redistribution; a store with more than one server needs a paid license ([AIStor Free agreement](https://www.min.io/legal/aistor-free-agreement), read 2026-10-13).
 
 These steps install the AIStor operator in namespace `aistor` and an object store named `minio-tenant` in `eyelevel`. With that name and TLS off, the store serves the hosts GroundX uses by default (`minio` and `minio-tenant-hl`), so GroundX needs no `file` settings other than the store's credentials. The chart versions are pinned to the ones GroundX tested (`aistor-operator` 6.0.0 and `aistor-objectstore` 1.1.0); the AIStor repository published newer charts on 2026-10-14.
+
+These steps assume `fileAccess.enabled` is false, the chart default; with it on, the chart refuses `file.username` and `file.password`.
 
 Add the AIStor repository, store your license as Secret `minio-license` (key `minio.license`) in the operator's namespace, and install the operator:
 
