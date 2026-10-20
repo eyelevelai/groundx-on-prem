@@ -11,6 +11,7 @@ IMAGE_FAIL="${IMAGE_REPO}:init-fail"
 INIT_SLEEP="${INIT_SLEEP:-90}"
 GRACE="${GRACE:-120}"
 TASK_SECONDS="${TASK_SECONDS:-20}"
+THREADS="${THREADS:-6}"
 POD_WAIT="${POD_WAIT:-300}"
 OBSERVE_SECONDS="${OBSERVE_SECONDS:-30}"
 DEPLOY=layout-inference
@@ -178,26 +179,43 @@ wait_until "pod ${POD} to be scheduled" "${POD_WAIT}" pod_scheduled
 wait_until "init-layout.py to start in pod ${POD}" "${POD_WAIT}" init_started
 wait_until "pod ${POD} to be Running" "${POD_WAIT}" pod_running
 POD_B="${POD}"
+enqueue $(( THREADS * 2 ))
 end=$(( SECONDS + POD_WAIT ))
-until [[ "$(consumed_by "${POD_B}")" -ge 1 ]]; do
+until [[ "$(consumed_by "${POD_B}")" -ge "${THREADS}" ]]; do
   if (( SECONDS >= end )); then
-    echo "FAIL: pod ${POD_B} consumed no task within ${POD_WAIT}s"
+    echo "FAIL: pod ${POD_B} consumed $(consumed_by "${POD_B}") of ${THREADS} tasks within ${POD_WAIT}s"
     k logs "${POD_B}" --all-containers --tail=40 || true
     exit 1
   fi
   enqueue 1
   sleep 2
 done
-INFLIGHT_BEFORE="$(completed_by "${POD_B}")"
+CONSUMED_AT_DELETE="$(consumed_by "${POD_B}")"
+COMPLETED_AT_DELETE="$(completed_by "${POD_B}")"
 k delete pod "${POD_B}" --wait=false
 START="$(date +%s)"
-wait_until "pod ${POD_B} to exit" $(( GRACE + 60 )) pod_gone "${POD_B}"
+ENQUEUED_DURING_TERMINATION=0
+MAX_DEPTH_AFTER_DELETE="$(queue_depth)"
+end=$(( SECONDS + GRACE + 60 ))
+until pod_gone "${POD_B}"; do
+  if (( SECONDS >= end )); then
+    echo "FAIL: pod ${POD_B} still present after $(( GRACE + 60 ))s"
+    exit 1
+  fi
+  enqueue 1
+  ENQUEUED_DURING_TERMINATION=$(( ENQUEUED_DURING_TERMINATION + 1 ))
+  DEPTH_NOW="$(queue_depth)"
+  (( DEPTH_NOW > MAX_DEPTH_AFTER_DELETE )) && MAX_DEPTH_AFTER_DELETE="${DEPTH_NOW}"
+  sleep 1
+done
 ELAPSED=$(( $(date +%s) - START ))
 CONSUMED_B="$(consumed_by "${POD_B}")"
 COMPLETED_B="$(completed_by "${POD_B}")"
-echo "pod=${POD_B} consumed=${CONSUMED_B} completed=${COMPLETED_B} completed_before_delete=${INFLIGHT_BEFORE} exit_seconds=${ELAPSED}"
+echo "pod=${POD_B} threads=${THREADS} consumed_at_delete=${CONSUMED_AT_DELETE} completed_at_delete=${COMPLETED_AT_DELETE} consumed_final=${CONSUMED_B} completed_final=${COMPLETED_B} enqueued_during_termination=${ENQUEUED_DURING_TERMINATION} max_queue_depth_after_delete=${MAX_DEPTH_AFTER_DELETE} exit_seconds=${ELAPSED} grace=${GRACE}"
+[[ "${CONSUMED_B}" == "${CONSUMED_AT_DELETE}" ]] && check "(b) no new task consumed after the stop signal" ok || check "(b) no new task consumed after the stop signal" bad
 [[ "${COMPLETED_B}" == "${CONSUMED_B}" ]] && check "(b) every consumed task completed before the pod exited" ok || check "(b) every consumed task completed before the pod exited" bad
 [[ "${ELAPSED}" -le "${GRACE}" ]] && check "(b) pod exited within the grace period" ok || check "(b) pod exited within the grace period" bad
+[[ "${ENQUEUED_DURING_TERMINATION}" -gt 0 && "${MAX_DEPTH_AFTER_DELETE}" -gt 0 ]] && check "(b) tasks were available during termination" ok || check "(b) tasks were available during termination" bad
 
 echo "== (c) init-layout exits non-zero"
 start_with_queued_tasks "${IMAGE_FAIL}" 5
