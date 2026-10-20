@@ -2,7 +2,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CHART="$(cd "${HERE}/../../../src/groundx" && pwd)"
+CHART="${CHART:-$(cd "${HERE}/../../../src/groundx" && pwd)}"
 NS="${NS:-gx115-lifecycle}"
 IMAGE_REPO="${IMAGE_REPO:-layout-inference-stub}"
 IMAGE_SLOW="${IMAGE_REPO}:init-slow"
