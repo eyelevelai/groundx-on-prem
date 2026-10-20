@@ -1,0 +1,161 @@
+suite: "layout-inference runs init-layout in an init container"
+chart:
+  appVersion: 0.1.0
+  version: 0.1.0
+
+tests:
+  - it: "init-layout is the last init container and execs init-layout.py"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-inference
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[4].name
+          value: init-layout
+      - equal:
+          path: spec.template.spec.initContainers[4].command[0]
+          value: /bin/sh
+      - equal:
+          path: spec.template.spec.initContainers[4].command[1]
+          value: -c
+      - matchRegex:
+          path: spec.template.spec.initContainers[4].command[2]
+          pattern: "^export PYTHONPATH=/app:\\$PYTHONPATH && exec python /app/init-layout\\.py"
+      - equal:
+          path: spec.template.spec.initContainers[4].workingDir
+          value: /app
+      - equal:
+          path: spec.template.spec.initContainers[4].image
+          value: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PYTHONPATH
+            value: /app
+      - equal:
+          path: spec.template.spec.initContainers[4].securityContext.runAsUser
+          value: 1001
+  - it: "layout-inference main container never runs init-layout and replaces the shell with supervisord"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-inference
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].command[2]
+          pattern: "^export PYTHONPATH=/app:\\$PYTHONPATH && exec supervisord -c /app/supervisord\\.conf"
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].command[2]
+          pattern: "init-layout\\.py"
+  - it: "init-layout requests the same resources as the main container, including the GPU"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-inference
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[4].resources.requests["nvidia.com/gpu"]
+          value: 1
+      - equal:
+          path: spec.template.spec.initContainers[4].resources.limits["nvidia.com/gpu"]
+          value: 1
+  - it: "init-layout in cpu mode carries the same non-GPU resources as the main container"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.layout-inference.cpu-placement.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-inference
+    asserts:
+      - isNotNull:
+          path: spec.template.spec.initContainers[4].resources
+      - notExists:
+          path: spec.template.spec.initContainers[4].resources.limits["nvidia.com/gpu"]
+      - notExists:
+          path: spec.template.spec.containers[0].resources.limits["nvidia.com/gpu"]
+  - it: "init-layout mounts models and config but not the supervisord conf"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-inference
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[4].volumeMounts
+          content:
+            name: config-models
+            mountPath: /app/config_models.py
+            subPath: config_models.py
+      - contains:
+          path: spec.template.spec.initContainers[4].volumeMounts
+          content:
+            name: config-volume
+            mountPath: /app/config.py
+            subPath: config.py
+      - contains:
+          path: spec.template.spec.initContainers[4].volumeMounts
+          content:
+            name: model-volume
+            mountPath: /app/hf_models_cache
+      - notContains:
+          path: spec.template.spec.initContainers[4].volumeMounts
+          content:
+            name: supervisord-volume
+            mountPath: /app/supervisord.conf
+            subPath: supervisord.conf
+  - it: "init-layout carries the CA env, CA mount and workload secrets of the main container"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.file-access.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-inference
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[4].env
+          content:
+            name: SSL_CERT_FILE
+            value: /var/run/groundx/file-access/ca.crt
+      - contains:
+          path: spec.template.spec.initContainers[4].volumeMounts
+          content:
+            name: file-access-ca
+            mountPath: /var/run/groundx/file-access
+            readOnly: true
+      - contains:
+          path: spec.template.spec.initContainers[4].envFrom
+          content:
+            secretRef:
+              name: file-store-credentials
+  - it: "ranker and summary inference gain no init-layout container and keep their shell command"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: metadata.name
+      value: ranker-inference
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers
+          content:
+            name: init-layout
+      - matchRegex:
+          path: spec.template.spec.containers[0].command[2]
+          pattern: "^export PYTHONPATH=/workspace:\\$PYTHONPATH &&  supervisord -c /workspace/supervisord.conf"
