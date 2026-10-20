@@ -22,7 +22,7 @@
 
 - [ ] 3.1 Run the repo gate; it covers helm lint, the full helm unittest suite, snapshot stability and the helm/ mirror check.
   check: .build/bin/validate-helm.sh
-- [ ] 3.2 Validate the OpenSpec change.
-  check: openspec validate --type change gx-115-layout-inference-pods-keep-accepting-tasks-after-deletion
+- [ ] 3.2 Validate the OpenSpec change (`openspec validate --type change gx-115-layout-inference-pods-keep-accepting-tasks-after-deletion`).
+  check: n/a — non-behavioral artifact validation; it passes on unchanged code, so it cannot define a RED baseline
 
 See workspace `openspec/changes/gx-115-layout-inference-pods-keep-accepting-tasks-after-deletion/tasks.md` for cross-service coordination and deferred items (the dev EKS round runs outside the pipeline).
