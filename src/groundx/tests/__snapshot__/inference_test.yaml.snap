@@ -45,7 +45,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -203,6 +203,47 @@
               volumeMounts:
                 - mountPath: /app/hf_models_cache
                   name: model-volume
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && exec python /app/init-layout.py
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
+              imagePullPolicy: IfNotPresent
+              name: init-layout
+              resources:
+                limits:
+                  memory: 12Gi
+                  nvidia.com/gpu: 1
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+                  nvidia.com/gpu: 1
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config_models.py
+                  name: config-models
+                  subPath: config_models.py
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
+              workingDir: /app
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -834,7 +875,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -992,6 +1033,47 @@
               volumeMounts:
                 - mountPath: /app/hf_models_cache
                   name: model-volume
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && exec python /app/init-layout.py
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
+              imagePullPolicy: IfNotPresent
+              name: init-layout
+              resources:
+                limits:
+                  memory: 12Gi
+                  nvidia.com/gpu: 1
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+                  nvidia.com/gpu: 1
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config_models.py
+                  name: config-models
+                  subPath: config_models.py
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
+              workingDir: /app
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -1620,7 +1702,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -1778,6 +1860,47 @@
               volumeMounts:
                 - mountPath: /app/hf_models_cache
                   name: model-volume
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && exec python /app/init-layout.py
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
+              imagePullPolicy: IfNotPresent
+              name: init-layout
+              resources:
+                limits:
+                  memory: 12Gi
+                  nvidia.com/gpu: 1
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+                  nvidia.com/gpu: 1
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config_models.py
+                  name: config-models
+                  subPath: config_models.py
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
+              workingDir: /app
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -2407,7 +2530,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -2565,6 +2688,47 @@
               volumeMounts:
                 - mountPath: /app/hf_models_cache
                   name: model-volume
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && exec python /app/init-layout.py
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
+              imagePullPolicy: IfNotPresent
+              name: init-layout
+              resources:
+                limits:
+                  memory: 12Gi
+                  nvidia.com/gpu: 1
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+                  nvidia.com/gpu: 1
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config_models.py
+                  name: config-models
+                  subPath: config_models.py
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
+              workingDir: /app
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3193,7 +3357,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -3351,6 +3515,47 @@
               volumeMounts:
                 - mountPath: /app/hf_models_cache
                   name: model-volume
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && exec python /app/init-layout.py
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
+              imagePullPolicy: IfNotPresent
+              name: init-layout
+              resources:
+                limits:
+                  memory: 12Gi
+                  nvidia.com/gpu: 1
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+                  nvidia.com/gpu: 1
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config_models.py
+                  name: config-models
+                  subPath: config_models.py
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
+              workingDir: /app
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -3721,7 +3926,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -3882,6 +4087,50 @@
               volumeMounts:
                 - mountPath: /app/hf_models_cache
                   name: model-volume
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && exec python /app/init-layout.py
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: eyelevel-secret-credentials
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
+              imagePullPolicy: IfNotPresent
+              name: init-layout
+              resources:
+                limits:
+                  memory: 12Gi
+                  nvidia.com/gpu: 1
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+                  nvidia.com/gpu: 1
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config_models.py
+                  name: config-models
+                  subPath: config_models.py
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
+              workingDir: /app
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4256,7 +4505,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -4414,6 +4663,47 @@
               volumeMounts:
                 - mountPath: /app/hf_models_cache
                   name: model-volume
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && exec python /app/init-layout.py
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
+              imagePullPolicy: IfNotPresent
+              name: init-layout
+              resources:
+                limits:
+                  memory: 12Gi
+                  nvidia.com/gpu: 1
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+                  nvidia.com/gpu: 1
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config_models.py
+                  name: config-models
+                  subPath: config_models.py
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
+              workingDir: /app
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -4783,7 +5073,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -4944,6 +5234,50 @@
               volumeMounts:
                 - mountPath: /app/hf_models_cache
                   name: model-volume
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && exec python /app/init-layout.py
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: eyelevel-secret-credentials
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
+              imagePullPolicy: IfNotPresent
+              name: init-layout
+              resources:
+                limits:
+                  memory: 12Gi
+                  nvidia.com/gpu: 1
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+                  nvidia.com/gpu: 1
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config_models.py
+                  name: config-models
+                  subPath: config_models.py
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
+              workingDir: /app
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -5053,7 +5387,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -5193,6 +5527,37 @@
               volumeMounts:
                 - mountPath: /app/hf_models_cache
                   name: model-volume
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && exec python /app/init-layout.py
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: test.image:v1
+              imagePullPolicy: Never
+              name: init-layout
+              resources:
+                limits:
+                  memory: 12Gi
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+              securityContext:
+                readOnlyRootFilesystem: true
+              volumeMounts:
+                - mountPath: /app/config_models.py
+                  name: config-models
+                  subPath: config_models.py
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
+              workingDir: /app
           nodeSelector:
             disktype: ssd
           securityContext:
@@ -5786,7 +6151,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -5917,6 +6282,47 @@
               volumeMounts:
                 - mountPath: /app/hf_models_cache
                   name: model-volume
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && exec python /app/init-layout.py
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
+              imagePullPolicy: IfNotPresent
+              name: init-layout
+              resources:
+                limits:
+                  memory: 12Gi
+                  nvidia.com/gpu: 1
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+                  nvidia.com/gpu: 1
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1001
+                runAsNonRoot: true
+                runAsUser: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config_models.py
+                  name: config-models
+                  subPath: config_models.py
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
+              workingDir: /app
           securityContext:
             fsGroup: 1001
             fsGroupChangePolicy: OnRootMismatch
@@ -6428,7 +6834,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -6555,6 +6961,45 @@
               volumeMounts:
                 - mountPath: /app/hf_models_cache
                   name: model-volume
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && exec python /app/init-layout.py
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
+              imagePullPolicy: IfNotPresent
+              name: init-layout
+              resources:
+                limits:
+                  memory: 12Gi
+                  nvidia.com/gpu: 1
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+                  nvidia.com/gpu: 1
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config_models.py
+                  name: config-models
+                  subPath: config_models.py
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
+              workingDir: /app
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -7046,7 +7491,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app:$PYTHONPATH && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -7175,6 +7620,45 @@
               volumeMounts:
                 - mountPath: /app/hf_models_cache
                   name: model-volume
+            - command:
+                - /bin/sh
+                - -c
+                - |
+                  export PYTHONPATH=/app:$PYTHONPATH && exec python /app/init-layout.py
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
+              imagePullPolicy: Always
+              name: init-layout
+              resources:
+                limits:
+                  memory: 12Gi
+                  nvidia.com/gpu: 1
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+                  nvidia.com/gpu: 1
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /app/config_models.py
+                  name: config-models
+                  subPath: config_models.py
+                - mountPath: /app/config.py
+                  name: config-volume
+                  subPath: config.py
+                - mountPath: /app/hf_models_cache
+                  name: model-volume
+              workingDir: /app
           securityContext:
             runAsNonRoot: true
             seccompProfile:
