@@ -7,7 +7,7 @@ Grounding: `proposal.md` states the problem and the scope. This is a comment-onl
 
 - **Wording.** Replace the line `# visibility timeout must be 10+ min for all SQS queues` (line 59 of
   `src/groundx/values/values.aws.services.yaml`, directly above `topics:`) with
-  two comment lines: `# visibility timeout must be 10+ min for all SQS queues. Every consumer except pre-process re-hides its in-flight messages for 5 min, renewed every minute, so a crashed pod's messages return about 5 min after their last renewal.` and `# If the upload queue has a DLQ, maxReceiveCount must be at least 4, since delivery 4 is the first one that errors the document; 3 or less sends it to the DLQ first.`.
+  two comment lines: `# visibility timeout must be 10+ min for all SQS queues. The upload, process and summary consumers re-hide their in-flight messages for 5 min, renewed every minute, so a crashed pod's messages return about 5 min after their last renewal.` and `# If the upload queue has a DLQ, maxReceiveCount must be at least 4, since delivery 4 is the first one that errors the document; 3 or less sends it to the DLQ first.`.
   Two lines, so the comment keeps its place above `topics:` and every queue keeps the
   existing 10+ minute rule. The note says what the consumers do, not what the queue
   timeout must be, because the lease is set by the consumer after it starts processing.
