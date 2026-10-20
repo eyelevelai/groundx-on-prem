@@ -186,9 +186,18 @@ guidance with `openspec instructions <artifact>`.
   `docs/adr/<LINEAR-TICKET>-<kebab>.md` (Linear ticket prefix mandatory). Cross-service
   decisions live in the **producing** repo and are referenced from consumers' `design.md`.
 
+## Private file access
+
+See [the file-access operator contract](docs/agents/private-file-access.md) for gateway/storage endpoints, credentials, migrations, local clients and per-provider activation evidence.
+
 ## Large file delivery
 
 See [the operator guide](docs/agents/large-file-delivery.md) for the optional worker, shared Google credentials with OCR, transport and activation checks.
+
+## Optional post-processing
+
+See [optional post-processing](docs/agents/post-processing.md) for queue support,
+retry admission, compatible images and draining before disablement.
 
 ## Database upgrades
 

@@ -46,6 +46,10 @@ stringData:
         ContainerUploadSettings,
         GroundXSettings,
     )
+    {{- if .Values.fileAccess.enabled }}
+    if not {"public_read", "storage_endpoint"}.issubset(ContainerUploadSettings.model_fields):
+        raise RuntimeError("private extraction storage requires a compatible GroundX SDK")
+    {{- end }}
 
     agent_queue = {{ include "groundx.extract.agent.queue" . | quote }}
     download_queue = {{ include "groundx.extract.download.queue" . | quote }}
@@ -99,14 +103,18 @@ stringData:
         metrics_broker={{ printf "%s://%s%s:%v/0" (include "groundx.metrics.cache.scheme" .) (include "groundx.metrics.cache.userinfo" .) (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) | quote }},
         service={{ $svc | quote }},
         upload=ContainerUploadSettings(
+            {{- if eq (include "groundx.fileAccess.create" .) "true" }}
+            storage_endpoint={{ .Values.fileAccess.storageEndpoint | quote }},
+            public_read=False,
+            {{- end }}
             base_domain={{ get $fs "bucketDomain" | quote }},
             bucket={{ get $fs "bucketName" | quote }},
             region={{ get $fs "region" | quote }},
             ssl={{ if eq (printf "%v" (get $fs "bucketSSL")) "true" }}True{{ else }}False{{ end }},
             type={{ $st | quote }},
-            url={{ printf "%s://%s/%s" (get $fs "scheme") (get $fs "baseDomain") $bucketSuffix | quote }},
-            key={{ get $fs "username" | quote }},
-            secret={{ get $fs "password" | quote }},
+            url={{ include "groundx.file.presentationUrl" (dict "root" . "settings" $fs) | quote }},
+            key={{ if eq (include "groundx.fileAccess.create" .) "true" }}""{{ else }}{{ get $fs "username" | quote }}{{ end }},
+            secret={{ if eq (include "groundx.fileAccess.create" .) "true" }}""{{ else }}{{ get $fs "password" | quote }}{{ end }},
         ),
         valid_api_keys=[
         {{- $apiKey := include "groundx.admin.apiKey" . -}}
