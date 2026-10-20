@@ -15,7 +15,7 @@
   check: n/a — hand-run test fixture; built and exercised only by the human-run lifecycle script in 2.2
 - [x] 2.2 Add `bin/tests/layout-inference-lifecycle/run.sh`: builds the stand-in into minikube's docker, deploys an in-cluster Redis, renders `inference.yaml` + `layout-supervisord-conf` through `helm template` changed only via `--set` values (image, `layout.inference.deviceType=cpu`, dependency endpoints, storage class), applies it, keeps enqueuing tasks during the test, and measures consumption from the broker/result side. Asserts (a) pod deleted during init: zero tasks consumed by that pod; (b) pod deleted after start: in-flight task completes and the worker exits warm within the grace period. Exit non-zero on any violated assertion. Not wired into pre-push or CI.
   check: n/a — human-run minikube lifecycle test (executes repo files and `kubectl delete pod` in a privileged repo; not runnable by the pipeline)
-- [ ] 2.3 Record the human run: the script's output against the unchanged chart (expected fail on assertion (a)) and against the fixed chart (expected pass) in the PR body.
+- [x] 2.3 Record the human run: the script's output against the unchanged chart (expected fail on assertion (a)) and against the fixed chart (expected pass) in the PR body.
   check: n/a — human-run evidence recorded outside the repo
 
 ## 3. Gate
