@@ -107,6 +107,14 @@ metadata:
 {{ include "groundx.renderDefaultLabels" (dict "name" $svc "indent" 4 "root" $) }}
 spec:
   replicas: {{ $desired }}
+  {{- $publishSageMaker := false }}
+  {{- range (dig "sagemaker" list (.Values.metrics | default dict)) }}
+    {{- if .publish }}{{- $publishSageMaker = true }}{{- end }}
+  {{- end }}
+  {{- if $publishSageMaker }}
+  strategy:
+    type: Recreate
+  {{- end }}
   selector:
     matchLabels:
       app: {{ $svc }}

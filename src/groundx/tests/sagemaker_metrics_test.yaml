@@ -1,0 +1,77 @@
+suite: SageMaker metrics opt in
+values:
+  - ../values/minikube/values.yaml
+tests:
+  - it: leaves the default metric configuration unchanged
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'sagemaker:'
+  - it: appends a remote throughput target without changing local targets
+    set:
+      metrics.enabled: true
+      metrics.sagemaker:
+        - name: remote-model
+          accountId: '903713046261'
+          region: ap-northeast-2
+          endpoint: finite-model
+          variant: AllTraffic
+          tokensPerMinute: 1000
+          publish: true
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'name: remote-model\n\s+tokensPerMinute: 1000\n\s+sagemaker:'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'endpoint: "finite-model"'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'publish: true'
+  - it: rejects multiple local metrics publishers
+    set:
+      metrics.enabled: true
+      metrics.replicas.desired: 2
+      metrics.sagemaker:
+        - name: remote-model
+          accountId: '903713046261'
+          region: ap-northeast-2
+          endpoint: finite-model
+          variant: AllTraffic
+          tokensPerMinute: 1000
+          publish: true
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: 'SageMaker metrics require one metrics replica'
+  - it: prevents overlapping publishers during an update
+    templates:
+      - ../templates/app/metrics.yaml
+    set:
+      metrics.enabled: true
+      metrics.sagemaker:
+        - name: remote-model
+          accountId: '903713046261'
+          region: ap-northeast-2
+          endpoint: finite-model
+          variant: AllTraffic
+          tokensPerMinute: 1000
+          publish: true
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - equal:
+          path: spec.strategy.type
+          value: Recreate

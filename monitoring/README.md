@@ -213,3 +213,31 @@ Your GroundX metrics target should appear as **UP**.
 ---
 
 This folder provides the minimal configuration required to integrate GroundX into a standard Prometheus + Grafana stack.
+# SageMaker metrics publication
+
+SageMaker targets are opt-in under `metrics.sagemaker`. Configure exact account,
+region, endpoint, variant and calibrated `tokensPerMinute`; `publish` defaults to
+false for observation. These targets reuse system-wide early GPU warm-up demand,
+not an endpoint-specific queue count. The metrics service needs its scoped runtime
+IAM role. Native AWS scaling policies are owned by production infrastructure.
+
+Before enabling publication or replacing its owning release, render the candidate
+application configuration into a private file and run:
+
+```bash
+python3 .build/bin/verify-sagemaker-publishers.py \
+  --candidate /private/path/rendered-config.yaml \
+  --context KUBE_CONTEXT --namespace NAMESPACE --release RELEASE
+```
+
+The read-only preflight inventories GroundX Helm releases across every configured
+Kubernetes context, deduplicates cluster aliases, and rejects another release or
+cluster publishing the same account/region/endpoint/variant. Unreadable inventory
+blocks publication. Rendered configuration may contain secrets; keep the candidate
+private and never commit it. Repeat the check immediately before the normal Helm
+upgrade. Deployment ownership must also cover any non-Kubernetes metrics process.
+
+Publication requires one metrics replica. The chart uses `Recreate` for publishing
+targets so an update cannot overlap old and new publishers. This briefly interrupts
+external metrics during replacement; existing inference requests keep running.
+Normal deployments without SageMaker publication keep their previous strategy.

@@ -1280,6 +1280,50 @@
             "required": ["name"],
           "additionalProperties": false
         },
+        "sagemaker": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "accountId": {
+                "type": "string",
+                "pattern": "^[0-9]{12}$"
+              },
+              "region": {
+                "type": "string",
+                "pattern": "^[a-z]{2}(-[a-z0-9]+)+-[0-9]+$"
+              },
+              "endpoint": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9-]{0,62}$"
+              },
+              "variant": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9-]{0,62}$"
+              },
+              "tokensPerMinute": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "publish": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "name",
+              "accountId",
+              "region",
+              "endpoint",
+              "variant",
+              "tokensPerMinute"
+            ],
+            "additionalProperties": false
+          }
+        },
         "serviceMonitor": {
           "type": "object",
           "properties": {

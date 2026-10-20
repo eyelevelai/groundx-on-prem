@@ -475,6 +475,8 @@ echo "==> Verifying Helm snapshots did not silently drop empty renders"
 python .build/tests/test_verify_helm_snapshots.py
 python .build/bin/verify-helm-snapshots.py
 
+echo "==> Verifying SageMaker publisher ownership preflight"
+"${PY}" .build/tests/test_verify_sagemaker_publishers.py
 echo "==> Verifying workspace chart contract"
 python .build/bin/verify-workspace-chart.py
 
