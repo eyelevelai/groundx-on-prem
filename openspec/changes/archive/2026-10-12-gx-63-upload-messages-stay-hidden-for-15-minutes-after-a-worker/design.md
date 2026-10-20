@@ -1,15 +1,15 @@
-# Design — GX-63 (groundx-on-prem): upload hold note in the AWS example values
+# Design — GX-63 (groundx-on-prem): queue hold note in the AWS example values
 
 Grounding: `proposal.md` states the problem and the scope. This is a comment-only change; the
-5 minute upload lease itself ships in cashbot-go under GX-63.
+5 minute lease itself ships in cashbot-go under GX-63.
 
 ## Decisions
 
 - **Wording.** Replace the line `# visibility timeout must be 10+ min for all SQS queues` (line 59 of
   `src/groundx/values/values.aws.services.yaml`, directly above `topics:`) with
-  two comment lines: `# visibility timeout must be 10+ min for all SQS queues. Upload re-hides its in-flight messages for 5 min, renewed every minute, so a crashed upload pod's messages return about 5 min after their last renewal.` and `# If the upload queue has a DLQ, maxReceiveCount must be at least 4, since delivery 4 is the first one that errors the document; 3 or less sends it to the DLQ first.`.
+  two comment lines: `# visibility timeout must be 10+ min for all SQS queues. Every consumer except pre-process re-hides its in-flight messages for 5 min, renewed every minute, so a crashed pod's messages return about 5 min after their last renewal.` and `# If the upload queue has a DLQ, maxReceiveCount must be at least 4, since delivery 4 is the first one that errors the document; 3 or less sends it to the DLQ first.`.
   Two lines, so the comment keeps its place above `topics:` and every queue keeps the
-  existing 10+ minute rule. The note says what the upload consumer does, not what the queue
+  existing 10+ minute rule. The note says what the consumers do, not what the queue
   timeout must be, because the lease is set by the consumer after it starts processing.
 - **Edit order.** `src/groundx/` first, then the identical line in `helm/values/values.aws.services.yaml`
   by hand. The files are byte-identical today and stay byte-identical. The mirror guard
