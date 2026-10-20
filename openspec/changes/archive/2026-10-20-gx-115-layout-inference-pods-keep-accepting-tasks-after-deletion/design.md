@@ -19,3 +19,7 @@ Goals: a layout-inference pod deleted before or during model initialization neve
 ## Rollout
 
 A chart upgrade restarts the layout-inference Deployment once. Rollback is a chart rollback. No migration.
+
+## Amendments
+
+- 2026-10-20: the lifecycle test's red run (unchanged chart, expected to fail assertion (a)) and green run (fixed chart, expected to pass) are pending task 2.3; no run has been recorded at the time of this amendment. Statements in `proposal.md` and this file that the test "fails on the current chart" describe the expected outcome, not an observed one.
