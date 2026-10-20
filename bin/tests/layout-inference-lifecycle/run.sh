@@ -73,6 +73,7 @@ render() {
     --set "layout.inference.deviceType=cpu" \
     --set "layout.inference.node=" \
     --set "layout.inference.replicas.desired=$2" \
+    --set "layout.inference.threads=${THREADS}" \
     --set "layout.inference.replicas.gracePeriod=${GRACE}" \
     --set "cache.existing.addr=${REDIS_HOST}" \
     --set "cache.existing.port=6379" \
@@ -125,6 +126,7 @@ pod_gone() { ! k get pod "$1" >/dev/null 2>&1; }
 queue_depth() { redis_cli -n 0 llen layout_queue | tr -d '\r'; }
 consumed_by() { redis_cli -n 1 llen "consumed:$1" | tr -d '\r'; }
 completed_by() { redis_cli -n 1 llen "completed:$1" | tr -d '\r'; }
+list_values() { redis_cli -n 1 lrange "$1" 0 -1 | tr -d '\r'; }
 init_started_count() { redis_cli -n 1 llen "init-started:$1" | tr -d '\r'; }
 
 enqueue() {
@@ -171,7 +173,7 @@ CONSUMED_A="$(consumed_by "${POD_A}")"
 echo "pod=${POD_A} queue_depth_before_delete=${DEPTH_BEFORE} consumed_by_pod=${CONSUMED_A}"
 [[ "${CONSUMED_A}" == "0" ]] && check "(a) pod deleted during init consumed zero tasks" ok || check "(a) pod deleted during init consumed zero tasks" bad
 
-echo "== (b) pod deleted after worker start"
+echo "== (b) pod removed by scale-down after the worker started"
 reset_deployment
 apply_chart "${IMAGE_FAST}" 1
 wait_until "layout-inference pod to appear" "${POD_WAIT}" have_pod
@@ -192,10 +194,10 @@ until [[ "$(consumed_by "${POD_B}")" -ge "${THREADS}" ]]; do
 done
 CONSUMED_AT_DELETE="$(consumed_by "${POD_B}")"
 COMPLETED_AT_DELETE="$(completed_by "${POD_B}")"
-k delete pod "${POD_B}" --wait=false
+k scale "deploy/${DEPLOY}" --replicas=0
 START="$(date +%s)"
 ENQUEUED_DURING_TERMINATION=0
-MAX_DEPTH_AFTER_DELETE="$(queue_depth)"
+SLOT_FREED_DEPTH=""
 end=$(( SECONDS + GRACE + 60 ))
 until pod_gone "${POD_B}"; do
   if (( SECONDS >= end )); then
@@ -204,18 +206,25 @@ until pod_gone "${POD_B}"; do
   fi
   enqueue 1
   ENQUEUED_DURING_TERMINATION=$(( ENQUEUED_DURING_TERMINATION + 1 ))
-  DEPTH_NOW="$(queue_depth)"
-  (( DEPTH_NOW > MAX_DEPTH_AFTER_DELETE )) && MAX_DEPTH_AFTER_DELETE="${DEPTH_NOW}"
+  if [[ -z "${SLOT_FREED_DEPTH}" && "$(completed_by "${POD_B}")" -gt "${COMPLETED_AT_DELETE}" ]]; then
+    SLOT_FREED_DEPTH="$(queue_depth)"
+  fi
   sleep 1
 done
 ELAPSED=$(( $(date +%s) - START ))
 CONSUMED_B="$(consumed_by "${POD_B}")"
 COMPLETED_B="$(completed_by "${POD_B}")"
-echo "pod=${POD_B} threads=${THREADS} consumed_at_delete=${CONSUMED_AT_DELETE} completed_at_delete=${COMPLETED_AT_DELETE} consumed_final=${CONSUMED_B} completed_final=${COMPLETED_B} enqueued_during_termination=${ENQUEUED_DURING_TERMINATION} max_queue_depth_after_delete=${MAX_DEPTH_AFTER_DELETE} exit_seconds=${ELAPSED} grace=${GRACE}"
-[[ "${CONSUMED_B}" == "${CONSUMED_AT_DELETE}" ]] && check "(b) no new task consumed after the stop signal" ok || check "(b) no new task consumed after the stop signal" bad
+STOPPING_AT="$(list_values "stopping:${POD_B}" | sort -g | head -n1)"
+LATE_CONSUMED=""
+if [[ -n "${STOPPING_AT}" ]]; then
+  LATE_CONSUMED="$(list_values "consumed:${POD_B}" | awk -v s="${STOPPING_AT}" '$1 + 0 > s + 0' | wc -l | tr -d ' ')"
+fi
+echo "pod=${POD_B} threads=${THREADS} consumed_at_scale_down=${CONSUMED_AT_DELETE} completed_at_scale_down=${COMPLETED_AT_DELETE} consumed_final=${CONSUMED_B} completed_final=${COMPLETED_B} stopping_marker_at=${STOPPING_AT:-none} consumed_after_stopping_marker=${LATE_CONSUMED:-unknown} enqueued_during_termination=${ENQUEUED_DURING_TERMINATION} queue_depth_when_slot_freed=${SLOT_FREED_DEPTH:-never} exit_seconds=${ELAPSED} grace=${GRACE}"
+[[ -n "${STOPPING_AT}" ]] && check "(b) worker recorded a stopping marker" ok || check "(b) worker recorded a stopping marker" bad
+[[ "${LATE_CONSUMED}" == "0" ]] && check "(b) no task consumed after the worker's stopping marker" ok || check "(b) no task consumed after the worker's stopping marker" bad
 [[ "${COMPLETED_B}" == "${CONSUMED_B}" ]] && check "(b) every consumed task completed before the pod exited" ok || check "(b) every consumed task completed before the pod exited" bad
 [[ "${ELAPSED}" -le "${GRACE}" ]] && check "(b) pod exited within the grace period" ok || check "(b) pod exited within the grace period" bad
-[[ "${ENQUEUED_DURING_TERMINATION}" -gt 0 && "${MAX_DEPTH_AFTER_DELETE}" -gt 0 ]] && check "(b) tasks were available during termination" ok || check "(b) tasks were available during termination" bad
+[[ -n "${SLOT_FREED_DEPTH}" && "${SLOT_FREED_DEPTH}" -gt 0 ]] && check "(b) tasks were waiting when a slot freed during termination" ok || check "(b) tasks were waiting when a slot freed during termination" bad
 
 echo "== (c) init-layout exits non-zero"
 start_with_queued_tasks "${IMAGE_FAIL}" 5
