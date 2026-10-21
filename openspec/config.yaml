@@ -70,6 +70,7 @@ context: |
     - helm template src/groundx -f values/minikube/values.yaml (render check)
     - helm lint (declared in repos.yml run.lint)
     - verify_mirrors() in .build/bin/verify-storage-contract.py enforces the full templates/ tree on every gate run (drift IS checked). The remaining gap is the absence of a regen script — nothing auto-syncs helm/ from src/groundx/, so a human still mirrors edits by hand.
+    - README.md is in the gate's scope: verify_no_stale_strings() in .build/bin/verify-storage-contract.py scans it, validate-helm.sh greps it for retired workspace wording, and `git diff --check` checks whitespace in its uncommitted edits. A README-only change still gates on validate-helm.sh.
   
   - COMMIT CONVENTION: standard conventional commits (inferred; no explicit convention in-repo).
   
