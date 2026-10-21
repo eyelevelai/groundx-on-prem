@@ -253,3 +253,7 @@ None. The snapshot-restore spike held on 2026-10-14, and decision 9 records the 
 ## Amendment 2026-10-19
 
 The line about trace files over 5 MiB at decision 4's S4 limits entry names groundx 4.0.10. groundx-python main shipped 4.1.0 and 4.1.1 on 2026-10-18 without GX-88, so the groundx release carrying the single-PUT `S4Client` is planned as 4.1.2, and internal-arcadia-agents pins `groundx==4.1.2`. The line is kept as written.
+
+## Amendment 2026-10-21
+
+groundx 4.1.2 shipped on 2026-10-20 without GX-88. The single-PUT `S4Client` first ships in groundx 4.1.3, and internal-arcadia-agents pins `groundx==4.1.3`. Every 4.0.10 or 4.1.2 above that names that release now means 4.1.3.
