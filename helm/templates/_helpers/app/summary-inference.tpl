@@ -278,6 +278,7 @@ true
 {{- $cfg := dict
   "baseName"       ($svc)
   "cfg"            (printf "%s-config-py-map" $svc)
+  "execOpts"       ("exec")
   "image"          (include "groundx.summary.inference.image" .)
   "mapPrefix"      ("summary")
   "modelParts"     ("00 01 02 03 04")

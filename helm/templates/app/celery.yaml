@@ -93,7 +93,7 @@ spec:
     spec:
 {{- if and $rp (hasKey $rp "gracePeriod") }}
       terminationGracePeriodSeconds: {{ get $rp "gracePeriod" }}
-{{- else if or (eq $mapPrefix "extract") (eq $mapPrefix "layout") }}
+{{- else }}
       terminationGracePeriodSeconds: 900
 {{- end }}
 {{- if $san }}
@@ -169,7 +169,7 @@ spec:
             - /bin/sh
             - -c
             - |
-              export PYTHONPATH=/app &&{{ if or (eq $mapPrefix "extract") (eq $mapPrefix "layout") }} exec{{ end }} supervisord -c /app/supervisord.conf
+              export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
 {{- if gt (len $lifecycle) 0 }}
           lifecycle:
 {{- toYaml $lifecycle | nindent 12 }}
