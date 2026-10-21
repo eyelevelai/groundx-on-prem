@@ -34,13 +34,13 @@ The chart SHALL render the container command of the five layout Celery workers (
 - **THEN** `workspace-workspace` keeps `export PYTHONPATH=/app && supervisord -c /app/supervisord.conf` with no `exec`
 - **AND** `ranker-inference` and `summary-inference` keep their current command with no `exec`, and gain no `init-layout` init container
 
-#### Scenario: Pod deleted during init never starts Celery (polarity: reject before state; hand-run lifecycle test)
+#### Scenario: Pod deleted during init never starts Celery (polarity: reject before state; verified by the recorded GX-115 lifecycle runs on minikube and EKS)
 - **WHEN** a `layout-inference` pod from the chart's rendered output is deleted while `init-layout` is still running
 - **THEN** the main container never starts, so no Celery worker starts and zero tasks are consumed, measured from the broker/result side while tasks keep being enqueued
-- **AND** the test runs real supervisord and real Celery against the chart's unedited `supervisord.conf`, with only `init-layout.py` and a minimal Celery app as stand-ins
-- **AND** the same test fails against the previous chart, where Celery starts after init and consumes tasks
+- **AND** the minikube lifecycle run used real supervisord and real Celery against the chart's unedited `supervisord.conf`, with only `init-layout.py` and a minimal Celery app as stand-ins
+- **AND** the same run failed against the previous chart, where Celery starts after init and consumes tasks
 
-#### Scenario: Pod deleted after start shuts down warm (polarity: finalize success; hand-run lifecycle test)
+#### Scenario: Pod deleted after start shuts down warm (polarity: finalize success; verified by the recorded GX-115 lifecycle runs on minikube and EKS)
 - **WHEN** a `layout-inference` pod from the chart's rendered output is deleted after `supervisord` has started
 - **THEN** `supervisord` receives SIGTERM as PID 1 and the real Celery worker stops through warm shutdown within the rendered grace period
 
