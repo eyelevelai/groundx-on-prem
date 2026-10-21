@@ -225,3 +225,171 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].command[2]
           value: "export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf\n"
+  - it: "ranker and summary inference default to a 900 second grace period and replace the shell with supervisord (polarity: finalize success)"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+        documentSelector:
+          path: metadata.name
+          value: ranker-inference
+      - equal:
+          path: spec.template.spec.containers[0].command[2]
+          value: "export PYTHONPATH=/workspace:$PYTHONPATH && exec supervisord -c /workspace/supervisord.conf\n"
+        documentSelector:
+          path: metadata.name
+          value: ranker-inference
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+        documentSelector:
+          path: metadata.name
+          value: summary-inference
+      - equal:
+          path: spec.template.spec.containers[0].command[2]
+          value: "export PYTHONPATH=/workspace:$PYTHONPATH && exec supervisord -c /workspace/supervisord.conf\n"
+        documentSelector:
+          path: metadata.name
+          value: summary-inference
+  - it: "ranker and summary gracePeriod override each service only and leave layout-inference alone (polarity: finalize success; must not block)"
+    templates:
+      - ../templates/app/inference.yaml
+      - ../templates/resources/ranker-supervisord-conf.yaml
+      - ../templates/resources/summary-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      ranker.inference.replicas.gracePeriod: 120
+      summary.inference.replicas.gracePeriod: 150
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 120
+        documentSelector:
+          path: metadata.name
+          value: ranker-inference
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 150
+        documentSelector:
+          path: metadata.name
+          value: summary-inference
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+        documentSelector:
+          path: metadata.name
+          value: layout-inference
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)\\[program:celery_worker_1\\].*stopwaitsecs=90\\n"
+        documentSelector:
+          path: metadata.name
+          value: ranker-inference-supervisord-conf-map
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)\\[program:celery_worker_1\\].*stopwaitsecs=120\\n"
+        documentSelector:
+          path: metadata.name
+          value: summary-inference-supervisord-conf-map
+  - it: "ranker and summary gracePeriod under 31 floors the stop wait at 1 second (polarity: finalize success)"
+    templates:
+      - ../templates/resources/ranker-supervisord-conf.yaml
+      - ../templates/resources/summary-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      ranker.inference.replicas.gracePeriod: 20
+      summary.inference.replicas.gracePeriod: 20
+    asserts:
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)\\[program:celery_worker_1\\].*stopwaitsecs=1\\n"
+        documentSelector:
+          path: metadata.name
+          value: ranker-inference-supervisord-conf-map
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)\\[program:celery_worker_1\\].*stopwaitsecs=1\\n"
+        documentSelector:
+          path: metadata.name
+          value: summary-inference-supervisord-conf-map
+  - it: "ranker supervisord at its default 14 workers: every worker has the 870 second stop wait and one group lists all 14 (polarity: finalize success; catches)"
+    templates:
+      - ../templates/resources/ranker-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    asserts:
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)(stopwaitsecs=870\\n.*){14}"
+      - notMatchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)(stopwaitsecs=870\\n.*){15}"
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "\\[group:celery_workers\\]\\nprograms=celery_worker_1,celery_worker_2,celery_worker_3,celery_worker_4,celery_worker_5,celery_worker_6,celery_worker_7,celery_worker_8,celery_worker_9,celery_worker_10,celery_worker_11,celery_worker_12,celery_worker_13,celery_worker_14\\n"
+  - it: "ranker workers override resizes the group to every worker (polarity: finalize success; catches)"
+    templates:
+      - ../templates/resources/ranker-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      ranker.inference.workers: 3
+    asserts:
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "\\[group:celery_workers\\]\\nprograms=celery_worker_1,celery_worker_2,celery_worker_3\\n"
+      - notMatchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)(stopwaitsecs=870\\n.*){4}"
+  - it: "summary supervisord defaults and a raised worker count: stop wait on every worker, one group (polarity: finalize success; catches)"
+    templates:
+      - ../templates/resources/summary-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    asserts:
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)\\[program:celery_worker_1\\].*stopwaitsecs=870\\n"
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "\\[group:celery_workers\\]\\nprograms=celery_worker_1\\n"
+  - it: "summary workers override resizes the group to every worker (polarity: finalize success; catches)"
+    templates:
+      - ../templates/resources/summary-supervisord-conf.yaml
+    values:
+      - ../values.yaml
+    set:
+      summary.inference.workers: 2
+    asserts:
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "(?s)(stopwaitsecs=870\\n.*){2}"
+      - matchRegex:
+          path: data["supervisord.conf"]
+          pattern: "\\[group:celery_workers\\]\\nprograms=celery_worker_1,celery_worker_2\\n"
+  - it: "ranker gracePeriod of zero fails schema validation before anything renders (polarity: reject before state)"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+    set:
+      ranker.inference.replicas.gracePeriod: 0
+    asserts:
+      - failedTemplate:
+          errorPattern: "ranker/inference/replicas/gracePeriod.*minimum: got 0, want 1"
+  - it: "summary gracePeriod of zero fails schema validation before anything renders (polarity: reject before state)"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+    set:
+      summary.inference.replicas.gracePeriod: 0
+    asserts:
+      - failedTemplate:
+          errorPattern: "summary/inference/replicas/gracePeriod.*minimum: got 0, want 1"
