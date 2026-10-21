@@ -23,4 +23,4 @@
 - [x] 3.2 Validate the OpenSpec change (`openspec validate --type change gx-115-layout-inference-pods-keep-accepting-tasks-after-deletion`).
   check: n/a — non-behavioral artifact validation; it passes on unchanged code, so it cannot define a RED baseline
 
-See workspace `openspec/changes/gx-115-layout-inference-pods-keep-accepting-tasks-after-deletion/tasks.md` for cross-service coordination and deferred items (the dev EKS round runs outside the pipeline).
+See workspace `openspec/changes/archive/2026-10-20-gx-115-layout-inference-pods-keep-accepting-tasks-after-deletion/tasks.md` for cross-service coordination and deferred items (the dev EKS round runs outside the pipeline).
