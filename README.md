@@ -255,7 +255,31 @@ Pods in this node group have specific requirements on GPU, CPU, RAM, and disk dr
 
 The resource requirements for these pods are described detail in more detail in the [Total Recommended Resources](#total-recommended-resources) section above.
 
-The current configuration for this service assumes an NVIDIA GPU with 48 GB of GPU memory, 4 CPU cores, and at least 30 GB RAM. It deploys 1 pod on this node (called `summary.inference.replicas.desired` in `values.yaml`). It does not claim the GPU via the `nvidia.com/gpu` resource provided by the [NVIDIA GPU operator](https://github.com/NVIDIA/gpu-operator) but uses 24 GB of GPU memory per worker.
+The default configuration for this service is sized for an NVIDIA GPU with 48 GB of GPU memory, 4 CPU cores, and at least 30 GB RAM. It deploys 2 pods on this node (called `summary.inference.replicas.desired` in `values.yaml`). It does not claim the GPU via the `nvidia.com/gpu` resource provided by the [NVIDIA GPU operator](https://github.com/NVIDIA/gpu-operator), so every summary pod scheduled to a node shares that node's GPU.
+
+Each summary pod runs `summary.inference.workers` workers, and each worker loads its own copy of the model and reserves `summary.inference.deviceUtilize` of the GPU's total memory (a fraction from 0 to 1). On each summary GPU node, pods x `summary.inference.workers` x `summary.inference.deviceUtilize` must be at most 1. With the defaults this is 2 x 1 x 0.48 = 0.96. Each worker's share must also hold the model and its cache: on a 24 GB GPU a share of 0.48 is too small, so the default values do not fit a 24 GB GPU.
+
+For one 24 GB summary GPU, run a single summary pod with one worker:
+
+```yaml
+summary:
+  inference:
+    replicas:
+      min: 1
+      desired: 1
+      max: 1
+    workers: 1
+    deviceUtilize: 0.9
+    updateStrategy: Recreate
+```
+
+Apply these values to a running install with `helm upgrade`, passing the file with `-f` after your other values files. With `updateStrategy: Recreate`, Kubernetes stops the old summary pods before it starts the new one, so summary is unavailable on each upgrade until the new pod has loaded its model (the load took about 5 minutes in the test run). Without it, the default rolling update starts the new pod while the old pods still hold the GPU, and the new pod cannot load its model.
+
+These values assume the summary pod has the node's GPU to itself. They were tested on an AWS `g5.2xlarge` (one NVIDIA A10G, which reported 23028 MiB of GPU memory) with the `summary-inference:0.2.7` image and helm `v3.19.0+g3d8990f`, applied as an in-place `helm upgrade` to an install running the default values. Other 24 GB GPUs, such as the NVIDIA L4, were not tested.
+
+With several summary GPU nodes, or with `cluster.hpa: true` and `summary.inference.replicas.max` above 1, more than one summary pod can land on the same node and share its GPU. To keep one pod per GPU, set `nvidia.com/gpu: 1` under both `requests` and `limits` in `summary.inference.resources`, or spread the pods across nodes with `summary.inference.topologySpreadConstraints`. Each pod then has a GPU to itself, so on 24 GB GPUs use the `summary.inference.workers` and `summary.inference.deviceUtilize` values from the block above. In either case, keep `summary.inference.replicas.max` at or below the number of summary pods your summary GPU nodes can hold. With a GPU request, keep `updateStrategy: Recreate` unless a spare GPU is free, because a rolling update's new pod waits Pending for the GPU the old pod holds. Every summary pod mounts the same model volume claim, so pods on more than one node need ReadWriteMany storage for that claim. The claim inherits `cluster.pvAccessMode` and `cluster.pvClass`; if that is not already ReadWriteMany on a storage class that supports it, set `summary.inference.pvc.access: ReadWriteMany` and such a class in `summary.inference.pvc.class` (see [Persistent Storage](#persistent-storage)). Kubernetes does not let a claim that already exists change its access mode, so on an existing install also set a new `summary.inference.pvc.name` (the default is `summary-model`): the upgrade creates a new claim, the summary pods download the model into it again, and Helm removes the old claim because the chart no longer renders it. With ReadWriteOnce storage the volume can be mounted by one node only, so a pod scheduled to a second node cannot start; keep summary on one node instead.
+
+For the 48 GB defaults, `updateStrategy: Recreate` is also recommended, with the same brief outage on each upgrade. Without it, Kubernetes' default rolling update starts a third summary pod on the node before it stops an old one, three pods at 0.48 need 1.44 of the GPU, and the new pod cannot load its model. This advice follows from that arithmetic and from the 24 GB test without `Recreate`, where the rollout stalled the same way; it was not tested on a 48 GB GPU.
 
 If your machine has different resources than this, you will need to modify `summary.inference` in your `values.yaml` using the per pod requirements described above to optimize for your node resources.
 
