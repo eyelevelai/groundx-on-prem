@@ -645,7 +645,7 @@ tests:
       preProcess.replicas.gracePeriod: 120
       process.replicas.gracePeriod: 300
       queue.replicas.gracePeriod: 60
-      summaryClient.replicas.gracePeriod: 900
+      summaryClient.replicas.gracePeriod: 600
       upload.replicas.gracePeriod: 180
     asserts:
       - matchRegex:
@@ -659,7 +659,7 @@ tests:
           pattern: "queueFileServer:\n  baseURL: .*\n  drainSeconds: 30\n"
       - matchRegex:
           path: stringData["config.yaml"]
-          pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds: 870\n"
+          pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds: 570\n"
       - matchRegex:
           path: stringData["config.yaml"]
           pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds: 150\n"

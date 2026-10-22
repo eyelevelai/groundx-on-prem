@@ -368,14 +368,14 @@ tests:
     values:
       - ../values/minikube/values.yaml
     set:
-      summaryClient.replicas.gracePeriod: 900
+      summaryClient.replicas.gracePeriod: 600
     documentSelector:
       path: metadata.name
       value: summary-client
     asserts:
       - equal:
           path: spec.template.spec.terminationGracePeriodSeconds
-          value: 900
+          value: 600
   - it: "process pod honors a custom shutdown budget independently"
     templates:
       - ../templates/app/golang.yaml
