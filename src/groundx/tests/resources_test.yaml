@@ -557,30 +557,30 @@ tests:
       summaryClient.replicas.gracePeriod: 900
     asserts:
       - matchSnapshot: {}
-  - it: "summaryClient gracePeriod renders drainSeconds only in the summaryServer block"
+  - it: "summaryClient gracePeriod overrides drainSeconds in the summaryServer block only"
     templates:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values/minikube/values.yaml
     set:
-      summaryClient.replicas.gracePeriod: 900
+      summaryClient.replicas.gracePeriod: 600
     asserts:
       - matchRegex:
           path: stringData["config.yaml"]
-          pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds: 870\n"
-      - notMatchRegex:
+          pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds: 570\n"
+      - matchRegex:
           path: stringData["config.yaml"]
-          pattern: "preProcessFileServer:\n  baseURL: .*\n  drainSeconds"
-      - notMatchRegex:
+          pattern: "preProcessFileServer:\n  baseURL: .*\n  drainSeconds: 870\n"
+      - matchRegex:
           path: stringData["config.yaml"]
-          pattern: "processFileServer:\n  baseURL: .*\n  drainSeconds"
-      - notMatchRegex:
+          pattern: "processFileServer:\n  baseURL: .*\n  drainSeconds: 870\n"
+      - matchRegex:
           path: stringData["config.yaml"]
-          pattern: "queueFileServer:\n  baseURL: .*\n  drainSeconds"
-      - notMatchRegex:
+          pattern: "queueFileServer:\n  baseURL: .*\n  drainSeconds: 870\n"
+      - matchRegex:
           path: stringData["config.yaml"]
-          pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds"
-  - it: "preProcess gracePeriod renders drainSeconds only in the preProcessFileServer block"
+          pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds: 870\n"
+  - it: "preProcess gracePeriod overrides drainSeconds in the preProcessFileServer block only"
     templates:
       - ../templates/resources/config-yaml.yaml
     values:
@@ -591,18 +591,18 @@ tests:
       - matchRegex:
           path: stringData["config.yaml"]
           pattern: "preProcessFileServer:\n  baseURL: .*\n  drainSeconds: 90\n"
-      - notMatchRegex:
+      - matchRegex:
           path: stringData["config.yaml"]
-          pattern: "processFileServer:\n  baseURL: .*\n  drainSeconds"
-      - notMatchRegex:
+          pattern: "processFileServer:\n  baseURL: .*\n  drainSeconds: 870\n"
+      - matchRegex:
           path: stringData["config.yaml"]
-          pattern: "queueFileServer:\n  baseURL: .*\n  drainSeconds"
-      - notMatchRegex:
+          pattern: "queueFileServer:\n  baseURL: .*\n  drainSeconds: 870\n"
+      - matchRegex:
           path: stringData["config.yaml"]
-          pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds"
-      - notMatchRegex:
+          pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds: 870\n"
+      - matchRegex:
           path: stringData["config.yaml"]
-          pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds"
+          pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds: 870\n"
   - it: "process gracePeriod renders drainSeconds in the processFileServer block"
     templates:
       - ../templates/resources/config-yaml.yaml
@@ -674,15 +674,27 @@ tests:
       - matchRegex:
           path: stringData["config.yaml"]
           pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds: 1\n"
-  - it: "no gracePeriod set anywhere - config-yaml renders with no drainSeconds key"
+  - it: "no gracePeriod set anywhere - every Go queue-service block renders the 870 default drainSeconds"
     templates:
       - ../templates/resources/config-yaml.yaml
     values:
       - ../values/minikube/values.yaml
     asserts:
-      - notMatchRegex:
+      - matchRegex:
           path: stringData["config.yaml"]
-          pattern: "drainSeconds"
+          pattern: "preProcessFileServer:\n  baseURL: .*\n  drainSeconds: 870\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "processFileServer:\n  baseURL: .*\n  drainSeconds: 870\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "queueFileServer:\n  baseURL: .*\n  drainSeconds: 870\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "summaryServer:\n  baseURL: .*\n  drainSeconds: 870\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds: 870\n"
   - it: "summary-api inference capacity is per gunicorn process while throughput stays per pod"
     templates:
       - ../templates/resources/config-yaml.yaml
