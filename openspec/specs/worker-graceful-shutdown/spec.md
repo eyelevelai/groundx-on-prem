@@ -112,7 +112,7 @@ Values files that do not set `gracePeriod` SHALL keep validating. The only rende
 - **AND** the rendered extract, layout, Go and API workloads are unchanged from the previous chart
 
 ### Requirement: Shutdown behavior is proven on the real images before release
-Before the change is released, a local-cluster test and then a validation-infra EKS test SHALL run the real ranker image at its default 14 workers, the summary image and one workspace worker, send each pod SIGTERM while a task runs, and record the result in the change folder. The test SHALL show that no worker starts a task after SIGTERM and that a running task shorter than `stopwaitsecs` finishes within the grace period, and it SHALL fail on the chart before this change.
+Before the change is released, shutdown behavior SHALL be proven in two runs, each recorded in the change folder. A local-cluster test SHALL apply the ranker (default 14 workers), summary and one workspace Deployment rendered by the chart, changed only in image, init containers, GPU requests, tolerations and volumes, on stand-in images built on each real image's base and Supervisor package (summary carrying the summary app's import-time SIGTERM handler), send each pod SIGTERM while a task runs, show that no worker starts a task after SIGTERM and that a running task shorter than `stopwaitsecs` finishes within the grace period, and SHALL fail on the chart before this change. A validation-infra EKS test SHALL then run the real ranker image at its default 14 workers and the real summary image on GPU nodes with this chart, send each pod SIGTERM while tasks run, show the same two properties, and complete an end-to-end ingest, search and summary afterwards; it SHALL also show a real workspace worker shutting down warm.
 
 #### Scenario: Ranker with 14 workers drains (polarity: finalize success)
 - **WHEN** the ranker pod at its default worker count receives SIGTERM while a task runs
@@ -124,6 +124,6 @@ Before the change is released, a local-cluster test and then a validation-infra 
 - **AND** a failure here stops the change for a plan amendment on the summary app's own SIGTERM handler, not a chart workaround
 
 #### Scenario: The previous chart fails the same test (polarity: reject before state)
-- **WHEN** the same test runs against the chart before this change
+- **WHEN** the local-cluster test runs against the chart before this change
 - **THEN** at least one pod takes a task after SIGTERM or loses its running task
 

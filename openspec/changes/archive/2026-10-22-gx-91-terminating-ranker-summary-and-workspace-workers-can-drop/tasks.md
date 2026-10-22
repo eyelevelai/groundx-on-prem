@@ -48,3 +48,9 @@ Commit plan: template, schema and test changes in one commit; the hand-patched `
   check: n/a — PR text, no behavior
 
 See workspace `openspec/changes/gx-91-terminating-ranker-summary-and-workspace-workers-can-drop/tasks.md` for cross-service coordination and deferred items (the `groundx-studio-harness` documentation PR, held until chart 0.2.8 is published).
+
+## Amendments
+
+### 2026-10-22
+
+- Task 5.1 is split by what each run can prove. Local cluster: the chart's rendered ranker (14 workers), summary and one workspace Deployment on stand-in images built on the real images' bases and Supervisor packages, because the real ranker and summary images need a GPU; this run carries the before/after proof (chart `eaa41edc` fails, PR head passes). Validation-infra EKS: the real ranker and summary images on GPU nodes with this chart only, tasks running at SIGTERM, then an end-to-end ingest, search and summary, plus a real workspace worker shutting down warm while idle. The live spec requirement "Shutdown behavior is proven on the real images before release" was amended to match. The local run passed on 2026-10-22 (evidence in EyeLevel-ai/engineering-context#207, `evidence/lifecycle/`); the EKS run is still to do.
