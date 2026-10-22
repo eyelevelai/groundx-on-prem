@@ -257,3 +257,7 @@ The line about trace files over 5 MiB at decision 4's S4 limits entry names grou
 ## Amendment 2026-10-21
 
 groundx 4.1.2 shipped on 2026-10-20 without GX-88. The single-PUT `S4Client` first ships in groundx 4.1.3, and internal-arcadia-agents pins `groundx==4.1.3`. Every 4.0.10 or 4.1.2 above that names that release now means 4.1.3.
+
+## Amendment 2026-10-22
+
+internal-arcadia-agents now pins `groundx==4.1.4`, adopted from its main #209. 4.1.4 is 4.1.3 plus generated API types and carries the same single-PUT `S4Client`, so the S4 limits above are unchanged.
