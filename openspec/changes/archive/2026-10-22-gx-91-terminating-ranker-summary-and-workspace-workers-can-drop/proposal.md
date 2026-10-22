@@ -33,3 +33,12 @@ Not changing: layout and layout-inference workers (GX-66), extract workers, `ack
 - Environments: any install that upgrades to the 0.2.8 chart line; this change is based on and targets the 0.2.8 branch, not main/master. No production values are edited here.
 - Downstream: the `groundx-studio-harness` docs level follows in a separate repo after this level reaches verify.
 - Open design questions: none.
+
+## Amendments
+
+### 2026-10-22
+
+- GX-66 shipped the fix for the layout workers. GX-115 covers `layout-inference` and is in review, not merged.
+- The cause that a shell wrapper does not forward SIGTERM to Supervisor is suspected and unverified on these images. The fix (`exec supervisord`, the grace period, the Supervisor stop settings) holds either way.
+- The `Why` section above is left as originally written and overstates the above.
+- The archived `specs/worker-graceful-shutdown/spec.md` in this change still carries the literal layout-inference command in its must-not-block scenario. It is left as-is because archives are append-only. The live spec at `openspec/specs/worker-graceful-shutdown/spec.md` now says the command is unchanged from the previous chart, because GX-115 replaces that command.

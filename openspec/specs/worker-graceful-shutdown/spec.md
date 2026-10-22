@@ -18,7 +18,7 @@ The chart SHALL render the container command of `ranker-inference` and `summary-
 #### Scenario: Extract, layout and layout-inference commands are unchanged (polarity: skip unrelated repair path; must not block)
 - **WHEN** the chart is rendered with default values
 - **THEN** the extract and layout Celery workers render the same `exec supervisord` command as the previous chart
-- **AND** `layout-inference` still renders `python /app/init-layout.py && exec supervisord`
+- **AND** the `layout-inference` command is unchanged from the previous chart
 
 ### Requirement: Ranker, summary and workspace worker pods default to a 900-second grace period
 The chart SHALL render `terminationGracePeriodSeconds: 900` on `ranker-inference`, `summary-inference` and the five workspace worker Deployments when no grace period is set, and SHALL render the value of `replicas.gracePeriod` of that service on its Deployment when it is set. The default SHALL NOT depend on the service name or map prefix of a Deployment rendered by `celery.yaml` or `inference.yaml`.
