@@ -112,7 +112,7 @@ Values files that do not set `gracePeriod` SHALL keep validating. The only rende
 - **AND** the rendered extract, layout, Go and API workloads are unchanged from the previous chart
 
 ### Requirement: Shutdown behavior is proven on the real images before release
-Before the change is released, shutdown behavior SHALL be proven in two runs, each recorded in the change folder. A local-cluster test SHALL apply the ranker (default 14 workers), summary and one workspace Deployment rendered by the chart, changed only in image, init containers, GPU requests, tolerations and volumes, on stand-in images built on each real image's base and Supervisor package (summary carrying the summary app's import-time SIGTERM handler), send each pod SIGTERM while a task runs, show that no worker starts a task after SIGTERM and that a running task shorter than `stopwaitsecs` finishes within the grace period, and SHALL fail on the chart before this change. A validation-infra EKS test SHALL then run the real ranker image at its default 14 workers and the real summary image on GPU nodes with this chart, send each pod SIGTERM while tasks run, show the same two properties, and complete an end-to-end ingest, search and summary afterwards; it SHALL also show a real workspace worker shutting down warm.
+Before the change is released, shutdown behavior SHALL be proven in two runs, each recorded in the change folder. A local-cluster test SHALL apply the ranker (default 14 workers), summary and one workspace Deployment rendered by the chart, changed only in image, init containers, GPU and resource requests, tolerations, affinity, probes and volumes, on stand-in images built on each real image's base and Supervisor package (summary carrying the summary app's import-time SIGTERM handler), send each pod SIGTERM while a task runs, show that no worker starts a task after SIGTERM and that a running task shorter than `stopwaitsecs` finishes within the grace period, and SHALL fail on the chart before this change. A validation-infra EKS test SHALL then run the real ranker image at its default 14 workers and the real summary image on GPU nodes with this chart, send each pod SIGTERM while tasks run, show the same two properties, and complete an end-to-end ingest, search and summary afterwards; it SHALL also show a real workspace worker shutting down warm.
 
 #### Scenario: Ranker with 14 workers drains (polarity: finalize success)
 - **WHEN** the ranker pod at its default worker count receives SIGTERM while a task runs
@@ -122,6 +122,7 @@ Before the change is released, shutdown behavior SHALL be proven in two runs, ea
 - **WHEN** the summary pod receives SIGTERM while a task runs
 - **THEN** it takes no new task and finishes the running task before the pod exits
 - **AND** a failure here stops the change for a plan amendment on the summary app's own SIGTERM handler, not a chart workaround
+- **AND** on the real summary image the worker may then be killed at its stop wait, after the running task has finished, because its vLLM engine process keeps it alive; the pod still exits within its grace period
 
 #### Scenario: The previous chart fails the same test (polarity: reject before state)
 - **WHEN** the local-cluster test runs against the chart before this change
