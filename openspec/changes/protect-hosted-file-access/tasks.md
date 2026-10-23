@@ -57,3 +57,7 @@ lints, exact public/protected configuration renders, mirror equality, strict
 OpenSpec and whitespace checks pass. Full validate-helm stops before tests because
 the installed helm-unittest is 1.0.3 and the repository requires verified 1.1.2.
 No live deployment or vendor certification was performed.
+
+## Historical originals (GX-88)
+
+- [x] Document bounded current-document and task-history binding passes before activation, compatible writers during cutover, ownership verification and rollback. Schema creation alone is insufficient. No chart, deployment or database change is included.

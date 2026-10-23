@@ -98,6 +98,23 @@ from `publicUrl` and preserve the existing host, path and bucket exactly once.
 Configured file and extraction presentation hosts must match the gateway host. Do not substitute the private origin into returned
 artifact URLs or append a second bucket to a configured presentation root.
 
+## Upgrade existing files before activation
+
+Creating `file_access_source_bindings` does not register older originals. Before sending existing file links to the gateway, populate bindings from both current documents and historical task records. Otherwise stored originals can return 404 even for their owner. This step applies to S3, MinIO, AIStor and S4.
+
+Use a compatible Cashbot release with the operator command's `-backfill` modes. From that source checkout, build it with `go build -o /tmp/groundx-file-access-repair ./cmd/fileaccessrepair`. Run the command from a private directory containing this installation's `config.yaml`, after its approved schema migration and with its database and Redis reachable:
+
+```sh
+/tmp/groundx-file-access-repair -apply -backfill sources -limit 100
+/tmp/groundx-file-access-repair -apply -backfill history -limit 100
+```
+
+Each invocation handles one batch. Repeat `sources` with `-after-id` set to the returned `NextID`; repeat `history` with `-after-task-id` set to `NextTaskID`. Save all reports and continue both passes until `Complete` is true. Resolve every conflict, unresolved record and unbound source alias, then rerun both passes from the beginning. Completion alone does not prove that every original is safe to serve.
+
+Keep legacy file routing during preparation. Active writers must use compatible binding hooks. If they still run with protection disabled, pause ingestion during the final binding passes and routing switch. Backfill writes ownership bindings and can quarantine shared claims; it does not copy objects, change policies or enable protection. Shared-source repairs follow the [Cashbot operator guide](https://github.com/EyeLevel-ai/cashbot-go/blob/master/docs/agents/file-access-repair.md).
+
+Verify older original and X-Ray downloads before cutover, including protected owner success and anonymous/wrong-owner denial. The API release must resolve saved `http://` references against the configured HTTPS storage namespace. Callers must still use HTTPS before sending a key. Keep storage private and retain bindings on rollback.
+
 ## Activation and rollback gates
 
 `frontProxyTLSVerified` defaults to `false`. The chart exposes the gateway's
