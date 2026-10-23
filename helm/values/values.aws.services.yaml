@@ -56,8 +56,9 @@ search:
 stream:
   enabled: false
 
-  # visibility timeout must be 10+ min for all SQS queues. From the cashbot-go release that includes GX-63, the upload, process and summary consumers re-hide their in-flight messages for 5 min, renewed every minute, so a crashed pod's messages return about 5 min after their last renewal.
-  # If the upload queue has a DLQ, maxReceiveCount must be at least 4, since delivery 4 is the first one that errors the document; 3 or less sends it to the DLQ first.
+  # SQS queue visibility must be at least 10 minutes.
+  # Workers containing GX-63 use 5-minute upload/process/summary leases, renewed every minute.
+  # Upload DLQs require maxReceiveCount >= 4.
   topics:
     preProcess:
       type: sqs
