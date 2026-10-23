@@ -223,6 +223,7 @@ true
   "baseName"       ($svc)
   "cache"          (include "groundx.ranker.cache.settings" . | fromYaml)
   "cfg"            (printf "%s-config-py-map" $svc)
+  "execOpts"       ("exec")
   "image"          (include "groundx.ranker.inference.image" .)
   "mapPrefix"      ("ranker")
   "modelParts"     ("00 01 02")
