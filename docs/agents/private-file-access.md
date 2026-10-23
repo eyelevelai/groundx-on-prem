@@ -100,20 +100,26 @@ artifact URLs or append a second bucket to a configured presentation root.
 
 ## Upgrade existing files before activation
 
-Creating `file_access_source_bindings` does not register older originals. Before sending existing file links to the gateway, populate bindings from both current documents and historical task records. Otherwise stored originals can return 404 even for their owner. This step applies to S3, MinIO, AIStor and S4.
+Use compatible Cashbot API, gateway and worker images. Stop older writers, run the
+normal database upgrade, then deploy compatible writers before resuming ingestion.
+The upgrade builds a historical-source index once. It reads old task metadata in
+small batches and does not access object storage. Budget upgrade time for that work.
+See the [backend upgrade guide](https://github.com/EyeLevel-ai/cashbot-go/blob/master/docs/agents/database-upgrades.md#historical-source-lookup)
+for the schema, rollout and rollback requirements.
 
-Use a compatible Cashbot release with the operator command's `-backfill` modes. From that source checkout, build it with `go build -o /tmp/groundx-file-access-repair ./cmd/fileaccessrepair`. Run the command from a private directory containing this installation's `config.yaml`, after its approved schema migration and with its database and Redis reachable:
+An older original without a binding migrates on its first read. The service looks
+up its exact indexed reference, verifies the saved file and current document owner,
+then saves the binding. It checks current references first, then historical ones.
+Downloads do not scan the database or storage. No separate binding backfill command
+is required. Deleted documents and detected conflicts remain unavailable; legacy
+shared-source repair is a separate operator procedure.
 
-```sh
-/tmp/groundx-file-access-repair -apply -backfill sources -limit 100
-/tmp/groundx-file-access-repair -apply -backfill history -limit 100
-```
-
-Each invocation handles one batch. Repeat `sources` with `-after-id` set to the returned `NextID`; repeat `history` with `-after-task-id` set to `NextTaskID`. Save all reports and continue both passes until `Complete` is true. Resolve every conflict, unresolved record and unbound source alias, then rerun both passes from the beginning. Completion alone does not prove that every original is safe to serve.
-
-Keep legacy file routing during preparation. Active writers must use compatible binding hooks. If they still run with protection disabled, pause ingestion during the final binding passes and routing switch. Backfill writes ownership bindings and can quarantine shared claims; it does not copy objects, change policies or enable protection. Shared-source repairs follow the [Cashbot operator guide](https://github.com/EyeLevel-ai/cashbot-go/blob/master/docs/agents/file-access-repair.md).
-
-Verify older original and X-Ray downloads before cutover, including protected owner success and anonymous/wrong-owner denial. The API release must resolve saved `http://` references against the configured HTTPS storage namespace. Callers must still use HTTPS before sending a key. Keep storage private and retain bindings on rollback.
+Verify older original and X-Ray downloads before cutover, including protected owner
+success and anonymous/wrong-owner denial. The API release must resolve saved HTTP
+references under configured HTTPS roots. Callers must use HTTPS before sending a
+key. Keep native storage private and retain indexes and bindings on rollback.
+These database and ownership rules apply to S3, MinIO, AIStor and S4; each backend
+still requires its own deployment acceptance tests.
 
 ## Activation and rollback gates
 
