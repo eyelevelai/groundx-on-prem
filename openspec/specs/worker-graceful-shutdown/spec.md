@@ -20,12 +20,13 @@ The chart SHALL render the container command of `ranker-inference` and `summary-
 - **THEN** the extract and layout Celery workers render the same `exec supervisord` command as the previous chart
 - **AND** the `layout-inference` command is unchanged from the previous chart
 
-### Requirement: Ranker, summary and workspace worker pods default to a 900-second grace period
-The chart SHALL render `terminationGracePeriodSeconds: 900` on `ranker-inference`, `summary-inference` and the five workspace worker Deployments when no grace period is set, and SHALL render the value of `replicas.gracePeriod` of that service on its Deployment when it is set. The default SHALL NOT depend on the service name or map prefix of a Deployment rendered by `celery.yaml` or `inference.yaml`.
+### Requirement: Ranker and workspace worker pods default to a 900-second grace period, summary to 300 seconds
+The chart SHALL render `terminationGracePeriodSeconds: 900` on `ranker-inference` and the five workspace worker Deployments and `terminationGracePeriodSeconds: 300` on `summary-inference` when no grace period is set, and SHALL render the value of `replicas.gracePeriod` of that service on its Deployment when it is set. The summary default is shorter because the real summary worker does not exit after its warm shutdown and is killed at its stop wait on every pod stop. Celery's solo pool, which summary runs, enforces no task time limit, so a summary task still running at the stop wait is killed; the summary API stops waiting for a result after 240 seconds, so such a task no longer has a caller. The default SHALL NOT depend on the service name or map prefix of a Deployment rendered by `celery.yaml` or `inference.yaml`.
 
 #### Scenario: Default grace period (polarity: finalize success)
 - **WHEN** the chart is rendered with `workspace.enabled=true` and no `gracePeriod`
-- **THEN** `ranker-inference`, `summary-inference` and each of the five workspace worker Deployments render `terminationGracePeriodSeconds: 900`
+- **THEN** `ranker-inference` and each of the five workspace worker Deployments render `terminationGracePeriodSeconds: 900`
+- **AND** `summary-inference` renders `terminationGracePeriodSeconds: 300`
 
 #### Scenario: Override applies to one service only (polarity: finalize success)
 - **WHEN** `ranker.inference.replicas.gracePeriod` is 120, `summary.inference.replicas.gracePeriod` is 150 and `workspace.provision.replicas.gracePeriod` is 120
@@ -37,16 +38,17 @@ The chart SHALL render `terminationGracePeriodSeconds: 900` on `ranker-inference
 - **THEN** the extract and layout Deployments render the same `terminationGracePeriodSeconds` as the previous chart
 
 ### Requirement: Supervisor stop wait follows the pod grace period
-The ranker, summary and workspace Supervisor configs SHALL set `stopwaitsecs` to `max(1, gracePeriod - 30)` on every `celery_worker_N` program, where `gracePeriod` is the `replicas.gracePeriod` of the service that owns the config map and defaults to 900 when unset. The `celery_monitor` and `celery_health` programs SHALL NOT gain `stopwaitsecs`.
+The ranker, summary and workspace Supervisor configs SHALL set `stopwaitsecs` to `max(1, gracePeriod - 30)` on every `celery_worker_N` program, where `gracePeriod` is the `replicas.gracePeriod` of the service that owns the config map and defaults to that service's default grace period when unset (900, or 300 for summary). The `celery_monitor` and `celery_health` programs SHALL NOT gain `stopwaitsecs`.
 
 #### Scenario: Default stop wait (polarity: finalize success)
 - **WHEN** the chart is rendered with `workspace.enabled=true` and no `gracePeriod`
-- **THEN** every `celery_worker_N` program in the ranker, summary and five workspace Supervisor config maps has `stopwaitsecs=870`
+- **THEN** every `celery_worker_N` program in the ranker and five workspace Supervisor config maps has `stopwaitsecs=870`
+- **AND** every `celery_worker_N` program in the summary Supervisor config map has `stopwaitsecs=270`
 
 #### Scenario: Stop wait follows the service's own override (polarity: finalize success)
 - **WHEN** `ranker.inference.replicas.gracePeriod` is 120 and `workspace.provision.replicas.gracePeriod` is 120
 - **THEN** the ranker and `workspace-provision` Supervisor configs have `stopwaitsecs=90`
-- **AND** the summary and `workspace-command` Supervisor configs still have `stopwaitsecs=870`
+- **AND** the summary Supervisor config still has `stopwaitsecs=270` and `workspace-command` still has `stopwaitsecs=870`
 
 #### Scenario: Stop wait floors at one second (polarity: finalize success)
 - **WHEN** `summary.inference.replicas.gracePeriod` is 20
@@ -122,7 +124,7 @@ Before the change is released, shutdown behavior SHALL be proven in two runs, ea
 - **WHEN** the summary pod receives SIGTERM while a task runs
 - **THEN** it takes no new task and finishes the running task before the pod exits
 - **AND** a failure here stops the change for a plan amendment on the summary app's own SIGTERM handler, not a chart workaround
-- **AND** on the real summary image the worker may then be killed at its stop wait, after the running task has finished, because its vLLM engine process keeps it alive; the pod still exits within its grace period
+- **AND** on the real summary image the worker may then be killed at its stop wait, after the running task has finished, because it does not exit after its warm shutdown; the pod still exits within its grace period
 
 #### Scenario: The previous chart fails the same test (polarity: reject before state)
 - **WHEN** the local-cluster test runs against the chart before this change
