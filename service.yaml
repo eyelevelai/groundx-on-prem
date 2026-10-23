@@ -12,7 +12,7 @@ stack:
   language: helm                       # Helm 3.8+ (Go templating) + Bash operator CLI + legacy Terraform
   k8s_targets: [eks, aks, gke, openshift, minikube]
   deploys_runtimes: [python-celery-gunicorn, go, vllm-gpu]
-  backing_services: [redis, mysql-percona, minio-s3, opensearch, kafka-strimzi-sqs, neo4j-legacy, prometheus-grafana]
+  backing_services: [redis, mysql-percona, aistor-s3-s4, opensearch, kafka-strimzi-sqs, neo4j-legacy, prometheus-grafana]
 
 entrypoints:
   model: helm-chart-plus-operator-cli
@@ -43,7 +43,7 @@ dependencies:
     - { name: openai, kind: http-api, auth: api-key, note: "optional external LLM (default is in-cluster vLLM)" }
     - { name: azure-openai, kind: http-api, auth: api-key, note: optional }
     - { name: google-sheets, kind: http-api, auth: gcp-service-account, note: "extract.save optional output sink" }
-    - { name: install-time-helm-repos, kind: object-store, note: "nvidia/percona/minio/strimzi/opensearch/prometheus/neo4j — dependency charts" }
+    - { name: install-time-helm-repos, kind: object-store, note: "nvidia/percona/aistor/strimzi/opensearch/prometheus/neo4j — dependency charts; S4 chart from its git tag" }
 
 generates: []
 
@@ -69,7 +69,7 @@ agent_boundaries:
 
 quality_gates:
   - "helm unittest src/groundx (snapshot tests — the CI gate)"
-  - "helm template src/groundx -f values/minikube/values.yaml (render check)"
+  - "helm template src/groundx -f values/minikube/values.yaml -f tests/files/values.search-credentials.yaml (render check)"
 
 conversion:
   status: onboarded
@@ -82,6 +82,6 @@ conversion:
     - "PRIVILEGED: bin/operator can DESTROY Helm releases incl. stateful stores (db/file/search); bin/environment can create/destroy AWS VPCs+EKS via terraform --auto-approve; build.sh has publish rights to the public chart bucket"
     - "helm/ <-> src/groundx duplication has NO regen script — manual sync required. Two drift checks exist: verify_mirrors() in .build/bin/verify-storage-contract.py byte-compares the full templates tree and fails the gate on any mismatch; the five API-pod probe-timing fields (FRA-145) are separately drift-guarded by validate-helm.sh's rendered-output comparison. Writing the regen script remains a good early-win conversion target."
     - "upload.groundx.ai model-weight download is hardcoded + air-gap blocker; wget|tar supply-chain surface"
-    - "plaintext secret defaults in example values (OpenSearch pw, minio123) — footgun if copied to prod"
+    - "plaintext secret defaults in example values (OpenSearch pw; minio123 in the Chainguard sample values) — footgun if copied to prod"
     - "groundx.extract config binding is unschematized — image field rename silently breaks rendering"
     - "Neo4j (graph) wired in legacy bin/terraform but absent from current chart — confirm dead"

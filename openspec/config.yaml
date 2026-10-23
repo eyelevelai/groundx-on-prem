@@ -18,10 +18,10 @@ workflows:
   - verify
 
 context: |
-  - IDENTITY: groundx-on-prem. Role: infra. Language: Helm (+ Bash operator CLI + Terraform, active/supported for existing AWS EKS deployments -- not used for new installs). Chart version: 0.2.7 (src/groundx/Chart.yaml; the helm/ published mirror currently lags at 0.2.6). Privileged: true (Tier 3 explicit authorization required for any destructive/deploy/publish operation).
+  - IDENTITY: groundx-on-prem. Role: infra. Language: Helm (+ Bash operator CLI + Terraform, active/supported for existing AWS EKS deployments -- not used for new installs). Chart version: read `version` in src/groundx/Chart.yaml. Privileged: true (Tier 3 explicit authorization required for any destructive/deploy/publish operation).
   - PURPOSE: Packages the commercial GroundX RAG platform (document ingestion + hybrid text/vector search + re-ranking + LLM summarization) as a Kubernetes deployment for self-hosted/air-gapped environments. Deploys pre-built private container images; no app source code lives here.
   - K8S TARGETS: eks, aks, gke, openshift, minikube (selected via cluster.type values key).
-  - BACKING SERVICES DEPLOYED (each can be swapped via existing:{} + serviceType): Redis (cache), MySQL/Percona XtraDB (db), MinIO/S3 (file), OpenSearch (search), Kafka/Strimzi or SQS (stream). Optional: Neo4j (legacy only, absent from current Helm path), Prometheus/Grafana (monitoring).
+  - BACKING SERVICES DEPLOYED (each can be swapped via existing:{} + serviceType): Redis (cache), MySQL/Percona XtraDB (db), MinIO AIStor, AWS S3, or S4 (file), OpenSearch (search), Kafka/Strimzi or SQS (stream). Optional: Neo4j (legacy only, absent from current Helm path), Prometheus/Grafana (monitoring).
   - APP RUNTIMES DEPLOYED: Python (Gunicorn + Celery + supervisord), Go, GPU inference (vLLM). Not authored here — shipped as pre-built private images (public.ecr.aws/c9r4x6y5 default; overridable via admin.imageRepository).
   
   - AGENT BOUNDARY — READ THIS BEFORE ANY EDIT:
@@ -53,7 +53,7 @@ context: |
     - OpenAI / Azure OpenAI: optional external LLM for extract.agent (off by default; default is in-cluster vLLM).
     - Google Sheets / Drive: optional extract.save sink (requires GCP service-account JSON secret, gcpCredentials key).
     - AWS S3 / SQS / RDS / ElastiCache: configurable swap-outs for file/stream/db/cache backing services.
-    - Install-time Helm repos: nvidia (ngc), percona, minio, strimzi (quay), opensearch, prometheus-community, neo4j.
+    - Install-time Helm repos: nvidia (ngc), percona, MinIO AIStor (helm.min.io), strimzi (quay), opensearch, prometheus-community, neo4j. The S4 chart installs from its git tag.
   
   - CROSS-REPO COUPLING: NO in-tree code dependency on any other workspace repo (verified). Soft reference-only edges:
     - groundx-python: referenced in README examples; plus a soft code-binding via generated extract-config-py.yaml (see UNSCHEMATIZED CONTRACT above). Dependency-graph edge: reference-only, outbound, unschematized.
@@ -67,7 +67,7 @@ context: |
       fails without it), and this repo's other chart contract verifiers. This IS what
       .github/workflows/helm-tests.yml runs; prefer it over hand-assembling the steps below.
     - helm unittest src/groundx (snapshot tests — the CI gate, enforced in helm-tests.yml)
-    - helm template src/groundx -f values/minikube/values.yaml (render check)
+    - helm template src/groundx -f values/minikube/values.yaml -f tests/files/values.search-credentials.yaml (render check; the fixture supplies explicit test search credentials)
     - helm lint (declared in repos.yml run.lint)
     - verify_mirrors() in .build/bin/verify-storage-contract.py enforces the full templates/ tree on every gate run (drift IS checked). The remaining gap is the absence of a regen script — nothing auto-syncs helm/ from src/groundx/, so a human still mirrors edits by hand.
     - README.md is in the gate's scope: verify_no_stale_strings() in .build/bin/verify-storage-contract.py scans it, validate-helm.sh greps it for retired workspace wording, and `git diff --check` checks whitespace in its uncommitted edits. A README-only change still gates on validate-helm.sh.
@@ -105,6 +105,35 @@ context: |
       `.build/bin/validate-helm.sh`. This is the established pattern for a new chart-level
       correctness check — prefer it over embedding check logic inline in the shell script or adding
       a parallel bash test harness.
+  - CONVENTIONS DISCOVERED DURING GX-88 (store sample values and third-party chart checks):
+    - Backing-store sample values live in src/groundx/values/<store>/ and helm/values/<store>/ and
+      must be byte-identical. verify_mirrors() covers only templates/ and the storageclass prereqs,
+      so a task check compares other mirrored values files with `cmp`.
+    - A check that renders a third-party chart (operators, object stores) pulls the pinned chart
+      version into a `mktemp -d` directory with HELM_CACHE_HOME and HELM_REPOSITORY_CONFIG pointed
+      inside it, reads named fields with `yq`, and never prints the render (renders can carry
+      credentials).
+    - CI pins helm v3.19.0; local checks use GX_ON_PREM_HELM when PATH helm is another version.
+      validate-helm.sh calls bare `helm` and `python`, so a check that runs it puts both on a
+      temporary PATH directory (helm v3.19.0, python3) and proves the interpreter runs first.
+    - groundx-studio-harness scripts/scans/scan-on-prem.mjs check 9 compares a README install code
+      block with the harness doc, locating it by the first match of a marker line. Keep each
+      mirrored install block's marker line unique in README.md.
+    - The helm-unittest suites pin chart.appVersion 0.1.0, so a Chart.yaml version bump alone does
+      not change snapshots.
+    - values.schema.json rejects an out-of-range extract.agent.imageTransport, maxRequestImages, or
+      jpegQualities before any template runs, so a failedTemplate test of
+      groundx.extract.agent.validateImageSettings can only reach the minLongEdgePx/targetLongEdgePx
+      check. Helm stops at the first failing template, which for extract agent settings is
+      templates/resources/extract-supervisord-conf.yaml; assert there.
+    - A task check that runs one helm-unittest suite copies src/groundx to a mktemp -d directory and
+      runs `helm unittest -f tests/<suite>.yaml` on the copy, never in the worktree.
+
+  - CONVENTIONS DISCOVERED DURING GX-75 (helm-unittest suites and the credentials Secret):
+    - helm-unittest 1.1.2: a suite-level `templates:` key stops the chart's `_helpers` templates from resolving ("no template groundx.golang.services"); list `templates:` on each test instead.
+    - A `documentSelector` on `metadata.name` for a Go service matches both its Service and its Deployment ("multiple indexes found"); select on `spec.template.metadata.labels.app`.
+    - A filtered `helm unittest -f <suite>` run of a suite that holds snapshots rewrote that suite's `.snap` without `-u` when some tests errored (the Google OCR fixture was missing). Put new non-snapshot cases in their own suite, and restore any `.snap` a run rewrote with `git checkout -- <file>`.
+    - Extra Secrets reach the Golang pods as `envFrom` only through `cluster.secrets`, which has no default; the sample credentials Secret (`src/groundx/prereqs/secret/values.yaml`, mirrored byte-for-byte in `helm/prereqs/secret/values.yaml` outside the templates drift check) is opt-in. Keep search keys in that sample empty: a non-empty sample value would become an unvalidated working credential.
 
   - KNOWN GAPS / OPEN QUESTIONS:
     - helm/ <-> src/groundx duplication: no regen script (manual sync required); a drift check DOES exist (verify_mirrors() in .build/bin/verify-storage-contract.py fails the gate on mismatch) — the remaining gap is only the absence of a regen script, not the absence of a check.
@@ -112,7 +141,7 @@ context: |
     - licenseKey phone-home behavior unknown (validation logic lives in opaque container images).
     - Neo4j (graph) service wired in legacy bin/terraform but absent from current chart — likely legacy-only, unconfirmed.
     - extract subsystem groundx.extract constructor signatures live in the image, not this repo — silent breaking changes possible.
-    - Plaintext secret defaults in example values (OpenSearch password, minio123) — footgun if copied to prod.
+    - Plaintext secret defaults in example values (OpenSearch password; minio123 in the Chainguard sample values/chainguard/values.yaml) — footgun if copied to prod.
 
 rules:
   proposal:

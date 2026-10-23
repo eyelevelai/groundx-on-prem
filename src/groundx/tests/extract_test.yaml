@@ -3,6 +3,11 @@ chart:
   appVersion: 0.1.0
   version: 0.1.0
 
+set:
+  search:
+    password: fixture-app-credential
+    privilegedPassword: fixture-admin-credential
+
 tests:
   - it: "extract-agent defaults fit one worker on a two-vCPU node"
     templates:
@@ -158,6 +163,36 @@ tests:
       - matchRegex:
           path: stringData["config.py"]
           pattern: 'secret="account-secret"'
+  - it: "s4 storage type reaches cashbot-go, layout, and extract unchanged"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/layout-config-py.yaml
+      - ../templates/resources/extract-config-py.yaml
+    set:
+      extract.enabled: true
+      file.existing.serviceType: s4
+      file.existing.url: http://s4.eyelevel.svc.cluster.local:7480
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: '(?m)^\s*service: s4$'
+        template: ../templates/resources/config-yaml.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadType="s4"'
+        template: ../templates/resources/layout-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadURL="http://s4\.eyelevel\.svc\.cluster\.local:7480/eyelevel/"'
+        template: ../templates/resources/layout-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'type="s4"'
+        template: ../templates/resources/extract-config-py.yaml
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'url="http://s4\.eyelevel\.svc\.cluster\.local:7480/eyelevel/"'
+        template: ../templates/resources/extract-config-py.yaml
   - it: "empty extract credentials preserve platform credential injection"
     templates:
       - ../templates/resources/extract-config-py.yaml
@@ -522,7 +557,41 @@ tests:
       - matchRegex:
           path: stringData["config.py"]
           pattern: 'type="s3"'
-  - it: "bedrock extract config rejects non-S3 storage"
+  - it: "bedrock extract config renders with the default storage"
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.serviceType: bedrock
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'service="bedrock"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'type="minio"'
+  - it: "bedrock extract config renders with s4 storage"
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.agent.serviceType: bedrock
+      file.existing.serviceType: s4
+      file.existing.url: http://s4.eyelevel.svc.cluster.local:7480
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'service="bedrock"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'type="s4"'
+  - it: "bedrock extract config still rejects a minimum long edge above the target"
     templates:
       - ../templates/resources/extract-supervisord-conf.yaml
     values:
@@ -531,9 +600,11 @@ tests:
       extract.enabled: true
       extract.agent.enabled: true
       extract.agent.serviceType: bedrock
+      extract.agent.targetLongEdgePx: 899
+      extract.agent.minLongEdgePx: 900
     asserts:
       - failedTemplate:
-          errorMessage: "extract.agent.serviceType bedrock requires AWS S3 file storage"
+          errorMessage: "extract.agent.minLongEdgePx must be less than or equal to extract.agent.targetLongEdgePx"
   - it: "bedrock extract config may omit an endpoint without inheriting the local endpoint"
     templates:
       - ../templates/resources/extract-config-py.yaml

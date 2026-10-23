@@ -34,10 +34,15 @@
   - [MySQL](#mysql)
     - [Using an Existing MySQL Cluster](#using-an-existing-mysql-cluster)
     - [Deploying a Dedicated MySQL Cluster](#deploying-a-dedicated-mysql-cluster)
-  - [MinIO](#minio)
+  - [MinIO AIStor](#minio-aistor)
     - [Using an Existing MinIO Cluster](#using-an-existing-minio-cluster)
     - [Using AWS S3](#using-aws-s3)
-    - [Deploying a Dedicated MinIO Cluster](#deploying-a-dedicated-minio-cluster)
+    - [Using S4](#using-s4)
+    - [Deploying a Dedicated AIStor Object Store](#deploying-a-dedicated-aistor-object-store)
+    - [Object Keys That Start with a Slash](#object-keys-that-start-with-a-slash)
+    - [Upgrading an Existing MinIO Install to AIStor](#upgrading-an-existing-minio-install-to-aistor)
+    - [Restoring Community MinIO from the Pre-Upgrade Snapshot](#restoring-community-minio-from-the-pre-upgrade-snapshot)
+    - [Staying on Community MinIO](#staying-on-community-minio)
   - [OpenSearch](#opensearch)
     - [Using an Existing OpenSearch Cluster](#using-an-existing-opensearch-cluster)
     - [Deploying a Dedicated OpenSearch Cluster](#deploying-a-dedicated-opensearch-cluster)
@@ -492,33 +497,124 @@ helm install db-cluster \
   -f helm/values/percona/values.cluster.yaml
 ```
 
-### MinIO
+### MinIO AIStor
+
+GroundX stores files in one S3-compatible bucket (`file.bucketName`, default `eyelevel`). New installs use MinIO AIStor with your own license. S4 is a license-free option for small installs. Existing community MinIO tenants can [upgrade to AIStor](#upgrading-an-existing-minio-install-to-aistor) or [stay on community MinIO](#staying-on-community-minio).
 
 #### Using an Existing MinIO Cluster
 
-If you wish to use an existing MinIO cluster, you must configure the `file.existing` parameters in your `values.yaml`.
+If you wish to use an existing MinIO or AIStor cluster, you must configure the `file.existing` parameters in your `values.yaml`.
 
 #### Using AWS S3
 
 If you wish to use an existing AWS S3 bucket, you must configure the `file.existing` parameters in your `values.yaml` **and** set `file.serviceType` to `s3`.
 
-#### Deploying a Dedicated MinIO Cluster
+#### Using S4
 
-If you'd like to install MinIO to your cluster, use the following commands below:
+[S4](https://github.com/rh-aiservices-bu/s4) is an experimental, single-replica S3-compatible store for small installs, with no high availability. Use [AIStor](#deploying-a-dedicated-aistor-object-store) for production. S4 requires GroundX chart 0.2.8 or later with its default images; older images can send files to AWS S3 or fail extraction.
+
+These steps assume `fileAccess.enabled` is false, the chart default; with it on, the chart refuses `file.username` and `file.password`.
+
+Run commands from the repository root. Replace the four `REPLACE_WITH_...` credentials in `helm/values/s4/values.yaml`, then install:
 
 ```bash
-helm repo add minio-operator https://operator.min.io/
+git clone --depth 1 --branch v0.3.2 https://github.com/rh-aiservices-bu/s4 s4-v0.3.2
+
+helm install s4 \
+  s4-v0.3.2/charts/s4 \
+  -n eyelevel \
+  -f helm/values/s4/values.yaml
+```
+
+The values pin the image by digest, use a `ClusterIP` Service with OpenShift Route off, and set `fsGroup: 1001`. The data volume defaults to 10Gi; set `storage.data.size` for your data. Alternatively, set `s3.existingSecret` to a Secret containing `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `UI_USERNAME`, and `UI_PASSWORD`.
+
+Connect a new GroundX install with the same S4 credentials. S4 always uses `us-east-1`; leave `file.existing.region` unset.
+
+```yaml
+file:
+  username: <s4-access-key>
+  password: <s4-secret-key>
+  existing:
+    serviceType: s4
+    url: http://s4.eyelevel.svc.cluster.local:7480
+```
+
+S4 is amd64 only. Health checks cover the UI, not its S3 port. Buckets suit thousands to tens of thousands of objects. URL-encoded keys are limited to 246 bytes (single upload) or 210 bytes (multipart), including GroundX's path prefix. Large-file import and review refuse files over 5 GiB and need temporary pod disk of about twice each upload's size. Credentials are fixed at first volume initialization; concurrent write-once uploads can overwrite each other. See [S4 limits](docs/storage/s4.md#limits).
+
+To replace an existing store, follow [Migrating from MinIO or AIStor](docs/storage/s4.md#migrating-from-minio-or-aistor). Keep the original storage URL and object keys, or existing documents become unreadable. Stop uploads and wait until no documents are processing before copying; do not migrate if you cannot confirm this. The procedure applies only with `fileAccess.enabled: false` and grants anonymous object reads to anyone who can reach the store.
+
+#### Deploying a Dedicated AIStor Object Store
+
+If you'd like to install MinIO AIStor to your cluster, you need an AIStor license. GroundX does not ship one. The AIStor Free license covers a single server and allows commercial use but not redistribution; a store with more than one server needs a paid license ([AIStor Free agreement](https://www.min.io/legal/aistor-free-agreement)).
+
+These steps install the AIStor operator in namespace `aistor` and an object store named `minio-tenant` in `eyelevel`. With that name and TLS off, the store serves the hosts GroundX uses by default (`minio` and `minio-tenant-hl`), so GroundX needs no `file` settings other than the store's credentials. The chart versions are pinned to `aistor-operator` 6.0.0 and `aistor-objectstore` 1.1.0.
+
+These steps assume `fileAccess.enabled` is false, the chart default; with it on, the chart refuses `file.username` and `file.password`.
+
+Add the AIStor repository, store your license as Secret `minio-license` (key `minio.license`) in the operator's namespace, and install the operator:
+
+```bash
+helm repo add minio https://helm.min.io/
 helm repo update
 
-helm install minio-operator \
-  minio-operator/operator \
-  -n eyelevel \
-  -f helm/values/minio/values.operator.yaml
-helm install minio-cluster \
-  minio-operator/tenant \
-  -n eyelevel \
-  -f helm/values/minio/values.tenant.yaml
+kubectl create namespace aistor
+kubectl -n aistor create secret generic minio-license \
+  --from-file=minio.license=<path-to-your-license-file>
+
+helm install aistor-operator \
+  minio/aistor-operator \
+  --version 6.0.0 \
+  -n aistor \
+  -f helm/values/aistor/values.operator.yaml
 ```
+
+The operator values run the operators on the `eyelevel-cpu-only` nodes and turn off the operator's cluster-wide pod webhook and its automatic certificate approval.
+
+Choose the object store's root credentials and put them in Secret `minio-tenant-env-configuration`. The object store values read the credentials from this Secret, which keeps them out of the Helm release; the chart also refuses to create the Secret itself with the well-known pair `minio`/`minio123`.
+
+```bash
+cat > config.env <<'EOF'
+export MINIO_ROOT_USER=<access-key>
+export MINIO_ROOT_PASSWORD=<secret-key>
+EOF
+kubectl -n eyelevel create secret generic minio-tenant-env-configuration \
+  --from-file=config.env
+rm config.env
+```
+
+Set GroundX's `file.username` and `file.password` to the same two values. Then install the object store:
+
+```bash
+helm install minio-tenant \
+  minio/aistor-objectstore \
+  --version 1.1.0 \
+  -n eyelevel \
+  -f helm/values/aistor/values.objectstore.yaml
+```
+
+Confirm that the store started with the license in place:
+
+```bash
+kubectl -n eyelevel get objectstore minio-tenant
+```
+
+The install is complete when `STATE` reads `Initialized` and `HEALTH` reads `green`. Without the `minio-license` Secret, the operator does not create the object store: no store pods or services appear, the state reports that Secret `minio-license` was not found, and GroundX keeps waiting for storage. Create the Secret in `aistor` to let the store start.
+
+#### Object Keys That Start with a Slash
+
+Before upgrading to chart 0.2.8, a store connected as `serviceType: minio` that preserves leading `/` keys needs a [key rename](docs/storage/minio-migration.md#object-keys-that-start-with-a-slash). MinIO, AIStor, and AWS S3 (`serviceType: s3`) are unaffected. Stop uploads and wait for processing to finish before renaming. Rolling back to 0.2.7 requires reversing the rename; new 0.2.8 objects may remain unreadable.
+
+#### Upgrading an Existing MinIO Install to AIStor
+
+Follow [Upgrading an Existing MinIO Install to AIStor](docs/storage/minio-migration.md#upgrading-an-existing-minio-install-to-aistor). The upgrade is permanent. Stop uploads and wait for processing to finish, then snapshot the tenant disk before uninstalling anything. Helm 3.17 or later and an AIStor license are required; multiple servers need a paid license. GroundX's EKS Terraform does not install the snapshot controller or `VolumeSnapshotClass`.
+
+#### Restoring Community MinIO from the Pre-Upgrade Snapshot
+
+Follow [Restoring Community MinIO](docs/storage/minio-migration.md#restoring-community-minio-from-the-pre-upgrade-snapshot). The restore deletes the current volume claim, so confirm the snapshot is ready first. It loses all objects written after the snapshot, including AIStor-era writes. GroundX's database and search index are not restored; affected documents stay listed without their files and must be re-ingested.
+
+#### Staying on Community MinIO
+
+Community MinIO receives no fixes. Its default server image no longer downloads anonymously, so rescheduled pods may not start. Keep the running image in your own registry and [point the tenant at that copy](docs/storage/minio-migration.md#staying-on-community-minio).
 
 ### OpenSearch
 
@@ -528,14 +624,57 @@ If you wish to use an existing OpenSearch cluster, you must configure the `searc
 
 #### Deploying a Dedicated OpenSearch Cluster
 
-If you'd like to install OpenSearch to your cluster, use the following commands below:
+If you'd like to install OpenSearch to your cluster, first choose the OpenSearch admin password. It must be the same value you later provide to GroundX as `search.privilegedPassword` in your `values.yaml` or as `SEARCH_INIT_PASSWORD` in the cluster credentials Secret (the Secret route needs `groundx` and `process` images that read it; see the notes under Configuration). Supply it to OpenSearch through a Kubernetes Secret, so the password is not written into the OpenSearch StatefulSet pod spec where anyone who can read pods in the namespace could see it. Restrict permissions before each file exists, and create it in an editor rather than with a shell command so the password is not saved to your shell history:
+
+```bash
+umask 077
+```
+
+Create `opensearch-admin-secret.yaml` in an editor with this content, then confirm it is owner-only with `chmod 600 opensearch-admin-secret.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: opensearch-admin
+  namespace: eyelevel
+type: Opaque
+stringData:
+  OPENSEARCH_INITIAL_ADMIN_PASSWORD: "<opensearch-admin-password>"
+```
+
+Apply the Secret, then delete the local file:
+
+```bash
+kubectl apply -f opensearch-admin-secret.yaml
+rm opensearch-admin-secret.yaml
+```
+
+Create `opensearch-admin.values.yaml` with this content. It references the Secret instead of embedding the password, so this file holds no credential:
+
+```yaml
+extraEnvs:
+  - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: opensearch-admin
+        key: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+```
+
+Then install OpenSearch with both values files:
 
 ```bash
 helm repo add opensearch https://opensearch-project.github.io/helm-charts/
 helm repo update
 
-helm install opensearch opensearch/opensearch -n eyelevel -f helm/values/opensearch/values.yaml
+helm install opensearch opensearch/opensearch -n eyelevel -f helm/values/opensearch/values.yaml -f opensearch-admin.values.yaml
 ```
+
+Choose a password you have not published anywhere. The GroundX chart rejects a known published default for `search.password` or `search.privilegedPassword` and fails to render if you supply one, so an upgrade that silently keeps the old default (for example `helm upgrade --reuse-values`) will not deploy.
+
+OpenSearch requires `OPENSEARCH_INITIAL_ADMIN_PASSWORD` at every start, not only on first initialization. On an already-initialized data volume it is still read at boot, and a start without it exits with `No custom admin password found` (observed on image digest `sha256:8e95a30f…`). Keep `-f opensearch-admin.values.yaml` on every `helm upgrade opensearch …`, not just the first install, and pin the OpenSearch image to a digest so this stays reproducible. The value is consumed only to initialize an empty volume; changing it on an existing volume does not rotate the stored admin password (rotate with the backup route under Upgrading an Existing Install). The Secret must exist before OpenSearch starts, which the order above ensures.
+
+Rotating these passwords does not by itself secure OpenSearch for production: the documented install still trusts OpenSearch's demo TLS certificates, and the GroundX application user has broad privileges. For production, also replace the demo certificates with operator-supplied ones and restrict network access to OpenSearch.
 
 ### Kafka
 
@@ -596,13 +735,36 @@ admin.password
 cluster.pvClass # an existing storage class
 cluster.pvAccessMode # ReadWriteMany for shared filesystems, ReadWriteOnce for block/local storage
 cluster.type    # type of Kubernetes cluster
+search.password           # unless mode is ingest: the OpenSearch application user password (values or Secret key SEARCH_PASSWORD)
+search.privilegedPassword # unless mode is ingest: the OpenSearch admin password (values or Secret key SEARCH_INIT_PASSWORD)
 ```
+
+The chart has no default OpenSearch passwords. When `mode` is not `ingest`, set both: each search credential can be set through `values.yaml` (`search.password`, `search.privilegedPassword`) or through the cluster credentials Secret (`SEARCH_PASSWORD`, `SEARCH_INIT_PASSWORD` in `eyelevel-secret-credentials`), as the `MYSQL_*` keys do for `db`. The sample Secret in `src/groundx/prereqs/secret/values.yaml` carries both keys with empty values; fill them in. The Secret route requires `cluster.secrets` to list `eyelevel-secret-credentials`, and `groundx` and `process` images that read `SEARCH_PASSWORD` and `SEARCH_INIT_PASSWORD`. Both services log in to OpenSearch: the API (`groundx`) to search, and the indexing worker (`process`) to write documents to the index. Their default images are tagged with the chart's `appVersion`, and images up to 0.2.7 do not read these keys. Until the chart ships images that read them, either set both passwords in values, or set both `groundx.image` and `process.image` to images built from cashbot-go with this change (EyeLevel-ai/cashbot-go#1809). With an older `groundx` image the API has no search password and crash-loops; with an older `process` image the indexing worker cannot write to OpenSearch, so ingested documents fail. Pods read the Secret only when they start, so after changing either key, restart both services. Restart `groundx` first and wait for it, because it updates the `search.username` user to the new password at startup, then restart `process`: `kubectl rollout restart -n eyelevel deployment/groundx`, `kubectl rollout status -n eyelevel deployment/groundx`, then `kubectl rollout restart -n eyelevel deployment/process`. Passwords delivered through the Secret are not render-validated by the chart, because the published-default check sees values only. The Secret route applies to the direct-helm route; the Terraform operator still takes both passwords as values, required when `cluster.search` is `true` and not needed for an ingest-only install (`cluster.search = false`). In `mode: ingest` neither is used or rendered.
 
 **Note**: `admin.apiKey` and `admin.username` must be valid UUIDs. We provide a helper script to generate random UUIDs. You can run it using thefollowing command:
 
 ```bash
 bin/uuid
 ```
+
+#### Upgrading an Existing Install
+
+Earlier chart versions defaulted both OpenSearch passwords to a public value. An OpenSearch data volume created with them keeps its original admin password, because the seed value is only read on first initialization. Before upgrading:
+
+1. Set `search.privilegedPassword` (or `SEARCH_INIT_PASSWORD`, which needs the `groundx` and `process` images described under Configuration) to the admin password your OpenSearch currently uses, unless that is a published default. The chart rejects a published default supplied through values and will not render, so if your install still uses one, first rotate the OpenSearch admin password off it with the admin-password route in step 3, then set `search.privilegedPassword` to the new value. When you upgrade the OpenSearch release itself, keep `-f opensearch-admin.values.yaml` on the `helm upgrade opensearch` command: the image requires `OPENSEARCH_INITIAL_ADMIN_PASSWORD` at every start, and a restart without it fails with `No custom admin password found`.
+2. Set `search.password` (or `SEARCH_PASSWORD`) to the application user password your install currently uses, unless that is a published default. The chart rejects a published default supplied through values, so if your install still uses one, choose a new application password for the upgrade. Make sure `search.privilegedPassword` already holds the correct admin password (from step 1 or the step 3 rotation) before changing `search.password`, or the GroundX API crash-loops when it re-creates `search.username`; confirm with the login check in step 3.
+3. Rotate the credentials. The OpenSearch `admin` user is reserved, so the security REST API refuses to change it (it returns 403 "Resource 'admin' is reserved"). Use these routes instead:
+   - Application password: set a new `search.password` and upgrade, or change `SEARCH_PASSWORD` in the Secret and restart `groundx` and then `process` as described under Configuration. The GroundX API re-creates `search.username` with it, using the admin credential, when its login is rejected.
+   - Admin password: open a shell in the OpenSearch pod (for example `kubectl exec -it -n eyelevel opensearch-cluster-master-0 -- bash`) and run these steps. Start from a backup of the stored users, not the image's `internal_users.yml`, because uploading that file replaces the whole stored user list and would drop every user created through the REST API, including the GroundX application user, and break search.
+     1. Back up the stored security configuration: `plugins/opensearch-security/tools/securityadmin.sh -backup /tmp/security-backup -icl -nhnv -cacert config/root-ca.pem -cert config/kirk.pem -key config/kirk-key.pem`.
+     2. Run `plugins/opensearch-security/tools/hash.sh` without `-p` so it prompts for the password and keeps it out of shell history.
+     3. Put the printed hash as the `admin` hash in `/tmp/security-backup/internal_users.yml`.
+     4. Upload only the users: `plugins/opensearch-security/tools/securityadmin.sh -f /tmp/security-backup/internal_users.yml -t internalusers -icl -nhnv -cacert config/root-ca.pem -cert config/kirk.pem -key config/kirk-key.pem`.
+
+     The backup keeps the existing users, including the GroundX application user, so search keeps working. See the OpenSearch [securityadmin documentation](https://docs.opensearch.org/latest/security/configuration/security-admin/).
+   - Then set `search.privilegedPassword` to the new admin password and upgrade. Confirm the rotation from inside the pod with `curl -k -u admin https://localhost:9200/_plugins/_security/authinfo`, which prompts for the password: the new password must succeed and the old one must be rejected.
+
+If `search.privilegedPassword` does not match the real admin password, the GroundX API crash-loops with an unauthorized error when it has to create or update its OpenSearch user: on a first install, or after `search.password` changes. On an existing install the mismatch is otherwise silent, so run the check above. If you deploy a Terraform `search` object with `cluster.search = true`, `password` and `root_password` must be non-empty and not an angle-bracket placeholder; an ingest-only install (`cluster.search = false`) needs neither. The operator module now requires Terraform 1.9 or later.
 
 ### Persistent Storage
 

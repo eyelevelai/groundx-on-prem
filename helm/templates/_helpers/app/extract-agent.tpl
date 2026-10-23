@@ -270,10 +270,6 @@ GROUNDX_AGENT_API_KEY
 {{- if lt $maxRequestImages 1 -}}
   {{- fail "extract.agent.maxRequestImages must be positive" -}}
 {{- end -}}
-{{- $serviceType := include "groundx.extract.agent.serviceType" . -}}
-{{- if and (eq $serviceType "bedrock") (ne (include "groundx.extract.file.storageType" .) "s3") -}}
-  {{- fail "extract.agent.serviceType bedrock requires AWS S3 file storage" -}}
-{{- end -}}
 {{- range $quality := splitList "," (include "groundx.extract.agent.imageJpegQualities" .) -}}
   {{- $qualityInt := $quality | int -}}
   {{- if or (lt $qualityInt 1) (gt $qualityInt 95) -}}
