@@ -19,6 +19,7 @@
 {{- $fs := get $svcData "fileSync" | default false -}}
 {{- $ms := get $svcData "metrics" | default false -}}
 {{- $image := get $svcData "image" -}}
+{{- $initCmd := get $svcData "initCommand" | default "" -}}
 {{- $ips := include "groundx.imagePullSecrets" $ | fromYaml -}}
 {{- $ic := get $svcData "celery" | default "false" -}}
 {{- $lbls := get $svcData "labels" -}}
@@ -193,6 +194,48 @@ spec:
           volumeMounts:
             - name: model-volume
               mountPath: {{ $wd }}/hf_models_cache
+{{- end }}
+{{- if ne $initCmd "" }}
+        - name: init-layout
+          image: {{ $image | quote }}
+          imagePullPolicy: {{ $pull | quote }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+{{- with include "groundx.fileAccess.caEnv" $ }}
+{{ . | nindent 12 }}
+{{- end }}
+{{- if gt (len $scr) 0 }}
+          envFrom:
+{{- range $kk, $vv := $scr }}
+            - secretRef:
+                name: {{ $vv }}
+{{- end }}
+{{- end }}
+          workingDir: {{ $wd }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              export PYTHONPATH={{ $wd }}:$PYTHONPATH && exec {{ $initCmd | replace "/app" $wd }}
+{{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" $username "cfg" "container") }}
+{{ include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
+          volumeMounts:
+{{- with include "groundx.fileAccess.caMount" $ }}
+{{ . | nindent 12 }}
+{{- end }}
+            - name: config-models
+              mountPath: {{ $wd }}/config_models.py
+              subPath: config_models.py
+            - name: config-volume
+              mountPath: {{ $wd }}/config.py
+              subPath: config.py
+{{- if not (empty $pvc) }}
+            - name: model-volume
+              mountPath: {{ $wd }}/hf_models_cache
+{{- end }}
 {{- end }}
       containers:
         - name: {{ $svc | quote }}
