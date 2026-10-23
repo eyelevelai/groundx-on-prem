@@ -1,0 +1,159 @@
+suite: "search CA is operator supplied and mounted into Golang workloads"
+chart:
+  appVersion: 0.1.0
+  version: 0.1.0
+
+tests:
+  - it: fails the render when the in-cluster OpenSearch is used without a search CA secret
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      search.password: fixture-app-credential
+      search.privilegedPassword: fixture-admin-credential
+    asserts:
+      - failedTemplate:
+          errorPattern: 'search\.caSecretName'
+  - it: renders caFile in the search block when a search CA secret is set
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      search.password: fixture-app-credential
+      search.privilegedPassword: fixture-admin-credential
+      search.caSecretName: fixture-search-ca
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'search:\n\s+baseURL: [^\n]+\n\s+caFile: /var/run/groundx/search-ca/ca\.crt\n'
+  - it: omits caFile and does not require a CA when search.existing.url is set without one
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      search.password: fixture-app-credential
+      search.privilegedPassword: fixture-admin-credential
+      search.existing.url: https://search.test.invalid:9200
+    asserts:
+      - isKind:
+          of: Secret
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'caFile:'
+  - it: renders caFile for a private-CA search.existing
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      search.password: fixture-app-credential
+      search.privilegedPassword: fixture-admin-credential
+      search.existing.url: https://search.test.invalid:9200
+      search.caSecretName: fixture-search-ca
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'caFile: /var/run/groundx/search-ca/ca\.crt'
+  - it: ingest mode needs no search CA secret
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    set:
+      mode: ingest
+      search.password: ""
+      search.privilegedPassword: ""
+    asserts:
+      - isKind:
+          of: Secret
+  - it: mounts the search CA read-only into groundx
+    templates:
+      - ../templates/app/golang.yaml
+    set:
+      search.password: fixture-app-credential
+      search.privilegedPassword: fixture-admin-credential
+      search.caSecretName: fixture-search-ca
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: groundx
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: search-ca
+            secret:
+              secretName: fixture-search-ca
+              items:
+                - key: ca.crt
+                  path: ca.crt
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: search-ca
+            mountPath: /var/run/groundx/search-ca
+            readOnly: true
+  - it: mounts the search CA read-only into process
+    templates:
+      - ../templates/app/golang.yaml
+    set:
+      search.password: fixture-app-credential
+      search.privilegedPassword: fixture-admin-credential
+      search.caSecretName: fixture-search-ca
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: process
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: search-ca
+            secret:
+              secretName: fixture-search-ca
+              items:
+                - key: ca.crt
+                  path: ca.crt
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: search-ca
+            mountPath: /var/run/groundx/search-ca
+            readOnly: true
+  - it: mounts the search CA read-only into queue
+    templates:
+      - ../templates/app/golang.yaml
+    set:
+      search.password: fixture-app-credential
+      search.privilegedPassword: fixture-admin-credential
+      search.caSecretName: fixture-search-ca
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: queue
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: search-ca
+            secret:
+              secretName: fixture-search-ca
+              items:
+                - key: ca.crt
+                  path: ca.crt
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: search-ca
+            mountPath: /var/run/groundx/search-ca
+            readOnly: true
+  - it: mounts no search CA volume when none is set
+    templates:
+      - ../templates/app/golang.yaml
+    set:
+      search.password: fixture-app-credential
+      search.privilegedPassword: fixture-admin-credential
+      search.existing.url: https://search.test.invalid:9200
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: groundx
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: search-ca
+            secret:
+              secretName: fixture-search-ca
+              items:
+                - key: ca.crt
+                  path: ca.crt
