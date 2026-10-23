@@ -261,3 +261,10 @@ groundx 4.1.2 shipped on 2026-10-20 without GX-88. The single-PUT `S4Client` fir
 ## Amendment 2026-10-22
 
 internal-arcadia-agents now pins `groundx==4.1.4`, adopted from its main #209. 4.1.4 is 4.1.3 plus generated API types and carries the same single-PUT `S4Client`, so the S4 limits above are unchanged.
+
+
+## Documentation layout amendment (2026-10-22)
+
+Keep fresh AIStor and S4 installation and configuration in `README.md`. Move S4 limits, copy, handover, and cutback to `docs/storage/s4.md`; move slash-key repair, community MinIO upgrade, snapshot restore, and image retention to `docs/storage/minio-migration.md`. README headings remain as concise warnings and links, preserving existing anchors. All command blocks and operational preconditions remain intact. Test dates, observed downtime, and experiment outcomes move to `storage-documentation-evidence.md`.
+
+The MinIO file allowlist additionally includes both storage guides. Community install markers are permitted only in the existing-install migration and recovery guide, not in fresh-install instructions. No chart, image, deployment, or storage behavior changes. Verify command-block preservation, local links and anchors, warning retention, OpenSpec validity, and `git diff --check`. Harness references must link directly to the owning guides, while its pinned fresh-install block continues to match README.
