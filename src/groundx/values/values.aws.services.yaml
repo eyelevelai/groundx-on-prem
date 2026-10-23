@@ -57,7 +57,7 @@ stream:
   enabled: false
 
   # SQS queue visibility must be at least 10 minutes.
-  # Workers containing GX-63 use 5-minute upload/process/summary leases, renewed every minute.
+  # Upload/process/summary workers can shorten visibility to 5 minutes, renewed every minute.
   # Upload DLQs require maxReceiveCount >= 4.
   topics:
     preProcess:
