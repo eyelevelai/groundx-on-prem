@@ -69,7 +69,7 @@ agent_boundaries:
 
 quality_gates:
   - "helm unittest src/groundx (snapshot tests — the CI gate)"
-  - "helm template src/groundx -f values/minikube/values.yaml (render check)"
+  - "helm template src/groundx -f values/minikube/values.yaml -f tests/files/values.search-credentials.yaml (render check)"
 
 conversion:
   status: onboarded

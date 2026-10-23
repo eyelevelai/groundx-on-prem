@@ -162,9 +162,9 @@ Run from the repository root. No command below deploys or uploads files.
 
 ```sh
 .build/bin/validate-helm.sh
-helm lint src/groundx
-helm template local src/groundx -f src/groundx/values/minikube/values.yaml
-helm template local src/groundx -f src/groundx/tests/files/values.large-file.yaml
+helm lint src/groundx -f src/groundx/tests/files/values.search-credentials.yaml
+helm template local src/groundx -f src/groundx/tests/files/values.search-credentials.yaml -f src/groundx/values/minikube/values.yaml
+helm template local src/groundx -f src/groundx/tests/files/values.search-credentials.yaml -f src/groundx/tests/files/values.large-file.yaml
 ```
 
 The enabled fixture uses test-only image, limits and Secret names. The existing

@@ -4,6 +4,9 @@ chart:
   version: 0.1.0
 
 set:
+  search:
+    password: fixture-app-credential
+    privilegedPassword: fixture-admin-credential
   metrics:
     enabled: true
     serviceMonitor:
@@ -51,6 +54,9 @@ tests:
       - ../templates/app/metrics.yaml
     values:
       - ../values/values.existing.yaml
+    set:
+      search.password: mypass
+      search.privilegedPassword: admin
     asserts:
       - matchSnapshot: {}
   - it: "metadata: golang"
