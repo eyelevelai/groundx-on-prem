@@ -30,7 +30,7 @@ either onto an existing cluster via Helm, or end-to-end on AWS via the deprecate
 - **Bash** — operator CLI (`bin/`).
 - **Terraform** — legacy AWS/EKS provisioning (deprecated 2025-11-04; see §10).
 - **helm-unittest** — snapshot-based chart tests; run in GitHub Actions.
-- Backing services it can deploy or attach to: **Redis, MySQL (Percona XtraDB), MinIO/S3,
+- Backing services it can deploy or attach to: **Redis, MySQL (Percona XtraDB), MinIO AIStor/AWS S3/S4,
   OpenSearch, Kafka (Strimzi)/SQS**, optional **Neo4j (`graph`, legacy only)**, Prometheus/Grafana.
 - App pods run **Python (Gunicorn + Celery + supervisord)**, **Go**, and **GPU inference (vLLM)**.
 
@@ -94,7 +94,7 @@ CI trigger: every push/PR/release on all branches → `helm unittest src/groundx
 
 **Ingestion pipeline** (the central path; pods scale on pipeline throughput):
 ```
-upload (API) → file storage (MinIO/S3) + queue (Kafka/SQS)
+upload (API) → file storage (MinIO AIStor/S3/S4) + queue (Kafka/SQS)
   → pre-process (Celery) → process (Celery)
   → layout pipeline:  layout-api → layout-ocr (tesseract) → layout-inference (GPU vision model)
                       → layout-map → layout-correct → layout-save
@@ -107,7 +107,7 @@ upload (API) → file storage (MinIO/S3) + queue (Kafka/SQS)
 groundx (main API/LB)  → OpenSearch hybrid query → ranker-api → ranker-inference (GPU re-ranker)
                        → results
 ```
-**Where state lives:** MySQL (`db`, metadata), OpenSearch (`search`, vectors+text), MinIO/S3
+**Where state lives:** MySQL (`db`, metadata), OpenSearch (`search`, vectors+text), MinIO AIStor/S3/S4
 (`file`, source files + semantic objects), Redis (`cache`), Kafka/SQS (`stream`, pipeline queues).
 
 ## 7. Key abstractions to internalize
@@ -159,10 +159,10 @@ groundx (main API/LB)  → OpenSearch hybrid query → ranker-api → ranker-inf
 | **OpenAI** (`api.openai.com/v1`) | `summary.existing` / `engines.default` / `extract.agent` (`serviceType: openai\|openai-base64`) | Configurable; off by default (self-hosted GPU LLM is default) | `apiKey` | External **LLM summarization / extraction** instead of on-prem vLLM. |
 | **Azure OpenAI** (`*.openai.azure.com`) | same as above, `serviceType: azure` | Configurable | `apiKey` | Same as OpenAI, Azure-hosted. |
 | **Google Sheets / Drive** | `extract.save.driveId`, `extract.save.templateId`, `extract.save.gcpCredentials` | Configurable; off unless `extract.save` enabled + creds set | GCP service-account JSON (`gcpCredentials`) → secret | **`extract.save` pod can write extraction results to a Google Sheet.** Verified in Phase 3 (see §13). |
-| **AWS S3** (`*.s3.*.amazonaws.com`) | `file.existing` + `file.serviceType: s3` | Configurable | AWS creds / IRSA | Object storage backend (replaces MinIO). |
+| **AWS S3** (`*.s3.*.amazonaws.com`) | `file.existing` + `file.serviceType: s3` | Configurable | AWS creds / IRSA | Object storage backend (instead of MinIO AIStor or S4). |
 | **AWS SQS** (`sqs.*.amazonaws.com`) | `stream.existing`/`stream.topics` + `serviceType: sqs` | Configurable | AWS creds / IRSA | Pipeline queues (replaces Kafka). |
 | **AWS RDS / ElastiCache** (`*.rds`, `*.cache.amazonaws.com`) | `db.existing`, `cache.existing` | Configurable | user/pass | External MySQL / Redis. |
-| Helm repos: nvidia (ngc), percona, minio, strimzi (quay), opensearch, prometheus-community, neo4j; RedisLabs GitHub releases | README + values overlays | Hardcoded in docs/commands | none | **Install-time** dependency charts/operators. |
+| Helm repos: nvidia (ngc), percona, MinIO AIStor (`helm.min.io`), strimzi (quay), opensearch, prometheus-community, neo4j; S4 chart from its git tag; RedisLabs GitHub releases | README + values overlays | Hardcoded in docs/commands | none | **Install-time** dependency charts/operators. |
 | `eyelevel.ai`, `dashboard.eyelevel.ai/xray`, `documentation.groundx.ai`, YouTube | README only | n/a | n/a | **Docs/marketing only** — no runtime call. |
 
 **Distinguishing the GroundX endpoints touched here:**
@@ -188,8 +188,8 @@ This repo's tooling holds **broad cluster- and cloud-control authority**:
   `apiregistration.k8s.io`, `external.metrics.k8s.io`), and a **custom APIService/metrics server**.
 - Init containers run **arbitrary `wget | tar` from `upload.groundx.ai`** with shell — supply-chain
   surface for the model weights.
-- Secrets in plaintext defaults in example values (OpenSearch `password`, MinIO `minio123`) — example
-  only, but a footgun if copied to prod.
+- Secrets in plaintext defaults in example values (OpenSearch `password`; `minio123` in the Chainguard
+  sample `values/chainguard/values.yaml`) — example only, but a footgun if copied to prod.
 
 ## 11. (b) CROSS-REPO COUPLING
 
