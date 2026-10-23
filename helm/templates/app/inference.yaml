@@ -80,7 +80,7 @@ spec:
 {{ toYaml $anns | nindent 8 }}
 {{- end }}
     spec:
-      terminationGracePeriodSeconds: {{ dig "gracePeriod" 900 $rp }}
+      terminationGracePeriodSeconds: {{ dig "gracePeriod" (get $svcData "defaultGracePeriod" | default 900) $rp }}
 {{- if $rt }}
       runtimeClassName: {{ $rt }}
 {{- end }}

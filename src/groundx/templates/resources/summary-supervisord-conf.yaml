@@ -5,7 +5,7 @@
 {{- $svc := include "groundx.summary.serviceName" . -}}
 {{- $workers := int (include "groundx.summary.inference.workers" .) -}}
 {{- $replicas := include "groundx.summary.inference.replicas" . | fromYaml | default dict -}}
-{{- $gracePeriod := int (dig "gracePeriod" 900 $replicas) -}}
+{{- $gracePeriod := int (dig "gracePeriod" 300 $replicas) -}}
 {{- $stopWaitSecs := int (max 1 (sub $gracePeriod 30)) -}}
 apiVersion: v1
 kind: ConfigMap

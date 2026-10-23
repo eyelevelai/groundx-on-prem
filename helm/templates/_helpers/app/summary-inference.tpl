@@ -278,6 +278,7 @@ true
 {{- $cfg := dict
   "baseName"       ($svc)
   "cfg"            (printf "%s-config-py-map" $svc)
+  "defaultGracePeriod" (300)
   "execOpts"       ("exec")
   "image"          (include "groundx.summary.inference.image" .)
   "mapPrefix"      ("summary")
