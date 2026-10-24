@@ -6,7 +6,8 @@ The following `values.yaml` files have been provided with default configurations
 
 | Folder Name                 | Description                                                                                                                              |
 |-----------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| `minio` | MinIO operator and tenant configurations that can be used to create a MinIO cluster |
+| `aistor` | MinIO AIStor operator and object store configurations that can be used to create an AIStor object store, plus an example for upgrading a community MinIO tenant |
+| `s4` | S4 configuration that can be used to create an S4 store |
 | `nvidia` | NVIDIA GPU operator configurations |
 | `opensearch` | OpenSearch operator and cluster configurations that can be used to create an OpenSearch cluster |
 | `percona` | Percona operator and cluster configuration that can be used to create a MySQL cluster |

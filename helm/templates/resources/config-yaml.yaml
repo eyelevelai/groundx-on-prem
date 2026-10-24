@@ -73,6 +73,8 @@
 {{- $integration := .Values.integration | default dict -}}
 {{- $captureAccounts := get $integration "extractionCaptureAccounts" | default list -}}
 {{- $captureDomains := get $integration "extractionCaptureDomains" | default list -}}
+{{- $_ := include "groundx.search.password" . -}}
+{{- $_ := include "groundx.search.privilegedPassword" . -}}
 {{- if gt (len $svcs) 0 }}
 apiVersion: v1
 kind: Secret
@@ -150,7 +152,9 @@ stringData:
             - {{ . }}
           {{- end }}
           username: {{ include "groundx.search.username" . | quote }}
+          {{- if ne (include "groundx.search.password" .) "" }}
           password: {{ include "groundx.search.password" . | quote }}
+          {{- end }}
       extract:
         client:
           {{- if ne (include "groundx.admin.username" .) "" }}
@@ -248,7 +252,9 @@ stringData:
         {{- end }}
       {{- end }}
       search:
+        {{- if ne (include "groundx.search.privilegedPassword" .) "" }}
         password: {{ include "groundx.search.privilegedPassword" . | quote }}
+        {{- end }}
         searchModel: all_access
         username: {{ include "groundx.search.privilegedUsername" . | quote }}
 
@@ -632,7 +638,15 @@ stringData:
     {{- include "groundx.largeFileDeliver.config" . | nindent 4 }}
     {{- end }}
 
+    {{- if eq (include "groundx.postProcess.create" .) "true" }}
+    {{- include "groundx.postProcess.config" . | nindent 4 }}
+    {{- end }}
+
     queues:
+      {{- if eq (include "groundx.postProcess.create" .) "true" }}
+      filePostProcess:
+        {{- include "groundx.stream.topic.postProcess" . | nindent 8 }}
+      {{- end }}
       filePreProcess:
         {{- $ppq | toYaml | nindent 8 }}
       fileProcess:
@@ -679,23 +693,38 @@ stringData:
       port: {{ include "groundx.summaryClient.containerPort" . }}
       serviceName: {{ include "groundx.summaryClient.serviceName" . }}
 
+    {{- if eq (include "groundx.fileAccess.create" .) "true" }}
+{{ include "groundx.fileAccess.config" . | indent 4 }}
+    {{- end }}
+
     upload:
+      {{- if eq (include "groundx.fileAccess.create" .) "true" }}
+      storageEndpoint: {{ .Values.fileAccess.storageEndpoint | quote }}
+      signingEndpoint: {{ .Values.fileAccess.signingEndpoint | quote }}
+      {{- else if .Values.file.signingEndpoint }}
+      signingEndpoint: {{ .Values.file.signingEndpoint | quote }}
+      {{- end }}
+      {{- if eq (include "groundx.fileAccess.create" .) "true" }}
+      baseDomain: {{ (urlParse .Values.fileAccess.publicUrl).host | quote }}
+      baseUrl: {{ trimSuffix "/" .Values.fileAccess.publicUrl | quote }}
+      {{- else }}
       baseDomain: {{ get $fs "baseDomain" }}
       baseUrl: {{ printf "%s://%s" (get $fs "scheme") (get $fs "baseDomain") }}
+      {{- end }}
       bucket: {{ get $fs "bucketName" }}
       bucketUrl: {{ printf "%s://%s" (get $fs "bucketScheme") (get $fs "bucketDomain") }}
-      {{- if and (hasKey $fs "username") (ne (get $fs "username") "") }}
+      {{- if and (eq (include "groundx.fileAccess.create" .) "false") (hasKey $fs "username") (ne (get $fs "username") "") }}
       id: {{ get $fs "username" | quote }}
       {{- end }}
       {{- if and (hasKey $fs "region") (ne (get $fs "region") "") }}
       region: {{ get $fs "region" }}
       {{- end }}
-      {{- if and (hasKey $fs "password") (ne (get $fs "password") "") }}
+      {{- if and (eq (include "groundx.fileAccess.create" .) "false") (hasKey $fs "password") (ne (get $fs "password") "") }}
       secret: {{ get $fs "password" | quote }}
       {{- end }}
       service: {{ get $fs "storageType" }}
       ssl: {{ get $fs "ssl" }}
-      {{- if and (hasKey $fs "token") (ne (get $fs "token") "") }}
+      {{- if and (eq (include "groundx.fileAccess.create" .) "false") (hasKey $fs "token") (ne (get $fs "token") "") }}
       token: {{ get $fs "token" }}
       {{- end }}
 

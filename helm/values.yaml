@@ -60,6 +60,8 @@ file:
   enabled: true
 
   bucketName: eyelevel
+  # Optional native origin reachable by clients receiving upload URLs.
+  signingEndpoint: ""
 
   # must set username/password explicitly
   # or via AWS or MinIO env variables
@@ -71,7 +73,7 @@ file:
 
   # set to use existing minio file storage
   existing: {}
-    # serviceType: minio OR s3
+    # serviceType: minio, s3 OR s4
     # url: https://minio.mycorp.net
 
     # if s3, must set region explicitly
@@ -81,6 +83,33 @@ file:
 
     # optional
     # port: 9000
+
+# Requires compatible FileAccess, API, and worker images plus operator-verified private origins.
+fileAccess:
+  enabled: false
+  frontProxyTLSVerified: false
+  originsPrivate: false
+  replicas: 2
+  image: {}
+  publicUrl: ""
+  trustedOrigins: []
+  storageEndpoint: ""
+  signingEndpoint: ""
+  storageCredentialsSecretName: ""
+  caSecretName: ""
+  tlsSecretName: ""
+  policyCacheTtlSeconds: 600
+  mappingCacheTtlSeconds: 3600
+  lookupTimeout: 5s
+  maxLookupConcurrency: 16
+  maxPresentationBytes: 67108864
+  maxConcurrentPresentations: 2
+  resources:
+    requests:
+      cpu: 200m
+      memory: 2Gi
+  ingress:
+    enabled: false
 
 metrics:
   enabled: false
@@ -100,9 +129,10 @@ search:
 
   indexName: prod-1
   username: eyelevel
-  password: R0otb_*t!kazs
+  password: ""
   privilegedUsername: admin
-  privilegedPassword: R0otb_*t!kazs
+  privilegedPassword: ""
+  bannedPasswordHashes: []
 
   # set to use existing opensearch
   existing: {}
@@ -149,6 +179,8 @@ summary:
     # specifies the amount of GPU memory to use, from 0 - 1.0
     deviceUtilize: 0.48
 
+    # pod termination grace period in seconds, default 300; set replicas.gracePeriod to override
+    # (Supervisor waits gracePeriod - 30 seconds for each worker to finish, minimum 1)
     replicas:
       desired: 2
       max: 32
@@ -341,6 +373,12 @@ process:
       cpu: 200m
       memory: 256Mi
 
+postProcess:
+  enabled: false
+  retryEnabled: false
+  disruptionBudget:
+    enabled: false
+
 largeFileDeliver:
   enabled: false
   disruptionBudget:
@@ -402,6 +440,8 @@ ranker:
     disruptionBudget:
       enabled: false
 
+    # pod termination grace period in seconds, default 900; set replicas.gracePeriod to override
+    # (Supervisor waits gracePeriod - 30 seconds for each worker to finish, minimum 1)
     replicas:
       desired: 1
       throughput: 0
@@ -514,6 +554,8 @@ workspace:
     enabled: true
     disruptionBudget:
       enabled: false
+    # pod termination grace period in seconds, default 900; set replicas.gracePeriod to override
+    # (Supervisor waits gracePeriod - 30 seconds for each worker to finish, minimum 1)
     replicas:
       desired: 1
 
@@ -521,6 +563,8 @@ workspace:
     enabled: true
     disruptionBudget:
       enabled: false
+    # pod termination grace period in seconds, default 900; set replicas.gracePeriod to override
+    # (Supervisor waits gracePeriod - 30 seconds for each worker to finish, minimum 1)
     replicas:
       desired: 1
 
@@ -528,6 +572,8 @@ workspace:
     enabled: true
     disruptionBudget:
       enabled: false
+    # pod termination grace period in seconds, default 900; set replicas.gracePeriod to override
+    # (Supervisor waits gracePeriod - 30 seconds for each worker to finish, minimum 1)
     replicas:
       desired: 1
 
@@ -535,6 +581,8 @@ workspace:
     enabled: true
     disruptionBudget:
       enabled: false
+    # pod termination grace period in seconds, default 900; set replicas.gracePeriod to override
+    # (Supervisor waits gracePeriod - 30 seconds for each worker to finish, minimum 1)
     replicas:
       desired: 1
 
@@ -542,6 +590,8 @@ workspace:
     enabled: true
     disruptionBudget:
       enabled: false
+    # pod termination grace period in seconds, default 900; set replicas.gracePeriod to override
+    # (Supervisor waits gracePeriod - 30 seconds for each worker to finish, minimum 1)
     replicas:
       desired: 1
 
