@@ -25,7 +25,7 @@ Invariant: a certificate whose private key is public, and a user whose password 
 
 #### Scenario: Hand-synced files match their mirrors (polarity: reject before state; catches)
 - **WHEN** `src/groundx/values/opensearch/values.yaml`, `values.yaml` and `values.schema.json` are compared with their `helm/` copies
-- **THEN** each pair is byte-identical (`validate-helm.sh` byte-checks only `templates/`)
+- **THEN** each pair is byte-identical (`verify_mirrors()` through `MIRRORED_FILES` in `.build/bin/verify-storage-contract.py`)
 
 ### Requirement: The GroundX chart takes an operator search CA and fails closed without one
 The chart SHALL accept `search.caSecretName` (string, default empty, in `values.yaml` and `values.schema.json`) naming a Secret in the release namespace whose key `ca.crt` is the CA that signed the OpenSearch server certificate. When the chart deploys against the in-cluster OpenSearch (`groundx.search.create` is true) and `search.caSecretName` is empty, rendering SHALL fail with a message naming `search.caSecretName`. When `search.existing.url` is set, `mode` is `ingest`, or search is disabled, an empty value SHALL render without error. The check runs wherever the GX-75 password check runs, so it does not depend on a Golang service being rendered.

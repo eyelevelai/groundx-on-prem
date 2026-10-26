@@ -32,3 +32,5 @@ The documented chart-deployed OpenSearch install (README `-f helm/values/opensea
 ## Amendments
 
 2026-10-26 (review round 1): the `search-credential-required` delta and the live spec `openspec/specs/search-credential-required/spec.md` regain the GX-75 `cluster.search` qualifier (the Terraform operator takes both passwords as values only when `cluster.search` is true; an ingest-only install needs neither), which this change's rewrite had dropped. The README upgrade steps also make removing the image's demo users a required step independent of admin-password rotation.
+
+2026-10-26 (review round 2): the rollout order is OpenSearch re-certified first, then `groundx` and `process` upgraded to images that read `ai.aws.search.caFile`. Images that skip verification keep working across the swap; images that trust only public CAs fail against both the demo certificate and a private CA until the upgrade, a short window the README now states. The design Rollout, the mirror-check wording (`verify_mirrors()` through `MIRRORED_FILES`) and the evidence for the image's published `admin` hash were aligned.

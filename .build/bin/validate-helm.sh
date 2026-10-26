@@ -526,6 +526,10 @@ bash src/groundx/tests/files/verify-opensearch-tls-values.sh
 for fixture in src/groundx/tests/files/opensearch-tls/accept-*.yaml; do
   bash src/groundx/tests/files/verify-opensearch-tls-values.sh "${fixture}" >/dev/null
 done
+if ! compgen -G "src/groundx/tests/files/opensearch-tls/reject-*.yaml" >/dev/null; then
+  echo "no reject-*.yaml fixture found under src/groundx/tests/files/opensearch-tls" >&2
+  exit 1
+fi
 for fixture in src/groundx/tests/files/opensearch-tls/reject-*.yaml; do
   if bash src/groundx/tests/files/verify-opensearch-tls-values.sh "${fixture}" >/dev/null 2>&1; then
     echo "verify-opensearch-tls-values.sh accepted ${fixture}, which it must reject" >&2
