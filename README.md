@@ -681,7 +681,7 @@ helm install opensearch opensearch/opensearch --version 2.23.1 -n eyelevel -f he
 
 The seed values file disables the image's demo installer (`DISABLE_INSTALL_DEMO_CONFIG=true`), so no admin password environment variable is used. Keep `-f helm/values/opensearch/values.yaml` on every `helm upgrade opensearch …`, and pin the OpenSearch image to a digest so the install stays reproducible.
 
-The `groundx` and `process` services verify the OpenSearch server certificate against `search.caSecretName` only when their images read `ai.aws.search.caFile`, which the chart renders from that value. Images built before this change ignore it and keep working, but do not verify the certificate. Use images that read it.
+The `groundx` and `process` services verify the OpenSearch server certificate against `search.caSecretName` only when their images read `ai.aws.search.caFile`, which the chart renders from that value. Images built before this change ignore it: depending on the build they either skip verification or trust only public CAs and reject a private CA. Use images that read it.
 
 To rotate any certificate, update the Secret and restart: `opensearch-cluster-master` first, then `groundx`, then `process`. A restart rereads the files; nothing else needs to change.
 
