@@ -28,3 +28,7 @@ The documented chart-deployed OpenSearch install (README `-f helm/values/opensea
 - Producer contract for the same-level consumer cashbot-go: the search CA Secret key, the mount path and `ai.aws.search.caFile`; exact names are fixed in design.
 - Out of scope: OpenSearch passwords (GX-75), the application user's `all_access` role, a NetworkPolicy, externally hosted OpenSearch hardening, the `src/opensearch` wrapper chart, release tarballs, regeneration of `groundx-agent-harness`.
 - Open for design: a spike on how the image disables the demo installer, whether `OPENSEARCH_INITIAL_ADMIN_PASSWORD` still applies, whether `restapi.roles_enabled` still includes `all_access`, and how upstream chart 2.23.1 mounts Secrets.
+
+## Amendments
+
+2026-10-26 (review round 1): the `search-credential-required` delta and the live spec `openspec/specs/search-credential-required/spec.md` regain the GX-75 `cluster.search` qualifier (the Terraform operator takes both passwords as values only when `cluster.search` is true; an ingest-only install needs neither), which this change's rewrite had dropped. The README upgrade steps also make removing the image's demo users a required step independent of admin-password rotation.

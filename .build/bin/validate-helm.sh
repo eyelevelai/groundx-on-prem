@@ -331,7 +331,7 @@ done
 
 echo "==> Verifying optional FileAccess storage and ingress contracts on both chart surfaces"
 for chart in src/groundx helm; do
-  file_access_output="$(helm template private-files "${chart}" -f src/groundx/tests/files/values.file-access.yaml)"
+  file_access_output="$(helm template private-files "${chart}" -f "${SEARCH_CREDENTIALS}" -f src/groundx/tests/files/values.file-access.yaml)"
   for expected in 'name: file-access' 'frontProxyTLSVerified: true' 'storageEndpoint: "https://store.internal.example.com:9443"' 'signingEndpoint: "https://s3.example.com"' 'uploadStorageEndpoint="https://store.internal.example.com:9443"' 'uploadPublicRead=False' 'name: file-store-credentials' 'secretName: "file-store-ca"' 'secretName: downloads-tls'; do
     if [[ "${file_access_output}" != *"${expected}"* ]]; then
       echo "${chart}: FileAccess render is missing ${expected}" >&2
@@ -345,7 +345,7 @@ for chart in src/groundx helm; do
     done
   done
   for storage_endpoint in https://store.internal.example.com:9443 https://s3.example.com; do
-    native_ingress_output="$(helm template native-files "${chart}" -f src/groundx/tests/files/values.file-access.yaml -f src/groundx/tests/files/values.file-native-signing.yaml --set fileAccess.ingress.enabled=false --set fileAccess.ingress.hostName=s3.example.com --set "fileAccess.storageEndpoint=${storage_endpoint}" -s templates/resources/ingress.yaml)"
+    native_ingress_output="$(helm template native-files "${chart}" -f "${SEARCH_CREDENTIALS}" -f src/groundx/tests/files/values.file-access.yaml -f src/groundx/tests/files/values.file-native-signing.yaml --set fileAccess.ingress.enabled=false --set fileAccess.ingress.hostName=s3.example.com --set "fileAccess.storageEndpoint=${storage_endpoint}" -s templates/resources/ingress.yaml)"
     if [[ "${native_ingress_output}" != *'host: "s3.example.com"'* || "${native_ingress_output}" != *'name: minio'* || "${native_ingress_output}" != *'number: 9000'* || "${native_ingress_output}" != *'secretName: store-tls'* ]]; then
       echo "${chart}: native ingress must retain Service port 9000 and TLS independently of the private HTTPS endpoint port." >&2
       exit 1
@@ -521,8 +521,17 @@ python .build/bin/verify-storage-contract.py
 echo "==> Verifying src/groundx and helm/ probe-timing mirror stay in sync"
 bash src/groundx/tests/files/verify-probe-mirror-drift.sh
 
-echo "==> Verifying the OpenSearch TLS seed values and hand-synced chart files stay in sync with helm/"
+echo "==> Verifying the OpenSearch TLS seed values and their accept/reject fixtures"
 bash src/groundx/tests/files/verify-opensearch-tls-values.sh
+for fixture in src/groundx/tests/files/opensearch-tls/accept-*.yaml; do
+  bash src/groundx/tests/files/verify-opensearch-tls-values.sh "${fixture}" >/dev/null
+done
+for fixture in src/groundx/tests/files/opensearch-tls/reject-*.yaml; do
+  if bash src/groundx/tests/files/verify-opensearch-tls-values.sh "${fixture}" >/dev/null 2>&1; then
+    echo "verify-opensearch-tls-values.sh accepted ${fixture}, which it must reject" >&2
+    exit 1
+  fi
+done
 
 echo "==> Rendering workspace chart fixtures"
 helm template workspace-contract src/groundx \

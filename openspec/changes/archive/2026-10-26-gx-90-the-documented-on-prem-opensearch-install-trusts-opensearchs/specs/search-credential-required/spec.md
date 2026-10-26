@@ -7,7 +7,7 @@ The README `### OpenSearch` install step SHALL take an operator-supplied admin p
 - passwords delivered through the Secret are not render-validated by the chart, because the published-default check sees values only;
 - the Secret route needs `groundx` and `process` images that read `SEARCH_PASSWORD` and `SEARCH_INIT_PASSWORD`, because both services log in to OpenSearch: the default images are tagged with the chart's `appVersion`, images up to 0.2.7 do not read these keys, and until the chart ships images that do the operator either sets both passwords in values or sets both `groundx.image` and `process.image` to images built from cashbot-go with this change (EyeLevel-ai/cashbot-go#1809), otherwise the API has no search password and crash-loops and the indexing worker cannot write to OpenSearch;
 - pods read the Secret only when they start, so after changing either Secret key the operator restarts `groundx` first, waits for it to update the `search.username` user, then restarts `process`;
-- the Secret route applies to the direct-helm route, and the Terraform operator still takes both passwords as values.
+- the Secret route applies to the direct-helm route, and the Terraform operator still takes both passwords as values when `cluster.search` is true (an ingest-only install, `cluster.search = false`, needs neither).
 
 The README SHALL carry a migration note for existing installs: an existing OpenSearch keeps the admin password it was first initialised with, so, when those are non-default, set the admin password (`search.privilegedPassword` or `SEARCH_INIT_PASSWORD`) to the current admin password and the application password (`search.password` or `SEARCH_PASSWORD`) to the current application password, then rotate (if either current value is a published default the chart rejects it when it is supplied through values, so rotate the admin off it first and choose a new application password); a wrong admin password makes the GroundX API crash-loop at startup when it has to create or update its user (a first install or an application-password change), and is otherwise silent rather than fail the render.
 
@@ -24,4 +24,4 @@ The README SHALL carry a migration note for existing installs: an existing OpenS
 #### Scenario: README states the Secret route and its limits (polarity: reject before state)
 - **WHEN** the README `### Configuration` section is read
 - **THEN** it names `SEARCH_PASSWORD`, `SEARCH_INIT_PASSWORD` and `cluster.secrets`
-- **AND** it states that Secret-delivered passwords are not render-validated and that the Terraform operator still takes the passwords as values
+- **AND** it states that Secret-delivered passwords are not render-validated and that the Terraform operator still takes the passwords as values when `cluster.search` is true

@@ -137,23 +137,41 @@ tests:
             name: search-ca
             mountPath: /var/run/groundx/search-ca
             readOnly: true
-  - it: mounts no search CA volume when none is set
+  - it: mounts no search CA volume or volume mount when none is set
     templates:
       - ../templates/app/golang.yaml
     set:
       search.password: fixture-app-credential
       search.privilegedPassword: fixture-admin-credential
       search.existing.url: https://search.test.invalid:9200
-    documentSelector:
-      path: spec.template.metadata.labels.app
-      value: groundx
     asserts:
-      - notContains:
-          path: spec.template.spec.volumes
-          content:
-            name: search-ca
-            secret:
-              secretName: fixture-search-ca
-              items:
-                - key: ca.crt
-                  path: ca.crt
+      - notExists:
+          path: 'spec.template.spec.volumes[?(@.name == "search-ca")]'
+        documentSelector:
+          path: spec.template.metadata.labels.app
+          value: groundx
+      - notExists:
+          path: 'spec.template.spec.containers[0].volumeMounts[?(@.name == "search-ca")]'
+        documentSelector:
+          path: spec.template.metadata.labels.app
+          value: groundx
+      - notExists:
+          path: 'spec.template.spec.volumes[?(@.name == "search-ca")]'
+        documentSelector:
+          path: spec.template.metadata.labels.app
+          value: process
+      - notExists:
+          path: 'spec.template.spec.containers[0].volumeMounts[?(@.name == "search-ca")]'
+        documentSelector:
+          path: spec.template.metadata.labels.app
+          value: process
+      - notExists:
+          path: 'spec.template.spec.volumes[?(@.name == "search-ca")]'
+        documentSelector:
+          path: spec.template.metadata.labels.app
+          value: queue
+      - notExists:
+          path: 'spec.template.spec.containers[0].volumeMounts[?(@.name == "search-ca")]'
+        documentSelector:
+          path: spec.template.metadata.labels.app
+          value: queue

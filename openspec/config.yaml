@@ -136,7 +136,7 @@ context: |
     - Extra Secrets reach the Golang pods as `envFrom` only through `cluster.secrets`, which has no default; the sample credentials Secret (`src/groundx/prereqs/secret/values.yaml`, mirrored byte-for-byte in `helm/prereqs/secret/values.yaml` outside the templates drift check) is opt-in. Keep search keys in that sample empty: a non-empty sample value would become an unvalidated working credential.
 
   - CONVENTIONS DISCOVERED DURING GX-90 (OpenSearch TLS seed values):
-    - verify_mirrors() covers only templates/; values/opensearch/values.yaml, values.yaml and values.schema.json are mirrored by hand and byte-compared by src/groundx/tests/files/verify-opensearch-tls-values.sh (run from validate-helm.sh).
+    - values/opensearch/values.yaml, values.yaml and values.schema.json are mirrored by hand and byte-compared by verify_mirrors() through MIRRORED_FILES in .build/bin/verify-storage-contract.py; src/groundx/tests/files/verify-opensearch-tls-values.sh checks the OpenSearch seed values themselves.
     - The OpenSearch image ships an internal_users.yml whose admin password is the published default; the demo installer (DISABLE_INSTALL_DEMO_CONFIG) is what replaces it, so any install that disables the installer must supply internal_users.yml.
 
   - KNOWN GAPS / OPEN QUESTIONS:
