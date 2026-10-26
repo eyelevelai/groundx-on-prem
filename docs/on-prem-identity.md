@@ -89,13 +89,16 @@ Operating an install in `local` mode:
 - A successful login or an admin password reset clears the failure count.
 - A Redis restart or failover can reset the failure count. This only gives an attacker a fresh set
   of attempts and is not a security boundary change.
+- If Redis returns an error while counting, the attempt is not counted and the login goes ahead.
+  When Redis is down entirely the API itself is unavailable, so no login succeeds.
 
 ### Sustained lockout
 
 Anyone who knows a customer's email can keep that account locked by repeatedly failing logins.
 A per-source-IP rate limit at the ingress slows brute-force guessing and bcrypt load. Set the
-limit annotations for your ingress controller under `groundx.ingress.annotations`, which apply
-to every route of the API Ingress. The chart has no defence against a targeted lockout of a
+limit annotations for your ingress controller under `groundx.ingress.annotations` (for example
+`nginx.ingress.kubernetes.io/limit-rps` on ingress-nginx), which apply to every route of the API
+Ingress. The chart has no defence against a targeted lockout of a
 known email; this is an accepted residual. Recovery for a locked customer is an admin password
 reset, which clears the lock.
 
