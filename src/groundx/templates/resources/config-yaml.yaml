@@ -1,6 +1,7 @@
 {{- $svcs := (include "groundx.golang.services" . | fromYaml) -}}
 {{- $engs := (include "groundx.engines" . | fromYaml) -}}
 {{- $pres := include "groundx.preProcessors" . | fromYaml -}}
+{{- $procs := include "groundx.processors" . | fromYaml -}}
 {{- $fs := (include "groundx.file.settings" . | fromYaml) -}}
 {{- $ppq := (include "groundx.stream.topic.preProcess" . | fromYaml) -}}
 {{- $pq := (include "groundx.stream.topic.process" . | fromYaml) -}}
@@ -601,26 +602,18 @@ stringData:
       serviceName: {{ include "groundx.process.serviceName" . }}
 
     processors:
-      convert: [11]
-      extract: [13]
-      layout: [3]
-      map: [4]
-      saveFile: [2]
-      skipConvert: [12]
-      skipGenerate: [1]
-      skipLayout: [5]
-      skipMap: [6]
-      skipSummarize: [7]
-      summarize: [8]
-      summarizeChunks: [10]
-      summarizeSections: [9]
+      {{- range $k, $v := $procs }}
+      {{ $k }}: [{{ range $i, $id := $v }}{{ if $i }}, {{ end }}{{ int $id }}{{ end }}]
+      {{- end }}
       {{- if $pres -}}
       {{ toYaml $pres | nindent 6 }}
       {{- end -}}
       {{- if eq (include "groundx.ingestOnly" .) "true" }}
       extraPostDefaults:
-        - processorID: 1
+        {{- range (get $procs "skipGenerate") }}
+        - processorID: {{ int . }}
           type: skip-generate
+        {{- end }}
       {{- end }}
 
     queueFileServer:
@@ -709,24 +702,9 @@ stringData:
       baseUrl: {{ trimSuffix "/" .Values.fileAccess.publicUrl | quote }}
       {{- else }}
       baseDomain: {{ get $fs "baseDomain" }}
-      baseUrl: {{ printf "%s://%s" (get $fs "scheme") (get $fs "baseDomain") }}
+      baseUrl: {{ .Values.file.publicUrl | default (printf "%s://%s" (get $fs "scheme") (get $fs "baseDomain")) }}
       {{- end }}
-      bucket: {{ get $fs "bucketName" }}
-      bucketUrl: {{ printf "%s://%s" (get $fs "bucketScheme") (get $fs "bucketDomain") }}
-      {{- if and (eq (include "groundx.fileAccess.create" .) "false") (hasKey $fs "username") (ne (get $fs "username") "") }}
-      id: {{ get $fs "username" | quote }}
-      {{- end }}
-      {{- if and (hasKey $fs "region") (ne (get $fs "region") "") }}
-      region: {{ get $fs "region" }}
-      {{- end }}
-      {{- if and (eq (include "groundx.fileAccess.create" .) "false") (hasKey $fs "password") (ne (get $fs "password") "") }}
-      secret: {{ get $fs "password" | quote }}
-      {{- end }}
-      service: {{ get $fs "storageType" }}
-      ssl: {{ get $fs "ssl" }}
-      {{- if and (eq (include "groundx.fileAccess.create" .) "false") (hasKey $fs "token") (ne (get $fs "token") "") }}
-      token: {{ get $fs "token" }}
-      {{- end }}
+      {{- include "groundx.file.uploadStorage" . | nindent 6 }}
 
     uploadFileServer:
       baseURL: {{ include "groundx.upload.serviceUrl" . }}
@@ -737,4 +715,14 @@ stringData:
       maxConcurrent: {{ include "groundx.upload.queueSize" . }}
       port: {{ include "groundx.upload.containerPort" . }}
       serviceName: {{ include "groundx.upload.serviceName" . }}
+    {{- if .Values.file.groundxPublicUrl }}
+
+    uploadGroundx:
+      {{- if .Values.file.signingEndpoint }}
+      signingEndpoint: {{ .Values.file.signingEndpoint | quote }}
+      {{- end }}
+      baseDomain: {{ get $fs "baseDomain" }}
+      baseUrl: {{ .Values.file.groundxPublicUrl }}
+      {{- include "groundx.file.uploadStorage" . | nindent 6 }}
+    {{- end }}
 {{- end }}

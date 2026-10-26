@@ -84,6 +84,25 @@
           },
           "additionalProperties": false
         },
+        "processors": {
+          "type": "object",
+          "properties": {
+            "convert": { "type": "array", "items": { "type": "integer" }, "minItems": 1 },
+            "extract": { "type": "array", "items": { "type": "integer" }, "minItems": 1 },
+            "layout": { "type": "array", "items": { "type": "integer" }, "minItems": 1 },
+            "map": { "type": "array", "items": { "type": "integer" }, "minItems": 1 },
+            "saveFile": { "type": "array", "items": { "type": "integer" }, "minItems": 1 },
+            "skipConvert": { "type": "array", "items": { "type": "integer" }, "minItems": 1 },
+            "skipGenerate": { "type": "array", "items": { "type": "integer" }, "minItems": 1 },
+            "skipLayout": { "type": "array", "items": { "type": "integer" }, "minItems": 1 },
+            "skipMap": { "type": "array", "items": { "type": "integer" }, "minItems": 1 },
+            "skipSummarize": { "type": "array", "items": { "type": "integer" }, "minItems": 1 },
+            "summarize": { "type": "array", "items": { "type": "integer" }, "minItems": 1 },
+            "summarizeChunks": { "type": "array", "items": { "type": "integer" }, "minItems": 1 },
+            "summarizeSections": { "type": "array", "items": { "type": "integer" }, "minItems": 1 }
+          },
+          "additionalProperties": false
+        },
         "pvAccessMode": { "type": "string" },
         "pvClass": { "type": "string" },
         "secrets": {
@@ -482,6 +501,7 @@
           },
           "additionalProperties": false
         },
+        "groundxPublicUrl": { "type": "string", "pattern": "^$|^https?://[^/@?#]+$" },
         "ingress": {
           "type": "object",
           "properties": {
@@ -498,6 +518,7 @@
         },
         "password": { "type": "string" },
         "port": { "type": "integer" },
+        "publicUrl": { "type": "string", "pattern": "^$|^https?://[^/@?#]+$" },
         "signingEndpoint": { "type": "string", "pattern": "^$|^https?://[^/@?#]+$" },
         "serviceName": { "type": "string" },
         "serviceType": { "type": "string" },

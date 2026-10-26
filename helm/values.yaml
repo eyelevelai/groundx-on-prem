@@ -12,6 +12,12 @@ cluster:
   # "", "eks", "aks", "gke", "openshift", etc.
   type: eks
 
+  # Optional processor ID lists by name (convert, extract, layout, ...). Each list
+  # set here replaces its default; {} keeps the IDs a new install creates, so a new
+  # install does not need it. GroundX Cloud must set it, as must any existing
+  # database whose processor rows use other IDs.
+  processors: {}
+
 cache:
   enabled: true
 
@@ -62,6 +68,14 @@ file:
   bucketName: eyelevel
   # Optional native origin reachable by clients receiving upload URLs.
   signingEndpoint: ""
+  # Optional file link host for upload.baseUrl; "" (default) uses the storage host.
+  # A new install does not need it; GroundX Cloud must set it. Rejected when
+  # fileAccess.enabled is true.
+  publicUrl: ""
+  # Optional second file link host; renders an uploadGroundx section that matches
+  # upload except baseUrl. "" (default) renders none. A new install does not need
+  # it; GroundX Cloud must set it. Rejected when fileAccess.enabled is true.
+  groundxPublicUrl: ""
 
   # must set username/password explicitly
   # or via AWS or MinIO env variables

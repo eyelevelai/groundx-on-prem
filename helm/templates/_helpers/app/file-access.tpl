@@ -4,6 +4,12 @@
 
 {{- define "groundx.fileAccess.validate" -}}
 {{- if eq (include "groundx.fileAccess.create" .) "true" -}}
+{{- if not (empty (get .Values.file "publicUrl")) -}}
+{{- fail "file.publicUrl is not supported when fileAccess is enabled; remove it and set the file link host with fileAccess.publicUrl" -}}
+{{- end -}}
+{{- if not (empty (get .Values.file "groundxPublicUrl")) -}}
+{{- fail "file.groundxPublicUrl is not supported when fileAccess is enabled; a second file link host requires fileAccess.enabled false" -}}
+{{- end -}}
 {{- $in := .Values.fileAccess -}}
 {{- if not $in.originsPrivate -}}
 {{- fail "fileAccess.originsPrivate must be true after operator verification of all storage aliases" -}}
