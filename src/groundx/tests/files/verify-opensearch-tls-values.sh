@@ -25,8 +25,8 @@ check_seed() {
   yq -e '.securityConfig.internalUsersSecret != null and .securityConfig.internalUsersSecret != ""' "${file}" >/dev/null 2>&1 \
     || fail "${file}" "securityConfig.internalUsersSecret is not set"
 
-  yq -e '.secretMounts | length > 0' "${file}" >/dev/null 2>&1 \
-    || fail "${file}" "no secretMounts for the operator certificates"
+  yq -e '.secretMounts[] | select(.secretName == "opensearch-tls" and .path == "/usr/share/opensearch/config/certs")' "${file}" >/dev/null 2>&1 \
+    || fail "${file}" "secretMounts does not mount opensearch-tls at /usr/share/opensearch/config/certs"
 
   local parsed
   parsed="$(yq '.config."opensearch.yml" | from_yaml' "${file}" 2>/dev/null)" \
