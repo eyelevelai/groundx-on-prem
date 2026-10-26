@@ -1,0 +1,18 @@
+secrets:
+  name: minio-tenant-env-configuration
+  existingSecret: true
+objectStore:
+  name: minio-tenant
+  pools:
+    - servers: 1
+      name: minio-tenant-pool-0
+      volumesPerServer: 1
+      size: 20Gi
+      nodeSelector:
+        node: eyelevel-cpu-only
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+  certificates:
+    disableAutoCert: true

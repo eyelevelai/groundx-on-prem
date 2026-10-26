@@ -1,0 +1,18 @@
+image:
+  tag: "0.3.2@sha256:48d1875da2eb087f6b52e01f3e97daa750962a347132230c27d35878c48ce16f"
+  pullPolicy: IfNotPresent
+s3:
+  accessKeyId: REPLACE_WITH_S4_ACCESS_KEY
+  secretAccessKey: REPLACE_WITH_S4_SECRET_KEY
+auth:
+  username: REPLACE_WITH_S4_UI_USERNAME
+  password: REPLACE_WITH_S4_UI_PASSWORD
+service:
+  type: ClusterIP
+route:
+  enabled: false
+podSecurityContext:
+  runAsNonRoot: true
+  fsGroup: 1001
+nodeSelector:
+  node: eyelevel-cpu-only

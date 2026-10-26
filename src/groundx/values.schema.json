@@ -524,7 +524,8 @@
         "privilegedPassword": { "type": "string" },
         "privilegedUsername": { "type": "string" },
         "serviceName": { "type": "string" },
-        "username": { "type": "string" }
+        "username": { "type": "string" },
+        "bannedPasswordHashes": { "type": "array", "items": { "type": "string" } }
       },
       "required": [
         "existing", "indexName", "password", "privilegedPassword", "privilegedUsername", "username"
@@ -911,6 +912,7 @@
               "type": "object",
               "properties": {
                 "desired": { "type": "integer" },
+                "gracePeriod": { "type": "integer", "minimum": 1 },
                 "max": { "type": "integer" },
                 "min": { "type": "integer" }
               },
@@ -2239,6 +2241,7 @@
               "properties": {
                 "cooldown": { "type": "integer" },
                 "desired": { "type": "integer" },
+                "gracePeriod": { "type": "integer", "minimum": 1 },
                 "hpa": { "type": "boolean" },
                 "max": { "type": "integer" },
                 "min": { "type": "integer" },

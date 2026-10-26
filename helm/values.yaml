@@ -73,7 +73,7 @@ file:
 
   # set to use existing minio file storage
   existing: {}
-    # serviceType: minio OR s3
+    # serviceType: minio, s3 OR s4
     # url: https://minio.mycorp.net
 
     # if s3, must set region explicitly
@@ -129,9 +129,10 @@ search:
 
   indexName: prod-1
   username: eyelevel
-  password: R0otb_*t!kazs
+  password: ""
   privilegedUsername: admin
-  privilegedPassword: R0otb_*t!kazs
+  privilegedPassword: ""
+  bannedPasswordHashes: []
 
   # set to use existing opensearch
   existing: {}
@@ -178,6 +179,8 @@ summary:
     # specifies the amount of GPU memory to use, from 0 - 1.0
     deviceUtilize: 0.48
 
+    # pod termination grace period in seconds, default 300; set replicas.gracePeriod to override
+    # (Supervisor waits gracePeriod - 30 seconds for each worker to finish, minimum 1)
     replicas:
       desired: 2
       max: 32
@@ -437,6 +440,8 @@ ranker:
     disruptionBudget:
       enabled: false
 
+    # pod termination grace period in seconds, default 900; set replicas.gracePeriod to override
+    # (Supervisor waits gracePeriod - 30 seconds for each worker to finish, minimum 1)
     replicas:
       desired: 1
       throughput: 0
@@ -549,6 +554,8 @@ workspace:
     enabled: true
     disruptionBudget:
       enabled: false
+    # pod termination grace period in seconds, default 900; set replicas.gracePeriod to override
+    # (Supervisor waits gracePeriod - 30 seconds for each worker to finish, minimum 1)
     replicas:
       desired: 1
 
@@ -556,6 +563,8 @@ workspace:
     enabled: true
     disruptionBudget:
       enabled: false
+    # pod termination grace period in seconds, default 900; set replicas.gracePeriod to override
+    # (Supervisor waits gracePeriod - 30 seconds for each worker to finish, minimum 1)
     replicas:
       desired: 1
 
@@ -563,6 +572,8 @@ workspace:
     enabled: true
     disruptionBudget:
       enabled: false
+    # pod termination grace period in seconds, default 900; set replicas.gracePeriod to override
+    # (Supervisor waits gracePeriod - 30 seconds for each worker to finish, minimum 1)
     replicas:
       desired: 1
 
@@ -570,6 +581,8 @@ workspace:
     enabled: true
     disruptionBudget:
       enabled: false
+    # pod termination grace period in seconds, default 900; set replicas.gracePeriod to override
+    # (Supervisor waits gracePeriod - 30 seconds for each worker to finish, minimum 1)
     replicas:
       desired: 1
 
@@ -577,6 +590,8 @@ workspace:
     enabled: true
     disruptionBudget:
       enabled: false
+    # pod termination grace period in seconds, default 900; set replicas.gracePeriod to override
+    # (Supervisor waits gracePeriod - 30 seconds for each worker to finish, minimum 1)
     replicas:
       desired: 1
 
