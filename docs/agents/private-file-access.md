@@ -1,7 +1,8 @@
 # Private file access deployment contract
 
 `fileAccess.enabled` defaults to `false`. Existing storage, worker configuration,
-workloads and ingress manifests remain unchanged while it is disabled. Enabling
+workloads and ingress manifests remain unchanged while it is disabled, except
+that a set `caSecretName` still delivers its CA bundle (see below). Enabling
 it adds two FileAccess gateway replicas using the shared Go Deployment, Service,
 health probes and config Secret. Gateway liveness uses `/health`; readiness
 uses `/readyz` to check its database/schema and Redis dependencies. Streaming adds a network hop and gateway
@@ -52,9 +53,12 @@ backend's release gates pass.
   hash. Provision role permissions and verify native AWS access independently.
 - `caSecretName` optionally references a Secret containing `ca.crt`. The chart
   mounts it read-only at `/var/run/groundx/file-access/ca.crt` and sets
-  `SSL_CERT_FILE` for application and migration consumers. Use a complete trust
-  bundle when those processes also contact other HTTPS services. An empty value
-  uses system trust. Provision certificates outside the chart and restart affected
+  `SSL_CERT_FILE` in every GroundX application workload, the metrics server and
+  the migration Job included, whether or not file access is enabled. Create the
+  Secret in the chart namespace before the install or upgrade that sets
+  `caSecretName`; a missing Secret or `ca.crt` key stops those pods from
+  starting. Use a complete trust bundle when those processes also contact other
+  HTTPS services. An empty value uses system trust. Provision certificates outside the chart and restart affected
   consumers after rotating credentials or trust Secrets; env imports and existing
   TLS client pools do not reload through the config hash.
 - `tlsSecretName` is required for a chart-managed gateway ingress. Set

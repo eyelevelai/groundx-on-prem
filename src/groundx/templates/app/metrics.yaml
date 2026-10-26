@@ -176,6 +176,9 @@ spec:
               value: /etc/ssl/tls/ca.crt
             - name: LISTEN_PORT
               value: {{ $cport | quote }}
+{{- with include "groundx.fileAccess.caEnv" $ }}
+{{ . | nindent 12 }}
+{{- end }}
           ports:
             - containerPort: {{ $cport }}
               protocol: TCP
@@ -196,6 +199,9 @@ spec:
             periodSeconds: 30
 {{ include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
           volumeMounts:
+{{- with include "groundx.fileAccess.caMount" $ }}
+{{ . | nindent 12 }}
+{{- end }}
             - name: config-volume
               mountPath: /home/{{ include "groundx.golang.home" . }}/.cashbot/config.yaml
               subPath: config.yaml
@@ -203,6 +209,9 @@ spec:
               mountPath: /etc/ssl/tls
               readOnly: true
       volumes:
+{{- with include "groundx.fileAccess.caVolume" $ }}
+{{ . | nindent 8 }}
+{{- end }}
         - name: config-volume
           secret:
             secretName: config-yaml-map
