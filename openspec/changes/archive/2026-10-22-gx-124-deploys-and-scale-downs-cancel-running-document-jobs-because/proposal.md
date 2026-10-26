@@ -14,7 +14,7 @@ Deploys and scale-downs cancel running document jobs in the five Go queue servic
 - Location note: the ticket's preferred approach was an `else` branch in `golang.yaml` and `config-yaml.yaml` modeled on `celery.yaml`, marked "location not confirmed". The plan gate chose the replicas helpers; the rendered behavior is identical. The PR body says so in one line.
 - Pre-merge validation task, not a code task: on the validation EKS, roll one of the five services with drain on while a long job is in flight, and record whether the draining pod keeps its partition, whether any message is processed by two pods at once, and whether a partition stalls. Capture before (current chart) and after (this branch) with the same method. If concurrent duplicates or stalls are confirmed, the ticket author decides whether the services' redelivery checks are safe under concurrency before merge.
 - Release notes go in the PR body: the restart and the rollback, plus a paragraph a human pastes into the 0.2.8 GitHub Release at release cut. No new file.
-- No `values.yaml`, `values.schema.json` or Chart.yaml change (Chart.yaml version bump belongs to release cut).
+- No `values.yaml`, `values.schema.json` or Chart.yaml change (Chart.yaml on the 0.2.8 branch already reads 0.2.8).
 
 Not breaking at the values surface: the schema already accepts `gracePeriod`, and operators who set it see no change. The default is a rollout-time behavior change (see Impact).
 
