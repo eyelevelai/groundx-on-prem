@@ -98,6 +98,29 @@ from `publicUrl` and preserve the existing host, path and bucket exactly once.
 Configured file and extraction presentation hosts must match the gateway host. Do not substitute the private origin into returned
 artifact URLs or append a second bucket to a configured presentation root.
 
+## Upgrade existing files before activation
+
+Use compatible Cashbot API, gateway and worker images. Stop older writers, run the
+normal database upgrade, then deploy compatible writers before resuming ingestion.
+The upgrade builds a historical-source index once. It reads old task metadata in
+small batches and does not access object storage. Budget upgrade time for that work.
+See the [backend upgrade guide](https://github.com/EyeLevel-ai/cashbot-go/blob/master/docs/agents/database-upgrades.md#historical-source-lookup)
+for the schema, rollout and rollback requirements.
+
+An older original without a binding migrates on its first read. The service looks
+up its exact indexed reference, verifies the saved file and current document owner,
+then saves the binding. It checks current references first, then historical ones.
+Downloads do not scan the database or storage. No separate binding backfill command
+is required. Deleted documents and detected conflicts remain unavailable; legacy
+shared-source repair is a separate operator procedure.
+
+Verify older original and X-Ray downloads before cutover, including protected owner
+success and anonymous/wrong-owner denial. The API release must resolve saved HTTP
+references under configured HTTPS roots. Callers must use HTTPS before sending a
+key. Keep native storage private and retain indexes and bindings on rollback.
+These database and ownership rules apply to S3, MinIO, AIStor and S4; each backend
+still requires its own deployment acceptance tests.
+
 ## Activation and rollback gates
 
 `frontProxyTLSVerified` defaults to `false`. The chart exposes the gateway's
