@@ -54,7 +54,9 @@ search:
 stream:
   enabled: false
 
-  # visibility timeout must be 10+ min for all SQS queues
+  # SQS queue visibility must be at least 10 minutes.
+  # Upload/process/summary workers can shorten visibility to 5 minutes, renewed every minute.
+  # Upload DLQs require maxReceiveCount >= 4.
   topics:
     preProcess:
       type: sqs

@@ -10819,7 +10819,7 @@
         metadata:
           annotations:
             config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-cleanup
         spec:
@@ -10842,7 +10842,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -10913,6 +10913,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -10951,7 +10952,7 @@
         metadata:
           annotations:
             config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-command
         spec:
@@ -10974,7 +10975,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -11045,6 +11046,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -11083,7 +11085,7 @@
         metadata:
           annotations:
             config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-provision
         spec:
@@ -11106,7 +11108,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -11177,6 +11179,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -11215,7 +11218,7 @@
         metadata:
           annotations:
             config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-publish
         spec:
@@ -11238,7 +11241,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -11309,6 +11312,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -11347,7 +11351,7 @@
         metadata:
           annotations:
             config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-workspace
         spec:
@@ -11370,7 +11374,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -11441,6 +11445,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
