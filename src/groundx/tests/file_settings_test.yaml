@@ -1282,3 +1282,59 @@ tests:
       - matchRegex:
           path: stringData["config.py"]
           pattern: 'secret="extraction-secret"'
+  - it: link host and GroundX alias render without the gateway and keep the bucket host
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      groundx.enabled: true
+      file.serviceType: s3
+      file.existing.url: https://gx-test-bucket.s3.us-west-2.amazonaws.com
+      file.existing.region: us-west-2
+      file.username: fixture-storage-key
+      file.password: fixture-storage-secret
+      file.publicUrl: https://upload.eyelevel.ai
+      file.groundxPublicUrl: https://upload.groundx.ai
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: '\nupload:\n  baseDomain: gx-test-bucket\.s3\.us-west-2\.amazonaws\.com\n  baseUrl: https://upload\.eyelevel\.ai\n  bucket: eyelevel\n  bucketUrl: https://gx-test-bucket\.s3\.us-west-2\.amazonaws\.com\n  id: "fixture-storage-key"\n  region: us-west-2\n  secret: "fixture-storage-secret"\n  service: s3\n  ssl: true\n\nuploadFileServer:'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: '\nuploadGroundx:\n  baseDomain: gx-test-bucket\.s3\.us-west-2\.amazonaws\.com\n  baseUrl: https://upload\.groundx\.ai\n  bucket: eyelevel\n  bucketUrl: https://gx-test-bucket\.s3\.us-west-2\.amazonaws\.com\n  id: "fixture-storage-key"\n  region: us-west-2\n  secret: "fixture-storage-secret"\n  service: s3\n  ssl: true\s*$'
+  - it: a link host without an alias keeps the MinIO storage host and renders no alias section
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      groundx.enabled: true
+      file.publicUrl: https://files.customer.example.com
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: '\nupload:\n  baseDomain: minio\.eyelevel\.svc\.cluster\.local\n  baseUrl: https://files\.customer\.example\.com\n  bucket: eyelevel\n  bucketUrl: http://minio\.eyelevel\.svc\.cluster\.local\n  service: minio\n  ssl: false\n\nuploadFileServer:'
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'uploadGroundx'
+  - it: enabled gateway rejects a separate link host
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      file.publicUrl: https://downloads.example.com
+    asserts:
+      - failedTemplate:
+          errorMessage: "file.publicUrl is not supported when fileAccess is enabled; remove it and set the file link host with fileAccess.publicUrl"
+  - it: enabled gateway rejects a GroundX alias link host
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      file.groundxPublicUrl: https://upload.groundx.ai
+    asserts:
+      - failedTemplate:
+          errorMessage: "file.groundxPublicUrl is not supported when fileAccess is enabled; a second file link host requires fileAccess.enabled false"

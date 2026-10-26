@@ -1046,3 +1046,74 @@ tests:
       - matchRegex:
           path: stringData["config.yaml"]
           pattern: 'largeFile:\n\s+region: us-west-2\n\s+type: sqs\n\s+url: https://sqs.us-west-2.amazonaws.com/123456789012/large-file'
+  - it: processor overrides render every configured list
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      cluster.processors.convert: [132]
+      cluster.processors.extract: [134]
+      cluster.processors.layout: [118]
+      cluster.processors.map: [120]
+      cluster.processors.saveFile: [5]
+      cluster.processors.skipConvert: [133]
+      cluster.processors.skipGenerate: [4]
+      cluster.processors.skipLayout: [119]
+      cluster.processors.skipMap: [121]
+      cluster.processors.skipSummarize: [123]
+      cluster.processors.summarize: [125]
+      cluster.processors.summarizeChunks: [124]
+      cluster.processors.summarizeSections: [122]
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: '\nprocessors:\n  convert: \[132\]\n  extract: \[134\]\n  layout: \[118\]\n  map: \[120\]\n  saveFile: \[5\]\n  skipConvert: \[133\]\n  skipGenerate: \[4\]\n  skipLayout: \[119\]\n  skipMap: \[121\]\n  skipSummarize: \[123\]\n  summarize: \[125\]\n  summarizeChunks: \[124\]\n  summarizeSections: \[122\]\n\nqueueFileServer:'
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'extraPostDefaults'
+  - it: a partial processor override keeps the other default lists
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      cluster.processors.extract: [134]
+      cluster.processors.layout: [118]
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: '\nprocessors:\n  convert: \[11\]\n  extract: \[134\]\n  layout: \[118\]\n  map: \[4\]\n  saveFile: \[2\]\n  skipConvert: \[12\]\n  skipGenerate: \[1\]\n  skipLayout: \[5\]\n  skipMap: \[6\]\n  skipSummarize: \[7\]\n  summarize: \[8\]\n  summarizeChunks: \[10\]\n  summarizeSections: \[9\]\n\nqueueFileServer:'
+  - it: ingest mode builds extraPostDefaults from the configured skipGenerate IDs
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.extract.ingest.yaml
+    set:
+      cluster.processors.skipGenerate: [4]
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: '\n  skipGenerate: \[4\]\n'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: '\n  extraPreDefaults:\n  - processorID: 13\n    type: extract\n  extraPostDefaults:\n    - processorID: 4\n      type: skip-generate\n\nqueueFileServer:'
+  - it: a misspelled processor list name fails schema validation
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      cluster.processors.skipGeneration: [4]
+    asserts:
+      - failedTemplate:
+          errorPattern: "cluster/processors.*skipGeneration.*not allowed"

@@ -135,6 +135,11 @@ context: |
     - A filtered `helm unittest -f <suite>` run of a suite that holds snapshots rewrote that suite's `.snap` without `-u` when some tests errored (the Google OCR fixture was missing). Put new non-snapshot cases in their own suite, and restore any `.snap` a run rewrote with `git checkout -- <file>`.
     - Extra Secrets reach the Golang pods as `envFrom` only through `cluster.secrets`, which has no default; the sample credentials Secret (`src/groundx/prereqs/secret/values.yaml`, mirrored byte-for-byte in `helm/prereqs/secret/values.yaml` outside the templates drift check) is opt-in. Keep search keys in that sample empty: a non-empty sample value would become an unvalidated working credential.
 
+  - CONVENTIONS DISCOVERED DURING GX-140 (config.yaml render assertions):
+    - Inside `stringData["config.yaml"]` of config-yaml-map, top-level keys start at column 0 and their fields are indented two spaces; a block assertion is a `matchRegex` of literal lines ending at the next key (for example `ssl: true\n\nuploadFileServer:`), with every expected value written out in the test.
+    - A suite run on a `mktemp -d` copy of src/groundx needs the OCR fixture at `files/ocr/gcv-test.json` written exactly as validate-helm.sh writes it (pretty-printed, two-space indent); a one-line JSON file fails the "shared Google credentials: resources" snapshot. A run where tests only fail (not error) leaves the copy's snapshots untouched.
+    - A new value that helm-unittest rejects through the schema shows as an errored test with "additional properties '<key>' not allowed", which is a valid RED for a new-key case.
+
   - KNOWN GAPS / OPEN QUESTIONS:
     - helm/ <-> src/groundx duplication: no regen script (manual sync required); a drift check DOES exist (verify_mirrors() in .build/bin/verify-storage-contract.py fails the gate on mismatch) — the remaining gap is only the absence of a regen script, not the absence of a check.
     - upload.groundx.ai model-weight download hardcoded in init-containers — air-gap blocker; no documented pre-seeding mechanism.
