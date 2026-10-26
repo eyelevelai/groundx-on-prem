@@ -27,6 +27,7 @@ Runs the GroundX Helm production chart gate from one stable entrypoint:
   - workspace chart contract verifier
   - storage chart, generated AWS values, and template-mirror contract verifier
   - probe-mirror-drift guard (renders src/groundx and helm/ and compares the API-pod probe timing)
+  - OpenSearch TLS seed values check (operator certificates only; values, schema and seed mirrors byte-identical)
   - targeted render checks for both chart surfaces
   - git whitespace check
 
@@ -519,6 +520,9 @@ python .build/bin/verify-storage-contract.py
 
 echo "==> Verifying src/groundx and helm/ probe-timing mirror stay in sync"
 bash src/groundx/tests/files/verify-probe-mirror-drift.sh
+
+echo "==> Verifying the OpenSearch TLS seed values and hand-synced chart files stay in sync with helm/"
+bash src/groundx/tests/files/verify-opensearch-tls-values.sh
 
 echo "==> Rendering workspace chart fixtures"
 helm template workspace-contract src/groundx \

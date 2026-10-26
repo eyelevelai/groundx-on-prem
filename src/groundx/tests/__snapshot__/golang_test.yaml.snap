@@ -97,7 +97,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 039161b3d30f9cba65928a60688c8ed8e59df41cba5bb3bc7d97797f8e689b80
+            config-hash: fa5f1b8d9ad7899a2ac8a10502a30bd38766d6e2d2ae14a0d9a0119a1793a836
           labels:
             app: groundx
         spec:
@@ -149,6 +149,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -198,6 +201,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -237,7 +246,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 039161b3d30f9cba65928a60688c8ed8e59df41cba5bb3bc7d97797f8e689b80
+            config-hash: fa5f1b8d9ad7899a2ac8a10502a30bd38766d6e2d2ae14a0d9a0119a1793a836
           labels:
             app: layout-webhook
         spec:
@@ -289,6 +298,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -317,6 +329,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -356,7 +374,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 039161b3d30f9cba65928a60688c8ed8e59df41cba5bb3bc7d97797f8e689b80
+            config-hash: fa5f1b8d9ad7899a2ac8a10502a30bd38766d6e2d2ae14a0d9a0119a1793a836
           labels:
             app: pre-process
         spec:
@@ -408,6 +426,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -436,6 +457,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -459,7 +486,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 039161b3d30f9cba65928a60688c8ed8e59df41cba5bb3bc7d97797f8e689b80
+            config-hash: fa5f1b8d9ad7899a2ac8a10502a30bd38766d6e2d2ae14a0d9a0119a1793a836
           labels:
             app: process
         spec:
@@ -511,6 +538,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -539,6 +569,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -562,7 +598,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 039161b3d30f9cba65928a60688c8ed8e59df41cba5bb3bc7d97797f8e689b80
+            config-hash: fa5f1b8d9ad7899a2ac8a10502a30bd38766d6e2d2ae14a0d9a0119a1793a836
           labels:
             app: queue
         spec:
@@ -614,6 +650,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -642,6 +681,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -665,7 +710,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 039161b3d30f9cba65928a60688c8ed8e59df41cba5bb3bc7d97797f8e689b80
+            config-hash: fa5f1b8d9ad7899a2ac8a10502a30bd38766d6e2d2ae14a0d9a0119a1793a836
           labels:
             app: summary-client
         spec:
@@ -717,6 +762,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -745,6 +793,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -768,7 +822,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 039161b3d30f9cba65928a60688c8ed8e59df41cba5bb3bc7d97797f8e689b80
+            config-hash: fa5f1b8d9ad7899a2ac8a10502a30bd38766d6e2d2ae14a0d9a0119a1793a836
           labels:
             app: upload
         spec:
@@ -820,6 +874,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -848,6 +905,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -872,7 +935,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e7249406718f33669eca20e97ffb203053c41db73f408bcf818e49b94a55645d
+            config-hash: fc1425a0924b418fdd724002206381357fef3ae0b26fd02336649123df05a747
           labels:
             app: groundx
         spec:
@@ -924,6 +987,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -979,6 +1045,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1018,7 +1090,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e7249406718f33669eca20e97ffb203053c41db73f408bcf818e49b94a55645d
+            config-hash: fc1425a0924b418fdd724002206381357fef3ae0b26fd02336649123df05a747
           labels:
             app: layout-webhook
         spec:
@@ -1070,6 +1142,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1097,6 +1172,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1136,7 +1217,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e7249406718f33669eca20e97ffb203053c41db73f408bcf818e49b94a55645d
+            config-hash: fc1425a0924b418fdd724002206381357fef3ae0b26fd02336649123df05a747
           labels:
             app: pre-process
         spec:
@@ -1188,6 +1269,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1215,6 +1299,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1238,7 +1328,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e7249406718f33669eca20e97ffb203053c41db73f408bcf818e49b94a55645d
+            config-hash: fc1425a0924b418fdd724002206381357fef3ae0b26fd02336649123df05a747
           labels:
             app: process
         spec:
@@ -1290,6 +1380,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1317,6 +1410,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1340,7 +1439,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e7249406718f33669eca20e97ffb203053c41db73f408bcf818e49b94a55645d
+            config-hash: fc1425a0924b418fdd724002206381357fef3ae0b26fd02336649123df05a747
           labels:
             app: queue
         spec:
@@ -1392,6 +1491,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1419,6 +1521,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1442,7 +1550,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e7249406718f33669eca20e97ffb203053c41db73f408bcf818e49b94a55645d
+            config-hash: fc1425a0924b418fdd724002206381357fef3ae0b26fd02336649123df05a747
           labels:
             app: summary-client
         spec:
@@ -1494,6 +1602,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1521,6 +1632,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1544,7 +1661,7 @@
       template:
         metadata:
           annotations:
-            config-hash: e7249406718f33669eca20e97ffb203053c41db73f408bcf818e49b94a55645d
+            config-hash: fc1425a0924b418fdd724002206381357fef3ae0b26fd02336649123df05a747
           labels:
             app: upload
         spec:
@@ -1596,6 +1713,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1623,6 +1743,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1731,7 +1857,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5e049896e2c23981da9ac352836fac5d4f115a43e7c1611039e978b32a5a2016
+            config-hash: f554c2643dda0678f00875aa50ea23e2d4b1f877651de263aa86e71b55a3525d
           labels:
             app: groundx
         spec:
@@ -1783,6 +1909,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1838,6 +1967,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1877,7 +2012,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5e049896e2c23981da9ac352836fac5d4f115a43e7c1611039e978b32a5a2016
+            config-hash: f554c2643dda0678f00875aa50ea23e2d4b1f877651de263aa86e71b55a3525d
           labels:
             app: layout-webhook
         spec:
@@ -1929,6 +2064,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1956,6 +2094,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1995,7 +2139,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5e049896e2c23981da9ac352836fac5d4f115a43e7c1611039e978b32a5a2016
+            config-hash: f554c2643dda0678f00875aa50ea23e2d4b1f877651de263aa86e71b55a3525d
           labels:
             app: pre-process
         spec:
@@ -2047,6 +2191,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2074,6 +2221,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2097,7 +2250,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5e049896e2c23981da9ac352836fac5d4f115a43e7c1611039e978b32a5a2016
+            config-hash: f554c2643dda0678f00875aa50ea23e2d4b1f877651de263aa86e71b55a3525d
           labels:
             app: process
         spec:
@@ -2149,6 +2302,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2176,6 +2332,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2199,7 +2361,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5e049896e2c23981da9ac352836fac5d4f115a43e7c1611039e978b32a5a2016
+            config-hash: f554c2643dda0678f00875aa50ea23e2d4b1f877651de263aa86e71b55a3525d
           labels:
             app: queue
         spec:
@@ -2251,6 +2413,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2278,6 +2443,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2301,7 +2472,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5e049896e2c23981da9ac352836fac5d4f115a43e7c1611039e978b32a5a2016
+            config-hash: f554c2643dda0678f00875aa50ea23e2d4b1f877651de263aa86e71b55a3525d
           labels:
             app: summary-client
         spec:
@@ -2353,6 +2524,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2380,6 +2554,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2403,7 +2583,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5e049896e2c23981da9ac352836fac5d4f115a43e7c1611039e978b32a5a2016
+            config-hash: f554c2643dda0678f00875aa50ea23e2d4b1f877651de263aa86e71b55a3525d
           labels:
             app: upload
         spec:
@@ -2455,6 +2635,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2482,6 +2665,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2507,7 +2696,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5e049896e2c23981da9ac352836fac5d4f115a43e7c1611039e978b32a5a2016
+            config-hash: f554c2643dda0678f00875aa50ea23e2d4b1f877651de263aa86e71b55a3525d
           labels:
             app: groundx
         spec:
@@ -2559,6 +2748,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2614,6 +2806,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2653,7 +2851,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5e049896e2c23981da9ac352836fac5d4f115a43e7c1611039e978b32a5a2016
+            config-hash: f554c2643dda0678f00875aa50ea23e2d4b1f877651de263aa86e71b55a3525d
           labels:
             app: layout-webhook
         spec:
@@ -2705,6 +2903,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2732,6 +2933,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2771,7 +2978,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5e049896e2c23981da9ac352836fac5d4f115a43e7c1611039e978b32a5a2016
+            config-hash: f554c2643dda0678f00875aa50ea23e2d4b1f877651de263aa86e71b55a3525d
           labels:
             app: pre-process
         spec:
@@ -2823,6 +3030,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2850,6 +3060,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2873,7 +3089,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5e049896e2c23981da9ac352836fac5d4f115a43e7c1611039e978b32a5a2016
+            config-hash: f554c2643dda0678f00875aa50ea23e2d4b1f877651de263aa86e71b55a3525d
           labels:
             app: process
         spec:
@@ -2925,6 +3141,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2952,6 +3171,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2975,7 +3200,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5e049896e2c23981da9ac352836fac5d4f115a43e7c1611039e978b32a5a2016
+            config-hash: f554c2643dda0678f00875aa50ea23e2d4b1f877651de263aa86e71b55a3525d
           labels:
             app: queue
         spec:
@@ -3027,6 +3252,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3054,6 +3282,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3077,7 +3311,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5e049896e2c23981da9ac352836fac5d4f115a43e7c1611039e978b32a5a2016
+            config-hash: f554c2643dda0678f00875aa50ea23e2d4b1f877651de263aa86e71b55a3525d
           labels:
             app: summary-client
         spec:
@@ -3129,6 +3363,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3156,6 +3393,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3179,7 +3422,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 5e049896e2c23981da9ac352836fac5d4f115a43e7c1611039e978b32a5a2016
+            config-hash: f554c2643dda0678f00875aa50ea23e2d4b1f877651de263aa86e71b55a3525d
           labels:
             app: upload
         spec:
@@ -3231,6 +3474,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3258,6 +3504,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3282,7 +3534,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 31e71d37cc170b1dc50d7c144e79ecf7fd9136c94cb14379221becb410adabf0
+            config-hash: 74789c0646c8bf71ec1874cfe35a4b6ae5c44b862f652be0f2ed55b1542488b3
           labels:
             app: groundx
         spec:
@@ -3334,6 +3586,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3389,6 +3644,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3428,7 +3689,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 31e71d37cc170b1dc50d7c144e79ecf7fd9136c94cb14379221becb410adabf0
+            config-hash: 74789c0646c8bf71ec1874cfe35a4b6ae5c44b862f652be0f2ed55b1542488b3
           labels:
             app: layout-webhook
         spec:
@@ -3480,6 +3741,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3507,6 +3771,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3546,7 +3816,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 31e71d37cc170b1dc50d7c144e79ecf7fd9136c94cb14379221becb410adabf0
+            config-hash: 74789c0646c8bf71ec1874cfe35a4b6ae5c44b862f652be0f2ed55b1542488b3
           labels:
             app: pre-process
         spec:
@@ -3598,6 +3868,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3625,6 +3898,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3648,7 +3927,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 31e71d37cc170b1dc50d7c144e79ecf7fd9136c94cb14379221becb410adabf0
+            config-hash: 74789c0646c8bf71ec1874cfe35a4b6ae5c44b862f652be0f2ed55b1542488b3
           labels:
             app: process
         spec:
@@ -3700,6 +3979,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3727,6 +4009,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3750,7 +4038,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 31e71d37cc170b1dc50d7c144e79ecf7fd9136c94cb14379221becb410adabf0
+            config-hash: 74789c0646c8bf71ec1874cfe35a4b6ae5c44b862f652be0f2ed55b1542488b3
           labels:
             app: queue
         spec:
@@ -3802,6 +4090,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3829,6 +4120,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3852,7 +4149,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 31e71d37cc170b1dc50d7c144e79ecf7fd9136c94cb14379221becb410adabf0
+            config-hash: 74789c0646c8bf71ec1874cfe35a4b6ae5c44b862f652be0f2ed55b1542488b3
           labels:
             app: summary-client
         spec:
@@ -3904,6 +4201,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3931,6 +4231,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3954,7 +4260,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 31e71d37cc170b1dc50d7c144e79ecf7fd9136c94cb14379221becb410adabf0
+            config-hash: 74789c0646c8bf71ec1874cfe35a4b6ae5c44b862f652be0f2ed55b1542488b3
           labels:
             app: upload
         spec:
@@ -4006,6 +4312,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -4033,6 +4342,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -4141,7 +4456,7 @@
       template:
         metadata:
           annotations:
-            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
+            config-hash: fc3374308fa8b807c6044209b46296ace250a10dd46c420936d9ab4244cbea7f
           labels:
             app: groundx
         spec:
@@ -4196,6 +4511,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -4238,6 +4556,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -4277,7 +4601,7 @@
       template:
         metadata:
           annotations:
-            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
+            config-hash: fc3374308fa8b807c6044209b46296ace250a10dd46c420936d9ab4244cbea7f
           labels:
             app: layout-webhook
         spec:
@@ -4332,6 +4656,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -4360,6 +4687,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -4399,7 +4732,7 @@
       template:
         metadata:
           annotations:
-            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
+            config-hash: fc3374308fa8b807c6044209b46296ace250a10dd46c420936d9ab4244cbea7f
           labels:
             app: pre-process
         spec:
@@ -4454,6 +4787,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -4482,6 +4818,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -4505,7 +4847,7 @@
       template:
         metadata:
           annotations:
-            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
+            config-hash: fc3374308fa8b807c6044209b46296ace250a10dd46c420936d9ab4244cbea7f
           labels:
             app: process
         spec:
@@ -4560,6 +4902,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -4588,6 +4933,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -4611,7 +4962,7 @@
       template:
         metadata:
           annotations:
-            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
+            config-hash: fc3374308fa8b807c6044209b46296ace250a10dd46c420936d9ab4244cbea7f
           labels:
             app: queue
         spec:
@@ -4666,6 +5017,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -4694,6 +5048,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -4717,7 +5077,7 @@
       template:
         metadata:
           annotations:
-            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
+            config-hash: fc3374308fa8b807c6044209b46296ace250a10dd46c420936d9ab4244cbea7f
           labels:
             app: summary-client
         spec:
@@ -4772,6 +5132,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -4800,6 +5163,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -4823,7 +5192,7 @@
       template:
         metadata:
           annotations:
-            config-hash: bbd47cb13dd57b8965d18b44794a56e5fde67d919ca0b31d4792697a81182c69
+            config-hash: fc3374308fa8b807c6044209b46296ace250a10dd46c420936d9ab4244cbea7f
           labels:
             app: upload
         spec:
@@ -4878,6 +5247,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -4906,6 +5278,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -4930,7 +5308,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0c845dcd342d3a0dc1f6ce93ff3a58b32b0159110481ea56072ebc034c67a4e9
+            config-hash: 85a096c67b5ef9bc8f0c71787978da81db599eb435371c334f55395e4092f2b5
           labels:
             app: groundx
         spec:
@@ -4982,6 +5360,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -5023,6 +5404,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -5062,7 +5449,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0c845dcd342d3a0dc1f6ce93ff3a58b32b0159110481ea56072ebc034c67a4e9
+            config-hash: 85a096c67b5ef9bc8f0c71787978da81db599eb435371c334f55395e4092f2b5
           labels:
             app: layout-webhook
         spec:
@@ -5114,6 +5501,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -5141,6 +5531,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -5180,7 +5576,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0c845dcd342d3a0dc1f6ce93ff3a58b32b0159110481ea56072ebc034c67a4e9
+            config-hash: 85a096c67b5ef9bc8f0c71787978da81db599eb435371c334f55395e4092f2b5
           labels:
             app: pre-process
         spec:
@@ -5232,6 +5628,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -5259,6 +5658,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -5282,7 +5687,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0c845dcd342d3a0dc1f6ce93ff3a58b32b0159110481ea56072ebc034c67a4e9
+            config-hash: 85a096c67b5ef9bc8f0c71787978da81db599eb435371c334f55395e4092f2b5
           labels:
             app: process
         spec:
@@ -5334,6 +5739,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -5361,6 +5769,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -5384,7 +5798,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0c845dcd342d3a0dc1f6ce93ff3a58b32b0159110481ea56072ebc034c67a4e9
+            config-hash: 85a096c67b5ef9bc8f0c71787978da81db599eb435371c334f55395e4092f2b5
           labels:
             app: queue
         spec:
@@ -5436,6 +5850,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -5463,6 +5880,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -5486,7 +5909,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0c845dcd342d3a0dc1f6ce93ff3a58b32b0159110481ea56072ebc034c67a4e9
+            config-hash: 85a096c67b5ef9bc8f0c71787978da81db599eb435371c334f55395e4092f2b5
           labels:
             app: summary-client
         spec:
@@ -5538,6 +5961,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -5565,6 +5991,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -5588,7 +6020,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 0c845dcd342d3a0dc1f6ce93ff3a58b32b0159110481ea56072ebc034c67a4e9
+            config-hash: 85a096c67b5ef9bc8f0c71787978da81db599eb435371c334f55395e4092f2b5
           labels:
             app: upload
         spec:
@@ -5640,6 +6072,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -5667,6 +6102,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -5691,7 +6132,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 03dbd7e13800e694c13b97c4f80da7217c8924d4667ed0f4a7424e7ae4dfc934
+            config-hash: 0551e6b671af541fd4c946eb75453bfd437c6f12a623e7e08959ccbfcec99098
           labels:
             app: groundx
         spec:
@@ -5746,6 +6187,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -5788,6 +6232,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -5827,7 +6277,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 03dbd7e13800e694c13b97c4f80da7217c8924d4667ed0f4a7424e7ae4dfc934
+            config-hash: 0551e6b671af541fd4c946eb75453bfd437c6f12a623e7e08959ccbfcec99098
           labels:
             app: layout-webhook
         spec:
@@ -5882,6 +6332,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -5910,6 +6363,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -5949,7 +6408,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 03dbd7e13800e694c13b97c4f80da7217c8924d4667ed0f4a7424e7ae4dfc934
+            config-hash: 0551e6b671af541fd4c946eb75453bfd437c6f12a623e7e08959ccbfcec99098
           labels:
             app: pre-process
         spec:
@@ -6004,6 +6463,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -6032,6 +6494,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -6055,7 +6523,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 03dbd7e13800e694c13b97c4f80da7217c8924d4667ed0f4a7424e7ae4dfc934
+            config-hash: 0551e6b671af541fd4c946eb75453bfd437c6f12a623e7e08959ccbfcec99098
           labels:
             app: process
         spec:
@@ -6110,6 +6578,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -6138,6 +6609,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -6161,7 +6638,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 03dbd7e13800e694c13b97c4f80da7217c8924d4667ed0f4a7424e7ae4dfc934
+            config-hash: 0551e6b671af541fd4c946eb75453bfd437c6f12a623e7e08959ccbfcec99098
           labels:
             app: queue
         spec:
@@ -6216,6 +6693,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -6244,6 +6724,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -6267,7 +6753,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 03dbd7e13800e694c13b97c4f80da7217c8924d4667ed0f4a7424e7ae4dfc934
+            config-hash: 0551e6b671af541fd4c946eb75453bfd437c6f12a623e7e08959ccbfcec99098
           labels:
             app: summary-client
         spec:
@@ -6322,6 +6808,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -6350,6 +6839,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -6373,7 +6868,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 03dbd7e13800e694c13b97c4f80da7217c8924d4667ed0f4a7424e7ae4dfc934
+            config-hash: 0551e6b671af541fd4c946eb75453bfd437c6f12a623e7e08959ccbfcec99098
           labels:
             app: upload
         spec:
@@ -6428,6 +6923,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -6456,6 +6954,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -6480,7 +6984,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 586b87eb4a41e81e7d48b0e7dcc232ebcdd00e96a9a052a9263dc24c63de0976
+            config-hash: 5f1d9f075830d8e10aa1e5d6dc2140dd52e10d521b0337ec7c595196d975ef14
           labels:
             app: groundx
         spec:
@@ -6532,6 +7036,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -6587,6 +7094,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -6626,7 +7139,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 586b87eb4a41e81e7d48b0e7dcc232ebcdd00e96a9a052a9263dc24c63de0976
+            config-hash: 5f1d9f075830d8e10aa1e5d6dc2140dd52e10d521b0337ec7c595196d975ef14
           labels:
             app: large-file-delivery
         spec:
@@ -6681,6 +7194,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -6711,6 +7227,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -6740,7 +7262,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 586b87eb4a41e81e7d48b0e7dcc232ebcdd00e96a9a052a9263dc24c63de0976
+            config-hash: 5f1d9f075830d8e10aa1e5d6dc2140dd52e10d521b0337ec7c595196d975ef14
           labels:
             app: layout-webhook
         spec:
@@ -6792,6 +7314,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -6819,6 +7344,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -6858,7 +7389,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 586b87eb4a41e81e7d48b0e7dcc232ebcdd00e96a9a052a9263dc24c63de0976
+            config-hash: 5f1d9f075830d8e10aa1e5d6dc2140dd52e10d521b0337ec7c595196d975ef14
           labels:
             app: pre-process
         spec:
@@ -6910,6 +7441,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -6937,6 +7471,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -6960,7 +7500,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 586b87eb4a41e81e7d48b0e7dcc232ebcdd00e96a9a052a9263dc24c63de0976
+            config-hash: 5f1d9f075830d8e10aa1e5d6dc2140dd52e10d521b0337ec7c595196d975ef14
           labels:
             app: process
         spec:
@@ -7012,6 +7552,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -7039,6 +7582,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -7062,7 +7611,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 586b87eb4a41e81e7d48b0e7dcc232ebcdd00e96a9a052a9263dc24c63de0976
+            config-hash: 5f1d9f075830d8e10aa1e5d6dc2140dd52e10d521b0337ec7c595196d975ef14
           labels:
             app: queue
         spec:
@@ -7114,6 +7663,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -7141,6 +7693,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -7164,7 +7722,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 586b87eb4a41e81e7d48b0e7dcc232ebcdd00e96a9a052a9263dc24c63de0976
+            config-hash: 5f1d9f075830d8e10aa1e5d6dc2140dd52e10d521b0337ec7c595196d975ef14
           labels:
             app: summary-client
         spec:
@@ -7216,6 +7774,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -7243,6 +7804,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -7266,7 +7833,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 586b87eb4a41e81e7d48b0e7dcc232ebcdd00e96a9a052a9263dc24c63de0976
+            config-hash: 5f1d9f075830d8e10aa1e5d6dc2140dd52e10d521b0337ec7c595196d975ef14
           labels:
             app: upload
         spec:
@@ -7318,6 +7885,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -7345,6 +7915,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -7369,7 +7945,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b660c3b505595326e32bd51ae12c3abc0ebafd3ea6e83d580d259a3f8398bb08
+            config-hash: 7d2effa1be124a158238017daff79b9fdf8f1fab37904106eab8a577cb9e3234
           labels:
             app: groundx
         spec:
@@ -7421,6 +7997,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -7476,6 +8055,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -7515,7 +8100,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b660c3b505595326e32bd51ae12c3abc0ebafd3ea6e83d580d259a3f8398bb08
+            config-hash: 7d2effa1be124a158238017daff79b9fdf8f1fab37904106eab8a577cb9e3234
           labels:
             app: large-file-delivery
         spec:
@@ -7570,6 +8155,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -7600,6 +8188,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -7629,7 +8223,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b660c3b505595326e32bd51ae12c3abc0ebafd3ea6e83d580d259a3f8398bb08
+            config-hash: 7d2effa1be124a158238017daff79b9fdf8f1fab37904106eab8a577cb9e3234
           labels:
             app: layout-webhook
         spec:
@@ -7681,6 +8275,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -7708,6 +8305,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -7747,7 +8350,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b660c3b505595326e32bd51ae12c3abc0ebafd3ea6e83d580d259a3f8398bb08
+            config-hash: 7d2effa1be124a158238017daff79b9fdf8f1fab37904106eab8a577cb9e3234
           labels:
             app: pre-process
         spec:
@@ -7799,6 +8402,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -7826,6 +8432,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -7849,7 +8461,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b660c3b505595326e32bd51ae12c3abc0ebafd3ea6e83d580d259a3f8398bb08
+            config-hash: 7d2effa1be124a158238017daff79b9fdf8f1fab37904106eab8a577cb9e3234
           labels:
             app: process
         spec:
@@ -7901,6 +8513,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -7928,6 +8543,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -7951,7 +8572,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b660c3b505595326e32bd51ae12c3abc0ebafd3ea6e83d580d259a3f8398bb08
+            config-hash: 7d2effa1be124a158238017daff79b9fdf8f1fab37904106eab8a577cb9e3234
           labels:
             app: queue
         spec:
@@ -8003,6 +8624,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -8030,6 +8654,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -8053,7 +8683,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b660c3b505595326e32bd51ae12c3abc0ebafd3ea6e83d580d259a3f8398bb08
+            config-hash: 7d2effa1be124a158238017daff79b9fdf8f1fab37904106eab8a577cb9e3234
           labels:
             app: summary-client
         spec:
@@ -8105,6 +8735,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -8132,6 +8765,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -8155,7 +8794,7 @@
       template:
         metadata:
           annotations:
-            config-hash: b660c3b505595326e32bd51ae12c3abc0ebafd3ea6e83d580d259a3f8398bb08
+            config-hash: 7d2effa1be124a158238017daff79b9fdf8f1fab37904106eab8a577cb9e3234
           labels:
             app: upload
         spec:
@@ -8207,6 +8846,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -8234,6 +8876,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -8327,7 +8975,7 @@
       template:
         metadata:
           annotations:
-            config-hash: f7d710fb2cf02a2cf9322273656f7ac4413ffc12225aa320715e11129121b542
+            config-hash: 7eb9183287739a9117517e05104f27bb495064b3458ec80660f9bdd291ff5f7f
             prometheus.io/port: "8081"
           labels:
             app: myapp
@@ -8368,6 +9016,9 @@
               securityContext:
                 readOnlyRootFilesystem: true
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -8418,6 +9069,12 @@
               operator: Equal
               value: batch
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -8457,7 +9114,7 @@
       template:
         metadata:
           annotations:
-            config-hash: f7d710fb2cf02a2cf9322273656f7ac4413ffc12225aa320715e11129121b542
+            config-hash: 7eb9183287739a9117517e05104f27bb495064b3458ec80660f9bdd291ff5f7f
           labels:
             app: layout-webhook
         spec:
@@ -8509,6 +9166,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -8535,6 +9195,12 @@
               operator: Equal
               value: batch
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -8574,7 +9240,7 @@
       template:
         metadata:
           annotations:
-            config-hash: f7d710fb2cf02a2cf9322273656f7ac4413ffc12225aa320715e11129121b542
+            config-hash: 7eb9183287739a9117517e05104f27bb495064b3458ec80660f9bdd291ff5f7f
           labels:
             app: pre-process
         spec:
@@ -8626,6 +9292,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -8656,6 +9325,12 @@
               key: eyelevel_node
               value: test-label-1
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -8679,7 +9354,7 @@
       template:
         metadata:
           annotations:
-            config-hash: f7d710fb2cf02a2cf9322273656f7ac4413ffc12225aa320715e11129121b542
+            config-hash: 7eb9183287739a9117517e05104f27bb495064b3458ec80660f9bdd291ff5f7f
           labels:
             app: process
         spec:
@@ -8731,6 +9406,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -8759,6 +9437,12 @@
               key: eyelevel_node
               value: test-label-1
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -8782,7 +9466,7 @@
       template:
         metadata:
           annotations:
-            config-hash: f7d710fb2cf02a2cf9322273656f7ac4413ffc12225aa320715e11129121b542
+            config-hash: 7eb9183287739a9117517e05104f27bb495064b3458ec80660f9bdd291ff5f7f
           labels:
             app: queue
         spec:
@@ -8820,6 +9504,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -8841,6 +9528,12 @@
               type: RuntimeDefault
           serviceAccountName: other-service-account
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -8864,7 +9557,7 @@
       template:
         metadata:
           annotations:
-            config-hash: f7d710fb2cf02a2cf9322273656f7ac4413ffc12225aa320715e11129121b542
+            config-hash: 7eb9183287739a9117517e05104f27bb495064b3458ec80660f9bdd291ff5f7f
           labels:
             app: summary-client
         spec:
@@ -8902,6 +9595,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -8928,6 +9624,12 @@
               operator: Equal
               value: batch
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -8951,7 +9653,7 @@
       template:
         metadata:
           annotations:
-            config-hash: f7d710fb2cf02a2cf9322273656f7ac4413ffc12225aa320715e11129121b542
+            config-hash: 7eb9183287739a9117517e05104f27bb495064b3458ec80660f9bdd291ff5f7f
           labels:
             app: upload
         spec:
@@ -8989,6 +9691,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -9012,6 +9717,12 @@
               type: RuntimeDefault
           serviceAccountName: other-service-account
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -9120,7 +9831,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 40c5f79c88571a4115f509878908531b0f4ea81b82a3e5ffa92838838f220e02
+            config-hash: cfb203ed1c67394109b360339a678b029095687c5bbb31cfbeac16582db07667
           labels:
             app: groundx
         spec:
@@ -9172,6 +9883,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -9227,6 +9941,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -9266,7 +9986,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 40c5f79c88571a4115f509878908531b0f4ea81b82a3e5ffa92838838f220e02
+            config-hash: cfb203ed1c67394109b360339a678b029095687c5bbb31cfbeac16582db07667
           labels:
             app: layout-webhook
         spec:
@@ -9318,6 +10038,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -9345,6 +10068,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -9384,7 +10113,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 40c5f79c88571a4115f509878908531b0f4ea81b82a3e5ffa92838838f220e02
+            config-hash: cfb203ed1c67394109b360339a678b029095687c5bbb31cfbeac16582db07667
           labels:
             app: pre-process
         spec:
@@ -9436,6 +10165,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -9463,6 +10195,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -9486,7 +10224,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 40c5f79c88571a4115f509878908531b0f4ea81b82a3e5ffa92838838f220e02
+            config-hash: cfb203ed1c67394109b360339a678b029095687c5bbb31cfbeac16582db07667
           labels:
             app: process
         spec:
@@ -9538,6 +10276,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -9565,6 +10306,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -9588,7 +10335,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 40c5f79c88571a4115f509878908531b0f4ea81b82a3e5ffa92838838f220e02
+            config-hash: cfb203ed1c67394109b360339a678b029095687c5bbb31cfbeac16582db07667
           labels:
             app: queue
         spec:
@@ -9640,6 +10387,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -9667,6 +10417,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -9690,7 +10446,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 40c5f79c88571a4115f509878908531b0f4ea81b82a3e5ffa92838838f220e02
+            config-hash: cfb203ed1c67394109b360339a678b029095687c5bbb31cfbeac16582db07667
           labels:
             app: summary-client
         spec:
@@ -9742,6 +10498,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -9769,6 +10528,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -9792,7 +10557,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 40c5f79c88571a4115f509878908531b0f4ea81b82a3e5ffa92838838f220e02
+            config-hash: cfb203ed1c67394109b360339a678b029095687c5bbb31cfbeac16582db07667
           labels:
             app: upload
         spec:
@@ -9844,6 +10609,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -9871,6 +10639,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -9895,7 +10669,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 40c5f79c88571a4115f509878908531b0f4ea81b82a3e5ffa92838838f220e02
+            config-hash: cfb203ed1c67394109b360339a678b029095687c5bbb31cfbeac16582db07667
           labels:
             app: groundx
         spec:
@@ -9945,6 +10719,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -9996,6 +10773,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -10035,7 +10818,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 40c5f79c88571a4115f509878908531b0f4ea81b82a3e5ffa92838838f220e02
+            config-hash: cfb203ed1c67394109b360339a678b029095687c5bbb31cfbeac16582db07667
           labels:
             app: layout-webhook
         spec:
@@ -10085,6 +10868,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -10108,6 +10894,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -10147,7 +10939,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 40c5f79c88571a4115f509878908531b0f4ea81b82a3e5ffa92838838f220e02
+            config-hash: cfb203ed1c67394109b360339a678b029095687c5bbb31cfbeac16582db07667
           labels:
             app: pre-process
         spec:
@@ -10197,6 +10989,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -10220,6 +11015,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -10243,7 +11044,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 40c5f79c88571a4115f509878908531b0f4ea81b82a3e5ffa92838838f220e02
+            config-hash: cfb203ed1c67394109b360339a678b029095687c5bbb31cfbeac16582db07667
           labels:
             app: process
         spec:
@@ -10293,6 +11094,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -10316,6 +11120,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -10339,7 +11149,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 40c5f79c88571a4115f509878908531b0f4ea81b82a3e5ffa92838838f220e02
+            config-hash: cfb203ed1c67394109b360339a678b029095687c5bbb31cfbeac16582db07667
           labels:
             app: queue
         spec:
@@ -10389,6 +11199,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -10412,6 +11225,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -10435,7 +11254,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 40c5f79c88571a4115f509878908531b0f4ea81b82a3e5ffa92838838f220e02
+            config-hash: cfb203ed1c67394109b360339a678b029095687c5bbb31cfbeac16582db07667
           labels:
             app: summary-client
         spec:
@@ -10485,6 +11304,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -10508,6 +11330,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -10531,7 +11359,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 40c5f79c88571a4115f509878908531b0f4ea81b82a3e5ffa92838838f220e02
+            config-hash: cfb203ed1c67394109b360339a678b029095687c5bbb31cfbeac16582db07667
           labels:
             app: upload
         spec:
@@ -10581,6 +11409,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -10604,6 +11435,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -10628,7 +11465,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 73b9c8863ae79651cb6a7e4396fd4ac1ca77d1ea4ea378ec97fee4a88a4c7a53
+            config-hash: 5ee3675866465097eb9a1d7efc4d1ea904338adfe62288083c37f5573f65f766
           labels:
             app: groundx-service
         spec:
@@ -10678,6 +11515,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -10731,6 +11571,12 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -10770,7 +11616,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 73b9c8863ae79651cb6a7e4396fd4ac1ca77d1ea4ea378ec97fee4a88a4c7a53
+            config-hash: 5ee3675866465097eb9a1d7efc4d1ea904338adfe62288083c37f5573f65f766
           labels:
             app: layout-webhook
         spec:
@@ -10820,6 +11666,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -10845,6 +11694,12 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -10884,7 +11739,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 73b9c8863ae79651cb6a7e4396fd4ac1ca77d1ea4ea378ec97fee4a88a4c7a53
+            config-hash: 5ee3675866465097eb9a1d7efc4d1ea904338adfe62288083c37f5573f65f766
           labels:
             app: pre-process
         spec:
@@ -10934,6 +11789,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -10959,6 +11817,12 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -10982,7 +11846,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 73b9c8863ae79651cb6a7e4396fd4ac1ca77d1ea4ea378ec97fee4a88a4c7a53
+            config-hash: 5ee3675866465097eb9a1d7efc4d1ea904338adfe62288083c37f5573f65f766
           labels:
             app: process
         spec:
@@ -11032,6 +11896,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -11057,6 +11924,12 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -11080,7 +11953,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 73b9c8863ae79651cb6a7e4396fd4ac1ca77d1ea4ea378ec97fee4a88a4c7a53
+            config-hash: 5ee3675866465097eb9a1d7efc4d1ea904338adfe62288083c37f5573f65f766
           labels:
             app: queue
         spec:
@@ -11130,6 +12003,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -11155,6 +12031,12 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -11178,7 +12060,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 73b9c8863ae79651cb6a7e4396fd4ac1ca77d1ea4ea378ec97fee4a88a4c7a53
+            config-hash: 5ee3675866465097eb9a1d7efc4d1ea904338adfe62288083c37f5573f65f766
           labels:
             app: summary-client
         spec:
@@ -11228,6 +12110,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -11253,6 +12138,12 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -11276,7 +12167,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 73b9c8863ae79651cb6a7e4396fd4ac1ca77d1ea4ea378ec97fee4a88a4c7a53
+            config-hash: 5ee3675866465097eb9a1d7efc4d1ea904338adfe62288083c37f5573f65f766
           labels:
             app: upload
         spec:
@@ -11326,6 +12217,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -11351,6 +12245,12 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -11375,7 +12275,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 586b87eb4a41e81e7d48b0e7dcc232ebcdd00e96a9a052a9263dc24c63de0976
+            config-hash: 5f1d9f075830d8e10aa1e5d6dc2140dd52e10d521b0337ec7c595196d975ef14
           labels:
             app: groundx
         spec:
@@ -11427,6 +12327,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -11482,6 +12385,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -11521,7 +12430,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 586b87eb4a41e81e7d48b0e7dcc232ebcdd00e96a9a052a9263dc24c63de0976
+            config-hash: 5f1d9f075830d8e10aa1e5d6dc2140dd52e10d521b0337ec7c595196d975ef14
             google-credentials-hash: 72a44514058cb545a86c2bc6895318ca8cce3322655796071dbc9a0addfe58ba
           labels:
             app: large-file-delivery
@@ -11577,6 +12486,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -11607,6 +12519,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -11636,7 +12554,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 586b87eb4a41e81e7d48b0e7dcc232ebcdd00e96a9a052a9263dc24c63de0976
+            config-hash: 5f1d9f075830d8e10aa1e5d6dc2140dd52e10d521b0337ec7c595196d975ef14
           labels:
             app: layout-webhook
         spec:
@@ -11688,6 +12606,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -11715,6 +12636,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -11754,7 +12681,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 586b87eb4a41e81e7d48b0e7dcc232ebcdd00e96a9a052a9263dc24c63de0976
+            config-hash: 5f1d9f075830d8e10aa1e5d6dc2140dd52e10d521b0337ec7c595196d975ef14
           labels:
             app: pre-process
         spec:
@@ -11806,6 +12733,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -11833,6 +12763,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -11856,7 +12792,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 586b87eb4a41e81e7d48b0e7dcc232ebcdd00e96a9a052a9263dc24c63de0976
+            config-hash: 5f1d9f075830d8e10aa1e5d6dc2140dd52e10d521b0337ec7c595196d975ef14
           labels:
             app: process
         spec:
@@ -11908,6 +12844,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -11935,6 +12874,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -11958,7 +12903,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 586b87eb4a41e81e7d48b0e7dcc232ebcdd00e96a9a052a9263dc24c63de0976
+            config-hash: 5f1d9f075830d8e10aa1e5d6dc2140dd52e10d521b0337ec7c595196d975ef14
           labels:
             app: queue
         spec:
@@ -12010,6 +12955,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -12037,6 +12985,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -12060,7 +13014,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 586b87eb4a41e81e7d48b0e7dcc232ebcdd00e96a9a052a9263dc24c63de0976
+            config-hash: 5f1d9f075830d8e10aa1e5d6dc2140dd52e10d521b0337ec7c595196d975ef14
           labels:
             app: summary-client
         spec:
@@ -12112,6 +13066,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -12139,6 +13096,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -12162,7 +13125,7 @@
       template:
         metadata:
           annotations:
-            config-hash: 586b87eb4a41e81e7d48b0e7dcc232ebcdd00e96a9a052a9263dc24c63de0976
+            config-hash: 5f1d9f075830d8e10aa1e5d6dc2140dd52e10d521b0337ec7c595196d975ef14
           labels:
             app: upload
         spec:
@@ -12214,6 +13177,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -12241,6 +13207,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -12265,7 +13237,7 @@
       template:
         metadata:
           annotations:
-            config-hash: bd0c4374a787d23683d3ef6e19cc472eec5fadfb441a26c427540a37c0c138aa
+            config-hash: cf84e72075df0eee6807ab60130ee447899c40cb838864d383df767bad8baf60
           labels:
             app: summary-client
         spec:
@@ -12317,6 +13289,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/search-ca
+                  name: search-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -12345,6 +13320,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: search-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-search-ca
             - name: config-volume
               secret:
                 secretName: config-yaml-map
