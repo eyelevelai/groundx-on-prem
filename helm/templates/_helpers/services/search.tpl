@@ -121,3 +121,33 @@ true
 {{- $in := .Values.search | default dict -}}
 {{ dig "username" "eyelevel" $in }}
 {{- end }}
+
+{{- define "groundx.search.caSecretName" -}}
+{{- $in := .Values.search | default dict -}}
+{{- $v := dig "caSecretName" "" $in -}}
+{{- if and (eq (include "groundx.search.create" .) "true") (empty $v) -}}
+{{- fail "search.caSecretName must name a Secret whose ca.crt is the CA that signed the OpenSearch server certificate" -}}
+{{- end -}}
+{{ $v }}
+{{- end }}
+
+{{- define "groundx.search.caMount" -}}
+{{- $in := .Values.search | default dict -}}
+{{- if not (empty (dig "caSecretName" "" $in)) }}
+- name: search-ca
+  mountPath: /var/run/groundx/search-ca
+  readOnly: true
+{{- end }}
+{{- end }}
+
+{{- define "groundx.search.caVolume" -}}
+{{- $in := .Values.search | default dict -}}
+{{- if not (empty (dig "caSecretName" "" $in)) }}
+- name: search-ca
+  secret:
+    secretName: {{ dig "caSecretName" "" $in | quote }}
+    items:
+      - key: ca.crt
+        path: ca.crt
+{{- end }}
+{{- end }}
