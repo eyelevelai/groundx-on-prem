@@ -30,7 +30,7 @@
 {{- $pull := get $svcData "pull" -}}
 {{- $san := get $svcData "serviceAccountName" -}}
 {{- $scr := get $svcData "secrets" | default dict -}}
-{{- $globalSecrets := include "groundx.secrets" $ | fromYaml | default dict -}}
+{{- $globalSecrets := include "groundx.fileAccess.workloadSecrets" (dict "root" $ "service" $entry) | fromYaml | default dict -}}
 {{- if gt (len $globalSecrets) 0 }}
   {{- range $k, $v := $globalSecrets }}
     {{- $_ := set $scr $k $v -}}
@@ -93,7 +93,7 @@ spec:
     spec:
 {{- if and $rp (hasKey $rp "gracePeriod") }}
       terminationGracePeriodSeconds: {{ get $rp "gracePeriod" }}
-{{- else if or (eq $mapPrefix "extract") (eq $mapPrefix "layout") }}
+{{- else }}
       terminationGracePeriodSeconds: 900
 {{- end }}
 {{- if $san }}
@@ -150,6 +150,9 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+{{- with include "groundx.fileAccess.caEnv" $ }}
+{{ . | nindent 12 }}
+{{- end }}
 {{- range $envName, $envValue := $env }}
             - name: {{ $envName }}
               value: {{ $envValue | quote }}
@@ -166,7 +169,7 @@ spec:
             - /bin/sh
             - -c
             - |
-              export PYTHONPATH=/app &&{{ if or (eq $mapPrefix "extract") (eq $mapPrefix "layout") }} exec{{ end }} supervisord -c /app/supervisord.conf
+              export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
 {{- if gt (len $lifecycle) 0 }}
           lifecycle:
 {{- toYaml $lifecycle | nindent 12 }}
@@ -190,6 +193,9 @@ spec:
             periodSeconds: 30
 {{ include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
           volumeMounts:
+{{- with include "groundx.fileAccess.caMount" $ }}
+{{ . | nindent 12 }}
+{{- end }}
             - name: config-volume
               mountPath: /app/config.py
               subPath: config.py
@@ -247,6 +253,9 @@ spec:
               readOnly: true
 {{- end }}
       volumes:
+{{- with include "groundx.fileAccess.caVolume" $ }}
+{{ . | nindent 8 }}
+{{- end }}
         - name: config-volume
           secret:
             secretName: {{ $svc }}-config-py-map

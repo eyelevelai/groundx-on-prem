@@ -1,7 +1,7 @@
 # on-prem-identity-config Specification
 
 ## Purpose
-TBD - created by archiving change gx-20-on-prem-has-no-identity-provider-servergroundx-wires-a-mock. Update Purpose after archive.
+Define chart configuration and operator documentation for API-key-only, Cognito, and local password identity modes.
 ## Requirements
 ### Requirement: The `cognito` block renders in cashbot-go's `config.yaml` Secret when a Cognito key is set
 
@@ -78,9 +78,9 @@ Every change to `templates/_helpers/main.tpl`, `templates/resources/config-yaml.
 
 ### Requirement: The on-prem identity story is documented in `docs/`
 
-`docs/on-prem-identity.md` SHALL state the default `apiKeyOnly` identity behavior, the optional `cognito` mode and its required keys, and the explicit air-gapped answer (`mode: cognito` requires reaching AWS Cognito, which an air-gapped cluster cannot do; air-gapped installs use `apiKeyOnly`, or `local` for password login subject to the GX-53 chart release). It SHALL also document the `local` mode password path as hardened by GX-83, covering:
+`docs/on-prem-identity.md` SHALL state the default `apiKeyOnly` identity behavior, the optional `cognito` mode and its required keys, the optional `local` mode and its compatible-server requirement, and the air-gapped choices (`apiKeyOnly` or `local`; `mode: cognito` requires reaching AWS Cognito, which an air-gapped cluster cannot do). It SHALL also document the `local` mode password path as hardened by GX-83, covering:
 
-- the per-email lock: three failed password attempts lock that email for 15 minutes, a locked or failed attempt returns the same generic error as any other failed login, and a successful login or an admin password reset clears the count;
+- the per-account lock: three failed password attempts lock that account for 15 minutes, every spelling of the account's email that the database treats as equal and the account's username share one count, a locked or failed attempt returns the same generic error as any other failed login, and a successful login or an admin password reset clears the count;
 - a sustained-lockout warning: anyone who knows an email can re-lock it every 15 minutes; per-source-IP ingress rate limits set through `groundx.ingress.annotations` slow brute-force guessing but are no defence against a targeted lockout of a known email (accepted residual), and an admin password reset is the recovery;
 - the API-key option on the MCP authorize page, for customers who have no password yet;
 - the scope of a password reset: it ends that customer's MCP sessions only, and after a compromise the operator must disable the account and reset its password (disabling can take up to an hour to reach cached credentials), since deleting API keys alone does not help (the username still works as a credential, GX-113);
@@ -90,17 +90,17 @@ Every change to `templates/_helpers/main.tpl`, `templates/resources/config-yaml.
 
 The document SHALL NOT contain the pre-GX-83 statements that nothing throttles password attempts or that MCP sign-in cannot authorize a customer until a password is set.
 
-#### Scenario: The identity-story doc covers both modes and the air-gapped answer (polarity: finalize success)
+#### Scenario: The identity-story doc covers supported modes and air-gapped choices (polarity: finalize success)
 
 - **GIVEN** this change is applied
 - **WHEN** `docs/on-prem-identity.md` is inspected
-- **THEN** it states the `apiKeyOnly` default, documents the `cognito.*` keys required to opt into `mode: cognito`, and explicitly states that air-gapped installs cannot use `mode: cognito` and use `apiKeyOnly` or `local`
+- **THEN** it states the `apiKeyOnly` default, documents the `cognito.*` keys required to opt into `mode: cognito`, documents `mode: local` and its compatible-server requirement, and states that air-gapped installs can use `apiKeyOnly` or `local` but not `mode: cognito`
 
 #### Scenario: The doc describes the lock and the uniform response (polarity: reject before state)
 
 - **GIVEN** this change is applied
 - **WHEN** the `local` section of `docs/on-prem-identity.md` is inspected
-- **THEN** it states that three failed attempts lock the email for 15 minutes and that a locked attempt gets the same generic error as any failed login
+- **THEN** it states that three failed attempts lock the account for 15 minutes and that a locked attempt gets the same generic error as any failed login
 - **AND THEN** it does not state or imply that a locked attempt is counted, extends the lock, or reveals whether the email exists
 
 #### Scenario: The doc warns about sustained lockout and names the defence (polarity: finalize success)
@@ -141,4 +141,51 @@ The document SHALL NOT contain the pre-GX-83 statements that nothing throttles p
 - **GIVEN** this change is applied
 - **WHEN** `docs/on-prem-identity.md` is searched for "Nothing throttles password attempts" and for the statement that MCP sign-in cannot authorize until a password is set
 - **THEN** neither is found
+
+### Requirement: `cognito.mode` accepts `local` as a valid password-login identity value
+
+`values.schema.json` (and its mirror `helm/values.schema.json`) SHALL accept `local` as a valid
+enum value for `cognito.mode`, alongside the existing `cognito` and `apiKeyOnly` values.
+`templates/resources/config-yaml.yaml`'s existing verbatim render of `cognito.mode` (via the
+`groundx.cognito.mode` helper) SHALL render `local` exactly as it renders any other accepted
+value — no new template, helper, or guard logic is required or introduced by this change.
+
+#### Scenario: `cognito.mode: local` renders `mode: "local"` (polarity: finalize success)
+
+- **GIVEN** a `values.yaml` that sets `cognito.mode: local`
+- **WHEN** `helm template` renders `templates/resources/config-yaml.yaml`, in either
+  `src/groundx/` or `helm/`
+- **THEN** the rendered `config.yaml` contains a `cognito:` block whose `mode` field is the
+  quoted string `"local"`
+
+#### Scenario: An unrecognized `cognito.mode` value stays rejected (polarity: reject before state)
+
+- **GIVEN** a `values.yaml` that sets `cognito.mode` to a value other than `cognito`,
+  `apiKeyOnly`, or `local`
+- **WHEN** `helm template`/`helm lint` validates the values against `values.schema.json`, on
+  either chart surface
+- **THEN** validation fails and no `config.yaml` is rendered — the opposite outcome (silently
+  accepting the value, or falling through to a default) must not occur
+
+#### Scenario: The enum widening does not change either existing value's render (polarity: finalize success)
+
+- **GIVEN** a `values.yaml` that sets `cognito.mode: cognito` or `cognito.mode: apiKeyOnly`
+- **WHEN** `helm template` renders `templates/resources/config-yaml.yaml`
+- **THEN** the rendered `cognito:` block is byte-for-byte unchanged from before this change
+
+#### Scenario: An install upgraded without opting in keeps working unchanged (backward compatibility — cross-service touchpoint)
+
+- **GIVEN** an on-prem install's `values.yaml` predates this change, or sets `cognito.mode` to
+  `cognito`/`apiKeyOnly`, or omits `cognito.mode` entirely
+- **WHEN** the chart is upgraded to the version carrying this change, with or without a
+  cashbot-go image that supports `local`
+- **THEN** the rendered `config.yaml` is unchanged for that install, and cashbot-go's own runtime
+  behavior for `apiKeyOnly`/`cognito` is unaffected — no chart-side action is required to keep
+  working exactly as it did before the upgrade
+
+#### Scenario: The schema change stays mirrored between chart surfaces (polarity: finalize success)
+
+- **GIVEN** this change is fully applied
+- **WHEN** `diff -q` compares `src/groundx/values.schema.json` to `helm/values.schema.json`
+- **THEN** the comparison reports no difference
 

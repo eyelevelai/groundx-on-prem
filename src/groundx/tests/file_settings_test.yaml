@@ -1,4 +1,9 @@
-suite: file connection settings
+suite: file storage and access settings
+set:
+  search:
+    password: fixture-app-credential
+    privilegedPassword: fixture-admin-credential
+
 tests:
   - it: extraction uses an override URL and its embedded port
     templates:
@@ -99,3 +104,1181 @@ tests:
       - matchRegex:
           path: stringData["config.py"]
           pattern: 'ssl=False'
+  - it: private gateway uses separate storage and native signing endpoints
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.file-access.yaml
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'storageEndpoint: "https://store.internal.example.com:9443"'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'signingEndpoint: "https://s3.example.com"'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'originsPrivate: true'
+  - it: private gateway rejects public storage origins
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.originsPrivate: false
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.originsPrivate must be true after operator verification of all storage aliases"
+  - it: private gateway rejects a storage loop
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.storageEndpoint: https://downloads.example.com
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.storageEndpoint must not use the delivery host"
+  - it: private IPv6 storage preserves the explicit connection port
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.storageEndpoint: "https://[2001:db8::1]:9443"
+    documentSelector:
+      path: metadata.name
+      value: layout-process
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers
+          any: true
+          content:
+            name: wait-for-file-storage
+            command: ['sh', '-c', "until nc -z 2001:db8::1 9443; do echo waiting for file storage; sleep 2; done"]
+  - it: extraction separates private storage from its existing presentation root
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      extract.file.url: http://downloads.example.com
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'storage_endpoint="https://store.internal.example.com:9443"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'public_read=False'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'issubset\(ContainerUploadSettings.model_fields\)'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'private extraction storage requires a compatible GroundX SDK'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'url="https://downloads.example.com/eyelevel/"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'key=""'
+  - it: extraction waits for private storage even with a presentation override
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      extract.agent.enabled: true
+      extract.file.url: http://downloads.example.com
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers
+          any: true
+          content:
+            name: wait-for-file-storage
+            command: ['sh', '-c', "until nc -z store.internal.example.com 9443; do echo waiting for file storage; sleep 2; done"]
+  - it: private presentations retain a configured bucket path exactly once
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      file.customDomain: downloads.example.com/eyelevel/
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadURL="https://downloads.example.com/eyelevel/"'
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadURL=.*eyelevel/eyelevel'
+  - it: private presentation rejects an unrelated file host
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      file.customDomain: other-files.example.com
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.publicUrl host must match the existing file presentation host"
+  - it: gateway renders explicit saved-reference aliases
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.trustedOrigins:
+        - https://legacy-files.example.com
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'trustedOrigins:'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'https://legacy-files.example.com'
+  - it: gateway rejects a trusted alias with a bucket path
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.trustedOrigins:
+        - https://legacy-files.example.com/other-bucket
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.trustedOrigins entries must be HTTPS origins without credentials, query, fragment or nonroot path"
+  - it: public local uploads use a recipient native endpoint without enabling protection
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      groundx.enabled: true
+      file.signingEndpoint: http://minio.customer.local:9000
+      file.username: local-user
+      file.password: local-password
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'signingEndpoint: "http://minio.customer.local:9000"'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'id: "local-user"'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'secret: "local-password"'
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'originsPrivate: true'
+  - it: enabled protection retains its verified signing endpoint
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      file.signingEndpoint: http://unused.local:9000
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'signingEndpoint: "https://s3.example.com"'
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'signingEndpoint: "http://unused.local'
+
+  - it: gateway uses the shared Go workload with private secret and CA references
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.file-access.yaml
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: file-access
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 2Gi
+      - equal:
+          path: spec.replicas
+          value: 2
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /readyz
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: file-store-credentials
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SSL_CERT_FILE
+            value: /var/run/groundx/file-access/ca.crt
+  - it: delivery ingress preserves the root path without rewriting queries or caching
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    documentSelector:
+      path: metadata.name
+      value: file-access
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: downloads.example.com
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: file-access
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /
+      - notExists:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/rewrite-target"]
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/proxy-buffering"]
+          value: "off"
+  - it: disabled gateway renders no Go workload in a disabled installation
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.disabled.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: gateway ingress requires the TLS certificate reference
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.tlsSecretName: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.tlsSecretName is required for ingress"
+  - it: gateway ingress rejects response cache overrides
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.ingress.annotations:
+        nginx.ingress.kubernetes.io/proxy-cache: "on"
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.ingress annotation nginx.ingress.kubernetes.io/proxy-cache can change file authorization, paths or response freshness"
+  - it: layout separates private storage from its existing presentation roots
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadStorageEndpoint="https://store.internal.example.com:9443"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadPublicRead=False'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadBaseURL="minio.eyelevel.svc.cluster.local"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadURL="https://downloads.example.com/eyelevel/"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'accessKey=""'
+  - it: enabled gateway rejects a separate extraction bucket
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      extract.file.bucketName: extraction-output
+    asserts:
+      - failedTemplate:
+          errorMessage: "extract.file.bucketName must match file.bucketName when fileAccess is enabled"
+  - it: private extraction inherits the gateway bucket
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      file.bucketName: account-bucket
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'bucket="account-bucket"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'url="https://downloads.example.com/account-bucket/"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'public_read=False'
+  - it: private extraction accepts an explicit matching bucket
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      extract.file.bucketName: account-bucket
+      file.bucketName: account-bucket
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'bucket="account-bucket"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'url="https://downloads.example.com/account-bucket/"'
+  - it: disabled file access preserves a separate extraction bucket
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      extract.file.bucketName: extraction-output
+      fileAccess.enabled: false
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'bucket="extraction-output"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'url="http://downloads.example.com/extraction-output/"'
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'public_read=False|storage_endpoint='
+  - it: disabled extraction does not reserve its unused bucket
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: false
+      extract.file.bucketName: extraction-output
+      extract.file.username: unused-inline-key
+      extract.file.password: unused-inline-secret
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'bucket: eyelevel'
+  - it: migration job receives the same credential and trust references on upgrades
+    templates:
+      - ../templates/app/schema-migration.yaml
+    values:
+      - ./files/values.file-access.yaml
+    release:
+      upgrade: true
+    documentSelector:
+      path: kind
+      value: Job
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: file-store-credentials
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SSL_CERT_FILE
+            value: /var/run/groundx/file-access/ca.crt
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: file-access-ca
+            secret:
+              secretName: file-store-ca
+              items:
+                - key: ca.crt
+                  path: ca.crt
+  - it: gateway creates its annotated service account only when requested
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.serviceAccount.create: true
+      fileAccess.serviceAccount.name: private-files
+      fileAccess.serviceAccount.annotations:
+        eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/private-files
+    documentSelector:
+      path: kind
+      value: ServiceAccount
+    asserts:
+      - equal:
+          path: metadata.name
+          value: private-files
+      - equal:
+          path: metadata.annotations["eks.amazonaws.com/role-arn"]
+          value: arn:aws:iam::123456789012:role/private-files
+  - it: native AWS storage uses ambient credentials without an empty Secret
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      file.enabled: false
+      file.existing.url: https://downloads.example.com
+      file.existing.serviceType: s3
+      file.existing.region: us-east-1
+      fileAccess.storageCredentialsSecretName: ""
+      fileAccess.serviceAccount.name: private-files
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: file-access
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: private-files
+      - notExists:
+          path: spec.template.spec.containers[0].envFrom
+  - it: a verified origin hostname changes ingress routing and TLS without changing public URLs
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.ingress.hostName: verified-origin.example.com
+    documentSelector:
+      path: metadata.name
+      value: file-access
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: verified-origin.example.com
+      - equal:
+          path: spec.tls[0].hosts[0]
+          value: verified-origin.example.com
+      - equal:
+          path: spec.tls[0].secretName
+          value: downloads-tls
+      - notExists:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/rewrite-target"]
+  - it: a TLS ingress reference cannot replace verified front proxy transport
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.frontProxyTLSVerified: false
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.frontProxyTLSVerified must be true after operator verification of HTTPS termination and encrypted trusted gateway backplane"
+  - it: verified front proxy transport reaches the gateway config
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.file-access.yaml
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'frontProxyTLSVerified: true'
+  - it: rejects storageEndpoint pointing at the enabled gateway ingress host
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.ingress.hostName: verified-origin.example.com
+      fileAccess.storageEndpoint: https://VERIFIED-ORIGIN.example.com:9443
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.storageEndpoint must not use the delivery host"
+  - it: rejects signingEndpoint pointing at the enabled gateway ingress host
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.ingress.hostName: verified-origin.example.com
+      fileAccess.signingEndpoint: https://VERIFIED-ORIGIN.example.com:9443
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.signingEndpoint must not use the delivery host"
+  - it: disabled ingress allows a storage endpoint sharing an unused ingress hostname
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.ingress.enabled: false
+      fileAccess.ingress.hostName: store.internal.example.com
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'storageEndpoint: "https://store.internal.example.com:9443"'
+  - it: disabled gateway ignores ingress endpoint loop settings
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      fileAccess.enabled: false
+      fileAccess.ingress.enabled: true
+      fileAccess.ingress.hostName: store.internal.example.com
+      fileAccess.storageEndpoint: https://store.internal.example.com
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: rejects native ingress DOWNLOADS.example.com with managed gateway ingress
+    templates:
+    - ../templates/resources/ingress.yaml
+    values:
+    - ./files/values.file-access.yaml
+    set:
+      fileAccess.ingress.enabled: true
+      fileAccess.ingress.hostName: origin.example.com
+      file.ingress:
+        enabled: true
+        name: native-files
+        data:
+          hostName: DOWNLOADS.example.com
+          path: /eyelevel
+    asserts:
+    - failedTemplate:
+        errorMessage: file.ingress host must not use a fileAccess delivery host
+
+  - it: rejects native ingress origin.example.com with managed gateway ingress
+    templates:
+    - ../templates/resources/ingress.yaml
+    values:
+    - ./files/values.file-access.yaml
+    set:
+      fileAccess.ingress.enabled: true
+      fileAccess.ingress.hostName: origin.example.com
+      file.ingress:
+        enabled: true
+        name: native-files
+        data:
+          hostName: origin.example.com
+          path: /eyelevel
+    asserts:
+    - failedTemplate:
+        errorMessage: file.ingress host must not use a fileAccess delivery host
+
+  - it: rejects native ingress DOWNLOADS.example.com with external gateway ingress
+    templates:
+    - ../templates/resources/ingress.yaml
+    values:
+    - ./files/values.file-access.yaml
+    set:
+      fileAccess.ingress.enabled: false
+      fileAccess.ingress.hostName: origin.example.com
+      file.ingress:
+        enabled: true
+        name: native-files
+        data:
+          hostName: DOWNLOADS.example.com
+          path: /eyelevel
+    asserts:
+    - failedTemplate:
+        errorMessage: file.ingress host must not use a fileAccess delivery host
+
+
+  - it: preserves distinct native TLS signing ingress with file access enabled
+    templates:
+    - ../templates/resources/ingress.yaml
+    values:
+    - ./files/values.file-access.yaml
+    set:
+      fileAccess.enabled: true
+      file.ingress:
+        enabled: true
+        name: native-files
+        data:
+          hostName: s3.example.com
+          tls:
+          - hosts:
+            - s3.example.com
+            secretName: store-tls
+          paths:
+          - path: /eyelevel
+            pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+    documentSelector:
+      path: metadata.name
+      value: native-files
+    asserts:
+    - equal:
+        path: spec.rules[0].host
+        value: s3.example.com
+    - equal:
+        path: spec.rules[0].http.paths[0].backend.service.name
+        value: minio
+    - equal:
+        path: spec.rules[0].http.paths[0].backend.service.port.number
+        value: 9000
+    - equal:
+        path: spec.rules[0].http.paths[0].path
+        value: /eyelevel
+    - equal:
+        path: spec.tls[0].secretName
+        value: store-tls
+
+  - it: preserves distinct native TLS signing ingress with file access disabled
+    templates:
+    - ../templates/resources/ingress.yaml
+    values:
+    - ./files/values.file-access.yaml
+    set:
+      fileAccess.enabled: false
+      file.ingress:
+        enabled: true
+        name: native-files
+        data:
+          hostName: s3.example.com
+          tls:
+          - hosts:
+            - s3.example.com
+            secretName: store-tls
+          paths:
+          - path: /eyelevel
+            pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+    documentSelector:
+      path: metadata.name
+      value: native-files
+    asserts:
+    - equal:
+        path: spec.rules[0].host
+        value: s3.example.com
+    - equal:
+        path: spec.rules[0].http.paths[0].backend.service.name
+        value: minio
+    - equal:
+        path: spec.rules[0].http.paths[0].backend.service.port.number
+        value: 9000
+    - equal:
+        path: spec.rules[0].http.paths[0].path
+        value: /eyelevel
+    - equal:
+        path: spec.tls[0].secretName
+        value: store-tls
+
+  - it: ranker-api receives only explicit global Secrets
+    templates:
+    - ../templates/app/api.yaml
+    values:
+    - ./files/values.file-access.yaml
+    set:
+      metrics.enabled: true
+      cluster.secrets:
+      - operator-secret
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: ranker-api
+    asserts:
+    - equal:
+        path: spec.template.spec.containers[0].envFrom
+        value:
+        - secretRef:
+            name: operator-secret
+
+  - it: summary-api receives only explicit global Secrets
+    templates:
+    - ../templates/app/api.yaml
+    values:
+    - ./files/values.file-access.yaml
+    set:
+      metrics.enabled: true
+      cluster.secrets:
+      - operator-secret
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: summary-api
+    asserts:
+    - equal:
+        path: spec.template.spec.containers[0].envFrom
+        value:
+        - secretRef:
+            name: operator-secret
+
+  - it: ranker-inference receives only explicit global Secrets
+    templates:
+    - ../templates/app/inference.yaml
+    values:
+    - ./files/values.file-access.yaml
+    set:
+      metrics.enabled: true
+      cluster.secrets:
+      - operator-secret
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: ranker-inference
+    asserts:
+    - equal:
+        path: spec.template.spec.containers[0].envFrom
+        value:
+        - secretRef:
+            name: operator-secret
+
+  - it: summary-inference receives only explicit global Secrets
+    templates:
+    - ../templates/app/inference.yaml
+    values:
+    - ./files/values.file-access.yaml
+    set:
+      metrics.enabled: true
+      cluster.secrets:
+      - operator-secret
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: summary-inference
+    asserts:
+    - equal:
+        path: spec.template.spec.containers[0].envFrom
+        value:
+        - secretRef:
+            name: operator-secret
+
+  - it: metrics receives only explicit global Secrets
+    templates:
+    - ../templates/app/metrics.yaml
+    values:
+    - ./files/values.file-access.yaml
+    set:
+      metrics.enabled: true
+      cluster.secrets:
+      - operator-secret
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: metrics
+    asserts:
+    - equal:
+        path: spec.template.spec.containers[0].envFrom
+        value:
+        - secretRef:
+            name: operator-secret
+
+  - it: upload retains feature credentials once with an explicit duplicate global import
+    templates:
+    - ../templates/app/golang.yaml
+    values:
+    - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      cluster.secrets:
+      - file-store-credentials
+      - operator-secret
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: upload
+    asserts:
+    - equal:
+        path: spec.template.spec.containers[0].envFrom
+        value:
+        - secretRef:
+            name: file-store-credentials
+        - secretRef:
+            name: operator-secret
+
+  - it: layout-api retains feature credentials once with an explicit duplicate global
+      import
+    templates:
+    - ../templates/app/api.yaml
+    values:
+    - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      cluster.secrets:
+      - file-store-credentials
+      - operator-secret
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: layout-api
+    asserts:
+    - equal:
+        path: spec.template.spec.containers[0].envFrom
+        value:
+        - secretRef:
+            name: file-store-credentials
+        - secretRef:
+            name: operator-secret
+
+  - it: layout-inference retains feature credentials once with an explicit duplicate
+      global import
+    templates:
+    - ../templates/app/inference.yaml
+    values:
+    - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      cluster.secrets:
+      - file-store-credentials
+      - operator-secret
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: layout-inference
+    asserts:
+    - equal:
+        path: spec.template.spec.containers[0].envFrom
+        value:
+        - secretRef:
+            name: file-store-credentials
+        - secretRef:
+            name: operator-secret
+
+  - it: layout-process retains feature credentials once with an explicit duplicate global
+      import
+    templates:
+    - ../templates/app/celery.yaml
+    values:
+    - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      cluster.secrets:
+      - file-store-credentials
+      - operator-secret
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: layout-process
+    asserts:
+    - equal:
+        path: spec.template.spec.containers[0].envFrom
+        value:
+        - secretRef:
+            name: file-store-credentials
+        - secretRef:
+            name: operator-secret
+
+  - it: extract-api retains feature credentials once with an explicit duplicate global
+      import
+    templates:
+    - ../templates/app/api.yaml
+    values:
+    - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      cluster.secrets:
+      - file-store-credentials
+      - operator-secret
+      extract.api.enabled: true
+      extract.agent.enabled: true
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: extract-api
+    asserts:
+    - equal:
+        path: spec.template.spec.containers[0].envFrom
+        value:
+        - secretRef:
+            name: extract-save-secret
+        - secretRef:
+            name: file-store-credentials
+        - secretRef:
+            name: operator-secret
+
+  - it: extract-agent retains feature credentials once with an explicit duplicate global
+      import
+    templates:
+    - ../templates/app/celery.yaml
+    values:
+    - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      cluster.secrets:
+      - file-store-credentials
+      - operator-secret
+      extract.api.enabled: true
+      extract.agent.enabled: true
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: extract-agent
+    asserts:
+    - equal:
+        path: spec.template.spec.containers[0].envFrom
+        value:
+        - secretRef:
+            name: extract-save-secret
+        - secretRef:
+            name: file-store-credentials
+        - secretRef:
+            name: operator-secret
+
+  - it: workspace receives its own Secret without feature storage credentials
+    templates:
+    - ../templates/app/api.yaml
+    values:
+    - ./files/values.file-access.yaml
+    set:
+      workspace.enabled: true
+      workspace.existingSecret: workspace-credentials
+    documentSelector:
+      path: spec.template.spec.containers[0].name
+      value: workspace-api
+    asserts:
+    - equal:
+        path: spec.template.spec.containers[0].envFrom
+        value:
+        - secretRef:
+            name: workspace-credentials
+
+  - it: disabled unused gateway hostname preserves the native TLS signing route
+    templates:
+    - ../templates/resources/ingress.yaml
+    values:
+    - ./files/values.file-access.yaml
+    set:
+      fileAccess.ingress.enabled: false
+      fileAccess.ingress.hostName: s3.example.com
+      file.ingress:
+        enabled: true
+        name: native-files
+        data:
+          hostName: s3.example.com
+          tls:
+          - hosts:
+            - s3.example.com
+            secretName: store-tls
+          paths:
+          - path: /eyelevel
+            pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+    documentSelector:
+      path: metadata.name
+      value: native-files
+    asserts:
+    - equal:
+        path: spec.rules[0].host
+        value: s3.example.com
+    - equal:
+        path: spec.rules[0].http.paths[0].backend.service.name
+        value: minio
+    - equal:
+        path: spec.rules[0].http.paths[0].backend.service.port.number
+        value: 9000
+    - equal:
+        path: spec.tls[0].secretName
+        value: store-tls
+
+  - it: generated native ingress keeps Service port 9000 with private HTTPS port 9443
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+      - ./files/values.file-native-signing.yaml
+    documentSelector:
+      path: metadata.name
+      value: native-files
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 9000
+      - equal:
+          path: spec.tls[0].secretName
+          value: store-tls
+
+  - it: generated native ingress keeps Service port 9000 with HTTPS port 443 and an unused gateway hostname
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+      - ./files/values.file-native-signing.yaml
+    set:
+      fileAccess.storageEndpoint: https://s3.example.com
+      fileAccess.ingress.enabled: false
+      fileAccess.ingress.hostName: s3.example.com
+    documentSelector:
+      path: metadata.name
+      value: native-files
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 9000
+      - equal:
+          path: spec.rules[0].host
+          value: s3.example.com
+
+  - it: generated legacy native ingress keeps Service port 9000 with private HTTPS port 9443
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+      - ./files/values.file-native-signing.yaml
+    set:
+      file.ingress.data.apiVersion: extensions/v1beta1
+    documentSelector:
+      path: metadata.name
+      value: native-files
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.servicePort
+          value: 9000
+
+  - it: generated native ingress retains its Service port with file access disabled
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+      - ./files/values.file-native-signing.yaml
+    set:
+      fileAccess.enabled: false
+    documentSelector:
+      path: metadata.name
+      value: native-files
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 9000
+
+  - it: generated native ingress retains external storage port resolution with file access disabled
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+      - ./files/values.file-native-signing.yaml
+    set:
+      fileAccess.enabled: false
+      file.existing.url: https://external.example.com:9444
+    documentSelector:
+      path: metadata.name
+      value: native-files
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 9444
+  - it: enabled file access rejects ignored file.username with a storage Secret
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      file.username: ignored-inline-value
+    asserts:
+      - failedTemplate:
+          errorMessage: "file.username is ignored when fileAccess is enabled; remove it and use fileAccess.storageCredentialsSecretName or native S3 ambient credentials"
+  - it: enabled file access rejects ignored file.password with a storage Secret
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      file.password: ignored-inline-value
+    asserts:
+      - failedTemplate:
+          errorMessage: "file.password is ignored when fileAccess is enabled; remove it and use fileAccess.storageCredentialsSecretName or native S3 ambient credentials"
+  - it: enabled file access rejects ignored file.token with a storage Secret
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      file.token: ignored-inline-value
+    asserts:
+      - failedTemplate:
+          errorMessage: "file.token is ignored when fileAccess is enabled; remove it and use fileAccess.storageCredentialsSecretName or native S3 ambient credentials"
+  - it: enabled file access rejects ignored extract.file.username with a storage Secret
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      extract.file.username: ignored-inline-value
+    asserts:
+      - failedTemplate:
+          errorMessage: "extract.file.username is ignored when fileAccess is enabled; remove it and use fileAccess.storageCredentialsSecretName or native S3 ambient credentials"
+  - it: enabled file access rejects ignored extract.file.password with a storage Secret
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      extract.file.password: ignored-inline-value
+    asserts:
+      - failedTemplate:
+          errorMessage: "extract.file.password is ignored when fileAccess is enabled; remove it and use fileAccess.storageCredentialsSecretName or native S3 ambient credentials"
+  - it: ambient S3 rejects ignored inline credentials without requiring a Secret
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      file.enabled: false
+      file.existing.url: https://downloads.example.com
+      file.existing.serviceType: s3
+      fileAccess.storageCredentialsSecretName: ""
+      file.username: ignored-inline-value
+    asserts:
+      - failedTemplate:
+          errorMessage: "file.username is ignored when fileAccess is enabled; remove it and use fileAccess.storageCredentialsSecretName or native S3 ambient credentials"
+  - it: disabled file access retains inline Go upload credentials
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.enabled: false
+      file.username: legacy-key
+      file.password: legacy-secret
+      file.token: legacy-token
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'id: "legacy-key"'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'secret: "legacy-secret"'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'token: legacy-token'
+  - it: disabled file access retains inline layout credentials
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.enabled: false
+      file.username: legacy-key
+      file.password: legacy-secret
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'accessKey="legacy-key"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'accessSecret="legacy-secret"'
+  - it: disabled file access retains extraction inline overrides
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.enabled: false
+      extract.enabled: true
+      file.username: main-key
+      file.password: main-secret
+      extract.file.username: extraction-key
+      extract.file.password: extraction-secret
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'key="extraction-key"'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'secret="extraction-secret"'

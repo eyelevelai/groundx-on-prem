@@ -4,6 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${ROOT_DIR}"
 
+SEARCH_CREDENTIALS="src/groundx/tests/files/values.search-credentials.yaml"
+
 RUN_JUNIT=0
 PY="$(command -v python3 || command -v python)" || { echo "no python interpreter on PATH (need python3 or python)" >&2; exit 1; }
 
@@ -155,13 +157,13 @@ for chart in src/groundx helm; do
   # Enabled: the credentials Secret resource must actually render. --show-only isolates
   # that one resource, so this cannot be satisfied by the volume's mere reference to the
   # same name (both carry the -ocr-credentials-map token in a full render).
-  ocr_configmap="$(helm template ocr-google "${chart}" -f src/groundx/tests/files/values.ocr-google.yaml --show-only templates/resources/layout-ocr-credentials.yaml 2>/dev/null || true)"
+  ocr_configmap="$(helm template ocr-google "${chart}" -f "${SEARCH_CREDENTIALS}" -f src/groundx/tests/files/values.ocr-google.yaml --show-only templates/resources/layout-ocr-credentials.yaml 2>/dev/null || true)"
   if ! grep -q 'kind: Secret' <<<"${ocr_configmap}" || ! grep -q -- '-ocr-credentials-map' <<<"${ocr_configmap}"; then
     echo "${chart}: google OCR enabled render must create the -ocr-credentials-map Secret resource." >&2
     exit 1
   fi
   # ...and the celery Deployment must mount that Secret and hash it.
-  ocr_enabled_render="$(helm template ocr-google "${chart}" -f src/groundx/tests/files/values.ocr-google.yaml)"
+  ocr_enabled_render="$(helm template ocr-google "${chart}" -f "${SEARCH_CREDENTIALS}" -f src/groundx/tests/files/values.ocr-google.yaml)"
   for expected in "ocr-credentials-hash" "credentials-volume"; do
     if ! grep -q -- "${expected}" <<<"${ocr_enabled_render}"; then
       echo "${chart}: google OCR enabled render is missing expected evidence: ${expected}" >&2
@@ -171,16 +173,16 @@ for chart in src/groundx helm; do
   # Disabled (credentials set, layout.ocr.enabled=false): the Secret resource must NOT
   # render (--show-only fails when the guard drops it to an empty document), and the
   # Deployment must NOT mount a Secret that is never created (the F5 must-not-mount case).
-  if helm template ocr-google-disabled "${chart}" -f src/groundx/tests/files/values.ocr-google-disabled.yaml --show-only templates/resources/layout-ocr-credentials.yaml >/dev/null 2>&1; then
+  if helm template ocr-google-disabled "${chart}" -f "${SEARCH_CREDENTIALS}" -f src/groundx/tests/files/values.ocr-google-disabled.yaml --show-only templates/resources/layout-ocr-credentials.yaml >/dev/null 2>&1; then
     echo "${chart}: google OCR disabled render must not create the -ocr-credentials-map Secret." >&2
     exit 1
   fi
-  ocr_disabled_render="$(helm template ocr-google-disabled "${chart}" -f src/groundx/tests/files/values.ocr-google-disabled.yaml)"
+  ocr_disabled_render="$(helm template ocr-google-disabled "${chart}" -f "${SEARCH_CREDENTIALS}" -f src/groundx/tests/files/values.ocr-google-disabled.yaml)"
   if grep -q -- "credentials-volume" <<<"${ocr_disabled_render}"; then
     echo "${chart}: google OCR disabled render must not mount a Secret that is never created." >&2
     exit 1
   fi
-  mixed_worker_render="$(helm template ocr-google-mixed "${chart}" \
+  mixed_worker_render="$(helm template ocr-google-mixed "${chart}" -f "${SEARCH_CREDENTIALS}" \
     -f src/groundx/tests/files/values.ocr-google.yaml \
     --set extract.enabled=true \
     --set extract.agent.enabled=true \
@@ -231,9 +233,10 @@ import tempfile
 from pathlib import Path
 
 fixture = Path("src/groundx/tests/files/values.google-shared.yaml").resolve()
+credentials = Path("src/groundx/tests/files/values.search-credentials.yaml").resolve()
 
 def render(chart, *overrides):
-    command = ["helm", "template", "shared-google", str(chart), "-f", str(fixture)]
+    command = ["helm", "template", "shared-google", str(chart), "-f", str(credentials), "-f", str(fixture)]
     for override in overrides:
         command += ["--set", override]
     result = subprocess.run(command, capture_output=True, text=True)
@@ -288,7 +291,7 @@ for chart in (Path("src/groundx"), Path("helm")):
         "google.secretKey=key-without-external-secret",
         "largeFileDeliver.credentials.operations-drive.secretName=ambiguous-source",
     ):
-        result = subprocess.run(["helm", "template", "invalid-google", str(chart), "-f", str(fixture), "--set", invalid], capture_output=True, text=True)
+        result = subprocess.run(["helm", "template", "invalid-google", str(chart), "-f", str(credentials), "-f", str(fixture), "--set", invalid], capture_output=True, text=True)
         assert result.returncode and "schema" in result.stderr, f"accepted ambiguous credentials: {invalid}"
 print("Shared Google credential isolation, rotation and schema checks passed")
 PY
@@ -302,7 +305,7 @@ expect_helm_template_failure() {
   local output
   local status
   set +e
-  output="$(helm template invalid-image-settings "${chart}" -f src/groundx/values/extract/values.yaml "$@" 2>&1 >/dev/null)"
+  output="$(helm template invalid-image-settings "${chart}" -f "${SEARCH_CREDENTIALS}" -f src/groundx/values/extract/values.yaml "$@" 2>&1 >/dev/null)"
   status=$?
   set -e
 
@@ -325,9 +328,42 @@ for chart in src/groundx helm; do
   expect_helm_template_failure "${chart}" "workspace.api.ingress is enabled but workspace.api is not created" --set workspace.api.ingress.enabled=true
 done
 
+echo "==> Verifying optional FileAccess storage and ingress contracts on both chart surfaces"
+for chart in src/groundx helm; do
+  file_access_output="$(helm template private-files "${chart}" -f src/groundx/tests/files/values.file-access.yaml)"
+  for expected in 'name: file-access' 'frontProxyTLSVerified: true' 'storageEndpoint: "https://store.internal.example.com:9443"' 'signingEndpoint: "https://s3.example.com"' 'uploadStorageEndpoint="https://store.internal.example.com:9443"' 'uploadPublicRead=False' 'name: file-store-credentials' 'secretName: "file-store-ca"' 'secretName: downloads-tls'; do
+    if [[ "${file_access_output}" != *"${expected}"* ]]; then
+      echo "${chart}: FileAccess render is missing ${expected}" >&2
+      exit 1
+    fi
+  done
+  for gateway_ingress in true false; do
+    for native_host in delivery origin; do
+      if [[ "${gateway_ingress}" == false && "${native_host}" == origin ]]; then continue; fi
+      expect_helm_template_failure "${chart}" "file.ingress host must not use a fileAccess delivery host" -f src/groundx/tests/files/values.file-access.yaml -f "src/groundx/tests/files/values.file-native-${native_host}.yaml" --set "fileAccess.ingress.enabled=${gateway_ingress}" --set fileAccess.ingress.hostName=origin.example.com
+    done
+  done
+  for storage_endpoint in https://store.internal.example.com:9443 https://s3.example.com; do
+    native_ingress_output="$(helm template native-files "${chart}" -f src/groundx/tests/files/values.file-access.yaml -f src/groundx/tests/files/values.file-native-signing.yaml --set fileAccess.ingress.enabled=false --set fileAccess.ingress.hostName=s3.example.com --set "fileAccess.storageEndpoint=${storage_endpoint}" -s templates/resources/ingress.yaml)"
+    if [[ "${native_ingress_output}" != *'host: "s3.example.com"'* || "${native_ingress_output}" != *'name: minio'* || "${native_ingress_output}" != *'number: 9000'* || "${native_ingress_output}" != *'secretName: store-tls'* ]]; then
+      echo "${chart}: native ingress must retain Service port 9000 and TLS independently of the private HTTPS endpoint port." >&2
+      exit 1
+    fi
+  done
+  expect_helm_template_failure "${chart}" "fileAccess.frontProxyTLSVerified must be true" -f src/groundx/tests/files/values.file-access.yaml --set fileAccess.frontProxyTLSVerified=false
+  expect_helm_template_failure "${chart}" "fileAccess.originsPrivate must be true" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=false --set fileAccess.originsPrivate=false
+  expect_helm_template_failure "${chart}" "fileAccess.storageEndpoint must not use the delivery host" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=false --set fileAccess.storageEndpoint=https://downloads.example.com
+  expect_helm_template_failure "${chart}" "fileAccess.signingEndpoint must not use the delivery host" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=false --set fileAccess.signingEndpoint=https://downloads.example.com
+  expect_helm_template_failure "${chart}" "fileAccess.storageCredentialsSecretName is required" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=false --set fileAccess.storageCredentialsSecretName=
+  expect_helm_template_failure "${chart}" "extract.file.bucketName must match file.bucketName when fileAccess is enabled" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=true --set extract.file.bucketName=extraction-output
+  for inline_credential in file.username file.password file.token extract.file.username extract.file.password; do
+    expect_helm_template_failure "${chart}" "${inline_credential} is ignored when fileAccess is enabled; remove it and use fileAccess.storageCredentialsSecretName or native S3 ambient credentials" -f src/groundx/tests/files/values.file-access.yaml --set extract.enabled=true --set "${inline_credential}=ignored-inline-value"
+  done
+done
+
 echo "==> Verifying generated Ingress backend routing"
 for chart in src/groundx helm; do
-  ingress_output="$(helm template phoenix-check "${chart}" -f src/groundx/tests/files/values.phoenix.yaml -s templates/resources/ingress.yaml)"
+  ingress_output="$(helm template phoenix-check "${chart}" -f "${SEARCH_CREDENTIALS}" -f src/groundx/tests/files/values.phoenix.yaml -s templates/resources/ingress.yaml)"
   if [[ "${ingress_output}" != *"name: extract-api"* ]]; then
     echo "Expected ${chart} generated Ingress backend to name extract-api" >&2
     exit 1
@@ -348,7 +384,7 @@ expect_helm_lint_failure() {
   local output
   local status
   set +e
-  output="$(helm lint "${chart}" --set engines.default.engineId=test-engine "$@" 2>&1)"
+  output="$(helm lint "${chart}" -f "${SEARCH_CREDENTIALS}" --set engines.default.engineId=test-engine "$@" 2>&1)"
   status=$?
   set -e
 
@@ -369,8 +405,8 @@ expect_helm_lint_failure() {
 }
 
 for chart in src/groundx helm; do
-  helm lint "${chart}" --set engines.default.engineId=test-engine --set-json engines.default.maxImages=null >/dev/null
-  helm lint "${chart}" --set engines.default.engineId=test-engine --set engines.default.maxImages=30 >/dev/null
+  helm lint "${chart}" -f "${SEARCH_CREDENTIALS}" --set engines.default.engineId=test-engine --set-json engines.default.maxImages=null >/dev/null
+  helm lint "${chart}" -f "${SEARCH_CREDENTIALS}" --set engines.default.engineId=test-engine --set engines.default.maxImages=30 >/dev/null
   expect_helm_lint_failure "${chart}" "a minimum-value failure" "greater than or equal to 1|minimum: got -?[0-9]+, want 1" --set engines.default.maxImages=0
   expect_helm_lint_failure "${chart}" "a minimum-value failure" "greater than or equal to 1|minimum: got -?[0-9]+, want 1" --set engines.default.maxImages=-1
   expect_helm_lint_failure "${chart}" "an invalid-type failure" "Invalid type|Expected:.*integer|got string, want null or integer" --set engines.default.maxImages=many
@@ -392,8 +428,8 @@ layout:
 YAML
 
 for chart in src/groundx helm; do
-  helm lint "${chart}" -f "${layout_pvc_values}" >/dev/null
-  helm template layout-pvc "${chart}" -f "${layout_pvc_values}" > "${layout_pvc_render}"
+  helm lint "${chart}" -f "${SEARCH_CREDENTIALS}" -f "${layout_pvc_values}" >/dev/null
+  helm template layout-pvc "${chart}" -f "${SEARCH_CREDENTIALS}" -f "${layout_pvc_values}" > "${layout_pvc_render}"
   for expected in \
     "claimName: layout-model-efs" \
     "storageClassName: eyelevel-efs" \
@@ -414,7 +450,7 @@ for svc in extract.agent extract.api extract.download extract.save layout.api la
     --set-json "${svc}.topologySpreadConstraints=[{\"maxSkew\":1,\"topologyKey\":\"kubernetes.io/hostname\",\"whenUnsatisfiable\":\"ScheduleAnyway\",\"labelSelector\":{\"matchLabels\":{\"app\":\"x\"}}}]")
 done
 for chart in src/groundx helm; do
-  drain_render="$(helm template drain-all "${chart}" -f src/groundx/tests/files/values.large-file.yaml "${drain_flags[@]}")"
+  drain_render="$(helm template drain-all "${chart}" -f src/groundx/tests/files/values.large-file.yaml -f "${SEARCH_CREDENTIALS}" "${drain_flags[@]}")"
   drain_pdbs="$(grep -c '^kind: PodDisruptionBudget$' <<<"${drain_render}" || true)"
   drain_spreads="$(grep -c '^      topologySpreadConstraints:$' <<<"${drain_render}" || true)"
   if [[ "${drain_pdbs}" != "30" || "${drain_spreads}" != "30" ]]; then
@@ -445,15 +481,15 @@ PY
 
 for chart in src/groundx helm; do
   if ! diff -q \
-    <(helm template deprecated-values "${chart}") \
-    <(helm template deprecated-values "${chart}" --set cluster.hasMig=true) \
+    <(helm template deprecated-values "${chart}" -f "${SEARCH_CREDENTIALS}") \
+    <(helm template deprecated-values "${chart}" -f "${SEARCH_CREDENTIALS}" --set cluster.hasMig=true) \
     >/dev/null; then
     echo "${chart}: cluster.hasMig must remain an inert compatibility field in 0.2.7." >&2
     exit 1
   fi
   if ! diff -q \
-    <(helm template deprecated-values "${chart}") \
-    <(helm template deprecated-values "${chart}" --set cluster.tls.existingSecret=legacy-tls) \
+    <(helm template deprecated-values "${chart}" -f "${SEARCH_CREDENTIALS}") \
+    <(helm template deprecated-values "${chart}" -f "${SEARCH_CREDENTIALS}" --set cluster.tls.existingSecret=legacy-tls) \
     >/dev/null; then
     echo "${chart}: cluster.tls.existingSecret must remain an inert compatibility field in 0.2.7." >&2
     exit 1
@@ -486,10 +522,12 @@ bash src/groundx/tests/files/verify-probe-mirror-drift.sh
 
 echo "==> Rendering workspace chart fixtures"
 helm template workspace-contract src/groundx \
+  -f "${SEARCH_CREDENTIALS}" \
   -f src/groundx/tests/files/values.workspace.yaml \
   -f src/groundx/tests/files/values.workspace-metrics.yaml \
   >/dev/null
 helm template workspace-contract helm \
+  -f "${SEARCH_CREDENTIALS}" \
   -f src/groundx/tests/files/values.workspace.yaml \
   -f src/groundx/tests/files/values.workspace-metrics.yaml \
   >/dev/null
@@ -517,7 +555,7 @@ echo "==> Checking diff whitespace"
 echo "==> Verifying database upgrade hook ships identically"
 cmp src/groundx/templates/app/schema-migration.yaml helm/templates/app/schema-migration.yaml
 for chart in src/groundx helm; do
-  helm template schema-upgrade "${chart}" --is-upgrade \
+  helm template schema-upgrade "${chart}" -f "${SEARCH_CREDENTIALS}" --is-upgrade \
     -f src/groundx/values/minikube/values.yaml >/dev/null
 done
 

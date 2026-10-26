@@ -1,0 +1,17 @@
+fileAccess:
+  enabled: true
+  frontProxyTLSVerified: true
+  publicUrl: https://downloads.example.com
+  storageEndpoint: https://store.internal.example.com:9443
+  signingEndpoint: https://s3.example.com
+  originsPrivate: true
+  storageCredentialsSecretName: file-store-credentials
+  caSecretName: file-store-ca
+  tlsSecretName: downloads-tls
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+file:
+  customDomain: downloads.example.com
+  existing:
+    url: ""

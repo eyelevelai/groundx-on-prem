@@ -1,0 +1,5 @@
+Source and shipping chart helpers, values and schema are synchronized. Both chart surfaces render Kafka and SQS configuration that decodes into the actual Cashbot API types. Disabled support omits queue/server settings and rejects retry activation. Empty transport fields and invalid enabled-worker settings fail rendering. Worker probes, custom topic/group and partition count pass Helm tests.
+
+`.build/bin/validate-helm.sh` passed with the repository-pinned Helm 3.19.0 and helm-unittest 1.1.2 in an isolated temporary tool installation, including binary hash verification. Existing snapshots were unchanged. `TestPostProcessChartConfiguration` passed for both source and shipping charts, including enabled Kafka/SQS, disabled and invalid settings.
+
+The new worker adapter compiles and its message acknowledgment tests pass in Cashbot. Images have not been published or deployed. Compatible API, file-processing and dedicated-worker images plus runtime queue/credential checks remain activation gates.

@@ -11,6 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 VALUES = (
+    ROOT / "src" / "groundx" / "tests" / "files" / "values.search-credentials.yaml",
     ROOT / "src" / "groundx" / "tests" / "files" / "values.workspace.yaml",
     ROOT / "src" / "groundx" / "tests" / "files" / "values.workspace-metrics.yaml",
 )

@@ -1,7 +1,7 @@
 ## 1. Lock and uniform response (first shippable slice)
 
 - [x] 1.1 Add a `local` section to `docs/on-prem-identity.md` stating three failed attempts lock the email for 15 minutes, locked and failed attempts get the same generic error, and success or an admin reset clears the count
-  check: grep -q 'locks that email for 15 minutes' docs/on-prem-identity.md
+  check: grep -q 'lock that account for 15 minutes' docs/on-prem-identity.md
 
 ## 2. Operator guidance
 
@@ -24,7 +24,7 @@
 ## 4. Stale text and whole-change validation
 
 - [x] 4.1 Ensure the stale pre-GX-83 statements are absent, and the removed wording is absent, and the `apiKeyOnly`, `cognito` and rollback sections are unchanged
-  check: ! grep -qE 'Nothing throttles password attempts|cannot authorize|Sign in with an API key|are the defence|cannot tell whether|also delete the' docs/on-prem-identity.md && grep -q 'locks that email for 15 minutes' docs/on-prem-identity.md && grep -q '^## Air-gapped installs' docs/on-prem-identity.md && grep -q '^## Rollback' docs/on-prem-identity.md
+  check: ! grep -qE 'Nothing throttles password attempts|cannot authorize|Sign in with an API key|are the defence|cannot tell whether|also delete the|MCP sign-in asks for email and password|locks that email' docs/on-prem-identity.md && grep -q 'lock that account for 15 minutes' docs/on-prem-identity.md && grep -q '^## Air-gapped installs' docs/on-prem-identity.md && grep -q '^## Rollback' docs/on-prem-identity.md
 - [x] 4.2 Run `openspec validate --specs`
   check: grep -q 'must re-authorize once' docs/on-prem-identity.md && openspec validate --specs
 

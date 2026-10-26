@@ -56,6 +56,7 @@ compare_renders() {
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "${script_dir}/../../../.." && pwd)"
 src_chart="${repo_root}/src/groundx"
+search_credentials_values="${src_chart}/tests/files/values.search-credentials.yaml"
 mirror_chart="${repo_root}/helm"
 src_minikube_values="${src_chart}/values/minikube/values.yaml"
 mirror_minikube_values="${mirror_chart}/values/minikube/values.yaml"
@@ -71,15 +72,19 @@ render_override_ws_mirror="$(mktemp)"
 trap 'rm -f "${render_default_src}" "${render_default_mirror}" "${render_ws_src}" "${render_ws_mirror}" "${render_override_src}" "${render_override_mirror}" "${render_override_ws_src}" "${render_override_ws_mirror}"' EXIT
 
 helm template "${src_chart}" -f "${src_minikube_values}" \
+  -f "${search_credentials_values}" \
   --set extract.enabled=true --set extract.api.enabled=true \
   > "${render_default_src}"
 helm template "${mirror_chart}" -f "${mirror_minikube_values}" \
+  -f "${search_credentials_values}" \
   --set extract.enabled=true --set extract.api.enabled=true \
   > "${render_default_mirror}"
 helm template "${src_chart}" -f "${src_minikube_values}" \
+  -f "${search_credentials_values}" \
   --set workspace.enabled=true --set workspace.token=drift-check-token \
   > "${render_ws_src}"
 helm template "${mirror_chart}" -f "${mirror_minikube_values}" \
+  -f "${search_credentials_values}" \
   --set workspace.enabled=true --set workspace.token=drift-check-token \
   > "${render_ws_mirror}"
 
@@ -94,20 +99,24 @@ for svc_spec in "layout:7:9:5" "ranker:11:13:6" "summary:15:17:8" "extract:19:21
 done
 
 helm template "${src_chart}" -f "${src_minikube_values}" \
+  -f "${search_credentials_values}" \
   --set extract.enabled=true --set extract.api.enabled=true \
   "${override_set_args[@]}" \
   > "${render_override_src}"
 helm template "${mirror_chart}" -f "${mirror_minikube_values}" \
+  -f "${search_credentials_values}" \
   --set extract.enabled=true --set extract.api.enabled=true \
   "${override_set_args[@]}" \
   > "${render_override_mirror}"
 helm template "${src_chart}" -f "${src_minikube_values}" \
+  -f "${search_credentials_values}" \
   --set workspace.enabled=true --set workspace.token=drift-check-token \
   --set workspace.api.probe.liveness.timeoutSeconds=23 \
   --set workspace.api.probe.readiness.timeoutSeconds=25 \
   --set workspace.api.probe.readiness.failureThreshold=12 \
   > "${render_override_ws_src}"
 helm template "${mirror_chart}" -f "${mirror_minikube_values}" \
+  -f "${search_credentials_values}" \
   --set workspace.enabled=true --set workspace.token=drift-check-token \
   --set workspace.api.probe.liveness.timeoutSeconds=23 \
   --set workspace.api.probe.readiness.timeoutSeconds=25 \

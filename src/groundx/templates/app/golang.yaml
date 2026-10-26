@@ -11,6 +11,9 @@
 {{- $dpnd := get $svcData "dependencies" | default dict -}}
 {{- $image := get $svcData "image" -}}
 {{- $env := get $svcData "env" | default list -}}
+{{- with include "groundx.fileAccess.caEnv" $ -}}
+{{- $env = concat $env (. | fromYamlArray) -}}
+{{- end -}}
 {{- $ips := include "groundx.imagePullSecrets" $ | fromYaml -}}
 {{- $io := include "groundx.ingestOnly" $ -}}
 {{- $lbls := get $svcData "labels" -}}
@@ -21,11 +24,12 @@
 {{- $cport := get $svcData "port" -}}
 {{- $pdb := get $svcData "disruptionBudget" | default dict -}}
 {{- $pull := get $svcData "pull" -}}
+{{- $probe := get $svcData "probe" | default dict -}}
 {{- $rp := get $svcData "replicas" -}}
 {{- $rs := get $svcData "resources" -}}
 {{- $san := get $svcData "serviceAccountName" -}}
 {{- $scr := get $svcData "secrets" | default dict -}}
-{{- $globalSecrets := include "groundx.secrets" $ | fromYaml | default dict -}}
+{{- $globalSecrets := include "groundx.fileAccess.workloadSecrets" (dict "root" $ "service" $entry) | fromYaml | default dict -}}
 {{- if gt (len $globalSecrets) 0 }}
   {{- range $k, $v := $globalSecrets }}
     {{- $_ := set $scr $k $v -}}
@@ -59,6 +63,9 @@ spec:
 {{- end }}
       annotations:
         config-hash: {{ include (print $.Template.BasePath "/resources/config-yaml.yaml") $ | sha256sum }}
+{{- if get $svcData "createServiceAccount" }}
+        service-account-hash: {{ get $svcData "serviceAccountAnnotations" | toYaml | sha256sum }}
+{{- end }}
 {{- if gt (len $anns) 0 }}
 {{ toYaml $anns | nindent 8 }}
 {{- end }}
@@ -146,18 +153,21 @@ spec:
 {{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" $username "cfg" "container") }}
           livenessProbe:
             httpGet:
-              path: /health
+              path: {{ dig "liveness" "path" "/health" $probe }}
               port: {{ $cport }}
             initialDelaySeconds: 30
             periodSeconds: 30
           readinessProbe:
             httpGet:
-              path: /health
+              path: {{ dig "readiness" "path" "/health" $probe }}
               port: {{ $cport }}
             initialDelaySeconds: 10
             periodSeconds: 30
 {{ include "groundx.renderContainerResources" (dict "ctx" $rs "indent" 10) }}
           volumeMounts:
+{{- with include "groundx.fileAccess.caMount" $ }}
+{{ . | nindent 12 }}
+{{- end }}
             - name: config-volume
               mountPath: /home/{{ include "groundx.golang.home" $ }}/.cashbot/config.yaml
               subPath: config.yaml
@@ -165,11 +175,29 @@ spec:
 {{ toYaml . | nindent 12 }}
 {{- end }}
       volumes:
+{{- with include "groundx.fileAccess.caVolume" $ }}
+{{ . | nindent 8 }}
+{{- end }}
         - name: config-volume
           secret:
             secretName: config-yaml-map
 {{- with get $svcData "volumes" }}
 {{ toYaml . | nindent 8 }}
+{{- end }}
+
+{{- if get $svcData "createServiceAccount" }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $san | quote }}
+  namespace: {{ include "groundx.ns" $ | quote }}
+  labels:
+{{ include "groundx.renderDefaultLabels" (dict "name" $san "indent" 4 "root" $) }}
+{{- with get $svcData "serviceAccountAnnotations" }}
+  annotations:
+{{ toYaml . | nindent 4 }}
+{{- end }}
 {{- end }}
 
 {{- if $int }}
