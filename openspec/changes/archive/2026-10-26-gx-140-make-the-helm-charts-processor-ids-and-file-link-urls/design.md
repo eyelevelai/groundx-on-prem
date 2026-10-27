@@ -35,7 +35,7 @@ When `file.groundxPublicUrl` is non-empty, `config-yaml.yaml` renders `uploadGro
 
 - *Alternative: copy the field block into `uploadGroundx`.* Rejected because the two copies would drift silently. The cost of the shared define is that the `upload` rendering code moves; the unchanged snapshots prove its output did not.
 
-The recorded gate run on the implemented change (2026-10-26, `.build/bin/validate-helm.sh` with Helm v3.19.0) passed 23 test suites, 534 tests and 850 snapshots.
+The recorded gate run at the change's final commit (2026-10-27, `.build/bin/validate-helm.sh` with Helm v3.19.0) passed 23 test suites, 535 tests and 850 snapshots.
 
 ### 4. The gateway conflict is a render failure in the existing validate list
 Two checks open the enabled branch of `groundx.fileAccess.validate` (`templates/_helpers/app/file-access.tpl`), before the gateway readiness checks, so an operator who turns the gateway on with GroundX Cloud values sees the key conflict first:
