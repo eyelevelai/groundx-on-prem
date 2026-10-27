@@ -28,6 +28,9 @@ check_seed() {
   yq -e '.secretMounts[] | select(.secretName == "opensearch-tls" and .path == "/usr/share/opensearch/config/certs")' "${file}" >/dev/null 2>&1 \
     || fail "${file}" "secretMounts does not mount opensearch-tls at /usr/share/opensearch/config/certs"
 
+  yq -e '.image.tag | test("@sha256:[0-9a-f]{64}$")' "${file}" >/dev/null 2>&1 \
+    || fail "${file}" "image.tag is not pinned to a sha256 digest"
+
   local parsed
   parsed="$(yq '.config."opensearch.yml" | from_yaml' "${file}" 2>/dev/null)" \
     || fail "${file}" "config.opensearch.yml is missing or is not valid YAML"

@@ -4,7 +4,7 @@
 TBD - created by archiving change gx-90-the-documented-on-prem-opensearch-install-trusts-opensearchs. Update Purpose after archive.
 ## Requirements
 ### Requirement: The documented OpenSearch install trusts only operator-supplied certificates
-`src/groundx/values/opensearch/values.yaml` (mirrored byte-identical to `helm/values/opensearch/values.yaml`) SHALL configure the upstream OpenSearch chart so that the CA, node certificate and node key are read from the operator-created Secret `opensearch-tls` (keys `ca.crt`, `node.crt`, `node.key`) mounted at `/usr/share/opensearch/config/certs`, the demo installer is disabled with `DISABLE_INSTALL_DEMO_CONFIG=true`, the admin identity is the DN `CN=gx-opensearch-admin`, and the admin user's credentials are read from the operator-created Secret `opensearch-internal-users` (key `internal_users.yml`). The seed file SHALL NOT contain `allow_unsafe_democertificates`, the DN `CN=kirk`, the demo file names (`esnode`, `root-ca.pem`), or any certificate or key material. The admin certificate and key SHALL NOT be mounted into the OpenSearch pod; only its DN is configured.
+`src/groundx/values/opensearch/values.yaml` (mirrored byte-identical to `helm/values/opensearch/values.yaml`) SHALL configure the upstream OpenSearch chart so that the CA, node certificate and node key are read from the operator-created Secret `opensearch-tls` (keys `ca.crt`, `node.crt`, `node.key`) mounted at `/usr/share/opensearch/config/certs`, the demo installer is disabled with `DISABLE_INSTALL_DEMO_CONFIG=true`, the admin identity is the DN `CN=gx-opensearch-admin`, and the admin user's credentials are read from the operator-created Secret `opensearch-internal-users` (key `internal_users.yml`). The seed file SHALL NOT contain `allow_unsafe_democertificates`, the DN `CN=kirk`, the demo file names (`esnode`, `root-ca.pem`), or any certificate or key material. The admin certificate and key SHALL NOT be mounted into the OpenSearch pod; only its DN is configured. The seed file SHALL pin the OpenSearch image to the sha256 digest tested with this configuration (`image.tag` ends in `@sha256:` and 64 hex digits).
 
 Invariant: a certificate whose private key is public, and a user whose password hash is public, authenticate to nothing. Removing `allow_unsafe_democertificates` while leaving the image's shipped `internal_users.yml` (admin password `admin`) in effect does not satisfy it.
 
@@ -21,6 +21,10 @@ Invariant: a certificate whose private key is public, and a user whose password 
 - **WHEN** the seed values file is read
 - **THEN** transport and HTTP `pemcert_filepath`, `pemkey_filepath` and `pemtrustedcas_filepath` point at `certs/node.crt`, `certs/node.key`, `certs/ca.crt`
 - **AND** `plugins.security.authcz.admin_dn` is `CN=gx-opensearch-admin` and `plugins.security.restapi.roles_enabled` still lists `all_access`, so the GroundX application user can still be created through the REST API
+
+#### Scenario: The OpenSearch image is pinned to a digest (polarity: reject before state; catches)
+- **WHEN** the seed values file is read
+- **THEN** `image.tag` ends in `@sha256:` followed by 64 hex digits, so a later push to the tag cannot change the image the install runs
 
 #### Scenario: No key material is committed (polarity: reject before state; catches)
 - **WHEN** the seed values file and its mirror are scanned
@@ -72,7 +76,7 @@ When `search.caSecretName` is set, every Deployment rendered by `templates/app/g
 - **THEN** all pass without regenerating any snapshot
 
 ### Requirement: README documents operator-supplied OpenSearch certificates
-The README `### OpenSearch` section SHALL: describe the demo-TLS risk of earlier installs; list the operator inputs (CA, node cert with SAN `<serviceName>-cluster-master.<namespace>.svc.cluster.local` and subject `CN=opensearch-node`, admin cert with subject `CN=gx-opensearch-admin`, a bcrypt hash for the admin user) with no certificate, key or hash value; create the `opensearch-tls` and `opensearch-internal-users` Secrets before OpenSearch starts; state `search.caSecretName` and the image requirement; describe restart-based rotation (restart OpenSearch, then `groundx`, then `process`); and move "Upgrading an Existing Install" step 3 off `kirk.pem` to the operator admin certificate, adding a pre-upgrade step to set `search.caSecretName` and re-certify `groundx` and `process`.
+The README `### OpenSearch` section SHALL: describe the demo-TLS risk of earlier installs; list the operator inputs (CA, node cert with SAN `<serviceName>-cluster-master.<namespace>.svc.cluster.local` and subject `CN=opensearch-node`, admin cert with subject `CN=gx-opensearch-admin`, a bcrypt hash for the admin user) with no certificate, key or hash value; create the `opensearch-tls` and `opensearch-internal-users` Secrets before OpenSearch starts; state `search.caSecretName` and the image requirement; describe restart-based rotation (restart OpenSearch, then `groundx`, then `process`); and move "Upgrading an Existing Install" step 3 off `kirk.pem` to the operator admin certificate, set `search.caSecretName` and the OpenSearch credentials and remove the demo users before a final step that upgrades and restarts `groundx` and `process`.
 
 #### Scenario: README carries no demo material and no secrets (polarity: reject before state)
 - **WHEN** the README is read
