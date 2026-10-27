@@ -58,7 +58,7 @@ Verify-time evidence, saved outside the repository and cited in the PR body, not
 - **Differential render:** render every fixture under `src/groundx/tests/files/` that renders at `07d332fc6c`, at that commit and at the feature tip, and compare only the `processors` mapping, the `upload` mapping, and the absence of `uploadGroundx`, with `yq` on named fields. A difference that comes from a `0.2.8` change made before this branch is rechecked against the base `895ca7a35` render and reported as such. Rendered bodies are never printed.
 
 ### 6. Mirror and gate
-Every template, `values.yaml` and `values.schema.json` edit is copied byte-for-byte into `helm/`. `verify_mirrors()` in `.build/bin/verify-storage-contract.py` already byte-compares the templates tree; task checks compare the two `values.yaml` and the two schema files with `cmp`. The gate is `.build/bin/validate-helm.sh` with Helm v3.19.0 and a real Python first on `PATH` (it calls bare `helm` and `python`). Never `helm unittest -u`.
+Every template, `values.yaml` and `values.schema.json` edit is copied byte-for-byte into `helm/`. `verify_mirrors()` in `.build/bin/verify-storage-contract.py` byte-compares the templates tree, and this change adds `values.yaml` and `values.schema.json` to its `MIRRORED_FILES` list, so the gate also fails when either pair drifts. The gate is `.build/bin/validate-helm.sh` with Helm v3.19.0 and a real Python first on `PATH` (it calls bare `helm` and `python`). Never `helm unittest -u`.
 
 No ADR: the change adds three optional values to an existing values contract and reverses by removing them.
 
