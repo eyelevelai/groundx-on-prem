@@ -14,10 +14,11 @@ Open design questions: none.
 ## Capabilities
 
 ### New Capabilities
-<!-- none: documentation-only change, no spec-level behavior -->
+None.
 
 ### Modified Capabilities
-<!-- none -->
+
+- `eks-cluster-version-config`: one ADDED requirement carrying the `AGENTS.md` pointer for GroundX hosted production AWS changes. It adds no behavior beyond the bullet described above.
 
 ## Impact
 
