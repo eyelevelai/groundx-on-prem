@@ -1096,17 +1096,17 @@ tests:
     values:
       - ./files/values.extract.ingest.yaml
     set:
-      cluster.processors.skipGenerate: [4]
+      cluster.processors.skipGenerate: [4, 5]
     documentSelector:
       path: metadata.name
       value: config-yaml-map
     asserts:
       - matchRegex:
           path: stringData["config.yaml"]
-          pattern: '\n  skipGenerate: \[4\]\n'
+          pattern: '\n  skipGenerate: \[4, 5\]\n'
       - matchRegex:
           path: stringData["config.yaml"]
-          pattern: '\n  extraPreDefaults:\n  - processorID: 13\n    type: extract\n  extraPostDefaults:\n    - processorID: 4\n      type: skip-generate\n\nqueueFileServer:'
+          pattern: '\n  extraPreDefaults:\n  - processorID: 13\n    type: extract\n  extraPostDefaults:\n    - processorID: 4\n      type: skip-generate\n    - processorID: 5\n      type: skip-generate\n\nqueueFileServer:'
   - it: a misspelled processor list name fails schema validation
     templates:
       - ../templates/resources/config-yaml.yaml
