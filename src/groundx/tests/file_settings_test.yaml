@@ -1319,6 +1319,17 @@ tests:
       - notMatchRegex:
           path: stringData["config.yaml"]
           pattern: 'uploadGroundx'
+  - it: a link host with a trailing colon and space fails schema validation
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      groundx.enabled: true
+      file.publicUrl: "https://upload.example.com: "
+    asserts:
+      - failedTemplate:
+          errorPattern: "file/publicUrl.*does not match pattern"
   - it: enabled gateway rejects a separate link host
     templates:
       - ../templates/resources/ingress.yaml

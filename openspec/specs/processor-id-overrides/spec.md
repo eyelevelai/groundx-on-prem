@@ -33,9 +33,9 @@ The chart SHALL accept an optional `cluster.processors` map whose keys are the 1
 In `mode: ingest`, the chart SHALL render one `processors.extraPostDefaults` entry of `type: skip-generate` for each ID in the effective `skipGenerate` list (the configured list, or the default `[1]`), in list order, instead of a fixed `processorID: 1`. Additional pre-processors from `cluster.preProcessors` SHALL render as `extraPreDefaults` exactly as before.
 
 #### Scenario: Ingest mode with a configured skipGenerate list (finalize success)
-- **GIVEN** an ingest-mode values file (`tests/files/values.extract.ingest.yaml`, which also sets `cluster.preProcessors: [{processorId: 13, type: extract}]`) and `cluster.processors.skipGenerate: [4]`
+- **GIVEN** an ingest-mode values file (`tests/files/values.extract.ingest.yaml`, which also sets `cluster.preProcessors: [{processorId: 13, type: extract}]`) and `cluster.processors.skipGenerate: [4, 5]`
 - **WHEN** the chart renders `config.yaml`
-- **THEN** `processors.skipGenerate` is `[4]` and `processors.extraPostDefaults` holds one entry with `processorID: 4` and `type: skip-generate`
+- **THEN** `processors.skipGenerate` is `[4, 5]` and `processors.extraPostDefaults` holds two entries, `processorID: 4` then `processorID: 5`, each with `type: skip-generate`
 - **AND** no `extraPostDefaults` entry with `processorID: 1` renders, and `extraPreDefaults` still holds `processorID: 13`, `type: extract`
 
 ### Requirement: Omitting cluster.processors renders today's processor configuration
