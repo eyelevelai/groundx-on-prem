@@ -702,7 +702,7 @@ stringData:
       baseUrl: {{ trimSuffix "/" .Values.fileAccess.publicUrl | quote }}
       {{- else }}
       baseDomain: {{ get $fs "baseDomain" }}
-      baseUrl: {{ .Values.file.publicUrl | default (printf "%s://%s" (get $fs "scheme") (get $fs "baseDomain")) }}
+      baseUrl: {{ if .Values.file.publicUrl }}{{ .Values.file.publicUrl | quote }}{{ else }}{{ printf "%s://%s" (get $fs "scheme") (get $fs "baseDomain") }}{{ end }}
       {{- end }}
       {{- include "groundx.file.uploadStorage" . | nindent 6 }}
 
@@ -722,7 +722,7 @@ stringData:
       signingEndpoint: {{ .Values.file.signingEndpoint | quote }}
       {{- end }}
       baseDomain: {{ get $fs "baseDomain" }}
-      baseUrl: {{ .Values.file.groundxPublicUrl }}
+      baseUrl: {{ .Values.file.groundxPublicUrl | quote }}
       {{- include "groundx.file.uploadStorage" . | nindent 6 }}
     {{- end }}
 {{- end }}

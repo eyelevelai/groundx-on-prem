@@ -1300,10 +1300,10 @@ tests:
     asserts:
       - matchRegex:
           path: stringData["config.yaml"]
-          pattern: '\nupload:\n  signingEndpoint: "https://signing\.example\.com"\n  baseDomain: gx-test-bucket\.s3\.us-west-2\.amazonaws\.com\n  baseUrl: https://upload\.eyelevel\.ai\n  bucket: eyelevel\n  bucketUrl: https://gx-test-bucket\.s3\.us-west-2\.amazonaws\.com\n  id: "fixture-storage-key"\n  region: us-west-2\n  secret: "fixture-storage-secret"\n  service: s3\n  ssl: true\n\nuploadFileServer:'
+          pattern: '\nupload:\n  signingEndpoint: "https://signing\.example\.com"\n  baseDomain: gx-test-bucket\.s3\.us-west-2\.amazonaws\.com\n  baseUrl: "https://upload\.eyelevel\.ai"\n  bucket: eyelevel\n  bucketUrl: https://gx-test-bucket\.s3\.us-west-2\.amazonaws\.com\n  id: "fixture-storage-key"\n  region: us-west-2\n  secret: "fixture-storage-secret"\n  service: s3\n  ssl: true\n\nuploadFileServer:'
       - matchRegex:
           path: stringData["config.yaml"]
-          pattern: '\nuploadGroundx:\n  signingEndpoint: "https://signing\.example\.com"\n  baseDomain: gx-test-bucket\.s3\.us-west-2\.amazonaws\.com\n  baseUrl: https://upload\.groundx\.ai\n  bucket: eyelevel\n  bucketUrl: https://gx-test-bucket\.s3\.us-west-2\.amazonaws\.com\n  id: "fixture-storage-key"\n  region: us-west-2\n  secret: "fixture-storage-secret"\n  service: s3\n  ssl: true\s*$'
+          pattern: '\nuploadGroundx:\n  signingEndpoint: "https://signing\.example\.com"\n  baseDomain: gx-test-bucket\.s3\.us-west-2\.amazonaws\.com\n  baseUrl: "https://upload\.groundx\.ai"\n  bucket: eyelevel\n  bucketUrl: https://gx-test-bucket\.s3\.us-west-2\.amazonaws\.com\n  id: "fixture-storage-key"\n  region: us-west-2\n  secret: "fixture-storage-secret"\n  service: s3\n  ssl: true\s*$'
   - it: a link host without an alias keeps the MinIO storage host and renders no alias section
     templates:
       - ../templates/resources/config-yaml.yaml
@@ -1315,7 +1315,7 @@ tests:
     asserts:
       - matchRegex:
           path: stringData["config.yaml"]
-          pattern: '\nupload:\n  baseDomain: minio\.eyelevel\.svc\.cluster\.local\n  baseUrl: https://files\.customer\.example\.com\n  bucket: eyelevel\n  bucketUrl: http://minio\.eyelevel\.svc\.cluster\.local\n  service: minio\n  ssl: false\n\nuploadFileServer:'
+          pattern: '\nupload:\n  baseDomain: minio\.eyelevel\.svc\.cluster\.local\n  baseUrl: "https://files\.customer\.example\.com"\n  bucket: eyelevel\n  bucketUrl: http://minio\.eyelevel\.svc\.cluster\.local\n  service: minio\n  ssl: false\n\nuploadFileServer:'
       - notMatchRegex:
           path: stringData["config.yaml"]
           pattern: 'uploadGroundx'

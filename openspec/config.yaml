@@ -107,8 +107,9 @@ context: |
       a parallel bash test harness.
   - CONVENTIONS DISCOVERED DURING GX-88 (store sample values and third-party chart checks):
     - Backing-store sample values live in src/groundx/values/<store>/ and helm/values/<store>/ and
-      must be byte-identical. verify_mirrors() covers only templates/ and the storageclass prereqs,
-      so a task check compares other mirrored values files with `cmp`.
+      must be byte-identical. verify_mirrors() byte-compares templates/, the storageclass prereqs,
+      and the top-level values.yaml and values.schema.json, so a task check compares other mirrored
+      values files with `cmp`.
     - A check that renders a third-party chart (operators, object stores) pulls the pinned chart
       version into a `mktemp -d` directory with HELM_CACHE_HOME and HELM_REPOSITORY_CONFIG pointed
       inside it, reads named fields with `yq`, and never prints the render (renders can carry
