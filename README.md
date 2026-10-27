@@ -405,6 +405,16 @@ helm install nvidia-gpu-operator nvidia/gpu-operator \
 
 If you wish to use an existing redis cache, you must configure the `cache.existing` and `cache.metrics.existing` parameters in your `values.yaml`.
 
+#### Upgrading to Chart 0.2.8 with a `rediss://` Redis
+
+Chart 0.2.8 images verify the certificate chain and the host name of a `rediss://` Redis in the layout, ranker and summary workers and in the summary API. A plain `redis://` Redis, including the Redis the chart installs, is unaffected. A certificate that chains to a public root needs no action.
+
+If your Redis certificate comes from a private CA, or does not cover the host name in `cache.existing`, act before upgrading. Create a Secret that holds the CA certificate under the key `ca.crt` and set `fileAccess.caSecretName` to its name, or correct the host name to one the certificate covers. If you skip this, the layout, ranker and summary workers stop publishing and consuming tasks.
+
+The CA file replaces the container's default CA file, so it must also contain any public roots that the same pods still need, for example for HTTPS to an object store.
+
+Not every Redis client verifies yet. The ai-server layout, ranker and summary clients verify. The extract client (AGE-395) and the workspace runner still accept any certificate from a `rediss://` Redis.
+
 #### Deploying a Dedicated Redis Cluster
 
 If you'd like to install redis to your cluster, instances will be automatically created during the application installation for you so long as `cache.existing` is an empty dictionary and `cache.enabled` is `true`.
