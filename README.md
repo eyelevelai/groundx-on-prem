@@ -407,11 +407,11 @@ If you wish to use an existing redis cache, you must configure the `cache.existi
 
 #### Upgrading to Chart 0.2.8 with a `rediss://` Redis
 
-Chart 0.2.8 images verify the certificate chain and the host name of a `rediss://` Redis in the layout, ranker and summary workers and in the summary API. A plain `redis://` Redis, including the Redis the chart installs, is unaffected. A certificate that chains to a public root needs no action.
+Chart 0.2.8 images verify the certificate chain and the host name of a `rediss://` Redis in the layout, ranker and summary services, both the APIs and the workers. This applies when you set `ssl: true` under `cache.existing` or under the ranker-only `ranker.cache`; the certificate must cover the `addr` host name of each. A plain `redis://` Redis, including the Redis the chart installs, is unaffected. A certificate that chains to a public root needs no action.
 
-If your Redis certificate comes from a private CA, or does not cover the host name in `cache.existing`, act before upgrading. Create a Secret that holds the CA certificate under the key `ca.crt` and set `fileAccess.caSecretName` to its name, or correct the host name to one the certificate covers. If you skip this, the layout, ranker and summary workers stop publishing and consuming tasks.
+If your Redis certificate comes from a private CA, or does not cover the `addr` host name, act before upgrading. Put the CA certificate in a Secret under the key `ca.crt`, in the release namespace, and set `fileAccess.caSecretName` to its name. If `fileAccess.caSecretName` is already set, for example for a private object-store CA, add the Redis CA to that Secret's `ca.crt` instead. Alternatively, correct `addr` to a host name the certificate covers. The chart mounts the CA from `fileAccess.caSecretName`; if the chart you deploy still requires `fileAccess.enabled` for that mount, deploy a chart release that removes that requirement. If you skip this and a certificate does not verify, ingest, search and summary requests fail and the workers stop publishing and consuming tasks.
 
-The CA file replaces the container's default CA file, so it must also contain any public roots that the same pods still need, for example for HTTPS to an object store.
+The CA file replaces the container's default CA file, so the bundle keeps the public roots and any CAs already in it that the same pods still need, for example for HTTPS to an object store.
 
 Not every Redis client verifies yet. The ai-server layout, ranker and summary clients verify. The extract client (AGE-395) and the workspace runner still accept any certificate from a `rediss://` Redis.
 

@@ -2,7 +2,7 @@
 
 ### Requirement: The existing-Redis section carries a chart 0.2.8 verified-TLS upgrade note
 
-`README.md` SHALL carry, inside "Using an Existing Redis Cluster" and before "Deploying a Dedicated Redis Cluster", a `####` upgrade note titled "Upgrading to Chart 0.2.8 with a `rediss://` Redis". It SHALL state that chart 0.2.8 ai-server images (layout, ranker and summary workers and the summary API) verify the certificate chain and host name of a `rediss://` Redis, and that plain `redis://`, including the Redis the chart installs, is unaffected. It SHALL state that a certificate chaining to a public root needs no action. It SHALL NOT document any setting that turns verification off.
+`README.md` SHALL carry, inside "Using an Existing Redis Cluster" and before "Deploying a Dedicated Redis Cluster", a `####` upgrade note titled "Upgrading to Chart 0.2.8 with a `rediss://` Redis". It SHALL state that chart 0.2.8 ai-server images (the layout, ranker and summary services, APIs and workers) verify the certificate chain and host name of a `rediss://` Redis, that this applies when `ssl: true` is set under `cache.existing` or under the ranker-only `ranker.cache` and the certificate must cover the `addr` host name of each, and that plain `redis://`, including the Redis the chart installs, is unaffected. It SHALL state that a certificate chaining to a public root needs no action. It SHALL NOT document any setting that turns verification off.
 
 #### Scenario: The note states the behavior change and who is unaffected (polarity: finalize success)
 
@@ -18,7 +18,7 @@
 
 ### Requirement: The note tells a private-CA operator what to do before upgrading
 
-The note SHALL tell an operator whose Redis certificate comes from a private CA, or whose certificate does not cover the host name in `cache.existing`, to act **before** upgrading: create a Secret holding the CA certificate under key `ca.crt` and set `fileAccess.caSecretName` to its name, or correct the host name. It SHALL state that the CA file replaces the container's default CA file, so it must also contain any public roots the same pods still need. It SHALL state the failure an operator sees if they skip this (workers stop publishing and consuming), and SHALL NOT describe the CA mount as available on chart 0.2.7.
+The note SHALL tell an operator whose Redis certificate comes from a private CA, or whose certificate does not cover the host name in `cache.existing`, to act **before** upgrading: create a Secret, in the release namespace, holding the CA certificate under key `ca.crt` and set `fileAccess.caSecretName` to its name (or, when `fileAccess.caSecretName` is already set, add the Redis CA to that Secret's `ca.crt`), or correct `addr` to a host name the certificate covers. It SHALL state that the chart mounts the CA from `fileAccess.caSecretName` and that, if the chart in use still requires `fileAccess.enabled` for that mount, the operator must deploy a chart release that removes that requirement; it SHALL NOT describe a mount behavior the chart at the branch head lacks. It SHALL state that the CA file replaces the container's default CA file, so the bundle must keep the public roots and any CAs already in it that the same pods still need. It SHALL state the failure an operator sees if they skip this and a certificate does not verify (ingest, search and summary requests fail and workers stop publishing and consuming), and SHALL NOT describe the CA mount as available on chart 0.2.7.
 
 #### Scenario: The remedy and its ordering are stated (polarity: accept and enqueue)
 

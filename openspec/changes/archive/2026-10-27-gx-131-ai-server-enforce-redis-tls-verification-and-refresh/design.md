@@ -16,16 +16,16 @@ The note goes after the existing-Redis paragraph and before "Deploying a Dedicat
 
 ### D2. Note content (decided wording points)
 
-1. Chart 0.2.8 images verify chain and host name for `rediss://` in the layout, ranker and summary workers and the summary API; plain `redis://` and the bundled Redis are unaffected; a publicly rooted certificate needs no action.
-2. A private-CA certificate, or a host name the certificate does not cover, makes those workers stop publishing and consuming after the upgrade. Before upgrading: create a Secret with the CA certificate under key `ca.crt` and set `fileAccess.caSecretName`, or correct the host name.
-3. The CA file replaces the container's default CA file, so it must also hold any public roots the same pods still need.
+1. Chart 0.2.8 images verify chain and host name for `rediss://` in the layout, ranker and summary services (APIs and workers); this applies when `ssl: true` is set under `cache.existing` (`src/groundx/values.yaml:42-46`, `src/groundx/templates/_helpers/services/cache.tpl:252-260`) or under the ranker-only `ranker.cache` (`src/groundx/values.yaml:411-418`, `src/groundx/templates/_helpers/app/ranker.tpl:32-39`), and the certificate must cover the `addr` of each; plain `redis://` and the bundled Redis are unaffected; a publicly rooted certificate needs no action.
+2. A private-CA certificate, or a host name the certificate does not cover, makes ingest, search and summary requests fail and the workers stop publishing and consuming after the upgrade. Before upgrading: create a Secret, in the release namespace, with the CA certificate under key `ca.crt` and set `fileAccess.caSecretName` (or, when it is already set, add the Redis CA to that Secret's `ca.crt`), or correct `addr`. The note states the mount condition plainly (the CA is mounted from `fileAccess.caSecretName`; a chart that still requires `fileAccess.enabled` for that mount needs a release that removes the requirement) and does not describe behavior the chart at this head lacks.
+3. The CA file replaces the container's default CA file, so the bundle keeps the public roots and any CAs already in it that the same pods still need.
 4. Not every client verifies: the extract client (AGE-395) and the workspace runner do not yet.
 
 No present-tense claim about a deployed environment is written; the note describes chart 0.2.8 image behavior.
 
 ### D3. Merge gate on the GX-130 on-prem change
 
-At base `origin/0.2.8` (`895ca7a35`) the CA env var, volume and mount helpers render only when `fileAccess.enabled` is true (`src/groundx/templates/_helpers/app/file-access.tpl:1-3,191-215`; default `fileAccess.caSecretName: ""` at `src/groundx/values.yaml:99`). The note tells operators to set `fileAccess.caSecretName` without enabling file access, which is accurate only once the sibling GX-130 on-prem change stops gating the CA mount on `fileAccess.enabled`. This PR therefore merges with or after that change. This is a merge-order condition, not a claim about the sibling's content.
+At base `origin/0.2.8` (`895ca7a35`) the CA env var, volume and mount helpers render only when `fileAccess.enabled` is true (`src/groundx/templates/_helpers/app/file-access.tpl:1-3,191-215`; default `fileAccess.caSecretName: ""` at `src/groundx/values.yaml:99`). The note tells operators to set `fileAccess.caSecretName` without enabling file access, which is accurate only once the sibling GX-130 on-prem change stops gating the CA mount on `fileAccess.enabled`. This PR therefore merges with or after that change. This is a merge-order condition, not a claim about the sibling's content; the merge-order dependency is carried in the PR body, and the README states only the mount condition.
 
 ### D4. Rollout and blast radius
 

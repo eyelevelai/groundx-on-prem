@@ -5,9 +5,9 @@ The ai-server change for GX-131 makes the layout, ranker and summary Celery clie
 ## What Changes
 
 - Add one upgrade note to the README "Using an Existing Redis Cluster" section (`README.md:406`), beside the other per-version notes (for example `README.md:605`). It states:
-  - Chart 0.2.8 images verify chain and host name for a `rediss://` Redis in the ai-server layout, ranker and summary workers and the summary API. Plain `redis://`, including the bundled Redis the chart installs, is unaffected.
-  - A certificate that chains to a public root needs no action. A certificate from a private CA needs a Secret holding the CA certificate under key `ca.crt`, referenced by `fileAccess.caSecretName`, or a corrected host name, before upgrading.
-  - The CA file replaces the container's default CA file, so it must also contain any public roots the same pods still need (for example for object-store HTTPS).
+  - Chart 0.2.8 images verify chain and host name for a `rediss://` Redis in the ai-server layout, ranker and summary services (APIs and workers), when `ssl: true` is set under `cache.existing` or the ranker-only `ranker.cache` (the certificate must cover the `addr` of each). Plain `redis://`, including the bundled Redis the chart installs, is unaffected.
+  - A certificate that chains to a public root needs no action. A certificate from a private CA needs a Secret, in the release namespace, holding the CA certificate under key `ca.crt`, referenced by `fileAccess.caSecretName` (or the Redis CA added to the existing Secret's `ca.crt` when `fileAccess.caSecretName` is already set), or a corrected `addr`, before upgrading.
+  - The CA file replaces the container's default CA file, so the bundle keeps the public roots and any CAs already in it that the same pods still need (for example for object-store HTTPS).
   - Which clients verify and which do not yet: ai-server layout, ranker and summary verify; the extract client (AGE-395) and the workspace runner do not.
 - No template, values, schema or `helm/` mirror change. No new value or toggle; verification cannot be turned off.
 - No change to `busybox:1.0.0` or its chart default. The image has no trust store; its model-download init container is recorded in the ai-server evidence and handed to GX-134.
