@@ -13,6 +13,26 @@ certify storage compatibility, transport encryption, image compatibility or live
 file authorization. Do not advertise or activate protection until the selected
 backend's release gates pass.
 
+## Extraction storage setting: `public_read`
+
+This is a generated Python service setting, not an account/bucket/document policy
+or a `values.yaml` field. Its SDK default is `True`. In this chart, file access
+is disabled by default and the SDK default remains in effect; a chart-created
+file-access gateway causes extraction config to set `public_read=False`.
+
+For a new MinIO/S4 bucket, `True` allows anonymous downloads and `False` leaves
+it private. Existing buckets are not changed. The S3 adapter does not use this
+flag to change bucket permissions. Operators must separately verify that direct
+storage access cannot bypass the gateway. See the
+[SDK storage-setting definition](https://github.com/eyelevelai/groundx-python/blob/main/CONTRIBUTING.md#extraction-storage-settings).
+
+Extraction also uses `False` to enable image-path validation and private image
+delivery. Its checks must accept the current document's original PNG/JPG source
+as well as generated pages/crops. Do not enable anonymous storage reads or set
+`True` to bypass a failed image check. Verify full public/protected PNG/JPG/PDF
+extraction, not only chart rendering or downloads. Internal file reads must reuse
+service credentials and existing document authorization regardless of customer policy.
+
 ## Endpoints and secrets
 
 - `publicUrl` is the stable HTTPS file host root, without a bucket path. Configure
