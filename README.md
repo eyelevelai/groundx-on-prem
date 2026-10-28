@@ -413,7 +413,7 @@ If your Redis certificate comes from a private CA, or does not cover the `addr` 
 
 The bundle replaces the container's default CA file. A Secret that holds only the private CA breaks the HTTPS calls that rely on public roots, such as an LLM API or an object store, so keep the public roots and any CAs already in the bundle.
 
-If you skip this and a certificate does not verify, ingest, search and summary requests fail and the workers stop publishing and consuming tasks. `helm upgrade` still reports success and the pods stay Ready, so after upgrading check the layout, ranker and summary logs for `certificate verify failed`.
+If you skip this and a certificate does not verify, ingest, search and summary requests fail and the workers stop publishing and consuming tasks. The API and worker pods stay Ready, so `helm upgrade` can still report success: after upgrading, check the layout, ranker and summary logs for `certificate verify failed`. The layout, ranker and summary inference pods go unready when the Redis their health check reads fails verification, which is the separate metrics Redis, or the main Redis when `cache.metrics.enabled` is `false`.
 
 Not every Redis client verifies yet. The ai-server layout, ranker and summary clients verify. The extract client (AGE-395) and the workspace runner still accept any certificate from a `rediss://` Redis.
 
