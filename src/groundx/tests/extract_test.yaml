@@ -840,3 +840,117 @@ tests:
       - equal:
           path: spec.minReplicas
           value: 2
+
+  - it: extraction aliases include the native S3 prefix and preserve current presentation
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    set:
+      extract.enabled: true
+      file.existing.url: https://store.example.com/prefix/
+      file.existing.serviceType: s3
+      fileAccess.trustedOrigins: [https://old-files.example.com:9443]
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'url_aliases=\["https://store.example.com/prefix/","https://old-files.example.com:9443/"\]'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: '"url_aliases".*issubset\(ContainerUploadSettings.model_fields\)'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'url="https://store.example.com/prefix//"'
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'public_read=False|storage_endpoint='
+  - it: extraction aliases include the S4 bucket exactly once
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    set:
+      extract.enabled: true
+      file.bucketName: archive
+      file.existing.url: https://store.example.com/archive/
+      file.existing.serviceType: s4
+      fileAccess.trustedOrigins: [https://old-files.example.com]
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'url_aliases=\["https://store.example.com/archive/","https://old-files.example.com/archive/"\]'
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'url_aliases=.*archive/archive'
+  - it: extraction without aliases preserves the legacy constructor
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    set:
+      extract.enabled: true
+    asserts:
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'url_aliases|issubset\(ContainerUploadSettings.model_fields\)'
+  - it: extraction with a different endpoint excludes primary-store origins
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    set:
+      extract.enabled: true
+      extract.file.url: https://separate.example.com
+      fileAccess.trustedOrigins: [https://old-files.example.com]
+    asserts:
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'old-files.example.com'
+
+  - it: extraction with a different bucket excludes primary-store origins
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    set:
+      extract.enabled: true
+      extract.file.bucketName: separate-bucket
+      fileAccess.trustedOrigins: [https://old-files.example.com]
+    asserts:
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'old-files.example.com'
+
+  - it: extraction with a different region excludes primary-store origins
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    set:
+      extract.enabled: true
+      extract.file.region: other-region
+      fileAccess.trustedOrigins: [https://old-files.example.com]
+    asserts:
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'old-files.example.com'
+
+  - it: extraction with a different backend excludes primary-store origins
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    set:
+      extract.enabled: true
+      extract.file.serviceType: s3
+      fileAccess.trustedOrigins: [https://old-files.example.com]
+    asserts:
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'old-files.example.com'
+
+  - it: private extraction retains native aliases with a presentation override
+    templates:
+      - ../templates/resources/extract-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      extract.enabled: true
+      extract.file.url: http://downloads.example.com
+      fileAccess.trustedOrigins: [https://old-files.example.com, https://old-files.example.com/]
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'url_aliases=\["http://minio.eyelevel.svc.cluster.local/eyelevel/","https://old-files.example.com/eyelevel/"\]'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: '"public_read", "storage_endpoint", "url_aliases".*issubset'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'url="https://downloads.example.com/eyelevel/"'

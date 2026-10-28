@@ -1355,3 +1355,104 @@ tests:
       - matchRegex:
           path: stringData["config.py"]
           pattern: 'secret="extraction-secret"'
+
+  - it: disabled gateway distributes aliases to Go without protected settings
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      groundx.enabled: true
+      fileAccess.trustedOrigins: [https://old-files.example.com:9443]
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'fileAccess:\n  enabled: false\n  trustedOrigins:\n    - https://old-files.example.com:9443'
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'fileAccessServer:|frontProxyTLSVerified:|originsPrivate:'
+  - it: disabled gateway rejects alias paths independently of private readiness
+    templates:
+      - ../templates/resources/ingress.yaml
+    set:
+      fileAccess.trustedOrigins: [https://old-files.example.com/bucket]
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.trustedOrigins entries must be HTTPS origins without credentials, query, fragment or nonroot path"
+  - it: layout receives native and declared roots with a disabled gateway
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+    set:
+      file.bucketName: archive
+      file.existing.url: https://store.example.com/archive/
+      file.existing.serviceType: minio
+      fileAccess.trustedOrigins: [https://old-files.example.com:9443/]
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadReplaceURL=\["https://store.example.com/archive/","https://old-files.example.com:9443/archive/"\]'
+      - notMatchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadStorageEndpoint=|uploadPublicRead=False|archive/archive'
+  - it: layout receives aliases with the gateway enabled and preserves presentation prefixes
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      file.customDomain: downloads.example.com/delivery/eyelevel/
+      fileAccess.trustedOrigins: [https://old-files.example.com]
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadReplaceURL=\["http://minio.eyelevel.svc.cluster.local/eyelevel/","https://old-files.example.com/eyelevel/"\]'
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadURL="https://downloads.example.com/delivery/eyelevel/"'
+
+  - it: aliases never create a disabled gateway workload
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      fileAccess.trustedOrigins: [https://old-files.example.com]
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: disabled gateway rejects alias HTTP
+    templates:
+      - ../templates/resources/ingress.yaml
+    set:
+      fileAccess.trustedOrigins: ["http://old.example.com"]
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.trustedOrigins entries must be HTTPS origins without credentials, query, fragment or nonroot path"
+
+  - it: disabled gateway rejects alias credentials
+    templates:
+      - ../templates/resources/ingress.yaml
+    set:
+      fileAccess.trustedOrigins: ["https://user:secret@old.example.com"]
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.trustedOrigins must not contain credentials"
+
+  - it: disabled gateway rejects alias query
+    templates:
+      - ../templates/resources/ingress.yaml
+    set:
+      fileAccess.trustedOrigins: ["https://old.example.com?query=x"]
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.trustedOrigins entries must be HTTPS origins without credentials, query, fragment or nonroot path"
+
+  - it: disabled gateway rejects alias fragment
+    templates:
+      - ../templates/resources/ingress.yaml
+    set:
+      fileAccess.trustedOrigins: ["https://old.example.com#fragment"]
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.trustedOrigins entries must be HTTPS origins without credentials, query, fragment or nonroot path"
