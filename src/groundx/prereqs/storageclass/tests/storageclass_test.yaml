@@ -1,0 +1,79 @@
+suite: "storageclass renders new-install defaults when no live class exists, and preserves the live class verbatim when one does"
+templates:
+  - ../templates/storageclass.yaml
+kubernetesProvider:
+  scheme:
+    "storage.k8s.io/v1/StorageClass":
+      gvr:
+        group: "storage.k8s.io"
+        version: "v1"
+        resource: "storageclasses"
+      namespaced: false
+  objects:
+    - kind: StorageClass
+      apiVersion: storage.k8s.io/v1
+      metadata:
+        name: existing-ebs-unencrypted
+      parameters:
+        type: gp3
+        encrypted: "false"
+    - kind: StorageClass
+      apiVersion: storage.k8s.io/v1
+      metadata:
+        name: existing-ebs-no-params
+
+tests:
+  - it: "no live class at this name: new EBS install renders the chart's own encrypted-by-default parameters"
+    asserts:
+      - equal:
+          path: parameters.type
+          value: gp3
+      - equal:
+          path: parameters.encrypted
+          value: "true"
+
+  - it: "live unencrypted EBS class exists: upgrade preserves its exact live parameters, not the chart's new default"
+    set:
+      storageClassName: existing-ebs-unencrypted
+    asserts:
+      - equal:
+          path: parameters.type
+          value: gp3
+      - equal:
+          path: parameters.encrypted
+          value: "false"
+      - notExists:
+          path: parameters.kmsKeyId
+
+  - it: "live EBS class exists with no parameters recorded: upgrade renders no parameters block at all"
+    set:
+      storageClassName: existing-ebs-no-params
+    asserts:
+      - notExists:
+          path: parameters
+
+  - it: "legacy in-tree EBS provisioner (kubernetes.io/aws-ebs): a new install keeps type, encrypted and kmsKeyId"
+    set:
+      provisioner: kubernetes.io/aws-ebs
+      parameters.kmsKeyId: arn:aws:kms:us-east-2:111122223333:key/example
+    asserts:
+      - equal:
+          path: parameters.type
+          value: gp3
+      - equal:
+          path: parameters.encrypted
+          value: "true"
+      - equal:
+          path: parameters.kmsKeyId
+          value: arn:aws:kms:us-east-2:111122223333:key/example
+
+  - it: "legacy in-tree EBS provisioner: the encrypted opt-out still omits the key and keeps type"
+    set:
+      provisioner: kubernetes.io/aws-ebs
+      parameters.encrypted: "false"
+    asserts:
+      - equal:
+          path: parameters.type
+          value: gp3
+      - notExists:
+          path: parameters.encrypted

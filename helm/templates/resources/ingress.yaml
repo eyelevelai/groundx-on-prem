@@ -16,6 +16,7 @@
 {{- $path := dig "path" "" $svcData -}}
 {{- $paths := dig "paths" list $svcData -}}
 {{- $portKey := printf "groundx.%s.port" $entry -}}
+{{- if eq $entry "file" -}}{{- $portKey = "groundx.file.nativePort" -}}{{- end -}}
 {{- $port := include $portKey $ -}}
 {{- $backendKey := printf "groundx.%s.serviceName" $entry -}}
 {{- $backend := include $backendKey $ -}}

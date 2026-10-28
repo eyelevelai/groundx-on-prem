@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import filecmp
+import os
 import re
 import subprocess
 import sys
@@ -15,6 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 CHART = ROOT / "src" / "groundx"
 CHARTS = (ROOT / "src" / "groundx", ROOT / "helm")
+SEARCH_CREDENTIALS_VALUES = ROOT / "src" / "groundx" / "tests" / "files" / "values.search-credentials.yaml"
 STORAGE_CHART = ROOT / "src" / "groundx" / "prereqs" / "storageclass"
 STORAGE_CHARTS = (
     ROOT / "src" / "groundx" / "prereqs" / "storageclass",
@@ -59,6 +61,7 @@ STORAGE_EXAMPLES: typing.Dict[str, StorageExampleSpec] = {
             r"provisioner:\s+ebs\.csi\.aws\.com",
             r'reclaimPolicy:\s+Delete',
             r'type:\s+"gp3"',
+            r'encrypted:\s+"true"',
         ),
         "must_not": (r'type:\s+""', r"parameters:\s+\{\}"),
     },
@@ -68,6 +71,7 @@ STORAGE_EXAMPLES: typing.Dict[str, StorageExampleSpec] = {
             r"provisioner:\s+ebs\.csi\.aws\.com",
             r'reclaimPolicy:\s+Delete',
             r'type:\s+"gp3"',
+            r'encrypted:\s+"true"',
         ),
         "must_not": (r'type:\s+""', r"parameters:\s+\{\}"),
     },
@@ -137,8 +141,10 @@ PVC_FIXTURES: typing.Dict[str, PvcFixtureSpec] = {
     },
 }
 MIRRORED_FILES = (
+    "prereqs/storageclass/.helmignore",
     "prereqs/storageclass/Chart.yaml",
     "prereqs/storageclass/templates/storageclass.yaml",
+    "prereqs/storageclass/templates/NOTES.txt",
     "prereqs/storageclass/values.yaml",
     "prereqs/storageclass/values.ebs.example.yaml",
     "prereqs/storageclass/values.efs.example.yaml",
@@ -155,7 +161,8 @@ STALE_PATTERNS = (
 
 
 def run(command: typing.List[str]) -> str:
-    result = subprocess.run(command, cwd=ROOT, check=False, capture_output=True, text=True)
+    env = {**os.environ, "KUBECONFIG": str(ROOT / ".build" / "no-such-kubeconfig")}
+    result = subprocess.run(command, cwd=ROOT, check=False, capture_output=True, text=True, env=env)
     if result.returncode != 0:
         raise RuntimeError(f"{' '.join(command)} failed:\n{result.stderr}")
     return result.stdout
@@ -191,7 +198,7 @@ def verify_storageclass(chart: Path) -> typing.List[str]:
 
 
 def verify_pvc_fixture(chart: Path, name: str, spec: PvcFixtureSpec) -> str:
-    command = ["helm", "template", f"pvc-{name}", str(chart)]
+    command = ["helm", "template", f"pvc-{name}", str(chart), "-f", str(SEARCH_CREDENTIALS_VALUES)]
     for values in spec.get("values", ()):
         command.extend(("-f", str(ROOT / values)))
     for show_only in spec.get("show_only", ()):
@@ -231,6 +238,92 @@ def verify_mirrors() -> typing.List[str]:
             raise AssertionError(f"mirrored file drift: {relative}")
         successes.append(f"mirror {relative} passed")
 
+    return successes
+
+
+NON_EBS_EXAMPLES = ("efs", "azure-files", "gke-filestore")
+
+
+def verify_provisioner_isolation(chart: Path) -> typing.List[str]:
+    successes: typing.List[str] = []
+    with tempfile.TemporaryDirectory(prefix="groundx-isolation-values-") as temp:
+        override = write_values(
+            Path(temp),
+            "values.isolation.override.yaml",
+            "parameters:\n  encrypted: \"true\"\n  kmsKeyId: \"test-key\"\n",
+        )
+        for name in NON_EBS_EXAMPLES:
+            spec = STORAGE_EXAMPLES[name]
+            command = ["helm", "template", f"isolation-{name}", str(chart)]
+            values_file = spec["file"]
+            if values_file is not None:
+                command.extend(("-f", str(chart / values_file)))
+            command.extend(("-f", str(override)))
+            rendered = run(command)
+
+            require(rendered, r"kind:\s+StorageClass", f"{name} provisioner isolation (StorageClass rendered)")
+            require(rendered, r"parameters:", f"{name} provisioner isolation (parameters block survives)")
+            reject(rendered, r"encrypted:", f"{name} provisioner isolation (encrypted leaked)")
+            reject(rendered, r"kmsKeyId:", f"{name} provisioner isolation (kmsKeyId leaked)")
+            successes.append(f"{chart.relative_to(ROOT)} {name} provisioner isolation passed")
+    return successes
+
+
+def verify_legacy_ebs_provisioner(chart: Path) -> typing.List[str]:
+    rendered = run(
+        [
+            "helm", "template", "legacy-ebs", str(chart),
+            "--set", "provisioner=kubernetes.io/aws-ebs",
+            "--set-string", "parameters.encrypted=true",
+            "--set", "parameters.kmsKeyId=test-key",
+        ]
+    )
+    require(rendered, r'encrypted:\s+"true"', f"{chart.relative_to(ROOT)} legacy kubernetes.io/aws-ebs keeps encrypted")
+    require(rendered, r'kmsKeyId:\s+"test-key"', f"{chart.relative_to(ROOT)} legacy kubernetes.io/aws-ebs keeps kmsKeyId")
+    require(rendered, r'type:\s+"gp3"', f"{chart.relative_to(ROOT)} legacy kubernetes.io/aws-ebs keeps type")
+    return [f"{chart.relative_to(ROOT)} legacy kubernetes.io/aws-ebs provisioner keeps its EBS parameters passed"]
+
+
+OPTOUT_SPELLINGS: typing.Dict[str, str] = {
+    "quoted-false": 'parameters:\n  encrypted: "false"\n',
+    "unquoted-false": "parameters:\n  encrypted: false\n",
+    "null": "parameters:\n  encrypted: null\n",
+    "empty-string": 'parameters:\n  encrypted: ""\n',
+}
+
+
+def verify_optout_normalization(chart: Path) -> typing.List[str]:
+    successes: typing.List[str] = []
+    with tempfile.TemporaryDirectory(prefix="groundx-optout-values-") as temp:
+        temp_dir = Path(temp)
+        for spelling, body in OPTOUT_SPELLINGS.items():
+            values = write_values(temp_dir, f"values.optout.{spelling}.yaml", body)
+            command = ["helm", "template", f"optout-{spelling}", str(chart), "-f", str(values)]
+            rendered = run(command)
+            require(rendered, r"kind:\s+StorageClass", f"opt-out spelling '{spelling}' (StorageClass rendered)")
+            require(rendered, r'type:\s+"gp3"', f"opt-out spelling '{spelling}' (other EBS parameters survive)")
+            reject(rendered, r"encrypted:", f"opt-out spelling '{spelling}'")
+            successes.append(f"{chart.relative_to(ROOT)} opt-out spelling '{spelling}' passed")
+    return successes
+
+
+def verify_non_ebs_false_value_survives(chart: Path) -> typing.List[str]:
+    successes: typing.List[str] = []
+    with tempfile.TemporaryDirectory(prefix="groundx-nonebs-false-values-") as temp:
+        override = write_values(
+            Path(temp),
+            "values.nonebs.false.override.yaml",
+            'parameters:\n  ensureUniqueDirectory: "false"\n',
+        )
+        spec = STORAGE_EXAMPLES["efs"]
+        command = ["helm", "template", "nonebs-false", str(chart), "-f", str(chart / spec["file"]), "-f", str(override)]
+        rendered = run(command)
+        require(
+            rendered,
+            r'ensureUniqueDirectory:\s+"false"',
+            f"{chart.relative_to(ROOT)} non-EBS 'false' parameter survival",
+        )
+        successes.append(f"{chart.relative_to(ROOT)} non-EBS 'false' parameter survival passed")
     return successes
 
 
@@ -299,7 +392,7 @@ workspace:
             r'fileSystemId:\s+"fs-0123456789abcdef0"',
             r'basePath:\s+"/eyelevel"',
         ),
-        "storage_must_not": (r'type:\s+"gp3"', r'type:\s+""'),
+        "storage_must_not": (r'type:\s+"gp3"', r'type:\s+""', r"encrypted:", r"kmsKeyId:"),
         "access": "ReadWriteMany",
     },
     "ebs": {
@@ -326,6 +419,7 @@ workspace:
         "storage_must": (
             r"provisioner:\s+ebs\.csi\.aws\.com",
             r'type:\s+"gp3"',
+            r'encrypted:\s+"true"',
         ),
         "storage_must_not": (r'type:\s+""',),
         "access": "ReadWriteOnce",
@@ -369,7 +463,7 @@ def verify_driver(driver: str, spec: GeneratedValuesSpec) -> typing.List[str]:
             reject(storage_render, pattern, f"{driver} generated storage values")
         successes.append(f"{driver} generated StorageClass values passed")
 
-        app_render = run(["helm", "template", f"aws-{driver}-app", str(CHART), "-f", str(app_values)])
+        app_render = run(["helm", "template", f"aws-{driver}-app", str(CHART), "-f", str(SEARCH_CREDENTIALS_VALUES), "-f", str(app_values)])
         verify_app_render(app_render, driver, spec["access"])
         successes.append(f"{driver} generated app values passed")
 
@@ -380,6 +474,8 @@ def verify_driver(driver: str, spec: GeneratedValuesSpec) -> typing.List[str]:
                     "template",
                     f"aws-{driver}-eks",
                     str(CHART),
+                    "-f",
+                    str(SEARCH_CREDENTIALS_VALUES),
                     "-f",
                     str(EKS_VALUES),
                     "-f",
@@ -469,6 +565,10 @@ def main() -> int:
         verify_setup_eks,
         lambda: [item for driver, spec in GENERATED.items() for item in verify_driver(driver, spec)],
         verify_setup_script_contract,
+        lambda: [item for chart in STORAGE_CHARTS for item in verify_provisioner_isolation(chart)],
+        lambda: [item for chart in STORAGE_CHARTS for item in verify_legacy_ebs_provisioner(chart)],
+        lambda: [item for chart in STORAGE_CHARTS for item in verify_optout_normalization(chart)],
+        lambda: [item for chart in STORAGE_CHARTS for item in verify_non_ebs_false_value_survives(chart)],
     )
     for check in checks:
         try:

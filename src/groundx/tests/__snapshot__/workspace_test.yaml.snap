@@ -187,7 +187,7 @@
         metadata:
           annotations:
             config-hash: cd1aec097cc9363c8b5b3fa5096871d253dfce0b52a028b045c339c527c50019
-            supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
+            supervisord-hash: f050eac7a391e2562ece9a1b1d9fb6c87049fa9b4467ecc3c1850d5c8a66dfaf
           labels:
             app: workspace-cleanup
         spec:
@@ -210,7 +210,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -281,6 +281,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -319,7 +320,7 @@
         metadata:
           annotations:
             config-hash: cd1aec097cc9363c8b5b3fa5096871d253dfce0b52a028b045c339c527c50019
-            supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
+            supervisord-hash: f050eac7a391e2562ece9a1b1d9fb6c87049fa9b4467ecc3c1850d5c8a66dfaf
           labels:
             app: workspace-command
             workspace.groundx.ai/tier: worker
@@ -343,7 +344,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -421,6 +422,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: workspace-command-service-account
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -459,7 +461,7 @@
         metadata:
           annotations:
             config-hash: cd1aec097cc9363c8b5b3fa5096871d253dfce0b52a028b045c339c527c50019
-            supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
+            supervisord-hash: f050eac7a391e2562ece9a1b1d9fb6c87049fa9b4467ecc3c1850d5c8a66dfaf
           labels:
             app: workspace-provision
         spec:
@@ -482,7 +484,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -553,6 +555,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -591,7 +594,7 @@
         metadata:
           annotations:
             config-hash: cd1aec097cc9363c8b5b3fa5096871d253dfce0b52a028b045c339c527c50019
-            supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
+            supervisord-hash: f050eac7a391e2562ece9a1b1d9fb6c87049fa9b4467ecc3c1850d5c8a66dfaf
           labels:
             app: workspace-publish
         spec:
@@ -614,7 +617,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -685,6 +688,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -723,7 +727,7 @@
         metadata:
           annotations:
             config-hash: cd1aec097cc9363c8b5b3fa5096871d253dfce0b52a028b045c339c527c50019
-            supervisord-hash: 6a2bc1f5f82dea1b2b37b20c4223b657306ca52eb46ad088ec48f1eac528dd86
+            supervisord-hash: f050eac7a391e2562ece9a1b1d9fb6c87049fa9b4467ecc3c1850d5c8a66dfaf
           labels:
             app: workspace-workspace
         spec:
@@ -746,7 +750,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -817,6 +821,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -941,10 +946,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -970,10 +980,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -999,6 +1014,7 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
@@ -1012,10 +1028,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1,celery_worker_2
     kind: ConfigMap
     metadata:
       labels:
@@ -1041,10 +1062,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -1070,10 +1096,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -1302,7 +1333,7 @@
         metadata:
           annotations:
             config-hash: 721826726fc4eb69292538324a71915d802079afaf30b1ce8b39cd5c5dad773d
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-cleanup
         spec:
@@ -1325,7 +1356,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -1398,6 +1429,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1436,7 +1468,7 @@
         metadata:
           annotations:
             config-hash: 721826726fc4eb69292538324a71915d802079afaf30b1ce8b39cd5c5dad773d
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-command
         spec:
@@ -1459,7 +1491,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -1532,6 +1564,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1570,7 +1603,7 @@
         metadata:
           annotations:
             config-hash: 721826726fc4eb69292538324a71915d802079afaf30b1ce8b39cd5c5dad773d
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-provision
         spec:
@@ -1593,7 +1626,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -1666,6 +1699,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1704,7 +1738,7 @@
         metadata:
           annotations:
             config-hash: 721826726fc4eb69292538324a71915d802079afaf30b1ce8b39cd5c5dad773d
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-publish
         spec:
@@ -1727,7 +1761,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -1800,6 +1834,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1838,7 +1873,7 @@
         metadata:
           annotations:
             config-hash: 721826726fc4eb69292538324a71915d802079afaf30b1ce8b39cd5c5dad773d
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-workspace
         spec:
@@ -1861,7 +1896,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -1934,6 +1969,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2180,7 +2216,7 @@
         metadata:
           annotations:
             config-hash: 56e3041cd33a178a584db52c0968f8c00c384be83d315cda59b5d8de9ac5fcf3
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-cleanup
         spec:
@@ -2203,7 +2239,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -2277,6 +2313,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2321,7 +2358,7 @@
         metadata:
           annotations:
             config-hash: 56e3041cd33a178a584db52c0968f8c00c384be83d315cda59b5d8de9ac5fcf3
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-command
         spec:
@@ -2344,7 +2381,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -2418,6 +2455,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2462,7 +2500,7 @@
         metadata:
           annotations:
             config-hash: 56e3041cd33a178a584db52c0968f8c00c384be83d315cda59b5d8de9ac5fcf3
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-provision
         spec:
@@ -2485,7 +2523,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -2559,6 +2597,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2603,7 +2642,7 @@
         metadata:
           annotations:
             config-hash: 56e3041cd33a178a584db52c0968f8c00c384be83d315cda59b5d8de9ac5fcf3
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-publish
         spec:
@@ -2626,7 +2665,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -2700,6 +2739,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2744,7 +2784,7 @@
         metadata:
           annotations:
             config-hash: 56e3041cd33a178a584db52c0968f8c00c384be83d315cda59b5d8de9ac5fcf3
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-workspace
         spec:
@@ -2767,7 +2807,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -2841,6 +2881,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3133,7 +3174,7 @@
         metadata:
           annotations:
             config-hash: 6b67d4d13ce263098c3d7b3ce737eb82f27febd214f4599aa3c09c3e67942007
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-cleanup
         spec:
@@ -3156,7 +3197,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -3230,6 +3271,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3274,7 +3316,7 @@
         metadata:
           annotations:
             config-hash: 6b67d4d13ce263098c3d7b3ce737eb82f27febd214f4599aa3c09c3e67942007
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-command
         spec:
@@ -3297,7 +3339,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -3371,6 +3413,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3415,7 +3458,7 @@
         metadata:
           annotations:
             config-hash: 6b67d4d13ce263098c3d7b3ce737eb82f27febd214f4599aa3c09c3e67942007
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-provision
         spec:
@@ -3438,7 +3481,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -3512,6 +3555,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3556,7 +3600,7 @@
         metadata:
           annotations:
             config-hash: 6b67d4d13ce263098c3d7b3ce737eb82f27febd214f4599aa3c09c3e67942007
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-publish
         spec:
@@ -3579,7 +3623,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -3653,6 +3697,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3697,7 +3742,7 @@
         metadata:
           annotations:
             config-hash: 6b67d4d13ce263098c3d7b3ce737eb82f27febd214f4599aa3c09c3e67942007
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-workspace
         spec:
@@ -3720,7 +3765,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -3794,6 +3839,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4396,7 +4442,7 @@
         metadata:
           annotations:
             config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-cleanup
         spec:
@@ -4419,7 +4465,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -4490,6 +4536,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4528,7 +4575,7 @@
         metadata:
           annotations:
             config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-command
         spec:
@@ -4551,7 +4598,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -4622,6 +4669,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4660,7 +4708,7 @@
         metadata:
           annotations:
             config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-provision
         spec:
@@ -4683,7 +4731,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -4754,6 +4802,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4792,7 +4841,7 @@
         metadata:
           annotations:
             config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-publish
         spec:
@@ -4815,7 +4864,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -4886,6 +4935,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4924,7 +4974,7 @@
         metadata:
           annotations:
             config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
-            supervisord-hash: e5fc6300429549d55c4934a5f961f7222d5ad05e081781a77cd59e9bf75c91e0
+            supervisord-hash: 71c56bbcb4cabe44590306097fc7f29201e4268c2156cfaa030cc9ac179feec9
           labels:
             app: workspace-workspace
         spec:
@@ -4947,7 +4997,7 @@
                 - /bin/sh
                 - -c
                 - |
-                  export PYTHONPATH=/app && supervisord -c /app/supervisord.conf
+                  export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
               env:
                 - name: POD_NAME
                   valueFrom:
@@ -5018,6 +5068,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 900
           tolerations:
             - effect: NoSchedule
               key: node
@@ -5142,10 +5193,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -5171,10 +5227,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -5200,10 +5261,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -5229,10 +5295,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -5258,10 +5329,15 @@
           PYTHONUNBUFFERED="1"
         autostart=true
         autorestart=true
+        stopwaitsecs=870
         stdout_logfile=/dev/stdout
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
