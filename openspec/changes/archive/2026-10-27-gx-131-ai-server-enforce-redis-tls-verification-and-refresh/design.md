@@ -34,3 +34,7 @@ README-only: no cluster redeploys, no stateful resource is touched, and rollback
 ### D5. Verification
 
 Each decision point is a runnable `grep`/`sed` check on the note's section of `README.md` (see `tasks.md`); the whole change is gated by the repo's pre-push `validate-helm.sh`, which the pipeline does not execute as an acceptance check because the repo is privileged. The checks avoid repo scripts.
+
+## Amendments
+
+- 2026-10-28: after review on the merged change, the README note was revised on `main`. The first CA instruction now says to build a complete bundle (public roots plus the private CA); the `fileAccess.enabled` sentence was dropped because the published 0.2.8 chart mounts the CA whenever `fileAccess.caSecretName` is set; a separate metrics Redis (`cache.metrics.existing` with `ssl: true`) was added; and the note tells operators to check the layout, ranker and summary logs after upgrading, because a local minikube upgrade test on 2026-10-28 showed `helm upgrade` succeeding with all pods Ready while every worker logged `certificate verify failed`. The living spec `existing-redis-tls-upgrade-guidance` carries the revised requirements; this change's task checks describe the note as first shipped.
