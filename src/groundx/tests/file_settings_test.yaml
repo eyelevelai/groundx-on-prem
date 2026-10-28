@@ -1390,6 +1390,21 @@ tests:
       - matchRegex:
           path: stringData["config.py"]
           pattern: 'uploadReplaceURL=\[\s*"http://minio\.eyelevel\.svc\.cluster\.local/eyelevel/",\s*"https://files\.customer\.example\.com/eyelevel/",\s*"https://upload\.groundx\.ai/eyelevel/",\s*\],'
+  - it: layout reads files linked on a single link host from S3 storage without a bucket suffix
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.enabled: false
+      file.serviceType: s3
+      file.existing.url: https://gx-test-bucket.s3.us-west-2.amazonaws.com
+      file.existing.region: us-west-2
+      file.groundxPublicUrl: https://upload.groundx.ai
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadReplaceURL=\[\s*"https://gx-test-bucket\.s3\.us-west-2\.amazonaws\.com/",\s*"https://upload\.groundx\.ai/",\s*\],'
   - it: a link host without an alias keeps the MinIO storage host and renders no alias section
     templates:
       - ../templates/resources/config-yaml.yaml
