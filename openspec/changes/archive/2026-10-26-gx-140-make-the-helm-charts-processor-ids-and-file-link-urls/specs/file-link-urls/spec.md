@@ -29,6 +29,14 @@ The chart SHALL accept an optional `file.groundxPublicUrl` with the same schema 
 - **WHEN** the chart renders `config.yaml`
 - **THEN** no `uploadGroundx` key appears anywhere in `config.yaml`
 
+### Requirement: Layout reads files linked on either link host from storage
+When `file.publicUrl` or `file.groundxPublicUrl` is set and `fileAccess.enabled` is false, the layout `config.py` `uploadReplaceURL` SHALL render as a list: the storage bucket URL it renders today, then each set link host followed by the same bucket suffix. Layout then reads a file whose URL starts with a link host through storage credentials instead of an unauthenticated download, which a private bucket refuses. When neither key is set, `uploadReplaceURL` SHALL render the single bucket URL string exactly as before.
+
+#### Scenario: Both link hosts with chart-deployed MinIO (finalize success)
+- **GIVEN** `fileAccess.enabled: false`, MinIO storage on `minio.eyelevel.svc.cluster.local`, `file.publicUrl: https://files.customer.example.com` and `file.groundxPublicUrl: https://upload.groundx.ai`
+- **WHEN** the chart renders the layout `config.py`
+- **THEN** `uploadReplaceURL` is the list `"http://minio.eyelevel.svc.cluster.local/eyelevel/"`, `"https://files.customer.example.com/eyelevel/"`, `"https://upload.groundx.ai/eyelevel/"`
+
 ### Requirement: The link host keys are rejected when the file-access gateway is enabled
 With `fileAccess.enabled: true`, a non-empty `file.publicUrl` or `file.groundxPublicUrl` SHALL fail the render through `groundx.fileAccess.validate`. With the gateway on, `fileAccess.publicUrl` owns `upload.baseUrl`, and cashbot-go checks the gateway against `uploadGroundx` whenever that section has a base URL and fails closed when the check does not pass. The `file.groundxPublicUrl` message SHALL NOT present `fileAccess.trustedOrigins` as a replacement. The gateway's rendering and validation SHALL otherwise stay unchanged.
 

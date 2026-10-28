@@ -1377,6 +1377,19 @@ tests:
       - matchRegex:
           path: stringData["config.yaml"]
           pattern: '\nuploadGroundx:\n  signingEndpoint: "https://signing\.example\.com"\n  baseDomain: gx-test-bucket\.s3\.us-west-2\.amazonaws\.com\n  baseUrl: "https://upload\.groundx\.ai"\n  bucket: eyelevel\n  bucketUrl: https://gx-test-bucket\.s3\.us-west-2\.amazonaws\.com\n  id: "fixture-storage-key"\n  region: us-west-2\n  secret: "fixture-storage-secret"\n  service: s3\n  ssl: true\s*$'
+  - it: layout reads files linked on either link host from storage
+    templates:
+      - ../templates/resources/layout-config-py.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.enabled: false
+      file.publicUrl: https://files.customer.example.com
+      file.groundxPublicUrl: https://upload.groundx.ai
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: 'uploadReplaceURL=\[\s*"http://minio\.eyelevel\.svc\.cluster\.local/eyelevel/",\s*"https://files\.customer\.example\.com/eyelevel/",\s*"https://upload\.groundx\.ai/eyelevel/",\s*\],'
   - it: a link host without an alias keeps the MinIO storage host and renders no alias section
     templates:
       - ../templates/resources/config-yaml.yaml
