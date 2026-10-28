@@ -4,6 +4,8 @@ GroundX Cloud cannot run on this chart yet, because two settings it needs are fi
 
 Moving GroundX Cloud onto the published chart (GX-4) needs both settings: the processor IDs so documents get processed and indexed, and the link URLs so existing file links keep working.
 
+Note (2026-10-28): on 2026-10-27 GroundX Cloud moved its file links behind the file-access gateway, keeping a second GroundX link host (`uploadGroundx`). The two link keys remain a gateway-off option; moving GroundX Cloud's file links onto the chart needs chart support for that gateway configuration.
+
 ## What Changes
 
 - New optional `cluster.processors` value. It covers the 13 lists (`convert`, `extract`, `layout`, `map`, `saveFile`, `skipConvert`, `skipGenerate`, `skipLayout`, `skipMap`, `skipSummarize`, `summarize`, `summarizeChunks`, `summarizeSections`), and each list it sets replaces that list's default. Any list left unset keeps its current default. In `mode: ingest`, the generated `processors.extraPostDefaults` skip-generate entries use the configured `skipGenerate` IDs instead of the fixed `1`.
