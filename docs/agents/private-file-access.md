@@ -25,13 +25,12 @@ flag to change bucket permissions. Operators must separately verify that direct
 storage access cannot bypass the gateway. See the
 [SDK storage-setting definition](https://github.com/eyelevelai/groundx-python/blob/main/CONTRIBUTING.md#extraction-storage-settings).
 
-Current extraction code also uses `False` to enable image-path validation and
-private image delivery. That validator rejects valid unsigned original PNG/JPG page URLs.
-Do not enable anonymous storage reads or set `True` to work around this failure.
-Require a compatible extraction fix and a full public/protected PNG/JPG/PDF
-extraction test before claiming that path works. Rendering and download-only
-checks are insufficient. Internal file reads must reuse service credentials and
-existing document authorization regardless of customer file policy.
+Extraction also uses `False` to enable image-path validation and private image
+delivery. Its checks must accept the current document's original PNG/JPG source
+as well as generated pages/crops. Do not enable anonymous storage reads or set
+`True` to bypass a failed image check. Verify full public/protected PNG/JPG/PDF
+extraction, not only chart rendering or downloads. Internal file reads must reuse
+service credentials and existing document authorization regardless of customer policy.
 
 ## Endpoints and secrets
 
