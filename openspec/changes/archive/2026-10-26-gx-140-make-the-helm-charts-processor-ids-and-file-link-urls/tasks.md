@@ -25,7 +25,7 @@ Mirror rule: every template, `values.yaml` and `values.schema.json` edit under `
 
 ## 3. Operator-facing documentation
 
-- [x] 3.1 In both `values.yaml` files, add `processors: {}` under `cluster` and `publicUrl: ""` / `groundxPublicUrl: ""` under `file` beside `signingEndpoint`, each with a short comment: what it sets, its default, that a new install does not need it, that GroundX Cloud must set it, and for the two URL keys that the render rejects them when `fileAccess.enabled` is true. No commented-out example blocks, no ticket or person references; parse both files after editing
+- [x] 3.1 In both `values.yaml` files, add `processors: {}` under `cluster` and `publicUrl: ""` / `groundxPublicUrl: ""` under `file` beside `signingEndpoint`, each with a short comment: what it sets, its default, that a new install does not need it, that GroundX Cloud must set the processor map, and for the two URL keys that the render rejects them when `fileAccess.enabled` is true. No commented-out example blocks, no ticket or person references; parse both files after editing
   check: n/a — inert empty defaults and comments; task 4.1's gate proves the render is unchanged and that the two values.yaml files are byte-identical
 - [x] 3.2 Add one line to `docs/agents/private-file-access.md` stating that `file.publicUrl` and `file.groundxPublicUrl` are rejected when `fileAccess.enabled` is true
   check: n/a — documentation only
