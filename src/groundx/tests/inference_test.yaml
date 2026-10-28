@@ -131,6 +131,10 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].resources.limits.memory
           value: 12Gi
+      - notExists:
+          path: spec.template.spec.initContainers[?(@.name=="init-layout")].resources.requests["nvidia.com/gpu"]
+      - notExists:
+          path: spec.template.spec.initContainers[?(@.name=="init-layout")].resources.limits["nvidia.com/gpu"]
   - it: "layout cpu mode omits zero gpu override"
     templates:
       - ../templates/app/inference.yaml
@@ -215,7 +219,7 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].resources.limits["nvidia.com/gpu"]
           value: 1
-  - it: "layout inference defaults to a 900 second grace period and runs init-layout then replaces the shell with supervisord"
+  - it: "layout inference defaults to a 900 second grace period and replaces the shell with supervisord without running init-layout"
     templates:
       - ../templates/app/inference.yaml
     values:
@@ -229,7 +233,19 @@ tests:
           value: 900
       - equal:
           path: spec.template.spec.containers[0].command[2]
-          value: "export PYTHONPATH=/app:$PYTHONPATH && python /app/init-layout.py && exec supervisord -c /app/supervisord.conf\n"
+          value: "export PYTHONPATH=/app:$PYTHONPATH && exec supervisord -c /app/supervisord.conf\n"
+      - equal:
+          path: spec.template.spec.initContainers[4].name
+          value: init-layout
+      - matchRegex:
+          path: spec.template.spec.initContainers[?(@.name=="init-layout")].command[2]
+          pattern: "exec python /app/init-layout\\.py"
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name=="init-layout")].resources.requests["nvidia.com/gpu"]
+          value: 1
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name=="init-layout")].resources.limits["nvidia.com/gpu"]
+          value: 1
   - it: "ranker and summary gracePeriod override each service only and leave layout-inference alone (polarity: finalize success; must not block)"
     templates:
       - ../templates/app/inference.yaml
@@ -321,6 +337,32 @@ tests:
       - matchRegex:
           path: data["supervisord.conf"]
           pattern: "\\[group:celery_workers\\]\\nprograms=celery_worker_1,celery_worker_2\\n"
+  - it: "layout inference init-layout carries the file-access CA env, CA mount and workload secrets"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.file-access.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-inference
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[?(@.name=="init-layout")].env
+          content:
+            name: SSL_CERT_FILE
+            value: /var/run/groundx/file-access/ca.crt
+      - contains:
+          path: spec.template.spec.initContainers[?(@.name=="init-layout")].volumeMounts
+          content:
+            name: file-access-ca
+            mountPath: /var/run/groundx/file-access
+            readOnly: true
+      - contains:
+          path: spec.template.spec.initContainers[?(@.name=="init-layout")].envFrom
+          content:
+            secretRef:
+              name: file-store-credentials
   - it: "ranker gracePeriod of zero fails schema validation before anything renders (polarity: reject before state)"
     templates:
       - ../templates/app/inference.yaml

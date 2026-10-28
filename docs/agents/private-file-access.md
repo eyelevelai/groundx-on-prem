@@ -1,7 +1,8 @@
 # Private file access deployment contract
 
 `fileAccess.enabled` defaults to `false`. Existing storage, worker configuration,
-workloads and ingress manifests remain unchanged while it is disabled. Enabling
+workloads and ingress manifests remain unchanged while it is disabled, except
+that a set `caSecretName` still delivers its CA bundle (see below). Enabling
 it adds two FileAccess gateway replicas using the shared Go Deployment, Service,
 health probes and config Secret. Gateway liveness uses `/health`; readiness
 uses `/readyz` to check its database/schema and Redis dependencies. Streaming adds a network hop and gateway
@@ -11,6 +12,26 @@ This chart configuration is a candidate deployment surface. Render checks do not
 certify storage compatibility, transport encryption, image compatibility or live
 file authorization. Do not advertise or activate protection until the selected
 backend's release gates pass.
+
+## Extraction storage setting: `public_read`
+
+This is a generated Python service setting, not an account/bucket/document policy
+or a `values.yaml` field. Its SDK default is `True`. In this chart, file access
+is disabled by default and the SDK default remains in effect; a chart-created
+file-access gateway causes extraction config to set `public_read=False`.
+
+For a new MinIO/S4 bucket, `True` allows anonymous downloads and `False` leaves
+it private. Existing buckets are not changed. The S3 adapter does not use this
+flag to change bucket permissions. Operators must separately verify that direct
+storage access cannot bypass the gateway. See the
+[SDK storage-setting definition](https://github.com/eyelevelai/groundx-python/blob/main/CONTRIBUTING.md#extraction-storage-settings).
+
+Extraction also uses `False` to enable image-path validation and private image
+delivery. Its checks must accept the current document's original PNG/JPG source
+as well as generated pages/crops. Do not enable anonymous storage reads or set
+`True` to bypass a failed image check. Verify full public/protected PNG/JPG/PDF
+extraction, not only chart rendering or downloads. Internal file reads must reuse
+service credentials and existing document authorization regardless of customer policy.
 
 ## Endpoints and secrets
 
@@ -54,9 +75,12 @@ backend's release gates pass.
   hash. Provision role permissions and verify native AWS access independently.
 - `caSecretName` optionally references a Secret containing `ca.crt`. The chart
   mounts it read-only at `/var/run/groundx/file-access/ca.crt` and sets
-  `SSL_CERT_FILE` for application and migration consumers. Use a complete trust
-  bundle when those processes also contact other HTTPS services. An empty value
-  uses system trust. Provision certificates outside the chart and restart affected
+  `SSL_CERT_FILE` in every GroundX application workload, the metrics server and
+  the migration Job included, whether or not file access is enabled. Create the
+  Secret in the chart namespace before the install or upgrade that sets
+  `caSecretName`; a missing Secret or `ca.crt` key stops those pods from
+  starting. Use a complete trust bundle when those processes also contact other
+  HTTPS services. An empty value uses system trust. Provision certificates outside the chart and restart affected
   consumers after rotating credentials or trust Secrets; env imports and existing
   TLS client pools do not reload through the config hash.
 - `tlsSecretName` is required for a chart-managed gateway ingress. Set
