@@ -692,7 +692,7 @@ The seed values file disables the image's demo installer (`DISABLE_INSTALL_DEMO_
 
 `groundx` and `process` images with certificate verification (cashbot-go #1865) check the OpenSearch certificate against this bundle; older images skip the check.
 
-To rotate any certificate, update the Secret and restart: `opensearch-cluster-master` first, then `groundx`, then `process`. A restart rereads the files; nothing else needs to change.
+To renew the node certificate from the same CA, update `opensearch-tls` and restart `opensearch-cluster-master`. To move to a new CA, add the new CA to the `fileAccess.caSecretName` bundle and keep the old one, restart `groundx` and then `process`, then update `opensearch-tls` and restart `opensearch-cluster-master`, then remove the old CA from the bundle and restart `groundx` and then `process`. A running pod rereads the files only on restart, so trust in the new CA must reach `groundx` and `process` before OpenSearch serves a certificate from it.
 
 The GroundX application user still has broad privileges, so also restrict network access to OpenSearch.
 
