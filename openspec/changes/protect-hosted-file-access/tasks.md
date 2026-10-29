@@ -74,3 +74,23 @@ No live deployment or vendor certification was performed.
 - [x] Set source and mirrored chart `version` and `appVersion` to 0.2.9, preserving the published 0.2.8 release.
 - [x] Run the existing full Helm gate and verify rendered default image tags are 0.2.9 in both chart trees. All 545 tests and 850 unchanged snapshots pass with the CI toolchain; dependency image versions are unchanged.
 - [ ] Build compatible 0.2.9 application images and complete deferred on-prem qualification before publishing the new release. This PR does not publish charts, retag images or upgrade installations.
+
+## Cloud implementation handoff
+
+SDK 4.1.6 is released. Cashbot PRs #1886, #1889 and #1890, ai-server #86, extraction #215 and Harness #293 are merged with passing checks. Dev public/protected PDF, PNG and JPG extraction and file-link acceptance passed; registered ADP scored 99/102 public and 101/102 protected against the existing 95% threshold. AI-server changes are tests and guidance only.
+
+The tracking-query hotfix is verified in production. Deployment of the remaining merged Go and extraction builds requires its reviewed production rollout. Chart 0.2.9 publication and live on-prem qualification remain deferred. The cross-repository storage-alias plan stays open for that remaining work.
+
+## Hosted download local artifact closeout
+
+- Owner: `cashbot-go`
+- Change: `verify-cloud-file-access`
+- Run: `hosted-download-query-20261029`
+- Closed: `2026-10-29T15:51:58.504406+00:00`
+- Cleanup state: complete
+- Removed files: 13
+- Removed symlinks: 0
+- Removed bytes: 69065962
+- Run root absent: true
+- External run roots: none
+- Summary SHA-256: `9c83c3ad6d34870b2a7952fdb6faa6479f598c416dad017aa78a81b3077323e5`
