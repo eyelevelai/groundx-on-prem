@@ -51,9 +51,12 @@ check_seed() {
 .["plugins.security.nodes_dn"] | length > 0
 .["plugins.security.nodes_dn"] | contains(["CN=gx-opensearch-admin"]) | not
 .["plugins.security.allow_unsafe_democertificates"] == null
+.["plugins.security.restapi.roles_enabled"] | contains(["all_access"])
 EXPRS
 
-  if yq -r '.config."opensearch.yml"' "${file}" | grep -qiE 'kirk|esnode|root-ca\.pem'; then
+  local opensearch_yml
+  opensearch_yml="$(yq -r '.config."opensearch.yml"' "${file}")"
+  if grep -qiE 'kirk|esnode|root-ca\.pem' <<<"${opensearch_yml}"; then
     fail "${file}" "config.opensearch.yml references demo certificate identities"
   fi
 
