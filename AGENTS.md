@@ -189,7 +189,7 @@ guidance with `openspec instructions <artifact>`.
 
 ## Private file access
 
-See [the file-access operator contract](docs/agents/private-file-access.md) for gateway/storage endpoints, credentials, migrations, local clients and per-provider activation evidence.
+See [the file-access operator contract](docs/agents/private-file-access.md) for gateway/storage endpoints, credentials, migrations, local clients, the extraction `public_read` setting and per-provider activation evidence.
 
 ## Large file delivery
 

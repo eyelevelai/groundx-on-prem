@@ -189,14 +189,14 @@ enabled: false
 {{- end }}
 
 {{- define "groundx.fileAccess.caEnv" -}}
-{{- if and (eq (include "groundx.fileAccess.create" .) "true") (not (empty .Values.fileAccess.caSecretName)) }}
+{{- if dig "caSecretName" "" (.Values.fileAccess | default dict) }}
 - name: SSL_CERT_FILE
   value: /var/run/groundx/file-access/ca.crt
 {{- end }}
 {{- end }}
 
 {{- define "groundx.fileAccess.caMount" -}}
-{{- if and (eq (include "groundx.fileAccess.create" .) "true") (not (empty .Values.fileAccess.caSecretName)) }}
+{{- if dig "caSecretName" "" (.Values.fileAccess | default dict) }}
 - name: file-access-ca
   mountPath: /var/run/groundx/file-access
   readOnly: true
@@ -204,10 +204,10 @@ enabled: false
 {{- end }}
 
 {{- define "groundx.fileAccess.caVolume" -}}
-{{- if and (eq (include "groundx.fileAccess.create" .) "true") (not (empty .Values.fileAccess.caSecretName)) }}
+{{- if dig "caSecretName" "" (.Values.fileAccess | default dict) }}
 - name: file-access-ca
   secret:
-    secretName: {{ .Values.fileAccess.caSecretName | quote }}
+    secretName: {{ dig "caSecretName" "" (.Values.fileAccess | default dict) | quote }}
     items:
       - key: ca.crt
         path: ca.crt
