@@ -96,3 +96,18 @@ Chart 0.2.9 image builds, publication and live on-prem qualification remain defe
 - Run root absent: true
 - External run roots: none
 - Summary SHA-256: `9c83c3ad6d34870b2a7952fdb6faa6479f598c416dad017aa78a81b3077323e5`
+
+
+## Deferred acceptance and remaining ownership
+
+Cloud file-access source, SDK 4.1.6 and the approved production runtime rollout are complete. The cloud closeout is recorded in Cashbot `openspec/changes/archive/2026-10-29-verify-cloud-file-access/storage-alias-production-rollout-20261029.md`. This plan owns the remaining work formerly listed across the SDK, layout, Harness, dashboard, middleware and infrastructure plans. Archived checklists are historical evidence, not additional deployment gates.
+
+- [ ] Build the 0.2.9 runtime images, verify their SDK/schema compatibility and publish the chart only after its release checks pass.
+- [ ] Qualify each advertised MinIO, AIStor and S4 version independently: public/protected uploads, credentialed processing, source/page/crop/X-Ray reads, ownership denial, sharing expiry, range/HEAD/conditional requests, TLS, encryption and measured load limits. AIStor still requires the operator's license. Cloud results do not establish vendor qualification.
+- [ ] Verify the released SDK, layout and Helm aliases together on the selected store, including gateway-disabled public uploads and all four maintained extraction fixture families. Preserve the existing prompts and answer keys.
+- [ ] Complete live installed-MCP/delegated-customer and browser/QC acceptance not already evidenced by the cloud execution record. Record named-customer acceptance separately; synthetic tests do not establish customer sign-off. These are unverified acceptance items, not missing cloud deployments.
+- [ ] If Terraform ownership of the already-running hosted delivery resources is later adopted, first reconcile current state owners and obtain the exact zero-change import proposal. Historical ECS/server and 1 GiB dev proposals are superseded by the deployed streaming Lambda and 100 MB limit. No import, apply, extra gateway or production change is authorized by this handoff.
+
+Historical instructions to stop older writers are superseded by the current shared migration runbook. This handoff authorizes no service pause or production mutation.
+
+The completed cloud work and deferred vendor work must not be conflated. Keep this plan open until the release and acceptance items above have evidence or an explicitly accepted successor.
