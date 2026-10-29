@@ -33,6 +33,22 @@ columns use instant addition; the returned-extraction index uses online index
 creation and consumes database I/O. Migrations need authorized DDL privileges
 and may fail on metadata locks or an unsupported table configuration.
 
+Cashbot releases containing the account process lookup index require
+`training_username_status_started_idx (username, status, started_time)` on
+`nlp_model_training`. Cashbot owns both fresh table creation and the shared
+upgrade SQL. Select a GroundX image containing that migration before upgrading;
+the existing `-migrate-only` hook adds the index with
+`ALGORITHM=INPLACE, LOCK=NONE`. No separate chart SQL, configuration field or
+hook is needed. Fresh API installs initialize it normally; worker-only fresh
+installs still require a prepared database. Updated APIs and Go workers check
+the index on reader and writer endpoints before accepting work.
+
+Building the index consumes database I/O and storage, and process writes maintain
+it afterward. Validate construction time, query-plan selection and status-list
+latency on the actual target engine. Keep the index when rolling application
+images back. An incompatible existing index or unsupported online operation
+stops migration without a blocking fallback.
+
 The Job has a 15-minute deadline and no automatic retry. Allow enough Helm
 timeout for both the migration and the remaining rollout, for example:
 

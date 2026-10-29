@@ -500,6 +500,79 @@ tests:
               items:
                 - key: ca.crt
                   path: ca.crt
+  - it: CA bundle reaches the metrics and Go Deployments while file access is disabled
+    templates:
+      - ../templates/app/golang.yaml
+      - ../templates/app/metrics.yaml
+    set:
+      fileAccess.enabled: false
+      fileAccess.caSecretName: private-ca
+      metrics.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SSL_CERT_FILE
+            value: /var/run/groundx/file-access/ca.crt
+        template: ../templates/app/metrics.yaml
+        documentSelector:
+          path: spec.template.metadata.labels.app
+          value: metrics
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: file-access-ca
+            mountPath: /var/run/groundx/file-access
+            readOnly: true
+        template: ../templates/app/metrics.yaml
+        documentSelector:
+          path: spec.template.metadata.labels.app
+          value: metrics
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: file-access-ca
+            secret:
+              secretName: private-ca
+              items:
+                - key: ca.crt
+                  path: ca.crt
+        template: ../templates/app/metrics.yaml
+        documentSelector:
+          path: spec.template.metadata.labels.app
+          value: metrics
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SSL_CERT_FILE
+            value: /var/run/groundx/file-access/ca.crt
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.template.metadata.labels.app
+          value: groundx
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: file-access-ca
+            mountPath: /var/run/groundx/file-access
+            readOnly: true
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.template.metadata.labels.app
+          value: groundx
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: file-access-ca
+            secret:
+              secretName: private-ca
+              items:
+                - key: ca.crt
+                  path: ca.crt
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.template.metadata.labels.app
+          value: groundx
   - it: gateway creates its annotated service account only when requested
     templates:
       - ../templates/app/golang.yaml

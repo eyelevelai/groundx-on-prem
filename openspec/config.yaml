@@ -138,6 +138,10 @@ context: |
   - CONVENTIONS DISCOVERED DURING GX-90 (OpenSearch TLS seed values):
     - values/opensearch/values.yaml, values.yaml and values.schema.json are mirrored by hand and byte-compared by verify_mirrors() through MIRRORED_FILES in .build/bin/verify-storage-contract.py; src/groundx/tests/files/verify-opensearch-tls-values.sh checks the OpenSearch seed values themselves.
     - The OpenSearch image ships an internal_users.yml whose admin password is the published default; the demo installer (DISABLE_INSTALL_DEMO_CONFIG) is what replaces it, so any install that disables the installer must supply internal_users.yml.
+  - CONVENTIONS DISCOVERED DURING GX-131 (README-only notes):
+    - A README-only task check extracts the note's section with `sed -n "/^#### <heading prefix>/,/^#### <next heading>/p" README.md` and greps the required facts inside it, asserting the section is non-empty first, so it fails on the unchanged README (an absent heading prints nothing). Never match a heading by text that contains backticks.
+    - A scope check for a README-only change diffs against `git merge-base HEAD origin/<base>` (not the moving `origin/<base>` tip) and requires README.md changed and `src helm .build helm-releases` unchanged.
+    - The pre-push gate runs `.build/bin/validate-helm.sh` itself; a task check must not execute it (privileged repo), so the gate task declares `check: n/a` with that reason.
 
   - KNOWN GAPS / OPEN QUESTIONS:
     - helm/ <-> src/groundx duplication: no regen script (manual sync required); a drift check DOES exist (verify_mirrors() in .build/bin/verify-storage-contract.py fails the gate on mismatch) — the remaining gap is only the absence of a regen script, not the absence of a check.
