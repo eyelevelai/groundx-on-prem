@@ -168,9 +168,6 @@ spec:
 {{- with include "groundx.fileAccess.caMount" $ }}
 {{ . | nindent 12 }}
 {{- end }}
-{{- with include "groundx.search.caMount" $ }}
-{{ . | nindent 12 }}
-{{- end }}
             - name: config-volume
               mountPath: /home/{{ include "groundx.golang.home" $ }}/.cashbot/config.yaml
               subPath: config.yaml
@@ -179,9 +176,6 @@ spec:
 {{- end }}
       volumes:
 {{- with include "groundx.fileAccess.caVolume" $ }}
-{{ . | nindent 8 }}
-{{- end }}
-{{- with include "groundx.search.caVolume" $ }}
 {{ . | nindent 8 }}
 {{- end }}
         - name: config-volume

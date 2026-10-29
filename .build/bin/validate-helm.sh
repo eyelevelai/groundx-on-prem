@@ -27,7 +27,7 @@ Runs the GroundX Helm production chart gate from one stable entrypoint:
   - workspace chart contract verifier
   - storage chart, generated AWS values, and template-mirror contract verifier
   - probe-mirror-drift guard (renders src/groundx and helm/ and compares the API-pod probe timing)
-  - OpenSearch TLS seed values check (operator certificates only; values, schema and seed mirrors byte-identical)
+  - OpenSearch TLS seed values check (operator certificates only; seed mirrors byte-identical)
   - targeted render checks for both chart surfaces
   - git whitespace check
 
@@ -331,7 +331,7 @@ done
 
 echo "==> Verifying optional FileAccess storage and ingress contracts on both chart surfaces"
 for chart in src/groundx helm; do
-  file_access_output="$(helm template private-files "${chart}" -f "${SEARCH_CREDENTIALS}" -f src/groundx/tests/files/values.file-access.yaml)"
+  file_access_output="$(helm template private-files "${chart}" -f src/groundx/tests/files/values.file-access.yaml)"
   for expected in 'name: file-access' 'frontProxyTLSVerified: true' 'storageEndpoint: "https://store.internal.example.com:9443"' 'signingEndpoint: "https://s3.example.com"' 'uploadStorageEndpoint="https://store.internal.example.com:9443"' 'uploadPublicRead=False' 'name: file-store-credentials' 'secretName: "file-store-ca"' 'secretName: downloads-tls'; do
     if [[ "${file_access_output}" != *"${expected}"* ]]; then
       echo "${chart}: FileAccess render is missing ${expected}" >&2
@@ -345,7 +345,7 @@ for chart in src/groundx helm; do
     done
   done
   for storage_endpoint in https://store.internal.example.com:9443 https://s3.example.com; do
-    native_ingress_output="$(helm template native-files "${chart}" -f "${SEARCH_CREDENTIALS}" -f src/groundx/tests/files/values.file-access.yaml -f src/groundx/tests/files/values.file-native-signing.yaml --set fileAccess.ingress.enabled=false --set fileAccess.ingress.hostName=s3.example.com --set "fileAccess.storageEndpoint=${storage_endpoint}" -s templates/resources/ingress.yaml)"
+    native_ingress_output="$(helm template native-files "${chart}" -f src/groundx/tests/files/values.file-access.yaml -f src/groundx/tests/files/values.file-native-signing.yaml --set fileAccess.ingress.enabled=false --set fileAccess.ingress.hostName=s3.example.com --set "fileAccess.storageEndpoint=${storage_endpoint}" -s templates/resources/ingress.yaml)"
     if [[ "${native_ingress_output}" != *'host: "s3.example.com"'* || "${native_ingress_output}" != *'name: minio'* || "${native_ingress_output}" != *'number: 9000'* || "${native_ingress_output}" != *'secretName: store-tls'* ]]; then
       echo "${chart}: native ingress must retain Service port 9000 and TLS independently of the private HTTPS endpoint port." >&2
       exit 1

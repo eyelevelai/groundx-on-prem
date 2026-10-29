@@ -20,7 +20,7 @@ ERROR = "private extraction storage requires a compatible GroundX SDK"
 
 
 def config_source(chart: str, *, private: bool) -> str:
-    command = ["helm", "template", "sdk-admission", chart, "-f", "src/groundx/tests/files/values.search-credentials.yaml", "--set", "extract.enabled=true"]
+    command = ["helm", "template", "sdk-admission", chart, "--set", "extract.enabled=true"]
     if private:
         command.extend(["-f", "src/groundx/tests/files/values.file-access.yaml"])
     completed = subprocess.run(command, cwd=ROOT, check=True, capture_output=True, text=True)

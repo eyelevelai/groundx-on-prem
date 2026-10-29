@@ -4,7 +4,6 @@ tests:
     templates:
       - ../templates/app/golang.yaml
     values:
-      - ./files/values.search-credentials.yaml
       - ./files/values.post-process.yaml
     documentSelector:
       path: metadata.name
@@ -22,8 +21,6 @@ tests:
   - it: adds no topic when disabled
     templates:
       - ../templates/services/stream-topics.yaml
-    values:
-      - ./files/values.search-credentials.yaml
     asserts:
       - hasDocuments:
           count: 5
@@ -31,7 +28,6 @@ tests:
     templates:
       - ../templates/services/stream-topics.yaml
     values:
-      - ./files/values.search-credentials.yaml
       - ./files/values.post-process.yaml
     set:
       postProcess.replicas.desired: 3
@@ -50,7 +46,6 @@ tests:
     templates:
       - ../templates/services/stream-topics.yaml
     values:
-      - ./files/values.search-credentials.yaml
       - ./files/values.post-process.yaml
     set:
       stream.topics.postProcess.type: sqs

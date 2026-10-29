@@ -31,3 +31,7 @@ Wording correction to the proposal's Impact line: `verify_mirrors()` in `.build/
 - **Tests.** One new helm-unittest suite (`tests/search_ca_test.yaml`) for guard, `caFile`, mount and no-mount; existing suites gain the fixture CA and only snapshots that show the new volume/mount/`caFile` are hand-patched, never `-u`. A shell check (`verify-opensearch-tls-values.sh`) covers the seed values; the hand-synced mirrors are byte-checked by `verify_mirrors()` through `MIRRORED_FILES`.
 - **ADR.** None: the decisions above are local to this change and recorded here.
 - **Config context.** `openspec/config.yaml` `context:` gains the GX-90 convention (the hand-mirrored values files are byte-compared by `verify_mirrors()` through `MIRRORED_FILES`, and `verify-opensearch-tls-values.sh` checks the seed values themselves).
+
+## Amendments
+
+2026-10-29 (alignment with GX-130): GX-130 merged with an approved scope of one CA bundle, `fileAccess.caSecretName`, set as `SSL_CERT_FILE` on every GroundX workload. GX-90 now uses it: the OpenSearch-only `search.caSecretName`, its mount, `ai.aws.search.caFile` and the render check were removed, and the README tells operators to add the CA that signed `node.crt` to that bundle. A missing bundle fails at startup with an `x509` error. `src/build.sh` no longer packages the `src/opensearch` wrapper chart, which still runs the demo security configuration. The live-cluster checks in tasks 6.1 and 6.2 run before merge.

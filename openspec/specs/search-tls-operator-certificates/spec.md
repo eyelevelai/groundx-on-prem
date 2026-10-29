@@ -34,52 +34,24 @@ Invariant: a certificate whose private key is public, and a user whose password 
 - **WHEN** `src/groundx/values/opensearch/values.yaml`, `values.yaml` and `values.schema.json` are compared with their `helm/` copies
 - **THEN** each pair is byte-identical (`verify_mirrors()` through `MIRRORED_FILES` in `.build/bin/verify-storage-contract.py`)
 
-### Requirement: The GroundX chart takes an operator search CA and fails closed without one
-The chart SHALL accept `search.caSecretName` (string, default empty, in `values.yaml` and `values.schema.json`) naming a Secret in the release namespace whose key `ca.crt` is the CA that signed the OpenSearch server certificate. When the chart deploys against the in-cluster OpenSearch (`groundx.search.create` is true) and `search.caSecretName` is empty, rendering SHALL fail with a message naming `search.caSecretName`. When `search.existing.url` is set, `mode` is `ingest`, or search is disabled, an empty value SHALL render without error. The check runs wherever the GX-75 password check runs, so it does not depend on a Golang service being rendered.
+### Requirement: GroundX trusts the operator OpenSearch CA through the GX-130 bundle
+GroundX SHALL trust the chart-deployed OpenSearch through `fileAccess.caSecretName` (GX-130): the README SHALL tell the operator to put the CA that signed `node.crt` into that Secret's `ca.crt`, a complete bundle of the public root CAs plus that CA. The chart SHALL NOT add an OpenSearch-only CA value, mount or `ai.aws.search.caFile` setting.
 
-Invariant: the chart never renders a GroundX config that talks to the chart-deployed OpenSearch with no CA to verify it against; an unset CA is rejected, not defaulted to skipping verification.
+Invariant: one CA setting serves every GroundX client, so a private CA is added in one place.
 
-#### Scenario: In-cluster OpenSearch without a CA fails the render (polarity: reject before state; catches)
-- **WHEN** the chart is rendered with `mode` not `ingest`, no `search.existing.url`, valid search passwords and `search.caSecretName` empty
-- **THEN** the render fails naming `search.caSecretName`
-- **AND** no `config-yaml-map` Secret is produced
+#### Scenario: No OpenSearch-only CA setting (polarity: reject before state; catches)
+- **WHEN** `values.yaml`, `values.schema.json` and the rendered `config.yaml` are read
+- **THEN** none of them contains `search.caSecretName` or `caFile`
 
-#### Scenario: Existing OpenSearch without a CA renders (polarity: accept and enqueue; must not block; backward compatibility during rollout)
-- **WHEN** the chart is rendered with `search.existing.url` set and `search.caSecretName` empty
-- **THEN** the render succeeds and `ai.aws.search` has no `caFile` line
-
-#### Scenario: Ingest mode needs no CA (polarity: accept and enqueue; must not block)
-- **WHEN** the chart is rendered with `mode: ingest` and `search.caSecretName` empty
-- **THEN** the render succeeds
-
-### Requirement: The search CA is mounted read-only into every Golang workload and rendered as caFile
-When `search.caSecretName` is set, every Deployment rendered by `templates/app/golang.yaml` SHALL mount that Secret's `ca.crt` read-only at `/var/run/groundx/search-ca/ca.crt` (volume and mount named `search-ca`), and `config.yaml` SHALL render `ai.aws.search.caFile: /var/run/groundx/search-ca/ca.crt`. The key serves both the chart-deployed OpenSearch and a private-CA `search.existing`. When it is empty, no volume, mount or `caFile` line SHALL be rendered. Only `groundx` and `process` images that read `caFile` verify the server certificate; older images ignore the key.
-
-#### Scenario: CA is mounted and rendered (polarity: accept and enqueue)
-- **WHEN** the chart is rendered with `search.caSecretName: fixture-search-ca`
-- **THEN** the `groundx`, `process` and `queue` Deployments each carry a `search-ca` volume from that Secret (item `ca.crt`) and a read-only mount at `/var/run/groundx/search-ca`
-- **AND** `config.yaml` carries `caFile: /var/run/groundx/search-ca/ca.crt` under `ai.aws.search`
-
-#### Scenario: Private-CA existing OpenSearch uses the same key (polarity: accept and enqueue)
-- **WHEN** the chart is rendered with `search.existing.url` and `search.caSecretName` both set
-- **THEN** `caFile` is rendered and the CA is mounted
-
-#### Scenario: Unset CA renders no mount (polarity: skip unrelated repair path; backward compatibility during rollout)
-- **WHEN** the chart is rendered with `search.existing.url` set and no `search.caSecretName`
-- **THEN** no Deployment carries a `search-ca` volume or mount and `config.yaml` has no `caFile`
-
-### Requirement: Every render gate supplies a test-only search CA
-`tests/files/values.search-credentials.yaml` and every helm-unittest suite that sets `search.privilegedPassword` SHALL also set `search.caSecretName` to a test-only Secret name so existing renders pass the guard. Snapshots changed by the new volume, mount or `caFile` SHALL be hand-patched and verified without `-u`.
-
-#### Scenario: Existing suites still pass (polarity: accept and enqueue; must not block)
-- **WHEN** the helm-unittest suites run with the updated fixtures
-- **THEN** all pass without regenerating any snapshot
+#### Scenario: README routes OpenSearch trust to the bundle (polarity: accept and enqueue)
+- **WHEN** the README `### OpenSearch` section is read
+- **THEN** it names `fileAccess.caSecretName` as a complete bundle that includes the CA that signed `node.crt`
 
 ### Requirement: README documents operator-supplied OpenSearch certificates
-The README `### OpenSearch` section SHALL: describe the demo-TLS risk of earlier installs; list the operator inputs (CA, node cert with SAN `<serviceName>-cluster-master.<namespace>.svc.cluster.local` and subject `CN=opensearch-node`, admin cert with subject `CN=gx-opensearch-admin`, a bcrypt hash for the admin user) with no certificate, key or hash value; create the `opensearch-tls` and `opensearch-internal-users` Secrets before OpenSearch starts; state `search.caSecretName` and the image requirement; describe restart-based rotation (restart OpenSearch, then `groundx`, then `process`); and move "Upgrading an Existing Install" step 3 off `kirk.pem` to the operator admin certificate, set `search.caSecretName` and the OpenSearch credentials and remove the demo users before a final step that upgrades and restarts `groundx` and `process`.
+The README `### OpenSearch` section SHALL: describe the demo-TLS risk of earlier installs; list the operator inputs (CA, node cert with SAN `<serviceName>-cluster-master.<namespace>.svc.cluster.local` and subject `CN=opensearch-node`, admin cert with subject `CN=gx-opensearch-admin`, a bcrypt hash for the admin user) with no certificate, key or hash value; create the `opensearch-tls` and `opensearch-internal-users` Secrets before OpenSearch starts; state that GroundX trusts the CA through the `fileAccess.caSecretName` bundle; describe restart-based rotation (restart OpenSearch, then `groundx`, then `process`); and move "Upgrading an Existing Install" step 3 off `kirk.pem` to the operator admin certificate, add the CA to that bundle, set the OpenSearch credentials and remove the demo users before a final step that upgrades and restarts `groundx` and `process`.
 
 #### Scenario: README carries no demo material and no secrets (polarity: reject before state)
 - **WHEN** the README is read
 - **THEN** `kirk.pem` and `kirk-key.pem` appear nowhere, and no `-----BEGIN` marker or bcrypt hash literal appears
-- **AND** `search.caSecretName`, `opensearch-tls`, `opensearch-internal-users` and `CN=gx-opensearch-admin` are named
+- **AND** `fileAccess.caSecretName`, `opensearch-tls`, `opensearch-internal-users` and `CN=gx-opensearch-admin` are named
 

@@ -75,7 +75,6 @@
 {{- $captureDomains := get $integration "extractionCaptureDomains" | default list -}}
 {{- $_ := include "groundx.search.password" . -}}
 {{- $_ := include "groundx.search.privilegedPassword" . -}}
-{{- $searchCa := include "groundx.search.caSecretName" . | trim -}}
 {{- if gt (len $svcs) 0 }}
 apiVersion: v1
 kind: Secret
@@ -147,9 +146,6 @@ stringData:
       aws:
         search:
           baseURL: {{ include "groundx.search.baseUrl" . }}
-          {{- if ne $searchCa "" }}
-          caFile: /var/run/groundx/search-ca/ca.crt
-          {{- end }}
           index: {{ include "groundx.search.indexName" . }}
           languages:
           {{- range (include "groundx.languages" . | fromYamlArray) }}

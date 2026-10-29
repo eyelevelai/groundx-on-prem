@@ -7,7 +7,6 @@ set:
   search:
     password: fixture-app-credential
     privilegedPassword: fixture-admin-credential
-    caSecretName: fixture-search-ca
 
 tests:
   - it: "external DB: database migration"
@@ -300,7 +299,6 @@ tests:
     set:
       search.password: mypass
       search.privilegedPassword: admin
-      search.caSecretName: fixture-search-ca
     asserts:
       - matchSnapshot: {}
   - it: "metadata: golang"
@@ -536,7 +534,7 @@ tests:
     asserts:
       - lengthEqual:
           path: spec.template.spec.volumes
-          count: 2
+          count: 1
       - lengthEqual:
           path: spec.template.spec.containers[0].volumeMounts
-          count: 2
+          count: 1

@@ -7,7 +7,6 @@ set:
   search:
     password: fixture-app-credential
     privilegedPassword: fixture-admin-credential
-    caSecretName: fixture-search-ca
 
 tests:
   - it: "database migration uses target database config in a separate hook Secret"
@@ -18,7 +17,6 @@ tests:
     set:
       search.password: mypass
       search.privilegedPassword: admin
-      search.caSecretName: fixture-search-ca
     release:
       name: migration-config
       upgrade: true
@@ -377,7 +375,6 @@ tests:
     set:
       search.password: mypass
       search.privilegedPassword: admin
-      search.caSecretName: fixture-search-ca
     asserts:
       - matchSnapshot: {}
   - it: "metadata: resources"
