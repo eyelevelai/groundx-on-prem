@@ -677,7 +677,13 @@ kubectl create secret generic opensearch-internal-users -n eyelevel --from-file=
 rm internal_users.yml
 ```
 
-GroundX trusts this OpenSearch through `fileAccess.caSecretName`: a Secret in the GroundX namespace whose `ca.crt` is a complete bundle, the public root CAs plus the CA that signed `node.crt` (see [the file-access operator contract](docs/agents/private-file-access.md)). If `fileAccess.caSecretName` is already set, add this CA to that bundle. Without it, `groundx` and `process` reject the OpenSearch certificate with an `x509` error.
+GroundX trusts this OpenSearch through `fileAccess.caSecretName`: a Secret in the GroundX namespace whose `ca.crt` is a complete bundle, the public root CAs plus the CA that signed `node.crt` (see [the file-access operator contract](docs/agents/private-file-access.md)). If `fileAccess.caSecretName` is already set, add this CA to that bundle. Otherwise start from a public root bundle, such as `/etc/ssl/certs/ca-certificates.crt` from your OS's Mozilla-derived bundle, append `ca.crt` to a copy of it named `ca-bundle.pem`, then create the Secret and set `fileAccess.caSecretName: groundx-ca-bundle` in your `values.yaml`:
+
+```bash
+kubectl create secret generic groundx-ca-bundle -n eyelevel --from-file=ca.crt=ca-bundle.pem
+```
+
+Without it, `groundx` and `process` reject the OpenSearch certificate with an `x509` error.
 
 Then install OpenSearch:
 
@@ -692,7 +698,7 @@ The seed values file disables the image's demo installer (`DISABLE_INSTALL_DEMO_
 
 `groundx` and `process` images with certificate verification (cashbot-go #1865) check the OpenSearch certificate against this bundle; older images skip the check.
 
-To renew the node certificate from the same CA, update `opensearch-tls` and restart `opensearch-cluster-master`. To move to a new CA, add the new CA to the `fileAccess.caSecretName` bundle and keep the old one, restart `groundx` and then `process`, then update `opensearch-tls` and restart `opensearch-cluster-master`, then remove the old CA from the bundle and restart `groundx` and then `process`. A running pod rereads the files only on restart, so trust in the new CA must reach `groundx` and `process` before OpenSearch serves a certificate from it.
+To renew the node certificate from the same CA, update `opensearch-tls` and restart `opensearch-cluster-master`. To move to a new CA, add the new CA to the `fileAccess.caSecretName` bundle and keep the old one, restart `groundx` and then `process`, then update `opensearch-tls` with the new CA and a node certificate it signed and restart `opensearch-cluster-master`. Issue a new operator admin certificate with the same subject (`CN=gx-opensearch-admin`) from the new CA, because OpenSearch checks the admin certificate against that CA and the old one stops working for `securityadmin.sh`. Remove the old CA from the bundle, then restart `groundx` and then `process`, only once nothing else trusted through the bundle, such as Redis or object storage, still uses it. A running pod rereads the files only on restart, so trust in the new CA must reach `groundx` and `process` before OpenSearch serves a certificate from it.
 
 The GroundX application user still has broad privileges, so also restrict network access to OpenSearch.
 
