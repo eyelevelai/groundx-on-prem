@@ -79,7 +79,9 @@ No live deployment or vendor certification was performed.
 
 SDK 4.1.6 is released. Cashbot PRs #1886, #1889 and #1890, ai-server #86, extraction #215 and Harness #293 are merged with passing checks. Dev public/protected PDF, PNG and JPG extraction and file-link acceptance passed; registered ADP scored 99/102 public and 101/102 protected against the existing 95% threshold. AI-server changes are tests and guidance only.
 
-The tracking-query hotfix is verified in production. Deployment of the remaining merged Go and extraction builds requires its reviewed production rollout. Chart 0.2.9 publication and live on-prem qualification remain deferred. The cross-repository storage-alias plan stays open for that remaining work.
+The merged Go and extraction builds are deployed and verified in cloud production. Public/protected PDF, PNG and JPG extraction, document/search links, sharing-link expiry and policy precedence passed. The legacy X-Ray and all 84 embedded assets passed clean/tracked reads. Synthetic resources and temporary artifacts were removed. No SQL or infrastructure changes were needed.
+
+Chart 0.2.9 image builds, publication and live on-prem qualification remain deferred. The cross-repository storage-alias plan stays open for that release handoff. Cloud verification does not certify an on-prem installation.
 
 ## Hosted download local artifact closeout
 
