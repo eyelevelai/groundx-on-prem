@@ -157,9 +157,10 @@ require compatible Go/layout images and an extraction image built with SDK
 `ContainerUploadSettings.url_aliases` support. Generated extraction configuration
 checks the SDK field before constructing settings and refuses older SDKs that
 would silently ignore it. Release that SDK and rebuild compatible images before
-applying alias-bearing configuration; this field has not yet been published.
-Runtime rollout and live on-prem certification remain deferred. No image version
-is implied by chart rendering.
+applying alias-bearing configuration. SDK 4.1.6 includes this field. Chart 0.2.9
+uses 0.2.9 application images by default; build compatible images before release.
+Runtime rollout and live on-prem certification remain deferred. Rendering does
+not verify image availability or storage compatibility.
 
 ## Upgrade existing files before activation
 

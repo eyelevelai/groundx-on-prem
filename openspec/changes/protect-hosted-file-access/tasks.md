@@ -68,3 +68,9 @@ No live deployment or vendor certification was performed.
   backend-specific owner/denial verification before activation. Backend PR #1866
   owns implementation and local evidence; this documentation does not certify a
   deployed store or authorize an upgrade.
+
+## Storage alias release 0.2.9
+
+- [x] Set source and mirrored chart `version` and `appVersion` to 0.2.9, preserving the published 0.2.8 release.
+- [x] Run the existing full Helm gate and verify rendered default image tags are 0.2.9 in both chart trees. All 545 tests and 850 unchanged snapshots pass with the CI toolchain; dependency image versions are unchanged.
+- [ ] Build compatible 0.2.9 application images and complete deferred on-prem qualification before publishing the new release. This PR does not publish charts, retag images or upgrade installations.
