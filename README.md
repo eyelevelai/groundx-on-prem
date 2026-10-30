@@ -971,8 +971,8 @@ Override one pod by setting `extract.api.terminalAgentTraceEnabled`,
 `extract.save.terminalAgentTraceEnabled`. An explicit pod value wins over the
 shared value, including `false`.
 
-Use this only with an Internal Arcadia image that implements the
-[AGE-272 terminal diagnostics contract](https://github.com/eyelevelai/internal-arcadia-agents/pull/101).
+Use this only with an Extraction Agents image that implements the
+[AGE-272 terminal diagnostics contract](https://github.com/eyelevelai/extraction-agents/pull/101).
 The runtime keeps successful work unchanged, publishes Celery failure callbacks
 before terminal persistence, and applies the rollout's storage, access,
 lifecycle, and failure-budget gates.
