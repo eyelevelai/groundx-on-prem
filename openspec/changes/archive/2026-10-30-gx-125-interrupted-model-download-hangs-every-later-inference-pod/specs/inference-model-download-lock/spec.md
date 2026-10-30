@@ -113,7 +113,7 @@ The script SHALL lock with `exec 9>>"$lock"` followed by `flock -n 9` and SHALL 
 - **THEN** the stale-lock case times out, the failed-download cases report a zero exit with a written marker, and the guard exits non-zero
 
 ### Requirement: The README documents the upgrade, rollback and failure behaviour
-The root `README.md` SHALL carry a `#### Upgrading Inference Services and the Model Download Lock` subsection before `### Persistent Storage` covering: scale the service to 0 before upgrading while a first download is in progress, and likewise before rolling back to an older chart while a new-chart pod is mid first download; a failed download or a waiter beyond 60 minutes ends in `Init:Error` / `CrashLoopBackOff`, so air-gapped installs seed the model volume before scaling up; a missing or rejected `flock` fails the init container at once and is fixed with a busybox image that provides flock or storage that supports file locks, with no value to bypass the lock; and cross-node locking is verified on EFS only. It SHALL NOT name a chart version. Polarity: `accept and enqueue`.
+The root `README.md` SHALL carry a `#### Upgrading Inference Services and the Model Download Lock` subsection before `### Persistent Storage` covering: scale the service to 0 and wait until no inference pod remains (Terminating pods included) before upgrading while a first download is in progress, and likewise before rolling back to an older chart while a new-chart pod is mid first download; a failed download or a waiter beyond 60 minutes ends in `Init:Error` / `CrashLoopBackOff`, so air-gapped installs seed the model volume before scaling up; a missing or rejected `flock` fails the init container at once and is fixed with a busybox image that provides flock or storage that supports file locks, with no value to bypass the lock; and cross-node locking is verified on EFS only. It SHALL NOT name a chart version. Polarity: `accept and enqueue`.
 
 #### Scenario: Note present and complete
 - **GIVEN** the README after the change
@@ -123,4 +123,4 @@ The root `README.md` SHALL carry a `#### Upgrading Inference Services and the Mo
 #### Scenario: Backward compatibility during rollout
 - **GIVEN** an old-chart pod and a new-chart pod running against the same volume during a first download
 - **WHEN** an operator follows the README note
-- **THEN** the service is scaled to 0 first so the two lock mechanisms never overlap, and a volume already holding `complete.<model>` is skipped by both versions
+- **THEN** the service is scaled to 0 and every inference pod, Terminating ones included, is gone first so the two lock mechanisms never overlap, and a volume already holding `complete.<model>` is skipped by both versions

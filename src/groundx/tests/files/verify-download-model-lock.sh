@@ -123,6 +123,19 @@ fi
 case "${STUB_WGET_MODE:-ok}" in
   fail) exit 1 ;;
   garbage) echo "not a tarball" > "${out}"; exit 0 ;;
+  shared)
+    part="$(basename "${out}")"
+    case "${part##*.}" in
+      00) sleep 4 ;;
+      01) sleep 3 ;;
+      02) sleep 2 ;;
+      03) sleep 1 ;;
+    esac
+    d="$(mktemp -d)"
+    echo "${part}" > "${d}/shared.bin"
+    tar -czf "${out}" -C "${d}" shared.bin
+    rm -rf "${d}"
+    ;;
   *)
     part="$(basename "${out}")"
     d="$(mktemp -d)"
@@ -263,6 +276,19 @@ if [ "${rc}" = "0" ] && vol_has "${marker_name}" && [ "$(wget_calls)" = "${part_
   report "case 3: no lock and no marker starts the download" pass
 else
   report "case 3: no lock and no marker starts the download" fail "exit=${rc} wget_calls=$(wget_calls) expected=${part_count}"
+fi
+
+new_case_dirs
+start_container gx125-shared "${base_path}" -e STUB_WGET_MODE=shared
+rc="$(wait_exit gx125-shared 40)"
+shared_content="$(vsh "${vol}" 'cat $(find /m -name shared.bin | head -1)' 2>/dev/null | tr -d ' \r\n' || true)"
+last_part="${parts##* }"
+if [ "${rc}" = "0" ] && vol_has "${marker_name}" && [ "$(wget_calls)" = "${part_count}" ] \
+  && [ "${shared_content##*.}" = "${last_part}" ]; then
+  report "case 3b: parts whose archives share a file name extract in part order and write the marker" pass
+else
+  report "case 3b: parts whose archives share a file name extract in part order and write the marker" fail \
+    "exit=${rc} marker=$(vol_has "${marker_name}" && echo yes || echo no) wget_calls=$(wget_calls) expected=${part_count} shared_file=${shared_content}"
 fi
 
 new_case_dirs
