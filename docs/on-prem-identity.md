@@ -52,6 +52,9 @@ cognito:
 
 ## Optional: `local`
 
+`local` mode lets customers sign in to GroundX and the MCP authorize page with an email and
+password stored in your own database, with no external identity provider.
+
 Set `cognito.mode: local`:
 
 ```yaml
@@ -63,7 +66,8 @@ cognito:
   the render is the same single-key `cognito.mode` pass-through the `apiKeyOnly` default uses.
 - `local` requires a cashbot-go image that supports it; the chart itself does not validate the
   image version and does not implement the local password-login behavior — that is entirely
-  cashbot-go's runtime concern.
+  cashbot-go's runtime concern. The lock and MCP behavior below need a cashbot-go image that
+  includes GX-83; an older image does not have it.
 
 Operating an install in `local` mode:
 
@@ -74,13 +78,61 @@ Operating an install in `local` mode:
 - **Login and register need a partner or admin key.** `customer/login` and `customer/register`
   are called with a partner or admin API key plus the customer's email and password; they are not
   open to anonymous callers.
-- **MCP sign-in asks for email and password.** Under `local`, the MCP authorize page shows email
-  and password fields instead of an API-key field, so a user without a password cannot authorize an
-  MCP client from it until one is set.
-- **Nothing throttles password attempts.** Neither cashbot-go nor this chart limits failed logins.
-  If the API is reachable by untrusted clients, add rate limits at your ingress; the Ingress
-  template passes `annotations` through, for example
-  `nginx.ingress.kubernetes.io/limit-rps` on ingress-nginx.
+
+### Login lockout
+
+- Three failed password attempts within 15 minutes lock that account for 15 minutes, counted from
+  the third failure. Every spelling of the account's email that the database treats as equal, and
+  the account's username, share one count.
+- A locked account and a wrong password get the same generic error. The response does not reveal
+  whether an email exists.
+- A successful login or an admin password reset clears the failure count.
+- A Redis restart or failover can reset the failure count. This only gives an attacker a fresh set
+  of attempts and is not a security boundary change.
+- If Redis returns an error while counting, the attempt is not counted and the login goes ahead.
+  When Redis is down entirely the API itself is unavailable, so no login succeeds.
+
+### Sustained lockout
+
+Anyone who knows a customer's email can keep that account locked by repeatedly failing logins.
+A per-source-IP rate limit at the ingress slows brute-force guessing and bcrypt load. Set the
+limit annotations for your ingress controller under `groundx.ingress.annotations` (for example
+`nginx.ingress.kubernetes.io/limit-rps` on ingress-nginx), which apply to every route of the API
+Ingress. The chart has no defence against a targeted lockout of a
+known email; this is an accepted residual. Recovery for a locked customer is an admin password
+reset, which clears the lock.
+
+### MCP sign-in
+
+- The MCP authorize page has an `Or use a GroundX API key` field below the email and password
+  fields, for customers who have no password.
+- MCP sign-in on chart installs needs GX-112. Until that lands, the sign-up link is hidden on
+  chart installs. This chart does not yet expose the values it needs.
+
+### Password reset and MCP sessions
+
+An admin password reset ends that customer's MCP sessions only. Their API keys and app sessions
+are not touched. After a suspected compromise, disable the account and reset its password; the
+reset ends its MCP sessions at once. Disabling can take up to an hour to reach cached credentials,
+because cashbot-go caches API-key lookups for up to 60 minutes. Deleting API keys alone does not
+help, because the username itself still works as a credential (GX-113).
+
+### Redis
+
+MCP session revocation relies on Redis.
+
+- Accepted edge case: a Redis failover right after a password reset can revive the MCP sessions
+  that reset ended.
+- Set the Redis `maxmemory-policy` to `noeviction` or a `volatile-*` policy. Under an `allkeys-*`
+  policy the reset marker can be evicted, which revives MCP sessions that an earlier reset ended.
+  Future resets still work.
+- The chart has no setting for the eviction policy. Check it on the running Redis with
+  `redis-cli CONFIG GET maxmemory-policy`; this also applies to customer-managed Redis.
+
+### Upgrading
+
+After upgrading to a GX-83 image, existing local-mode MCP sessions must re-authorize once.
+Sessions issued before GX-83 have no owning customer and are rejected.
 
 ## Rollback
 
