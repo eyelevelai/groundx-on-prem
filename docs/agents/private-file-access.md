@@ -275,3 +275,22 @@ fall back to the hosted FileUpload service. Existing anonymous `/upload/{type}`
 request and response formats remain compatibility adapters to the same signing
 implementation. Hosted routing and retirement of the standalone Lambda require a
 separate deployment after all legacy routes are verified.
+
+## Temporary file links
+
+To enable temporary links with an explicit authentication choice, set
+`fileAccess.linkSigningKeySecretName` to an existing Kubernetes Secret. It must
+contain `GROUNDX_FILE_LINK_SIGNING_KEY`: at least 32 random bytes, base64-encoded.
+The chart gives this key only to the API and FileAccess pods. Use the same key on
+all replicas. Do not put its value in Helm values, browser code or storage settings.
+
+On `file-link`, `requireAuthentication: true` requires current owner credentials;
+false allows anyone with the link to read it. Both expire. Leaving out the field
+keeps existing storage-signed sharing. Saved file URLs and policies do not change.
+Without the Secret, older links work and the new option returns 404.
+
+Deploy compatible file-service and API images before issuing new links. The key
+is read at startup: restart both after changing the Secret and verify they use the
+same value. Rotation cancels links signed with the old key. During rollback, keep
+the verifier and key until those links expire. These settings do not establish
+MinIO, AIStor or S4 certification; test each actual deployment separately.

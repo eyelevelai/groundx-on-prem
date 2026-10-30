@@ -1456,3 +1456,55 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "fileAccess.trustedOrigins entries must be HTTPS origins without credentials, query, fragment or nonroot path"
+  - it: shares a file-link signing secret with the API
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.linkSigningKeySecretName: file-link-signing
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: groundx
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].envFrom
+          value:
+            - secretRef:
+                name: file-link-signing
+            - secretRef:
+                name: file-store-credentials
+  - it: shares the same signing secret with the gateway
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.linkSigningKeySecretName: file-link-signing
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: file-access
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].envFrom
+          value:
+            - secretRef:
+                name: file-link-signing
+            - secretRef:
+                name: file-store-credentials
+  - it: does not expose the signing secret to Python workers
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.linkSigningKeySecretName: file-link-signing
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: layout-api
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].envFrom
+          value:
+            - secretRef:
+                name: file-store-credentials
