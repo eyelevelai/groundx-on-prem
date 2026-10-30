@@ -281,8 +281,9 @@ separate deployment after all legacy routes are verified.
 To enable temporary links with an explicit authentication choice, set
 `fileAccess.linkSigningKeySecretName` to an existing Kubernetes Secret. It must
 contain `GROUNDX_FILE_LINK_SIGNING_KEY`: at least 32 random bytes, base64-encoded.
-The chart gives this key only to the API and FileAccess pods. Use the same key on
-all replicas. Do not put its value in Helm values, browser code or storage settings.
+The chart gives this key to the API and FileAccess pods and the existing API
+schema-migration Job. Other workers do not receive it. Use the same key on all
+replicas. Do not put its value in Helm values, browser code or storage settings.
 
 On `file-link`, `requireAuthentication: true` requires current owner credentials;
 false allows anyone with the link to read it. Both expire. Leaving out the field
