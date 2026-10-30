@@ -52,7 +52,20 @@ stringData:
         uploadBaseURL={{ get $fs "bucketDomain" | quote }},
         uploadBucket={{ get $fs "bucketName" | quote }},
         uploadRegion={{ get $fs "region" | quote }},
-        uploadReplaceURL={{ printf "%s://%s/%s" (get $fs "bucketScheme") (get $fs "bucketDomain") $bucketSuffix | quote }},
+        {{- $replaceURL := printf "%s://%s/%s" (get $fs "bucketScheme") (get $fs "bucketDomain") $bucketSuffix }}
+        {{- if or .Values.file.publicUrl .Values.file.groundxPublicUrl }}
+        uploadReplaceURL=[
+          {{ $replaceURL | quote }},
+          {{- with .Values.file.publicUrl }}
+          {{ printf "%s/%s" . $bucketSuffix | quote }},
+          {{- end }}
+          {{- with .Values.file.groundxPublicUrl }}
+          {{ printf "%s/%s" . $bucketSuffix | quote }},
+          {{- end }}
+        ],
+        {{- else }}
+        uploadReplaceURL={{ $replaceURL | quote }},
+        {{- end }}
         uploadSSL={{ if eq (printf "%v" (get $fs "bucketSSL")) "true" }}True{{ else }}False{{ end }},
         uploadType={{ $st | quote }},
         uploadURL={{ include "groundx.file.presentationUrl" (dict "root" . "settings" $fs) | quote }},

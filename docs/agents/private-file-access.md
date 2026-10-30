@@ -39,6 +39,8 @@ service credentials and existing document authorization regardless of customer p
   its DNS and ingress to reach the gateway. Existing stored artifact URLs retain
   their paths; the ingress forwards paths, query strings (including `view=links`)
   and GroundX authentication headers without rewriting them.
+- Rendering rejects `file.publicUrl` and `file.groundxPublicUrl` when `fileAccess.enabled`
+  is true; set the file link host with `publicUrl` and remove the second link host.
 - `trustedOrigins` optionally declares HTTPS origins for saved references from
   older file aliases (at most 32 origins, 2048 characters each). Entries have no credentials, query, fragment or nonroot
   path and must refer to the same configured storage namespace. The gateway

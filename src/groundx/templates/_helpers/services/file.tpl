@@ -214,6 +214,26 @@ false
 {{- printf "%s://%s/%s" $scheme $domain $suffix -}}
 {{- end }}
 
+{{- define "groundx.file.uploadStorage" -}}
+{{- $fs := include "groundx.file.settings" . | fromYaml -}}
+bucket: {{ get $fs "bucketName" }}
+bucketUrl: {{ printf "%s://%s" (get $fs "bucketScheme") (get $fs "bucketDomain") }}
+{{- if and (eq (include "groundx.fileAccess.create" .) "false") (hasKey $fs "username") (ne (get $fs "username") "") }}
+id: {{ get $fs "username" | quote }}
+{{- end }}
+{{- if and (hasKey $fs "region") (ne (get $fs "region") "") }}
+region: {{ get $fs "region" }}
+{{- end }}
+{{- if and (eq (include "groundx.fileAccess.create" .) "false") (hasKey $fs "password") (ne (get $fs "password") "") }}
+secret: {{ get $fs "password" | quote }}
+{{- end }}
+service: {{ get $fs "storageType" }}
+ssl: {{ get $fs "ssl" }}
+{{- if and (eq (include "groundx.fileAccess.create" .) "false") (hasKey $fs "token") (ne (get $fs "token") "") }}
+token: {{ get $fs "token" }}
+{{- end }}
+{{- end }}
+
 {{- define "groundx.file.settings" -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- $svc := include "groundx.file.serviceName" . -}}
