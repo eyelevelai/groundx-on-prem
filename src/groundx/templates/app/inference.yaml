@@ -205,15 +205,18 @@ spec:
                   wget -q -O {{ $wd }}/hf_models_cache/{{ $bn }}.tar.gz.part.$PART $URL && { echo "Downloaded {{ $bn }}.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
                   echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
                 done; \
-                [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; exit 1; }; \
-                echo "Unzipping {{ $bn }}.tar.gz.part.$PART..."; \
-                tar -xzf {{ $wd }}/hf_models_cache/{{ $bn }}.tar.gz.part.$PART -C {{ $wd }}/hf_models_cache/ || { echo "Failed to unzip {{ $bn }}.tar.gz.part.$PART. Exiting."; exit 1; }; \
-                echo "Unzipping {{ $bn }}.tar.gz.part.$PART complete...";'
+                [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; exit 1; }; exit 0;'
               xrc=$?
               if [ "$xrc" -ne 0 ]; then
                 echo "Model download failed (xargs exit $xrc). No completion marker written." >&2
                 exit 1
               fi
+
+              for part in {{ $mpr }}; do
+                echo "Unzipping {{ $bn }}.tar.gz.part.$part..."
+                tar -xzf {{ $wd }}/hf_models_cache/{{ $bn }}.tar.gz.part.$part -C {{ $wd }}/hf_models_cache/ || { echo "Failed to unzip {{ $bn }}.tar.gz.part.$part. No completion marker written." >&2; exit 1; }
+                echo "Unzipping {{ $bn }}.tar.gz.part.$part complete..."
+              done
 
               rm -f "$dir"/{{ $bn }}.tar.* || { echo "Failed to remove downloaded archives." >&2; exit 1; }
               touch "$marker" || { echo "Failed to write $marker." >&2; exit 1; }

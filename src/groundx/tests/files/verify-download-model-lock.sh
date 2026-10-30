@@ -187,7 +187,7 @@ start_container() {
   shift 2
   docker run -d --label "${label}" --name "${name}" --network none --user "${uid_gid}" \
     -v "${vol}:${mount_path}" -v "${state}:/state" -v "${stubs}:/stubs:ro" \
-    -v "${script}:/s.sh:ro" \
+    -v "${run_script:-${script}}:/s.sh:ro" \
     -v "${noflock}:/nolock:ro" -v "${flock_bad}:/flockbad:ro" -v "${flock_silent}:/flocksilent:ro" \
     -e "PATH=${path}" "$@" "${image}" /bin/sh /s.sh >/dev/null
 }
@@ -294,6 +294,92 @@ else
 fi
 
 new_case_dirs
+start_container gx125-killed-holder "${base_path}" -e STUB_WGET_SLEEP_UNTIL=/state/release
+killed_up=0
+for _ in $(seq 1 40); do
+  if [ "$(wget_calls)" -gt 0 ]; then killed_up=1; break; fi
+  sleep 0.5
+done
+if [ "${killed_up}" -eq 1 ]; then
+  start_container gx125-killed-waiter "${base_path}"
+  killed_waiting=0
+  for _ in $(seq 1 40); do
+    if docker logs gx125-killed-waiter 2>&1 | grep -q "Waiting"; then killed_waiting=1; break; fi
+    sleep 0.5
+  done
+  calls_before_kill="$(wget_calls)"
+  docker kill gx125-killed-holder >/dev/null
+  rc="$(wait_exit gx125-killed-waiter 60)"
+  calls_after_kill=$(( $(wget_calls) - calls_before_kill ))
+  if [ "${killed_waiting}" -eq 1 ] && [ "${rc}" = "0" ] && vol_has "${marker_name}" && [ "${calls_after_kill}" = "${part_count}" ]; then
+    report "case 8a: killing the holder lets a waiter take the lock, download a full set of parts and write the marker" pass
+  else
+    report "case 8a: killing the holder lets a waiter take the lock, download a full set of parts and write the marker" fail \
+      "waiting=${killed_waiting} exit=${rc} marker=$(vol_has "${marker_name}" && echo yes || echo no) calls_after_kill=${calls_after_kill} expected=${part_count}"
+  fi
+else
+  report "case 8a: killing the holder lets a waiter take the lock, download a full set of parts and write the marker" fail "holder never started downloading"
+fi
+
+new_case_dirs
+start_container gx125-failing-holder "${base_path}" -e STUB_WGET_SLEEP_UNTIL=/state/release -e STUB_WGET_MODE=fail
+failing_up=0
+for _ in $(seq 1 40); do
+  if [ "$(wget_calls)" -gt 0 ]; then failing_up=1; break; fi
+  sleep 0.5
+done
+if [ "${failing_up}" -eq 1 ]; then
+  start_container gx125-failing-waiter "${base_path}"
+  failing_waiting=0
+  for _ in $(seq 1 40); do
+    if docker logs gx125-failing-waiter 2>&1 | grep -q "Waiting"; then failing_waiting=1; break; fi
+    sleep 0.5
+  done
+  vsh "${state}" "touch /m/release"
+  holder_rc="$(wait_exit gx125-failing-holder 90)"
+  waiter_rc="$(wait_exit gx125-failing-waiter 60)"
+  expected_calls=$(( part_count * 4 ))
+  if [ "${failing_waiting}" -eq 1 ] && [ "${holder_rc}" != "TIMEOUT" ] && [ "${holder_rc}" != "0" ] \
+    && [ "${waiter_rc}" = "0" ] && vol_has "${marker_name}" && [ "$(wget_calls)" = "${expected_calls}" ]; then
+    report "case 8b: a holder whose download fails leaves no marker and the waiter downloads the full set itself" pass
+  else
+    report "case 8b: a holder whose download fails leaves no marker and the waiter downloads the full set itself" fail \
+      "waiting=${failing_waiting} holder_exit=${holder_rc} waiter_exit=${waiter_rc} marker=$(vol_has "${marker_name}" && echo yes || echo no) wget_calls=$(wget_calls) expected=${expected_calls}"
+  fi
+else
+  report "case 8b: a holder whose download fails leaves no marker and the waiter downloads the full set itself" fail "holder never started downloading"
+fi
+
+new_case_dirs
+start_container gx125-deadline-holder "${base_path}" -e STUB_WGET_SLEEP_UNTIL=/state/release
+deadline_up=0
+for _ in $(seq 1 40); do
+  if [ "$(wget_calls)" -gt 0 ]; then deadline_up=1; break; fi
+  sleep 0.5
+done
+if [ "${deadline_up}" -eq 1 ]; then
+  short_script="${work}/short-deadline.sh"
+  sed 's/^\( *\)wait_limit=3600$/\1wait_limit=4/' "${script}" > "${short_script}"
+  if grep -qE '^ *wait_limit=4$' "${short_script}"; then
+    run_script="${short_script}" start_container gx125-deadline-waiter "${base_path}"
+    rc="$(wait_exit gx125-deadline-waiter 40)"
+    waiter_logs="$(docker logs gx125-deadline-waiter 2>&1)"
+    if [ "${rc}" != "TIMEOUT" ] && [ "${rc}" != "0" ] && grep -q "Timed out after 4s" <<< "${waiter_logs}" \
+      && ! vol_has "${marker_name}" && [ "$(wget_calls)" = "${part_count}" ]; then
+      report "case 9: a waiter behind a held lock fails at the deadline with the timeout message and no marker" pass
+    else
+      report "case 9: a waiter behind a held lock fails at the deadline with the timeout message and no marker" fail \
+        "exit=${rc} marker=$(vol_has "${marker_name}" && echo yes || echo no) wget_calls=$(wget_calls)"
+    fi
+  else
+    report "case 9: a waiter behind a held lock fails at the deadline with the timeout message and no marker" fail "could not shorten wait_limit in the rendered script"
+  fi
+  vsh "${state}" "touch /m/release"
+else
+  report "case 9: a waiter behind a held lock fails at the deadline with the timeout message and no marker" fail "holder never started downloading"
+fi
+
+new_case_dirs
 start_container gx125-race-a "${base_path}" -e STUB_WGET_SLEEP=2
 start_container gx125-race-b "${base_path}" -e STUB_WGET_SLEEP=2
 rc_a="$(wait_exit gx125-race-a 60)"
@@ -307,6 +393,13 @@ else
     "exit_a=${rc_a} exit_b=${rc_b} wget_calls=$(wget_calls) unique=${unique_calls} expected=${part_count}"
 fi
 
+path_form_flock_lines() {
+  grep -E '(^|[^[:alnum:]_.-])flock([[:space:]]|$)' "$1" \
+    | grep -vE '^[[:space:]]*echo ' \
+    | grep -v 'command -v flock' \
+    | grep -vE 'flock -n 9([[:space:]]|$)' || true
+}
+
 static_ok=1
 static_detail=""
 if ! grep -qE '^[[:space:]]*exec 9>>"\$lock"' "${script}"; then
@@ -317,13 +410,25 @@ if ! grep -qE 'flock -n 9( |$)' "${script}"; then
   static_ok=0
   static_detail="${static_detail:+${static_detail}; }no fd-based flock -n 9"
 fi
-if grep -E '^[^#"]*[[:space:]]flock[[:space:]]+(-[A-Za-z]+[[:space:]]+)*("?\$|/)' "${script}" | grep -vq 'flock -n 9'; then
+if [ -n "$(path_form_flock_lines "${script}")" ]; then
   static_ok=0
   static_detail="${static_detail:+${static_detail}; }path-form flock found"
 fi
 if ! grep -qE 'wait_limit=3600' "${script}"; then
   static_ok=0
   static_detail="${static_detail:+${static_detail}; }no 60-minute wait limit (wait_limit=3600)"
+fi
+bad_fixture="${script_dir}/download-model-path-form-flock.bad.sh"
+if [ ! -s "${bad_fixture}" ]; then
+  static_ok=0
+  static_detail="${static_detail:+${static_detail}; }missing known-bad fixture ${bad_fixture}"
+else
+  bad_total="$(wc -l < "${bad_fixture}" | tr -d ' ')"
+  bad_caught="$(path_form_flock_lines "${bad_fixture}" | wc -l | tr -d ' ')"
+  if [ "${bad_caught}" != "${bad_total}" ]; then
+    static_ok=0
+    static_detail="${static_detail:+${static_detail}; }path-form check caught ${bad_caught} of ${bad_total} known-bad lines"
+  fi
 fi
 if [ "${static_ok}" -eq 1 ]; then
   report "case 6: locks a write-opened fd and never uses the flock <path> <cmd> form" pass
