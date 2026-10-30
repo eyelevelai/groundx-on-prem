@@ -148,6 +148,17 @@ stream:
   # bundled (Mode-2) Kafka: prereqs/kafka-cluster/README.md namespace-pairing constraint:
   # that subchart's -n <ns> must equal this chart's .Values.namespace
 
+# Summary engines. Setting `engines` replaces the implicit default engine, so
+# engines.default.engineId is required.
+# The chart sets inlineImages: true on the in-cluster engine when file storage is s3,
+# and false turns it off. true on a remote engine sends this install's page-image bytes
+# to that engine's baseUrl. The key acts only with a summary-client image that reads it.
+#
+# engines:
+#   default:
+#     engineId: local-model
+#     inlineImages: false
+
 summary:
   api:
     enabled: true

@@ -202,6 +202,13 @@ stringData:
         {{- if hasKey $e "baseUrl" }}
         baseURL: {{ get $e "baseUrl" }}
         {{- end }}
+        {{- $inlineImages := and (eq (include "groundx.engine.create" (dict "root" $ "engine" $e)) "true") (eq (get $fs "storageType") "s3") }}
+        {{- if and (hasKey $e "inlineImages") (kindIs "bool" (get $e "inlineImages")) }}
+        {{- $inlineImages = get $e "inlineImages" }}
+        {{- end }}
+        {{- if $inlineImages }}
+        inlineImages: true
+        {{- end }}
         {{- if and (hasKey $e "maxImages") (ne (get $e "maxImages") nil) }}
         maxImages: {{ get $e "maxImages" }}
         {{- end }}
