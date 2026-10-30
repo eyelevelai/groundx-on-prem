@@ -16,7 +16,7 @@
 
 ## Branch continuity
 
-- [ ] Keep planning and implementation on the existing plan/protect-hosted-file-access working branch and the same draft PR in this repository. Append code/tests to that PR after design review; mark it ready after implementation and required gates, without a separate planning merge.
+The original gateway plan and implementation are merged. Remaining chart release work is consolidated on `fix/storage-url-aliases`, PR [#162](https://github.com/eyelevelai/groundx-on-prem/pull/162), for release 0.2.9. The plan remains open for the release and acceptance gates below.
 
 ## 3. Ingress and credential admission
 
@@ -47,16 +47,16 @@
 - [x] Use one authenticated bucket upload operation for public and protected uploads; preserve explicit legacy compatibility.
 - [x] Update owning implementation and human/agent instructions without new CI scripts.
 - [x] Extend existing storage/render/widget tests for protection disabled, local/non-AWS storage and failure without hosted fallback.
-- [ ] Refresh generated mirrors and run existing validators; record deployment tests separately.
+- [x] Refresh generated chart mirrors and run the existing validators. Live deployment tests remain covered by the deferred acceptance gates below.
 
 The source and published chart render public signing independently of protection,
 preserve legacy inline credentials, and retain the protected signing endpoint's
 precedence. File settings and gateway tests are consolidated in the existing
 file_settings_test.yaml with every pre-existing test case unchanged. Both chart
 lints, exact public/protected configuration renders, mirror equality, strict
-OpenSpec and whitespace checks pass. Full validate-helm stops before tests because
-the installed helm-unittest is 1.0.3 and the repository requires verified 1.1.2.
-No live deployment or vendor certification was performed.
+OpenSpec and whitespace checks pass. The consolidated 0.2.9 chart passes the
+full Helm gate with the repository-verified 1.1.2 plugin, 551 tests and 850
+unchanged snapshots. No live deployment or vendor certification was performed.
 
 ## Historical originals (GX-88)
 
@@ -68,3 +68,60 @@ No live deployment or vendor certification was performed.
   backend-specific owner/denial verification before activation. Backend PR #1866
   owns implementation and local evidence; this documentation does not certify a
   deployed store or authorize an upgrade.
+
+## Storage alias release 0.2.9
+
+- [x] Set source and mirrored chart `version` and `appVersion` to 0.2.9, preserving the published 0.2.8 release.
+- [x] Run the existing full Helm gate and verify rendered default image tags are 0.2.9 in both chart trees. All 545 tests and 850 unchanged snapshots pass with the CI toolchain; dependency image versions are unchanged.
+- [ ] Build compatible 0.2.9 application images and complete deferred on-prem qualification before publishing the new release. This PR does not publish charts, retag images or upgrade installations.
+
+## 0.2.9 chart consolidation
+
+- [x] Merge current `origin/main` (`7661506037465431d9f2d2e94a88d6fa0eddf6df`) and temporary-link branch `feat/independent-file-links` (`95bf6e6db2fede4210ba9cac2ba9d038aaa69647`) into PR #162 without rewriting either history. Keep the single 0.2.9 source/mirror version and all existing file-settings/extraction tests.
+- [x] Include optional `fileAccess.linkSigningKeySecretName` in source and mirrored values/schema. Import its existing Secret into the API, FileAccess gateway and existing API schema-migration Job through the shared helper. Other workers receive no implicit signing Secret. Preserve the empty default and existing storage credential imports.
+- [x] Verify combined alias/signing configuration, 0.2.9 default application image tags, template and values/schema parity, source/mirror minikube renders and strict validation of this OpenSpec change.
+- [x] Run the full existing `.build/bin/validate-helm.sh` gate with isolated Helm 3.19.0, SHA-256-verified helm-unittest 1.1.2 and yq 4.53.2. All 551 tests, 23 suites and 850 unchanged snapshots pass across the four chart inputs; OCR, workspace, storage, full template mirrors, probe parity, upgrade-hook and whitespace checks pass.
+
+This consolidation changes chart packaging and its release record. It performs no
+image build, chart publication, database upgrade or deployment. The current
+reproduction remains covered by existing chart tests. Arcadia legacy, Arcadia v1,
+generic v1 and ADP v1 definitions, prompts, task chains, schema routing and answer
+keys are unchanged. Their live on-prem extraction and storage acceptance remains
+unverified under the deferred gates below.
+
+## Cloud implementation handoff
+
+SDK 4.1.6 is released. Cashbot PRs #1886, #1889 and #1890, ai-server #86, extraction #215 and Harness #293 are merged with passing checks. Dev public/protected PDF, PNG and JPG extraction and file-link acceptance passed; registered ADP scored 99/102 public and 101/102 protected against the existing 95% threshold. AI-server changes are tests and guidance only.
+
+The merged Go and extraction builds are deployed and verified in cloud production. Public/protected PDF, PNG and JPG extraction, document/search links, sharing-link expiry and policy precedence passed. The legacy X-Ray and all 84 embedded assets passed clean/tracked reads. Synthetic resources and temporary artifacts were removed. No SQL or infrastructure changes were needed.
+
+Chart 0.2.9 image builds, publication and live on-prem qualification remain deferred. The cross-repository storage-alias plan stays open for that release handoff. Cloud verification does not certify an on-prem installation.
+
+## Hosted download local artifact closeout
+
+- Owner: `cashbot-go`
+- Change: `verify-cloud-file-access`
+- Run: `hosted-download-query-20261029`
+- Closed: `2026-10-29T15:51:58.504406+00:00`
+- Cleanup state: complete
+- Removed files: 13
+- Removed symlinks: 0
+- Removed bytes: 69065962
+- Run root absent: true
+- External run roots: none
+- Summary SHA-256: `9c83c3ad6d34870b2a7952fdb6faa6479f598c416dad017aa78a81b3077323e5`
+
+
+## Deferred acceptance and remaining ownership
+
+Cloud file-access source, SDK 4.1.6 and the approved production runtime rollout are complete. The cloud closeout is recorded in Cashbot `openspec/changes/archive/2026-10-29-verify-cloud-file-access/storage-alias-production-rollout-20261029.md`. This plan owns the remaining work formerly listed across the SDK, layout, Harness, dashboard, middleware and infrastructure plans. Archived checklists are historical evidence, not additional deployment gates.
+
+- [ ] Build the 0.2.9 runtime images, verify their SDK/schema compatibility and publish the chart only after its release checks pass.
+- [ ] Qualify each advertised MinIO, AIStor and S4 version independently: public/protected uploads, credentialed processing, source/page/crop/X-Ray reads, ownership denial, sharing expiry, range/HEAD/conditional requests, TLS, encryption and measured load limits. AIStor still requires the operator's license. Cloud results do not establish vendor qualification.
+- [ ] Verify the released SDK, layout and Helm aliases together on the selected store, including gateway-disabled public uploads and all four maintained extraction fixture families. Preserve the existing prompts and answer keys.
+- [ ] Complete live installed-MCP/delegated-customer and browser/QC acceptance not already evidenced by the cloud execution record. Record named-customer acceptance separately; synthetic tests do not establish customer sign-off. These are unverified acceptance items, not missing cloud deployments.
+- [ ] If Terraform ownership of the already-running hosted delivery resources is later adopted, first reconcile current state owners and obtain the exact zero-change import proposal. Historical ECS/server and 1 GiB dev proposals are superseded by the deployed streaming Lambda and 100 MB limit. No import, apply, extra gateway or production change is authorized by this handoff.
+
+Historical instructions to stop older writers are superseded by the current shared migration runbook. This handoff authorizes no service pause or production mutation.
+
+The completed cloud work and deferred vendor work must not be conflated. Keep this plan open until the release and acceptance items above have evidence or an explicitly accepted successor.

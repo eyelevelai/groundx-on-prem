@@ -3,6 +3,16 @@
 {{- end }}
 
 {{- define "groundx.fileAccess.validate" -}}
+{{- $in := .Values.fileAccess | default dict -}}
+{{- range $alias := dig "trustedOrigins" list $in -}}
+  {{- if contains "@" $alias -}}
+    {{- fail "fileAccess.trustedOrigins must not contain credentials" -}}
+  {{- end -}}
+  {{- $url := urlParse $alias -}}
+  {{- if or (ne $url.scheme "https") (empty $url.host) (not (empty $url.userinfo)) (not (empty $url.query)) (not (empty $url.fragment)) (and (ne $url.path "") (ne $url.path "/")) -}}
+    {{- fail "fileAccess.trustedOrigins entries must be HTTPS origins without credentials, query, fragment or nonroot path" -}}
+  {{- end -}}
+{{- end -}}
 {{- if eq (include "groundx.fileAccess.create" .) "true" -}}
 {{- $in := .Values.fileAccess -}}
 {{- if not $in.originsPrivate -}}
@@ -81,15 +91,6 @@
     {{- end -}}
   {{- end -}}
 {{- end -}}
-{{- range $alias := dig "trustedOrigins" list $in -}}
-  {{- if contains "@" $alias -}}
-    {{- fail "fileAccess.trustedOrigins must not contain credentials" -}}
-  {{- end -}}
-  {{- $url := urlParse $alias -}}
-  {{- if or (ne $url.scheme "https") (empty $url.host) (not (empty $url.userinfo)) (not (empty $url.query)) (not (empty $url.fragment)) (and (ne $url.path "") (ne $url.path "/")) -}}
-    {{- fail "fileAccess.trustedOrigins entries must be HTTPS origins without credentials, query, fragment or nonroot path" -}}
-  {{- end -}}
-{{- end -}}
 {{- if ne (include "groundx.file.storageType" .) "s3" -}}
   {{- $_ := required "fileAccess.storageCredentialsSecretName is required" $in.storageCredentialsSecretName -}}
 {{- end -}}
@@ -148,13 +149,16 @@
 {{- include "groundx.fileAccess.validate" . -}}
 {{- $in := .Values.fileAccess -}}
 fileAccess:
-  enabled: true
+  enabled: {{ $in.enabled }}
+  {{- if $in.enabled }}
   frontProxyTLSVerified: {{ $in.frontProxyTLSVerified }}
   publicUrl: {{ $in.publicUrl | quote }}
+  {{- end }}
   {{- with $in.trustedOrigins }}
   trustedOrigins:
 {{ toYaml . | indent 4 }}
   {{- end }}
+  {{- if $in.enabled }}
   originsPrivate: {{ $in.originsPrivate }}
   policyCacheTtlSeconds: {{ $in.policyCacheTtlSeconds }}
   mappingCacheTtlSeconds: {{ $in.mappingCacheTtlSeconds }}
@@ -165,6 +169,7 @@ fileAccess:
 fileAccessServer:
   port: {{ include "groundx.fileAccess.port" . }}
   serviceName: {{ include "groundx.fileAccess.serviceName" . }}
+  {{- end }}
 {{- end }}
 
 {{- define "groundx.fileAccess.ingress" -}}
@@ -217,6 +222,10 @@ enabled: false
 {{- define "groundx.fileAccess.workloadSecrets" -}}
 {{- $root := .root -}}
 {{- $secrets := include "groundx.secrets" $root | fromYaml | default dict -}}
+{{- if and (eq (include "groundx.fileAccess.create" $root) "true") (has .service (list "groundx" "fileAccess")) -}}
+  {{- $name := dig "linkSigningKeySecretName" "" ($root.Values.fileAccess | default dict) -}}
+  {{- if $name -}}{{- $_ := set $secrets $name $name -}}{{- end -}}
+{{- end -}}
 {{- $consumers := list "groundx" "fileAccess" "layoutWebhook" "preProcess" "process" "queue" "largeFileDeliver" "summaryClient" "upload" "layout.api" "layout.inference" "layout.correct" "layout.map" "layout.ocr" "layout.process" "layout.save" "extract.api" "extract.agent" "extract.download" "extract.save" -}}
 {{- if and (eq (include "groundx.fileAccess.create" $root) "true") (has .service $consumers) -}}
   {{- $name := $root.Values.fileAccess.storageCredentialsSecretName -}}
