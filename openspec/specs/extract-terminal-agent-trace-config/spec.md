@@ -79,7 +79,7 @@ diagnostics are safe or active.
 
 - **WHEN** chart tests prove the shared and pod values render correctly
 - **THEN** no production capture is enabled by this chart change
-- **AND** deployment remains gated by the Internal Arcadia AGE-272 storage,
+- **AND** deployment remains gated by the Extraction Agents AGE-272 storage,
   budget, security, readiness, and natural-failure checks
 - **AND** those runtime checks prove API failure diagnostics use one best-effort
   one-second transport budget while preserving status and body, without
