@@ -102,8 +102,6 @@ fi
 
 stubs="${work}/stubs"
 mkdir -p "${stubs}"
-echo model > "${work}/model.bin"
-tar -czf "${stubs}/payload.tgz" -C "${work}" model.bin
 cat > "${stubs}/wget" <<'STUB'
 #!/bin/sh
 out=""
@@ -125,7 +123,13 @@ fi
 case "${STUB_WGET_MODE:-ok}" in
   fail) exit 1 ;;
   garbage) echo "not a tarball" > "${out}"; exit 0 ;;
-  *) cp /stubs/payload.tgz "${out}" ;;
+  *)
+    part="$(basename "${out}")"
+    d="$(mktemp -d)"
+    echo "${part}" > "${d}/${part}.bin"
+    tar -czf "${out}" -C "${d}" "${part}.bin"
+    rm -rf "${d}"
+    ;;
 esac
 STUB
 chmod +x "${stubs}/wget"

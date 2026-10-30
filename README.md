@@ -776,6 +776,15 @@ Earlier chart versions defaulted both OpenSearch passwords to a public value. An
 
 If `search.privilegedPassword` does not match the real admin password, the GroundX API crash-loops with an unauthorized error when it has to create or update its OpenSearch user: on a first install, or after `search.password` changes. On an existing install the mismatch is otherwise silent, so run the check above. If you deploy a Terraform `search` object with `cluster.search = true`, `password` and `root_password` must be non-empty and not an angle-bracket placeholder; an ingest-only install (`cluster.search = false`) needs neither. The operator module now requires Terraform 1.9 or later.
 
+#### Upgrading Inference Services and the Model Download Lock
+
+The `download-model` init container of the inference services (layout, ranker, summary) now takes an exclusive `flock` on `download.lock` in the model volume, so a pod that is killed mid-download no longer blocks every later pod. A failed download or extraction now fails the init container (`Init:Error`, then `CrashLoopBackOff`) and writes no completion marker.
+
+- **Upgrading and rolling back:** older pods coordinate through a `downloading` file and ignore `download.lock`; newer pods do the reverse. Before upgrading, and again before rolling back, scale the inference deployments to 0 so old and new pods never download into the same volume at once. A volume that already holds its `complete.<model>` marker is safe in both directions.
+- **Init:Error / CrashLoopBackOff:** the pod reports the failed download or extraction in its `download-model` logs. A waiter gives up after 60 minutes and retries. In an air-gapped cluster the download cannot succeed, so seed the model volume with the model files and the `complete.<model>` marker instead.
+- **Missing or rejected flock:** if the busybox image has no `flock` applet, or the volume rejects the lock, a pod that still needs to download fails at once and names `flock` in its logs. Use a busybox image that provides `flock` (`busybox.image`) or a model volume that supports file locks. There is no value that bypasses the lock.
+- **Storage tested:** cross-node locking was verified on EFS only. Other ReadWriteMany storage is untested.
+
 ### Persistent Storage
 
 **Chart publication status:** as of this writing, only `groundx-storageclass` `0.1.1` is published to
