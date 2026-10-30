@@ -235,3 +235,21 @@ fall back to the hosted FileUpload service. Existing anonymous `/upload/{type}`
 request and response formats remain compatibility adapters to the same signing
 implementation. Hosted routing and retirement of the standalone Lambda require a
 separate deployment after all legacy routes are verified.
+
+## Temporary gateway links
+
+`fileAccess.linkSigningKeySecretName` optionally names an existing Secret containing
+`GROUNDX_FILE_LINK_SIGNING_KEY`, a base64-encoded value with at least 32 random bytes.
+The chart loads it only into GroundX API and FileAccess pods. Use the same value for
+all replicas. Do not put the value in Helm values, browser code or storage credentials.
+
+With compatible images, an explicit `requireAuthentication` on `file-link` selects a
+temporary gateway link. Both false and true use the same expiry check; true also
+requires current GroundX API-key access. Omission keeps native sharing. Permanent
+URLs and policy settings are unchanged. Without the secret, existing links still
+work and the new mode returns 404. Rotating the key invalidates gateway links issued
+with it. Ship gateway support before clients issue those links; retain it until
+issued links expire. Vendor qualification and release remain separate.
+
+Restart issuing API and gateway replicas after changing the signing Secret.
+They read it at startup; do not leave replicas using different values.

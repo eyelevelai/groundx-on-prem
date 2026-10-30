@@ -217,6 +217,10 @@ enabled: false
 {{- define "groundx.fileAccess.workloadSecrets" -}}
 {{- $root := .root -}}
 {{- $secrets := include "groundx.secrets" $root | fromYaml | default dict -}}
+{{- if and (eq (include "groundx.fileAccess.create" $root) "true") (has .service (list "groundx" "fileAccess")) -}}
+  {{- $name := dig "linkSigningKeySecretName" "" ($root.Values.fileAccess | default dict) -}}
+  {{- if $name -}}{{- $_ := set $secrets $name $name -}}{{- end -}}
+{{- end -}}
 {{- $consumers := list "groundx" "fileAccess" "layoutWebhook" "preProcess" "process" "queue" "largeFileDeliver" "summaryClient" "upload" "layout.api" "layout.inference" "layout.correct" "layout.map" "layout.ocr" "layout.process" "layout.save" "extract.api" "extract.agent" "extract.download" "extract.save" -}}
 {{- if and (eq (include "groundx.fileAccess.create" $root) "true") (has .service $consumers) -}}
   {{- $name := $root.Values.fileAccess.storageCredentialsSecretName -}}
