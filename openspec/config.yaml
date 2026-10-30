@@ -140,6 +140,13 @@ context: |
     - A scope check for a README-only change diffs against `git merge-base HEAD origin/<base>` (not the moving `origin/<base>` tip) and requires README.md changed and `src helm .build helm-releases` unchanged.
     - The pre-push gate runs `.build/bin/validate-helm.sh` itself; a task check must not execute it (privileged repo), so the gate task declares `check: n/a` with that reason.
 
+  - CONVENTIONS DISCOVERED DURING GX-93 (per-engine config keys and snapshot hashes):
+    - A key derived per engine is computed in the engine loop of src/groundx/templates/resources/config-yaml.yaml, not in groundx.engines or groundx.engine.settings: those helpers also feed config-models.yaml, extract.tpl and summary.tpl. Inside the loop `.` is the engine, so pass `$` as the root.
+    - The config-hash annotation in the golang and metrics snapshots hashes the rendered config-yaml.yaml, so any change to that render changes it for every label that renders the change. Take each new value from the gate's own failure log (extract only the `config-hash:` tokens into a scratch file, never print the surrounding diff) and substitute inside that label's block, never type it.
+    - verify-helm-snapshot-stability.py only reports a snapshot rewrite; it does not restore. A task check that runs validate-helm.sh copies the .snap files first and restores them when the run fails.
+    - helm-unittest reports a failedTemplate whose errorPattern does not match as an errored test showing the real schema error, so the pattern can pin the exact type-error wording (helm v3.19.0 prints `got string, want boolean`).
+    - A "no key" helm-unittest case asserts its precondition too (the upload service line and the engine's own line): file.serviceType without file.existing.url silently renders minio, so a fixture can pass for the wrong reason.
+
   - KNOWN GAPS / OPEN QUESTIONS:
     - helm/ <-> src/groundx duplication: no regen script (manual sync required); a drift check DOES exist (verify_mirrors() in .build/bin/verify-storage-contract.py fails the gate on mismatch) — the remaining gap is only the absence of a regen script, not the absence of a check.
     - upload.groundx.ai model-weight download hardcoded in init-containers — air-gap blocker; no documented pre-seeding mechanism.
