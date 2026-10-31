@@ -27,6 +27,7 @@ Runs the GroundX Helm production chart gate from one stable entrypoint:
   - workspace chart contract verifier
   - storage chart, generated AWS values, and template-mirror contract verifier
   - probe-mirror-drift guard (renders src/groundx and helm/ and compares the API-pod probe timing)
+  - download-model lock guard (runs the rendered download-model script in the chart busybox image; needs Docker)
   - targeted render checks for both chart surfaces
   - git whitespace check
 
@@ -519,6 +520,9 @@ python .build/bin/verify-storage-contract.py
 
 echo "==> Verifying src/groundx and helm/ probe-timing mirror stay in sync"
 bash src/groundx/tests/files/verify-probe-mirror-drift.sh
+
+echo "==> Verifying download-model flock lock and failed-download handling (see GX-125)"
+bash src/groundx/tests/files/verify-download-model-lock.sh
 
 echo "==> Rendering workspace chart fixtures"
 helm template workspace-contract src/groundx \

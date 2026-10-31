@@ -149,43 +149,77 @@ spec:
             - /bin/sh
             - -c
             - |
-              download_and_extract_model() {
-                echo "Model downloading started..."
+              dir={{ $wd }}/hf_models_cache
+              lock="$dir/download.lock"
+              marker="$dir/complete.{{ $mv }}"
+              wait_limit=3600
 
-                touch {{ $wd }}/hf_models_cache/downloading
-
-                echo "{{ $mpr }}" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
-                  'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/{{ $bn }}/model/current/{{ $mv }}.tar.gz.part.$PART; \
-                  while [ $RETRIES -lt $MAX_RETRIES ]; do \
-                    echo "Download [attempt $RETRIES] {{ $bn }}.tar.gz.part.$PART"; \
-                    wget -q -O {{ $wd }}/hf_models_cache/{{ $bn }}.tar.gz.part.$PART $URL && { echo "Downloaded {{ $bn }}.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
-                    echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
-                  done; \
-                  [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; rm {{ $wd }}/hf_models_cache/downloading; exit 1; }; \
-                  echo "Unzipping {{ $bn }}.tar.gz.part.$PART..."; tar -xzf {{ $wd }}/hf_models_cache/{{ $bn }}.tar.gz.part.$PART -C {{ $wd }}/hf_models_cache/; echo "Unzipping {{ $bn }}.tar.gz.part.$PART complete...";'
-
-                rm {{ $wd }}/hf_models_cache/{{ $bn }}.tar.*
-                rm {{ $wd }}/hf_models_cache/downloading
-                touch {{ $wd }}/hf_models_cache/complete.{{ $mv }}
-              }
-              if [ ! -f {{ $wd }}/hf_models_cache/complete.{{ $mv }} ]; then
-                if [ ! -f {{ $wd }}/hf_models_cache/downloading ]; then
-                  download_and_extract_model
-                else
-                  echo "Download in progress by another pod. Waiting..."
-                  while [ -f {{ $wd }}/hf_models_cache/downloading ] || [ ! -f {{ $wd }}/hf_models_cache/complete.{{ $mv }} ]; do
-                    sleep $((3 + RANDOM % 2))
-                  done
-
-                  if [ ! -f {{ $wd }}/hf_models_cache/complete.{{ $mv }} ]; then
-                    download_and_extract_model
-                  else
-                    echo "Model cache ready."
-                  fi
-                fi
-              else
+              if [ -f "$marker" ]; then
                 echo "Model cache already exists. Skipping download."
+                echo "Model load done."
+                exit 0
               fi
+
+              if ! command -v flock >/dev/null 2>&1; then
+                echo "flock is not available in this busybox image; the model download lock needs it. Use a busybox image that provides flock." >&2
+                exit 1
+              fi
+
+              errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+              trap 'rm -f "$errf"' EXIT
+              exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
+
+              start=$(date +%s)
+              announced=0
+              while :; do
+                flock -n 9 2>"$errf" && break
+                rc=$?
+                if [ "$rc" -ne 1 ] || [ -s "$errf" ]; then
+                  echo "flock failed on $lock (exit $rc): $(cat "$errf")" >&2
+                  exit 1
+                fi
+                if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
+                  echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
+                  exit 1
+                fi
+                if [ "$announced" -eq 0 ]; then
+                  echo "Download in progress by another pod. Waiting..."
+                  announced=1
+                fi
+                sleep 3
+              done
+
+              if [ -f "$marker" ]; then
+                echo "Model cache ready."
+                echo "Model load done."
+                exit 0
+              fi
+
+              echo "Model downloading started..."
+              rm -f "$dir/downloading" "$dir"/{{ $bn }}.tar.*
+
+              echo "{{ $mpr }}" | tr ' ' '\n' | xargs -n 1 -P 5 -I {} sh -c \
+                'MAX_RETRIES=3; RETRIES=0; SUCCESS=0; PART={}; URL=https://upload.groundx.ai/{{ $bn }}/model/current/{{ $mv }}.tar.gz.part.$PART; \
+                while [ $RETRIES -lt $MAX_RETRIES ]; do \
+                  echo "Download [attempt $RETRIES] {{ $bn }}.tar.gz.part.$PART"; \
+                  wget -q -O {{ $wd }}/hf_models_cache/{{ $bn }}.tar.gz.part.$PART $URL && { echo "Downloaded {{ $bn }}.tar.gz.part.$PART successfully."; SUCCESS=1; break; }; \
+                  echo "Failed to download $URL. Retrying..."; RETRIES=$((RETRIES + 1)); sleep 3; \
+                done; \
+                [ $SUCCESS -eq 0 ] && { echo "Failed to download $URL after $MAX_RETRIES attempts. Exiting."; exit 1; }; exit 0;'
+              xrc=$?
+              if [ "$xrc" -ne 0 ]; then
+                echo "Model download failed (xargs exit $xrc). No completion marker written." >&2
+                exit 1
+              fi
+
+              for part in {{ $mpr }}; do
+                echo "Unzipping {{ $bn }}.tar.gz.part.$part..."
+                tar -xzf {{ $wd }}/hf_models_cache/{{ $bn }}.tar.gz.part.$part -C {{ $wd }}/hf_models_cache/ || { echo "Failed to unzip {{ $bn }}.tar.gz.part.$part. No completion marker written." >&2; exit 1; }
+                echo "Unzipping {{ $bn }}.tar.gz.part.$part complete..."
+              done
+
+              rm -f "$dir"/{{ $bn }}.tar.* || { echo "Failed to remove downloaded archives." >&2; exit 1; }
+              touch "$marker" || { echo "Failed to write $marker." >&2; exit 1; }
 
               echo "Model load done."
 {{ include "groundx.renderSecurityContext" (dict "ctx" $csct "indent" 10 "root" $ "user" $username "cfg" "container") }}

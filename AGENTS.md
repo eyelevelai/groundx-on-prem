@@ -30,7 +30,9 @@ Follow [CONTRIBUTING.md](CONTRIBUTING.md) for focused regression coverage and PR
   own installer can leave a stale binary behind a correct-looking version string):
   `helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "$(cat .build/HELM_UNITTEST_VERSION)"`,
   and `yq` (mikefarah v4 line) for the `probe-mirror-drift` guard's field-level renders
-  (`src/groundx/tests/files/verify-probe-mirror-drift.sh`). Do not regenerate the `__snapshot__`
+  (`src/groundx/tests/files/verify-probe-mirror-drift.sh`). The `download-model` lock guard
+  (`src/groundx/tests/files/verify-download-model-lock.sh`) also needs Docker and the chart busybox
+  image (pulled when absent) next to `yq`. Do not regenerate the `__snapshot__`
   golden files with `helm unittest -u src/groundx` — see the "Agent boundaries" section below for
   why and for the correct method.
 - **Helpers:** `bin/uuid` generates the UUIDs needed for `admin.apiKey` / `admin.username`
