@@ -1,0 +1,64 @@
+clusterName: opensearch-cluster
+config:
+  opensearch.yml: |
+    cluster.name: opensearch-cluster
+    network.host: 0.0.0.0
+    plugins.security.ssl.transport.pemcert_filepath: certs/node.crt
+    plugins.security.ssl.transport.pemkey_filepath: certs/node.key
+    plugins.security.ssl.transport.pemtrustedcas_filepath: certs/ca.crt
+    plugins.security.ssl.transport.enforce_hostname_verification: false
+    plugins.security.ssl.http.enabled: true
+    plugins.security.ssl.http.pemcert_filepath: esnode.pem
+    plugins.security.ssl.http.pemkey_filepath: certs/node.key
+    plugins.security.ssl.http.pemtrustedcas_filepath: certs/ca.crt
+    plugins.security.allow_default_init_securityindex: true
+    plugins.security.authcz.admin_dn:
+      - CN=gx-opensearch-admin
+    plugins.security.nodes_dn:
+      - CN=opensearch-node
+    plugins.security.audit.type: internal_opensearch
+    plugins.security.enable_snapshot_restore_privilege: true
+    plugins.security.check_snapshot_restore_write_privileges: true
+    plugins.security.restapi.roles_enabled: ["all_access", "security_rest_api_access"]
+    plugins.security.system_indices.enabled: true
+    plugins.security.system_indices.indices:
+      [
+        ".opendistro-alerting-config",
+        ".opendistro-alerting-alert*",
+        ".opendistro-anomaly-results*",
+        ".opendistro-anomaly-detector*",
+        ".opendistro-anomaly-checkpoints",
+        ".opendistro-anomaly-detection-state",
+        ".opendistro-reports-*",
+        ".opendistro-notifications-*",
+        ".opendistro-notebooks",
+        ".opendistro-asynchronous-search-response*",
+      ]
+extraEnvs:
+  - name: DISABLE_INSTALL_DEMO_CONFIG
+    value: "true"
+global:
+  dockerRegistry: public.ecr.aws/c9r4x6y5
+image:
+  repository: eyelevel/opensearch
+  tag: "latest@sha256:8e95a30fe67dc3d92b85924e46cd299bc83fe2716e100bcad30e7e3a0b199b00"
+majorVersion: 2.16.0
+nodeGroup: master
+nodeSelector:
+  node: eyelevel-cpu-only
+persistence:
+  enabled: true
+  enableInitChown: false
+  size: 20Gi
+replicas: 1
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+secretMounts:
+  - name: opensearch-tls
+    secretName: opensearch-tls
+    path: /usr/share/opensearch/config/certs
+securityConfig:
+  internalUsersSecret: opensearch-internal-users
+singleNode: true

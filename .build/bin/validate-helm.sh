@@ -27,6 +27,7 @@ Runs the GroundX Helm production chart gate from one stable entrypoint:
   - workspace chart contract verifier
   - storage chart, generated AWS values, and template-mirror contract verifier
   - probe-mirror-drift guard (renders src/groundx and helm/ and compares the API-pod probe timing)
+  - OpenSearch TLS seed values check (operator certificates only; seed mirrors byte-identical)
   - targeted render checks for both chart surfaces
   - git whitespace check
 
@@ -519,6 +520,22 @@ python .build/bin/verify-storage-contract.py
 
 echo "==> Verifying src/groundx and helm/ probe-timing mirror stay in sync"
 bash src/groundx/tests/files/verify-probe-mirror-drift.sh
+
+echo "==> Verifying the OpenSearch TLS seed values and their accept/reject fixtures"
+bash src/groundx/tests/files/verify-opensearch-tls-values.sh
+for fixture in src/groundx/tests/files/opensearch-tls/accept-*.yaml; do
+  bash src/groundx/tests/files/verify-opensearch-tls-values.sh "${fixture}" >/dev/null
+done
+if ! compgen -G "src/groundx/tests/files/opensearch-tls/reject-*.yaml" >/dev/null; then
+  echo "no reject-*.yaml fixture found under src/groundx/tests/files/opensearch-tls" >&2
+  exit 1
+fi
+for fixture in src/groundx/tests/files/opensearch-tls/reject-*.yaml; do
+  if bash src/groundx/tests/files/verify-opensearch-tls-values.sh "${fixture}" >/dev/null 2>&1; then
+    echo "verify-opensearch-tls-values.sh accepted ${fixture}, which it must reject" >&2
+    exit 1
+  fi
+done
 
 echo "==> Rendering workspace chart fixtures"
 helm template workspace-contract src/groundx \
