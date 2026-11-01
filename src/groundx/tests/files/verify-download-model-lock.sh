@@ -94,10 +94,18 @@ if [ -z "${image}" ] || [ -z "${mount_path}" ] || [ -z "${marker_name}" ] || [ "
 fi
 
 if ! docker image inspect "${image}" >/dev/null 2>&1; then
-  docker pull "${image}" >/dev/null 2>&1 || {
-    echo "FAIL: chart busybox image ${image} is not present and could not be pulled; run: docker pull ${image}" >&2
+  pulled=0
+  for attempt in 1 2 3; do
+    if docker pull "${image}" >/dev/null 2>&1; then
+      pulled=1
+      break
+    fi
+    [ "${attempt}" -lt 3 ] && sleep $((attempt * 10))
+  done
+  if [ "${pulled}" -ne 1 ]; then
+    echo "FAIL: chart busybox image ${image} is not present and could not be pulled after 3 attempts; run: docker pull ${image}" >&2
     exit 1
-  }
+  fi
 fi
 
 stubs="${work}/stubs"
