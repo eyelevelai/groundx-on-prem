@@ -164,7 +164,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -500,7 +500,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -794,7 +794,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -1098,7 +1098,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -1433,7 +1433,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -1726,7 +1726,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -2029,7 +2029,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -2364,7 +2364,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -2657,7 +2657,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -2961,7 +2961,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -3296,7 +3296,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -3589,7 +3589,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -3892,7 +3892,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -4227,7 +4227,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -4533,7 +4533,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -4874,7 +4874,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -5178,7 +5178,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -5512,7 +5512,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -5818,7 +5818,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -6153,7 +6153,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -6467,7 +6467,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -6748,7 +6748,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -7004,7 +7004,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -7291,7 +7291,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -7536,7 +7536,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -7789,7 +7789,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -8066,7 +8066,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -8303,7 +8303,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -8552,7 +8552,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -8831,7 +8831,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
@@ -9073,7 +9073,7 @@
                     exit 1
                   fi
 
-                  errf=$(mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in $dir; the model volume must be writable." >&2; exit 1; }
+                  errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
                   trap 'rm -f "$errf"' EXIT
                   exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 

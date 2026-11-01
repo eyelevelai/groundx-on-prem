@@ -32,3 +32,7 @@ None. No existing spec in `openspec/specs/` covers model download behaviour.
 - **Tooling:** `validate-helm.sh` gains a Docker prerequisite (CI `ubuntu-latest` has it). groundx-on-prem is PRIVILEGED, so running the gate prompts for approval. The engineering-context push-gate update is built by the orchestrator, not in this repo.
 - **Out of scope:** GX-114 (ai-server model-load lock), `terraform/groundx-operator` copies of the script (deprecated), and groundx-studio-harness on-prem docs (separate follow-up ticket).
 - **Open design questions:** none.
+
+## Amendments
+
+- 2026-11-01: the groundx-studio-harness on-prem docs follow-up is GX-156.

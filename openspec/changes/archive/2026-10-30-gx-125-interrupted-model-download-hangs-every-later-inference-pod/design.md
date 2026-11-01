@@ -109,3 +109,8 @@ touch "$marker" || { echo "Failed to write $marker." >&2; exit 1; }
 
 echo "Model load done."
 ```
+
+## Amendments
+
+- 2026-11-01: the flock error scratch file is created with `mktemp` in the container's `/tmp`, falling back to `$dir/.flock-err.XXXXXX` on the model volume only when `/tmp` is not writable (a per-service `readOnlyRootFilesystem: true` override). A killed downloader cannot run its EXIT trap, so the previous volume-only scratch file left one empty `.flock-err.*` per killed pod on the shared volume; this was observed on groundx-validation on 2026-11-01. The Reference script's `errf=` line above predates this. Guard: case 8a also requires no `.flock-err.*` on the volume after the holder is killed, and case 10 runs the script with a read-only root filesystem and requires a full download and the marker.
+- 2026-11-01: the groundx-studio-harness on-prem docs follow-up is GX-156.

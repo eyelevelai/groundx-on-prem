@@ -139,14 +139,14 @@ case "${STUB_WGET_MODE:-ok}" in
       02) sleep 2 ;;
       03) sleep 1 ;;
     esac
-    d="$(mktemp -d)"
+    d="$(mktemp -d /state/stub.XXXXXX)"
     echo "${part}" > "${d}/shared.bin"
     tar -czf "${out}" -C "${d}" shared.bin
     rm -rf "${d}"
     ;;
   *)
     part="$(basename "${out}")"
-    d="$(mktemp -d)"
+    d="$(mktemp -d /state/stub.XXXXXX)"
     echo "${part}" > "${d}/${part}.bin"
     tar -czf "${out}" -C "${d}" "${part}.bin"
     rm -rf "${d}"
@@ -287,6 +287,15 @@ else
 fi
 
 new_case_dirs
+start_container gx125-readonly-root "${base_path}" --read-only
+rc="$(wait_exit gx125-readonly-root 40)"
+if [ "${rc}" = "0" ] && vol_has "${marker_name}" && [ "$(wget_calls)" = "${part_count}" ]; then
+  report "case 10: a read-only root filesystem still downloads and writes the marker" pass
+else
+  report "case 10: a read-only root filesystem still downloads and writes the marker" fail "exit=${rc} wget_calls=$(wget_calls) expected=${part_count}"
+fi
+
+new_case_dirs
 start_container gx125-shared "${base_path}" -e STUB_WGET_MODE=shared
 rc="$(wait_exit gx125-shared 40)"
 shared_content="$(vsh "${vol}" 'cat $(find /m -name shared.bin | head -1)' 2>/dev/null | tr -d ' \r\n' || true)"
@@ -345,11 +354,12 @@ if [ "${killed_up}" -eq 1 ]; then
   docker kill gx125-killed-holder >/dev/null
   rc="$(wait_exit gx125-killed-waiter 60)"
   calls_after_kill=$(( $(wget_calls) - calls_before_kill ))
-  if [ "${killed_waiting}" -eq 1 ] && [ "${rc}" = "0" ] && vol_has "${marker_name}" && [ "${calls_after_kill}" = "${part_count}" ]; then
+  scratch_left="$(vsh "${vol}" "ls -A /m | grep -c '^\.flock-err\.'" || true)"
+  if [ "${killed_waiting}" -eq 1 ] && [ "${rc}" = "0" ] && vol_has "${marker_name}" && [ "${calls_after_kill}" = "${part_count}" ] && [ "${scratch_left}" = "0" ]; then
     report "case 8a: killing the holder lets a waiter take the lock, download a full set of parts and write the marker" pass
   else
     report "case 8a: killing the holder lets a waiter take the lock, download a full set of parts and write the marker" fail \
-      "waiting=${killed_waiting} exit=${rc} marker=$(vol_has "${marker_name}" && echo yes || echo no) calls_after_kill=${calls_after_kill} expected=${part_count}"
+      "waiting=${killed_waiting} exit=${rc} marker=$(vol_has "${marker_name}" && echo yes || echo no) calls_after_kill=${calls_after_kill} expected=${part_count} scratch_files_on_volume=${scratch_left}"
   fi
 else
   report "case 8a: killing the holder lets a waiter take the lock, download a full set of parts and write the marker" fail "holder never started downloading"
