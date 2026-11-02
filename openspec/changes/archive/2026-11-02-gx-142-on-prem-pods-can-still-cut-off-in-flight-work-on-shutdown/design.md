@@ -45,3 +45,11 @@ Context is in `proposal.md`. Producer contract shapes confirmed against the plan
 - **Longer API shutdown.** Pods with a request in flight take up to 150 s (270 s summary) to stop, which lengthens rolling updates and node drains; idle pods are unaffected.
 - **Merge order with GX-125 (#164) and 0.2.9 prep (#162).** #164 edits the `download-model` block and inference/ranker snapshots; whichever merges second rebases. #162 changes the chart-version label in all snapshots.
 - **Hand-patched snapshots** can encode a wrong value; the render diff and the unmodified `helm unittest` run are the cross-check.
+
+## Amendments
+
+### 2026-11-02
+
+`execOpts` and `$eopts` were removed in review round 1 with the render unchanged. This supersedes D1's "execOpts stays in the settings" and, for commit 1, D7's "commit 1 and commit 2 are independent and revertible separately": the shared Celery helper change and the `execOpts` removal must be reverted together (see the rollback amendment in `proposal.md`).
+
+`.build/bin/verify-celery-render-identity.py` is not run by the CI gate: CI uses a shallow checkout and the script needs the pre-change base. Run it by hand whenever someone edits the shared Celery helper. Only its unit tests run in `validate-helm.sh`.

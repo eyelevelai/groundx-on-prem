@@ -53,3 +53,7 @@ Open design questions: none.
 ### 2026-11-02
 
 The rollback line in the blast radius is corrected. Each change is a mirror and source commit pair: the shared helper is `1e900f8b` (mirror) and `e55643cb` (source); the API change is `334e4bbe` (mirror) and `d4394d97` (source). To roll one back, revert both commits of its pair.
+
+### 2026-11-02 (rollback, supersedes the amendment above)
+
+Rollback is stated by content, not by commit SHA, because SHAs change if the branch is rebased. The shared Celery helper change and the removal of `execOpts` (and `$eopts` in `inference.yaml`) must be reverted together, or revert the whole PR merge commit: reverting the helper alone leaves `inference.yaml` referencing the removed `$eopts`, and the chart fails to render. The API pod change (gunicorn `graceful_timeout`, API pod grace period, `RANKER_TASK_WAIT_SECONDS`) can be reverted on its own.
