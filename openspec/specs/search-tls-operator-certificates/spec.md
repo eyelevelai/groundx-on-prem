@@ -38,6 +38,19 @@ Invariant: a certificate whose private key is public, and a user whose password 
 - **WHEN** the `operator` block of `src/opensearch/values.yaml`, which `src/build.sh` packages and publishes as the `opensearch` chart, is read
 - **THEN** it passes the same checks as the seed values file, so a wrapper install also runs on operator certificates and operator-supplied users
 
+### Requirement: The chart refuses to render the in-cluster OpenSearch without the CA bundle
+When GroundX uses the in-cluster OpenSearch (`groundx.search.create` is true: no `search.existing.url` and `mode` is not `ingest`), the chart SHALL fail to render with an error naming `fileAccess.caSecretName` while that value is empty. The check lives in `templates/resources/search-ca-check.yaml`, which renders no manifest. An existing OpenSearch and ingest mode SHALL render with `fileAccess.caSecretName` empty, and then no workload carries `SSL_CERT_FILE`.
+
+Invariant: GroundX images verify the OpenSearch certificate, and a missing bundle surfaces at startup only as `request timed out`, so an upgrade that would start them without a bundle stops at render instead of reporting success.
+
+#### Scenario: In-cluster OpenSearch without the bundle fails the render (polarity: reject before state; catches)
+- **WHEN** the chart renders with default search settings and `fileAccess.caSecretName` empty
+- **THEN** the render fails with "fileAccess.caSecretName is required when GroundX uses the in-cluster OpenSearch" (helm-unittest case in `src/groundx/tests/search_credentials_test.yaml`)
+
+#### Scenario: An existing OpenSearch or ingest mode needs no bundle (polarity: accept and enqueue; must not block)
+- **WHEN** the chart renders with `fileAccess.caSecretName` empty and either `search.existing.url` set or `mode: ingest`
+- **THEN** the render succeeds, and the `golang_test.yaml` migration and producer cases that use an existing OpenSearch find no `SSL_CERT_FILE` and no `file-access-ca` volume
+
 ### Requirement: GroundX trusts the operator OpenSearch CA through the GX-130 bundle
 GroundX SHALL trust the chart-deployed OpenSearch through `fileAccess.caSecretName` (GX-130): the README SHALL tell the operator to put the CA that signed `node.crt` into that Secret's `ca.crt`, a complete bundle of the public root CAs plus that CA. The chart SHALL NOT add an OpenSearch-only CA value, mount or `ai.aws.search.caFile` setting.
 

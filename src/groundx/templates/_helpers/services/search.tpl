@@ -26,6 +26,12 @@ true
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.search.caBundle.validate" -}}
+{{- if and (eq (include "groundx.search.create" .) "true") (empty (dig "caSecretName" "" (.Values.fileAccess | default dict))) -}}
+{{- fail "fileAccess.caSecretName is required when GroundX uses the in-cluster OpenSearch: name a Secret whose ca.crt bundle includes the CA that signed the OpenSearch node certificate" -}}
+{{- end -}}
+{{- end }}
+
 {{- define "groundx.search.serviceHost" -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- $name := include "groundx.search.serviceName" . -}}

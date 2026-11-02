@@ -78,7 +78,9 @@ service credentials and existing document authorization regardless of customer p
   Secret in the chart namespace before the install or upgrade that sets
   `caSecretName`; a missing Secret or `ca.crt` key stops those pods from
   starting. Use a complete trust bundle when those processes also contact other
-  HTTPS services. An empty value uses system trust. Provision certificates outside the chart and restart affected
+  HTTPS services. An empty value uses system trust, but the chart will not
+  render with it empty while GroundX uses the in-cluster OpenSearch, whose CA
+  must be in this bundle (README, OpenSearch). Provision certificates outside the chart and restart affected
   consumers after rotating credentials or trust Secrets; env imports and existing
   TLS client pools do not reload through the config hash.
 - `tlsSecretName` is required for a chart-managed gateway ingress. Set
