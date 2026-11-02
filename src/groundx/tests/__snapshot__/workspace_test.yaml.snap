@@ -22,7 +22,7 @@
         metadata:
           annotations:
             config-hash: cd1aec097cc9363c8b5b3fa5096871d253dfce0b52a028b045c339c527c50019
-            gunicorn-conf-hash: 7b77a5ecbb71e70922f104c678cbaf4ce20a98b86db5735dab4924809990de45
+            gunicorn-conf-hash: da15209103d5313e974394c4d6ca9801559a2938b702ffae867e28ce5e094e86
             workspace.groundx.ai/component: api
           labels:
             app: workspace-api
@@ -120,6 +120,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: workspace-api-service-account
+          terminationGracePeriodSeconds: 210
           tolerations:
             - effect: NoSchedule
               key: dedicated
@@ -915,6 +916,7 @@
         errorlog = "-"
         loglevel = "info"
         timeout = 180
+        graceful_timeout = 180
         timeout_keep_alive = 20
         worker_class = "uvicorn.workers.UvicornWorker"
         workers = 2
@@ -1161,7 +1163,7 @@
         metadata:
           annotations:
             config-hash: 721826726fc4eb69292538324a71915d802079afaf30b1ce8b39cd5c5dad773d
-            gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
+            gunicorn-conf-hash: 14ae4f7c0fe89ab931684316e576b138415ff1e95b6f50d21f2842519a591386
           labels:
             app: workspace-api
         spec:
@@ -1264,6 +1266,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2037,7 +2040,7 @@
         metadata:
           annotations:
             config-hash: 56e3041cd33a178a584db52c0968f8c00c384be83d315cda59b5d8de9ac5fcf3
-            gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
+            gunicorn-conf-hash: 14ae4f7c0fe89ab931684316e576b138415ff1e95b6f50d21f2842519a591386
           labels:
             app: workspace-api
         spec:
@@ -2141,6 +2144,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2995,7 +2999,7 @@
         metadata:
           annotations:
             config-hash: 6b67d4d13ce263098c3d7b3ce737eb82f27febd214f4599aa3c09c3e67942007
-            gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
+            gunicorn-conf-hash: 14ae4f7c0fe89ab931684316e576b138415ff1e95b6f50d21f2842519a591386
           labels:
             app: workspace-api
         spec:
@@ -3099,6 +3103,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4272,7 +4277,7 @@
         metadata:
           annotations:
             config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
-            gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
+            gunicorn-conf-hash: 14ae4f7c0fe89ab931684316e576b138415ff1e95b6f50d21f2842519a591386
           labels:
             app: workspace-api
         spec:
@@ -4373,6 +4378,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -5162,6 +5168,7 @@
         errorlog = "-"
         loglevel = "info"
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
         worker_class = "uvicorn.workers.UvicornWorker"
         workers = 2

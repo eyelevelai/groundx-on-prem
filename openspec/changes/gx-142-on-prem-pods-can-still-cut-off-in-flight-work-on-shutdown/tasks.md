@@ -20,15 +20,15 @@
 
 ## 3. API pods (commit 2)
 
-- [ ] 3.1 Add `graceful_timeout = <groundx.<svc>.api.timeout>` to the five `*-gunicorn-conf-py.yaml` templates
+- [x] 3.1 Add `graceful_timeout = <groundx.<svc>.api.timeout>` to the five `*-gunicorn-conf-py.yaml` templates
   check: helm template r src/groundx -f src/groundx/tests/files/values.search-credentials.yaml | grep -q 'graceful_timeout = 240'
-- [ ] 3.2 Render `terminationGracePeriodSeconds` in `api.yaml` as `replicas.gracePeriod` when set and otherwise `timeout + 30`
+- [x] 3.2 Render `terminationGracePeriodSeconds` in `api.yaml` as `replicas.gracePeriod` when set and otherwise `timeout + 30`
   check: helm template r src/groundx -f src/groundx/tests/files/values.search-credentials.yaml -s templates/app/api.yaml | grep -q 'terminationGracePeriodSeconds: 270'
-- [ ] 3.3 Add `groundx.ranker.api.taskWaitSeconds` (`max(1, timeout - 10)`) and render `RANKER_TASK_WAIT_SECONDS` through a `ranker-api` settings `env` entry, on `ranker-api` only
+- [x] 3.3 Add `groundx.ranker.api.taskWaitSeconds` (`max(1, timeout - 10)`) and render `RANKER_TASK_WAIT_SECONDS` through a `ranker-api` settings `env` entry, on `ranker-api` only
   check: helm template r src/groundx -f src/groundx/tests/files/values.search-credentials.yaml -s templates/app/api.yaml | grep -q 'RANKER_TASK_WAIT_SECONDS'
-- [ ] 3.4 Mirror the commit 2 templates into `helm/templates` and run the new API suite plus the template mirror comparison
+- [x] 3.4 Mirror the commit 2 templates into `helm/templates` and run the new API suite plus the template mirror comparison
   check: .build/bin/run-suite-on-copy.sh api-shutdown_test.yaml && diff -rq src/groundx/templates helm/templates
-- [ ] 3.5 Hand-patch the commit 2 snapshots (gunicorn config maps, config hash annotations, API grace and `ranker-api` env in `resources_test`, `api_test`, `workspace_test`, `ranker_test`, `extract_test` and any other suite the render diff shows) and run the affected suites without `-u`
+- [x] 3.5 Hand-patch the commit 2 snapshots (gunicorn config maps, config hash annotations, API grace and `ranker-api` env in `resources_test`, `api_test`, `workspace_test`, `ranker_test`, `extract_test` and any other suite the render diff shows) and run the affected suites without `-u`
   check: ! git diff --quiet "$(git merge-base HEAD origin/main)" -- src/groundx/tests/__snapshot__/api_test.yaml.snap && .build/bin/run-suite-on-copy.sh api_test.yaml resources_test.yaml workspace_test.yaml ranker_test.yaml extract_test.yaml
 
 ## 4. Runtime proofs and gate (evidence recorded in the change folder)
