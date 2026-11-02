@@ -1,0 +1,168 @@
+suite: "api graceful shutdown renders as expected"
+chart:
+  appVersion: 0.1.0
+  version: 0.1.0
+
+set:
+  search:
+    password: fixture-app-credential
+    privilegedPassword: fixture-admin-credential
+
+tests:
+  - it: "ranker gunicorn graceful_timeout equals the API timeout (finalize success)"
+    templates:
+      - ../templates/resources/ranker-gunicorn-conf-py.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: metadata.name
+      value: ranker-gunicorn-conf-py-map
+    asserts:
+      - matchRegex:
+          path: data["gunicorn_conf.py"]
+          pattern: "timeout = 120\\n(.|\\n)*graceful_timeout = 120\\n"
+  - it: "ranker gunicorn graceful_timeout follows an overridden API timeout (finalize success; catches a hard-coded value)"
+    templates:
+      - ../templates/resources/ranker-gunicorn-conf-py.yaml
+    values:
+      - ../values.yaml
+    set:
+      ranker.api.timeout: 200
+    documentSelector:
+      path: metadata.name
+      value: ranker-gunicorn-conf-py-map
+    asserts:
+      - matchRegex:
+          path: data["gunicorn_conf.py"]
+          pattern: "graceful_timeout = 200\\n"
+  - it: "summary gunicorn graceful_timeout is 240 by default (finalize success)"
+    templates:
+      - ../templates/resources/summary-gunicorn-conf-py.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: metadata.name
+      value: summary-gunicorn-conf-py-map
+    asserts:
+      - matchRegex:
+          path: data["gunicorn_conf.py"]
+          pattern: "graceful_timeout = 240\\n"
+  - it: "layout gunicorn graceful_timeout equals the API timeout (finalize success)"
+    templates:
+      - ../templates/resources/layout-gunicorn-conf-py.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: metadata.name
+      value: layout-gunicorn-conf-py-map
+    asserts:
+      - matchRegex:
+          path: data["gunicorn_conf.py"]
+          pattern: "graceful_timeout = 120\\n"
+  - it: "extract gunicorn graceful_timeout equals the API timeout (finalize success)"
+    templates:
+      - ../templates/resources/extract-gunicorn-conf-py.yaml
+    values:
+      - ../values/extract/values.yaml
+    documentSelector:
+      path: metadata.name
+      value: extract-gunicorn-conf-py-map
+    asserts:
+      - matchRegex:
+          path: data["gunicorn_conf.py"]
+          pattern: "graceful_timeout = 120\\n"
+  - it: "workspace gunicorn graceful_timeout equals the API timeout (finalize success)"
+    templates:
+      - ../templates/resources/workspace-gunicorn-conf-py.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.workspace.enabled.yaml
+    documentSelector:
+      path: metadata.name
+      value: workspace-gunicorn-conf-py-map
+    asserts:
+      - matchRegex:
+          path: data["gunicorn_conf.py"]
+          pattern: "graceful_timeout = 120\\n"
+  - it: "ranker-api defaults its pod grace to timeout plus 30 (finalize success)"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: ranker-api
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 150
+  - it: "summary-api defaults its pod grace to 270 (finalize success)"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: summary-api
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 270
+  - it: "extract-api keeps replicas.gracePeriod over the derived default (skip unrelated repair path; must not block)"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values/extract/values.yaml
+    set:
+      extract.api.replicas.gracePeriod: 60
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: extract-api
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 60
+  - it: "ranker-api renders RANKER_TASK_WAIT_SECONDS as timeout minus 10 (accept and enqueue)"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: ranker-api
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: RANKER_TASK_WAIT_SECONDS
+            value: "110"
+  - it: "ranker-api task wait floors at 1 for a tiny timeout (finalize success; catches a negative cap)"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+    set:
+      ranker.api.timeout: 5
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: ranker-api
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: RANKER_TASK_WAIT_SECONDS
+            value: "1"
+  - it: "summary-api gets no RANKER_TASK_WAIT_SECONDS (skip unrelated repair path; must not block)"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: summary-api
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: RANKER_TASK_WAIT_SECONDS
+            value: "110"
