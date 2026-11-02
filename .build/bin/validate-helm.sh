@@ -90,6 +90,7 @@ OCR_TEST_CREDENTIALS="files/ocr/gcv-test.json"
 layout_pvc_values=""
 layout_pvc_render=""
 opensearch_wrapper_values=""
+opensearch_reject_values=""
 ocr_generated_files=()
 SNAPSHOT_STABILITY_HASHFILE="$(mktemp)"
 cleanup() {
@@ -97,7 +98,7 @@ cleanup() {
     rm -f "${ocr_generated_files[@]}"
   fi
   rmdir src/groundx/files/ocr src/groundx/files helm/files/ocr helm/files 2>/dev/null || true
-  rm -f "${layout_pvc_values}" "${layout_pvc_render}" "${opensearch_wrapper_values}" "${SNAPSHOT_STABILITY_HASHFILE}"
+  rm -f "${layout_pvc_values}" "${layout_pvc_render}" "${opensearch_wrapper_values}" "${opensearch_reject_values}" "${SNAPSHOT_STABILITY_HASHFILE}"
 }
 trap cleanup EXIT
 for chart in src/groundx helm; do
@@ -522,24 +523,35 @@ python .build/bin/verify-storage-contract.py
 echo "==> Verifying src/groundx and helm/ probe-timing mirror stay in sync"
 bash src/groundx/tests/files/verify-probe-mirror-drift.sh
 
-echo "==> Verifying the OpenSearch TLS seed values and their accept/reject fixtures"
+echo "==> Verifying the OpenSearch TLS seed values, the wrapper values and edits the check must reject"
 bash src/groundx/tests/files/verify-opensearch-tls-values.sh
 opensearch_wrapper_values="$(mktemp)"
 yq '.operator' src/opensearch/values.yaml > "${opensearch_wrapper_values}"
 bash src/groundx/tests/files/verify-opensearch-tls-values.sh "${opensearch_wrapper_values}"
-for fixture in src/groundx/tests/files/opensearch-tls/accept-*.yaml; do
-  bash src/groundx/tests/files/verify-opensearch-tls-values.sh "${fixture}" >/dev/null
-done
-if ! compgen -G "src/groundx/tests/files/opensearch-tls/reject-*.yaml" >/dev/null; then
-  echo "no reject-*.yaml fixture found under src/groundx/tests/files/opensearch-tls" >&2
-  exit 1
-fi
-for fixture in src/groundx/tests/files/opensearch-tls/reject-*.yaml; do
-  if bash src/groundx/tests/files/verify-opensearch-tls-values.sh "${fixture}" >/dev/null 2>&1; then
-    echo "verify-opensearch-tls-values.sh accepted ${fixture}, which it must reject" >&2
+opensearch_reject_values="$(mktemp)"
+while IFS=$'\t' read -r edit expr; do
+  yq "${expr}" src/groundx/values/opensearch/values.yaml > "${opensearch_reject_values}"
+  if bash src/groundx/tests/files/verify-opensearch-tls-values.sh "${opensearch_reject_values}" >/dev/null 2>&1; then
+    echo "verify-opensearch-tls-values.sh accepted the seed values with the ${edit} edit, which it must reject" >&2
     exit 1
   fi
-done
+done <<'EDITS'
+admin-dn-only-in-nodes	.config."opensearch.yml" |= (sub("admin_dn:\n  - CN=gx-opensearch-admin", "admin_dn:\n  - CN=other") | sub("  - CN=opensearch-node\n", "  - CN=opensearch-node\n  - CN=gx-opensearch-admin\n"))
+demo-admin-dn-added	.config."opensearch.yml" |= sub("  - CN=gx-opensearch-admin\n", "  - CN=gx-opensearch-admin\n  - CN=kirk,OU=client,O=client,L=test,C=de\n")
+demo-certificates-allowed	.config."opensearch.yml" |= sub("cluster.name: opensearch-cluster\n", "cluster.name: opensearch-cluster\nplugins.security.allow_unsafe_democertificates: true\n")
+demo-installer-enabled	(.extraEnvs[] | select(.name == "DISABLE_INSTALL_DEMO_CONFIG") | .value) = "false"
+digest-without-tag	.image.tag |= sub("^latest", "")
+http-tls-commented-out	.config."opensearch.yml" |= sub("plugins.security.ssl.http.enabled: true", "# plugins.security.ssl.http.enabled: true")
+http-tls-disabled	.config."opensearch.yml" |= sub("plugins.security.ssl.http.enabled: true", "plugins.security.ssl.http.enabled: false")
+http-tls-overridden-later	.config."opensearch.yml" |= sub("audit.type: internal_opensearch\n", "audit.type: internal_opensearch\nplugins.security.ssl.http.enabled: false\n")
+internal-users-missing	del(.securityConfig)
+key-material	.nodeCertificate = "-----BEGIN CERTIFICATE-----"
+rest-api-roles-without-all-access	.config."opensearch.yml" |= sub("\\[\"all_access\", ", "[")
+unpinned-image	.image.tag = "latest"
+wrong-cert-path	.config."opensearch.yml" |= sub("ssl.http.pemcert_filepath: certs/node.crt", "ssl.http.pemcert_filepath: esnode.pem")
+wrong-secret-mount	.secretMounts[0].path = "/usr/share/opensearch/config/tls"
+wrong-transport-cert-path	.config."opensearch.yml" |= sub("transport.pemcert_filepath: certs/node.crt", "transport.pemcert_filepath: certs/transport.crt")
+EDITS
 
 echo "==> Rendering workspace chart fixtures"
 helm template workspace-contract src/groundx \
