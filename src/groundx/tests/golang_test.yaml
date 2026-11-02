@@ -376,14 +376,14 @@ tests:
     values:
       - ../values/minikube/values.yaml
     set:
-      summaryClient.replicas.gracePeriod: 900
+      summaryClient.replicas.gracePeriod: 600
     documentSelector:
       path: metadata.name
       value: summary-client
     asserts:
       - equal:
           path: spec.template.spec.terminationGracePeriodSeconds
-          value: 900
+          value: 600
   - it: "process pod honors a custom shutdown budget independently"
     templates:
       - ../templates/app/golang.yaml
@@ -440,7 +440,7 @@ tests:
       - equal:
           path: spec.template.spec.terminationGracePeriodSeconds
           value: 45
-  - it: "a Go queue service pod with no gracePeriod set renders unchanged"
+  - it: "a Go queue service pod with no gracePeriod set renders the 900-second default"
     templates:
       - ../templates/app/golang.yaml
     values:
@@ -448,6 +448,43 @@ tests:
     documentSelector:
       path: metadata.name
       value: summary-client
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+  - it: "an explicit gracePeriod on one Go queue service leaves a sibling on the 900-second default"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      process.replicas.gracePeriod: 120
+    documentSelector:
+      path: metadata.name
+      value: upload
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+  - it: "the groundx pod renders no grace period when none is set"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/minikube/values.yaml
+    documentSelector:
+      path: spec.selector.matchLabels.app
+      value: groundx
+    asserts:
+      - notExists:
+          path: spec.template.spec.terminationGracePeriodSeconds
+  - it: "the layout-webhook pod renders no grace period when none is set"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/minikube/values.yaml
+    documentSelector:
+      path: spec.selector.matchLabels.app
+      value: layout-webhook
     asserts:
       - notExists:
           path: spec.template.spec.terminationGracePeriodSeconds
