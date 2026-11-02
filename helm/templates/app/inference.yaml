@@ -15,7 +15,6 @@
 {{- $cacheAddr := coalesce (get $cache "addr") (include "groundx.cache.addr" $) -}}
 {{- $cachePort := coalesce (get $cache "port") (include "groundx.cache.port" $) -}}
 {{- $csct := get $svcData "containerSecurityContext" -}}
-{{- $eopts := get $svcData "execOpts" | default "" -}}
 {{- $fs := get $svcData "fileSync" | default false -}}
 {{- $ms := get $svcData "metrics" | default false -}}
 {{- $image := get $svcData "image" -}}
