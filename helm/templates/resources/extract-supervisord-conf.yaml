@@ -12,8 +12,7 @@
 {{- $threads := get $svcData "threads" -}}
 {{- $workers := int (get $svcData "workers") -}}
 {{- $maxTasksPerChild := get $svcData "maxTasksPerChild" | default 100 -}}
-{{- $gracePeriod := int (dig "gracePeriod" 900 $replicas) -}}
-{{- $stopWaitSecs := int (max 1 (sub $gracePeriod 30)) -}}
+{{- $stopWaitSecs := include "groundx.celeryWorker.stopWaitSecs" (dict "key" $entry "replicas" $replicas) -}}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -44,5 +43,7 @@ data:
     stderr_logfile=/dev/stderr
     stderr_logfile_maxbytes=0
     {{ end }}
+
+    {{ include "groundx.celeryWorker.group" $workers }}
 
 {{ end }}
