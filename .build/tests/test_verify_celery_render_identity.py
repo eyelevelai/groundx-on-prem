@@ -27,6 +27,20 @@ def test_extract_config_with_only_the_group_added_passes():
     assert guard.compare({key: CONF}, {key: CONF + GROUP}) == []
 
 
+def test_extract_config_already_grouped_in_base_and_identical_passes():
+    guard = load_guard()
+    key = "ConfigMap/extract-agent-supervisord-conf-map"
+    assert guard.compare({key: CONF + GROUP}, {key: CONF + GROUP}) == []
+
+
+def test_extract_config_already_grouped_in_base_and_changed_is_rejected():
+    guard = load_guard()
+    key = "ConfigMap/extract-agent-supervisord-conf-map"
+    changed = (CONF + GROUP).replace("870", "1")
+    assert guard.compare({key: CONF + GROUP}, {key: changed}) != []
+    assert guard.compare({key: CONF + GROUP}, {key: CONF}) != []
+
+
 def test_extract_config_without_the_group_is_rejected():
     guard = load_guard()
     key = "ConfigMap/extract-agent-supervisord-conf-map"

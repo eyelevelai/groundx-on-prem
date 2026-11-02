@@ -138,7 +138,10 @@ def compare(base: dict[str, str], branch: dict[str, str]) -> list[str]:
         _, name = key.split("/", 1)
         base_doc, branch_doc = base[key], branch[key]
         if name in EXTRACT_SERVICES or re.sub(r"-supervisord-conf-map$", "", name) in EXTRACT_SERVICES:
-            if key.startswith("ConfigMap/"):
+            if key.startswith("ConfigMap/") and GROUP_PROGRAMS.search(base_doc):
+                if base_doc != branch_doc:
+                    problems.append(f"{key}: base already has the group but branch is not byte-identical")
+            elif key.startswith("ConfigMap/"):
                 programs = WORKER_PROGRAM.findall(branch_doc)
                 stripped, groups = strip_extract_group(branch_doc)
                 if len(groups) != 1 or groups[0].split(",") != programs or not programs:

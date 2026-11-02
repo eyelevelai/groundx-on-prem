@@ -166,3 +166,41 @@ tests:
           content:
             name: RANKER_TASK_WAIT_SECONDS
             value: "110"
+  - it: "layout-api pod grace follows an overridden API timeout plus 30 (finalize success; catches a hard-coded grace)"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.api.timeout: 200
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: layout-api
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 230
+  - it: "workspace-api keeps replicas.gracePeriod over the derived default (skip unrelated repair path; must not block)"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.workspace.enabled.yaml
+    set:
+      workspace.api.replicas.gracePeriod: 60
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: workspace-api
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 60
+  - it: "ranker-api rejects replicas.gracePeriod (reject before state)"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+    set:
+      ranker.api.replicas.gracePeriod: 60
+    asserts:
+      - failedTemplate: {}

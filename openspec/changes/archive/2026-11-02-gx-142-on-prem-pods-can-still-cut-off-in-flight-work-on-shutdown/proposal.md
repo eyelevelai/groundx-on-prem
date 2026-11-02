@@ -47,3 +47,9 @@ Open design questions: none.
 - Tests: `celery`, `extract`, `inference`, `ranker`, `workspace`, `api` and `resources` helm-unittest suites and their snapshots.
 - Specs: `openspec/specs/worker-graceful-shutdown`, `openspec/specs/layout-worker-graceful-shutdown`, new `openspec/specs/api-graceful-shutdown`.
 - Related work: groundx-on-prem #164 (GX-125) edits the `download-model` block and the inference and ranker snapshots, so whichever merges second rebases; #162 (0.2.9 prep) changes the chart-version label in every snapshot if it merges first.
+
+## Amendments
+
+### 2026-11-02
+
+The rollback line in the blast radius is corrected. Each change is a mirror and source commit pair: the shared helper is `1e900f8b` (mirror) and `e55643cb` (source); the API change is `334e4bbe` (mirror) and `d4394d97` (source). To roll one back, revert both commits of its pair.

@@ -33,11 +33,11 @@
 
 ## 4. Runtime proofs and gate (evidence recorded in the change folder)
 
-- [ ] 4.1 Run the local minikube test with two busy workers in one extract-download pod and show both take SIGTERM within a few seconds and no new task starts after it, and show the previous chart fails the same test
+- [x] 4.1 Run the local minikube test with two busy workers in one extract-download pod and show both take SIGTERM within a few seconds and no new task starts after it, and show the previous chart fails the same test
   check: n/a — needs a local minikube cluster and a stand-in worker image; evidence recorded in the change folder (no AWS)
-- [ ] 4.2 Measure the extract-agent preStop run time at 1, 2 and 3 workers on the extract image (or a stand-in with the same Celery app import) and record `5 + N * c` against the 30 second slack; escalate if any tested count reaches it
+- [x] 4.2 Measure the extract-agent preStop run time at 1, 2 and 3 workers on the extract image (or a stand-in with the same Celery app import) and record `5 + N * c` against the 30 second slack; escalate if any tested count reaches it
   check: n/a — needs the extract image or a stand-in running locally; measurement recorded in the change folder
-- [ ] 4.3 Run the local Docker 60 second request test for each API image with the chart's rendered gunicorn config: the request completes after SIGTERM, and the previous config returns an empty reply at 30 seconds
+- [x] 4.3 Run the local Docker 60 second request test for each API image with the chart's rendered gunicorn config: the request completes after SIGTERM, and the previous config returns an empty reply at 30 seconds
   check: n/a — needs each private API image pulled locally; recorded as evidence before the review gate
 - [ ] 4.4 Run `.build/bin/validate-helm.sh` as the pre-push gate for both commits
   check: n/a — privileged-repo gate, run by the pre-push hook and the orchestrator, not by a task check
