@@ -107,6 +107,7 @@ without explicit human authorization.**
   retire Terraform's role in provisioning or maintaining the AWS infrastructure — see README.md's
   "Terraform Deployment (terraform/aws/)" section, including the EKS cluster-version configuration
   it documents.
+- **Production infra upkeep.** Never change GroundX hosted production AWS by hand: record every change in `groundx-production-infra` in the same change, adding the resource if it is missing. Adoption is partial, so apply through whatever currently manages the resource.
 
 ## Where specs live
 
