@@ -1,21 +1,21 @@
 ## 1. Thin slice: extract workers stop together through the shared helper (commit 1)
 
-- [ ] 1.1 Add `src/groundx/templates/_helpers/app/celery-worker.tpl` with `defaultGrace`, `gracePeriod`, `stopWaitSecs`, `group` and `command`; call it from `extract-supervisord-conf.yaml` and `celery.yaml` so extract Supervisor configs render `[group:celery_workers]` at every worker count and the Celery start command and grace come from the helper
+- [x] 1.1 Add `src/groundx/templates/_helpers/app/celery-worker.tpl` with `defaultGrace`, `gracePeriod`, `stopWaitSecs`, `group` and `command`; call it from `extract-supervisord-conf.yaml` and `celery.yaml` so extract Supervisor configs render `[group:celery_workers]` at every worker count and the Celery start command and grace come from the helper
   check: .build/bin/run-suite-on-copy.sh celery-worker-shutdown_test.yaml
-- [ ] 1.2 Reference `test_verify_celery_render_identity.py` in `.build/bin/validate-helm.sh` next to the other guard-script tests, so the committed identity-script counter-example tests run in the gate
+- [x] 1.2 Reference `test_verify_celery_render_identity.py` in `.build/bin/validate-helm.sh` next to the other guard-script tests, so the committed identity-script counter-example tests run in the gate
   check: grep -qF test_verify_celery_render_identity.py .build/bin/validate-helm.sh
 
 ## 2. Move the remaining Celery callers onto the helper (commit 1)
 
-- [ ] 2.1 Make `layout-`, `ranker-`, `summary-` and `workspace-supervisord-conf.yaml` take grace, stop wait and group from the helper, with no literal default grace or `sub $gracePeriod 30` left in any of the five supervisord files or `celery.yaml`
+- [x] 2.1 Make `layout-`, `ranker-`, `summary-` and `workspace-supervisord-conf.yaml` take grace, stop wait and group from the helper, with no literal default grace or `sub $gracePeriod 30` left in any of the five supervisord files or `celery.yaml`
   check: ! grep -nE 'dig "gracePeriod" (900|300)|sub \$gracePeriod 30' src/groundx/templates/resources/extract-supervisord-conf.yaml src/groundx/templates/resources/layout-supervisord-conf.yaml src/groundx/templates/resources/ranker-supervisord-conf.yaml src/groundx/templates/resources/summary-supervisord-conf.yaml src/groundx/templates/resources/workspace-supervisord-conf.yaml src/groundx/templates/app/celery.yaml
-- [ ] 2.2 Make `inference.yaml` take `terminationGracePeriodSeconds` and the start command from the helper and delete the `defaultGracePeriod` setting from `summary-inference.tpl`, leaving the `download-model` block untouched
+- [x] 2.2 Make `inference.yaml` take `terminationGracePeriodSeconds` and the start command from the helper and delete the `defaultGracePeriod` setting from `summary-inference.tpl`, leaving the `download-model` block untouched
   check: ! grep -rn 'defaultGracePeriod' src/groundx/templates
-- [ ] 2.3 Add `groundx.celeryWorker.initContainer` to the helper and call it from `inference.yaml` for layout inference's `init-layout`, byte-identical to today's block
+- [x] 2.3 Add `groundx.celeryWorker.initContainer` to the helper and call it from `inference.yaml` for layout inference's `init-layout`, byte-identical to today's block
   check: grep -q 'groundx.celeryWorker.initContainer' src/groundx/templates/app/inference.yaml
-- [ ] 2.4 Mirror every commit 1 template change into `helm/templates` and prove the Celery worker render is identical to the merge-base for every listed value combination, with the extract group as the only difference
+- [x] 2.4 Mirror every commit 1 template change into `helm/templates` and prove the Celery worker render is identical to the merge-base for every listed value combination, with the extract group as the only difference
   check: python3 .build/bin/verify-celery-render-identity.py
-- [ ] 2.5 Hand-patch the commit 1 snapshots (extract Supervisor config maps and extract Deployment hashes in `resources_test`, `celery_test` and any other suite the render diff shows), never `helm unittest -u`, and run the affected suites without `-u`
+- [x] 2.5 Hand-patch the commit 1 snapshots (extract Supervisor config maps and extract Deployment hashes in `resources_test`, `celery_test` and any other suite the render diff shows), never `helm unittest -u`, and run the affected suites without `-u`
   check: ! git diff --quiet "$(git merge-base HEAD origin/main)" -- src/groundx/tests/__snapshot__/resources_test.yaml.snap && .build/bin/run-suite-on-copy.sh resources_test.yaml celery_test.yaml extract_test.yaml inference_test.yaml workspace_test.yaml
 
 ## 3. API pods (commit 2)
