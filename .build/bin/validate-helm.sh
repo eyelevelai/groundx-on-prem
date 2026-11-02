@@ -89,6 +89,7 @@ fi
 OCR_TEST_CREDENTIALS="files/ocr/gcv-test.json"
 layout_pvc_values=""
 layout_pvc_render=""
+opensearch_wrapper_values=""
 ocr_generated_files=()
 SNAPSHOT_STABILITY_HASHFILE="$(mktemp)"
 cleanup() {
@@ -96,7 +97,7 @@ cleanup() {
     rm -f "${ocr_generated_files[@]}"
   fi
   rmdir src/groundx/files/ocr src/groundx/files helm/files/ocr helm/files 2>/dev/null || true
-  rm -f "${layout_pvc_values}" "${layout_pvc_render}" "${SNAPSHOT_STABILITY_HASHFILE}"
+  rm -f "${layout_pvc_values}" "${layout_pvc_render}" "${opensearch_wrapper_values}" "${SNAPSHOT_STABILITY_HASHFILE}"
 }
 trap cleanup EXIT
 for chart in src/groundx helm; do
@@ -523,6 +524,9 @@ bash src/groundx/tests/files/verify-probe-mirror-drift.sh
 
 echo "==> Verifying the OpenSearch TLS seed values and their accept/reject fixtures"
 bash src/groundx/tests/files/verify-opensearch-tls-values.sh
+opensearch_wrapper_values="$(mktemp)"
+yq '.operator' src/opensearch/values.yaml > "${opensearch_wrapper_values}"
+bash src/groundx/tests/files/verify-opensearch-tls-values.sh "${opensearch_wrapper_values}"
 for fixture in src/groundx/tests/files/opensearch-tls/accept-*.yaml; do
   bash src/groundx/tests/files/verify-opensearch-tls-values.sh "${fixture}" >/dev/null
 done

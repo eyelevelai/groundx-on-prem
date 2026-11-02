@@ -31,6 +31,10 @@ Invariant: a certificate whose private key is public, and a user whose password 
 - **WHEN** `src/groundx/values/opensearch/values.yaml`, `values.yaml` and `values.schema.json` are compared with their `helm/` copies
 - **THEN** each pair is byte-identical (`verify_mirrors()` through `MIRRORED_FILES` in `.build/bin/verify-storage-contract.py`)
 
+#### Scenario: The published opensearch wrapper chart uses the same configuration (polarity: reject before state; catches)
+- **WHEN** the `operator` block of `src/opensearch/values.yaml`, which `src/build.sh` packages and publishes as the `opensearch` chart, is read
+- **THEN** it passes the same checks as the seed values file, so a wrapper install also runs on operator certificates and operator-supplied users
+
 ### Requirement: GroundX trusts the operator OpenSearch CA through the GX-130 bundle
 GroundX SHALL trust the chart-deployed OpenSearch through `fileAccess.caSecretName` (GX-130): the README SHALL tell the operator to put the CA that signed `node.crt` into that Secret's `ca.crt`, a complete bundle of the public root CAs plus that CA. The chart SHALL NOT add an OpenSearch-only CA value, mount or `ai.aws.search.caFile` setting.
 
