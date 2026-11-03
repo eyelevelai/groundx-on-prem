@@ -214,6 +214,36 @@ false
 {{- printf "%s://%s/%s" $scheme $domain $suffix -}}
 {{- end }}
 
+{{- define "groundx.file.urlAliases" -}}
+{{- $root := .root -}}
+{{- $fs := .settings -}}
+{{- $origins := dig "trustedOrigins" list ($root.Values.fileAccess | default dict) -}}
+{{- $aliases := list -}}
+{{- if $origins -}}
+  {{- $primary := include "groundx.file.settings" $root | fromYaml -}}
+  {{- $sameStore := true -}}
+  {{- range $key := list "storageType" "bucketName" "region" -}}
+    {{- if ne (get $fs $key) (get $primary $key) -}}{{- $sameStore = false -}}{{- end -}}
+  {{- end -}}
+  {{- if eq (include "groundx.fileAccess.create" $root) "false" -}}
+    {{- if or (ne (get $fs "bucketDomain") (get $primary "bucketDomain")) (ne (get $fs "bucketScheme") (get $primary "bucketScheme")) -}}{{- $sameStore = false -}}{{- end -}}
+  {{- end -}}
+  {{- $native := $fs -}}
+  {{- if $sameStore -}}{{- $native = $primary -}}{{- end -}}
+  {{- $roots := list (printf "%s://%s" (get $native "bucketScheme") (get $native "bucketDomain")) -}}
+  {{- if $sameStore -}}{{- $roots = concat $roots $origins -}}{{- end -}}
+  {{- range $url := $roots -}}
+    {{- $url = trimSuffix "/" $url -}}
+    {{- $bucket := printf "/%s" (get $fs "bucketName") -}}
+    {{- if and (ne (get $fs "storageType") "s3") (not (hasSuffix $bucket $url)) -}}
+      {{- $url = printf "%s%s" $url $bucket -}}
+    {{- end -}}
+    {{- $aliases = append $aliases (printf "%s/" $url) -}}
+  {{- end -}}
+{{- end -}}
+{{- uniq $aliases | toJson -}}
+{{- end }}
+
 {{- define "groundx.file.settings" -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- $svc := include "groundx.file.serviceName" . -}}

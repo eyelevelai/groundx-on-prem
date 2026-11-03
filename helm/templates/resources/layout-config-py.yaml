@@ -8,6 +8,7 @@
 {{- $bucketSuffix := printf "%s/" (get $fs "bucketName") -}}
 {{- $baseDomain := get $fs "baseDomain" -}}
 {{- $st := include "groundx.file.storageType" . -}}
+{{- $aliases := include "groundx.file.urlAliases" (dict "root" . "settings" $fs) | fromJsonArray -}}
 {{- if eq $st "s3" }}
 {{- $bucketSuffix = "" -}}
 {{- end }}
@@ -52,7 +53,7 @@ stringData:
         uploadBaseURL={{ get $fs "bucketDomain" | quote }},
         uploadBucket={{ get $fs "bucketName" | quote }},
         uploadRegion={{ get $fs "region" | quote }},
-        uploadReplaceURL={{ printf "%s://%s/%s" (get $fs "bucketScheme") (get $fs "bucketDomain") $bucketSuffix | quote }},
+        uploadReplaceURL={{ if $aliases }}{{ $aliases | toJson }}{{ else }}{{ printf "%s://%s/%s" (get $fs "bucketScheme") (get $fs "bucketDomain") $bucketSuffix | quote }}{{ end }},
         uploadSSL={{ if eq (printf "%v" (get $fs "bucketSSL")) "true" }}True{{ else }}False{{ end }},
         uploadType={{ $st | quote }},
         uploadURL={{ include "groundx.file.presentationUrl" (dict "root" . "settings" $fs) | quote }},
