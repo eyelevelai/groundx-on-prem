@@ -149,6 +149,7 @@ echo "==> Running guard-script unit tests"
 "${PY}" .build/tests/test_verify_helm_unittest_plugin_version.py
 "${PY}" .build/tests/test_verify_helm_snapshot_stability.py
 "${PY}" .build/tests/test_verify_storage_contract.py
+"${PY}" .build/tests/test_verify_extract_agent_key.py
 
 echo "==> Running Helm unit tests"
 run_helm_unittest_and_verify_stability ""

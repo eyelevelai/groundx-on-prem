@@ -9,8 +9,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import yaml
-
 ROOT = Path(__file__).resolve().parents[2]
 CHARTS = ("src/groundx", "helm")
 FIXTURES = (
@@ -54,7 +52,10 @@ def render(chart: str, sets: dict[str, str], secrets: list[str]) -> list[dict]:
     result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode != 0:
         raise RuntimeError(f"{chart}: helm template failed: {result.stderr.strip()}")
-    return [d for d in yaml.safe_load_all(result.stdout) if isinstance(d, dict)]
+    parsed = subprocess.run(["yq", "ea", "-o=json", "[.]"], input=result.stdout, capture_output=True, text=True)
+    if parsed.returncode != 0:
+        raise RuntimeError(f"{chart}: yq failed to parse the helm render: {parsed.stderr.strip()}")
+    return [d for d in json.loads(parsed.stdout) if isinstance(d, dict)]
 
 
 def secret_data(documents: list[dict], shared: dict[str, dict[str, str]]) -> dict[str, dict[str, str]]:
