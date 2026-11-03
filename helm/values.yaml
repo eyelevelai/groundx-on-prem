@@ -158,6 +158,9 @@ stream:
 # services; it ignores it for bedrock, google, cegid, samsung and openai-base64. true on a
 # remote engine of an honored service sends this install's page-image bytes to that
 # engine's baseUrl. The key acts only with a summary-client image that reads it.
+# With fileAccess off the worker reads pages only while the database holds no file-access
+# policy, so an install that once ran with fileAccess on and still has policies keeps
+# sending page links.
 #
 # engines:
 #   default:
