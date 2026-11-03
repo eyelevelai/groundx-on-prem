@@ -16,7 +16,7 @@
 
 ## Branch continuity
 
-The original gateway plan and implementation are merged. Remaining chart release work is consolidated on `0.2.9`, PR [#168](https://github.com/eyelevelai/groundx-on-prem/pull/168). The plan remains open for the release and acceptance gates below.
+The original gateway plan and implementation are merged. Remaining chart release work is consolidated on `0.2.9`, PR [#168](https://github.com/eyelevelai/groundx-on-prem/pull/168). Release 0.2.9 is published. Uncompleted acceptance gates below are deferred, not certified.
 
 ## 3. Ingress and credential admission
 
@@ -124,7 +124,7 @@ Cloud file-access source, SDK 4.1.6 and the approved production runtime rollout 
 
 Historical instructions to stop older writers are superseded by the current shared migration runbook. This handoff authorizes no service pause or production mutation.
 
-The completed cloud work and deferred vendor work must not be conflated. Keep this plan open until the release and acceptance items above have evidence or an explicitly accepted successor.
+The completed cloud work and deferred vendor work are separate. This change is closed after publication of 0.2.9. Unchecked items remain deferred and were not completed. See closeout.md.
 
 ## Release branch readiness
 
