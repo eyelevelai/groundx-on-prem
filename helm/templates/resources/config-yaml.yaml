@@ -693,7 +693,7 @@ stringData:
       port: {{ include "groundx.summaryClient.containerPort" . }}
       serviceName: {{ include "groundx.summaryClient.serviceName" . }}
 
-    {{- if eq (include "groundx.fileAccess.create" .) "true" }}
+    {{- if or (eq (include "groundx.fileAccess.create" .) "true") .Values.fileAccess.trustedOrigins }}
 {{ include "groundx.fileAccess.config" . | indent 4 }}
     {{- end }}
 

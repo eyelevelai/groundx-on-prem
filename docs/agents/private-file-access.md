@@ -1,8 +1,9 @@
 # Private file access deployment contract
 
 `fileAccess.enabled` defaults to `false`. Existing storage, worker configuration,
-workloads and ingress manifests remain unchanged while it is disabled, except
-that a set `caSecretName` still delivers its CA bundle (see below). Enabling
+workloads and ingress manifests remain unchanged while it is disabled. A set
+`caSecretName` still delivers its CA bundle, and nonempty `trustedOrigins` configures
+existing storage readers without creating a gateway (see below). Enabling
 it adds two FileAccess gateway replicas using the shared Go Deployment, Service,
 health probes and config Secret. Gateway liveness uses `/health`; readiness
 uses `/readyz` to check its database/schema and Redis dependencies. Streaming adds a network hop and gateway
@@ -43,7 +44,9 @@ service credentials and existing document authorization regardless of customer p
   older file aliases (at most 32 origins, 2048 characters each). Entries have no credentials, query, fragment or nonroot
   path and must refer to the same configured storage namespace. The gateway
   resolves them through its configured bucket; this does not expose a store or
-  grant reads across buckets. Inventory and verify aliases before declaring them.
+  grant reads across buckets. This list also applies while `enabled=false`, without
+  requiring private-origin, credential or gateway TLS assertions. Alias syntax is
+  checked in both modes. Inventory and verify aliases before declaring them.
 - `storageEndpoint` is the full private HTTPS S3 API origin, including its port
   when required, without any path or trailing slash. Go clients, layout workers and their
   storage dependency checks use it independently of public URL SSL settings.
@@ -121,6 +124,43 @@ presentation settings. Enabled public presentation URLs use the HTTPS scheme
 from `publicUrl` and preserve the existing host, path and bucket exactly once.
 Configured file and extraction presentation hosts must match the gateway host. Do not substitute the private origin into returned
 artifact URLs or append a second bucket to a configured presentation root.
+
+## Storage aliases across workers
+
+Persist historical primary-store origins in `fileAccess.trustedOrigins`, including
+for public installations without the gateway:
+
+```yaml
+fileAccess:
+  enabled: false
+  trustedOrigins:
+    - https://old-files.example.com
+```
+
+The existing Go `config-yaml-map` Secret carries `fileAccess.trustedOrigins` in
+`config.yaml`. The existing layout config Secret carries a list of complete roots
+in `uploadReplaceURL`. The extraction config Secret carries the same roots in
+`ContainerUploadSettings.url_aliases`. Those lists include the native bucket root
+and each declared origin. S3 keeps configured path prefixes; MinIO and S4 add the
+bucket suffix only when absent. Current presentation roots and returned URLs stay
+unchanged. Historical HTTP references can resolve internally through a configured
+HTTPS root; callers still require HTTPS before sending authentication headers.
+
+Primary aliases apply to extraction only when backend, native endpoint, bucket
+and region identify the same store. A separate `extract.file` store retains its
+own current/native roots without those primary aliases. Alias recognition never
+grants document access or replaces native signed-link authority. Native grants
+retain their exact signed HTTP transport and do not retry through store credentials.
+
+Empty `trustedOrigins` preserves existing constructor rendering. Nonempty aliases
+require compatible Go/layout images and an extraction image built with SDK
+`ContainerUploadSettings.url_aliases` support. Generated extraction configuration
+checks the SDK field before constructing settings and refuses older SDKs that
+would silently ignore it. Release that SDK and rebuild compatible images before
+applying alias-bearing configuration. SDK 4.1.6 includes this field. Chart 0.2.9
+uses 0.2.9 application images by default; build compatible images before release.
+Runtime rollout and live on-prem certification remain deferred. Rendering does
+not verify image availability or storage compatibility.
 
 ## Upgrade existing files before activation
 
@@ -235,3 +275,23 @@ fall back to the hosted FileUpload service. Existing anonymous `/upload/{type}`
 request and response formats remain compatibility adapters to the same signing
 implementation. Hosted routing and retirement of the standalone Lambda require a
 separate deployment after all legacy routes are verified.
+
+## Temporary file links
+
+To enable temporary links with an explicit authentication choice, set
+`fileAccess.linkSigningKeySecretName` to an existing Kubernetes Secret. It must
+contain `GROUNDX_FILE_LINK_SIGNING_KEY`: at least 32 random bytes, base64-encoded.
+The chart gives this key to the API and FileAccess pods and the existing API
+schema-migration Job. Other workers do not receive it. Use the same key on all
+replicas. Do not put its value in Helm values, browser code or storage settings.
+
+On `file-link`, `requireAuthentication: true` requires current owner credentials;
+false allows anyone with the link to read it. Both expire. Leaving out the field
+keeps existing storage-signed sharing. Saved file URLs and policies do not change.
+Without the Secret, older links work and the new option returns 404.
+
+Deploy compatible file-service and API images before issuing new links. The key
+is read at startup: restart both after changing the Secret and verify they use the
+same value. Rotation cancels links signed with the old key. During rollback, keep
+the verifier and key until those links expire. These settings do not establish
+MinIO, AIStor or S4 certification; test each actual deployment separately.
