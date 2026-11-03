@@ -1,14 +1,14 @@
 ## 1. Thin slice: extract-agent, extract-download and extract-save render the agent Secret last
 
 - [x] 1.1 Add `groundx.extract.agent.lastSecret` to `src/groundx/templates/_helpers/app/extract-agent.tpl` and use it in `src/groundx/templates/app/celery.yaml` so the agent Secret is skipped in the sorted range and emitted as the final `envFrom` entry (only when attached to an `extract.*` workload)
-  check: helm unittest -f 'tests/extract_agent_key_test.yaml' src/groundx
+  check: helm unittest -f 'tests/extract_test.yaml' src/groundx
 - [x] 1.2 Hand-patch the `celery_test.yaml.snap` `envFrom` blocks (swap `extract-agent-secret` and `extract-save-secret`); never run `helm unittest -u`
   check: n/a — mechanical snapshot patch, verified by the gate in 5.1 and `.build/bin/verify-helm-snapshots.py`
 
 ## 2. extract-api
 
 - [x] 2.1 Apply the same helper in `src/groundx/templates/app/api.yaml` (the range there emits the map key, keep that) so `extract-api` renders the agent Secret last
-  check: helm unittest -f 'tests/extract_agent_key_api_test.yaml' src/groundx
+  check: helm unittest -f 'tests/extract_test.yaml' src/groundx
 - [x] 2.2 Hand-patch the `api_test.yaml.snap` extract-api `envFrom` blocks
   check: n/a — mechanical snapshot patch, verified by the gate in 5.1
 
