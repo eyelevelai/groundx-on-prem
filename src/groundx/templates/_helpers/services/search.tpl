@@ -26,10 +26,36 @@ true
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.search.caSecretName" -}}
+{{- $in := .Values.search | default dict -}}
+{{ dig "caSecretName" "" $in | trim }}
+{{- end }}
+
 {{- define "groundx.search.caBundle.validate" -}}
-{{- if and (eq (include "groundx.search.create" .) "true") (empty (dig "caSecretName" "" (.Values.fileAccess | default dict))) -}}
-{{- fail "fileAccess.caSecretName is required when GroundX uses the in-cluster OpenSearch: name a Secret whose ca.crt bundle includes the CA that signed the OpenSearch node certificate" -}}
+{{- $ca := coalesce (include "groundx.search.caSecretName" . | trim) (dig "caSecretName" "" (.Values.fileAccess | default dict) | trim) -}}
+{{- if and (eq (include "groundx.search.create" .) "true") (empty $ca) -}}
+{{- fail "search.caSecretName or fileAccess.caSecretName is required when GroundX uses the in-cluster OpenSearch: name a Secret whose ca.crt is the CA that signed the OpenSearch node certificate, or add that CA to the fileAccess.caSecretName bundle" -}}
 {{- end -}}
+{{- end }}
+
+{{- define "groundx.search.caMount" -}}
+{{- if include "groundx.search.caSecretName" . | trim }}
+- name: search-ca
+  mountPath: /var/run/groundx/search-ca
+  readOnly: true
+{{- end }}
+{{- end }}
+
+{{- define "groundx.search.caVolume" -}}
+{{- $name := include "groundx.search.caSecretName" . | trim -}}
+{{- if $name }}
+- name: search-ca
+  secret:
+    secretName: {{ $name | quote }}
+    items:
+      - key: ca.crt
+        path: ca.crt
+{{- end }}
 {{- end }}
 
 {{- define "groundx.search.serviceHost" -}}

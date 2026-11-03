@@ -80,7 +80,8 @@ service credentials and existing document authorization regardless of customer p
   starting. Use a complete trust bundle when those processes also contact other
   HTTPS services. An empty value uses system trust, but the chart will not
   render with it empty while GroundX uses the in-cluster OpenSearch, whose CA
-  must be in this bundle (README, OpenSearch). Provision certificates outside the chart and restart affected
+  must be in this bundle unless `search.caSecretName` names a Secret holding it,
+  which takes precedence for OpenSearch only (README, OpenSearch). Provision certificates outside the chart and restart affected
   consumers after rotating credentials or trust Secrets; env imports and existing
   TLS client pools do not reload through the config hash.
 - `tlsSecretName` is required for a chart-managed gateway ingress. Set
