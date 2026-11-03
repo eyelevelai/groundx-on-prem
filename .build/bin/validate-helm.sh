@@ -28,6 +28,7 @@ Runs the GroundX Helm production chart gate from one stable entrypoint:
   - storage chart, generated AWS values, and template-mirror contract verifier
   - probe-mirror-drift guard (renders src/groundx and helm/ and compares the API-pod probe timing)
   - targeted render checks for both chart surfaces
+  - extract agent API key precedence check (verify-extract-agent-key.py)
   - git whitespace check
 
 Options:
@@ -531,6 +532,9 @@ helm template workspace-contract helm \
   -f src/groundx/tests/files/values.workspace.yaml \
   -f src/groundx/tests/files/values.workspace-metrics.yaml \
   >/dev/null
+
+echo "==> Verifying extract agent API key precedence for both chart surfaces"
+"${PY}" .build/bin/verify-extract-agent-key.py
 
 echo "==> Validating workspace smoke/E2E script syntax and wording"
 bash -n .build/bin/smoke-workspace-runner.sh

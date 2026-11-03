@@ -957,6 +957,12 @@ extract:
 
 When set, pods use simulated LLM responses instead of external model providers.
 
+## Extract Agent API Key Precedence
+
+When the chart attaches its extract agent Secret (`extract-agent-secret`, or the Secret named by `extract.agent.secretName`) to `extract-api`, `extract-agent`, `extract-download` or `extract-save`, it renders that Secret last in `envFrom`, so its `GROUNDX_AGENT_API_KEY` wins over the same key in any Secret listed in `cluster.secrets`, whatever the names or order. With `extract.agent.existingSecret: true`, every key in that Secret overrides the same key from earlier Secrets on `extract-agent`, `extract-download` and `extract-save`; keys it lacks still resolve from the shared Secrets. A hosted provider with no `apiKey` and no `existingSecret` attaches no agent Secret and keeps the shared Secret's key. Upgrading rolls the extract api, agent, download and save pods once.
+
+Self-hosted extraction against the bundled summary service also needs a python-api image that includes the summary-api chat-completion reply fix (GX-158). Use the first python-api release that carries that fix; earlier images still fail extraction even with the correct key.
+
 ## Terminal Extract Diagnostics
 
 Terminal extract diagnostics are disabled by default. Enable the same value on
