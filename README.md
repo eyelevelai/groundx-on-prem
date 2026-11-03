@@ -961,7 +961,7 @@ When set, pods use simulated LLM responses instead of external model providers.
 
 When the chart attaches its extract agent Secret (`extract-agent-secret`, or the Secret named by `extract.agent.secretName`) to `extract-api`, `extract-agent`, `extract-download` or `extract-save`, it renders that Secret last in `envFrom`, so its `GROUNDX_AGENT_API_KEY` wins over the same key in any Secret listed in `cluster.secrets`, whatever the names or order. For the in-cluster summary engine this applies when `admin.apiKey` is set in values, which is what renders the agent Secret; supplying the admin key only through a shared Secret renders no agent Secret. With `extract.agent.existingSecret: true`, every key in that Secret overrides the same key from earlier Secrets on `extract-agent`, `extract-download` and `extract-save`; keys it lacks still resolve from the shared Secrets. A hosted provider with no `apiKey` and no `existingSecret` attaches no agent Secret and keeps the shared Secret's key. Upgrading rolls the extract api, agent, download and save pods once.
 
-Self-hosted extraction against the bundled summary service also needs a python-api image that includes the summary-api chat-completion reply fix (GX-158). Use the first python-api release that carries that fix; earlier images still fail extraction even with the correct key.
+This fix ships in chart 0.3.0. Self-hosted extraction against the bundled summary service also needs the summary-api chat-completion reply fix (GX-158) in python-api. The chart's default summary-api image is `python-api:<chart appVersion>`, so the python-api 0.3.0 image must be built from ai-server after that change merges; an earlier image still fails extraction even with the correct key.
 
 ## Terminal Extract Diagnostics
 

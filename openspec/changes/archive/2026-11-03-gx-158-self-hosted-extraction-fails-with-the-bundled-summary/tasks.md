@@ -22,7 +22,7 @@
 ## 4. Documentation
 
 - [x] 4.1 README: add a `GROUNDX_AGENT_API_KEY` precedence note (agent Secret last, `existingSecret` keys override, hosted without a key keeps the shared Secret) and the minimum python-api image release that carries the ai-server reply fix
-  check: grep -q 'GROUNDX_AGENT_API_KEY' README.md
+  check: grep -q 'ships in chart 0.3.0' README.md
 
 ## 5. Gate
 
