@@ -107,7 +107,7 @@ without explicit human authorization.**
   retire Terraform's role in provisioning or maintaining the AWS infrastructure — see README.md's
   "Terraform Deployment (terraform/aws/)" section, including the EKS cluster-version configuration
   it documents.
-- **Production infra upkeep.** Never change GroundX hosted production AWS by hand: record every change in `groundx-production-infra` in the same change, adding the resource if it is missing. Adoption is partial, so apply through whatever currently manages the resource.
+- **Production infra upkeep.** Record GroundX hosted production infrastructure and infrastructure configuration changes in `groundx-production-infra` in the same change, adding missing resources and applying through their current owner while adoption is partial. Routine updates to existing Lambda packages, Kubernetes application images or service binaries need no infrastructure PR; keep release evidence in the owning application or deployment repo. Infrastructure release snapshots can be refreshed with platform releases such as 0.2.9 and 0.3.0. Production approval, verification and rollback still apply.
 
 ## Where specs live
 
