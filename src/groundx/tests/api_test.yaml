@@ -611,3 +611,85 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "workspace/api/probe/readiness/timeoutSeconds.*minimum: got 0, want 1"
+  - it: "ranker gunicorn graceful_timeout follows an overridden API timeout (finalize success; catches a hard-coded value)"
+    templates:
+      - ../templates/resources/ranker-gunicorn-conf-py.yaml
+    values:
+      - ../values.yaml
+    set:
+      ranker.api.timeout: 200
+    documentSelector:
+      path: metadata.name
+      value: ranker-gunicorn-conf-py-map
+    asserts:
+      - matchRegex:
+          path: data["gunicorn_conf.py"]
+          pattern: "graceful_timeout = 200\\n"
+  - it: "extract-api keeps replicas.gracePeriod over the derived default (skip unrelated repair path; must not block)"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values/extract/values.yaml
+    set:
+      extract.api.replicas.gracePeriod: 60
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: extract-api
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 60
+  - it: "ranker-api task wait floors at 1 for a tiny timeout (finalize success; catches a negative cap)"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+    set:
+      ranker.api.timeout: 5
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: ranker-api
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: RANKER_TASK_WAIT_SECONDS
+            value: "1"
+  - it: "layout-api pod grace follows an overridden API timeout plus 30 (finalize success; catches a hard-coded grace)"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.api.timeout: 200
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: layout-api
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 230
+  - it: "workspace-api keeps replicas.gracePeriod over the derived default (skip unrelated repair path; must not block)"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.workspace.enabled.yaml
+    set:
+      workspace.api.replicas.gracePeriod: 60
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: workspace-api
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 60
+  - it: "ranker-api rejects replicas.gracePeriod (reject before state)"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+    set:
+      ranker.api.replicas.gracePeriod: 60
+    asserts:
+      - failedTemplate: {}

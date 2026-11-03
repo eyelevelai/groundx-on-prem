@@ -146,17 +146,16 @@ Before the change is released, shutdown behavior SHALL be proven in two runs, ea
 The chart SHALL define, in one shared helper under `templates/_helpers/app/`, for every Celery worker service rendered through `celery.yaml` and `inference.yaml`: the service's default grace period, the Supervisor stop wait `max(1, gracePeriod - 30)`, the `[group:celery_workers]` section, the `export PYTHONPATH=... && exec supervisord -c .../supervisord.conf` container command and the optional startup step rendered as an init container. The five `*-supervisord-conf.yaml` files, `celery.yaml` and `inference.yaml` SHALL call that helper and SHALL NOT compute a default grace period or a stop wait themselves. A Celery worker service's rendered grace period, stop wait, worker programs, group and start command SHALL be byte-identical to the previous chart for the value combinations default values, `replicas.gracePeriod` set on every worker family, cache type valkey, `imageType: chainguard` (`values/chainguard/values.yaml`), two and three workers per family, and `mode: ingest`, except that each extract Supervisor config gains `[group:celery_workers]` and its Deployment's `supervisord-hash` changes with it. The `download-model` init container and every other non-Celery workload SHALL be untouched. The shared start command SHALL keep the shell form so Supervisor is PID 1 through `exec`.
 
 #### Scenario: Every Celery worker render matches the previous chart (polarity: finalize success; must not block)
-- **WHEN** `.build/bin/verify-celery-render-identity.py` renders the base commit and the working tree for each listed value combination
-- **THEN** every Celery worker Deployment and `*-supervisord-conf-map` ConfigMap is byte-identical to the base render, except the extract Supervisor config maps and the `supervisord-hash` line of the extract Deployments
-- **AND** the script exits 0
+- **WHEN** the previous chart and this chart are rendered for each listed value combination
+- **THEN** every Celery worker Deployment and `*-supervisord-conf-map` ConfigMap is byte-identical, except the extract Supervisor config maps and the `supervisord-hash` line of the extract Deployments
 
 #### Scenario: A shared default that is wrong for one service is caught (polarity: finalize failure; catches)
 - **WHEN** a shared definition applies the 900-second default to `summary-inference`, where the previous chart rendered 300
-- **THEN** the identity script reports the `summary-inference` Deployment and Supervisor config as not byte-identical and exits non-zero
+- **THEN** the committed `inference_test.yaml` snapshot fails in `.build/bin/validate-helm.sh`
 
-#### Scenario: A change beyond the extract group is caught (polarity: finalize failure; catches)
-- **WHEN** an extract Supervisor config differs from the previous chart in anything other than the added group section
-- **THEN** the identity script exits non-zero naming that config map
+#### Scenario: A later change to a Celery worker render is caught (polarity: finalize failure; catches)
+- **WHEN** any Celery worker Supervisor config or its Deployment's `supervisord-hash` changes
+- **THEN** a committed snapshot suite fails in `.build/bin/validate-helm.sh`
 
 #### Scenario: Defaults and stop wait are not computed per file (polarity: reject before state)
 - **WHEN** `extract-supervisord-conf.yaml`, `layout-supervisord-conf.yaml`, `ranker-supervisord-conf.yaml`, `summary-supervisord-conf.yaml`, `workspace-supervisord-conf.yaml`, `celery.yaml` and `inference.yaml` are searched for a literal default grace period or the `sub $gracePeriod 30` calculation

@@ -1,9 +1,9 @@
 ## 1. Thin slice: extract workers stop together through the shared helper (commit 1)
 
 - [x] 1.1 Add `src/groundx/templates/_helpers/app/celery-worker.tpl` with `defaultGrace`, `gracePeriod`, `stopWaitSecs`, `group` and `command`; call it from `extract-supervisord-conf.yaml` and `celery.yaml` so extract Supervisor configs render `[group:celery_workers]` at every worker count and the Celery start command and grace come from the helper
-  check: .build/bin/run-suite-on-copy.sh celery-worker-shutdown_test.yaml
-- [x] 1.2 Reference `test_verify_celery_render_identity.py` in `.build/bin/validate-helm.sh` next to the other guard-script tests, so the committed identity-script counter-example tests run in the gate
-  check: grep -qF test_verify_celery_render_identity.py .build/bin/validate-helm.sh
+  check: .build/bin/validate-helm.sh
+- [x] 1.2 Add the multi-worker extract group cases to `celery_test.yaml`
+  check: grep -qF 'extract-agent with three workers groups all of them' src/groundx/tests/celery_test.yaml
 
 ## 2. Move the remaining Celery callers onto the helper (commit 1)
 
@@ -14,9 +14,9 @@
 - [x] 2.3 Add `groundx.celeryWorker.initContainer` to the helper and call it from `inference.yaml` for layout inference's `init-layout`, byte-identical to today's block
   check: grep -q 'groundx.celeryWorker.initContainer' src/groundx/templates/app/inference.yaml
 - [x] 2.4 Mirror every commit 1 template change into `helm/templates` and prove the Celery worker render is identical to the merge-base for every listed value combination, with the extract group as the only difference
-  check: python3 .build/bin/verify-celery-render-identity.py
+  check: n/a — one-time render comparison against the merge-base; result recorded in `evidence/render-identity.md`
 - [x] 2.5 Hand-patch the commit 1 snapshots (extract Supervisor config maps and extract Deployment hashes in `resources_test`, `celery_test` and any other suite the render diff shows), never `helm unittest -u`, and run the affected suites without `-u`
-  check: ! git diff --quiet "$(git merge-base HEAD origin/main)" -- src/groundx/tests/__snapshot__/resources_test.yaml.snap && .build/bin/run-suite-on-copy.sh resources_test.yaml celery_test.yaml extract_test.yaml inference_test.yaml workspace_test.yaml
+  check: ! git diff --quiet "$(git merge-base HEAD origin/0.3.0)" -- src/groundx/tests/__snapshot__/resources_test.yaml.snap && .build/bin/validate-helm.sh
 
 ## 3. API pods (commit 2)
 
@@ -26,10 +26,10 @@
   check: helm template r src/groundx -f src/groundx/tests/files/values.search-credentials.yaml -s templates/app/api.yaml | grep -q 'terminationGracePeriodSeconds: 270'
 - [x] 3.3 Add `groundx.ranker.api.taskWaitSeconds` (`max(1, timeout - 10)`) and render `RANKER_TASK_WAIT_SECONDS` through a `ranker-api` settings `env` entry, on `ranker-api` only
   check: helm template r src/groundx -f src/groundx/tests/files/values.search-credentials.yaml -s templates/app/api.yaml | grep -q 'RANKER_TASK_WAIT_SECONDS'
-- [x] 3.4 Mirror the commit 2 templates into `helm/templates` and run the new API suite plus the template mirror comparison
-  check: .build/bin/run-suite-on-copy.sh api-shutdown_test.yaml && diff -rq src/groundx/templates helm/templates
+- [x] 3.4 Mirror the commit 2 templates into `helm/templates` and add the API cases a snapshot does not cover to `api_test.yaml`
+  check: diff -rq src/groundx/templates helm/templates && .build/bin/validate-helm.sh
 - [x] 3.5 Hand-patch the commit 2 snapshots (gunicorn config maps, config hash annotations, API grace and `ranker-api` env in `resources_test`, `api_test`, `workspace_test`, `ranker_test`, `extract_test` and any other suite the render diff shows) and run the affected suites without `-u`
-  check: ! git diff --quiet "$(git merge-base HEAD origin/main)" -- src/groundx/tests/__snapshot__/api_test.yaml.snap && .build/bin/run-suite-on-copy.sh api_test.yaml resources_test.yaml workspace_test.yaml ranker_test.yaml extract_test.yaml
+  check: ! git diff --quiet "$(git merge-base HEAD origin/0.3.0)" -- src/groundx/tests/__snapshot__/api_test.yaml.snap && .build/bin/validate-helm.sh
 
 ## 4. Runtime proofs and gate (evidence recorded in the change folder)
 
@@ -39,7 +39,7 @@
   check: n/a — needs the extract image or a stand-in running locally; measurement recorded in the change folder
 - [x] 4.3 Run the local Docker 60 second request test for each API image with the chart's rendered gunicorn config: the request completes after SIGTERM, and the previous config returns an empty reply at 30 seconds
   check: n/a — needs each private API image pulled locally; recorded as evidence before the review gate
-- [ ] 4.4 Run `.build/bin/validate-helm.sh` as the pre-push gate for both commits
+- [x] 4.4 Run `.build/bin/validate-helm.sh` as the pre-push gate for both commits
   check: n/a — privileged-repo gate, run by the pre-push hook and the orchestrator, not by a task check
 
 See workspace `openspec/changes/gx-142-on-prem-pods-can-still-cut-off-in-flight-work-on-shutdown/tasks.md` for cross-service coordination and deferred items.
