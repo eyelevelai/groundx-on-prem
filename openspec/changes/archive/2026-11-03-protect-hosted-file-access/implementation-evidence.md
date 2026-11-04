@@ -41,3 +41,11 @@ Arcadia legacy, Arcadia v1, generic v1 and ADP v1 workflow definitions, runtime,
 ## Inline credential validation closeout
 
 Change `protect-hosted-file-access`, closed 2026-10-17T18:19:19.484601+00:00. Cleanup removed the exact `openspec/work/protect-hosted-file-access/inline-credential-admission-20261017` root (715 files, 218054244 bytes); absence is verified. The bounded lifecycle summary is `openspec/runs/protect-hosted-file-access/inline-credential-admission-20261017.json`, SHA-256 `2fb582db89fd88b1725e67691ded84c2473bc40bf838d5123fc8d8c3cd00fb5c`. Validation results remain in this file. No local validation root remains open.
+
+## 0.2.9 release branch
+
+PR [#168](https://github.com/eyelevelai/groundx-on-prem/pull/168) targets main from `0.2.9`; it replaces #162 after the source-branch rename. Existing history and all chart tests are preserved. Current main (`7661506037465431d9f2d2e94a88d6fa0eddf6df`) is included. Both source and mirrored charts remain 0.2.9. The existing full chart gate passes with Helm 3.19.0 and the checksum-verified helm-unittest 1.1.2; no snapshots were regenerated. Strict OpenSpec validation and whitespace checks pass. The primary local checkout tracks `origin/0.2.9`. Its existing untracked 0.2.8 package is unchanged.
+
+Image builds, publication, installation and live storage-vendor qualification remain deferred. Renaming the branch does not complete those acceptance gates.
+
+Local artifact receipt: accepted at 2026-11-03T03:40:20.931296+00:00. Removed `openspec/work/protect-hosted-file-access/20261102-release-branch` (794 regular files, 137129329 bytes), including temporary tools and raw validation logs; exact root confirmed absent. No unrelated files were removed. The bounded local summary is `openspec/runs/protect-hosted-file-access/20261102-release-branch-summary.json`, SHA-256 `f786529482998b24acfa98d2c182639fb79d44c0cf6ba02a25ba99c9bff0d937`. Retain it for at least 90 days. No raw content or credentials are retained in the receipt or summary.
