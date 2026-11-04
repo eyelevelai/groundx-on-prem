@@ -165,19 +165,11 @@ spec:
                 exit 1
               fi
 
-              errf=$(mktemp 2>/dev/null || mktemp "$dir/.flock-err.XXXXXX") || { echo "Cannot create a scratch file in /tmp or $dir; one of them must be writable." >&2; exit 1; }
-              trap 'rm -f "$errf"' EXIT
               exec 9>>"$lock" || { echo "Cannot open $lock for writing; the model volume must support file locks." >&2; exit 1; }
 
               start=$(date +%s)
               announced=0
-              while :; do
-                flock -n 9 2>"$errf" && break
-                rc=$?
-                if [ "$rc" -ne 1 ] || [ -s "$errf" ]; then
-                  echo "flock failed on $lock (exit $rc): $(cat "$errf")" >&2
-                  exit 1
-                fi
+              until flock -n 9; do
                 if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                   echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                   exit 1

@@ -778,13 +778,26 @@ If `search.privilegedPassword` does not match the real admin password, the Groun
 
 #### Upgrading Inference Services and the Model Download Lock
 
-The `download-model` init container of the inference services (layout, ranker, summary) now takes an exclusive `flock` on `download.lock` in the model volume, so a pod that is killed mid-download no longer blocks every later pod. A failed download or extraction now fails the init container (`Init:Error`, then `CrashLoopBackOff`) and writes no completion marker.
+The layout, ranker and summary inference pods download their model the first time they start. One pod downloads while the others wait. If the downloading pod is killed, the next pod takes over. If the download fails, the pod shows `Init:Error` and retries, instead of starting with a partial model.
 
-- **Upgrading and rolling back:** older pods coordinate through a `downloading` file and ignore `download.lock`; newer pods do the reverse. Before upgrading, and again before rolling back, scale the inference deployments to 0 so old and new pods never download into the same volume at once. After scaling to 0, wait until no inference pod remains, Terminating pods included (`kubectl wait -n eyelevel --for=delete pod -l 'app in (layout-inference,ranker-inference,summary-inference)' --timeout=20m`), because an old `download-model` container ignores SIGTERM and can keep downloading until `terminationGracePeriodSeconds` ends. A volume that already holds a genuine `complete.<model>` marker is safe in both directions.
-- **Volumes left broken by an older chart:** older charts wrote `complete.<model>` even when a download failed, so a volume can hold that marker on top of a partial model. This chart trusts the marker and does not re-download. If an inference pod cannot load its model after the upgrade, scale that service to 0 and wait until its pods are gone (`kubectl wait -n eyelevel --for=delete pod -l app=<service> --timeout=20m`, for example `app=summary-inference`), delete `complete.<model>` from its model volume (for example from a short-lived pod that mounts the claim), then scale it back up so the next pod downloads the model again.
-- **Init:Error / CrashLoopBackOff:** the pod reports the failed download or extraction in its `download-model` logs. A waiter gives up after 60 minutes and retries. In an air-gapped cluster the download cannot succeed, so seed the model volume with the model files and the `complete.<model>` marker instead.
-- **Missing or rejected flock:** if the busybox image has no `flock` applet, or the volume rejects the lock, a pod that still needs to download fails at once and names `flock` in its logs. Use a busybox image that provides `flock` (`busybox.image`) or a model volume that supports file locks. There is no value that bypasses the lock.
-- **Storage tested:** cross-node locking was verified on EFS only. Other ReadWriteMany storage is untested.
+**Before you upgrade or roll back** while a model is still downloading for the first time:
+
+1. Scale the inference deployments to 0.
+2. Wait until all their pods are gone. An old pod can keep downloading until its shutdown grace period ends.
+
+   ```bash
+   kubectl wait -n eyelevel --for=delete pod -l 'app in (layout-inference,ranker-inference,summary-inference)' --timeout=20m
+   ```
+
+3. Upgrade or roll back, then scale the deployments back up.
+
+Old and new pods use different locks, so they must not download into the same volume at the same time. If every model has already downloaded, you can skip these steps.
+
+**If an inference pod cannot load its model after upgrading:** older charts could mark a failed download as complete. Scale that service to 0, wait until its pods are gone (`kubectl wait -n eyelevel --for=delete pod -l app=summary-inference --timeout=20m` for summary), delete the `complete.<model>` file from its model volume, and scale it back up. The next pod downloads the model again.
+
+**Air-gapped clusters:** the pods cannot download the model. Copy the model files and the `complete.<model>` file into the model volume before scaling up.
+
+**Custom busybox image (`busybox.image`):** it must include `flock`. Without it, a pod that needs to download its model fails at once with a message naming `flock`.
 
 ### Persistent Storage
 

@@ -39,8 +39,8 @@ The script SHALL stop waiting after 60 minutes (a script constant, `wait_limit=3
 - **WHEN** the waiter's elapsed time reaches 3600 seconds
 - **THEN** the container exits non-zero with a timeout message and writes no marker
 
-### Requirement: An unusable flock fails at once
-The script SHALL first exit 0 without downloading when `complete.<model>` already exists, so a missing `flock` never fails a pod whose model volume is complete. When the marker is absent it SHALL check that `flock` exists before any wait and exit non-zero naming `flock` when it is missing. It SHALL retry only a silent exit code 1 as contention; any `flock -n` failure that prints an error or exits with another code SHALL exit non-zero immediately with that output. It SHALL NOT wait out the 60-minute limit on such a failure and SHALL NOT start a download. Polarity: `reject before state`.
+### Requirement: A missing flock fails at once
+The script SHALL first exit 0 without downloading when `complete.<model>` already exists, so a missing `flock` never fails a pod whose model volume is complete. When the marker is absent it SHALL check that `flock` exists before any wait and exit non-zero naming `flock` when it is missing. Any `flock -n` failure SHALL be retried every 3 seconds until the 60-minute limit, with `flock`'s own error output left in the container log. Polarity: `reject before state`.
 
 #### Scenario: flock applet missing
 - **GIVEN** an image where `flock` is not on the `PATH`
@@ -52,16 +52,10 @@ The script SHALL first exit 0 without downloading when `complete.<model>` alread
 - **WHEN** the container starts
 - **THEN** it exits 0 without any download request and without failing on the missing flock
 
-#### Scenario: flock rejects the lock
-- **GIVEN** a `flock` that prints `Bad file descriptor` and exits 1
+#### Scenario: flock reports an error
+- **GIVEN** a `flock` that prints an error and exits 1
 - **WHEN** the container starts on an empty volume
-- **THEN** it exits non-zero at once with a message naming flock, makes no download request and writes no marker
-- **AND** it is not treated as contention
-
-#### Scenario: Silent exit code 1 is contention
-- **GIVEN** a `flock` that exits 1 with no output
-- **WHEN** the container starts
-- **THEN** it keeps running and reports that it is waiting, and does not exit
+- **THEN** it keeps waiting with the error visible in its log, makes no download request, and exits non-zero at the 60-minute limit with no marker
 
 ### Requirement: A failed download is never marked complete
 The script SHALL exit non-zero, and SHALL NOT write `complete.<model>`, when any `wget`, `tar` or `xargs` step fails. `complete.<model>` SHALL be written only after every part downloaded and extracted and the archives were removed, while the lock is still held. Polarity: `finalize failure`.
@@ -79,44 +73,26 @@ The script SHALL exit non-zero, and SHALL NOT write `complete.<model>`, when any
 ### Requirement: The lock is taken by file descriptor on a write-opened file
 The script SHALL lock with `exec 9>>"$lock"` followed by `flock -n 9` and SHALL NOT use the `flock <path> <command>` form, which busybox opens read-only and which never acquires on EFS. Polarity: `reject before state`.
 
-#### Scenario: Path-form flock is rejected by the guard
-- **GIVEN** a rendered script that calls `flock "$lock" <command>` and has no write-opened fd
-- **WHEN** the lock guard checks it
-- **THEN** the guard fails
-
-#### Scenario: Fd form passes the guard
-- **GIVEN** the rendered script opens `exec 9>>"$lock"` and calls `flock -n 9`
-- **WHEN** the lock guard checks it
-- **THEN** the static check passes and does not block the legitimate form
+#### Scenario: Rendered script uses the fd form
+- **GIVEN** the rendered `download-model` command of any inference service
+- **WHEN** it is compared with the golden snapshots
+- **THEN** it opens `exec 9>>"$lock"`, calls `flock -n 9`, and contains no `flock <path> <command>` call
 
 ### Requirement: Both chart surfaces render the same script
 `src/groundx/templates/app/inference.yaml` and `helm/templates/app/inference.yaml` SHALL render the same `download-model` command for every inference service (layout, ranker, summary), and the hand-patched golden snapshots for `inference_test.yaml` and `ranker_test.yaml` SHALL match the rendered script. Polarity: `reject before state`.
 
 #### Scenario: Mirror drift is caught
 - **GIVEN** `helm/` differs from `src/groundx` in the `download-model` command of any inference service
-- **WHEN** the lock guard renders both charts
-- **THEN** the guard fails naming the service
+- **WHEN** the chart gate's template mirror check runs
+- **THEN** it fails naming `templates/app/inference.yaml`
 
 #### Scenario: Identical surfaces pass
-- **GIVEN** both charts render byte-identical scripts
-- **WHEN** the guard compares them
+- **GIVEN** both template copies are byte-identical
+- **WHEN** the mirror check compares them
 - **THEN** the mirror check passes
 
-### Requirement: The guard runs in the chart gate
-`.build/bin/validate-helm.sh` SHALL run `src/groundx/tests/files/verify-download-model-lock.sh` in a step announced as `==> Verifying download-model flock lock and failed-download handling (see GX-125)`. The guard SHALL run the rendered script in the chart's busybox image through Docker with a stubbed `wget`, SHALL fail closed naming the missing tool when `helm`, `yq` or `docker` is unavailable, and SHALL prove the `wget` stub intercepts the script before relying on it. Polarity: `reject before state`.
-
-#### Scenario: Docker unavailable
-- **GIVEN** `docker` is not on the `PATH` or its daemon is unreachable
-- **WHEN** the guard runs
-- **THEN** it exits non-zero naming docker, and does not pass vacuously
-
-#### Scenario: Guard fails on the pre-change template
-- **GIVEN** the template with the presence-only `downloading` lock
-- **WHEN** the guard runs
-- **THEN** the stale-lock case times out, the failed-download cases report a zero exit with a written marker, and the guard exits non-zero
-
 ### Requirement: The README documents the upgrade, rollback and failure behaviour
-The root `README.md` SHALL carry a `#### Upgrading Inference Services and the Model Download Lock` subsection before `### Persistent Storage` covering: scale the service to 0 and wait until no inference pod remains (Terminating pods included) before upgrading while a first download is in progress, and likewise before rolling back to an older chart while a new-chart pod is mid first download; a failed download or a waiter beyond 60 minutes ends in `Init:Error` / `CrashLoopBackOff`, so air-gapped installs seed the model volume before scaling up; a missing or rejected `flock` fails the init container at once and is fixed with a busybox image that provides flock or storage that supports file locks, with no value to bypass the lock; and cross-node locking is verified on EFS only. It SHALL NOT name a chart version. Polarity: `accept and enqueue`.
+The root `README.md` SHALL carry a `#### Upgrading Inference Services and the Model Download Lock` subsection before `### Persistent Storage` in plain language covering: scale the inference deployments to 0 and wait until their pods are gone before upgrading or rolling back while a first download is in progress; how to recover a pod that cannot load its model because an older chart marked a failed download complete; that air-gapped installs seed the model volume and the `complete.<model>` marker before scaling up; and that a custom busybox image must include `flock`. It SHALL NOT name a chart version. Polarity: `accept and enqueue`.
 
 #### Scenario: Note present and complete
 - **GIVEN** the README after the change
