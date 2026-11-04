@@ -8,3 +8,4 @@
 - [x] Make the README explain the gateway, verification flags and upgrade order without relying on prior context; preserve required settings and reference links.
 - [x] Document the starter's purpose and inclusion rules in repo agent guidance, keeping optional provider configuration in dedicated guides.
 - [x] Convert `AGENTS.md` to a table of contents, preserve detailed instructions in linked guidance and align references.
+- [x] Document customer-facing writing and placement rules; assess the README as a product introduction and quick start.

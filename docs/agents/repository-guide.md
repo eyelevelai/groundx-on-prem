@@ -112,6 +112,33 @@ without explicit human authorization.**
   it documents.
 - **Production infra upkeep.** Never change GroundX hosted production AWS by hand: record every change in `groundx-production-infra` in the same change, adding the resource if it is missing. Adoption is partial, so apply through whatever currently manages the resource.
 
+## Customer-facing documentation
+
+GroundX On-Prem is a customer-facing product repository. Its main README is the
+product introduction and quick start. Write for a human evaluating the product
+or installing it for the first time.
+
+- Use concise, plain English. Explain necessary technical terms and make every
+  section understandable without chat history or internal engineering context.
+- Allocate space by importance to the reader. Keep the product's purpose,
+  deployment choices, essential requirements, main Helm installation path and
+  first-use verification easy to find.
+- Put minor features, optional integrations, provider-specific alternatives,
+  tuning, diagnostics and detailed upgrade procedures in dedicated guides.
+  Link them where they help the reader. Adding a feature does not justify a
+  section in the main README.
+- Keep critical safety warnings beside the affected installation or upgrade
+  step. Link the full procedure without hiding prerequisites, security limits
+  or compatibility requirements. Preserve useful instructions when moving them.
+- Keep implementation details, CI commands and contributor procedures in
+  contributor or agent documentation. Avoid repeating them in customer guides.
+- Use specific, supported product claims. Qualify security and air-gap claims
+  by the required deployment configuration; avoid blanket promises or
+  unsupported superlatives.
+- Before expanding the README, ask whether the content helps a new customer
+  evaluate, install or begin using GroundX. If it serves a narrower task, update
+  the relevant guide instead.
+
 ## Customer starter values
 
 [`sample.values.yaml`](../../sample.values.yaml) is the minimal customer-facing starter

@@ -2,6 +2,9 @@
 
 ## Pull Requests
 
+- Follow the [customer documentation rules](docs/agents/repository-guide.md#customer-facing-documentation)
+  for the README and customer guides. Keep optional features and detailed
+  operating procedures in linked guides.
 - Keep Helm chart changes in `src/groundx/` first; mirror to `helm/` when the
   change needs to ship through the published chart.
 - Explain chart behavior in committed comments only when it captures a

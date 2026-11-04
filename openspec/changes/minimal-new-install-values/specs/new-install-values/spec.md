@@ -34,3 +34,12 @@ The install guide SHALL instruct customers to retain and pass their customized v
 - **WHEN** it follows the customer starter link
 - **THEN** the repository guide explains the minimal new-install sample and excludes optional provider blocks such as Cognito
 - **AND** `AGENTS.md` contains links rather than embedded procedures.
+
+### Requirement: Customer documentation prioritizes evaluation and first installation
+Repository guidance SHALL define the main README as a concise customer-facing product introduction and quick start. It SHALL place optional features and detailed operating procedures in linked guides, keep critical warnings beside affected steps, preserve useful instructions when relocating them and require plain English without internal engineering context.
+
+#### Scenario: Optional feature documentation is added
+- **GIVEN** a feature that is not required to evaluate, install or begin using GroundX
+- **WHEN** its documentation is added
+- **THEN** detailed configuration belongs in the relevant guide
+- **AND** the main README receives a link only where it helps the reader.
