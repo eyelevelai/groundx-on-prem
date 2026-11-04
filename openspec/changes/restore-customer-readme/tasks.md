@@ -16,4 +16,4 @@
 - Python and TypeScript quick-start examples parse. Both source and published Workspace chart contract checks pass, including the PVC behavior described in the guide.
 - Strict OpenSpec validation passes for all 53 items. The Harness validation, including the chart-backed on-prem scan, passes against this checkout; generated internal/public bundles match.
 - Independent review is clean after restoring the original OpenSearch numbered procedure and aligning the S4 guide ownership scenario.
-- Historical product claims and the Open Beta label are retained from the baseline, without asserting a newly verified lifecycle status. No live deployment or backend acceptance was performed.
+- Historical product language is retained. The stale Open Beta label is replaced with generally available, matching the Harness canonical product inventory (`skills/product-brand-gtm/references/product.md`, GroundX On-Prem) and its explicit stale-label note in `references/proof-points.md`. No live deployment or backend acceptance was performed.
