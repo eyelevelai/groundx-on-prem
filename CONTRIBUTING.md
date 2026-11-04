@@ -27,3 +27,13 @@ render, snapshot, and approval checks.
 - Run `helm template` or an existing focused render command for values/template
   changes.
 - For docs-only changes, run `git diff --check` before pushing.
+
+## Workspace validation
+
+Run the local Helm production gate before changing chart helpers, values, schemas, or snapshots:
+
+```bash
+.build/bin/validate-helm.sh
+```
+
+The Helm CI gate uses the same script. It lints both chart surfaces, runs Helm unittest, verifies that snapshots did not silently drop empty renders, runs `.build/bin/verify-workspace-chart.py` to prove the workspace API service and metrics contracts stay aligned, and runs `.build/bin/verify-storage-contract.py` to prove StorageClass defaults, provider examples, PVC access modes, mirrored chart files, and the `setup-eks` generated EFS/EBS values and printed Helm commands all render.

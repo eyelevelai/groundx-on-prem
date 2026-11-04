@@ -9,6 +9,7 @@ Keep this file as a table of contents. Detailed rules belong in the linked docum
 | Editing charts or generated files | [Agent boundaries](docs/agents/repository-guide.md#agent-boundaries) and [deployment caveats](docs/agents/repository-guide.md#repo-specific-gotchas) |
 | Running cluster, cloud or publishing commands | [Privileged operations](docs/agents/repository-guide.md#privileged-operations) |
 | Writing customer documentation or editing the README | [Audience, clarity and content placement](docs/agents/repository-guide.md#customer-facing-documentation) |
+| Changing deployment behavior or documentation paths | [On-prem skill maintenance](docs/agents/repository-guide.md#maintaining-the-on-prem-skill) |
 | Editing the customer starter | [sample.values.yaml rules](docs/agents/repository-guide.md#customer-starter-values) |
 | Planning or changing specifications | [OpenSpec workflow](docs/agents/repository-guide.md#openspec), [configuration](openspec/config.yaml), [active changes](openspec/changes/) and [archived changes](openspec/changes/archive/) |
 | Configuring private file access | [File-access deployment contract](docs/agents/private-file-access.md) |

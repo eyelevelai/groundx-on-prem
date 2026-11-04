@@ -139,6 +139,15 @@ or installing it for the first time.
   evaluate, install or begin using GroundX. If it serves a narrower task, update
   the relevant guide instead.
 
+## Maintaining the on-prem skill
+
+When deployment behavior or documentation paths change, check the affected
+`groundx-studio-harness/skills/groundx-on-prem/` references. Update those that no
+longer match, or note that they remain accurate. Use the same customer guides and
+current chart sources for both humans and agents. The Harness maintenance guide
+owns its existing validation and packaging steps; no automatic cross-repo sync is
+required.
+
 ## Customer starter values
 
 [`sample.values.yaml`](../../sample.values.yaml) is the minimal customer-facing starter

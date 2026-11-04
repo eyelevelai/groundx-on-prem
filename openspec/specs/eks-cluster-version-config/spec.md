@@ -62,7 +62,7 @@ version-downgrade state; the written value must match what is already running.
   version (as read via the AWS EKS API) and **not** to `1.35`
 
 ### Requirement: `terraform/aws/`'s supported status is documented consistently
-`README.md` and `docs/agents/repository-guide.md` SHALL describe `terraform/aws/`'s supported status consistently with
+`README.md`, its linked `terraform/aws/README.md` and `docs/agents/repository-guide.md` SHALL describe `terraform/aws/`'s supported status consistently with
 each other and with its actual, currently-deployed state on this branch: an optional path for
 provisioning AWS infrastructure (a VPC and/or EKS cluster) ahead of the Helm install, and the
 supported path for maintaining AWS infrastructure already provisioned through it. Neither document

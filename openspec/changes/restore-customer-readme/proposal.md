@@ -21,7 +21,11 @@ The baseline is `aecde7bc63029f936f85051de023c0aa10a9a798:README.md` (February 1
 
 ### Modified Capabilities
 
-None. Existing location-specific requirements will be adjusted during implementation only where a documented procedure actually moves; their behavioral and safety requirements remain intact.
+- `s4-storage-type`: align documentation locations while preserving deployment and safety requirements.
+- `existing-redis-tls-upgrade-guidance`: align documentation locations while preserving deployment and safety requirements.
+- `summary-inference-gpu-sizing`: align documentation locations while preserving deployment and safety requirements.
+- `eks-cluster-version-config`: align documentation locations while preserving deployment and safety requirements.
+- `object-store-install-and-upgrade`: align documentation locations while preserving deployment and safety requirements.
 
 ## Impact
 
