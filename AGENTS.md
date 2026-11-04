@@ -109,6 +109,33 @@ without explicit human authorization.**
   it documents.
 - **Production infra upkeep.** Never change GroundX hosted production AWS by hand: record every change in `groundx-production-infra` in the same change, adding the resource if it is missing. Adoption is partial, so apply through whatever currently manages the resource.
 
+## Customer starter values
+
+[`sample.values.yaml`](sample.values.yaml) is the minimal customer-facing starter
+for a new full Helm installation. Customers copy it to their own `values.yaml`,
+customize it and pass that file to Helm with `-f`. They retain their customized
+file for upgrades. The sample is not the chart's default values or a catalog of
+supported features.
+
+- Include only critical installation choices: license, administrator identity,
+  cluster/storage selection, database/search credentials and file-access setup.
+  Add a setting only when a new customer needs to consider it before installing,
+  not merely because a feature was added.
+- Keep optional features, provider-specific configuration and tuning in their
+  dedicated guides or examples. Do not add Cognito settings or other optional
+  blocks, even as commented examples. Link [identity modes](docs/on-prem-identity.md)
+  and the [full values reference](helm/README.md) instead.
+- Use replacement placeholders and short, plain-English comments. Do not include
+  real credentials, usable example passwords, repeated defaults, debugging
+  settings, migration procedures or internal implementation notes.
+- The sample explicitly enables file access; packaged chart defaults remain
+  unchanged. Keep privacy and transport verification flags false until the
+  operator completes the [required checks](docs/agents/private-file-access.md).
+- Keep the sample, README instructions and existing sample-render tests aligned.
+  Use supported schema keys and preserve required installation choices when
+  simplifying it. Existing customers must never replace their values with this
+  sample as an upgrade step.
+
 ## Where specs live
 
 - OpenSpec: `openspec/changes/` (active), `openspec/changes/archive/` (shipped).
