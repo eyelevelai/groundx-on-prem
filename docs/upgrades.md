@@ -90,7 +90,7 @@ Both services log in to OpenSearch: the API (`groundx`) to search, and the index
 
 With an older `groundx` image the API has no search password and crash-loops; with an older `process` image the indexing worker cannot write to OpenSearch, so ingested documents fail.
 
-Pods read the Secret only when they start, so after changing either key, restart both services. 
+Pods read the Secret only when they start, so after changing either key, restart both services.
 
 Restart `groundx` first and wait for it, because it updates the `search.username` user to the new password at startup, then restart `process`: `kubectl rollout restart -n eyelevel deployment/groundx`, `kubectl rollout status -n eyelevel deployment/groundx`, then `kubectl rollout restart -n eyelevel deployment/process`.
 
