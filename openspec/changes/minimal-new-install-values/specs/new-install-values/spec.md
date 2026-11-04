@@ -25,3 +25,12 @@ The install guide SHALL instruct customers to retain and pass their customized v
 - **GIVEN** an existing customer-owned values file
 - **WHEN** the customer follows the upgrade instructions
 - **THEN** the Helm command uses that file and does not copy the new-install sample over it.
+
+### Requirement: Repository agent entrypoint remains a table of contents
+`AGENTS.md` SHALL remain a short table of contents linking to repository guidance, contribution instructions and relevant operator guides. Detailed rules, including the purpose and inclusion criteria for `sample.values.yaml`, SHALL live in the linked repository guide. Relocation SHALL preserve existing operational and safety instructions and update references to their new location.
+
+#### Scenario: Agent reads customer starter rules
+- **GIVEN** an agent starts at `AGENTS.md`
+- **WHEN** it follows the customer starter link
+- **THEN** the repository guide explains the minimal new-install sample and excludes optional provider blocks such as Cognito
+- **AND** `AGENTS.md` contains links rather than embedded procedures.

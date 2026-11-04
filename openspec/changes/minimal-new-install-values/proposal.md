@@ -8,6 +8,7 @@ The documented new-install sample uses the unsupported `groundxKey` field, so th
 - Recommend file access in the new-install sample, with private-origin and HTTPS assertions false until verified. Use the existing storage credentials Secret instead of inline object-store credentials.
 - Link identity alternatives and deployment details rather than duplicating them. Update README copy/install/upgrade instructions.
 - Extend existing Helm resource tests to exercise the actual sample after operator configuration and reject unverified activation.
+- Keep `AGENTS.md` as a table of contents; move detailed rules into the linked repository guide and align specification references.
 - No chart templates, packaged values, schema, image tags, releases or deployments change.
 
 ## Capabilities
@@ -17,6 +18,9 @@ The documented new-install sample uses the unsupported `groundxKey` field, so th
 
 ### Modified Capabilities
 - `on-prem-identity-config`: move provider-specific identity examples out of the minimal starter.
+- `eks-cluster-version-config`: retain Terraform and hosted-production rules in linked repository guidance.
+- `search-credential-required`: retain test-fixture commands in linked repository guidance.
+- `object-store-install-and-upgrade`: retain store wording in linked repository guidance.
 
 ## Impact
 

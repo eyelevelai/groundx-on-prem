@@ -10,6 +10,10 @@ Extend `resources_test.yaml` using the real root sample as the values input. Wit
 
 No new production code or Kubernetes resource is introduced. The sample and README are not mirrored chart sources. The identity specification's starter-file requirement is revised to match the smaller sample; the full provider field definitions stay documented in the identity guide and schema.
 
+Repository agent instructions live in `docs/agents/repository-guide.md`. Keep `AGENTS.md` as a short table of contents that routes to that guide and the existing operator documents. Preserve operational and safety instructions during relocation, and update specification and architecture references to their new location.
+
 ## Validation
 
 Run the focused resource suite before and after the sample edit, then the complete `.build/bin/validate-helm.sh` gate with Helm 3.19.0 and the pinned helm-unittest binary. Render both source and published charts using the completed sample, compare their output, and verify their packaged defaults and templates have no diff. No cluster or database operation is required.
+
+For documentation relocation, verify all new links and anchors, compare the moved instructions with the prior version, run strict OpenSpec validation and check diff whitespace. No chart rerun is needed for documentation-only edits.
