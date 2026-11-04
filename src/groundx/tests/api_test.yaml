@@ -693,3 +693,25 @@ tests:
       ranker.api.replicas.gracePeriod: 60
     asserts:
       - failedTemplate: {}
+  - it: "schema rejects a zero timeout on every API (reject before state)"
+    templates:
+      - ../templates/app/api.yaml
+    values:
+      - ../values.yaml
+    set:
+      extract.api.timeout: 0
+      layout.api.timeout: 0
+      ranker.api.timeout: 0
+      summary.api.timeout: 0
+      workspace.api.timeout: 0
+    asserts:
+      - failedTemplate:
+          errorPattern: "extract/api/timeout.*minimum: got 0, want 1"
+      - failedTemplate:
+          errorPattern: "layout/api/timeout.*minimum: got 0, want 1"
+      - failedTemplate:
+          errorPattern: "ranker/api/timeout.*minimum: got 0, want 1"
+      - failedTemplate:
+          errorPattern: "summary/api/timeout.*minimum: got 0, want 1"
+      - failedTemplate:
+          errorPattern: "workspace/api/timeout.*minimum: got 0, want 1"

@@ -20,7 +20,7 @@ The chart SHALL set gunicorn `graceful_timeout` in each of the five API gunicorn
 - **AND** the same run against the previous chart's gunicorn config returns an empty reply 30 seconds after SIGTERM
 
 ### Requirement: API pods default their grace period to timeout plus 30 seconds
-The chart SHALL render `terminationGracePeriodSeconds` on each of the five API Deployments as `groundx.<svc>.api.timeout + 30` when `replicas.gracePeriod` is not set (150 seconds, 270 for summary-api), and SHALL render `replicas.gracePeriod` when it is set on `extract.api` or `workspace.api`. `layout.api`, `ranker.api` and `summary.api` SHALL keep rejecting `replicas.gracePeriod`. `values.schema.json` SHALL NOT change. An idle API pod SHALL still stop immediately on SIGTERM.
+The chart SHALL render `terminationGracePeriodSeconds` on each of the five API Deployments as `groundx.<svc>.api.timeout + 30` when `replicas.gracePeriod` is not set (150 seconds, 270 for summary-api), and SHALL render `replicas.gracePeriod` when it is set on `extract.api` or `workspace.api`. `layout.api`, `ranker.api` and `summary.api` SHALL keep rejecting `replicas.gracePeriod`. An idle API pod SHALL still stop immediately on SIGTERM.
 
 #### Scenario: Derived default grace (polarity: finalize success)
 - **WHEN** the chart is rendered with default values
@@ -37,6 +37,13 @@ The chart SHALL render `terminationGracePeriodSeconds` on each of the five API D
 #### Scenario: Unsupported grace override is still rejected (polarity: reject before state)
 - **WHEN** `ranker.api.replicas.gracePeriod` is set
 - **THEN** schema validation fails and no manifest is rendered
+
+### Requirement: The schema rejects an API timeout below 1
+`values.schema.json` SHALL require `timeout` to be at least 1 on `extract.api`, `layout.api`, `ranker.api`, `summary.api` and `workspace.api`, in `src/groundx` and `helm/`. A `timeout` of 0 would render a 0-second gunicorn drain and a 1-second `ranker-api` task wait, and no finite grace period can mean "no limit".
+
+#### Scenario: A zero timeout is rejected (polarity: reject before state)
+- **WHEN** `timeout` is 0 on any of the five API blocks
+- **THEN** schema validation fails with `minimum: got 0, want 1` and no manifest is rendered
 
 ### Requirement: Ranker-api task wait is capped by a chart-rendered environment variable
 The chart SHALL render the container env var `RANKER_TASK_WAIT_SECONDS` on `ranker-api` only, with the value `max(1, groundx.ranker.api.timeout - 10)`, computed once in a chart helper. It SHALL NOT be a `config.py` key, so `ranker-config-py-map` and `ranker-inference` render unchanged. It is not a secret.

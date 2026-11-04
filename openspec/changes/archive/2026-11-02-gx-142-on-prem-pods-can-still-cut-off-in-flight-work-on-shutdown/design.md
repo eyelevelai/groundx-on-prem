@@ -6,7 +6,7 @@
 - The Celery worker render stays byte-identical to the previous chart, apart from the extract group.
 
 **Non-Goals:**
-- Extract-agent preStop, any existing grace default or worker count, GX-124's services and its `drainSeconds` calculation, `acks_late`, broker visibility timeout, the `download-model` init container (GX-125), `values.schema.json`, harness docs (linked follow-up ticket at hand-off).
+- Extract-agent preStop, any existing grace default or worker count, GX-124's services and its `drainSeconds` calculation, `acks_late`, broker visibility timeout, the `download-model` init container (GX-125), harness docs (linked follow-up ticket at hand-off).
 - Per-request upper bounds for `extract-api`, `layout-api`, `workspace-api`: the chart `timeout` is the stated limit their waits cover (accepted gap, see proposal).
 
 Context is in `proposal.md`. Producer contract shapes confirmed against the plan: the only cross-repo shape is the `RANKER_TASK_WAIT_SECONDS` env var, recorded in the workspace `contract.md`.
@@ -55,3 +55,7 @@ Context is in `proposal.md`. Producer contract shapes confirmed against the plan
 ### 2026-11-03
 
 The branch merges `0.3.0` at `87027773` (`da2fd346`). The render-identity script, its unit test and `.build/bin/run-suite-on-copy.sh` are removed; D8 and D9 describe what replaces them.
+
+### 2026-11-04
+
+`values.schema.json` now requires `timeout` of at least 1 on the five API blocks, in both trees (supersedes the non-goal that excluded the schema). With `timeout: 0` the chart rendered `graceful_timeout = 0`, so gunicorn killed workers at SIGTERM, and `RANKER_TASK_WAIT_SECONDS=1`, so every ranker search returned 504 after 1 s. On the previous chart 0 only turned off gunicorn's hung-worker check. No values file in this repo sets 0. `api_test.yaml` gains one case that sets all five to 0 and checks each rejection.
