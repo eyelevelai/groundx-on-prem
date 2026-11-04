@@ -226,7 +226,7 @@ enabled: false
   {{- $name := dig "linkSigningKeySecretName" "" ($root.Values.fileAccess | default dict) -}}
   {{- if $name -}}{{- $_ := set $secrets $name $name -}}{{- end -}}
 {{- end -}}
-{{- $consumers := list "groundx" "fileAccess" "layoutWebhook" "preProcess" "process" "queue" "largeFileDeliver" "summaryClient" "upload" "layout.api" "layout.inference" "layout.correct" "layout.map" "layout.ocr" "layout.process" "layout.save" "extract.api" "extract.agent" "extract.download" "extract.save" -}}
+{{- $consumers := list "groundx" "fileAccess" "layoutWebhook" "preProcess" "postProcess" "process" "queue" "largeFileDeliver" "summaryClient" "upload" "layout.api" "layout.inference" "layout.correct" "layout.map" "layout.ocr" "layout.process" "layout.save" "extract.api" "extract.agent" "extract.download" "extract.save" -}}
 {{- if and (eq (include "groundx.fileAccess.create" $root) "true") (has .service $consumers) -}}
   {{- $name := $root.Values.fileAccess.storageCredentialsSecretName -}}
   {{- if $name -}}{{- $_ := set $secrets $name $name -}}{{- end -}}

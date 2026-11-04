@@ -337,6 +337,11 @@ for chart in src/groundx helm; do
       exit 1
     fi
   done
+  post_process_output="$(helm template private-files "${chart}" -f src/groundx/tests/files/values.file-access.yaml -f src/groundx/tests/files/values.post-process.yaml)"
+  if ! yq -e 'select(.kind == "Deployment" and .metadata.name == "post-process") | .spec.template.spec.containers[0].envFrom[] | select(.secretRef.name == "file-store-credentials")' <<<"${post_process_output}" >/dev/null; then
+    echo "${chart}: post-process must receive the file-store-credentials Secret when FileAccess is enabled." >&2
+    exit 1
+  fi
   for gateway_ingress in true false; do
     for native_host in delivery origin; do
       if [[ "${gateway_ingress}" == false && "${native_host}" == origin ]]; then continue; fi

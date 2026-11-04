@@ -96,7 +96,7 @@ The chart SHALL reject legacy native store ingress using the public delivery hos
 - **THEN** existing port resolution and explicit custom backends are preserved.
 
 ### Requirement: Feature credentials reach only storage consumers
-The chart SHALL import the feature storage Secret only into verified Go, migration, layout and extraction consumers. Explicit operator global and workload Secret imports SHALL retain their existing scope.
+The chart SHALL import the feature storage Secret only into verified Go, migration, layout and extraction consumers, including the optional post-process worker. Explicit operator global and workload Secret imports SHALL retain their existing scope.
 
 #### Scenario: Storage consumers without dependency wait containers
 - **GIVEN** file access has a storage Secret and no operator global Secrets
@@ -108,6 +108,18 @@ The chart SHALL import the feature storage Secret only into verified Go, migrati
 - **GIVEN** an explicit operator global Secret or native S3 with an empty feature storage Secret
 - **WHEN** workloads render
 - **THEN** operator global imports remain available to every workload, duplicate imports are absent and ambient S3 creates no empty Secret reference.
+
+#### Scenario: Post-process worker with file access enabled (accept and enqueue)
+- **GIVEN** file access is enabled with a feature storage Secret and `postProcess.enabled` is true
+- **WHEN** either chart surface renders
+- **THEN** the `post-process` Deployment `envFrom` includes that Secret
+- **AND** the `src/groundx` and `helm` template copies stay byte-identical.
+
+#### Scenario: Post-process worker with file access disabled (skip unrelated path)
+- **GIVEN** file access is disabled and `postProcess.enabled` is true
+- **WHEN** the chart renders
+- **THEN** the `post-process` Deployment has no storage Secret `envFrom` entry and its rendered output is unchanged
+- **AND** no workload outside the existing consumer list gains the Secret.
 
 ### Requirement: Enabled file access rejects ignored inline credentials
 When file access is enabled, the chart SHALL reject nonempty `file.username`, `file.password` and `file.token`, and nonempty `extract.file.username` or `extract.file.password` when extraction is enabled. The error SHALL identify the field without disclosing its value and direct migration to the feature storage Secret or native S3 ambient credentials.
@@ -134,3 +146,4 @@ The chart SHALL configure public native upload signing independently of fileAcce
 - **GIVEN** fileAccess is enabled with verified native signing settings
 - **WHEN** an additional public file.signingEndpoint is configured
 - **THEN** the protected fileAccess.signingEndpoint remains authoritative.
+

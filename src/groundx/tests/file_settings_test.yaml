@@ -1508,3 +1508,32 @@ tests:
           value:
             - secretRef:
                 name: file-store-credentials
+
+  - it: post-process receives the storage Secret when file access is on
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.file-access.yaml
+      - ./files/values.post-process.yaml
+    documentSelector:
+      path: metadata.name
+      value: post-process
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: file-store-credentials
+
+  - it: post-process has no storage Secret import when file access is off
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.disabled.yaml
+      - ./files/values.post-process.yaml
+    documentSelector:
+      path: metadata.name
+      value: post-process
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].envFrom
