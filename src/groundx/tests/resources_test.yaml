@@ -9,6 +9,54 @@ set:
     privilegedPassword: fixture-admin-credential
 
 tests:
+  - it: "completed new-install sample renders licensed private file access"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../../../sample.values.yaml
+    set:
+      licenseKey: fixture-license
+      admin.apiKey: 3bf42079-1974-4f62-b71f-f8130ea35a42
+      admin.username: 683c364a-f128-4ac2-a13f-c117d77f9cdc
+      fileAccess.originsPrivate: true
+      fileAccess.frontProxyTLSVerified: true
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "licenseKey: fixture-license"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "fileAccess:\n  enabled: true\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'publicUrl: "https://files.example.com"'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'storageEndpoint: "https://store.internal.example.com:9443"'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'signingEndpoint: "https://s3.example.com"'
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "password: password|groundxKey:|cognito:"
+  - it: "new-install sample requires private-origin verification"
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ../../../sample.values.yaml
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.originsPrivate must be true after operator verification of all storage aliases"
+  - it: "new-install sample requires encrypted transport verification"
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ../../../sample.values.yaml
+    set:
+      fileAccess.originsPrivate: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.frontProxyTLSVerified must be true after operator verification of HTTPS termination and encrypted trusted gateway backplane"
   - it: "database migration uses target database config in a separate hook Secret"
     templates:
       - ../templates/app/schema-migration.yaml

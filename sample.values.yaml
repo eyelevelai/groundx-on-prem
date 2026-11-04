@@ -1,50 +1,52 @@
-groundxKey: "00000000-0000-0000-0000-000000000000"
+# Starter for new full installations. Replace placeholders and example hosts.
+# Existing installations should retain their own values file when upgrading.
+licenseKey: "<groundx-license-key>"
 
 admin:
-  apiKey: "00000000-0000-0000-0000-000000000000"
-  email: "support@mycorp.net"
-  password: "password"
-  username: "00000000-0000-0000-0000-000000000000"
+  apiKey: "<generate-a-uuid-v4>"
+  username: "<generate-a-different-uuid-v4>"
+  email: "<administrator-email>"
 
-# Uncomment and fill to enable Cognito login; omit to stay on the apiKeyOnly identity default.
-# mode: cognito also requires AWS credentials reaching the pod (existing chart mechanism, not a
-# new value: standard AWS env vars, or an IRSA-enabled serviceAccount.name) and region set.
-# cognito:
-#   mode: cognito
-#   clientId: "<cognito-app-client-id>"
-#   clientSecret: "<cognito-app-client-secret>"
-#   poolId: "<cognito-user-pool-id>"
-#   region: "<aws-region>"
+# Authentication defaults to API keys, without password login.
+# For local password login or Cognito, see docs/on-prem-identity.md.
 
 cluster:
-  pvClass: eyelevel-pv
+  type: eks # Set to your Kubernetes platform, such as eks, aks or openshift.
+  pvClass: "<existing-storage-class>"
+  pvAccessMode: ReadWriteMany # Use ReadWriteOnce for block/local storage.
 
-  # "", "eks", "aks", "gke", "openshift", etc.
-  type: eks
-
+# Match the separately provisioned MySQL application and migration credentials.
 db:
-  enabled: true
+  username: "<database-application-user>"
+  password: "<database-application-password>"
+  privilegedUsername: "<database-migration-user>"
+  privilegedPassword: "<database-migration-password>"
 
-  dbName: eyelevel
-  username: eyelevel
-  password: password
-
-  privilegedUsername: root
-  privilegedPassword: password
-
+# Backing services must be installed first. For external S3, MySQL or search,
+# see README.md, Installing Services, before changing the connection settings.
 file:
+  bucketName: "<object-store-bucket>"
+  customDomain: files.example.com # Must match fileAccess.publicUrl's host.
+
+fileAccess:
   enabled: true
+  publicUrl: https://files.example.com
+  storageEndpoint: https://store.internal.example.com:9443
+  signingEndpoint: https://s3.example.com
+  # Existing Secret containing GROUNDX_ACCESS_KEY_ID and GROUNDX_SECRET_ACCESS_KEY.
+  # Native AWS S3 may omit this Secret when all storage readers use ambient IAM.
+  storageCredentialsSecretName: groundx-storage-credentials
+  # Set each assertion true only after completing its verification.
+  # See docs/agents/private-file-access.md for backend acceptance and TLS checks.
+  originsPrivate: false
+  frontProxyTLSVerified: false
+  ingress:
+    enabled: true
+    ingressClassName: nginx # Set to your controller's ingress class.
+  tlsSecretName: groundx-files-tls # Existing certificate Secret for publicUrl.
+  # caSecretName: groundx-storage-ca # Required for a private storage CA.
 
-  bucketName: eyelevel
-
-  username: "<object-store-username>"
-  password: "<object-store-password>"
-
+# Match the separately provisioned OpenSearch application and admin passwords.
 search:
-  enabled: true
-
-  indexName: prod-1
-  username: eyelevel
-  password: ""
-  privilegedUsername: admin
-  privilegedPassword: ""
+  password: "<search-application-password>"
+  privilegedPassword: "<search-administrator-password>"
