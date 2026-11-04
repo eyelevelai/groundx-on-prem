@@ -39,23 +39,11 @@ true
 {{- end }}
 
 {{- define "groundx.search.caMount" -}}
-{{- if include "groundx.search.caSecretName" . | trim }}
-- name: search-ca
-  mountPath: /var/run/groundx/search-ca
-  readOnly: true
-{{- end }}
+{{- include "groundx.caBundle.mount" (dict "name" "search-ca" "path" "/var/run/groundx/search-ca" "secret" (include "groundx.search.caSecretName" . | trim)) }}
 {{- end }}
 
 {{- define "groundx.search.caVolume" -}}
-{{- $name := include "groundx.search.caSecretName" . | trim -}}
-{{- if $name }}
-- name: search-ca
-  secret:
-    secretName: {{ $name | quote }}
-    items:
-      - key: ca.crt
-        path: ca.crt
-{{- end }}
+{{- include "groundx.caBundle.volume" (dict "name" "search-ca" "secret" (include "groundx.search.caSecretName" . | trim)) }}
 {{- end }}
 
 {{- define "groundx.search.serviceHost" -}}
