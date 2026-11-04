@@ -731,37 +731,40 @@ You must have completed the following steps before attempting to install the Gro
 
 ### Configuration
 
-For a **new full installation**, copy the starter into a customer-owned values file:
+Helm reads your installation settings from a YAML file. For a new installation with ingestion and search, run this from the repository root:
 
 ```bash
 cp sample.values.yaml values.yaml
 ```
 
-Replace its placeholders and example hosts before installing. Keep populated credentials out of source control. The starter contains the settings that require an installation-specific choice:
+Edit `values.yaml` with your settings before installing. Replace all placeholders and example hostnames. Keep the completed file out of source control because it contains credentials.
 
 | Settings | What to supply |
 |---|---|
 | `licenseKey` | The GroundX license key for this installation. |
-| `admin.apiKey`, `admin.username`, `admin.email` | Two distinct generated UUIDs and the administrator's email. Authentication defaults to API keys without password login; see [identity modes](docs/on-prem-identity.md) for local login or Cognito. |
+| `admin.apiKey`, `admin.username`, `admin.email` | A different generated UUID for each of the first two fields, plus the administrator's email. Generate both UUIDs with `bin/uuid`. |
 | `cluster.type`, `cluster.pvClass`, `cluster.pvAccessMode` | Kubernetes platform, existing StorageClass and its supported access mode. Prefer `ReadWriteMany` for shared filesystems; use `ReadWriteOnce` for block/local storage. |
-| `db.username`, `db.password`, `db.privilegedUsername`, `db.privilegedPassword` | Application and migration credentials matching the separately provisioned MySQL service. |
+| `db.username`, `db.password`, `db.privilegedUsername`, `db.privilegedPassword` | MySQL application credentials and an account with permission to create and upgrade the GroundX database schema. Match the accounts configured when installing MySQL. |
 | `file.bucketName`, `file.customDomain` | Object-store bucket and stable file-delivery hostname. The hostname must match `fileAccess.publicUrl`. |
-| `fileAccess` | HTTPS delivery, private storage and native signing endpoints, existing storage/TLS Secrets, and the ingress class. |
+| `fileAccess` | File-delivery and storage URLs, storage credentials, HTTPS certificates and ingress settings. Follow the file-access steps below. |
 | `search.password`, `search.privilegedPassword` | Application and administrator passwords matching OpenSearch. Neither is required for `mode: ingest`. |
 
-The starter explicitly enables file access for new installations. The chart-wide default remains disabled. Before using the starter, complete the selected backend's acceptance and configuration requirements in the [private file-access guide](docs/agents/private-file-access.md). Remove inline object-store credentials; use the existing `storageCredentialsSecretName` Secret, or ambient IAM for native AWS S3. Configure a trusted storage CA through `caSecretName` when needed.
+Authentication uses API keys by default, without password login. See [identity modes](docs/on-prem-identity.md) to configure local password login or Amazon Cognito.
 
-The starter deliberately leaves `originsPrivate` and `frontProxyTLSVerified` false. Verify that anonymous reads fail on every storage origin, and that HTTPS termination and the gateway backplane are encrypted, before setting each assertion true. A TLS certificate Secret alone does not prove these conditions. Rendering fails while either assertion is false. Configure DNS, ingress and the named Secrets before installation; Helm does not create those external prerequisites or change an existing bucket's permissions.
+The sample enables the GroundX file gateway, which applies your file-access policies to downloads. Complete the [file-access deployment guide](docs/agents/private-file-access.md) for your storage provider before deploying. It covers URLs, DNS, ingress, certificates, credentials, compatible images and storage tests.
 
-Install the backing-service prerequisites using [Installing Services](#installing-services). For external services or specialized deployments, use the connection examples in [helm/values](helm/values) and the [full values reference](helm/README.md). Add only the overrides needed for the target environment.
+The sample leaves two verification flags false. Complete the guide's checks before setting them true:
+
+1. `fileAccess.originsPrivate`: every storage address rejects unauthenticated reads, authorized processing works, and stored files and storage connections are encrypted.
+2. `fileAccess.frontProxyTLSVerified`: HTTPS is configured, and traffic between your ingress or proxy and the gateway is encrypted.
+
+Helm blocks installation until both flags are true. The flags record your verification; they do not change bucket permissions or configure encryption. Create the required Kubernetes Secrets and network routes before installing.
+
+The chart's default for `fileAccess.enabled` remains `false`. Using your existing values file on an upgrade does not enable the gateway automatically.
+
+For external services or specialized deployments, see the [service installation instructions](#installing-services), [connection examples](helm/values) and [full values reference](helm/README.md).
 
 The chart has no default OpenSearch passwords. When `mode` is not `ingest`, set both: each search credential can be set through `values.yaml` (`search.password`, `search.privilegedPassword`) or through the cluster credentials Secret (`SEARCH_PASSWORD`, `SEARCH_INIT_PASSWORD` in `eyelevel-secret-credentials`), as the `MYSQL_*` keys do for `db`. The sample Secret in `src/groundx/prereqs/secret/values.yaml` carries both keys with empty values; fill them in. The Secret route requires `cluster.secrets` to list `eyelevel-secret-credentials`, and `groundx` and `process` images that read `SEARCH_PASSWORD` and `SEARCH_INIT_PASSWORD`. Both services log in to OpenSearch: the API (`groundx`) to search, and the indexing worker (`process`) to write documents to the index. Their default images are tagged with the chart's `appVersion`, and images up to 0.2.7 do not read these keys. Until the chart ships images that read them, either set both passwords in values, or set both `groundx.image` and `process.image` to images built from cashbot-go with this change (EyeLevel-ai/cashbot-go#1809). With an older `groundx` image the API has no search password and crash-loops; with an older `process` image the indexing worker cannot write to OpenSearch, so ingested documents fail. Pods read the Secret only when they start, so after changing either key, restart both services. Restart `groundx` first and wait for it, because it updates the `search.username` user to the new password at startup, then restart `process`: `kubectl rollout restart -n eyelevel deployment/groundx`, `kubectl rollout status -n eyelevel deployment/groundx`, then `kubectl rollout restart -n eyelevel deployment/process`. Passwords delivered through the Secret are not render-validated by the chart, because the published-default check sees values only. The Secret route applies to the direct-helm route; the Terraform operator still takes both passwords as values, required when `cluster.search` is `true` and not needed for an ingest-only install (`cluster.search = false`). In `mode: ingest` neither is used or rendered.
-
-**Note**: `admin.apiKey` and `admin.username` must be valid UUIDs. We provide a helper script to generate random UUIDs. You can run it using thefollowing command:
-
-```bash
-bin/uuid
-```
 
 #### Upgrading an Existing Install
 
@@ -852,13 +855,15 @@ helm install groundx \
 
 Replace `values.yaml` with the path to the `values.yaml` file you created in the previous [Configuration](#configuration) step.
 
-Retain that customized file and pass it again on upgrades:
+For upgrades, keep your customized `values.yaml`. Do not replace it with `sample.values.yaml`.
+
+Before upgrading, follow the [database upgrade requirements](docs/agents/database-upgrades.md) and the [OpenSearch credential steps](#upgrading-an-existing-install). Then pass your existing file to Helm:
 
 ```bash
 helm upgrade groundx groundx/groundx -n eyelevel -f values.yaml
 ```
 
-Existing installations must keep their existing values file rather than replace it with the new-install sample. Adopting file access on an existing installation requires the [existing-file activation procedure](docs/agents/private-file-access.md#upgrade-existing-files-before-activation), compatible images and verification of the deployed backend. Follow the [database upgrade gate](docs/agents/database-upgrades.md) for application upgrades.
+To enable the file gateway on an existing installation, follow the [existing-file activation procedure](docs/agents/private-file-access.md#upgrade-existing-files-before-activation). It includes preparing older files, selecting compatible images and testing your storage provider.
 
 # Autoscaling & Monitoring
 
