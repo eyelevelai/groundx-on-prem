@@ -91,11 +91,7 @@ spec:
 {{ toYaml $anns | nindent 8 }}
 {{- end }}
     spec:
-{{- if and $rp (hasKey $rp "gracePeriod") }}
-      terminationGracePeriodSeconds: {{ get $rp "gracePeriod" }}
-{{- else }}
-      terminationGracePeriodSeconds: 900
-{{- end }}
+      terminationGracePeriodSeconds: {{ include "groundx.celeryWorker.gracePeriod" (dict "key" $entry "replicas" $rp) }}
 {{- if $san }}
       serviceAccountName: {{ $san }}
 {{- end }}
@@ -169,7 +165,7 @@ spec:
             - /bin/sh
             - -c
             - |
-              export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf
+              {{ include "groundx.celeryWorker.command" (dict "workDir" "/app" "inheritPath" false) }}
 {{- if gt (len $lifecycle) 0 }}
           lifecycle:
 {{- toYaml $lifecycle | nindent 12 }}

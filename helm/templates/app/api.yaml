@@ -75,6 +75,8 @@ spec:
     spec:
 {{- if and $rp (hasKey $rp "gracePeriod") }}
       terminationGracePeriodSeconds: {{ get $rp "gracePeriod" }}
+{{- else }}
+      terminationGracePeriodSeconds: {{ add (int (include (printf "groundx.%s.timeout" $entry) $)) 30 }}
 {{- end }}
 {{- if $san }}
       serviceAccountName: {{ $san }}
