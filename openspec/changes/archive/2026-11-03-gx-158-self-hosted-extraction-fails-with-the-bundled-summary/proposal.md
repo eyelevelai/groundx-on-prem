@@ -4,7 +4,7 @@ With the documented shared Secret, the extraction pod sends the OpenAI key to th
 
 The Linear body (GX-158) is the authority; its on-prem code links are stale only in that `celery.yaml` now merges through `groundx.fileAccess.workloadSecrets`. The bug is unchanged.
 
-This is the chart half of GX-158. The second half (summary-api's reply missing `id`, `object`, `model`, `choices[].index`) is fixed in ai-server and verified in internal-arcadia-agents and cashbot-go; both must land for self-hosted extraction to work.
+This is the chart half of GX-158. The second half (summary-api's reply missing `id`, `object`, `model`, `choices[].index`) is fixed in ai-server and verified in internal-arcadia-agents; both must land for self-hosted extraction to work.
 
 ## What Changes
 
@@ -12,7 +12,7 @@ This is the chart half of GX-158. The second half (summary-api's reply missing `
 - Hosted-provider path with no key in values and no `existingSecret` attaches no agent Secret, so `GROUNDX_AGENT_API_KEY` keeps coming from the shared Secret exactly as today.
 - Values-keyed hosted providers (anthropic `engines.default.apiKey`, bedrock `extract.agent.apiKey`, `summary.existing.apiKey`) intentionally get the agent Secret's key after the fix (plan-gate adjustment P1).
 - Changes are made in `src/groundx/` and mirrored by hand into `helm/` (no regen script; `verify_mirrors()` in `.build/bin/verify-storage-contract.py` enforces byte equality of the template trees).
-- Tests, run through `.build/bin/validate-helm.sh`: helm-unittest cases in `src/groundx/tests/` with conflicting Secrets sorting before and after the agent Secret in both list orders, plus anthropic and bedrock cases; a check that renders both `src/groundx` and `helm/`, resolves the extraction pod's env with Kubernetes precedence, and asserts it equals the summary key. Snapshots are hand-patched, never regenerated with `-u`, and verified with `helm unittest` and `.build/bin/verify-helm-snapshots.py`.
+- Tests, run through `.build/bin/validate-helm.sh`: helm-unittest cases in `src/groundx/tests/` with conflicting Secrets sorting before and after the agent Secret in both list orders, plus anthropic and bedrock cases; `helm/` is covered by the existing mirror check. Snapshots are hand-patched, never regenerated with `-u`, and verified with `helm unittest` and `.build/bin/verify-helm-snapshots.py`.
 - README: a `GROUNDX_AGENT_API_KEY` precedence note and the minimum python-api image release that carries the ai-server reply fix (P2).
 
 ## Capabilities

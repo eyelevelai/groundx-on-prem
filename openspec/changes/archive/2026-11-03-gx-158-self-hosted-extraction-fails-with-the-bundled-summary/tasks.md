@@ -14,10 +14,8 @@
 
 ## 3. Mirror and cross-surface proof
 
-- [x] 3.1 Mirror the template changes by hand into `helm/templates` (byte-identical to `src/groundx/templates`) and confirm `src/groundx` and `helm/` both resolve `GROUNDX_AGENT_API_KEY` to the summary key
-  check: python3 .build/bin/verify-extract-agent-key.py
-- [x] 3.2 Wire `.build/bin/verify-extract-agent-key.py` into `.build/bin/validate-helm.sh` after the targeted render checks, and list it in the script's usage text
-  check: grep -q 'verify-extract-agent-key.py' .build/bin/validate-helm.sh
+- [x] 3.1 Mirror the template changes by hand into `helm/templates` (byte-identical to `src/groundx/templates`); the existing mirror check covers `helm/`, and the helm-unittest cases prove the agent Secret is the last `envFrom` entry, which Kubernetes resolves last
+  check: python .build/bin/verify-storage-contract.py
 
 ## 4. Documentation
 
@@ -29,4 +27,4 @@
 - [x] 5.1 Run the full chart gate (lint, helm unittest with the generated OCR fixture, snapshot stability, mirror and render checks); PRIVILEGED repo, so lint, template and unittest only
   check: .build/bin/validate-helm.sh
 
-See workspace `openspec/changes/gx-158-self-hosted-extraction-fails-with-the-bundled-summary/tasks.md` for cross-service coordination and deferred items (ai-server reply fix, internal-arcadia-agents and cashbot-go verification, cluster proof for acceptance criterion 4).
+See workspace `openspec/changes/gx-158-self-hosted-extraction-fails-with-the-bundled-summary/tasks.md` for cross-service coordination and deferred items (ai-server reply fix, internal-arcadia-agents verification, cluster proof for acceptance criterion 4).
