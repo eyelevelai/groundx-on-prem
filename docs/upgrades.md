@@ -133,7 +133,7 @@ cluster:
 
 Use this mode when multiple pods need to share a mounted cache or model/data volume. Workspace does not require this for the primary local-git workflow, but it is useful when the secondary file API cache is configured as a PVC. Example storage class values are included for common shared filesystems:
 
-- EKS/EFS: `src/groundx/prereqs/storageclass/values.efs.example.yaml`
+- EKS/EFS: `src/groundx/prereqs/storageclass/values.efs.example.yaml` (new installs using this example set `cluster.pvClass: eyelevel-efs`; existing EFS releases keep their current `storageClassName`)
 - AKS/Azure Files: `src/groundx/prereqs/storageclass/values.azure-files.example.yaml`
 - GKE Filestore: `src/groundx/prereqs/storageclass/values.gke-filestore.example.yaml`
 
