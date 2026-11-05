@@ -696,7 +696,7 @@ helm repo update
 helm install opensearch opensearch/opensearch --version 2.23.1 -n eyelevel -f helm/values/opensearch/values.yaml
 ```
 
-Keep `-f helm/values/opensearch/values.yaml` on every `helm upgrade opensearch …`. The values pin the tested OpenSearch image; to move to a newer image, test it and update the digest in that file.
+Keep `-f helm/values/opensearch/values.yaml` on every `helm upgrade opensearch …`, followed by `opensearch-overrides.yaml` if you changed any OpenSearch setting: without it, a changed `clusterName` or `nodeGroup` starts OpenSearch on a new, empty volume (see [Upgrading an Existing Install](docs/storage/opensearch-upgrade.md#upgrading-an-existing-install)). The values pin the tested OpenSearch image; to move to a newer image, test it and update the digest in that file.
 
 To rotate certificates or fix a `request timed out` error from `groundx` or `process`, see [Upgrading and Maintaining the Bundled OpenSearch](docs/storage/opensearch-upgrade.md).
 
