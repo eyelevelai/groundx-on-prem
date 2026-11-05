@@ -200,7 +200,6 @@ true
 {{- $cfg := dict
   "baseName"       ($svc)
   "cfg"            (printf "%s-config-py-map" $svc)
-  "execOpts"       ("exec")
   "fileSync"       ("true")
   "image"          (include "groundx.layout.inference.image" .)
   "initCommand"    ("python /app/init-layout.py")

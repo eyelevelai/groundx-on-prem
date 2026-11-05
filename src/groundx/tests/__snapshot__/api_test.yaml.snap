@@ -20,7 +20,7 @@
         metadata:
           annotations:
             config-hash: 12d78cdd587a51bcb7ebf5af6c8872d7f1f8f4152175071dc503b226ba269583
-            gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
+            gunicorn-conf-hash: 2095cc7d0f249c6b79325f8e5afc5fc7f5ecba9b37a89f3b5224ae80f73c9d25
           labels:
             app: layout-api
         spec:
@@ -110,6 +110,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -161,7 +162,7 @@
         metadata:
           annotations:
             config-hash: 80984f2c4c5a566db5f4dd7a3c86abb0733bb079165671ca808e888a3cd8f9af
-            gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
+            gunicorn-conf-hash: 6fbeb844eb8ce604087b86894fac71d0b4b9607d1131f40032a62b0882c642b4
           labels:
             app: ranker-api
         spec:
@@ -190,6 +191,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: RANKER_TASK_WAIT_SECONDS
+                  value: "110"
               image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -251,6 +254,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -302,7 +306,7 @@
         metadata:
           annotations:
             config-hash: ea698157e5a248cb307974eaf0b410f6b3b67dfa9c1de3ee0df957acbe0d63f9
-            gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
+            gunicorn-conf-hash: 5a1341d0b173e18e4fc4232da2a7c0cea01a60d7e8faf6a305e3613fef144853
           labels:
             app: summary-api
         spec:
@@ -392,6 +396,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 270
           tolerations:
             - effect: NoSchedule
               key: node
@@ -444,7 +449,7 @@
         metadata:
           annotations:
             config-hash: c1973ea15bd9ac85e885f12ece25ff6cbda66e125632e817e4fda068309d5cde
-            gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
+            gunicorn-conf-hash: 47b7c6d9656ddc62e2dbb077069754a96311369f49e316a80c1eda8d720d2580
           labels:
             app: extract-api
         spec:
@@ -550,6 +555,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -601,7 +607,7 @@
         metadata:
           annotations:
             config-hash: 1a3a2f023bfcd922f9e67fc1100bb4f5b34e3b03513c80d5de2226fbef681569
-            gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
+            gunicorn-conf-hash: 2095cc7d0f249c6b79325f8e5afc5fc7f5ecba9b37a89f3b5224ae80f73c9d25
           labels:
             app: layout-api
         spec:
@@ -690,6 +696,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -741,7 +748,7 @@
         metadata:
           annotations:
             config-hash: ac9291d84ab87466fb7f0b6f351533f5e84e0af9b65a4917346adef6cdd66621
-            gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
+            gunicorn-conf-hash: 6fbeb844eb8ce604087b86894fac71d0b4b9607d1131f40032a62b0882c642b4
           labels:
             app: ranker-api
         spec:
@@ -770,6 +777,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: RANKER_TASK_WAIT_SECONDS
+                  value: "110"
               image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -830,6 +839,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -881,7 +891,7 @@
         metadata:
           annotations:
             config-hash: f19515bd35dbbf61aa32bae04e98da83bcb133856d7d855eed7f3c170e247b5f
-            gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
+            gunicorn-conf-hash: 5a1341d0b173e18e4fc4232da2a7c0cea01a60d7e8faf6a305e3613fef144853
           labels:
             app: summary-api
         spec:
@@ -970,6 +980,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 270
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1022,7 +1033,7 @@
         metadata:
           annotations:
             config-hash: 4adaae49d2cf5be77aaa3be5ed372c23dd728021f01803f2296142d9d2d04a6d
-            gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
+            gunicorn-conf-hash: 2095cc7d0f249c6b79325f8e5afc5fc7f5ecba9b37a89f3b5224ae80f73c9d25
           labels:
             app: layout-api
         spec:
@@ -1111,6 +1122,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1162,7 +1174,7 @@
         metadata:
           annotations:
             config-hash: 90d8d3d124b674c0682da50361feded1ac99639c608b03372420c8d6942bc5cc
-            gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
+            gunicorn-conf-hash: 6fbeb844eb8ce604087b86894fac71d0b4b9607d1131f40032a62b0882c642b4
           labels:
             app: ranker-api
         spec:
@@ -1191,6 +1203,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: RANKER_TASK_WAIT_SECONDS
+                  value: "110"
               image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1251,6 +1265,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1302,7 +1317,7 @@
         metadata:
           annotations:
             config-hash: 99f41ef2cfafc8c53d00c72d079fe6433f24db2e19f2e5ce76160425923f03b9
-            gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
+            gunicorn-conf-hash: 5a1341d0b173e18e4fc4232da2a7c0cea01a60d7e8faf6a305e3613fef144853
           labels:
             app: summary-api
         spec:
@@ -1391,6 +1406,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 270
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1444,7 +1460,7 @@
         metadata:
           annotations:
             config-hash: 4adaae49d2cf5be77aaa3be5ed372c23dd728021f01803f2296142d9d2d04a6d
-            gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
+            gunicorn-conf-hash: 2095cc7d0f249c6b79325f8e5afc5fc7f5ecba9b37a89f3b5224ae80f73c9d25
           labels:
             app: layout-api
         spec:
@@ -1533,6 +1549,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1584,7 +1601,7 @@
         metadata:
           annotations:
             config-hash: 90d8d3d124b674c0682da50361feded1ac99639c608b03372420c8d6942bc5cc
-            gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
+            gunicorn-conf-hash: 6fbeb844eb8ce604087b86894fac71d0b4b9607d1131f40032a62b0882c642b4
           labels:
             app: ranker-api
         spec:
@@ -1613,6 +1630,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: RANKER_TASK_WAIT_SECONDS
+                  value: "110"
               image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1673,6 +1692,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1724,7 +1744,7 @@
         metadata:
           annotations:
             config-hash: 99f41ef2cfafc8c53d00c72d079fe6433f24db2e19f2e5ce76160425923f03b9
-            gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
+            gunicorn-conf-hash: 5a1341d0b173e18e4fc4232da2a7c0cea01a60d7e8faf6a305e3613fef144853
           labels:
             app: summary-api
         spec:
@@ -1813,6 +1833,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 270
           tolerations:
             - effect: NoSchedule
               key: node
@@ -1865,7 +1886,7 @@
         metadata:
           annotations:
             config-hash: 5326560ebc335a832d5b084c947e691d3fc49492f37533e8796210d4722765a3
-            gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
+            gunicorn-conf-hash: 2095cc7d0f249c6b79325f8e5afc5fc7f5ecba9b37a89f3b5224ae80f73c9d25
           labels:
             app: layout-api
         spec:
@@ -1954,6 +1975,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2005,7 +2027,7 @@
         metadata:
           annotations:
             config-hash: 5d5ecc9ccedb41694e7a07b79380b55a743c3a46abd9252407f19567d8b8dbe9
-            gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
+            gunicorn-conf-hash: 6fbeb844eb8ce604087b86894fac71d0b4b9607d1131f40032a62b0882c642b4
           labels:
             app: ranker-api
         spec:
@@ -2034,6 +2056,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: RANKER_TASK_WAIT_SECONDS
+                  value: "110"
               image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -2094,6 +2118,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2146,7 +2171,7 @@
         metadata:
           annotations:
             config-hash: 78308f99e67dfe2320ee3a82e39e9abed4d74a01b6cfe8fc665bec0b8ee197be
-            gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
+            gunicorn-conf-hash: 47b7c6d9656ddc62e2dbb077069754a96311369f49e316a80c1eda8d720d2580
           labels:
             app: extract-api
         spec:
@@ -2253,6 +2278,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2304,7 +2330,7 @@
         metadata:
           annotations:
             config-hash: f5e125078762065d891bd7cc60044a2a0f4955fda12fd5fbabeac6ae132c0777
-            gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
+            gunicorn-conf-hash: 2095cc7d0f249c6b79325f8e5afc5fc7f5ecba9b37a89f3b5224ae80f73c9d25
           labels:
             app: layout-api
         spec:
@@ -2397,6 +2423,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2448,7 +2475,7 @@
         metadata:
           annotations:
             config-hash: 1fe84656d42aeaadd42f108c33efed189e6cbe10a886b815e2733c0de6d3653e
-            gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
+            gunicorn-conf-hash: 5a1341d0b173e18e4fc4232da2a7c0cea01a60d7e8faf6a305e3613fef144853
           labels:
             app: summary-api
         spec:
@@ -2541,6 +2568,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 270
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2593,7 +2621,7 @@
         metadata:
           annotations:
             config-hash: 7a2eea711ddd4ae8eafd493aa4115b03bc79d4bca6c7518aa16a273f6c275beb
-            gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
+            gunicorn-conf-hash: 47b7c6d9656ddc62e2dbb077069754a96311369f49e316a80c1eda8d720d2580
           labels:
             app: extract-api
         spec:
@@ -2699,6 +2727,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2750,7 +2779,7 @@
         metadata:
           annotations:
             config-hash: 34ecf902bba4ab13212343c7738fba69995e865922a70ab1a4e53b6a782b105a
-            gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
+            gunicorn-conf-hash: 2095cc7d0f249c6b79325f8e5afc5fc7f5ecba9b37a89f3b5224ae80f73c9d25
           labels:
             app: layout-api
         spec:
@@ -2839,6 +2868,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -2890,7 +2920,7 @@
         metadata:
           annotations:
             config-hash: 58a2df1961226517dde68430c4cde9ff29487e1dae3dcbf8c7027af93a9fd243
-            gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
+            gunicorn-conf-hash: 5a1341d0b173e18e4fc4232da2a7c0cea01a60d7e8faf6a305e3613fef144853
           labels:
             app: summary-api
         spec:
@@ -2979,6 +3009,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 270
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3031,7 +3062,7 @@
         metadata:
           annotations:
             config-hash: a087924ef41f7340ac7005068d14bfca82943de3029968013f59d50e5eb97270
-            gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
+            gunicorn-conf-hash: 47b7c6d9656ddc62e2dbb077069754a96311369f49e316a80c1eda8d720d2580
           labels:
             app: extract-api
         spec:
@@ -3138,6 +3169,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3189,7 +3221,7 @@
         metadata:
           annotations:
             config-hash: f5e125078762065d891bd7cc60044a2a0f4955fda12fd5fbabeac6ae132c0777
-            gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
+            gunicorn-conf-hash: 2095cc7d0f249c6b79325f8e5afc5fc7f5ecba9b37a89f3b5224ae80f73c9d25
           labels:
             app: layout-api
         spec:
@@ -3282,6 +3314,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: existing-service-account
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3334,7 +3367,7 @@
         metadata:
           annotations:
             config-hash: 5b0e156bb86eaeb30efdafa27a00d9e17579a1ca9830fa03097d7d8133405f1b
-            gunicorn-conf-hash: 83c12b1b7b62e11b58c3977068cad50ec59ee79a1f19eb1261da2490d219c23c
+            gunicorn-conf-hash: 4de3b4edb71ba98512f34fb07950e5c501be3570c05ac56e53c1a8bd9d1d87dc
           labels:
             app: myapp-api
         spec:
@@ -3424,6 +3457,7 @@
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: other-service-account
+          terminationGracePeriodSeconds: 40
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3475,7 +3509,7 @@
         metadata:
           annotations:
             config-hash: 341d44e61c7b48386a4bc1cb6bb40ea2b700340e1c5d76472f7c18777811f057
-            gunicorn-conf-hash: a549b26517e32f7a8ffda2515b3c71d7e219de4734ba5efb1178364200945858
+            gunicorn-conf-hash: 232ba70fe1aea9fdea49e19a59e629b600218b11d899d2e732d09d588a955948
             prometheus.io/port: "8081"
           labels:
             app: myapp-api
@@ -3501,6 +3535,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: RANKER_TASK_WAIT_SECONDS
+                  value: "20"
               image: test.image:v1
               imagePullPolicy: Never
               livenessProbe:
@@ -3548,6 +3584,7 @@
           securityContext:
             fsGroup: 2000
           serviceAccountName: other-service-account
+          terminationGracePeriodSeconds: 60
           tolerations:
             - effect: NoSchedule
               key: workload-type
@@ -3597,7 +3634,7 @@
         metadata:
           annotations:
             config-hash: e3e55899a2ad709cb04aae6178d9d39ba8089f3a82339d4541992a330e7d0246
-            gunicorn-conf-hash: 53cd8f931b746c1417345baed9c6a6b673f1f70836554d582f7040894bdeaa2b
+            gunicorn-conf-hash: 109323c7fe34381c7ba7e32ec11ad1409142a25d04734e6d3e7ecd3dec022488
             prometheus.io/port: "8081"
           labels:
             app: myapp-api
@@ -3672,6 +3709,7 @@
           securityContext:
             fsGroup: 2000
           serviceAccountName: other-service-account
+          terminationGracePeriodSeconds: 35
           volumes:
             - name: config-volume
               secret:
@@ -3717,7 +3755,7 @@
         metadata:
           annotations:
             config-hash: 01a921a7559b4af85f56c800168663a3d26b0aec9bcd1a69af5452c25283d4e2
-            gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
+            gunicorn-conf-hash: 2095cc7d0f249c6b79325f8e5afc5fc7f5ecba9b37a89f3b5224ae80f73c9d25
           labels:
             app: layout-api
         spec:
@@ -3806,6 +3844,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3857,7 +3896,7 @@
         metadata:
           annotations:
             config-hash: ac9291d84ab87466fb7f0b6f351533f5e84e0af9b65a4917346adef6cdd66621
-            gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
+            gunicorn-conf-hash: 6fbeb844eb8ce604087b86894fac71d0b4b9607d1131f40032a62b0882c642b4
           labels:
             app: ranker-api
         spec:
@@ -3886,6 +3925,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: RANKER_TASK_WAIT_SECONDS
+                  value: "110"
               image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -3946,6 +3987,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -3997,7 +4039,7 @@
         metadata:
           annotations:
             config-hash: f19515bd35dbbf61aa32bae04e98da83bcb133856d7d855eed7f3c170e247b5f
-            gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
+            gunicorn-conf-hash: 5a1341d0b173e18e4fc4232da2a7c0cea01a60d7e8faf6a305e3613fef144853
           labels:
             app: summary-api
         spec:
@@ -4086,6 +4128,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 270
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4138,7 +4181,7 @@
         metadata:
           annotations:
             config-hash: 01a921a7559b4af85f56c800168663a3d26b0aec9bcd1a69af5452c25283d4e2
-            gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
+            gunicorn-conf-hash: 2095cc7d0f249c6b79325f8e5afc5fc7f5ecba9b37a89f3b5224ae80f73c9d25
           labels:
             app: layout-api
         spec:
@@ -4221,6 +4264,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4272,7 +4316,7 @@
         metadata:
           annotations:
             config-hash: ac9291d84ab87466fb7f0b6f351533f5e84e0af9b65a4917346adef6cdd66621
-            gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
+            gunicorn-conf-hash: 6fbeb844eb8ce604087b86894fac71d0b4b9607d1131f40032a62b0882c642b4
           labels:
             app: ranker-api
         spec:
@@ -4301,6 +4345,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: RANKER_TASK_WAIT_SECONDS
+                  value: "110"
               image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -4355,6 +4401,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4406,7 +4453,7 @@
         metadata:
           annotations:
             config-hash: f19515bd35dbbf61aa32bae04e98da83bcb133856d7d855eed7f3c170e247b5f
-            gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
+            gunicorn-conf-hash: 5a1341d0b173e18e4fc4232da2a7c0cea01a60d7e8faf6a305e3613fef144853
           labels:
             app: summary-api
         spec:
@@ -4489,6 +4536,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 270
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4541,7 +4589,7 @@
         metadata:
           annotations:
             config-hash: 5a986c3ed73e7e9e46ac528ae84cd6853e7ec85233207e9c3983106c0d547de3
-            gunicorn-conf-hash: 0b508950537af16f918cc8ca6bdffca604b10a37474c196be4f66081ecc3140b
+            gunicorn-conf-hash: 47b7c6d9656ddc62e2dbb077069754a96311369f49e316a80c1eda8d720d2580
           labels:
             app: extract-api
         spec:
@@ -4636,6 +4684,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4687,7 +4736,7 @@
         metadata:
           annotations:
             config-hash: 0fc6c0b783942d8aac8aa267423de4ee6b0b7483007a471480b0734f75629f0f
-            gunicorn-conf-hash: 3a82ec80ee3c99c95710802a1d12ba572b88f2234643a252380f4a3a5f53b951
+            gunicorn-conf-hash: 2095cc7d0f249c6b79325f8e5afc5fc7f5ecba9b37a89f3b5224ae80f73c9d25
           labels:
             app: layout-api
         spec:
@@ -4772,6 +4821,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4823,7 +4873,7 @@
         metadata:
           annotations:
             config-hash: 42531a5b3e71b2717e16ee81e69bd953744e418bbd246e89b45e1bc763d22bfb
-            gunicorn-conf-hash: 40212089ebd02f566a0389e71802a4a65d4e823233d849e37148efd96b4b69b3
+            gunicorn-conf-hash: 6fbeb844eb8ce604087b86894fac71d0b4b9607d1131f40032a62b0882c642b4
           labels:
             app: ranker-api
         spec:
@@ -4852,6 +4902,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: RANKER_TASK_WAIT_SECONDS
+                  value: "110"
               image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
               imagePullPolicy: Always
               livenessProbe:
@@ -4908,6 +4960,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node
@@ -4959,7 +5012,7 @@
         metadata:
           annotations:
             config-hash: 303137171c8c7bb69bfb0c4c4d1f73d31384a1fd40a4cf2ac410b059b2f270da
-            gunicorn-conf-hash: e5a1c91402abbc045a4e9ec98b0be0ee20d414d185078940fda640ee5a7d4180
+            gunicorn-conf-hash: 5a1341d0b173e18e4fc4232da2a7c0cea01a60d7e8faf6a305e3613fef144853
           labels:
             app: summary-api
         spec:
@@ -5044,6 +5097,7 @@
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 270
           tolerations:
             - effect: NoSchedule
               key: node
@@ -5096,7 +5150,7 @@
         metadata:
           annotations:
             config-hash: 31201ed74baf86b767746596746180c38a2a265909e26b17c1052f9e490a8ad9
-            gunicorn-conf-hash: 310959745157fba9940d2f522881a1d73d439c9e733e1c4590626f021e7772ed
+            gunicorn-conf-hash: 14ae4f7c0fe89ab931684316e576b138415ff1e95b6f50d21f2842519a591386
           labels:
             app: workspace-api
         spec:
@@ -5197,6 +5251,7 @@
             runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
+          terminationGracePeriodSeconds: 150
           tolerations:
             - effect: NoSchedule
               key: node

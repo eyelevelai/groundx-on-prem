@@ -230,12 +230,14 @@
 
         preProcessFileServer:
           baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: pre-process
 
         processFileServer:
           baseURL: http://process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: process
@@ -257,6 +259,7 @@
 
         queueFileServer:
           baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           pollTime: 1
           port: 8080
@@ -291,6 +294,7 @@
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 3
           port: 8080
           serviceName: summary-client
@@ -305,6 +309,7 @@
 
         uploadFileServer:
           baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: upload
@@ -370,6 +375,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -678,6 +684,7 @@
         workers = 1
         threads = 3
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -974,6 +981,7 @@
         workers = 1
         threads = 4
         timeout = 240
+        graceful_timeout = 240
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -1293,12 +1301,14 @@
 
         preProcessFileServer:
           baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: pre-process
 
         processFileServer:
           baseURL: http://process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: process
@@ -1320,6 +1330,7 @@
 
         queueFileServer:
           baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           pollTime: 1
           port: 8080
@@ -1366,6 +1377,7 @@
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 3
           port: 8080
           serviceName: summary-client
@@ -1383,6 +1395,7 @@
 
         uploadFileServer:
           baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: upload
@@ -1457,6 +1470,7 @@
         workers = 2
         threads = 2
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -1494,6 +1508,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -1524,6 +1542,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -1554,6 +1576,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -1625,6 +1651,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -1933,6 +1960,7 @@
         workers = 1
         threads = 3
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -2257,6 +2285,7 @@
         workers = 1
         threads = 4
         timeout = 240
+        graceful_timeout = 240
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -2534,12 +2563,14 @@
 
         preProcessFileServer:
           baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: pre-process
 
         processFileServer:
           baseURL: http://process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: process
@@ -2561,6 +2592,7 @@
 
         queueFileServer:
           baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           pollTime: 1
           port: 8080
@@ -2610,6 +2642,7 @@
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 3
           port: 8080
           serviceName: summary-client
@@ -2626,6 +2659,7 @@
 
         uploadFileServer:
           baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: upload
@@ -2843,12 +2877,14 @@
 
         preProcessFileServer:
           baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: pre-process
 
         processFileServer:
           baseURL: http://process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: process
@@ -2870,6 +2906,7 @@
 
         queueFileServer:
           baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           pollTime: 1
           port: 8080
@@ -2916,6 +2953,7 @@
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 3
           port: 8080
           serviceName: summary-client
@@ -2930,6 +2968,7 @@
 
         uploadFileServer:
           baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: upload
@@ -2993,6 +3032,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -3299,6 +3339,7 @@
         workers = 1
         threads = 3
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -3593,6 +3634,7 @@
         workers = 1
         threads = 4
         timeout = 240
+        graceful_timeout = 240
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -3881,12 +3923,14 @@
 
         preProcessFileServer:
           baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: pre-process
 
         processFileServer:
           baseURL: http://process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: process
@@ -3908,6 +3952,7 @@
 
         queueFileServer:
           baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           pollTime: 1
           port: 8080
@@ -3954,6 +3999,7 @@
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 3
           port: 8080
           serviceName: summary-client
@@ -3968,6 +4014,7 @@
 
         uploadFileServer:
           baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: upload
@@ -4031,6 +4078,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -4337,6 +4385,7 @@
         workers = 1
         threads = 3
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -4631,6 +4680,7 @@
         workers = 1
         threads = 4
         timeout = 240
+        graceful_timeout = 240
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -4926,12 +4976,14 @@
 
         preProcessFileServer:
           baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: pre-process
 
         processFileServer:
           baseURL: http://process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: process
@@ -4953,6 +5005,7 @@
 
         queueFileServer:
           baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           pollTime: 1
           port: 8080
@@ -5002,6 +5055,7 @@
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 3
           port: 8080
           serviceName: summary-client
@@ -5018,6 +5072,7 @@
 
         uploadFileServer:
           baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: upload
@@ -5083,6 +5138,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -5391,6 +5447,7 @@
         workers = 1
         threads = 3
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -5872,12 +5929,14 @@
 
         preProcessFileServer:
           baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: pre-process
 
         processFileServer:
           baseURL: http://process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: process
@@ -5905,6 +5964,7 @@
 
         queueFileServer:
           baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           pollTime: 1
           port: 8080
@@ -5939,6 +5999,7 @@
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 3
           port: 8080
           serviceName: summary-client
@@ -5953,6 +6014,7 @@
 
         uploadFileServer:
           baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: upload
@@ -6024,6 +6086,7 @@
         workers = 2
         threads = 2
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -6061,6 +6124,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -6091,6 +6158,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -6121,6 +6192,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -6190,6 +6265,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -6509,6 +6585,7 @@
         workers = 1
         threads = 4
         timeout = 240
+        graceful_timeout = 240
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -6825,12 +6902,14 @@
 
         preProcessFileServer:
           baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: pre-process
 
         processFileServer:
           baseURL: http://process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: process
@@ -6858,6 +6937,7 @@
 
         queueFileServer:
           baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           pollTime: 1
           port: 8080
@@ -6910,6 +6990,7 @@
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 3
           port: 8080
           serviceName: summary-client
@@ -6927,6 +7008,7 @@
 
         uploadFileServer:
           baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: upload
@@ -7005,6 +7087,7 @@
         workers = 2
         threads = 2
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -7042,6 +7125,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -7072,6 +7159,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -7102,6 +7193,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -7173,6 +7268,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -7480,6 +7576,7 @@
         workers = 1
         threads = 4
         timeout = 240
+        graceful_timeout = 240
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -7767,12 +7864,14 @@
 
         preProcessFileServer:
           baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: pre-process
 
         processFileServer:
           baseURL: http://process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: process
@@ -7800,6 +7899,7 @@
 
         queueFileServer:
           baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           pollTime: 1
           port: 8080
@@ -7834,6 +7934,7 @@
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 3
           port: 8080
           serviceName: summary-client
@@ -7848,6 +7949,7 @@
 
         uploadFileServer:
           baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: upload
@@ -7918,6 +8020,7 @@
         workers = 2
         threads = 2
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -7955,6 +8058,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -7985,6 +8092,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -8015,6 +8126,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -8084,6 +8199,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -8556,12 +8672,14 @@
 
         preProcessFileServer:
           baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: pre-process
 
         processFileServer:
           baseURL: http://process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: process
@@ -8583,6 +8701,7 @@
 
         queueFileServer:
           baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           pollTime: 1
           port: 8080
@@ -8647,6 +8766,7 @@
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 3
           port: 8080
           serviceName: summary-client
@@ -8661,6 +8781,7 @@
 
         uploadFileServer:
           baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: upload
@@ -8855,12 +8976,14 @@
 
         preProcessFileServer:
           baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: pre-process
 
         processFileServer:
           baseURL: http://process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: process
@@ -8882,6 +9005,7 @@
 
         queueFileServer:
           baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           pollTime: 1
           port: 8080
@@ -8945,6 +9069,7 @@
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 3
           port: 8080
           serviceName: summary-client
@@ -8959,6 +9084,7 @@
 
         uploadFileServer:
           baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: upload
@@ -9176,12 +9302,14 @@
 
         preProcessFileServer:
           baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 2
           port: 8080
           serviceName: pre-process
 
         processFileServer:
           baseURL: http://process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 2
           port: 8080
           serviceName: process
@@ -9203,6 +9331,7 @@
 
         queueFileServer:
           baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 2
           pollTime: 1
           port: 8080
@@ -9249,6 +9378,7 @@
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 5
           port: 8080
           serviceName: summary-client
@@ -9265,6 +9395,7 @@
 
         uploadFileServer:
           baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 2
           port: 8080
           serviceName: upload
@@ -9328,6 +9459,7 @@
         workers = 3
         threads = 3
         timeout = 10
+        graceful_timeout = 10
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -9739,6 +9871,7 @@
         workers = 4
         threads = 2
         timeout = 30
+        graceful_timeout = 30
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -9893,6 +10026,7 @@
         workers = 2
         threads = 2
         timeout = 5
+        graceful_timeout = 5
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -10207,12 +10341,14 @@
 
         preProcessFileServer:
           baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: pre-process
 
         processFileServer:
           baseURL: http://process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: process
@@ -10234,6 +10370,7 @@
 
         queueFileServer:
           baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           pollTime: 1
           port: 8080
@@ -10280,6 +10417,7 @@
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 3
           port: 8080
           serviceName: summary-client
@@ -10294,6 +10432,7 @@
 
         uploadFileServer:
           baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: upload
@@ -10359,6 +10498,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -10638,6 +10778,7 @@
         workers = 1
         threads = 3
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -10934,6 +11075,7 @@
         workers = 1
         threads = 4
         timeout = 240
+        graceful_timeout = 240
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -11234,12 +11376,14 @@
 
         preProcessFileServer:
           baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: pre-process
 
         processFileServer:
           baseURL: http://process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: process
@@ -11261,6 +11405,7 @@
 
         queueFileServer:
           baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           pollTime: 1
           port: 8080
@@ -11307,6 +11452,7 @@
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 3
           port: 8080
           serviceName: summary-client
@@ -11321,6 +11467,7 @@
 
         uploadFileServer:
           baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: upload
@@ -11386,6 +11533,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -11665,6 +11813,7 @@
         workers = 1
         threads = 3
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -11961,6 +12110,7 @@
         workers = 1
         threads = 4
         timeout = 240
+        graceful_timeout = 240
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -12285,12 +12435,14 @@
 
         preProcessFileServer:
           baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: pre-process
 
         processFileServer:
           baseURL: http://process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: process
@@ -12312,6 +12464,7 @@
 
         queueFileServer:
           baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           pollTime: 1
           port: 8080
@@ -12358,6 +12511,7 @@
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 3
           port: 8080
           serviceName: summary-client
@@ -12374,6 +12528,7 @@
 
         uploadFileServer:
           baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: upload
@@ -12449,6 +12604,7 @@
         workers = 2
         threads = 2
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -12486,6 +12642,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -12516,6 +12676,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -12546,6 +12710,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -12618,6 +12786,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -12898,6 +13067,7 @@
         workers = 1
         threads = 3
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -13223,6 +13393,7 @@
         workers = 1
         threads = 4
         timeout = 240
+        graceful_timeout = 240
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -13487,12 +13658,14 @@
 
         preProcessFileServer:
           baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: pre-process
 
         processFileServer:
           baseURL: http://process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: process
@@ -13514,6 +13687,7 @@
 
         queueFileServer:
           baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           pollTime: 1
           port: 8080
@@ -13578,6 +13752,7 @@
 
         summaryServer:
           baseURL: http://summary-client.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 3
           port: 8080
           serviceName: summary-client
@@ -13592,6 +13767,7 @@
 
         uploadFileServer:
           baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: upload
@@ -13819,12 +13995,14 @@
 
         preProcessFileServer:
           baseURL: http://pre-process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: pre-process
 
         processFileServer:
           baseURL: http://process.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: process
@@ -13846,6 +14024,7 @@
 
         queueFileServer:
           baseURL: http://queue.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           pollTime: 1
           port: 8080
@@ -13907,6 +14086,7 @@
 
         uploadFileServer:
           baseURL: http://upload.eyelevel.svc.cluster.local:8080
+          drainSeconds: 870
           maxConcurrent: 4
           port: 8080
           serviceName: upload
@@ -13987,6 +14167,7 @@
         errorlog = "-"
         loglevel = "info"
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
         worker_class = "uvicorn.workers.UvicornWorker"
         workers = 2

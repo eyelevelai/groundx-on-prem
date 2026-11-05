@@ -16,6 +16,10 @@
 {{- if eq $ic "true" }}
 {{- include "groundx.extract.agent.validateImageSettings" . -}}
 {{- $fs := (include "groundx.extract.file.settings" . | fromYaml) -}}
+{{- $aliases := include "groundx.file.urlAliases" (dict "root" . "settings" $fs) | fromJsonArray -}}
+{{- $requiredUploadFields := list -}}
+{{- if .Values.fileAccess.enabled -}}{{- $requiredUploadFields = list "public_read" "storage_endpoint" -}}{{- end -}}
+{{- if $aliases -}}{{- $requiredUploadFields = append $requiredUploadFields "url_aliases" -}}{{- end -}}
 {{- $svc := include "groundx.extract.serviceName" . -}}
 {{- $bucketSuffix := printf "%s/" (get $fs "bucketName") -}}
 {{- $st := include "groundx.extract.file.storageType" . -}}
@@ -46,9 +50,9 @@ stringData:
         ContainerUploadSettings,
         GroundXSettings,
     )
-    {{- if .Values.fileAccess.enabled }}
-    if not {"public_read", "storage_endpoint"}.issubset(ContainerUploadSettings.model_fields):
-        raise RuntimeError("private extraction storage requires a compatible GroundX SDK")
+    {{- if or .Values.fileAccess.enabled $aliases }}
+    if not { {{- range $i, $field := $requiredUploadFields }}{{ if $i }}, {{ end }}{{ $field | quote }}{{ end }}}.issubset(ContainerUploadSettings.model_fields):
+        raise RuntimeError({{ if .Values.fileAccess.enabled }}"private extraction storage requires a compatible GroundX SDK"{{ else }}"extraction storage aliases require a compatible GroundX SDK"{{ end }})
     {{- end }}
 
     agent_queue = {{ include "groundx.extract.agent.queue" . | quote }}
@@ -103,6 +107,9 @@ stringData:
         metrics_broker={{ printf "%s://%s%s:%v/0" (include "groundx.metrics.cache.scheme" .) (include "groundx.metrics.cache.userinfo" .) (include "groundx.metrics.cache.addr" .) (include "groundx.metrics.cache.port" .) | quote }},
         service={{ $svc | quote }},
         upload=ContainerUploadSettings(
+            {{- if $aliases }}
+            url_aliases={{ $aliases | toJson }},
+            {{- end }}
             {{- if eq (include "groundx.fileAccess.create" .) "true" }}
             storage_endpoint={{ .Values.fileAccess.storageEndpoint | quote }},
             public_read=False,

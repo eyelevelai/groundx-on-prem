@@ -213,6 +213,10 @@ false
 {{ dig "timeout" 120 $in }}
 {{- end }}
 
+{{- define "groundx.ranker.api.taskWaitSeconds" -}}
+{{ max 1 (sub (int (include "groundx.ranker.api.timeout" .)) 10) }}
+{{- end }}
+
 {{- define "groundx.ranker.api.workers" -}}
 {{- $b := .Values.ranker | default dict -}}
 {{- $in := dig "api" dict $b -}}
@@ -256,6 +260,7 @@ false
   "cfg"          (printf "%s-config-py-map" $svc)
   "cache"        (include "groundx.ranker.cache.settings" . | fromYaml)
   "disruptionBudget" (dig "disruptionBudget" dict $in)
+  "env"          (dict "RANKER_TASK_WAIT_SECONDS" (include "groundx.ranker.api.taskWaitSeconds" .))
   "gunicorn"     (printf "%s-gunicorn-conf-py-map" $svc)
   "image"        (include "groundx.ranker.api.image" .)
   "interface"    (include "groundx.ranker.api.interface" .)
