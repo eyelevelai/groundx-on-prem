@@ -150,6 +150,8 @@ MIRRORED_FILES = (
     "prereqs/storageclass/values.efs.example.yaml",
     "prereqs/storageclass/values.azure-files.example.yaml",
     "prereqs/storageclass/values.gke-filestore.example.yaml",
+    "values.yaml",
+    "values.schema.json",
 )
 SRC_TEMPLATES = ROOT / "src" / "groundx" / "templates"
 MIRROR_TEMPLATES = ROOT / "helm" / "templates"
