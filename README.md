@@ -636,7 +636,7 @@ If you wish to use an existing OpenSearch cluster, you must configure the `searc
 
 #### Deploying a Dedicated OpenSearch Cluster
 
-Earlier versions of this install left the OpenSearch image's demo security configuration in place. That configuration trusts a demo admin certificate whose private key is published in OpenSearch's public source, so any workload that can reach ports 9200 and 9300 could act as OpenSearch admin, whatever admin password was set. This install configures OpenSearch with certificates and an admin user that you supply, and the seed values file (`helm/values/opensearch/values.yaml`) contains no certificate, key or password hash. Do not put any in it.
+This install runs OpenSearch on certificates and an admin user that you supply. The seed values file (`helm/values/opensearch/values.yaml`) contains no certificate, key or password hash; do not put any in it.
 
 Supply these inputs, issued by your own certificate authority:
 
@@ -649,7 +649,7 @@ Supply these inputs, issued by your own certificate authority:
 docker run --rm -it --entrypoint plugins/opensearch-security/tools/hash.sh public.ecr.aws/c9r4x6y5/eyelevel/opensearch@sha256:8e95a30fe67dc3d92b85924e46cd299bc83fe2716e100bcad30e7e3a0b199b00
 ```
 
-The plaintext of the same password must be provided to GroundX as `search.privilegedPassword` in your `values.yaml` or as `SEARCH_INIT_PASSWORD` in the cluster credentials Secret (the Secret route needs `groundx` and `process` images that read it; see the notes under Configuration). Choose a password you have not published anywhere. The GroundX chart rejects a known published default for `search.password` or `search.privilegedPassword` and fails to render if you supply one, so an upgrade that silently keeps the old default (for example `helm upgrade --reuse-values`) will not deploy.
+The plaintext of the same password must be provided to GroundX as `search.privilegedPassword` in your `values.yaml` or as `SEARCH_INIT_PASSWORD` in the cluster credentials Secret (the Secret route needs `groundx` and `process` images that read it; see the notes under Configuration). Choose a password you have not published anywhere: the chart rejects a known published default for `search.password` or `search.privilegedPassword`.
 
 Create the Secrets before OpenSearch starts, because the pod mounts both. Restrict permissions before each file exists, and create `internal_users.yml` in an editor rather than with a shell command so the hash is not saved to your shell history:
 

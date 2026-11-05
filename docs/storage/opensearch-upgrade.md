@@ -2,6 +2,8 @@
 
 Run commands from the repository root. For a new OpenSearch, follow the [README's OpenSearch section](../../README.md#deploying-a-dedicated-opensearch-cluster). This guide covers moving an existing OpenSearch off the demo certificates, trusting OpenSearch with its own CA, rotating certificates, and the error a certificate mismatch causes.
 
+Earlier versions of the README install left the OpenSearch image's demo security configuration in place. That configuration trusts a demo admin certificate whose private key is published in OpenSearch's public source, so any workload that can reach ports 9200 and 9300 could act as OpenSearch admin, whatever admin password was set. The GroundX chart also rejects a known published default for `search.password` or `search.privilegedPassword` and fails to render if you supply one, so an upgrade that silently keeps the old default (for example `helm upgrade --reuse-values`) will not deploy.
+
 The OpenSearch upgrade is forward-only: OpenSearch cannot be downgraded on the same data, and `helm rollback` does not restore its earlier version or data.
 
 ## Upgrading an Existing Install
