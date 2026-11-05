@@ -140,13 +140,9 @@ context: |
     - A scope check for a README-only change diffs against `git merge-base HEAD origin/<base>` (not the moving `origin/<base>` tip) and requires README.md changed and `src helm .build helm-releases` unchanged.
     - The pre-push gate runs `.build/bin/validate-helm.sh` itself; a task check must not execute it (privileged repo), so the gate task declares `check: n/a` with that reason.
 
-  - CONVENTIONS DISCOVERED DURING GX-125:
-    - Busybox `flock FILE cmd` opens the file read-only and never acquires on EFS; lock a
-      write-opened fd (`exec 9>>"$lock"; flock -n 9`).
-
   - KNOWN GAPS / OPEN QUESTIONS:
     - helm/ <-> src/groundx duplication: no regen script (manual sync required); a drift check DOES exist (verify_mirrors() in .build/bin/verify-storage-contract.py fails the gate on mismatch) — the remaining gap is only the absence of a regen script, not the absence of a check.
-    - upload.groundx.ai model-weight download hardcoded in init-containers — air-gap blocker; no documented pre-seeding mechanism.
+    - upload.groundx.ai model-weight download hardcoded in init-containers — air-gap blocker; pre-seeding is documented only briefly (docs/upgrades.md#inference-model-downloads).
     - licenseKey phone-home behavior unknown (validation logic lives in opaque container images).
     - Neo4j (graph) service wired in legacy bin/terraform but absent from current chart — likely legacy-only, unconfirmed.
     - extract subsystem groundx.extract constructor signatures live in the image, not this repo — silent breaking changes possible.

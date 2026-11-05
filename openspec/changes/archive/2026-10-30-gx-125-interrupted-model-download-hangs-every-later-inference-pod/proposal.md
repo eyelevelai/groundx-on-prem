@@ -37,3 +37,4 @@ None. No existing spec in `openspec/specs/` covers model download behaviour.
 
 - 2026-11-01: the groundx-studio-harness on-prem docs follow-up is GX-156.
 - 2026-11-04: the Docker guard is removed from the chart gate and the lock loop simplified; see design.md Amendments.
+- 2026-11-05: after merging `0.3.0`, the upgrade procedure moves from the README to `docs/upgrades.md`; see design.md Amendments.

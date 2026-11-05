@@ -8,6 +8,7 @@ Before a GroundX application upgrade, follow the [database migration requirement
 - [OpenSearch installation and credentials](#opensearch)
 - [Persistent storage](#persistent-storage)
 - [Summary GPU sizing](#summary-gpu-sizing)
+- [Inference model downloads](#inference-model-downloads)
 - [MinIO migration and recovery](storage/minio-migration.md)
 
 ## Redis TLS upgrades
@@ -201,3 +202,26 @@ For the 48 GB defaults, `updateStrategy: Recreate` is also recommended, with the
 If your machine has different resources than this, you will need to modify `summary.inference` in your `values.yaml` using the per pod requirements described above to optimize for your node resources.
 
 Note: in many cloud Kubernetes services, such as EKS, you must use a node image that supports GPUs (e.g. AL2023_x86_64_NVIDIA).
+
+## Inference model downloads
+
+The layout, ranker and summary inference pods download their model the first time they start. One pod downloads while the others wait. If the downloading pod is killed, the next pod takes over. If the download fails, the pod shows `Init:Error` and retries, instead of starting with a partial model.
+
+**Before you upgrade or roll back** while a model is still downloading for the first time:
+
+1. Scale the inference deployments to 0.
+2. Wait until all their pods are gone. An old pod can keep downloading until its shutdown grace period ends.
+
+   ```bash
+   kubectl wait -n eyelevel --for=delete pod -l 'app in (layout-inference,ranker-inference,summary-inference)' --timeout=20m
+   ```
+
+3. Upgrade or roll back, then scale the deployments back up.
+
+Old and new pods use different locks, so they must not download into the same volume at the same time. If every model has already downloaded, you can skip these steps.
+
+**If an inference pod cannot load its model after upgrading:** older charts could mark a failed download as complete. Scale that service to 0, wait until its pods are gone (`kubectl wait -n eyelevel --for=delete pod -l app=summary-inference --timeout=20m` for summary), delete the `complete.<model>` file from its model volume, and scale it back up. The next pod downloads the model again.
+
+**Air-gapped clusters:** the pods cannot download the model. Copy the model files and the `complete.<model>` file into the model volume before scaling up.
+
+**Custom busybox image (`busybox.image`):** it must include `flock`. Without it, a pod that needs to download its model fails at once with a message naming `flock`.
