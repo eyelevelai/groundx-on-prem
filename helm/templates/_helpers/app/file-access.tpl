@@ -200,23 +200,31 @@ enabled: false
 {{- end }}
 {{- end }}
 
-{{- define "groundx.fileAccess.caMount" -}}
-{{- if dig "caSecretName" "" (.Values.fileAccess | default dict) }}
-- name: file-access-ca
-  mountPath: /var/run/groundx/file-access
+{{- define "groundx.caBundle.mount" -}}
+{{- if .secret }}
+- name: {{ .name }}
+  mountPath: {{ .path }}
   readOnly: true
 {{- end }}
 {{- end }}
 
-{{- define "groundx.fileAccess.caVolume" -}}
-{{- if dig "caSecretName" "" (.Values.fileAccess | default dict) }}
-- name: file-access-ca
+{{- define "groundx.caBundle.volume" -}}
+{{- if .secret }}
+- name: {{ .name }}
   secret:
-    secretName: {{ dig "caSecretName" "" (.Values.fileAccess | default dict) | quote }}
+    secretName: {{ .secret | quote }}
     items:
       - key: ca.crt
         path: ca.crt
 {{- end }}
+{{- end }}
+
+{{- define "groundx.fileAccess.caMount" -}}
+{{- include "groundx.caBundle.mount" (dict "name" "file-access-ca" "path" "/var/run/groundx/file-access" "secret" (dig "caSecretName" "" (.Values.fileAccess | default dict))) }}
+{{- end }}
+
+{{- define "groundx.fileAccess.caVolume" -}}
+{{- include "groundx.caBundle.volume" (dict "name" "file-access-ca" "secret" (dig "caSecretName" "" (.Values.fileAccess | default dict))) }}
 {{- end }}
 
 {{- define "groundx.fileAccess.workloadSecrets" -}}

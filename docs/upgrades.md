@@ -27,58 +27,71 @@ The original chart 0.2.8 rollout verified the ai-server layout, ranker and summa
 
 ### Installing OpenSearch
 
-If you'd like to install OpenSearch to your cluster, first choose the OpenSearch admin password. It must be the same value you later provide to GroundX as `search.privilegedPassword` in your `values.yaml` or as `SEARCH_INIT_PASSWORD` in the cluster credentials Secret (the Secret route needs `groundx` and `process` images that read it; see GroundX password delivery below). Supply it to OpenSearch through a Kubernetes Secret, so the password is not written into the OpenSearch StatefulSet pod spec where anyone who can read pods in the namespace could see it. Restrict permissions before each file exists, and create it in an editor rather than with a shell command so the password is not saved to your shell history:
+This install runs OpenSearch on certificates and an admin user that you supply. The seed values file (`helm/values/opensearch/values.yaml`) contains no certificate, key or password hash; do not put any in it.
+
+Supply these inputs, issued by your own certificate authority:
+
+- A CA certificate (`ca.crt`).
+- A node certificate (`node.crt`) and its key (`node.key`), signed by that CA. The subject must be `CN=opensearch-node`, and the subject alternative names must include `opensearch-cluster-master.eyelevel.svc.cluster.local` (`<serviceName>-cluster-master.<namespace>.svc.cluster.local`, the host GroundX connects to). The certificate must be usable as both a server and a client certificate.
+- An admin certificate and key signed by the same CA, with subject `CN=gx-opensearch-admin`. You keep these for administration; they are never mounted into the OpenSearch pod.
+- The OpenSearch admin password as a bcrypt hash. Generate it with the image's own tool, which prompts for the password so it stays out of your shell history, and copy the printed hash:
+
+```bash
+docker run --rm -it --entrypoint plugins/opensearch-security/tools/hash.sh public.ecr.aws/c9r4x6y5/eyelevel/opensearch@sha256:8e95a30fe67dc3d92b85924e46cd299bc83fe2716e100bcad30e7e3a0b199b00
+```
+
+The plaintext of the same password must be provided to GroundX as `search.privilegedPassword` in your `values.yaml` or as `SEARCH_INIT_PASSWORD` in the cluster credentials Secret (the Secret route needs `groundx` and `process` images that read it; see [GroundX password delivery](#groundx-password-delivery)). Choose a password you have not published anywhere: the chart rejects a known published default for `search.password` or `search.privilegedPassword`.
+
+Create the Secrets before OpenSearch starts, because the pod mounts both. Restrict permissions before each file exists, and create `internal_users.yml` in an editor rather than with a shell command so the hash is not saved to your shell history:
 
 ```bash
 umask 077
 ```
 
-Create `opensearch-admin-secret.yaml` in an editor with this content, then confirm it is owner-only with `chmod 600 opensearch-admin-secret.yaml`:
+Create `internal_users.yml` with this content, replacing the placeholder with the hash from above:
 
 ```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: opensearch-admin
-  namespace: eyelevel
-type: Opaque
-stringData:
-  OPENSEARCH_INITIAL_ADMIN_PASSWORD: "<opensearch-admin-password>"
+_meta:
+  type: "internalusers"
+  config_version: 2
+admin:
+  hash: "<bcrypt-hash-of-the-admin-password>"
+  reserved: true
+  backend_roles:
+    - "admin"
+  description: "GroundX OpenSearch admin"
 ```
 
-Apply the Secret, then delete the local file:
+Then create the Secrets and delete the local `internal_users.yml`:
 
 ```bash
-kubectl apply -f opensearch-admin-secret.yaml
-rm opensearch-admin-secret.yaml
+kubectl create secret generic opensearch-tls -n eyelevel --from-file=ca.crt --from-file=node.crt --from-file=node.key
+kubectl create secret generic opensearch-internal-users -n eyelevel --from-file=internal_users.yml
+rm internal_users.yml
 ```
 
-Create `opensearch-admin.values.yaml` with this content. It references the Secret instead of embedding the password, so this file holds no credential:
+GroundX trusts this OpenSearch through `fileAccess.caSecretName`: a Secret in the GroundX namespace whose `ca.crt` is a complete bundle, the public root CAs plus the CA that signed `node.crt` (see [the file-access operator contract](agents/private-file-access.md)). If `fileAccess.caSecretName` is already set, add this CA to that bundle. Otherwise start from a public root bundle, such as `/etc/ssl/certs/ca-certificates.crt` from your OS's Mozilla-derived bundle, append `ca.crt` to a copy of it named `ca-bundle.pem`, then create the Secret and set `fileAccess.caSecretName: groundx-ca-bundle` in your `values.yaml`:
 
-```yaml
-extraEnvs:
-  - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: opensearch-admin
-        key: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+```bash
+kubectl create secret generic groundx-ca-bundle -n eyelevel --from-file=ca.crt=ca-bundle.pem
 ```
 
-Then install OpenSearch with both values files:
+While GroundX uses this in-cluster OpenSearch, the chart will not render without a CA for it. To trust OpenSearch with its own CA instead of the bundle (`search.caSecretName`), see [Trusting OpenSearch with its own CA](#trusting-opensearch-with-its-own-ca).
+
+Then install OpenSearch:
 
 ```bash
 helm repo add opensearch https://opensearch-project.github.io/helm-charts/
 helm repo update
 
-helm install opensearch opensearch/opensearch -n eyelevel -f helm/values/opensearch/values.yaml -f opensearch-admin.values.yaml
+helm install opensearch opensearch/opensearch --version 2.23.1 -n eyelevel -f helm/values/opensearch/values.yaml
 ```
 
-Choose a password you have not published anywhere. The GroundX chart rejects a known published default for `search.password` or `search.privilegedPassword` and fails to render if you supply one, so an upgrade that silently keeps the old default (for example `helm upgrade --reuse-values`) will not deploy.
+Keep `-f helm/values/opensearch/values.yaml` on every `helm upgrade opensearch …`, followed by `opensearch-overrides.yaml` if you changed any OpenSearch setting: without it, a changed `clusterName` or `nodeGroup` starts OpenSearch on a new, empty volume (see [Upgrading existing OpenSearch](#upgrading-existing-opensearch)). The values pin the tested OpenSearch image; to move to a newer image, test it and update the digest in that file.
 
-OpenSearch requires `OPENSEARCH_INITIAL_ADMIN_PASSWORD` at every start, not only on first initialization. On an already-initialized data volume it is still read at boot, and a start without it exits with `No custom admin password found` (observed on image digest `sha256:8e95a30f…`). Keep `-f opensearch-admin.values.yaml` on every `helm upgrade opensearch …`, not just the first install, and pin the OpenSearch image to a digest so this stays reproducible. The value is consumed only to initialize an empty volume; changing it on an existing volume does not rotate the stored admin password (rotate with the backup route under Upgrading existing OpenSearch). The Secret must exist before OpenSearch starts, which the order above ensures.
+To rotate certificates or fix a `request timed out` error from `groundx` or `process`, see [Rotating certificates](#rotating-certificates) and [Certificate errors](#certificate-errors).
 
-Rotating these passwords does not by itself secure OpenSearch for production: the documented install still trusts OpenSearch's demo TLS certificates, and the GroundX application user has broad privileges. For production, also replace the demo certificates with operator-supplied ones and restrict network access to OpenSearch.
-
+The GroundX application user still has broad privileges, so also restrict network access to OpenSearch.
 
 ### GroundX password delivery
 
@@ -100,22 +113,57 @@ The Secret route applies to the direct-helm route; the Terraform operator still 
 
 ### Upgrading existing OpenSearch
 
-Earlier chart versions defaulted both OpenSearch passwords to a public value. An OpenSearch data volume created with them keeps its original admin password, because the seed value is only read on first initialization. Before upgrading:
+Earlier versions of the README install left the OpenSearch image's demo security configuration in place. That configuration trusts a demo admin certificate whose private key is published in OpenSearch's public source, so any workload that can reach ports 9200 and 9300 could act as OpenSearch admin, whatever admin password was set. The GroundX chart also rejects a known published default for `search.password` or `search.privilegedPassword` and fails to render if you supply one, so an upgrade that silently keeps the old default (for example `helm upgrade --reuse-values`) will not deploy.
 
-1. Set `search.privilegedPassword` (or `SEARCH_INIT_PASSWORD`, which needs the `groundx` and `process` images described under GroundX password delivery) to the admin password your OpenSearch currently uses, unless that is a published default. The chart rejects a published default supplied through values and will not render, so if your install still uses one, first rotate the OpenSearch admin password off it with the admin-password route in step 3, then set `search.privilegedPassword` to the new value. When you upgrade the OpenSearch release itself, keep `-f opensearch-admin.values.yaml` on the `helm upgrade opensearch` command: the image requires `OPENSEARCH_INITIAL_ADMIN_PASSWORD` at every start, and a restart without it fails with `No custom admin password found`.
-2. Set `search.password` (or `SEARCH_PASSWORD`) to the application user password your install currently uses, unless that is a published default. The chart rejects a published default supplied through values, so if your install still uses one, choose a new application password for the upgrade. Make sure `search.privilegedPassword` already holds the correct admin password (from step 1 or the step 3 rotation) before changing `search.password`, or the GroundX API crash-loops when it re-creates `search.username`; confirm with the login check in step 3.
-3. Rotate the credentials. The OpenSearch `admin` user is reserved, so the security REST API refuses to change it (it returns 403 "Resource 'admin' is reserved"). Use these routes instead:
-   - Application password: set a new `search.password` and upgrade, or change `SEARCH_PASSWORD` in the Secret and restart `groundx` and then `process` as described under GroundX password delivery. The GroundX API re-creates `search.username` with it, using the admin credential, when its login is rejected.
-   - Admin password: open a shell in the OpenSearch pod (for example `kubectl exec -it -n eyelevel opensearch-cluster-master-0 -- bash`) and run these steps. Start from a backup of the stored users, not the image's `internal_users.yml`, because uploading that file replaces the whole stored user list and would drop every user created through the REST API, including the GroundX application user, and break search.
-     1. Back up the stored security configuration: `plugins/opensearch-security/tools/securityadmin.sh -backup /tmp/security-backup -icl -nhnv -cacert config/root-ca.pem -cert config/kirk.pem -key config/kirk-key.pem`.
-     2. Run `plugins/opensearch-security/tools/hash.sh` without `-p` so it prompts for the password and keeps it out of shell history.
-     3. Put the printed hash as the `admin` hash in `/tmp/security-backup/internal_users.yml`.
-     4. Upload only the users: `plugins/opensearch-security/tools/securityadmin.sh -f /tmp/security-backup/internal_users.yml -t internalusers -icl -nhnv -cacert config/root-ca.pem -cert config/kirk.pem -key config/kirk-key.pem`.
+The OpenSearch upgrade is forward-only: OpenSearch cannot be downgraded on the same data, and `helm rollback` does not restore its earlier version or data.
 
-     The backup keeps the existing users, including the GroundX application user, so search keeps working. See the OpenSearch [securityadmin documentation](https://docs.opensearch.org/latest/security/configuration/security-admin/).
-   - Then set `search.privilegedPassword` to the new admin password and upgrade. Confirm the rotation from inside the pod with `curl -k -u admin https://localhost:9200/_plugins/_security/authinfo`, which prompts for the password: the new password must succeed and the old one must be rejected.
+Earlier chart versions defaulted both OpenSearch passwords to a public value, and the documented OpenSearch install trusted OpenSearch's demo certificates. An OpenSearch data volume created with them keeps its original admin password and stored users, because the seed values are only read on first initialization. Chart 0.2.8's default `groundx` and `process` images already verify certificates (cashbot-go #1865), so a 0.2.8 install on the demo-certificate OpenSearch is already failing with `request timed out` until you complete these steps. Before upgrading:
+
+1. Check the OpenSearch version on every pod of your OpenSearch release. The label below uses the release name `opensearch` from the [README install](#installing-opensearch); for a release installed from the `groundx/opensearch` wrapper chart, use that release's name instead. If the command prints nothing, the label does not match your release: stop and correct it. `for p in $(kubectl get pods -n eyelevel -l app.kubernetes.io/instance=opensearch -o name); do kubectl exec -n eyelevel "$p" -- sh -c 'ls lib | grep "^opensearch-[0-9]"'; done`. The seed values pin OpenSearch 3.2.0 (`opensearch-3.2.0.jar`). OpenSearch upgrades to 3.x only from 2.19 or later and does not support downgrades, so continue only if every pod reports a version from 2.19.0 to 3.2.0. If any pod reports an older or newer version, stop and do not upgrade OpenSearch: keep GroundX on chart 0.2.7 or earlier images, which do not verify certificates, until an upgrade path from that version is documented.
+
+   Then create the `opensearch-tls` and `opensearch-internal-users` Secrets as described in [Installing OpenSearch](#installing-opensearch). Run `helm get values opensearch -n eyelevel` to see the settings your OpenSearch release uses, then upgrade it with one of these commands:
+   - If those settings come only from the README values files, upgrade with the seed values file alone: `helm upgrade opensearch opensearch/opensearch --version 2.23.1 -n eyelevel -f helm/values/opensearch/values.yaml`.
+   - If you changed any setting, first create `opensearch-overrides.yaml` holding only those settings (for example `clusterName`, `nodeGroup`, `persistence`, `replicas`, `resources` or `nodeSelector`) and leave out `config`, `extraEnvs`, `secretMounts`, `securityConfig`, `image` and `majorVersion`, which the seed values file now sets. Then upgrade with both files: `helm upgrade opensearch opensearch/opensearch --version 2.23.1 -n eyelevel -f helm/values/opensearch/values.yaml -f opensearch-overrides.yaml`. Without the overrides file, a changed `clusterName` or `nodeGroup` makes Helm replace the StatefulSet and start OpenSearch on a new, empty volume while your data stays on the old one.
+
+   - If you installed OpenSearch from the published `opensearch` wrapper chart (`groundx/opensearch`, version 0.1.1), upgrade that release with the wrapper chart instead of the commands above. Run `helm get values <release> -n eyelevel`. If you changed any setting, first create `opensearch-wrapper-overrides.yaml` holding only those settings under `operator:` (for example `operator.clusterName`, `operator.nodeGroup`, `operator.persistence`, `operator.replicas`, `operator.resources` or `operator.nodeSelector`) and leave out `config`, `extraEnvs`, `secretMounts`, `securityConfig`, `image` and `majorVersion`, which version 0.1.2 sets. Then run `helm repo update` and `helm upgrade <release> groundx/opensearch --version 0.1.2 -n eyelevel -f opensearch-wrapper-overrides.yaml`, leaving out `-f opensearch-wrapper-overrides.yaml` if you changed nothing. Without the overrides file, a changed `clusterName` or `nodeGroup` starts OpenSearch on a new, empty volume, and an `extraEnvs` list in it replaces the one that turns the demo installer off. Create the two Secrets before the upgrade: without them the upgraded pod stays in `Init` with a "secret not found" mount error while Helm reports `deployed`. Version 0.1.2 keeps the StatefulSet name and volume claim of 0.1.1, so the release upgrades in place.
+
+   The restart moves OpenSearch to your certificates and admin DN. The stored users, including the stored admin password, are unchanged.
+2. Add the CA that signed `node.crt` to the `fileAccess.caSecretName` bundle, as described in [Installing OpenSearch](#installing-opensearch). Choose `groundx` and `process` images with certificate verification (cashbot-go #1865); step 7 deploys them. Do not deploy them before step 1: they reject the demo certificate, which OpenSearch serves until the step 1 upgrade restarts it.
+3. Set `search.privilegedPassword` (or `SEARCH_INIT_PASSWORD`, which needs the `groundx` and `process` images described under [GroundX password delivery](#groundx-password-delivery)) to the admin password your OpenSearch currently uses, unless that is a published default. The chart rejects a published default supplied through values and will not render, so if your install still uses one, first rotate the OpenSearch admin password off it with the admin-password route in step 5, then set `search.privilegedPassword` to the new value.
+4. Set `search.password` (or `SEARCH_PASSWORD`) to the application user password your install currently uses, unless that is a published default. The chart rejects a published default supplied through values, so if your install still uses one, choose a new application password for the upgrade. Make sure `search.privilegedPassword` already holds the correct admin password (from step 3 or the step 5 rotation) before changing `search.password`, or the GroundX API crash-loops when it re-creates `search.username`; confirm with the login check in step 5.
+5. Rotate the credentials. The OpenSearch `admin` user is reserved, so the security REST API refuses to change it (it returns 403 "Resource 'admin' is reserved"). Use these routes instead:
+   - Application password: set a new `search.password` (step 7 deploys it), or change `SEARCH_PASSWORD` in the Secret and restart `groundx` and then `process` as described under [GroundX password delivery](#groundx-password-delivery). The GroundX API re-creates `search.username` with it, using the admin credential, when its login is rejected.
+   - Admin password: run the `securityadmin.sh` procedure in step 6, and in its substep 3 also put a new hash (from `plugins/opensearch-security/tools/hash.sh`, run without `-p` so it prompts for the password) in as the `admin` hash. The OpenSearch `admin` user is reserved, so the REST API cannot change it; authenticating with the operator admin certificate is the supported route.
+   - Then set `search.privilegedPassword` to the new admin password; step 7 deploys it. Confirm the rotation from inside the pod with `curl --cacert config/certs/ca.crt -u admin https://opensearch-cluster-master.eyelevel.svc.cluster.local:9200/_plugins/_security/authinfo`, which prompts for the password: the new password must succeed and the old one must be rejected.
+
+6. Remove the image's six demo users (required, whether or not you rotate the admin password). An OpenSearch data volume created from the image keeps every user the image shipped, and their password hashes are published. Authenticate `securityadmin.sh` with your operator admin certificate (`CN=gx-opensearch-admin`), which the upgraded OpenSearch trusts as its admin identity. Copy the admin certificate and key into the pod for the commands and remove them afterwards, for example `kubectl cp admin.crt eyelevel/opensearch-cluster-master-0:/tmp/admin.crt` and `kubectl cp admin.key eyelevel/opensearch-cluster-master-0:/tmp/admin.key`, then open a shell (`kubectl exec -it -n eyelevel opensearch-cluster-master-0 -- bash`) and run these steps. Start from a backup of the stored users, not the image's `internal_users.yml`, because uploading that file replaces the whole stored user list and would drop every user created through the REST API, including the GroundX application user, and break search.
+   1. Back up the stored security configuration: `plugins/opensearch-security/tools/securityadmin.sh -backup /tmp/security-backup -icl -nhnv -cacert config/certs/ca.crt -cert /tmp/admin.crt -key /tmp/admin.key`.
+   2. If you are also rotating the admin password, run `plugins/opensearch-security/tools/hash.sh` without `-p` so it prompts for the password and keeps it out of shell history.
+   3. In `/tmp/security-backup/internal_users.yml`, delete the image's six demo users: `anomalyadmin`, `kibanaserver`, `kibanaro`, `logstash`, `readall` and `snapshotrestore`. Leave every other user unchanged, including `admin`, the GroundX application user (`search.username`) and any user you created. If you ran substep 2, put the printed hash as the `admin` hash.
+   4. Upload only the users: `plugins/opensearch-security/tools/securityadmin.sh -f /tmp/security-backup/internal_users.yml -t internalusers -icl -nhnv -cacert config/certs/ca.crt -cert /tmp/admin.crt -key /tmp/admin.key`.
+   5. Remove the copied files: `rm -f /tmp/admin.crt /tmp/admin.key`.
+
+   The backup keeps the existing users, including the GroundX application user, so search keeps working. See the OpenSearch [securityadmin documentation](https://docs.opensearch.org/latest/security/configuration/security-admin/).
+
+7. Upgrade GroundX with the values from steps 2 to 5 and the images from step 2, then restart `groundx`, wait for it (`kubectl rollout status -n eyelevel deployment/groundx`), and restart `process`. Images without certificate verification keep working across the certificate swap.
+
+   If the GroundX upgrade fails, fix forward: confirm the Secret GroundX uses for OpenSearch holds the CA that signed `node.crt` (`openssl verify -CAfile ca.crt node.crt` against its `ca.crt`): `search.caSecretName` when it is set, otherwise the `fileAccess.caSecretName` bundle. Correct that Secret and run the GroundX upgrade again. `helm rollback groundx` restores the previous values and images, which only restores service when those images do not verify certificates (chart 0.2.7 and earlier); 0.2.8 and later images reject the operator certificate without its CA too. A GroundX rollback does not undo the OpenSearch steps: OpenSearch keeps your certificates, its users and its admin password, so after an admin password rotation the previous `search.privilegedPassword` no longer works. Do not roll OpenSearch back to the demo configuration.
 
 If `search.privilegedPassword` does not match the real admin password, the GroundX API crash-loops with an unauthorized error when it has to create or update its OpenSearch user: on a first install, or after `search.password` changes. On an existing install the mismatch is otherwise silent, so run the check above. If you deploy a Terraform `search` object with `cluster.search = true`, `password` and `root_password` must be non-empty and not an angle-bracket placeholder; an ingest-only install (`cluster.search = false`) needs neither. The operator module now requires Terraform 1.9 or later.
+
+### Trusting OpenSearch with its own CA
+
+To trust OpenSearch with its own CA instead, create a Secret whose `ca.crt` is the CA that signed `node.crt` and set `search.caSecretName` to its name. When set, it takes precedence over the bundle for OpenSearch only; every other connection still uses `fileAccess.caSecretName`. It needs `groundx` and `process` images built with cashbot-go #1877 or later; older images ignore it and keep using the bundle.
+
+`groundx` and `process` images with certificate verification (cashbot-go #1865) check the OpenSearch certificate against this bundle, or against `search.caSecretName` when it is set and the images include cashbot-go #1877; older images skip the check.
+
+### Rotating certificates
+
+To renew the node certificate from the same CA, update `opensearch-tls` and restart `opensearch-cluster-master`. To move to a new CA, add the new CA to the Secret GroundX uses for OpenSearch and keep the old one: the `search.caSecretName` Secret when it is set (its `ca.crt` may hold both CAs), otherwise the `fileAccess.caSecretName` bundle, which `search.caSecretName` replaces for OpenSearch. Restart `groundx` and then `process`, then update `opensearch-tls` with the new CA and a node certificate it signed and restart `opensearch-cluster-master`. Issue a new operator admin certificate with the same subject (`CN=gx-opensearch-admin`) from the new CA, because OpenSearch checks the admin certificate against that CA and the old one stops working for `securityadmin.sh`. Remove the old CA from that Secret, then restart `groundx` and then `process`; from the bundle, only once nothing else trusted through it, such as Redis or object storage, still uses it. A running pod rereads the files only on restart, so trust in the new CA must reach `groundx` and `process` before OpenSearch serves a certificate from it.
+
+### Certificate errors
+
+While GroundX uses this in-cluster OpenSearch (no `search.existing.url`, and `mode` is not `ingest`), the chart will not render with both `search.caSecretName` and `fileAccess.caSecretName` empty. If the Secret GroundX uses for OpenSearch does not hold the CA that signed `node.crt`, `groundx` exits at startup and `process` fails its OpenSearch calls with `request timed out`: the client reports the rejected certificate as a timeout, so the log does not mention `x509`.
 
 ## Persistent storage
 

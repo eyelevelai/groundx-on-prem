@@ -49,6 +49,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
                 - name: RANKER_TASK_WAIT_SECONDS
                   value: "110"
               image: public.ecr.aws/c9r4x6y5/eyelevel/python-api:0.1.0
@@ -88,6 +90,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -120,6 +125,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: ranker-config-py-map
@@ -223,6 +234,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -261,6 +274,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -384,6 +400,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-ranker
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models

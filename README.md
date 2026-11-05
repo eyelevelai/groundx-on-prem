@@ -515,16 +515,16 @@ If you wish to use an existing OpenSearch cluster, you must configure the `searc
 
 #### Deploying a Dedicated OpenSearch Cluster
 
-First follow [OpenSearch credential setup](docs/upgrades.md#installing-opensearch) to create the administrator Secret and `opensearch-admin.values.yaml`. Use the same administrator password for GroundX's `search.privilegedPassword`.
+First follow [OpenSearch certificate and credential setup](docs/upgrades.md#installing-opensearch) to create the `opensearch-tls` and `opensearch-internal-users` Secrets from certificates you issue (node `CN=opensearch-node`, admin `CN=gx-opensearch-admin`) and add the OpenSearch CA to the `fileAccess.caSecretName` bundle. Use the same administrator password for GroundX's `search.privilegedPassword` (or `SEARCH_INIT_PASSWORD`). The seed values file holds no certificate, key or password hash; do not put any in it. Then install OpenSearch:
 
 ```bash
 helm repo add opensearch https://opensearch-project.github.io/helm-charts/
 helm repo update
 
-helm install opensearch opensearch/opensearch -n eyelevel -f helm/values/opensearch/values.yaml -f opensearch-admin.values.yaml
+helm install opensearch opensearch/opensearch --version 2.23.1 -n eyelevel -f helm/values/opensearch/values.yaml
 ```
 
-Keep `-f opensearch-admin.values.yaml` on later OpenSearch upgrades. Changing its seed value does not rotate an existing administrator password. For production, replace demo TLS certificates and restrict network access; password rotation alone is insufficient.
+Keep `-f helm/values/opensearch/values.yaml` on every `helm upgrade opensearch …`, followed by `opensearch-overrides.yaml` if you changed any OpenSearch setting: without it, a changed `clusterName` or `nodeGroup` starts OpenSearch on a new, empty volume (see [Upgrading existing OpenSearch](docs/upgrades.md#upgrading-existing-opensearch)). The values pin the tested OpenSearch image. To trust OpenSearch with its own CA, rotate certificates or fix a `request timed out` error, see [OpenSearch](docs/upgrades.md#opensearch). The GroundX application user has broad privileges, so also restrict network access to OpenSearch.
 
 ### Kafka
 
@@ -586,6 +586,7 @@ Edit `values.yaml` with your settings before installing. Replace all placeholder
 | `file.bucketName`, `file.customDomain` | Object-store bucket and stable file-delivery hostname. The hostname must match `fileAccess.publicUrl`. |
 | `fileAccess` | File-delivery and storage URLs, storage credentials, HTTPS certificates and ingress settings. Follow the file-access steps below. |
 | `search.password`, `search.privilegedPassword` | Application and administrator passwords matching OpenSearch. Neither is required for `mode: ingest`. |
+| `fileAccess.caSecretName` | When the chart deploys OpenSearch: a Secret whose `ca.crt` holds the public root CAs plus the CA that signed the OpenSearch node certificate, unless `search.caSecretName` names a Secret holding that CA. See [OpenSearch setup](docs/upgrades.md#installing-opensearch). |
 
 Authentication uses API keys by default, without password login. See [identity modes](docs/on-prem-identity.md) to configure local password login or Amazon Cognito.
 
@@ -606,7 +607,7 @@ Set both OpenSearch passwords to match your installed service. [Password deliver
 
 #### Upgrading an Existing Install
 
-Keep your existing values file. Before upgrading, follow the [OpenSearch credential steps](docs/upgrades.md#upgrading-existing-opensearch) and [database migration requirements](docs/agents/database-upgrades.md). Earlier installs may still use published passwords; rotate them before upgrading. Changing a seed password does not rotate credentials already stored in OpenSearch.
+Keep your existing values file. Before upgrading, follow the [OpenSearch upgrade steps](docs/upgrades.md#upgrading-existing-opensearch) and [database migration requirements](docs/agents/database-upgrades.md). Installs from chart 0.2.9 or earlier run OpenSearch on its published demo certificates and may still use published passwords; the `groundx` and `process` images of chart 0.2.8 and later already reject the demo certificate. The OpenSearch upgrade is forward-only: OpenSearch cannot be downgraded, and `helm rollback` does not restore its earlier version or data.
 
 ### Persistent Storage
 
