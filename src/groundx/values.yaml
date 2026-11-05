@@ -148,19 +148,25 @@ stream:
   # bundled (Mode-2) Kafka: prereqs/kafka-cluster/README.md namespace-pairing constraint:
   # that subchart's -n <ns> must equal this chart's .Values.namespace
 
-# Summary engines. Setting `engines` replaces the implicit default engine, so the default
-# entry must restate what the chart derives for it: engineId (the summary model name,
-# google/gemma-3-4b-it unless changed), maxInputTokens, maxRequests and requestLimit (the
-# chart sets the last two to twice the desired inference replicas).
-# The chart sets inlineImages: true on the in-cluster engine when file storage is s3, and a
-# boolean you set on an engines entry wins. The worker acts on it only with fileAccess off
-# and only for the openai, azure, anthropic, deep-infra, hosted, eyelevel and sagemaker
-# services; it ignores it for bedrock, google, cegid, samsung and openai-base64. true on a
-# remote engine of an honored service sends this install's page-image bytes to that
-# engine's baseUrl. The key acts only with a summary-client image that reads it.
-# With fileAccess off the worker reads pages only while the database holds no file-access
-# policy, so an install that once ran with fileAccess on and still has policies keeps
-# sending page links.
+# Summary engines (optional). Leave this unset to use the built-in summary model.
+#
+# Page images on private S3: the built-in summary model cannot open private S3 links.
+# So when files are stored in S3, the chart sets inlineImages: true on the built-in
+# engine, and GroundX sends each page image inside the summary request instead of a link.
+# This needs a summary-client image that supports inlineImages. Set it to false to turn
+# it off.
+#
+# It works only while fileAccess is off and the database has no file-access policies.
+# An install that once ran with fileAccess on may still have them. There, keep fileAccess
+# on: it already sends page images inside the request.
+#
+# Setting inlineImages: true on an engine outside this cluster sends your page images to
+# that engine's address. Bedrock, Google, Cegid, Samsung and openai-base64 engines ignore
+# the setting.
+#
+# Setting engines replaces the built-in engine, so "default" must repeat its settings:
+# engineId (the model name), maxInputTokens, and maxRequests and requestLimit (each twice
+# the number of summary inference replicas).
 #
 # engines:
 #   default:
