@@ -13,7 +13,7 @@ This is the chart half of GX-158. The second half (summary-api's reply missing `
 - Values-keyed hosted providers (anthropic `engines.default.apiKey`, bedrock `extract.agent.apiKey`, `summary.existing.apiKey`) intentionally get the agent Secret's key after the fix (plan-gate adjustment P1).
 - Changes are made in `src/groundx/` and mirrored by hand into `helm/` (no regen script; `verify_mirrors()` in `.build/bin/verify-storage-contract.py` enforces byte equality of the template trees).
 - Tests, run through `.build/bin/validate-helm.sh`: helm-unittest cases in `src/groundx/tests/` with conflicting Secrets sorting before and after the agent Secret in both list orders, plus anthropic and bedrock cases; `helm/` is covered by the existing mirror check. Snapshots are hand-patched, never regenerated with `-u`, and verified with `helm unittest` and `.build/bin/verify-helm-snapshots.py`.
-- README: a `GROUNDX_AGENT_API_KEY` precedence note and the minimum python-api image release that carries the ai-server reply fix (P2).
+- Agent reference (`docs/agents/extract-agent-key.md`): a `GROUNDX_AGENT_API_KEY` precedence note and the minimum python-api image release that carries the ai-server reply fix (P2).
 
 ## Capabilities
 
@@ -26,9 +26,9 @@ None. No existing spec in `openspec/specs/` changes requirements.
 
 ## Impact
 
-- **Affected files:** `templates/app/celery.yaml`, `templates/app/api.yaml`, the extract helpers under `templates/_helpers/app/` (`extract-agent.tpl`, `extract-api.tpl`, `extract-download.tpl`, `extract-save.tpl`), the same files under `helm/templates/`, `src/groundx/tests/` (unittest cases and hand-patched `__snapshot__` entries), `.build/bin/validate-helm.sh` plus a new render-and-resolve check, and `README.md`. No `values.schema.json` or `values.yaml` change.
+- **Affected files:** `templates/app/celery.yaml`, `templates/app/api.yaml`, the extract helpers under `templates/_helpers/app/` (`extract-agent.tpl`, `extract-api.tpl`, `extract-download.tpl`, `extract-save.tpl`), the same files under `helm/templates/`, `src/groundx/tests/` (unittest cases and hand-patched `__snapshot__` entries), `docs/agents/extract-agent-key.md` and its `AGENTS.md` link. No `values.schema.json` or `values.yaml` change.
 - **Blast radius:** any release upgrading to this chart rolls the extract api, agent, download and save pods once (rendered `envFrom`/`env` change). Operators whose shared Secret sets `GROUNDX_AGENT_API_KEY` to an OpenAI key while also using the in-cluster summary engine are the ones whose behavior changes (the key becomes `admin.apiKey`); operators with values-keyed hosted providers also now get the agent Secret's key (P1). Operators with no agent Secret see no change. Layout, workspace and summary workloads never get the agent Secret and are untouched.
 - **Environments / state:** no stateful resource, PVC, or data is touched. Chart-only; no deploy, apply or helm install is run by this change (PRIVILEGED repo: lint, template and unittest only).
 - **Rollback / rollforward:** `helm rollback` to the previous release restores the old render; rolling forward needs only a normal chart upgrade. Release target branch is a hand-off detail (next release branch vs `main`).
-- **Cross-service:** a compatible python-api image is required for the whole fix to work (ai-server reply shape); the minimum release is named in the README. Cluster proof (acceptance criterion 4) is a manual open task before merge, outside this repo's automated checks.
+- **Cross-service:** a compatible python-api image is required for the whole fix to work (ai-server reply shape); the minimum release is named in `docs/agents/extract-agent-key.md`. Cluster proof (acceptance criterion 4) is a manual open task before merge, outside this repo's automated checks.
 - **Open design questions:** none beyond the mechanism choice, which `design.md` resolves.

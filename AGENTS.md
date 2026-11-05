@@ -207,3 +207,7 @@ See [the migration gate](docs/agents/database-upgrades.md) for the pre-upgrade J
 ## EKS cost controls
 
 See [the operator guide](docs/agents/eks-cost-controls.md) for CPU disk defaults, node replacement, and CloudWatch configuration.
+
+## Extract agent API key
+
+See [the key precedence note](docs/agents/extract-agent-key.md) for which `GROUNDX_AGENT_API_KEY` the extract pods resolve and the python-api release the fix needs.

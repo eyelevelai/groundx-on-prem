@@ -22,7 +22,7 @@ Anthropic (`engines.default.apiKey`), Bedrock (`extract.agent.apiKey`) and `summ
 
 ### 4. Compatibility and rollout
 
-Classification: additive in values and schema (no key added or removed); the rendered `envFrom` order changes, so any release upgrading to this chart rolls the extract api, agent, download and save pods once. `helm rollback` restores the old render. No schema, migration, stateful resource or deploy step is involved; PRIVILEGED limits apply (lint, template, unittest only). Producer contract shapes confirmed: not applicable, this repo exposes no API shape here. The whole GX-158 fix also needs a python-api image carrying the ai-server reply fix; the README names the minimum release (P2, release number recorded in the README at implementation from the ai-server change).
+Classification: additive in values and schema (no key added or removed); the rendered `envFrom` order changes, so any release upgrading to this chart rolls the extract api, agent, download and save pods once. `helm rollback` restores the old render. No schema, migration, stateful resource or deploy step is involved; PRIVILEGED limits apply (lint, template, unittest only). Producer contract shapes confirmed: not applicable, this repo exposes no API shape here. The whole GX-158 fix also needs a python-api image carrying the ai-server reply fix; `docs/agents/extract-agent-key.md` names the minimum release (P2). The customer-facing README carries no note.
 
 ### 5. Mirror and tests
 

@@ -19,8 +19,8 @@
 
 ## 4. Documentation
 
-- [x] 4.1 README: add a `GROUNDX_AGENT_API_KEY` precedence note (agent Secret last, `existingSecret` keys override, hosted without a key keeps the shared Secret) and the minimum python-api image release that carries the ai-server reply fix
-  check: grep -q 'ships in chart 0.3.0' README.md
+- [x] 4.1 Agent reference `docs/agents/extract-agent-key.md`, linked from `AGENTS.md`: a `GROUNDX_AGENT_API_KEY` precedence note (agent Secret last, `existingSecret` keys override, hosted without a key keeps the shared Secret) and the minimum python-api image release that carries the ai-server reply fix. The customer-facing README is unchanged.
+  check: grep -q 'ships in chart 0.3.0' docs/agents/extract-agent-key.md && grep -q 'docs/agents/extract-agent-key.md' AGENTS.md
 
 ## 5. Gate
 
