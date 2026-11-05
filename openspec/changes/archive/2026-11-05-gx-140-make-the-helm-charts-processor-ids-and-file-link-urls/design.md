@@ -1,3 +1,5 @@
+*Rebuilt on `0.3.0` (2026-11-05): the change targets the `0.3.0` release branch; comparisons use the merge base with `origin/0.3.0` (`43d46715`). References to `main` at `595510d8c` below describe the review on the earlier main-based branch, whose chart matches `0.3.0`'s merge base with `main` (`87027773`).*
+
 ## Goals / Non-Goals
 
 The motivation and the inventory of files are in `proposal.md`; this document records how the rework is done and why.
@@ -34,7 +36,7 @@ Invariant: after the rework, every chart file the link-host keys touched is byte
 
 The restore is per file: `templates/_helpers/app/file-access.tpl`, `templates/_helpers/services/file.tpl`, `tests/file_settings_test.yaml`, `tests/extract_test.yaml` and `docs/agents/private-file-access.md` are restored whole (in `src/groundx` and, for templates, in `helm/`). The `groundx.file.uploadStorage` helper goes with `file.tpl`, and its body returns inline in the `upload` block of `config-yaml.yaml`, because after the `uploadGroundx` section is gone it would have one caller. In `config-yaml.yaml` only the `upload` block through the end of the file is restored; the `$procs` line and the `processors` hunks stay. In `values.yaml` and `values.schema.json` only the two `file` keys and their comments are removed.
 
-The checks compare against `git merge-base HEAD origin/main` rather than the moving `origin/main` tip, so a later `main` commit cannot turn a correct restore red before the branch syncs. Whole files use `git diff --quiet`; the partial files compare data (`jq`/`yq` with `cluster.processors` deleted) or the `upload`-to-end region, each with a non-empty guard so a failed read cannot pass as "equal".
+The checks compare against `git merge-base HEAD origin/0.3.0` rather than the moving `origin/0.3.0` tip, so a later `main` commit cannot turn a correct restore red before the branch syncs. Whole files use `git diff --quiet`; the partial files compare data (`jq`/`yq` with `cluster.processors` deleted) or the `upload`-to-end region, each with a non-empty guard so a failed read cannot pass as "equal".
 
 The `MIRRORED_FILES` entries for `values.yaml` and `values.schema.json` in `.build/bin/verify-storage-contract.py` stay: they guard the processor-map mirror, which remains.
 
@@ -69,7 +71,7 @@ The values contract the harness reads (the removed keys, the single-ID limit, th
 ## Migration Plan
 
 Rollout:
-1. Ship with the next chart release cut from `main`. An install that does not set `cluster.processors` renders the same `config.yaml` as chart 0.2.9, so the Go services' `config-hash` annotation does not change and nothing restarts because of this change.
+1. Ship with the next chart release cut from `0.3.0`. An install that does not set `cluster.processors` renders the same `config.yaml` as chart 0.2.9, so the Go services' `config-hash` annotation does not change and nothing restarts because of this change.
 2. Merge the held groundx-studio-harness documentation change only after that chart release is published.
 3. Setting `cluster.processors` or the gateway settings for GroundX Cloud is separate deployment work.
 

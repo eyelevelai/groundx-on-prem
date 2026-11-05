@@ -79,16 +79,16 @@ The chart SHALL accept an optional `cluster.processors` map whose keys are the 1
 - **AND** the template, `values.yaml` and `values.schema.json` mirror comparisons pass
 
 ### Requirement: Omitting cluster.processors renders today's processor configuration
-When `cluster.processors` is absent or empty, the rendered `processors:` block, the `extraPreDefaults` entries, the ingest-mode `extraPostDefaults` entry and the `upload` section SHALL be byte-identical to chart 0.2.9 on `main` at `595510d8c`, and no `uploadGroundx` section SHALL render. The `processors` mapping SHALL also equal the 0.2.7 render at `07d332fc6c`.
+When `cluster.processors` is absent or empty, the rendered `processors:` block, the `extraPreDefaults` entries, the ingest-mode `extraPostDefaults` entry and the `upload` section SHALL be byte-identical to the merge base of the feature branch and its target release branch (`43d46715` on `0.3.0`), and no `uploadGroundx` section SHALL render. The `processors` mapping SHALL also equal the 0.2.7 render at `07d332fc6c`.
 
 #### Scenario: Existing snapshots stay unchanged (finalize success)
 - **WHEN** the full helm-unittest suite runs through `.build/bin/validate-helm.sh` without `cluster.processors` in any existing fixture
 - **THEN** every committed snapshot under `src/groundx/tests/__snapshot__/` matches with no update, including the `config.yaml` renders of the default, ingest (`extract.ingest`) and `cluster.preProcessors` fixtures
-- **AND** no snapshot file differs from `main` at `595510d8c`, the merge base of the feature branch and `origin/main`
+- **AND** no snapshot file differs from the merge base of the feature branch and its target release branch (`43d46715` on `0.3.0`)
 
 #### Scenario: Matches the main render of the same fixtures (finalize success)
-- **GIVEN** the fixtures under `src/groundx/tests/files/` at `595510d8c` that render successfully at that commit
-- **WHEN** each fixture is rendered at `595510d8c` and at the feature branch tip without `cluster.processors`
+- **GIVEN** the fixtures under `src/groundx/tests/files/` at that merge base that render successfully there
+- **WHEN** each fixture is rendered at that merge base and at the feature branch tip without `cluster.processors`
 - **THEN** the `processors` mapping, including `extraPreDefaults` and `extraPostDefaults`, and the `upload` mapping are equal in both renders
 - **AND** neither render has an `uploadGroundx` key
 - **AND** this differential is run at verify time with named-field `yq` comparisons and its output saved outside the repository, not committed as a script
