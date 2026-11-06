@@ -135,6 +135,9 @@ context: |
     - A filtered `helm unittest -f <suite>` run of a suite that holds snapshots rewrote that suite's `.snap` without `-u` when some tests errored (the Google OCR fixture was missing). Put new non-snapshot cases in their own suite, and restore any `.snap` a run rewrote with `git checkout -- <file>`.
     - Extra Secrets reach the Golang pods as `envFrom` only through `cluster.secrets`, which has no default; the sample credentials Secret (`src/groundx/prereqs/secret/values.yaml`, mirrored byte-for-byte in `helm/prereqs/secret/values.yaml` outside the templates drift check) is opt-in. Keep search keys in that sample empty: a non-empty sample value would become an unvalidated working credential.
 
+  - CONVENTIONS DISCOVERED DURING GX-90 (OpenSearch TLS seed values):
+    - values/opensearch/values.yaml, values.yaml and values.schema.json are mirrored by hand and byte-compared by verify_mirrors() through MIRRORED_FILES in .build/bin/verify-storage-contract.py; src/groundx/tests/files/verify-opensearch-tls-values.sh checks the OpenSearch seed values themselves.
+    - The OpenSearch image ships an internal_users.yml whose admin password is the published default; the demo installer (DISABLE_INSTALL_DEMO_CONFIG) is what replaces it, so any install that disables the installer must supply internal_users.yml.
   - CONVENTIONS DISCOVERED DURING GX-131 (README-only notes):
     - A README-only task check extracts the note's section with `sed -n "/^#### <heading prefix>/,/^#### <next heading>/p" README.md` and greps the required facts inside it, asserting the section is non-empty first, so it fails on the unchanged README (an absent heading prints nothing). Never match a heading by text that contains backticks.
     - A scope check for a README-only change diffs against `git merge-base HEAD origin/<base>` (not the moving `origin/<base>` tip) and requires README.md changed and `src helm .build helm-releases` unchanged.

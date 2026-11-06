@@ -112,6 +112,8 @@
                   value: /etc/ssl/tls/ca.crt
                 - name: LISTEN_PORT
                   value: "8443"
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -147,6 +149,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -185,6 +190,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -356,6 +367,8 @@
                   value: /etc/ssl/tls/ca.crt
                 - name: LISTEN_PORT
                   value: "8443"
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -391,6 +404,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -429,6 +445,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -600,6 +622,8 @@
                   value: /etc/ssl/tls/ca.crt
                 - name: LISTEN_PORT
                   value: "8443"
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -635,6 +659,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -673,6 +700,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -844,6 +877,8 @@
                   value: /etc/ssl/tls/ca.crt
                 - name: LISTEN_PORT
                   value: "8443"
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -879,6 +914,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -917,6 +955,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1088,6 +1132,8 @@
                   value: /etc/ssl/tls/ca.crt
                 - name: LISTEN_PORT
                   value: "8443"
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1123,6 +1169,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1161,6 +1210,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1332,6 +1387,8 @@
                   value: /etc/ssl/tls/ca.crt
                 - name: LISTEN_PORT
                   value: "8443"
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1367,6 +1424,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1405,6 +1465,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1576,6 +1642,8 @@
                   value: /etc/ssl/tls/ca.crt
                 - name: LISTEN_PORT
                   value: "8443"
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
@@ -1614,6 +1682,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1652,6 +1723,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1823,6 +1900,8 @@
                   value: /etc/ssl/tls/ca.crt
                 - name: LISTEN_PORT
                   value: "8443"
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1858,6 +1937,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1896,6 +1978,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2067,6 +2155,8 @@
                   value: /etc/ssl/tls/ca.crt
                 - name: LISTEN_PORT
                   value: "8443"
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
@@ -2105,6 +2195,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2143,6 +2236,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2314,6 +2413,8 @@
                   value: /etc/ssl/tls/ca.crt
                 - name: LISTEN_PORT
                   value: "8443"
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -2349,6 +2450,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2387,6 +2491,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2558,6 +2668,8 @@
                   value: /etc/ssl/tls/ca.crt
                 - name: LISTEN_PORT
                   value: "8443"
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -2593,6 +2705,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2631,6 +2746,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2802,6 +2923,8 @@
                   value: /etc/ssl/tls/ca.crt
                 - name: LISTEN_PORT
                   value: "8443"
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -2835,6 +2958,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2869,6 +2995,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3040,6 +3172,8 @@
                   value: /etc/ssl/tls/ca.crt
                 - name: LISTEN_PORT
                   value: "8443"
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
               imagePullPolicy: Always
               livenessProbe:
@@ -3073,6 +3207,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3109,6 +3246,12 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3280,6 +3423,8 @@
                   value: /etc/ssl/tls/ca.crt
                 - name: LISTEN_PORT
                   value: "8443"
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/metrics:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -3315,6 +3460,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3353,6 +3501,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map

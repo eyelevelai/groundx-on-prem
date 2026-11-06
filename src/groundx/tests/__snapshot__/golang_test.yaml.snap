@@ -40,6 +40,9 @@
           containers:
             - args:
                 - -migrate-only
+              env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
               name: migrate
@@ -56,6 +59,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   readOnly: true
@@ -73,6 +79,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: RELEASE-NAME-schema-migration
@@ -116,7 +128,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -149,6 +164,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -198,6 +216,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -256,7 +280,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -289,6 +316,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -317,6 +347,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -375,7 +411,10 @@
                         values:
                           - eyelevel-cpu-memory
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -408,6 +447,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -437,6 +479,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -479,7 +527,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -512,6 +563,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -541,6 +595,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -583,7 +643,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -616,6 +679,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -645,6 +711,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -687,7 +759,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -720,6 +795,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -749,6 +827,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -791,7 +875,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -824,6 +911,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -853,6 +943,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -896,7 +992,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -929,6 +1028,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -984,6 +1086,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1042,7 +1150,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -1075,6 +1186,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1102,6 +1216,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1160,7 +1280,10 @@
                         values:
                           - eyelevel-cpu-memory
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -1193,6 +1316,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1221,6 +1347,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1263,7 +1395,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -1296,6 +1431,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1324,6 +1462,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1366,7 +1510,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -1399,6 +1546,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1427,6 +1577,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1469,7 +1625,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -1502,6 +1661,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1530,6 +1692,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1572,7 +1740,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -1605,6 +1776,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1633,6 +1807,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1760,7 +1940,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -1793,6 +1976,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1848,6 +2034,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -1906,7 +2098,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -1939,6 +2134,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -1966,6 +2164,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2024,7 +2228,10 @@
                         values:
                           - eyelevel-cpu-memory
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -2057,6 +2264,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2085,6 +2295,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2127,7 +2343,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -2160,6 +2379,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2188,6 +2410,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2230,7 +2458,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -2263,6 +2494,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2291,6 +2525,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2333,7 +2573,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -2366,6 +2609,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2394,6 +2640,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2436,7 +2688,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -2469,6 +2724,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2497,6 +2755,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2541,7 +2805,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -2574,6 +2841,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2629,6 +2899,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2687,7 +2963,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -2720,6 +2999,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2747,6 +3029,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2805,7 +3093,10 @@
                         values:
                           - eyelevel-cpu-memory
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -2838,6 +3129,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2866,6 +3160,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -2908,7 +3208,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -2941,6 +3244,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -2969,6 +3275,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3011,7 +3323,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -3044,6 +3359,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3072,6 +3390,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3114,7 +3438,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -3147,6 +3474,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3175,6 +3505,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3217,7 +3553,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -3250,6 +3589,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3278,6 +3620,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3321,7 +3669,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -3354,6 +3705,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3409,6 +3763,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3467,7 +3827,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -3500,6 +3863,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3527,6 +3893,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3585,7 +3957,10 @@
                         values:
                           - eyelevel-cpu-memory
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -3618,6 +3993,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3646,6 +4024,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3688,7 +4072,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -3721,6 +4108,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3749,6 +4139,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3791,7 +4187,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -3824,6 +4223,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3852,6 +4254,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3894,7 +4302,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -3927,6 +4338,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -3955,6 +4369,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -3997,7 +4417,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -4030,6 +4453,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -4058,6 +4484,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -4103,6 +4535,9 @@
           containers:
             - args:
                 - -migrate-only
+              env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
               name: migrate
@@ -4121,6 +4556,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   readOnly: true
@@ -4142,6 +4580,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: RELEASE-NAME-schema-migration
@@ -4185,7 +4629,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - envFrom:
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
@@ -4221,6 +4668,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -4263,6 +4713,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -4321,7 +4777,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - envFrom:
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
@@ -4357,6 +4816,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -4385,6 +4847,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -4443,7 +4911,10 @@
                         values:
                           - eyelevel-cpu-memory
           containers:
-            - envFrom:
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
@@ -4479,6 +4950,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -4508,6 +4982,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -4550,7 +5030,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - envFrom:
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
@@ -4586,6 +5069,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -4615,6 +5101,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -4657,7 +5149,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - envFrom:
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
@@ -4693,6 +5188,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -4722,6 +5220,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -4764,7 +5268,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - envFrom:
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
@@ -4800,6 +5307,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -4829,6 +5339,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -4871,7 +5387,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - envFrom:
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
@@ -4907,6 +5426,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -4936,6 +5458,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -4979,7 +5507,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -5012,6 +5543,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -5053,6 +5587,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -5111,7 +5651,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -5144,6 +5687,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -5171,6 +5717,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -5229,7 +5781,10 @@
                         values:
                           - eyelevel-cpu-memory
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -5262,6 +5817,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -5290,6 +5848,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -5332,7 +5896,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -5365,6 +5932,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -5393,6 +5963,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -5435,7 +6011,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -5468,6 +6047,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -5496,6 +6078,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -5538,7 +6126,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -5571,6 +6162,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -5599,6 +6193,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -5641,7 +6241,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -5674,6 +6277,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -5702,6 +6308,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -5745,7 +6357,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - envFrom:
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
@@ -5781,6 +6396,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -5823,6 +6441,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -5881,7 +6505,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - envFrom:
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
@@ -5917,6 +6544,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -5945,6 +6575,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -6003,7 +6639,10 @@
                         values:
                           - eyelevel-cpu-memory
           containers:
-            - envFrom:
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
@@ -6039,6 +6678,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -6068,6 +6710,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -6110,7 +6758,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - envFrom:
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
@@ -6146,6 +6797,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -6175,6 +6829,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -6217,7 +6877,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - envFrom:
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
@@ -6253,6 +6916,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -6282,6 +6948,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -6324,7 +6996,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - envFrom:
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
@@ -6360,6 +7035,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -6389,6 +7067,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -6431,7 +7115,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - envFrom:
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
               image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
@@ -6467,6 +7154,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -6496,6 +7186,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -6539,7 +7235,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -6572,6 +7271,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -6627,6 +7329,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -6685,7 +7393,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: test.invalid/large-file-delivery:local
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: test.invalid/large-file-delivery:local
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -6721,6 +7432,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -6751,6 +7465,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -6799,7 +7519,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -6832,6 +7555,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -6859,6 +7585,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -6917,7 +7649,10 @@
                         values:
                           - eyelevel-cpu-memory
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -6950,6 +7685,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -6978,6 +7716,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -7020,7 +7764,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -7053,6 +7800,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -7081,6 +7831,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -7123,7 +7879,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -7156,6 +7915,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -7184,6 +7946,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -7226,7 +7994,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -7259,6 +8030,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -7287,6 +8061,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -7329,7 +8109,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -7362,6 +8145,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -7390,6 +8176,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -7433,7 +8225,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -7466,6 +8261,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -7521,6 +8319,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -7579,7 +8383,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: test.invalid/large-file-delivery:local
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: test.invalid/large-file-delivery:local
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -7615,6 +8422,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -7645,6 +8455,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -7693,7 +8509,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -7726,6 +8545,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -7753,6 +8575,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -7811,7 +8639,10 @@
                         values:
                           - eyelevel-cpu-memory
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -7844,6 +8675,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -7872,6 +8706,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -7914,7 +8754,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -7947,6 +8790,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -7975,6 +8821,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -8017,7 +8869,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -8050,6 +8905,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -8078,6 +8936,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -8120,7 +8984,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -8153,6 +9020,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -8181,6 +9051,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -8223,7 +9099,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -8256,6 +9135,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -8284,6 +9166,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -8327,6 +9215,9 @@
           containers:
             - args:
                 - -migrate-only
+              env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: test.image:v1
               imagePullPolicy: Never
               name: migrate
@@ -8337,6 +9228,9 @@
               securityContext:
                 readOnlyRootFilesystem: true
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   readOnly: true
@@ -8353,6 +9247,12 @@
               operator: Equal
               value: batch
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: RELEASE-NAME-schema-migration
@@ -8393,7 +9293,10 @@
                         - myapp
                 topologyKey: kubernetes.io/hostname
           containers:
-            - image: test.image:v1
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: test.image:v1
               imagePullPolicy: Never
               livenessProbe:
                 httpGet:
@@ -8418,6 +9321,9 @@
               securityContext:
                 readOnlyRootFilesystem: true
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -8468,6 +9374,12 @@
               operator: Equal
               value: batch
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -8526,7 +9438,10 @@
                         values:
                           - test-label-1
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -8559,6 +9474,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -8585,6 +9503,12 @@
               operator: Equal
               value: batch
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -8643,7 +9567,10 @@
                         values:
                           - test-label-1
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -8676,6 +9603,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -8707,6 +9637,12 @@
               key: eyelevel_node
               value: test-label-1
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -8749,7 +9685,10 @@
                         values:
                           - test-label-1
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -8782,6 +9721,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -8811,6 +9753,12 @@
               key: eyelevel_node
               value: test-label-1
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -8839,7 +9787,10 @@
             app: queue
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -8872,6 +9823,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -8894,6 +9848,12 @@
           serviceAccountName: other-service-account
           terminationGracePeriodSeconds: 900
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -8922,7 +9882,10 @@
             app: summary-client
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -8955,6 +9918,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -8982,6 +9948,12 @@
               operator: Equal
               value: batch
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -9010,7 +9982,10 @@
             app: upload
         spec:
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -9043,6 +10018,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -9067,6 +10045,12 @@
           serviceAccountName: other-service-account
           terminationGracePeriodSeconds: 900
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -9112,6 +10096,9 @@
           containers:
             - args:
                 - -migrate-only
+              env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
               name: migrate
@@ -9130,6 +10117,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   readOnly: true
@@ -9151,6 +10141,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: RELEASE-NAME-schema-migration
@@ -9194,7 +10190,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -9227,6 +10226,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -9282,6 +10284,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -9340,7 +10348,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -9373,6 +10384,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -9400,6 +10414,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -9458,7 +10478,10 @@
                         values:
                           - eyelevel-cpu-memory
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -9491,6 +10514,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -9519,6 +10545,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -9561,7 +10593,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -9594,6 +10629,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -9622,6 +10660,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -9664,7 +10708,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -9697,6 +10744,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -9725,6 +10775,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -9767,7 +10823,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -9800,6 +10859,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -9828,6 +10890,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -9870,7 +10938,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -9903,6 +10974,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -9931,6 +11005,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -9974,7 +11054,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -10005,6 +11088,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -10056,6 +11142,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -10114,7 +11206,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -10145,6 +11240,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -10168,6 +11266,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -10226,7 +11330,10 @@
                         values:
                           - eyelevel-cpu-memory
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -10257,6 +11364,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -10281,6 +11391,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -10323,7 +11439,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -10354,6 +11473,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -10378,6 +11500,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -10420,7 +11548,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -10451,6 +11582,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -10475,6 +11609,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -10517,7 +11657,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -10548,6 +11691,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -10572,6 +11718,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -10614,7 +11766,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -10645,6 +11800,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -10669,6 +11827,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -10712,7 +11876,10 @@
                         values:
                           - eyelevel-gpu
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: Always
               livenessProbe:
                 httpGet:
@@ -10743,6 +11910,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -10796,6 +11966,12 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -10854,7 +12030,10 @@
                         values:
                           - eyelevel-gpu
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: Always
               livenessProbe:
                 httpGet:
@@ -10885,6 +12064,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -10910,6 +12092,12 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -10968,7 +12156,10 @@
                         values:
                           - eyelevel-gpu
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: Always
               livenessProbe:
                 httpGet:
@@ -10999,6 +12190,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -11025,6 +12219,12 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -11067,7 +12267,10 @@
                         values:
                           - eyelevel-gpu
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: Always
               livenessProbe:
                 httpGet:
@@ -11098,6 +12301,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -11124,6 +12330,12 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -11166,7 +12378,10 @@
                         values:
                           - eyelevel-gpu
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: Always
               livenessProbe:
                 httpGet:
@@ -11197,6 +12412,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -11223,6 +12441,12 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -11265,7 +12489,10 @@
                         values:
                           - eyelevel-gpu
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: Always
               livenessProbe:
                 httpGet:
@@ -11296,6 +12523,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -11322,6 +12552,12 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -11364,7 +12600,10 @@
                         values:
                           - eyelevel-gpu
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: Always
               livenessProbe:
                 httpGet:
@@ -11395,6 +12634,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -11421,6 +12663,12 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -11464,7 +12712,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/groundx:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -11497,6 +12748,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -11552,6 +12806,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -11611,7 +12871,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: test.invalid/large-file-delivery:local
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: test.invalid/large-file-delivery:local
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -11647,6 +12910,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -11677,6 +12943,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -11725,7 +12997,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/layout-webhook:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -11758,6 +13033,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -11785,6 +13063,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -11843,7 +13127,10 @@
                         values:
                           - eyelevel-cpu-memory
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/pre-process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -11876,6 +13163,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -11904,6 +13194,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-memory
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -11946,7 +13242,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/process:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -11979,6 +13278,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -12007,6 +13309,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -12049,7 +13357,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/queue:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -12082,6 +13393,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -12110,6 +13424,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -12152,7 +13472,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -12185,6 +13508,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -12213,6 +13539,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -12255,7 +13587,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/upload:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -12288,6 +13623,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -12316,6 +13654,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map
@@ -12359,7 +13703,10 @@
                         values:
                           - eyelevel-cpu-only
           containers:
-            - image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
+            - env:
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
+              image: public.ecr.aws/c9r4x6y5/eyelevel/summary-client:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -12392,6 +13739,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /home/golang/.cashbot/config.yaml
                   name: config-volume
                   subPath: config.yaml
@@ -12420,6 +13770,12 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: config-yaml-map

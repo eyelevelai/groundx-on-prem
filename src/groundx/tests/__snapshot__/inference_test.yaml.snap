@@ -51,6 +51,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -90,6 +92,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -239,6 +244,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
               imagePullPolicy: IfNotPresent
               name: init-layout
@@ -261,6 +268,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -288,6 +298,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-layout
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -387,6 +403,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -425,6 +443,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -575,6 +596,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-ranker
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -674,6 +701,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
                 - name: HF_HUB_OFFLINE
                   value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
@@ -711,6 +740,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -861,6 +893,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-summary
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -961,6 +999,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1000,6 +1040,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -1149,6 +1192,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
               imagePullPolicy: IfNotPresent
               name: init-layout
@@ -1171,6 +1216,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -1197,6 +1245,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-layout
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -1296,6 +1350,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1334,6 +1390,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -1483,6 +1542,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-ranker
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -1582,6 +1647,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
                 - name: HF_HUB_OFFLINE
                   value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
@@ -1619,6 +1686,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -1768,6 +1838,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-summary
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -1868,6 +1944,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1907,6 +1985,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -2056,6 +2137,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
               imagePullPolicy: IfNotPresent
               name: init-layout
@@ -2078,6 +2161,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -2104,6 +2190,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-layout
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -2203,6 +2295,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -2241,6 +2335,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -2390,6 +2487,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-ranker
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -2489,6 +2592,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
                 - name: HF_HUB_OFFLINE
                   value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
@@ -2526,6 +2631,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -2675,6 +2783,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-summary
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -2776,6 +2890,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -2815,6 +2931,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -2964,6 +3083,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
               imagePullPolicy: IfNotPresent
               name: init-layout
@@ -2986,6 +3107,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -3012,6 +3136,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-layout
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -3111,6 +3241,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -3149,6 +3281,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -3298,6 +3433,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-ranker
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -3397,6 +3538,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
                 - name: HF_HUB_OFFLINE
                   value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
@@ -3434,6 +3577,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -3583,6 +3729,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-summary
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -3683,6 +3835,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -3722,6 +3876,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -3871,6 +4028,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
               imagePullPolicy: IfNotPresent
               name: init-layout
@@ -3893,6 +4052,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -3919,6 +4081,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-layout
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -4018,6 +4186,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -4056,6 +4226,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -4205,6 +4378,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-ranker
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -4305,6 +4484,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
@@ -4347,6 +4528,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -4496,6 +4680,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
@@ -4521,6 +4707,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -4548,6 +4737,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-layout
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -4647,6 +4842,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
                 - name: HF_HUB_OFFLINE
                   value: "1"
               envFrom:
@@ -4687,6 +4884,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -4837,6 +5037,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-summary
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -4937,6 +5143,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -4976,6 +5184,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -5125,6 +5336,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
               imagePullPolicy: IfNotPresent
               name: init-layout
@@ -5147,6 +5360,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -5173,6 +5389,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-layout
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -5272,6 +5494,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
                 - name: HF_HUB_OFFLINE
                   value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
@@ -5309,6 +5533,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -5458,6 +5685,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-summary
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -5558,6 +5791,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
@@ -5600,6 +5835,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -5749,6 +5987,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: eyelevel-secret-credentials
@@ -5774,6 +6014,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -5801,6 +6044,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-layout
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -5898,6 +6147,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: test.image:v1
               imagePullPolicy: Never
               livenessProbe:
@@ -5927,6 +6178,9 @@
               securityContext:
                 readOnlyRootFilesystem: true
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -6068,6 +6322,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: test.image:v1
               imagePullPolicy: Never
               name: init-layout
@@ -6080,6 +6336,9 @@
               securityContext:
                 readOnlyRootFilesystem: true
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -6103,6 +6362,12 @@
               key: eyelevel_node
               value: test-label-1
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -6202,6 +6467,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -6240,6 +6507,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -6388,6 +6658,12 @@
               operator: Equal
               value: batch
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -6484,6 +6760,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
                 - name: HF_HUB_OFFLINE
                   value: "1"
               image: test.image:v1
@@ -6513,6 +6791,9 @@
               securityContext:
                 readOnlyRootFilesystem: true
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -6643,6 +6924,12 @@
           serviceAccountName: other-service-account
           terminationGracePeriodSeconds: 300
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -6742,6 +7029,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -6781,6 +7070,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -6903,6 +7195,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
               imagePullPolicy: IfNotPresent
               name: init-layout
@@ -6925,6 +7219,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -6951,6 +7248,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-layout
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -7029,6 +7332,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -7067,6 +7372,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -7189,6 +7497,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-ranker
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -7267,6 +7581,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
                 - name: HF_HUB_OFFLINE
                   value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
@@ -7304,6 +7620,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -7426,6 +7745,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-summary
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -7505,6 +7830,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -7542,6 +7869,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -7662,6 +7992,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
               imagePullPolicy: IfNotPresent
               name: init-layout
@@ -7682,6 +8014,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -7704,6 +8039,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-layout
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -7782,6 +8123,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -7818,6 +8161,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -7934,6 +8280,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-ranker
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -8012,6 +8364,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
                 - name: HF_HUB_OFFLINE
                   value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
@@ -8047,6 +8401,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -8163,6 +8520,12 @@
               key: eyelevel_node
               value: eyelevel-gpu-summary
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -8242,6 +8605,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
               imagePullPolicy: Always
               livenessProbe:
@@ -8279,6 +8644,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -8401,6 +8769,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/layout-inference:0.1.0
               imagePullPolicy: Always
               name: init-layout
@@ -8421,6 +8791,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /app/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -8443,6 +8816,12 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -8521,6 +8900,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
               image: public.ecr.aws/c9r4x6y5/eyelevel/ranker-inference:0.1.0
               imagePullPolicy: Always
               livenessProbe:
@@ -8557,6 +8938,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -8675,6 +9059,12 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
@@ -8753,6 +9143,8 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: SSL_CERT_FILE
+                  value: /var/run/groundx/file-access/ca.crt
                 - name: HF_HUB_OFFLINE
                   value: "1"
               image: public.ecr.aws/c9r4x6y5/eyelevel/summary-inference:0.1.0
@@ -8791,6 +9183,9 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
+                - mountPath: /var/run/groundx/file-access
+                  name: file-access-ca
+                  readOnly: true
                 - mountPath: /workspace/config_models.py
                   name: config-models
                   subPath: config_models.py
@@ -8909,6 +9304,12 @@
               key: eyelevel_node
               value: eyelevel-gpu
           volumes:
+            - name: file-access-ca
+              secret:
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                secretName: fixture-ca-bundle
             - configMap:
                 name: config-models-map
               name: config-models
