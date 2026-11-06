@@ -375,6 +375,128 @@ tests:
       - notMatchRegex:
           path: stringData["config.yaml"]
           pattern: "maxImages:"
+  - it: "engine inlineImages renders on the local engine when storage is s3"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.inline-images-s3.yaml
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "\n\\s+service: s3\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "baseURL: http://summary-api[^\n]*\n\\s+inlineImages: true\n"
+  - it: "engine inlineImages is omitted for in-cluster minio and AIStor storage"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "\n\\s+service: minio\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "service: eyelevel\n(\\s+apiKey: [^\n]*\n)?\\s+baseURL: http://summary-api"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "inlineImages"
+  - it: "engine inlineImages is omitted for s4 storage"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.inline-images-s4.yaml
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "\n\\s+service: s4\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "service: eyelevel\n(\\s+apiKey: [^\n]*\n)?\\s+baseURL: http://summary-api"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "inlineImages"
+  - it: "engine inlineImages is omitted for a remote eyelevel engine on s3"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.inline-images-s3.yaml
+      - ./files/values.inline-images-remote-eyelevel.yaml
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "\n\\s+service: s3\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "service: eyelevel\n\\s+apiKey: test-api-key\n\\s+baseURL: https://summary.remote.example.com\n"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "inlineImages"
+  - it: "engine inlineImages is omitted for an openai engine on s3"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.inline-images-s3.yaml
+      - ./files/values.inline-images-openai.yaml
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "\n\\s+service: s3\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "service: openai\n\\s+apiKey: test-api-key\n"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "inlineImages"
+  - it: "engine inlineImages false on the local s3 engine omits the key"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.inline-images-s3.yaml
+    set:
+      engines.default.engineId: local-model
+      engines.default.inlineImages: false
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "\n\\s+service: s3\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "engineID: \"local-model\"\n\\s+service: eyelevel\n(\\s+apiKey: [^\n]*\n)?\\s+baseURL: http://summary-api"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "inlineImages"
+  - it: "engine inlineImages true on a non-local engine renders true"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.inline-images-s3.yaml
+      - ./files/values.inline-images-openai.yaml
+    set:
+      engines.default.inlineImages: true
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "engineID: \"gpt-5.4-mini\"\n\\s+service: openai\n\\s+apiKey: test-api-key\n\\s+inlineImages: true\n"
+  - it: "engine inlineImages string fails schema validation"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.inline-images-s3.yaml
+    set:
+      engines.default.engineId: local-model
+      engines.default.inlineImages: "yes"
+    asserts:
+      - failedTemplate:
+          errorPattern: "engines/default/inlineImages.*got string, want boolean"
   - it: "layout OCR timeout override renders unquoted in layout config.py"
     templates:
       - ../templates/resources/layout-config-py.yaml
