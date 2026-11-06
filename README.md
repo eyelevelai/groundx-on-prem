@@ -607,7 +607,7 @@ Set both OpenSearch passwords to match your installed service. [Password deliver
 
 #### Upgrading an Existing Install
 
-Keep your existing values file. Before upgrading, follow the [OpenSearch upgrade steps](docs/upgrades.md#upgrading-existing-opensearch) and [database migration requirements](docs/agents/database-upgrades.md). Installs from chart 0.2.9 or earlier run OpenSearch on its published demo certificates and may still use published passwords; the `groundx` and `process` images of chart 0.2.8 and later already reject the demo certificate. The OpenSearch upgrade is forward-only: OpenSearch cannot be downgraded, and `helm rollback` does not restore its earlier version or data.
+Keep your existing values file. Before upgrading, follow the [OpenSearch upgrade steps](docs/upgrades.md#upgrading-existing-opensearch) and [database migration requirements](docs/agents/database-upgrades.md). Installs from chart 0.2.9 or earlier run OpenSearch on its published demo certificates and may still use published passwords; the `groundx` and `process` images of chart 0.2.8 and later already reject the demo certificate. For OpenSearch 2.19 or later the upgrade to 3.2.0 is forward-only (OpenSearch cannot be downgraded); an older OpenSearch is re-certified without changing its version.
 
 ### Persistent Storage
 
