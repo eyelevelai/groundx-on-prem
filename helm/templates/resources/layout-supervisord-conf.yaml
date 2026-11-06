@@ -11,8 +11,7 @@
 {{- $threads := get $svcData "threads" -}}
 {{- $workers := int (get $svcData "workers") -}}
 {{- $replicas := get $svcData "replicas" | default dict -}}
-{{- $gracePeriod := int (dig "gracePeriod" 900 $replicas) -}}
-{{- $stopWaitSecs := int (max 1 (sub $gracePeriod 30)) -}}
+{{- $stopWaitSecs := include "groundx.celeryWorker.stopWaitSecs" (dict "key" $entry "replicas" $replicas) -}}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -49,8 +48,7 @@ data:
     stderr_logfile_maxbytes=0
     {{ end }}
 
-    [group:celery_workers]
-    programs={{ range $i, $_ := until $workers }}{{ if $i }},{{ end }}celery_worker_{{ add $i 1 }}{{ end }}
+    {{ include "groundx.celeryWorker.group" $workers }}
 
     {{- if contains "inference" $name }}
     [program:celery_monitor]

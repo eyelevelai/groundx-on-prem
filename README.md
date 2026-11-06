@@ -26,7 +26,6 @@
   - [PV Class](#pv-class)
   - [NVIDIA GPU Operator](#nvidia-gpu-operator)
     - [Installing in Microsoft Azure](#installing-in-microsoft-azure)
-    - [Uninstalling the NVIDIA GPU Operator](#uninstalling-the-nvidia-gpu-operator)
 - [Installing Services](#installing-services)
   - [Redis](#redis)
     - [Using an Existing Redis Cluster](#using-an-existing-redis-cluster)
@@ -77,19 +76,19 @@ With this repository you can deploy GroundX RAG document ingestion and search ca
 GroundX delivers a unique approach to advanced RAG that consists of three interlocking systems:
 
 1. **GroundX Ingest:** A state-of-the-art vision model trained on over 1M pages of enterprise documents. It delivers unparalleled document understanding and can be fine-tuned for your unique document sets.
-2. **GroundX Store:** Secure, encrypted storage for source files, semantic objects, and vectors, ensuring your data is always protected.
+2. **GroundX Store:** Secure, encrypted storage for source files, semantic objects, and vectors, with access controls and encryption configured for your deployment.
 3. **GroundX Search:** Built on OpenSearch, it combines text and vector search with a fine-tuned re-ranker model for precise, enterprise-grade results.
 
 In head-to-head testing, GroundX significantly outperforms many popular RAG tools ([ref1](https://www.eyelevel.ai/post/most-accurate-rag), [ref2](https://www.eyelevel.ai/post/guide-to-document-parsing), [ref3](https://www.eyelevel.ai/post/do-vector-databases-lose-accuracy-at-scale)), especially with respect to complex documents at scale. GroundX is trusted by organizations like Air France, Dartmouth and Samsung with over 2 billion tokens ingested on our models.
 
-GroundX On-Prem allows you to leverage GroundX within hardened and secure environments. GroundX On-Prem requires no external dependencies when running, meaning it can be used in air-gapped environments. Deployment consists of two key steps:
+GroundX On-Prem allows you to leverage GroundX within hardened and secure environments. Air-gapped deployments require self-hosted models and services, with images, model files and other dependencies prepared in advance. Deployment consists of two key steps:
 
 1. (Optional) Creation of Infrastructure on AWS via Terraform
 2. Deployment of GroundX onto Kubernetes via Helm
 
 Currently, creation of infrastructure via Terraform is only supported for AWS. However, with sufficient expertise GroundX can be deployed onto any pre-existing Kubernetes cluster.
 
-This repo is in Open Beta. Feedback is appreciated and encouraged. To use the hosted version of GroundX visit [EyeLevel.ai](https://www.eyelevel.ai/). For white glove support in configuring this open source repo in your environment, or to access more performant and closed source versions of this repo, [contact us](https://www.eyelevel.ai/product/request-demo). To learn more about what GroundX is, and what it's useful for, you may be interested in the following resources:
+GroundX On-Prem is generally available. Feedback is appreciated and encouraged. To use the hosted version of GroundX visit [EyeLevel.ai](https://www.eyelevel.ai/). For white glove support in configuring this open source repo in your environment, or to access more performant and closed source versions of this repo, [contact us](https://www.eyelevel.ai/product/request-demo). To learn more about what GroundX is, and what it's useful for, you may be interested in the following resources:
 
 - [A Video discussion the importance of parsing, and a comparison of several approaches](https://www.youtube.com/watch?v=7Vv64f1yI0I&t=1108s)
 - [GroundX being used to power a multi-modal RAG application](https://www.youtube.com/watch?v=tIiqCG11hzQ)
@@ -119,11 +118,9 @@ Once documents have been processed via the ingest service they can be queried ag
 
 You must have the following command line tools installed:
 
-```markdown
 - `bash` shell (version 4.0 or later recommended. AWS Cloud Shell has insufficient resources.)
 - `kubectl` (or `oc`) configured to a namespace you can write to (e.g., `eyelevel`) ([Setup Docs](https://kubernetes.io/docs/tasks/tools/))
 - `helm` v3.8+
-```
 
 ## Cluster Requirements
 
@@ -170,7 +167,7 @@ The **publicly available** GroundX On-Prem Kubernetes pods are all built for `x8
 
 The GroundX On-Prem GPU pods are designed to run on NVIDIA GPUs with CUDA 12+. Other GPU types or older driver versions are not supported.
 
-As part of the deployment, the [NVIDIA GPU Operator](#nvidia-gpu-operator) must be installed. We offer terraform scripts to deploy the [NVIDIA GPU Operator](#nvidia-gpu-operator) to your cluster, if you have not already done so.
+As part of the deployment, the [NVIDIA GPU Operator](#nvidia-gpu-operator) must be installed. Install it with the Helm commands below if you have not already done so.
 
 The NVIDIA GPU operator should update your NVIDIA drivers and other software components needed to provision the GPU, so long as you have [supported NVIDIA hardware](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/platform-support.html) on the machine.
 
@@ -258,33 +255,9 @@ Note: in many cloud Kubernetes services, such as EKS, you must use a node image 
 
 Pods in this node group have specific requirements on GPU, CPU, RAM, and disk drive space.
 
-The resource requirements for these pods are described detail in more detail in the [Total Recommended Resources](#total-recommended-resources) section above.
+The default configuration is sized for an NVIDIA GPU with 48 GB of GPU memory, 4 CPU cores, and at least 30 GB RAM. It deploys 2 pods (`summary.inference.replicas.desired`), which share the node's GPU. Their combined memory allocation must fit on that GPU.
 
-The default configuration for this service is sized for an NVIDIA GPU with 48 GB of GPU memory, 4 CPU cores, and at least 30 GB RAM. It deploys 2 pods on this node (called `summary.inference.replicas.desired` in `values.yaml`). It does not claim the GPU via the `nvidia.com/gpu` resource provided by the [NVIDIA GPU operator](https://github.com/NVIDIA/gpu-operator), so every summary pod scheduled to a node shares that node's GPU.
-
-Each summary pod runs `summary.inference.workers` workers, and each worker loads its own copy of the model and reserves `summary.inference.deviceUtilize` of the GPU's total memory (a fraction from 0 to 1). On each summary GPU node, pods x `summary.inference.workers` x `summary.inference.deviceUtilize` must be at most 1. With the defaults this is 2 x 1 x 0.48 = 0.96. Each worker's share must also hold the model and its cache: on a 24 GB GPU a share of 0.48 is too small, so the default values do not fit a 24 GB GPU.
-
-For one 24 GB summary GPU, run a single summary pod with one worker:
-
-```yaml
-summary:
-  inference:
-    replicas:
-      min: 1
-      desired: 1
-      max: 1
-    workers: 1
-    deviceUtilize: 0.9
-    updateStrategy: Recreate
-```
-
-Apply these values to a running install with `helm upgrade`, passing the file with `-f` after your other values files. With `updateStrategy: Recreate`, Kubernetes stops the old summary pods before it starts the new one, so summary is unavailable on each upgrade until the new pod has loaded its model (the load took about 5 minutes in the test run). Without it, the default rolling update starts the new pod while the old pods still hold the GPU, and the new pod cannot load its model.
-
-These values assume the summary pod has the node's GPU to itself. They were tested on an AWS `g5.2xlarge` (one NVIDIA A10G, which reported 23028 MiB of GPU memory) with the `summary-inference:0.2.7` image and helm `v3.19.0+g3d8990f`, applied as an in-place `helm upgrade` to an install running the default values. Other 24 GB GPUs, such as the NVIDIA L4, were not tested.
-
-With several summary GPU nodes, or with `cluster.hpa: true` and `summary.inference.replicas.max` above 1, more than one summary pod can land on the same node and share its GPU. To keep one pod per GPU, set `nvidia.com/gpu: 1` under both `requests` and `limits` in `summary.inference.resources`, or spread the pods across nodes with `summary.inference.topologySpreadConstraints`. Each pod then has a GPU to itself, so on 24 GB GPUs use the `summary.inference.workers` and `summary.inference.deviceUtilize` values from the block above. In either case, keep `summary.inference.replicas.max` at or below the number of summary pods your summary GPU nodes can hold. With a GPU request, keep `updateStrategy: Recreate` unless a spare GPU is free, because a rolling update's new pod waits Pending for the GPU the old pod holds. Every summary pod mounts the same model volume claim, so pods on more than one node need ReadWriteMany storage for that claim. The claim inherits `cluster.pvAccessMode` and `cluster.pvClass`; if that is not already ReadWriteMany on a storage class that supports it, set `summary.inference.pvc.access: ReadWriteMany` and such a class in `summary.inference.pvc.class` (see [Persistent Storage](#persistent-storage)). Kubernetes does not let a claim that already exists change its access mode, so on an existing install also set a new `summary.inference.pvc.name` (the default is `summary-model`): the upgrade creates a new claim, the summary pods download the model into it again, and Helm removes the old claim because the chart no longer renders it. With ReadWriteOnce storage the volume can be mounted by one node only, so a pod scheduled to a second node cannot start; keep summary on one node instead.
-
-For the 48 GB defaults, `updateStrategy: Recreate` is also recommended, with the same brief outage on each upgrade. Without it, Kubernetes' default rolling update starts a third summary pod on the node before it stops an old one, three pods at 0.48 need 1.44 of the GPU, and the new pod cannot load its model. This advice follows from that arithmetic and from the 24 GB test without `Recreate`, where the rollout stalled the same way; it was not tested on a 48 GB GPU.
+For a 24 GB GPU, different worker counts or multiple nodes, follow the [summary GPU sizing notes](docs/upgrades.md#summary-gpu-sizing). The default values do not fit a 24 GB GPU. The guide includes the tested configuration, shared-storage requirements and upgrade downtime considerations.
 
 If your machine has different resources than this, you will need to modify `summary.inference` in your `values.yaml` using the per pod requirements described above to optimize for your node resources.
 
@@ -292,7 +265,7 @@ Note: in many cloud Kubernetes services, such as EKS, you must use a node image 
 
 ### Configure Node Groups
 
-As mentioned in the [node groups](#node-groups) section, node labels are defined in [values.yaml](./values.yaml) and must be applied to appropriate nodes within your cluster. Default node label values include:
+As mentioned in the [node groups](#node-groups) section, node labels are defined in [values.yaml](src/groundx/values.yaml) and must be applied to appropriate nodes within your cluster. Default node label values include:
 
 ```text
 eyelevel-cpu-memory
@@ -302,9 +275,9 @@ eyelevel-gpu-ranker
 eyelevel-gpu-summary
 ```
 
-Multiple node labels can be applied to the same node group, so long as resources are available as described in the [total recommended resource](#total-recommended-resources) and [node group resources](#node-group-resources) sections.
+Different pod families can share nodes when resources permit, but a node can carry only one value for the `eyelevel_node` label. To combine families on the same nodes, configure their selectors to use the same label value. See the [total recommended resources](#total-recommended-resources) and [node group resources](#node-group-resources).
 
-However, **all** node labels must exist on **at least 1 node group** within your cluster. The label should be applied with a string key named `eyelevel_node` and an enumerated string value from the list above.
+For the default full deployment, **all** required node labels must exist on **at least 1 node group** within your cluster. The label should be applied with a string key named `eyelevel_node` and an enumerated string value from the list above.
 
 #### Applying Custom Node Groups
 
@@ -407,15 +380,7 @@ If you wish to use an existing redis cache, you must configure the `cache.existi
 
 #### Upgrading to Chart 0.2.8 with a `rediss://` Redis
 
-Chart 0.2.8 images verify the certificate chain and the host name of a `rediss://` Redis in the layout, ranker and summary services, both the APIs and the workers. This applies when you set `ssl: true` under `cache.existing`, under the ranker-only `ranker.cache`, or under `cache.metrics.existing` for a separate metrics Redis; the certificate must cover the `addr` host name of each. A plain `redis://` Redis, including the Redis the chart installs, is unaffected. A certificate that chains to a public root needs no action.
-
-If your Redis certificate comes from a private CA, or does not cover the `addr` host name, act before upgrading. Build a complete CA bundle from the public root CAs plus your private CA, store it in a Secret under the key `ca.crt` in the GroundX namespace (the `namespace` value, `eyelevel` by default), and set `fileAccess.caSecretName` to its name. If `fileAccess.caSecretName` is already set, for example for a private object-store CA, add the Redis CA to that Secret's `ca.crt` instead. Alternatively, correct `addr` to a host name the certificate covers.
-
-The bundle replaces the container's default CA file. A Secret that holds only the private CA breaks the HTTPS calls that rely on public roots, such as an LLM API or an object store, so keep the public roots and any CAs already in the bundle.
-
-If you skip this and a certificate does not verify, ingest, search and summary requests fail and the workers stop publishing and consuming tasks. The ai-server API and worker pods stay Ready even when they cannot connect, so after upgrading check the layout, ranker and summary logs for `certificate verify failed`.
-
-Not every Redis client verifies yet. The ai-server layout, ranker and summary clients verify. The extract client (AGE-395) and the workspace runner still accept any certificate from a `rediss://` Redis.
+Images from chart 0.2.8 verify Redis certificates. Before upgrading a TLS-enabled Redis connection, follow the [Redis TLS upgrade notes](docs/upgrades.md#redis-tls-upgrades).
 
 #### Deploying a Dedicated Redis Cluster
 
@@ -423,67 +388,7 @@ If you'd like to install redis to your cluster, instances will be automatically 
 
 ### Workspace
 
-The `workspace` service family is optional and disabled by default. Enable it when the Partner API should provision managed code projects for GroundX Studio Harness generated projects. The runner is internal-only: agents call the Partner API, the Partner API calls the runner, and the runner owns managed repository creation, short-lived git sessions, fallback file operations, command execution, cleanup, and publish operations.
-
-Set `workspace.enabled: true` and provide either `workspace.token` or `workspace.existingSecret`. When `workspace.token` is provided, the chart renders it into the generated GroundX `config.yaml` as `workspace.token`, renders it into the runner `config.py` as `runner_token`, and creates a `workspace-secret` containing `WORKSPACE_RUNNER_TOKEN` as the environment fallback. When `workspace.existingSecret` is provided, that secret must contain `WORKSPACE_RUNNER_TOKEN`; both the Partner API and workspace runner fall back to that environment value because the config files intentionally render the token empty. The internal runner URL is derived into GroundX `config.yaml` as `workspace.baseURL`, not stored as a secret.
-
-The runner follows the standard Python microservice deployment pattern. The API uses the shared Gunicorn deployment template and the workers use the shared supervisord Celery deployment template. Workspace-specific resources provide `/app/config.py` (a `Secret`, since it carries credentials — see GX-17), `/app/gunicorn_conf.py` (a `ConfigMap`), and one supervisord config per queue (ConfigMaps): provision, workspace, command, publish, and cleanup. API knobs such as `threads`, `workers`, `timeout`, `timeoutKeepAlive`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under `workspace.api`, matching the other Python API services. Worker knobs such as `queue`, `threads`, `workers`, `replicas`, `resources`, `node`, `serviceAccount`, and pod metadata live under each worker section: `provision`, `workspace`, `command`, `publish`, and `cleanup`.
-
-Workspace project metadata and operation state are stored in MySQL. The primary path creates a managed GitHub or GitLab repository from the scaffold, returns a short-lived repo-scoped git session, and expects agents to clone, edit, commit, and push locally. The optional secondary file API uses `/tmp/workspaces` only as a disposable checkout cache for server-side reads, writes, patches, commands, and diffs; Git remains the source of truth and cache loss is recoverable. By default the chart renders this cache as `emptyDir`. Set `workspace.pvc.enabled: true` only when you want a persistent cache for repeated secondary file API work. When enabled, the PVC follows the same helper pattern as inference services: `cluster.pvClass` sets the storage class and `cluster.pvAccessMode` sets the access mode. Prefer `ReadWriteMany` when multiple workspace pods need to share the cache. The runner waits on Redis/Valkey and MySQL but does not wait on file storage because workspace artifacts are not part of the GroundX document file store. Runtime config rendered into `/app/config.py` uses chart helpers for MySQL, Redis/Valkey, command, and workspace defaults, with `workspace.publishDryRun` exposed as the normal safety toggle.
-
-`workspace.ownershipChecksEnabled` defaults to `true`. Setting it to `false` skips runner ownership comparisons and project-list filtering, but leaves runner authentication and operation safety checks active. The shared ConfigMap change rolls the workspace API and every worker. Deploy a compatible workspace-runner image before using a chart version that renders this setting. Restore `true` before offering Workspace outside internal use.
-
-Publish is dry-run by default. To enable real publish, set `workspace.publishDryRun: false`, configure the provider credentials owned by the runner service, and set the workflow or pipeline to trigger. For GitHub Actions:
-
-Managed project data is also disabled by default. For the hosted AWS path, set `workspace.managedData.enabled: true`, its AWS region, and the dev and prod S3 bucket, Redis endpoint, and Redis user-group values. To verify managed MySQL certificates with a public CA, set `workspace.managedData.mysqlSslCaConfigMap` to an existing ConfigMap containing the fixed key `ca.pem`; the chart mounts it read-only at `/var/run/config/workspace/mysql/ca.pem` in the Workspace API and all five workers. Use `workspace.existingSecret`; it must contain `WORKSPACE_RUNNER_TOKEN`, `MANAGED_DATA_RDS_ADMIN_CONNECTION_DEV`, and `MANAGED_DATA_RDS_ADMIN_CONNECTION_PROD`. Keep the RDS administrator URLs out of values files. Grant every Workspace component service account the least-privilege AWS permissions needed to manage the configured S3 prefixes, IAM users, and ElastiCache users. Enable dev first and verify allocation, republish, isolation, and confirmed deletion before enabling prod. Disabling the setting stops new reconciliation but does not delete existing app data.
-
-```yaml
-workspace:
-  enabled: true
-  token: "<internal-runner-token>"
-  publishDryRun: false
-  publishGithubWorkflowId: deploy.yml
-  github:
-    appId: "<github-app-id>"
-    installationId: "<github-app-installation-id>"
-    privateKeySecret:
-      name: workspace-github-app
-      key: private-key.pem
-```
-
-For GitLab, set `workspace.gitProvider: gitlab`, configure `workspace.gitlab.apiBaseUrl`, and provide a token via `workspace.gitlab.tokenSecret` or `workspace.gitlab.token`.
-
-`privateKeySecret` is the production path: the chart mounts that existing secret only into workspace API and worker pods at `/var/run/secrets/workspace/github/private-key.pem`. For local or lower-environment testing, `workspace.github.privateKeyPem` can populate `GITHUB_APP_PRIVATE_KEY_PEM` in a generated `workspace-github-secret` that is mounted only into workspace API and worker pods. GitHub credentials are not mounted into the Partner API service.
-
-Workspace autoscaling uses the same external metrics server as the rest of GroundX. Enable the metrics server and either global or per-component HPA settings so every rendered HPA metric has a matching `config.yaml` metric definition:
-
-```yaml
-metrics:
-  enabled: true
-
-cluster:
-  hpa: true
-
-workspace:
-  enabled: true
-  token: "<internal-runner-token>"
-  command:
-    queue: command_queue
-    replicas:
-      desired: 2
-      threshold: 10
-      throughput: 1250
-```
-
-The API emits `workspace-api:api` with a default threshold of `4000` and, by default, `workspace-api:throughput` with a default throughput of `50000`. The Partner API receives the runner URL from the workspace API helper, so the derived internal URL follows the same pattern as `extract-api`: `http://workspace-api.<namespace>.svc.cluster.local`. Worker HPAs emit `workspace-<worker>:task` and point the metrics server at the configured Celery queue for that worker; worker task thresholds default to `10`, worker targets default to `1`, and worker throughput defaults to `50000`. All of these values may be overridden per worker. Keep custom worker queue names in values rather than editing templates so the HPA and metrics-server config stay in sync.
-
-Run the local Helm production gate before changing chart helpers, values, schemas, or snapshots:
-
-```bash
-.build/bin/validate-helm.sh
-```
-
-The Helm CI gate uses the same script. It lints both chart surfaces, runs Helm unittest, verifies that snapshots did not silently drop empty renders, runs `.build/bin/verify-workspace-chart.py` to prove the workspace API service and metrics contracts stay aligned, and runs `.build/bin/verify-storage-contract.py` to prove StorageClass defaults, provider examples, PVC access modes, mirrored chart files, and the `setup-eks` generated EFS/EBS values and printed Helm commands all render. After deploying to a cluster, run `.build/bin/smoke-workspace-runner.sh` with the target kube context selected to verify the API, workers, cluster DNS, health endpoint, internal `/storage` status endpoint, and Partner API runner URL wiring.
+Workspace is optional and disabled by default. See [Workspace configuration](docs/workspace.md) to enable managed code projects, publishing or managed application data.
 
 ### MySQL
 
@@ -519,41 +424,13 @@ If you wish to use an existing MinIO or AIStor cluster, you must configure the `
 
 #### Using AWS S3
 
-If you wish to use an existing AWS S3 bucket, you must configure the `file.existing` parameters in your `values.yaml` **and** set `file.serviceType` to `s3`.
+If you wish to use an existing AWS S3 bucket, you must configure the `file.existing` parameters in your `values.yaml` **and** set `file.existing.serviceType` to `s3`.
 
 #### Using S4
 
-[S4](https://github.com/rh-aiservices-bu/s4) is an experimental, single-replica S3-compatible store for small installs, with no high availability. Use [AIStor](#deploying-a-dedicated-aistor-object-store) for production. S4 requires GroundX chart 0.2.8 or later with its default images; older images can send files to AWS S3 or fail extraction.
+[S4](https://github.com/rh-aiservices-bu/s4) is an experimental storage option for small installations, with one replica and no high availability. Use AIStor for production.
 
-These steps assume `fileAccess.enabled` is false, the chart default; with it on, the chart refuses `file.username` and `file.password`.
-
-Run commands from the repository root. Replace the four `REPLACE_WITH_...` credentials in `helm/values/s4/values.yaml`, then install:
-
-```bash
-git clone --depth 1 --branch v0.3.2 https://github.com/rh-aiservices-bu/s4 s4-v0.3.2
-
-helm install s4 \
-  s4-v0.3.2/charts/s4 \
-  -n eyelevel \
-  -f helm/values/s4/values.yaml
-```
-
-The values pin the image by digest, use a `ClusterIP` Service with OpenShift Route off, and set `fsGroup: 1001`. The data volume defaults to 10Gi; set `storage.data.size` for your data. Alternatively, set `s3.existingSecret` to a Secret containing `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `UI_USERNAME`, and `UI_PASSWORD`.
-
-Connect a new GroundX install with the same S4 credentials. S4 always uses `us-east-1`; leave `file.existing.region` unset.
-
-```yaml
-file:
-  username: <s4-access-key>
-  password: <s4-secret-key>
-  existing:
-    serviceType: s4
-    url: http://s4.eyelevel.svc.cluster.local:7480
-```
-
-S4 is amd64 only. Health checks cover the UI, not its S3 port. Buckets suit thousands to tens of thousands of objects. URL-encoded keys are limited to 246 bytes (single upload) or 210 bytes (multipart), including GroundX's path prefix. Large-file import and review refuse files over 5 GiB and need temporary pod disk of about twice each upload's size. Credentials are fixed at first volume initialization; concurrent write-once uploads can overwrite each other. See [S4 limits](docs/storage/s4.md#limits).
-
-To replace an existing store, follow [Migrating from MinIO or AIStor](docs/storage/s4.md#migrating-from-minio-or-aistor). Keep the original storage URL and object keys, or existing documents become unreadable. Stop uploads and wait until no documents are processing before copying; do not migrate if you cannot confirm this. The procedure applies only with `fileAccess.enabled: false` and grants anonymous object reads to anyone who can reach the store.
+Follow [S4 installation, configuration and limits](docs/storage/s4.md#installation). The documented installation and migration procedures assume `fileAccess.enabled: false`; do not use their anonymous-read policy with the new protected-file starter. Existing-store migration must preserve stored URLs and object keys.
 
 #### Deploying a Dedicated AIStor Object Store
 
@@ -561,7 +438,7 @@ If you'd like to install MinIO AIStor to your cluster, you need an AIStor licens
 
 These steps install the AIStor operator in namespace `aistor` and an object store named `minio-tenant` in `eyelevel`. With that name and TLS off, the store serves the hosts GroundX uses by default (`minio` and `minio-tenant-hl`), so GroundX needs no `file` settings other than the store's credentials. The chart versions are pinned to `aistor-operator` 6.0.0 and `aistor-objectstore` 1.1.0.
 
-These steps assume `fileAccess.enabled` is false, the chart default; with it on, the chart refuses `file.username` and `file.password`.
+The commands below provision the object store. For the new protected-file starter, also complete the [private storage and HTTPS configuration](docs/agents/private-file-access.md) before installing GroundX. The TLS-off defaults below are not sufficient for that configuration.
 
 Add the AIStor repository, store your license as Secret `minio-license` (key `minio.license`) in the operator's namespace, and install the operator:
 
@@ -594,7 +471,9 @@ kubectl -n eyelevel create secret generic minio-tenant-env-configuration \
 rm config.env
 ```
 
-Set GroundX's `file.username` and `file.password` to the same two values. Then install the object store:
+For the new starter, put these credentials in the Secret named by `fileAccess.storageCredentialsSecretName`, using keys `GROUNDX_ACCESS_KEY_ID` and `GROUNDX_SECRET_ACCESS_KEY`. Do not set inline `file.username` or `file.password` when file access is enabled. A legacy install with file access disabled can use those inline values.
+
+Then install the object store:
 
 ```bash
 helm install minio-tenant \
@@ -636,44 +515,7 @@ If you wish to use an existing OpenSearch cluster, you must configure the `searc
 
 #### Deploying a Dedicated OpenSearch Cluster
 
-If you'd like to install OpenSearch to your cluster, first choose the OpenSearch admin password. It must be the same value you later provide to GroundX as `search.privilegedPassword` in your `values.yaml` or as `SEARCH_INIT_PASSWORD` in the cluster credentials Secret (the Secret route needs `groundx` and `process` images that read it; see the notes under Configuration). Supply it to OpenSearch through a Kubernetes Secret, so the password is not written into the OpenSearch StatefulSet pod spec where anyone who can read pods in the namespace could see it. Restrict permissions before each file exists, and create it in an editor rather than with a shell command so the password is not saved to your shell history:
-
-```bash
-umask 077
-```
-
-Create `opensearch-admin-secret.yaml` in an editor with this content, then confirm it is owner-only with `chmod 600 opensearch-admin-secret.yaml`:
-
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: opensearch-admin
-  namespace: eyelevel
-type: Opaque
-stringData:
-  OPENSEARCH_INITIAL_ADMIN_PASSWORD: "<opensearch-admin-password>"
-```
-
-Apply the Secret, then delete the local file:
-
-```bash
-kubectl apply -f opensearch-admin-secret.yaml
-rm opensearch-admin-secret.yaml
-```
-
-Create `opensearch-admin.values.yaml` with this content. It references the Secret instead of embedding the password, so this file holds no credential:
-
-```yaml
-extraEnvs:
-  - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: opensearch-admin
-        key: OPENSEARCH_INITIAL_ADMIN_PASSWORD
-```
-
-Then install OpenSearch with both values files:
+First follow [OpenSearch credential setup](docs/upgrades.md#installing-opensearch) to create the administrator Secret and `opensearch-admin.values.yaml`. Use the same administrator password for GroundX's `search.privilegedPassword`.
 
 ```bash
 helm repo add opensearch https://opensearch-project.github.io/helm-charts/
@@ -682,11 +524,7 @@ helm repo update
 helm install opensearch opensearch/opensearch -n eyelevel -f helm/values/opensearch/values.yaml -f opensearch-admin.values.yaml
 ```
 
-Choose a password you have not published anywhere. The GroundX chart rejects a known published default for `search.password` or `search.privilegedPassword` and fails to render if you supply one, so an upgrade that silently keeps the old default (for example `helm upgrade --reuse-values`) will not deploy.
-
-OpenSearch requires `OPENSEARCH_INITIAL_ADMIN_PASSWORD` at every start, not only on first initialization. On an already-initialized data volume it is still read at boot, and a start without it exits with `No custom admin password found` (observed on image digest `sha256:8e95a30f…`). Keep `-f opensearch-admin.values.yaml` on every `helm upgrade opensearch …`, not just the first install, and pin the OpenSearch image to a digest so this stays reproducible. The value is consumed only to initialize an empty volume; changing it on an existing volume does not rotate the stored admin password (rotate with the backup route under Upgrading an Existing Install). The Secret must exist before OpenSearch starts, which the order above ensures.
-
-Rotating these passwords does not by itself secure OpenSearch for production: the documented install still trusts OpenSearch's demo TLS certificates, and the GroundX application user has broad privileges. For production, also replace the demo certificates with operator-supplied ones and restrict network access to OpenSearch.
+Keep `-f opensearch-admin.values.yaml` on later OpenSearch upgrades. Changing its seed value does not rotate an existing administrator password. For production, replace demo TLS certificates and restrict network access; password rotation alone is insufficient.
 
 ### Kafka
 
@@ -696,7 +534,7 @@ If you wish to use an existing Kafka cluster, you must configure the `stream.exi
 
 #### Using AWS SQS
 
-If you wish to use existing AWS SQS queues, you must configure the `stream.existing` parameters in your `values.yaml` **and** set `stream.serviceType` to `sqs`.
+If you wish to use existing AWS SQS queues, you must configure the `stream.existing` parameters in your `values.yaml` **and** set `stream.existing.serviceType` to `sqs`.
 
 #### Deploying a Dedicated Kafka Cluster
 
@@ -731,102 +569,62 @@ You must have completed the following steps before attempting to install the Gro
 
 ### Configuration
 
-Instructions on how to configure GroundX On-Prem can by found in the main [README.md](helm/README.md). A set of example configurations can be found at [helm/values](helm/values).
-
-For a GroundX deployment with default settings:
-
-1. Copy `sample.values.yaml` to something like `values.yaml`
-2. We minimally suggest updating the following values:
-
-```yaml
-groundxKey      # a valid GroundX API key, to be used to look up licensing information
-admin.apiKey    # admin values are associated with
-admin.username  # the admin account for your deployment
-admin.email
-admin.password
-cluster.pvClass # an existing storage class
-cluster.pvAccessMode # ReadWriteMany for shared filesystems, ReadWriteOnce for block/local storage
-cluster.type    # type of Kubernetes cluster
-search.password           # unless mode is ingest: the OpenSearch application user password (values or Secret key SEARCH_PASSWORD)
-search.privilegedPassword # unless mode is ingest: the OpenSearch admin password (values or Secret key SEARCH_INIT_PASSWORD)
-```
-
-The chart has no default OpenSearch passwords. When `mode` is not `ingest`, set both: each search credential can be set through `values.yaml` (`search.password`, `search.privilegedPassword`) or through the cluster credentials Secret (`SEARCH_PASSWORD`, `SEARCH_INIT_PASSWORD` in `eyelevel-secret-credentials`), as the `MYSQL_*` keys do for `db`. The sample Secret in `src/groundx/prereqs/secret/values.yaml` carries both keys with empty values; fill them in. The Secret route requires `cluster.secrets` to list `eyelevel-secret-credentials`, and `groundx` and `process` images that read `SEARCH_PASSWORD` and `SEARCH_INIT_PASSWORD`. Both services log in to OpenSearch: the API (`groundx`) to search, and the indexing worker (`process`) to write documents to the index. Their default images are tagged with the chart's `appVersion`, and images up to 0.2.7 do not read these keys. Until the chart ships images that read them, either set both passwords in values, or set both `groundx.image` and `process.image` to images built from cashbot-go with this change (EyeLevel-ai/cashbot-go#1809). With an older `groundx` image the API has no search password and crash-loops; with an older `process` image the indexing worker cannot write to OpenSearch, so ingested documents fail. Pods read the Secret only when they start, so after changing either key, restart both services. Restart `groundx` first and wait for it, because it updates the `search.username` user to the new password at startup, then restart `process`: `kubectl rollout restart -n eyelevel deployment/groundx`, `kubectl rollout status -n eyelevel deployment/groundx`, then `kubectl rollout restart -n eyelevel deployment/process`. Passwords delivered through the Secret are not render-validated by the chart, because the published-default check sees values only. The Secret route applies to the direct-helm route; the Terraform operator still takes both passwords as values, required when `cluster.search` is `true` and not needed for an ingest-only install (`cluster.search = false`). In `mode: ingest` neither is used or rendered.
-
-**Note**: `admin.apiKey` and `admin.username` must be valid UUIDs. We provide a helper script to generate random UUIDs. You can run it using thefollowing command:
+Helm reads your installation settings from a YAML file. For a new installation with ingestion and search, run this from the repository root:
 
 ```bash
-bin/uuid
+cp sample.values.yaml values.yaml
 ```
+
+Edit `values.yaml` with your settings before installing. Replace all placeholders and example hostnames. Keep the completed file out of source control because it contains credentials.
+
+| Settings | What to supply |
+|---|---|
+| `licenseKey` | The GroundX license key for this installation. |
+| `admin.apiKey`, `admin.username`, `admin.email` | A different generated UUID for each of the first two fields, plus the administrator's email. Generate both UUIDs with `bin/uuid`. |
+| `cluster.type`, `cluster.pvClass`, `cluster.pvAccessMode` | Kubernetes platform, existing StorageClass and its supported access mode. Prefer `ReadWriteMany` for shared filesystems; use `ReadWriteOnce` for block/local storage. |
+| `db.username`, `db.password`, `db.privilegedUsername`, `db.privilegedPassword` | MySQL application credentials and an account with permission to create and upgrade the GroundX database schema. Match the accounts configured when installing MySQL. |
+| `file.bucketName`, `file.customDomain` | Object-store bucket and stable file-delivery hostname. The hostname must match `fileAccess.publicUrl`. |
+| `fileAccess` | File-delivery and storage URLs, storage credentials, HTTPS certificates and ingress settings. Follow the file-access steps below. |
+| `search.password`, `search.privilegedPassword` | Application and administrator passwords matching OpenSearch. Neither is required for `mode: ingest`. |
+
+Authentication uses API keys by default, without password login. See [identity modes](docs/on-prem-identity.md) to configure local password login or Amazon Cognito.
+
+The sample enables the GroundX file gateway, which applies your file-access policies to downloads. Complete the [file-access deployment guide](docs/agents/private-file-access.md) for your storage provider before deploying. It covers URLs, DNS, ingress, certificates, credentials, compatible images and storage tests.
+
+The sample leaves two verification flags false. Complete the guide's checks before setting them true:
+
+1. `fileAccess.originsPrivate`: every storage address rejects unauthenticated reads, authorized processing works, and stored files and storage connections are encrypted.
+2. `fileAccess.frontProxyTLSVerified`: HTTPS is configured, and traffic between your ingress or proxy and the gateway is encrypted.
+
+Helm blocks installation until both flags are true. The flags record your verification; they do not change bucket permissions or configure encryption. Create the required Kubernetes Secrets and network routes before installing.
+
+The chart's default for `fileAccess.enabled` remains `false`. Using your existing values file on an upgrade does not enable the gateway automatically.
+
+For external services or specialized deployments, see the [service installation instructions](#installing-services), [connection examples](helm/values) and [full values reference](helm/README.md).
+
+Set both OpenSearch passwords to match your installed service. [Password delivery and image compatibility](docs/upgrades.md#groundx-password-delivery) covers using Kubernetes Secrets and upgrading older images.
 
 #### Upgrading an Existing Install
 
-Earlier chart versions defaulted both OpenSearch passwords to a public value. An OpenSearch data volume created with them keeps its original admin password, because the seed value is only read on first initialization. Before upgrading:
+Keep your existing values file. Before upgrading, follow the [OpenSearch credential steps](docs/upgrades.md#upgrading-existing-opensearch) and [database migration requirements](docs/agents/database-upgrades.md). Earlier installs may still use published passwords; rotate them before upgrading. Changing a seed password does not rotate credentials already stored in OpenSearch.
 
-1. Set `search.privilegedPassword` (or `SEARCH_INIT_PASSWORD`, which needs the `groundx` and `process` images described under Configuration) to the admin password your OpenSearch currently uses, unless that is a published default. The chart rejects a published default supplied through values and will not render, so if your install still uses one, first rotate the OpenSearch admin password off it with the admin-password route in step 3, then set `search.privilegedPassword` to the new value. When you upgrade the OpenSearch release itself, keep `-f opensearch-admin.values.yaml` on the `helm upgrade opensearch` command: the image requires `OPENSEARCH_INITIAL_ADMIN_PASSWORD` at every start, and a restart without it fails with `No custom admin password found`.
-2. Set `search.password` (or `SEARCH_PASSWORD`) to the application user password your install currently uses, unless that is a published default. The chart rejects a published default supplied through values, so if your install still uses one, choose a new application password for the upgrade. Make sure `search.privilegedPassword` already holds the correct admin password (from step 1 or the step 3 rotation) before changing `search.password`, or the GroundX API crash-loops when it re-creates `search.username`; confirm with the login check in step 3.
-3. Rotate the credentials. The OpenSearch `admin` user is reserved, so the security REST API refuses to change it (it returns 403 "Resource 'admin' is reserved"). Use these routes instead:
-   - Application password: set a new `search.password` and upgrade, or change `SEARCH_PASSWORD` in the Secret and restart `groundx` and then `process` as described under Configuration. The GroundX API re-creates `search.username` with it, using the admin credential, when its login is rejected.
-   - Admin password: open a shell in the OpenSearch pod (for example `kubectl exec -it -n eyelevel opensearch-cluster-master-0 -- bash`) and run these steps. Start from a backup of the stored users, not the image's `internal_users.yml`, because uploading that file replaces the whole stored user list and would drop every user created through the REST API, including the GroundX application user, and break search.
-     1. Back up the stored security configuration: `plugins/opensearch-security/tools/securityadmin.sh -backup /tmp/security-backup -icl -nhnv -cacert config/root-ca.pem -cert config/kirk.pem -key config/kirk-key.pem`.
-     2. Run `plugins/opensearch-security/tools/hash.sh` without `-p` so it prompts for the password and keeps it out of shell history.
-     3. Put the printed hash as the `admin` hash in `/tmp/security-backup/internal_users.yml`.
-     4. Upload only the users: `plugins/opensearch-security/tools/securityadmin.sh -f /tmp/security-backup/internal_users.yml -t internalusers -icl -nhnv -cacert config/root-ca.pem -cert config/kirk.pem -key config/kirk-key.pem`.
-
-     The backup keeps the existing users, including the GroundX application user, so search keeps working. See the OpenSearch [securityadmin documentation](https://docs.opensearch.org/latest/security/configuration/security-admin/).
-   - Then set `search.privilegedPassword` to the new admin password and upgrade. Confirm the rotation from inside the pod with `curl -k -u admin https://localhost:9200/_plugins/_security/authinfo`, which prompts for the password: the new password must succeed and the old one must be rejected.
-
-If `search.privilegedPassword` does not match the real admin password, the GroundX API crash-loops with an unauthorized error when it has to create or update its OpenSearch user: on a first install, or after `search.password` changes. On an existing install the mismatch is otherwise silent, so run the check above. If you deploy a Terraform `search` object with `cluster.search = true`, `password` and `root_password` must be non-empty and not an angle-bracket placeholder; an ingest-only install (`cluster.search = false`) needs neither. The operator module now requires Terraform 1.9 or later.
+If an inference model is still downloading for the first time, scale the inference deployments to 0 and wait until their pods are gone before you upgrade or roll back. See [inference model downloads](docs/upgrades.md#inference-model-downloads).
 
 ### Persistent Storage
 
-**Chart publication status:** as of this writing, only `groundx-storageclass` `0.1.1` is published to
-`registry.groundx.ai/helm` -- `helm search repo` and a plain `helm install`/`helm upgrade` with no
-`--version` pin resolve to `0.1.1`, which has no `lookup`-based upgrade-safety guard and does not
-default `parameters.encrypted` to `"true"`. The `0.1.2` behavior described in the upgrade note below
-(encrypted-by-default EBS installs, existing-class preservation on upgrade) applies only once `0.1.2`
-is published; until then, pin `--version 0.1.2` explicitly once it is available, and do not assume an
-unpinned install already has these defaults.
+Set `cluster.pvClass` to an existing StorageClass and `cluster.pvAccessMode` to a mode it supports. Prefer `ReadWriteMany` for shared filesystems; use `ReadWriteOnce` for block or local storage. Summary pods on multiple nodes need shared `ReadWriteMany` storage.
 
-GroundX uses one app-wide persistent storage abstraction. Set `cluster.pvClass` to the Kubernetes storage class name and `cluster.pvAccessMode` to the access mode that class supports. Services that need PVCs, including summary inference, ranker inference, layout inference, and workspace when `workspace.pvc.enabled: true`, inherit those values unless their local `pvc` block explicitly overrides them.
-
-Prefer a shared filesystem class with `ReadWriteMany` when available:
-
-```yaml
-cluster:
-  pvClass: eyelevel-pv
-  pvAccessMode: ReadWriteMany
-```
-
-Use this mode when multiple pods need to share a mounted cache or model/data volume. Workspace does not require this for the primary local-git workflow, but it is useful when the secondary file API cache is configured as a PVC. Example storage class values are included for common shared filesystems:
-
-- EKS/EFS: `src/groundx/prereqs/storageclass/values.efs.example.yaml`
-- AKS/Azure Files: `src/groundx/prereqs/storageclass/values.azure-files.example.yaml`
-- GKE Filestore: `src/groundx/prereqs/storageclass/values.gke-filestore.example.yaml`
-
-When only block or local storage is available, use `ReadWriteOnce`:
-
-```yaml
-cluster:
-  pvClass: eyelevel-pv
-  pvAccessMode: ReadWriteOnce
-```
-
-An EKS/EBS example is available at `src/groundx/prereqs/storageclass/values.ebs.example.yaml`. With `ReadWriteOnce`, any pod family sharing the same PVC must be scheduled in a compatible shape because the volume cannot be mounted freely across nodes.
-
-For AWS EKS, `terraform/aws/setup-eks` generates `src/groundx/prereqs/storageclass/values.aws.local.yaml` and `src/groundx/values.aws.local.yaml` from Terraform outputs. Use `STORAGE_DRIVER=efs` for the shared EFS path or `STORAGE_DRIVER=ebs` for EBS. The generated Helm commands printed by the script do not require manually editing the EFS filesystem ID.
-
-**Upgrade note (EBS encryption default):** starting with `groundx-storageclass` `0.1.2`, a new EBS install (provisioner `ebs.csi.aws.com`, or the legacy in-tree `kubernetes.io/aws-ebs`) renders `parameters.encrypted: "true"` by default -- an operator opting out sets `encrypted: "false"` explicitly (unquoted `false`, `null`, and `""` are equivalent opt-out spellings). An already-installed StorageClass is never changed by a real `helm upgrade --install`: the chart reads the live class via Helm's `lookup` function and, when the class already exists, renders its current live `parameters` verbatim instead of the chart's new defaults -- `helm upgrade` never attempts to change a StorageClass's `parameters`, which Kubernetes treats as immutable once the object is created. When the class exists and any supplied parameter (`encrypted`, `kmsKeyId`, `type`, or a provisioner-specific one) differs from the live class, the chart's install notes print one line naming each parameter that was not applied. This `lookup` guard only sees a live cluster: `helm template`, a client-side dry run, and GitOps renderers have no live cluster to query, so those flows always render the new-install defaults -- an operator managing an existing class that `0.1.1` created without an explicit `encrypted` value must set `encrypted: "false"` explicitly to keep it unchanged. This does not work for a class that `0.1.1` created with an explicit `encrypted: "false"`: `0.1.2` never renders an explicit `false`, so a no-live-cluster render omits the key, the rendered class then differs from the live one, and the apply fails on an immutable parameter. For that class, use a live-cluster `helm upgrade --install` (the `lookup` keeps the live value), stay on `0.1.1` in that flow, or create a new StorageClass. Changing an existing class's actual encryption requires creating a new StorageClass, because `parameters` cannot be updated in place. **Pin the version explicitly** (`helm install groundx-storageclass groundx/groundx-storageclass --version 0.1.2 ...`) once `0.1.2` is published -- an unpinned install resolves to whatever `helm search repo` currently reports (see the chart publication status note above), which may still be `0.1.1` and carries none of this behavior.
+See [persistent storage configuration and upgrades](docs/upgrades.md#persistent-storage) for provider examples, EKS setup and existing StorageClass limitations. Do not change an existing StorageClass's immutable parameters during an upgrade.
 
 ### Helm Installation
 
 When deploying from this checkout with an environment-specific values file, use the local source chart:
 
 ```bash
-helm upgrade --install groundx src/groundx -n eyelevel -f values.ranker-only-eks.yaml
+helm upgrade --install groundx src/groundx -n eyelevel -f values.yaml
 ```
 
-Replace `values.ranker-only-eks.yaml` with the values file for your target cluster. Do not set image
+Use the customized `values.yaml` from Configuration. Do not set image
 tags manually for a normal release; workloads that do not override their image tag use the chart
 `appVersion` from `src/groundx/Chart.yaml`.
 
@@ -847,6 +645,16 @@ helm install groundx \
 ```
 
 Replace `values.yaml` with the path to the `values.yaml` file you created in the previous [Configuration](#configuration) step.
+
+For upgrades, keep your customized `values.yaml`. Do not replace it with `sample.values.yaml`.
+
+Before upgrading, follow the [database upgrade requirements](docs/agents/database-upgrades.md) and the [OpenSearch credential steps](#upgrading-an-existing-install). Then pass your existing file to Helm:
+
+```bash
+helm upgrade groundx groundx/groundx -n eyelevel -f values.yaml
+```
+
+To enable the file gateway on an existing installation, follow the [existing-file activation procedure](docs/agents/private-file-access.md#upgrade-existing-files-before-activation). It includes preparing older files, selecting compatible images and testing your storage provider.
 
 # Autoscaling & Monitoring
 
@@ -959,25 +767,7 @@ When set, pods use simulated LLM responses instead of external model providers.
 
 ## Terminal Extract Diagnostics
 
-Terminal extract diagnostics are disabled by default. Enable the same value on
-the extract API, agent, download, and save pods with:
-
-```yaml
-extract:
-  terminalAgentTraceEnabled: true
-```
-
-Override one pod by setting `extract.api.terminalAgentTraceEnabled`,
-`extract.agent.terminalAgentTraceEnabled`,
-`extract.download.terminalAgentTraceEnabled`, or
-`extract.save.terminalAgentTraceEnabled`. An explicit pod value wins over the
-shared value, including `false`.
-
-Use this only with an Extraction Agents image that implements the
-[AGE-272 terminal diagnostics contract](https://github.com/eyelevelai/extraction-agents/pull/101).
-The runtime keeps successful work unchanged, publishes Celery failure callbacks
-before terminal persistence, and applies the rollout's storage, access,
-lifecycle, and failure-budget gates.
+Terminal diagnostics are disabled by default. See [extract diagnostics](docs/extract-diagnostics.md) for compatible images, shared and per-pod settings, and rollout requirements.
 
 # Using GroundX On-Prem
 
@@ -986,6 +776,7 @@ lifecycle, and failure-budget gates.
 Once the setup is complete, run:
 
 ```bash
+kubectl -n eyelevel rollout status deployment/groundx
 kubectl -n eyelevel get svc groundx
 ```
 
@@ -1000,7 +791,9 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxxxx.us-east-2.elb.amazonaws.com
 
 ## Use the SDKs
 
-The [API endpoint](#get-the-api-endpoint), in conjuction with the `admin.api_key` defined during deployment, can be used to configure the GroundX SDK to communicate with your On-Prem instance of GroundX.
+The [API endpoint](#get-the-api-endpoint), in conjunction with the `admin.apiKey` defined during deployment, can be used to configure the GroundX SDK to communicate with your On-Prem instance of GroundX.
+
+Configure HTTPS at your API ingress or proxy before sending API keys. The examples below assume that HTTPS endpoint is ready.
 
 Note: you must append `/api` to your [API endpoint](#get-the-api-endpoint) in the SDK configuration.
 
@@ -1010,7 +803,7 @@ from groundx import GroundX
 external_ip = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxxxx.us-east-2.elb.amazonaws.com'
 api_key="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
-client = GroundX(api_key=api_key, base_url=f"http://{external_ip}/api")
+client = GroundX(api_key=api_key, base_url=f"https://{external_ip}/api")
 ```
 
 ```typescript
@@ -1020,85 +813,45 @@ const external_ip = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxxxx.us-east-2.elb.a
 
 const groundx = new GroundXClient({
   apiKey: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-  environment: `http://${external_ip}/api`;,
+  environment: `https://${external_ip}/api`,
 });
 ```
 
 ## Use the APIs
 
-The [API endpoint](#get-the-api-endpoint), in conjuction with the `admin.api_key` defined during deployment, can be used to interact with your On-Prem instance of GroundX.
+The [API endpoint](#get-the-api-endpoint), in conjunction with the `admin.apiKey` defined during deployment, can be used to interact with your On-Prem instance of GroundX.
 
 All of the methods and operations described in the [GroundX documentation](https://documentation.groundx.ai/reference) are supported with your On-Prem instance of GroundX. You simply have to substitute `https://api.groundx.ai` with your [API endpoint](#get-the-api-endpoint).
 
 # Terraform Deployment (terraform/aws/)
 
-`terraform/aws/` is an optional path for provisioning AWS infrastructure (a VPC and/or an EKS
-cluster) ahead of the Helm install described above — see [Deployment](#what-is-groundx-on-prem)
-step 1. It is also the supported path for maintaining AWS infrastructure already provisioned
-through it. As of November 4, 2025, the previous **hybrid terraform-helm approach to deploying the
-GroundX application itself** was retired in favor of a pure Helm release; that change is about how
-the application is installed onto a cluster, not about Terraform's role in provisioning the
-cluster, which is unaffected and remains supported for both new and existing AWS installs.
+`terraform/aws/` is an optional path for creating AWS infrastructure before the Helm installation. It also remains supported for maintaining infrastructure it provisioned. GroundX itself is installed with Helm.
+
+See [AWS infrastructure with Terraform](terraform/aws/README.md) for EKS versions, upgrade precautions, cost controls and node diagnostics.
 
 ## Accessing Legacy Scripts
-If you would like to access the legacy terraform scripts, they can be pulled from [legacy-terraform-deployment](https://github.com/eyelevelai/groundx-on-prem/releases/tag/legacy-terraform-deployment).
+
+Legacy application deployment scripts are linked from the [Terraform guide](terraform/aws/README.md#accessing-legacy-scripts).
 
 ## EKS CPU and monitoring cost controls
 
-CPU-only nodes default to gp3 disks and one unavailable node per update. CloudWatch keeps enhanced Container Insights enabled and Application Signals disabled. See [EKS cost controls](docs/agents/eks-cost-controls.md) before applying these settings to an existing cluster.
+See [EKS cost controls](docs/agents/eks-cost-controls.md).
 
 ## Optional EKS Node Diagnostics
 
-AWS EKS deployments managed by the bundled Terraform (new or existing) can enable default-off
-diagnostics with one setting. See [EKS Node Diagnostics](docs/eks-node-diagnostics.md).
+See [EKS Node Diagnostics](docs/eks-node-diagnostics.md).
 
 ## EKS Cluster Version Configuration
 
-`terraform/aws/variables.tf`'s `environment_internal.eks_version` key controls the Kubernetes
-version requested for a new EKS cluster (via `terraform/aws/eks/eks.tf`'s
-`module "eyelevel_eks".cluster_version`). Leaving the key unset (the default) passes `null` to
-the module, so AWS creates the cluster at the AWS default version rather than a version this repo
-selects — see the [EKS `CreateCluster` API
-reference](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html) for what
-"the AWS default version" means; it is not necessarily the newest version EKS offers.
+See [EKS version configuration and upgrade precautions](terraform/aws/README.md#eks-cluster-version-configuration).
 
-**Owner and bump process.** The declared default in `terraform/aws/env.tfvars.example` (currently
-`1.35`) is owned by whoever maintains `groundx-on-prem`. Bump it when the currently-declared
-version approaches the end of its [AWS EKS standard support
-window](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-version-support.html), so new
-installs land on a version still inside standard support.
+## Reference Guides
 
-**What happens when standard support ends.** This module does not set an [EKS upgrade
-policy](https://docs.aws.amazon.com/eks/latest/APIReference/API_UpgradePolicyRequest.html), so the
-outcome depends on the policy the cluster ends up with (AWS's own default for newly created
-clusters is `EXTENDED`; an existing cluster this Terraform now maintains may already carry a
-different policy set outside this repo):
-
-- **`EXTENDED`** — the cluster keeps running its current version past standard support, at an
-  additional per-cluster hourly cost ([EKS pricing](https://aws.amazon.com/eks/pricing/)), until it
-  reaches its extended-support end date.
-- **`STANDARD`** — there is no paid extended-support period; AWS force-upgrades the cluster to the
-  next supported version once standard support ends, whether or not that upgrade was planned.
-
-Know which policy your cluster has (`aws eks describe-cluster --name <cluster> --query
-cluster.upgradePolicy`) so you know which of these two outcomes to expect, and budget for it.
-
-**Adopting the key on an existing cluster.** `setup-eks` writes the key automatically: it reads
-Terraform state (`terraform show -json`) to find an existing cluster, then looks up that cluster's
-actual running version via `aws eks describe-cluster` — the declared default is only used when
-state shows no cluster at all. If a cluster is found in state but its running version cannot be
-resolved (bad credentials, missing IAM permission, wrong region, throttling), `setup-eks` aborts
-rather than silently falling back to the declared default and risking an unattended downgrade — a
-normal re-run is safe, an unresolvable one stops instead of guessing. An operator hand-editing
-`env.tfvars` for an existing cluster must instead:
-
-1. Read the cluster's actual running version first: `aws eks describe-cluster --name <cluster>
-   --query cluster.version --output text`. EKS does not support control-plane downgrades, so
-   setting a lower version than what is running is rejected.
-2. Know that this same value also drives every EKS-managed node group's AMI release selection
-   (`groundx-on-prem`'s node groups don't override it, so they inherit the cluster's resolved
-   version) — changing it can trigger a managed-node-group rollout, not just a control-plane
-   change.
-3. Review `terraform -chdir=terraform/aws/eks plan` before applying. `bin/environment eks` calls
-   `terraform apply --auto-approve` with no confirmation gate, so the plan output is the only
-   review point before a version change takes effect.
+- [Identity and login modes](docs/on-prem-identity.md)
+- [Private file access](docs/agents/private-file-access.md)
+- [Deployment and upgrade notes](docs/upgrades.md)
+- [Workspace](docs/workspace.md)
+- [Large-file delivery](docs/agents/large-file-delivery.md) and [post-processing](docs/agents/post-processing.md)
+- [Monitoring](monitoring/README.md) and [extract diagnostics](docs/extract-diagnostics.md)
+- [Full values reference](helm/README.md) and [configuration examples](helm/values)
+- [Contributing](CONTRIBUTING.md)

@@ -15,6 +15,7 @@ data:
     errorlog = "-"
     loglevel = {{ include "groundx.logLevel" . | quote }}
     timeout = {{ include "groundx.workspace.api.timeout" . }}
+    graceful_timeout = {{ include "groundx.workspace.api.timeout" . }}
     timeout_keep_alive = {{ include "groundx.workspace.api.timeoutKeepAlive" . }}
     worker_class = "uvicorn.workers.UvicornWorker"
     workers = {{ include "groundx.workspace.api.workers" . }}
