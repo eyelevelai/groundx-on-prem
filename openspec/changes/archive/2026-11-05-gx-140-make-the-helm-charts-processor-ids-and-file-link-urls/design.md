@@ -6,7 +6,7 @@ The motivation and the inventory of files are in `proposal.md`; this document re
 
 **Goals:**
 - The values schema rejects two or more IDs for `cluster.processors.layout`, `.map` and `.summarize` before any template runs, and keeps accepting one or more IDs for the other ten lists.
-- The `values.yaml` comment tells operators which three lists take one ID and which six lists the GroundX server does not read.
+- `values.yaml` stays unchanged: `cluster.processors` is schema-only, like `cluster.preProcessors`, and the harness values reference says which three lists take one ID and which six lists the GroundX server does not read.
 - Every file the link-host keys touched returns to its content on `main` at `595510d8c`, so the branch's only difference from chart 0.2.9 is the processor map.
 - With `cluster.processors` unset, the rendered `config.yaml` is the same as chart 0.2.9, and the proof uses an oracle the new code cannot influence.
 
@@ -32,7 +32,7 @@ The other ten lists get no `maxItems`. `skipGenerate` with two IDs is the must-n
 
 ### 2. The link-host removal restores files to `main` instead of unwinding edits by hand
 
-Invariant: after the rework, every chart file the link-host keys touched is byte-identical to `main` at `595510d8c`, except the processor-map lines in `values.yaml`, `values.schema.json` and `templates/resources/config-yaml.yaml`.
+Invariant: after the rework, every chart file the link-host keys touched is byte-identical to `main` at `595510d8c`, except the processor-map lines in `values.schema.json` and `templates/resources/config-yaml.yaml`.
 
 The restore is per file: `templates/_helpers/app/file-access.tpl`, `templates/_helpers/services/file.tpl`, `tests/file_settings_test.yaml`, `tests/extract_test.yaml` and `docs/agents/private-file-access.md` are restored whole (in `src/groundx` and, for templates, in `helm/`). The `groundx.file.uploadStorage` helper goes with `file.tpl`, and its body returns inline in the `upload` block of `config-yaml.yaml`, because after the `uploadGroundx` section is gone it would have one caller. In `config-yaml.yaml` only the `upload` block through the end of the file is restored; the `$procs` line and the `processors` hunks stay. In `values.yaml` and `values.schema.json` only the two `file` keys and their comments are removed.
 
@@ -65,7 +65,7 @@ The values contract the harness reads (the removed keys, the single-ID limit, th
 
 - [A values file written against the unreleased branch that sets `file.publicUrl` or `file.groundxPublicUrl`, or gives a single-ID list two IDs, now fails validation] → No published chart carried those keys or `cluster.processors`. The failure happens at `helm upgrade` time with a named path, before anything deploys.
 - [A wrong but single processor ID still passes] → The chart cannot see the database, so it cannot detect this; out of scope here, as `proposal.md` records.
-- [The six unread lists stay settable, so an operator may expect them to do something] → The `values.yaml` comment names them; removing them would change the 13-key contract the requester chose to keep.
+- [The six unread lists stay settable, so an operator may expect them to do something] → The harness values reference names them; removing them would change the 13-key contract the requester chose to keep.
 - [The restore misses a line the link-host work added outside the listed files] → The closure check greps `src`, `helm` and `docs` for `groundxPublicUrl`, `file.publicUrl` and `uploadGroundx`, and the values and schema checks compare data with `main`.
 
 ## Migration Plan

@@ -24,10 +24,10 @@ Mirror rule: every template, `values.yaml` and `values.schema.json` edit under `
 - [x] 2.3 Restore `docs/agents/private-file-access.md` to main (drops the bullet about rejecting the two link keys)
   check: b=$(git merge-base HEAD origin/0.3.0) && git diff --quiet "$b" -- docs/agents/private-file-access.md
 
-## 3. Operator-facing values comment
+## 3. Customer-facing values file
 
-- [x] 3.1 Extend the comment above `processors: {}` under `cluster` in `src/groundx/values.yaml` to say that `layout`, `map` and `summarize` take exactly one ID and that the server does not read `saveFile`, `skipConvert`, `skipLayout`, `skipMap`, `summarizeChunks` or `summarizeSections`; keep it a short knob description with no example block and no ticket or person reference, keep `processors: {}`, copy the file to `helm/values.yaml`, and parse both files
-  check: for f in src/groundx/values.yaml helm/values.yaml; do c=$(awk '/^cluster:/{s=1} s&&/^  #/{b=b" "$0; next} s&&/^  processors:/{print b; f=1; exit} s{b=""} END{if(!f) exit 1}' "$f" | tr -s ' #' ' ') || { echo "$f: no cluster.processors key" >&2; exit 1; }; [ -n "$c" ] || { echo "$f: no comment above cluster.processors" >&2; exit 1; }; for w in 'exactly one' layout map summarize saveFile skipConvert skipLayout skipMap summarizeChunks summarizeSections; do printf '%s' "$c" | grep -qiF -- "$w" || { echo "$f: cluster.processors comment does not mention $w" >&2; exit 1; }; done; done; cmp src/groundx/values.yaml helm/values.yaml && [ "$(yq -o=json '.cluster.processors' src/groundx/values.yaml)" = '{}' ]
+- [x] 3.1 Keep `cluster.processors` out of `src/groundx/values.yaml` and `helm/values.yaml`: the key is schema-only, like `cluster.preProcessors`, because `values.yaml` lists only required or commonly configured values
+  check: set -o pipefail; b=$(git merge-base HEAD origin/0.3.0) || exit 1; git diff --quiet "$b" -- src/groundx/values.yaml helm/values.yaml || { echo "values.yaml differs from $b" >&2; exit 1; }; for f in src/groundx/values.yaml helm/values.yaml; do [ "$(yq '.cluster | has("processors")' "$f")" = false ] || { echo "$f lists cluster.processors" >&2; exit 1; }; done
 
 ## 4. Retire the link-host spec
 

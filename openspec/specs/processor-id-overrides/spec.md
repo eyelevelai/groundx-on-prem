@@ -97,15 +97,15 @@ The values schema SHALL give `cluster.processors.layout`, `cluster.processors.ma
 - **THEN** the cases "two layout processor IDs fail schema validation", "two map processor IDs fail schema validation" and "two summarize processor IDs fail schema validation" pass with a `failedTemplate` assertion on the schema error
 - **AND** the cases "processor overrides render every configured list" and "ingest mode builds extraPostDefaults from the configured skipGenerate IDs" still pass
 
-### Requirement: The values comment names the single-ID lists and the unread lists
-The comment above `cluster.processors` in `src/groundx/values.yaml` and `helm/values.yaml` SHALL state that `layout`, `map` and `summarize` take exactly one ID, and SHALL name the six lists the GroundX server does not read: `saveFile`, `skipConvert`, `skipLayout`, `skipMap`, `summarizeChunks` and `summarizeSections`. At cashbot-go `1bc6431ccc` those six exist only as config struct fields (`pkg/config/api.go:91-107`), with no non-test `Processors.<field>` reference. The comment SHALL stay a short knob description with no commented-out example and no ticket or person reference, and the two `values.yaml` files SHALL stay byte-identical.
+### Requirement: values.yaml does not list cluster.processors
+`src/groundx/values.yaml` and `helm/values.yaml` SHALL NOT contain a `cluster.processors` key or a comment about it. The key SHALL exist only in `values.schema.json`, like `cluster.preProcessors`, because `values.yaml` lists only required or commonly configured values and a new install never sets this one. The single-ID rule and the six lists the GroundX server does not read (`saveFile`, `skipConvert`, `skipLayout`, `skipMap`, `summarizeChunks`, `summarizeSections`; at cashbot-go `1bc6431ccc` they exist only as config struct fields, `pkg/config/api.go:91-107`) are documented in the harness values reference instead.
 
-#### Scenario: Comment carries both facts (finalize success)
-- **WHEN** an operator reads the comment lines directly above `processors:` under `cluster` in either `values.yaml`
-- **THEN** the comment says `layout`, `map` and `summarize` take exactly one ID
-- **AND** it names `saveFile`, `skipConvert`, `skipLayout`, `skipMap`, `summarizeChunks` and `summarizeSections` as lists the server does not read
-
-#### Scenario: Default value unchanged (must not block)
+#### Scenario: Key absent from both values files
 - **WHEN** either `values.yaml` is parsed
-- **THEN** `cluster.processors` is still `{}`, so a new install renders the default IDs
+- **THEN** `.cluster` has no `processors` key
+- **AND** both files are unchanged from the merge base with the target release branch
+
+#### Scenario: Unset map renders the default IDs (must not block)
+- **WHEN** the chart renders without a `cluster.processors` value
+- **THEN** the rendered `processors` block carries the default IDs
 
