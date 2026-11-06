@@ -192,7 +192,10 @@ supported features.
   `src/groundx/tests/files/verify-probe-mirror-drift.sh` (FRA-145), a narrower rendered-output
   check that predates and still complements the full-tree one.
 - **`upload.groundx.ai` model-weight download is HARDCODED** in inference init-containers — an
-  **air-gap blocker**; weights must be mirrored for offline installs (mechanism not documented in-repo).
+  **air-gap blocker**; offline installs seed the model files and `complete.<model>` into the model
+  volume ([inference model downloads](../upgrades.md#inference-model-downloads)).
+- **The `download-model` init container locks a write-opened fd** (`exec 9>>"$lock"; flock -n 9`).
+  Busybox `flock FILE cmd` opens the file read-only and never gets the lock on EFS.
 - **Hosted ranker-only EKS is migration-state, not generic chart truth.** As of 2026-07-23,
   hosted search inference is two EC2 `search-inference-*.groundx.ai` servers plus one EKS
   `ranker-inference` pod. One EKS replica can mean one GPU node; judge HPA behavior with

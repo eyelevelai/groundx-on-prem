@@ -608,6 +608,8 @@ Set both OpenSearch passwords to match your installed service. [Password deliver
 
 Keep your existing values file. Before upgrading, follow the [OpenSearch credential steps](docs/upgrades.md#upgrading-existing-opensearch) and [database migration requirements](docs/agents/database-upgrades.md). Earlier installs may still use published passwords; rotate them before upgrading. Changing a seed password does not rotate credentials already stored in OpenSearch.
 
+If an inference model is still downloading for the first time, scale the inference deployments to 0 and wait until their pods are gone before you upgrade or roll back. See [inference model downloads](docs/upgrades.md#inference-model-downloads).
+
 ### Persistent Storage
 
 Set `cluster.pvClass` to an existing StorageClass and `cluster.pvAccessMode` to a mode it supports. Prefer `ReadWriteMany` for shared filesystems; use `ReadWriteOnce` for block or local storage. Summary pods on multiple nodes need shared `ReadWriteMany` storage.

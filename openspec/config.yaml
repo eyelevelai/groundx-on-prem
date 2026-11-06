@@ -142,7 +142,7 @@ context: |
 
   - KNOWN GAPS / OPEN QUESTIONS:
     - helm/ <-> src/groundx duplication: no regen script (manual sync required); a drift check DOES exist (verify_mirrors() in .build/bin/verify-storage-contract.py fails the gate on mismatch) — the remaining gap is only the absence of a regen script, not the absence of a check.
-    - upload.groundx.ai model-weight download hardcoded in init-containers — air-gap blocker; no documented pre-seeding mechanism.
+    - upload.groundx.ai model-weight download hardcoded in init-containers — air-gap blocker; pre-seeding is documented only briefly (docs/upgrades.md#inference-model-downloads).
     - licenseKey phone-home behavior unknown (validation logic lives in opaque container images).
     - Neo4j (graph) service wired in legacy bin/terraform but absent from current chart — likely legacy-only, unconfirmed.
     - extract subsystem groundx.extract constructor signatures live in the image, not this repo — silent breaking changes possible.
