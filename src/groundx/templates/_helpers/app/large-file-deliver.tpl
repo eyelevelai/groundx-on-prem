@@ -16,6 +16,7 @@
 {{- define "groundx.largeFileDeliver.replicas" -}}
 {{- $in := .Values.largeFileDeliver | default dict -}}
 desired: {{ dig "replicas" "desired" 1 $in }}
+gracePeriod: {{ dig "replicas" "gracePeriod" 900 $in }}
 {{- end }}
 
 {{- define "groundx.largeFileDeliver.settings" -}}
@@ -71,6 +72,7 @@ largeFileDelivery:
       credentialsFile: {{ printf "/var/run/groundx/large-file/%s/credentials.json" $ref }}
     {{- end }}
 largeFileDeliveryServer:
+  drainSeconds: {{ int (max 1 (sub (int (get (include "groundx.largeFileDeliver.replicas" . | fromYaml) "gracePeriod")) 30)) }}
   maxConcurrent: {{ $in.concurrency }}
   port: {{ include "groundx.largeFileDeliver.containerPort" . }}
   serviceName: {{ include "groundx.largeFileDeliver.serviceName" . }}

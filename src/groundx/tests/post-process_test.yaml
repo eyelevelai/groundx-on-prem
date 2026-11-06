@@ -18,6 +18,9 @@ tests:
       - equal:
           path: spec.replicas
           value: 1
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
   - it: adds no topic when disabled
     templates:
       - ../templates/services/stream-topics.yaml

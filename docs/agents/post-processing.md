@@ -27,8 +27,10 @@ postProcess:
 The queue defaults to Kafka topic and consumer group `file-post-process`, using
 the existing stream broker. Override broker, topic and group through
 `stream.topics.postProcess`. Topic partitions follow `postProcess.replicas.desired`
-(default one). The worker accepts existing Go workload scheduling, security,
-service-account, port and image-pull settings. Health probes use port 8080.
+(default one). `postProcess.replicas.gracePeriod` (integer of at least 1, default 900)
+sets the pod termination grace period, and the worker's `drainSeconds` is
+`gracePeriod - 30`, floored at 1. The worker accepts existing Go workload scheduling,
+security, service-account, port and image-pull settings. Health probes use port 8080.
 
 For SQS, set `stream.topics.postProcess.type: sqs`, `url` and `region`. Existing
 stream credentials or per-topic credentials apply. SQS creates no Kafka topic

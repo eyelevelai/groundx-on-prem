@@ -488,6 +488,66 @@ tests:
     asserts:
       - notExists:
           path: spec.template.spec.terminationGracePeriodSeconds
+  - it: "the large-file-delivery pod renders the 900-second default when enabled"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.large-file.yaml
+    documentSelector:
+      path: metadata.name
+      value: large-file-delivery
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+  - it: "an explicit gracePeriod on post-process leaves large-file-delivery on the 900-second default"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.large-file.yaml
+      - ./files/values.post-process.yaml
+    set:
+      postProcess.replicas.gracePeriod: 120
+    documentSelector:
+      path: metadata.name
+      value: large-file-delivery
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+  - it: "post-process pod honors a custom shutdown budget independently"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.large-file.yaml
+      - ./files/values.post-process.yaml
+    set:
+      postProcess.replicas.gracePeriod: 120
+    documentSelector:
+      path: metadata.name
+      value: post-process
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 120
+  - it: "schema rejects a non-positive gracePeriod on the post-process replicas block"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.post-process.yaml
+    set:
+      postProcess.replicas.gracePeriod: 0
+    asserts:
+      - failedTemplate: {}
+  - it: "schema rejects a non-positive gracePeriod on the large-file-delivery replicas block"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.large-file.yaml
+    set:
+      largeFileDeliver.replicas.gracePeriod: 0
+    asserts:
+      - failedTemplate: {}
   - it: "schema rejects a non-integer gracePeriod"
     templates:
       - ../templates/app/golang.yaml

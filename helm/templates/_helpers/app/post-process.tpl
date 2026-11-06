@@ -16,6 +16,7 @@
 {{- define "groundx.postProcess.replicas" -}}
 {{- $in := .Values.postProcess | default dict -}}
 desired: {{ dig "replicas" "desired" 1 $in }}
+gracePeriod: {{ dig "replicas" "gracePeriod" 900 $in }}
 {{- end }}
 
 {{- define "groundx.postProcess.settings" -}}
@@ -40,6 +41,7 @@ desired: {{ dig "replicas" "desired" 1 $in }}
 {{- define "groundx.postProcess.config" -}}
 manualDeliveryRetry: {{ .Values.postProcess.retryEnabled | default false }}
 postProcessFileServer:
+  drainSeconds: {{ int (max 1 (sub (int (get (include "groundx.postProcess.replicas" . | fromYaml) "gracePeriod")) 30)) }}
   maxConcurrent: {{ .Values.postProcess.concurrency }}
   port: {{ include "groundx.postProcess.containerPort" . }}
   serviceName: {{ include "groundx.postProcess.serviceName" . }}

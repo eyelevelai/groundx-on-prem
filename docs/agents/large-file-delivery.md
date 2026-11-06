@@ -21,6 +21,7 @@ Set these fields under `largeFileDeliver`:
 | `resources.requests` and `resources.limits` | Explicit CPU and memory settings for the delivery container. |
 | `credentials` | Map from trusted credential reference to `secretName` and `secretKey`. At least one binding is required. |
 | `replicas.desired` | Optional worker count, default one. No new autoscaler is introduced. |
+| `replicas.gracePeriod` | Optional pod termination grace period in seconds, an integer of at least 1. Default 900. The worker's `drainSeconds` is `gracePeriod - 30`, floored at 1, so a running delivery can finish before the pod stops and an idle pod still stops at once. |
 
 The worker also accepts the standard Go workload scheduling, labels, annotations,
 security context, service account, port and image pull policy settings. Its default

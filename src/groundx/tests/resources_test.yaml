@@ -1084,6 +1084,37 @@ tests:
       - matchRegex:
           path: stringData["config.yaml"]
           pattern: 'largeFileDeliveryServer:'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "largeFileDeliveryServer:\n  drainSeconds: 870\n"
+  - it: "post-process renders the 870-second drain default in its own block"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.post-process.yaml
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "postProcessFileServer:\n  drainSeconds: 870\n"
+  - it: "post-process and large-file-delivery gracePeriod render drainSeconds in their own blocks only"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.large-file.yaml
+      - ./files/values.post-process.yaml
+    set:
+      postProcess.replicas.gracePeriod: 120
+      largeFileDeliver.replicas.gracePeriod: 60
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "postProcessFileServer:\n  drainSeconds: 90\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "largeFileDeliveryServer:\n  drainSeconds: 30\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "processFileServer:\n  baseURL: .*\n  drainSeconds: 870\n"
   - it: omits optional delivery configuration when explicitly disabled
     templates:
       - ../templates/resources/config-yaml.yaml
