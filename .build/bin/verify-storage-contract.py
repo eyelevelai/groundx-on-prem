@@ -78,6 +78,7 @@ STORAGE_EXAMPLES: typing.Dict[str, StorageExampleSpec] = {
     "efs": {
         "file": "values.efs.example.yaml",
         "must": (
+            r"name:\s+eyelevel-efs",
             r"provisioner:\s+efs\.csi\.aws\.com",
             r'reclaimPolicy:\s+Retain',
             r'basePath:\s+"/eyelevel"',
@@ -150,6 +151,8 @@ MIRRORED_FILES = (
     "prereqs/storageclass/values.efs.example.yaml",
     "prereqs/storageclass/values.azure-files.example.yaml",
     "prereqs/storageclass/values.gke-filestore.example.yaml",
+    "values.yaml",
+    "values.schema.json",
 )
 SRC_TEMPLATES = ROOT / "src" / "groundx" / "templates"
 MIRROR_TEMPLATES = ROOT / "helm" / "templates"

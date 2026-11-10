@@ -1,6 +1,7 @@
 {{- $svcs := (include "groundx.golang.services" . | fromYaml) -}}
 {{- $engs := (include "groundx.engines" . | fromYaml) -}}
 {{- $pres := include "groundx.preProcessors" . | fromYaml -}}
+{{- $procs := include "groundx.processors" . | fromYaml -}}
 {{- $fs := (include "groundx.file.settings" . | fromYaml) -}}
 {{- $ppq := (include "groundx.stream.topic.preProcess" . | fromYaml) -}}
 {{- $pq := (include "groundx.stream.topic.process" . | fromYaml) -}}
@@ -601,26 +602,18 @@ stringData:
       serviceName: {{ include "groundx.process.serviceName" . }}
 
     processors:
-      convert: [11]
-      extract: [13]
-      layout: [3]
-      map: [4]
-      saveFile: [2]
-      skipConvert: [12]
-      skipGenerate: [1]
-      skipLayout: [5]
-      skipMap: [6]
-      skipSummarize: [7]
-      summarize: [8]
-      summarizeChunks: [10]
-      summarizeSections: [9]
+      {{- range $k, $v := $procs }}
+      {{ $k }}: [{{ range $i, $id := $v }}{{ if $i }}, {{ end }}{{ int $id }}{{ end }}]
+      {{- end }}
       {{- if $pres -}}
       {{ toYaml $pres | nindent 6 }}
       {{- end -}}
       {{- if eq (include "groundx.ingestOnly" .) "true" }}
       extraPostDefaults:
-        - processorID: 1
+        {{- range (get $procs "skipGenerate") }}
+        - processorID: {{ int . }}
           type: skip-generate
+        {{- end }}
       {{- end }}
 
     queueFileServer:
