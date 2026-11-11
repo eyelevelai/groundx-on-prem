@@ -5,6 +5,7 @@ Use these notes for storage and GPU configuration, or when upgrading an existing
 Before a GroundX application upgrade, follow the [database migration requirements](agents/database-upgrades.md). Do not replace an existing values file with the new-install sample. To enable the file gateway on existing data, complete the [existing-file activation procedure](agents/private-file-access.md#upgrade-existing-files-before-activation).
 
 - [Redis TLS upgrades](#redis-tls-upgrades)
+- [Go service shutdown grace periods](#go-service-shutdown-grace-periods)
 - [OpenSearch installation and credentials](#opensearch)
 - [Persistent storage](#persistent-storage)
 - [Summary GPU sizing](#summary-gpu-sizing)
@@ -23,6 +24,25 @@ If you skip this and a certificate does not verify, ingest, search and summary r
 
 The original chart 0.2.8 rollout verified the ai-server layout, ranker and summary clients. Its notes recorded that the extract client (AGE-395) and Workspace runner still accepted any certificate. Do not infer platform-wide verification from these results; check the extraction and Workspace images selected for your release.
 
+
+## Go service shutdown grace periods
+
+Every Go service now renders its pod `terminationGracePeriodSeconds` and the matching `drainSeconds` in its `config.yaml` block from one rule: the service's own grace period, and `drainSeconds` is that value minus 30 seconds (never below 1). The defaults are:
+
+| Services | Grace period | `drainSeconds` |
+| --- | --- | --- |
+| `preProcess`, `process`, `queue`, `summaryClient`, `upload`, `largeFileDeliver`, `postProcess` | 900 | 870 |
+| `groundx`, `layoutWebhook`, `fileAccess`, `metrics` | 150 | 120 |
+
+To change one service, set `gracePeriod` (an integer of at least 1) in its `replicas` block, for example `groundx.replicas.gracePeriod` or `process.replicas.gracePeriod`. `fileAccess.replicas` stays an integer, so its override is the top-level `fileAccess.gracePeriod`. An override changes only its own service.
+
+What to expect when you upgrade:
+
+- Every Go Deployment restarts once, because the rendered configuration changes and so does its `config-hash`. No stateful resource, secret or database is touched, and no manual step is needed.
+- `largeFileDeliver` and `postProcess` begin draining for up to 870 seconds as soon as the chart is applied, on any image that supports queue-server drain.
+- `groundx`, `layoutWebhook`, `metrics` and `fileAccess` keep their current behavior on older images; the new `drainSeconds` key is ignored until the image reads it.
+- A newer File Access image on an older chart finds no `drainSeconds` and exits with no wait.
+- To roll back the chart, first remove any `gracePeriod` override you added, because the previous chart's schema rejects the key.
 
 ## OpenSearch
 

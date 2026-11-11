@@ -466,7 +466,7 @@ tests:
       - equal:
           path: spec.template.spec.terminationGracePeriodSeconds
           value: 900
-  - it: "the groundx pod renders no grace period when none is set"
+  - it: "the groundx pod renders the 150-second default when none is set"
     templates:
       - ../templates/app/golang.yaml
     values:
@@ -475,9 +475,10 @@ tests:
       path: spec.selector.matchLabels.app
       value: groundx
     asserts:
-      - notExists:
+      - equal:
           path: spec.template.spec.terminationGracePeriodSeconds
-  - it: "the layout-webhook pod renders no grace period when none is set"
+          value: 150
+  - it: "the layout-webhook pod renders the 150-second default when none is set"
     templates:
       - ../templates/app/golang.yaml
     values:
@@ -486,8 +487,9 @@ tests:
       path: spec.selector.matchLabels.app
       value: layout-webhook
     asserts:
-      - notExists:
+      - equal:
           path: spec.template.spec.terminationGracePeriodSeconds
+          value: 150
   - it: "schema rejects a non-integer gracePeriod"
     templates:
       - ../templates/app/golang.yaml
