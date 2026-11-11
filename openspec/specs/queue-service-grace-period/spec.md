@@ -5,190 +5,163 @@ TBD - created by archiving change fra-114-summary-client-hpa-scale-down-interrup
 ## Requirements
 ### Requirement: Chart renders a k8s termination grace period from `replicas.gracePeriod`
 
-The chart SHALL render `terminationGracePeriodSeconds` on each of the five Go queue-service pods' (`summaryClient`/`process`/`upload`/`queue`/`preProcess`) Deployment from that service's own `replicas.gracePeriod` value, guarded by presence (`hasKey`) of that key.
+The chart SHALL render `terminationGracePeriodSeconds` on the Deployment of every Go service the chart can deploy (`groundx`, `layoutWebhook`, `fileAccess`, `metrics`, `preProcess`, `process`, `queue`, `summaryClient`, `upload`, and the opt-in `largeFileDeliver` and `postProcess`). The value SHALL be that service's own `gracePeriod` when set (`<service>.replicas.gracePeriod`; `fileAccess.gracePeriod` for File Access, whose `replicas` stays an integer) and the service's default from the single default table otherwise.
 
-Polarity: **accept and enqueue** — a configured `gracePeriod` must flow through to the
-rendered field unchanged; the opposite outcome (the field stays absent, or renders a
-different value, despite `gracePeriod` being set) must not happen.
+Polarity: **accept and enqueue** — a configured `gracePeriod` must reach the rendered field unchanged and an unset one must render the table default; the opposite outcome (the field absent, or a value taken from another service) must not happen.
 
-#### Scenario: Operator sets gracePeriod on summaryClient
+#### Scenario: Operator sets gracePeriod on one queue service
 
-- **GIVEN** `summaryClient.replicas.gracePeriod: 900`
-- **WHEN** `templates/app/golang.yaml` renders the `summaryClient` Deployment
-- **THEN** `spec.template.spec.terminationGracePeriodSeconds` equals `900`.
+- **GIVEN** `summaryClient.replicas.gracePeriod: 600` and no other service sets `gracePeriod`
+- **WHEN** `templates/app/golang.yaml` renders every Go Deployment
+- **THEN** `summary-client` renders `terminationGracePeriodSeconds: 600`
+- **AND** every other Go Deployment renders its own default.
 
-#### Scenario: Operator sets gracePeriod on each of the other four Go queue services
+#### Scenario: Operator sets gracePeriod on each of the four request-serving services
 
-- **GIVEN** `process.replicas.gracePeriod: 300`, `upload.replicas.gracePeriod: 180`,
-  `queue.replicas.gracePeriod: 60`, and `preProcess.replicas.gracePeriod: 45` are each set
-  independently (no other service's `gracePeriod` set)
-- **WHEN** `templates/app/golang.yaml` renders each service's Deployment
-- **THEN** each Deployment's `spec.template.spec.terminationGracePeriodSeconds` equals that
-  service's own configured value, and no service picks up a value from any other service.
+- **GIVEN** `groundx.replicas.gracePeriod: 300`, `layoutWebhook.replicas.gracePeriod: 60`, `metrics.replicas.gracePeriod: 90` and `fileAccess.gracePeriod: 100` are each set independently
+- **WHEN** `templates/app/golang.yaml` and `templates/app/metrics.yaml` render
+- **THEN** each Deployment renders its own configured value and no service picks up a value from another
+- **AND** `fileAccess.replicas` still sets `spec.replicas` as an integer.
+
+#### Scenario: Operator sets gracePeriod on the two opt-in queue services
+
+- **GIVEN** `largeFileDeliver.replicas.gracePeriod: 120` and `postProcess.replicas.gracePeriod: 200` with both services enabled
+- **WHEN** `templates/app/golang.yaml` renders
+- **THEN** `large-file-delivery` renders `120` and `post-process` renders `200`, and neither changes the other or any of the other nine Go Deployments.
 
 ### Requirement: Chart renders a derived `drainSeconds` application config value
 
-The chart SHALL render `drainSeconds` = `gracePeriod − 30` seconds (floored at a minimum of `1`) for each of the five Go queue-service config blocks in `config-yaml.yaml` (`preProcessFileServer`/`processFileServer`/`queueFileServer`/`summaryServer`/`uploadFileServer`), at the same YAML level as that block's existing `baseURL`/`maxConcurrent`/`port`/`serviceName` keys. The `gracePeriod` read is that service's own `replicas.gracePeriod`, which is `900` when the operator does not set it, so every one of the five blocks renders a `drainSeconds`.
+The chart SHALL render `drainSeconds` = `gracePeriod − 30` seconds (floored at `1`) in the `config.yaml` block of every Go service: `groundxServer`, `layoutWebhookServer`, `metricsServer`, `fileAccessServer`, `preProcessFileServer`, `processFileServer`, `queueFileServer`, `summaryServer`, `uploadFileServer`, `largeFileDeliveryServer` and `postProcessFileServer`. The `gracePeriod` read SHALL be the same effective value the service's pod renders, so a pod and its own block never disagree. Blocks that have `baseURL` carry `drainSeconds` directly after it; `fileAccessServer`, `largeFileDeliveryServer` and `postProcessFileServer` carry it as their first key.
 
-Polarity: **accept and enqueue** — a configured or defaulted `gracePeriod` must produce a correctly derived `drainSeconds` in that exact service's block; the opposite outcome (missing, mis-derived, or leaking into a different service's block) must not happen.
+Polarity: **accept and enqueue** — a configured or defaulted `gracePeriod` must produce the correctly derived `drainSeconds` in that exact service's block; the opposite outcome (missing, mis-derived, or leaking into another block) must not happen.
 
-#### Scenario: Operator sets gracePeriod on summaryClient only
+#### Scenario: Default render gives every Go service the table value
 
-- **GIVEN** `summaryClient.replicas.gracePeriod: 600` and no other Go queue service sets `gracePeriod`
+- **GIVEN** no `gracePeriod` is set anywhere and `largeFileDeliver`, `postProcess` and `fileAccess` are enabled
 - **WHEN** `templates/resources/config-yaml.yaml` renders
-- **THEN** the `summaryServer` block contains `drainSeconds: 570`
-- **AND** the `preProcessFileServer`, `processFileServer`, `queueFileServer` and `uploadFileServer` blocks each contain `drainSeconds: 870`.
+- **THEN** the seven queue blocks contain `drainSeconds: 870`
+- **AND** `groundxServer`, `layoutWebhookServer`, `metricsServer` and `fileAccessServer` contain `drainSeconds: 120`.
 
-#### Scenario: Operator sets gracePeriod independently on all five services
+#### Scenario: Operator sets gracePeriod on one service only
 
-- **GIVEN** each of `preProcess`/`process`/`queue`/`summaryClient`/`upload` sets its own distinct `replicas.gracePeriod`
+- **GIVEN** `summaryClient.replicas.gracePeriod: 600` and nothing else is set
 - **WHEN** `templates/resources/config-yaml.yaml` renders
-- **THEN** each of the five blocks (`preProcessFileServer`/`processFileServer`/`queueFileServer`/`summaryServer`/`uploadFileServer`) contains its own correctly derived `drainSeconds` (that service's `gracePeriod − 30`, min `1`), independent of the other four.
+- **THEN** `summaryServer` contains `drainSeconds: 570`
+- **AND** every other block keeps its default.
 
 #### Scenario: gracePeriod below the 30-second margin floors at 1
 
-- **GIVEN** `summaryClient.replicas.gracePeriod: 10`
+- **GIVEN** `groundx.replicas.gracePeriod: 20`
 - **WHEN** `templates/resources/config-yaml.yaml` renders
-- **THEN** the `summaryServer` block contains `drainSeconds: 1` (not a negative number).
+- **THEN** `groundxServer` contains `drainSeconds: 1`, not a negative number.
 
 ### Requirement: Schema accepts `gracePeriod` as an optional integer ≥ 1, strict otherwise
 
-`src/groundx/values.schema.json` SHALL add `gracePeriod` (`type: integer`, `minimum: 1`) to the `replicas` schema block of all five Go queue-service entries (`summaryClient`/`process`/`upload`/`queue`/`preProcess`), preserving `additionalProperties: false` on each `replicas` block.
+`src/groundx/values.schema.json` SHALL accept `gracePeriod` (`type: integer`, `minimum: 1`) in the `replicas` block of `summaryClient`, `process`, `upload`, `queue`, `preProcess`, `groundx`, `layoutWebhook`, `metrics`, `largeFileDeliver` and `postProcess`, and as a new top-level `fileAccess.gracePeriod`. Every `replicas` block SHALL keep `additionalProperties: false`, and `fileAccess.replicas` SHALL stay an integer.
 
-Polarity: **reject before state** — an invalid `gracePeriod` (wrong type, or an integer less
-than `1`) or an unknown `replicas` key must fail schema validation before any values are
-accepted; validation failure creates no chart state.
+Polarity: **reject before state** — an invalid `gracePeriod` (wrong type, or below `1`) or an unknown `replicas` key must fail schema validation before any template renders.
 
-#### Scenario: Schema accepts a valid integer gracePeriod
+#### Scenario: Schema accepts a valid gracePeriod on each Go service
 
-- **GIVEN** values set `summaryClient.replicas.gracePeriod: 900`
-- **WHEN** Helm validates the chart values against `values.schema.json`
+- **GIVEN** values set a valid integer `gracePeriod` on a service (for example `groundx.replicas.gracePeriod: 300`, `fileAccess.gracePeriod: 100`)
+- **WHEN** Helm validates the values against `values.schema.json`
 - **THEN** validation succeeds.
 
 #### Scenario: Schema rejects a non-integer gracePeriod
 
-- **GIVEN** values set `summaryClient.replicas.gracePeriod: "soon"`
-- **WHEN** Helm validates the chart values against `values.schema.json`
+- **GIVEN** values set `gracePeriod: "soon"` on `groundx.replicas`, `postProcess.replicas` or `fileAccess`
+- **WHEN** Helm validates the values
 - **THEN** validation fails because `gracePeriod` must be an integer.
 
 #### Scenario: Schema rejects a non-positive gracePeriod
 
-- **GIVEN** values set `summaryClient.replicas.gracePeriod: 0`
-- **WHEN** Helm validates the chart values against `values.schema.json`
+- **GIVEN** values set `gracePeriod: 0` on `layoutWebhook.replicas`, `metrics.replicas`, `largeFileDeliver.replicas` or `fileAccess`
+- **WHEN** Helm validates the values
 - **THEN** validation fails because `gracePeriod` must satisfy `minimum: 1`.
 
-#### Scenario: Schema rejects an unknown key on a Go queue-service replicas block
+#### Scenario: Schema rejects an unknown replicas key and an object under fileAccess.replicas
 
-- **GIVEN** values set an undefined key, e.g. `summaryClient.replicas.timeoutSeconds: 30`
-- **WHEN** Helm validates the chart values against `values.schema.json`
-- **THEN** validation fails because `additionalProperties: false` rejects the unknown key.
+- **GIVEN** values set `summaryClient.replicas.timeoutSeconds: 30`, or `fileAccess.replicas: {gracePeriod: 100}`
+- **WHEN** Helm validates the values
+- **THEN** validation fails because `additionalProperties: false` rejects the key, or because `fileAccess.replicas` must be an integer.
 
 ### Requirement: Chart-side rendering is safe to deploy in any order relative to cashbot-go
 
-The chart SHALL be safe to roll out this change independently of the cashbot-go image's deployment order — an install may upgrade this chart before, after, or in the same rollout as the paired cashbot-go image — because the `drainSeconds-config` touchpoint is Additive (unset/`0` on the cashbot-go side preserves today's immediate-exit behavior).
+The chart SHALL be safe to roll out independently of the cashbot-go image's deployment order for the four request-serving services, because the `drainSeconds` key is additive (an image that does not read it ignores it, and an absent key means no drain wait). Two rollouts behave differently and the release note SHALL state both: a new cashbot-go image with an old chart (no `drainSeconds`) makes File Access exit with no wait, and `largeFileDeliver` and `postProcess` start draining for up to 870 seconds as soon as the new chart lands on any image that already supports queue-server drain.
 
-#### Scenario: Backward compatibility — chart change rolls out ahead of a paired cashbot-go image
+#### Scenario: Backward compatibility — chart ahead of an older image on a request-serving service
 
-- **GIVEN** an install upgrades this chart to render `drainSeconds` for `summaryClient`
-  (because it has set `summaryClient.replicas.gracePeriod`)
-- **AND** the currently-running `summaryClient` image predates the cashbot-go drain feature
-  (so it does not read or act on `drainSeconds`)
+- **GIVEN** the chart renders `drainSeconds: 120` for `groundxServer`
+- **AND** the running `groundx` image predates the cashbot-go shutdown change and does not read it
 - **WHEN** the pod restarts and reads the rendered config
-- **THEN** the old binary's non-strict YAML decode ignores the unrecognized `drainSeconds`
-  key and it continues its existing immediate-exit-on-SIGTERM behavior — no rendering error,
-  no crash, no schema-validation failure on the chart side.
+- **THEN** the non-strict YAML decode ignores the key and the pod exits on SIGTERM as before, with no rendering error and no schema failure.
+
+#### Scenario: New image with an old chart leaves File Access without a drain wait
+
+- **GIVEN** a chart that renders no `drainSeconds` in `fileAccessServer`
+- **WHEN** a File Access pod on a new image receives SIGTERM
+- **THEN** it exits with no wait, which `docs/upgrades.md` states as the expected result.
+
+#### Scenario: Release note states the opt-in queue behavior change
+
+- **GIVEN** `docs/upgrades.md` after this change
+- **WHEN** an operator reads the release note
+- **THEN** it says every Go Deployment restarts once, and that `largeFileDeliver` and `postProcess` start draining up to 870 seconds as soon as the chart lands.
 
 ### Requirement: `src/groundx` and `helm/` mirror render identically
 
-The `helm/` published-chart mirror SHALL render identically to its `src/groundx/` counterpart, for both the no-op case and the `gracePeriod`-set case, for the three touched files (`values.schema.json`, `templates/app/golang.yaml`, `templates/resources/config-yaml.yaml`).
+The `helm/` mirror SHALL render identically to `src/groundx` for every template, `values.yaml` and `values.schema.json` this change touches, for the default case and for the `gracePeriod`-set case. `helm/` carries no `tests/` tree, so the drift check (`.build/bin/verify-storage-contract.py`) covers `templates/`, `values.yaml` and `values.schema.json` only, and tests and snapshots are authored in `src/groundx/tests/` alone.
 
-Polarity: **finalize success** — this proposal is not complete until both chart copies
-agree; the opposite outcome (the two copies diverge on either file) must not happen and
-must block completion.
+Polarity: **finalize success** — the change is not complete until both chart copies agree; divergence must block completion.
 
-#### Scenario: Mirror diff is empty for the touched files
+#### Scenario: Mirror files are byte-identical
 
-- **GIVEN** `src/groundx/values.schema.json`, `src/groundx/templates/app/golang.yaml`, and
-  `src/groundx/templates/resources/config-yaml.yaml` have been edited for this change
-- **WHEN** the matching files under `helm/` are compared with `diff`
-- **THEN** the diff is empty for all three file pairs.
+- **GIVEN** the templates, `values.yaml` and `values.schema.json` under `src/groundx` have been edited for this change
+- **WHEN** the same paths under `helm/` are compared
+- **THEN** `diff -r src/groundx/templates helm/templates` is empty and both values files compare equal.
 
-#### Scenario: Mirror renders identically with gracePeriod set
+#### Scenario: Mirror renders identically with defaults and with overrides
 
-- **GIVEN** the same values setting `summaryClient.replicas.gracePeriod: 900`
-- **WHEN** `helm template` renders `src/groundx` and `helm template` renders `helm/`
-- **THEN** the rendered `summaryClient` Deployment and `config-yaml.yaml` ConfigMap are
-  identical between the two chart copies.
+- **GIVEN** the same values, once with no `gracePeriod` and once with a `gracePeriod` set on a request-serving and a queue service
+- **WHEN** `helm template` renders `src/groundx` and `helm/`
+- **THEN** the two renders are identical.
 
-### Requirement: Sweep consistency across the five parallel `config-yaml.yaml` edits
+### Requirement: One default table and one formula serve every Go service
 
-Each block's `drainSeconds` render SHALL be gated on that exact block's own service replicas dict — never a value copied from, or shared with, a different block — because `config-yaml.yaml` renders its five Go queue-service blocks as five separately authored literal stanzas rather than through a shared loop. The same applies to the default: each of the five `groundx.<service>.replicas` helpers SHALL set `gracePeriod` to `900` on its own service's replicas dict only when that dict has no `gracePeriod` key.
+The chart SHALL hold the per-service default grace period in exactly one place and the `max 1 (sub grace 30)` formula in exactly one place, in a helper that follows the `groundx.celeryWorker.gracePeriod` / `stopWaitSecs` pattern. The table SHALL give `900` to `preProcess`, `process`, `queue`, `summaryClient`, `upload`, `largeFileDeliver` and `postProcess`, and `150` to `groundx`, `layoutWebhook`, `fileAccess` and `metrics`. Pods and config blocks SHALL read the helper; no template, helper or values file SHALL carry another copy of a default or of the subtraction. The helper SHALL NOT write into `.Values`.
 
-Invariant (see design.md `## Decisions`): a service's rendered grace-period fields equal its own explicit `replicas.gracePeriod` when it sets one and the 900/870 default when it does not, for each of the five services alike; they never take another service's value, and a service outside the five never renders them.
+Invariant (see design.md `## Decisions`): a Go service's rendered `terminationGracePeriodSeconds` and `drainSeconds` come only from that service's own `gracePeriod` when set, otherwise from its single table entry, with the `− 30` floor applied in one place; they never take another service's value or a second copy of the table.
 
-#### Scenario: catches — a sweep that defaults only some of the five helpers
+Polarity: **skip unrelated repair path** — a default or override applied for one service must not reach any other.
 
-- **GIVEN** no `gracePeriod` is set anywhere
-- **WHEN** `templates/resources/config-yaml.yaml` renders
-- **THEN** all five of the `preProcessFileServer`, `processFileServer`, `queueFileServer`, `summaryServer` and `uploadFileServer` blocks contain `drainSeconds: 870` — a block with no `drainSeconds` means that service's helper was missed by the sweep and is a sweep-consistency defect.
+#### Scenario: The table and formula each appear once
 
-#### Scenario: catches — setting gracePeriod on one service must not leak into a sibling block
+- **GIVEN** the chart templates after this change
+- **WHEN** they are searched for `max 1 (sub` outside `celery-worker.tpl` and for `set $in "gracePeriod" 900`
+- **THEN** the subtraction appears once, in the Go grace helper, and no `set $in "gracePeriod" 900` remains in any of the five queue helpers.
+
+#### Scenario: catches — a default added only in the shared `golang.yaml` loop
+
+- **GIVEN** an implementation that renders `terminationGracePeriodSeconds` from a single literal in `templates/app/golang.yaml`
+- **WHEN** the default render is checked
+- **THEN** `groundx`, `layout-webhook` and `file-access` rendering `900` instead of `150` is a defect, because the table gives them their own entry.
+
+#### Scenario: catches — one service's override leaks into a sibling
 
 - **GIVEN** only `preProcess.replicas.gracePeriod: 120` is set
-- **WHEN** `templates/resources/config-yaml.yaml` renders
-- **THEN** the `preProcessFileServer` block contains `drainSeconds: 90`
-- **AND** the `processFileServer`, `queueFileServer`, `summaryServer` and `uploadFileServer` blocks each contain `drainSeconds: 870` — a `90` in any of those four blocks is a sweep-consistency defect.
+- **WHEN** the Go Deployments and `config.yaml` render
+- **THEN** `pre-process` renders `120` and `preProcessFileServer` renders `drainSeconds: 90`
+- **AND** a `120` or `90` on any other pod or block is a sweep-consistency defect.
 
-#### Scenario: must not block — five independently-configured services all render correctly
+#### Scenario: must not block — an override and defaults coexist across all eleven services
 
-- **GIVEN** all five services set distinct `replicas.gracePeriod` values (as in the "Operator sets gracePeriod independently on all five services" scenario above)
-- **WHEN** `templates/resources/config-yaml.yaml` renders
-- **THEN** rendering succeeds and every one of the five blocks contains its own correct `drainSeconds`, and none of them renders the 870 default.
+- **GIVEN** distinct `gracePeriod` values on `groundx`, `layoutWebhook`, `metrics`, `fileAccess`, `largeFileDeliver` and `postProcess`, and none on the five original queue services
+- **WHEN** the chart renders
+- **THEN** rendering succeeds, each overridden service shows its own value and derived `drainSeconds`, and the five queue services render `900` and `870`.
 
-### Requirement: No gracePeriod set — the five Go queue services default to a 900-second grace period
+#### Scenario: The five original queue services render as on 0.3.0 except config-hash
 
-When a Go queue service (`preProcess`/`process`/`queue`/`summaryClient`/`upload`) does not set `replicas.gracePeriod`, the chart SHALL render `terminationGracePeriodSeconds: 900` on that service's Deployment and `drainSeconds: 870` in that service's `config-yaml.yaml` block. The default SHALL come from that service's own `groundx.<service>.replicas` helper, so the unchanged presence guards in `templates/app/golang.yaml` and `templates/resources/config-yaml.yaml` render it. Every other Deployment rendered by `templates/app/golang.yaml` (`groundx`, `layoutWebhook` and the opt-in `fileAccess`/`largeFileDeliver`/`postProcess` workers) SHALL keep rendering no `terminationGracePeriodSeconds`, and its config block SHALL render no `drainSeconds`.
-
-Polarity: **accept and enqueue** — an unset `gracePeriod` on one of the five services must produce the 900/870 default; the opposite outcome (the field stays absent, or renders any other value, while the service sets nothing) must not happen. **Skip unrelated repair path** — a service that is not one of the five must not pick up the default.
-
-#### Scenario: Unset gracePeriod renders the default on each of the five services
-
-- **GIVEN** none of `preProcess`/`process`/`queue`/`summaryClient`/`upload` sets `replicas.gracePeriod`
-- **WHEN** `templates/app/golang.yaml` and `templates/resources/config-yaml.yaml` render
-- **THEN** the `pre-process`, `process`, `queue`, `summary-client` and `upload` Deployments each render `spec.template.spec.terminationGracePeriodSeconds` equal to `900`
-- **AND** the `preProcessFileServer`, `processFileServer`, `queueFileServer`, `summaryServer` and `uploadFileServer` blocks each contain `drainSeconds: 870`.
-
-#### Scenario: Services outside the five render no grace period
-
-- **GIVEN** no `gracePeriod` is set anywhere
-- **WHEN** `templates/app/golang.yaml` renders the `groundx` and `layout-webhook` Deployments
-- **THEN** neither Deployment contains `terminationGracePeriodSeconds`
-- **AND** `config-yaml.yaml` contains exactly five `drainSeconds` keys, one in each of the five service blocks above.
-
-#### Scenario: catches — a default applied in the shared template reaches a service outside the five
-
-- **GIVEN** an implementation that adds the 900-second default as an `else` branch in `templates/app/golang.yaml`, which loops over every Go service
-- **WHEN** `templates/app/golang.yaml` renders the `groundx` and `layout-webhook` Deployments with no `gracePeriod` set
-- **THEN** a `terminationGracePeriodSeconds` on either of them is a defect, because the invariant limits the default to the five services whose helpers carry it.
-
-#### Scenario: must not block — an explicit gracePeriod overrides the default for its own service only
-
-- **GIVEN** `process.replicas.gracePeriod: 120` and no other service sets `gracePeriod`
-- **WHEN** `templates/app/golang.yaml` and `templates/resources/config-yaml.yaml` render
-- **THEN** the `process` Deployment renders `terminationGracePeriodSeconds: 120` and the `processFileServer` block renders `drainSeconds: 90`
-- **AND** the `pre-process`, `queue`, `summary-client` and `upload` Deployments render `900` and their blocks render `drainSeconds: 870`.
-
-#### Scenario: The helm/ mirror renders the default identically
-
-- **GIVEN** the five helper files under `src/groundx/templates/_helpers/app/` carry the default
-- **WHEN** `helm template` renders `src/groundx` and `helm/` with no `gracePeriod` set
-- **THEN** the five Deployments and the `config-yaml.yaml` Secret are identical between the two chart copies
-- **AND** `diff -r src/groundx/templates helm/templates` is empty.
-
-#### Scenario: Backward compatibility — an image that predates the cashbot-go drain feature
-
-- **GIVEN** an install upgrades to a chart that renders the 900/870 default
-- **AND** the running `process` image predates the cashbot-go drain feature and does not read `drainSeconds`
-- **WHEN** the pod restarts and reads the rendered config
-- **THEN** the non-strict YAML decode ignores the unrecognized `drainSeconds` key and the pod exits on SIGTERM as before, with no rendering error and no schema-validation failure.
+- **GIVEN** a default render on the `0.3.0` baseline and on this change
+- **WHEN** the `pre-process`, `process`, `queue`, `summary-client` and `upload` Deployments and their five config blocks are compared
+- **THEN** they are identical except the `config-hash` annotation.
 
