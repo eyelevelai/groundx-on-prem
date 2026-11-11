@@ -1,0 +1,139 @@
+suite: "all six grace overrides together"
+chart:
+  appVersion: 0.1.0
+  version: 0.1.0
+
+set:
+  search:
+    password: fixture-app-credential
+    privilegedPassword: fixture-admin-credential
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+    useExisting: true
+
+tests:
+  - it: "six overrides set together change exactly those pods and blocks and leave the five queue services at 900 and 870"
+    templates:
+      - ../templates/app/golang.yaml
+      - ../templates/app/metrics.yaml
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+      - ./files/values.large-file.yaml
+      - ./files/values.post-process.yaml
+      - ./files/values.file-access.yaml
+    set:
+      groundx.replicas.gracePeriod: 300
+      layoutWebhook.replicas.gracePeriod: 60
+      metrics.replicas.gracePeriod: 90
+      largeFileDeliver.replicas.gracePeriod: 120
+      postProcess.replicas.gracePeriod: 200
+      fileAccess.gracePeriod: 100
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 300
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: groundx
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 60
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: layout-webhook
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 120
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: large-file-delivery
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 200
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: post-process
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 100
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: file-access
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: pre-process
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: process
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: queue
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: summary-client
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: upload
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 90
+        template: ../templates/app/metrics.yaml
+        documentSelector:
+          path: kind
+          value: Deployment
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "groundxServer:\n(  baseURL: .*\n)?  drainSeconds: 270\n"
+        template: ../templates/resources/config-yaml.yaml
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "layoutWebhookServer:\n(  baseURL: .*\n)?  drainSeconds: 30\n"
+        template: ../templates/resources/config-yaml.yaml
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "metricsServer:\n(  baseURL: .*\n)?  drainSeconds: 60\n"
+        template: ../templates/resources/config-yaml.yaml
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "largeFileDeliveryServer:\n(  baseURL: .*\n)?  drainSeconds: 90\n"
+        template: ../templates/resources/config-yaml.yaml
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "postProcessFileServer:\n(  baseURL: .*\n)?  drainSeconds: 170\n"
+        template: ../templates/resources/config-yaml.yaml
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "fileAccessServer:\n(  baseURL: .*\n)?  drainSeconds: 70\n"
+        template: ../templates/resources/config-yaml.yaml
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds: 870\n"
+        template: ../templates/resources/config-yaml.yaml

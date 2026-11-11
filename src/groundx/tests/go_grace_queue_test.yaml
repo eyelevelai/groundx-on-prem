@@ -166,3 +166,43 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "postProcess/replicas/gracePeriod"
+  - it: "a bare largeFileDeliver.replicas.gracePeriod renders without setting desired"
+    templates:
+      - ../templates/app/golang.yaml
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.large-file.yaml
+    set:
+      largeFileDeliver.replicas.gracePeriod: 120
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 120
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: large-file-delivery
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "largeFileDeliveryServer:\n  drainSeconds: 90\n"
+        template: ../templates/resources/config-yaml.yaml
+  - it: "a bare postProcess.replicas.gracePeriod renders without setting desired"
+    templates:
+      - ../templates/app/golang.yaml
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.post-process.yaml
+    set:
+      postProcess.replicas.gracePeriod: 200
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 200
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: post-process
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "postProcessFileServer:\n  drainSeconds: 170\n"
+        template: ../templates/resources/config-yaml.yaml

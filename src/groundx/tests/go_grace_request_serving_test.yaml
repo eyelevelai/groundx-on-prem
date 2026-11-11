@@ -127,3 +127,23 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "metrics/replicas/gracePeriod.*minimum: got 0, want 1"
+  - it: "a bare metrics.replicas.gracePeriod renders without setting desired"
+    templates:
+      - ../templates/app/metrics.yaml
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      metrics.replicas.gracePeriod: 90
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 90
+        template: ../templates/app/metrics.yaml
+        documentSelector:
+          path: kind
+          value: Deployment
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "metricsServer:\n  baseURL: .*\n  drainSeconds: 60\n"
+        template: ../templates/resources/config-yaml.yaml

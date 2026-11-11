@@ -38,7 +38,7 @@ To change one service, set `gracePeriod` (an integer of at least 1) in its `repl
 
 What to expect when you upgrade:
 
-- Every Go Deployment restarts once, because the rendered configuration changes and so does its `config-hash`. No stateful resource, secret or database is touched, and no manual step is needed.
+- Every Go Deployment restarts once, because the rendered configuration changes and so does its `config-hash`. No credential secret, stateful resource or database is touched, and no manual step is needed. The `config-yaml-map` Secret gains the new `drainSeconds` keys, which is why `config-hash` changes.
 - `largeFileDeliver` and `postProcess` begin draining for up to 870 seconds as soon as the chart is applied, on any image that supports queue-server drain.
 - `groundx`, `layoutWebhook`, `metrics` and `fileAccess` keep their current behavior on older images; the new `drainSeconds` key is ignored until the image reads it.
 - A newer File Access image on an older chart finds no `drainSeconds` and exits with no wait.

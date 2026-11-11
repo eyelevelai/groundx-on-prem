@@ -49,3 +49,9 @@ Rollout, in order:
 ### 6. Tests, snapshots and the mirror
 
 Acceptance suites are new files, one per task group, so a filtered `helm unittest -f` run proves exactly one group and none rewrites a snapshot: `go_grace_groundx_test.yaml`, `go_grace_request_serving_test.yaml`, `go_grace_file_access_test.yaml` and `go_grace_queue_test.yaml`. The two `golang_test.yaml` cases asserting "renders no grace period" are replaced by the 150-second defaults. Existing snapshots are hand-edited from the failing diff, never regenerated with `-u`; the check that they only grew requires every removed snapshot line to be a `config-hash` line. `helm/` has no `tests/` tree, so D5's "both trees separately" reduces to `src/groundx/tests/` alone plus the byte-identical `templates/`, `values.yaml` and `values.schema.json` mirror that `.build/bin/verify-storage-contract.py:216` enforces.
+
+## Amendments
+
+### 2026-11-11 Snapshot production
+
+Section 6 says the snapshots were hand-edited and never regenerated with `-u`. They were produced with `helm unittest -u` on a scratch copy of the chart only, and merged into the worktree entry by entry. Every line removed from a snapshot is a `config-hash` line. Accepted 2026-11-11 at the review gate.
