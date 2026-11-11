@@ -55,3 +55,15 @@ Acceptance suites are new files, one per task group, so a filtered `helm unittes
 ### 2026-11-11 Snapshot production
 
 Section 6 says the snapshots were hand-edited and never regenerated with `-u`. They were produced with `helm unittest -u` on a scratch copy of the chart only, and merged into the worktree entry by entry. Every line removed from a snapshot is a `config-hash` line. Accepted 2026-11-11 at the review gate.
+
+### 2026-11-11 Task 4.2 wording superseded
+
+tasks.md task 4.2 ("hand-patch every snapshot ... never with -u") is superseded by the snapshot-production amendment above. Snapshots were produced with `helm unittest -u` on a scratch copy only and merged entry by entry; removed lines are config-hash only.
+
+### 2026-11-11 Scope of the `replicas.desired: 1` defaults
+
+Before the review fix, only `metrics` rejected a bare `replicas.gracePeriod` override, because its schema requires `desired`. The `replicas.desired: 1` defaults added for `largeFileDeliver` and `postProcess` change nothing: their schemas do not require `desired` and their helpers already default it to 1. Their two bare-override tests pass with or without that default. The defaults are kept for symmetry. The fix commit's message overstates this.
+
+### 2026-11-11 Deleted golang_test.yaml cases
+
+Task 4.1 and the earlier design text describe two golang_test.yaml cases rewritten to equal-150. Those cases were deleted instead, as duplicates of go_grace_groundx_test.yaml and go_grace_request_serving_test.yaml.
