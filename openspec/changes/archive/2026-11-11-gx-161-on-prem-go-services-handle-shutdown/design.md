@@ -67,3 +67,7 @@ Before the review fix, only `metrics` rejected a bare `replicas.gracePeriod` ove
 ### 2026-11-11 Deleted golang_test.yaml cases
 
 Task 4.1 and the earlier design text describe two golang_test.yaml cases rewritten to equal-150. Those cases were deleted instead, as duplicates of go_grace_groundx_test.yaml and go_grace_request_serving_test.yaml.
+
+### 2026-11-12 Acceptance tests moved into existing files
+
+Section 6 put the acceptance cases in five new `go_grace_*_test.yaml` files. After PR review they were moved into the existing `golang_test.yaml`, `metrics_test.yaml` and `post-process_test.yaml`, and the duplicates were removed: the combined six-override case (the per-service override cases already check that other services stay unchanged), the per-service default cases the snapshots already capture (kept: one request-serving default on `file-access`, which no snapshot renders, and the seven-service queue default), and the "not an integer" cases where a service already had a "zero rejected" case. `postProcess` keeps its "not an integer" case because it is that service's only schema rejection. The moved cases use plain assertions, so no snapshot changed.

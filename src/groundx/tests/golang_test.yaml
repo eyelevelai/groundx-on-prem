@@ -553,3 +553,316 @@ tests:
       - lengthEqual:
           path: spec.template.spec.containers[0].volumeMounts
           count: 1
+  - it: "groundx.replicas.gracePeriod overrides the pod and the block for groundx only"
+    templates:
+      - ../templates/app/golang.yaml
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      groundx.replicas.gracePeriod: 300
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 300
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: groundx
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 150
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: layout-webhook
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: process
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "groundxServer:\n  baseURL: .*\n  drainSeconds: 270\n"
+        template: ../templates/resources/config-yaml.yaml
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "layoutWebhookServer:\n  baseURL: .*\n  drainSeconds: 120\n"
+        template: ../templates/resources/config-yaml.yaml
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "processFileServer:\n  baseURL: .*\n  drainSeconds: 870\n"
+        template: ../templates/resources/config-yaml.yaml
+  - it: "groundx gracePeriod under 31 floors drainSeconds at 1"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      groundx.replicas.gracePeriod: 20
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "groundxServer:\n  baseURL: .*\n  drainSeconds: 1\n"
+  - it: "groundx gracePeriod of zero is rejected before anything renders"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      groundx.replicas.gracePeriod: 0
+    asserts:
+      - failedTemplate:
+          errorPattern: "groundx/replicas/gracePeriod.*minimum: got 0, want 1"
+  - it: "layoutWebhook.replicas.gracePeriod changes layout-webhook only"
+    templates:
+      - ../templates/app/golang.yaml
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      layoutWebhook.replicas.gracePeriod: 60
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 60
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: layout-webhook
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 150
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: groundx
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "layoutWebhookServer:\n  baseURL: .*\n  drainSeconds: 30\n"
+        template: ../templates/resources/config-yaml.yaml
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "groundxServer:\n  baseURL: .*\n  drainSeconds: 120\n"
+        template: ../templates/resources/config-yaml.yaml
+  - it: "layoutWebhook gracePeriod of zero is rejected before anything renders"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      layoutWebhook.replicas.gracePeriod: 0
+    asserts:
+      - failedTemplate:
+          errorPattern: "layoutWebhook/replicas/gracePeriod.*minimum: got 0, want 1"
+  - it: "file-access pod and block render 150 and 120 by default"
+    templates:
+      - ../templates/app/golang.yaml
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.file-access.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 150
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: file-access
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "fileAccessServer:\n  drainSeconds: 120\n  port: "
+        template: ../templates/resources/config-yaml.yaml
+  - it: "fileAccess.gracePeriod changes file-access only and fileAccess.replicas stays an integer"
+    templates:
+      - ../templates/app/golang.yaml
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.gracePeriod: 100
+      fileAccess.replicas: 3
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 100
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: file-access
+      - equal:
+          path: spec.replicas
+          value: 3
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: file-access
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 150
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: groundx
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "fileAccessServer:\n  drainSeconds: 70\n  port: "
+        template: ../templates/resources/config-yaml.yaml
+  - it: "fileAccess gracePeriod of zero is rejected before anything renders"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.gracePeriod: 0
+    asserts:
+      - failedTemplate:
+          errorPattern: "fileAccess/gracePeriod.*minimum: got 0, want 1"
+  - it: "fileAccess.replicas rejects an object so gracePeriod cannot hide under it"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.file-access.yaml
+    set:
+      fileAccess.replicas:
+        gracePeriod: 100
+    asserts:
+      - failedTemplate:
+          errorPattern: "fileAccess/replicas"
+  - it: "all seven queue services render 900 and 870 by default"
+    templates:
+      - ../templates/app/golang.yaml
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.large-file.yaml
+      - ./files/values.post-process.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: large-file-delivery
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: post-process
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: process
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "largeFileDeliveryServer:\n  drainSeconds: 870\n  maxConcurrent: "
+        template: ../templates/resources/config-yaml.yaml
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "postProcessFileServer:\n  drainSeconds: 870\n  maxConcurrent: "
+        template: ../templates/resources/config-yaml.yaml
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds: 870\n"
+        template: ../templates/resources/config-yaml.yaml
+  - it: "largeFileDeliver.replicas.gracePeriod changes large-file-delivery only"
+    templates:
+      - ../templates/app/golang.yaml
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.large-file.yaml
+      - ./files/values.post-process.yaml
+    set:
+      largeFileDeliver.replicas.gracePeriod: 120
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 120
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: large-file-delivery
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: post-process
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "largeFileDeliveryServer:\n  drainSeconds: 90\n"
+        template: ../templates/resources/config-yaml.yaml
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "postProcessFileServer:\n  drainSeconds: 870\n"
+        template: ../templates/resources/config-yaml.yaml
+  - it: "an override on one of the five existing queue services leaves the other six on the default"
+    templates:
+      - ../templates/app/golang.yaml
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.large-file.yaml
+      - ./files/values.post-process.yaml
+    set:
+      upload.replicas.gracePeriod: 180
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 180
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: upload
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: large-file-delivery
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "uploadFileServer:\n  baseURL: .*\n  drainSeconds: 150\n"
+        template: ../templates/resources/config-yaml.yaml
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "largeFileDeliveryServer:\n  drainSeconds: 870\n"
+        template: ../templates/resources/config-yaml.yaml
+  - it: "largeFileDeliver gracePeriod of zero is rejected before anything renders"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.large-file.yaml
+    set:
+      largeFileDeliver.replicas.gracePeriod: 0
+    asserts:
+      - failedTemplate:
+          errorPattern: "largeFileDeliver/replicas/gracePeriod.*minimum: got 0, want 1"
+  - it: "a bare largeFileDeliver.replicas.gracePeriod renders without setting desired"
+    templates:
+      - ../templates/app/golang.yaml
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.large-file.yaml
+    set:
+      largeFileDeliver.replicas.gracePeriod: 120
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 120
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: large-file-delivery
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "largeFileDeliveryServer:\n  drainSeconds: 90\n"
+        template: ../templates/resources/config-yaml.yaml
