@@ -21,6 +21,8 @@ The bundle replaces the container's default CA file. A Secret that holds only th
 
 If you skip this and a certificate does not verify, ingest, search and summary requests fail and the workers stop publishing and consuming tasks. The ai-server API and worker pods stay Ready even when they cannot connect, so after upgrading check the layout, ranker and summary logs for `certificate verify failed`.
 
+A Workspace runner image that includes the AGE-403 fix verifies a `rediss://` Redis the same way, for both its Celery broker and result backend, and trusts a private CA through the same `SSL_CERT_FILE`. When your release selects such an image and a certificate does not verify, the `workspace-*` workers cannot reach Redis, so also check their logs for `certificate verify failed`. A `workspace.celeryBrokerUrl` or `workspace.celeryResultBackend` override that sets an `ssl_*` option in its URL query stops those pods at startup; remove the option.
+
 The original chart 0.2.8 rollout verified the ai-server layout, ranker and summary clients. Its notes recorded that the extract client (AGE-395) and Workspace runner still accepted any certificate. Do not infer platform-wide verification from these results; check the extraction and Workspace images selected for your release.
 
 
