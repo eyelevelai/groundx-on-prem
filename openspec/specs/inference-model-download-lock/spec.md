@@ -40,7 +40,7 @@ The script SHALL stop waiting after 60 minutes (a script constant, `wait_limit=3
 - **THEN** the container exits non-zero with a timeout message and writes no marker
 
 ### Requirement: A missing flock fails at once
-The script SHALL first exit 0 without downloading when `complete.<model>` already exists, so a missing `flock` never fails a pod whose model volume is complete. When the marker is absent it SHALL check that `flock` exists before any wait and exit non-zero naming `flock` when it is missing. Any `flock -n` failure SHALL be retried every 3 seconds until the 60-minute limit, with `flock`'s own error output left in the container log. Polarity: `reject before state`.
+The script SHALL first exit 0 without downloading when `complete.<model>` already exists, so a missing `flock` never fails a pod whose model volume is complete. When the marker is absent it SHALL check that `flock` exists before any wait and exit non-zero naming `flock` when it is missing. A `flock -n` failure that prints nothing is contention and SHALL be retried every 3 seconds until the 60-minute limit. A `flock -n` failure that prints an error SHALL end the container at once with a non-zero exit and a message carrying that error, without the waiting message, a download request or a marker. Polarity: `reject before state`.
 
 #### Scenario: flock applet missing
 - **GIVEN** an image where `flock` is not on the `PATH`
@@ -55,7 +55,12 @@ The script SHALL first exit 0 without downloading when `complete.<model>` alread
 #### Scenario: flock reports an error
 - **GIVEN** a `flock` that prints an error and exits 1
 - **WHEN** the container starts on an empty volume
-- **THEN** it keeps waiting with the error visible in its log, makes no download request, and exits non-zero at the 60-minute limit with no marker
+- **THEN** it exits non-zero at once with a message carrying that error, never prints "Download in progress by another pod", makes no download request and writes no marker
+
+#### Scenario: Silent flock failure is contention
+- **GIVEN** a `flock` that exits 1 and prints nothing
+- **WHEN** the container starts on an empty volume
+- **THEN** it keeps running, reports that it is waiting, and makes no download request
 
 ### Requirement: A failed download is never marked complete
 The script SHALL exit non-zero, and SHALL NOT write `complete.<model>`, when any `wget`, `tar` or `xargs` step fails. `complete.<model>` SHALL be written only after every part downloaded and extracted and the archives were removed, while the lock is still held. Polarity: `finalize failure`.
