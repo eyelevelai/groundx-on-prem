@@ -1,0 +1,44 @@
+## Why
+
+On a private-S3 install that summarizes with the bundled self-hosted model, the summary worker (cashbot-go) sends the model plain bucket links, the model server fetches them without credentials, and S3 answers 403, so documents complete without image summaries and nothing reports a failure (GX-93). A companion cashbot-go change lets the worker read each page with its own storage credentials and embed it in the request when an engine carries `inlineImages: true`. The worker cannot tell the chart's in-cluster summary-api from a remote engine that uses the same `eyelevel` service; only this chart knows which engine is its own. So the chart must mark that engine: render an opt-in `inlineImages` flag on it when files live on S3.
+
+Blast radius: only installs whose storage type renders as `s3` and whose summary engine is the chart's own get a different `config.yaml`, and on `helm upgrade` that rolls every Go-service Deployment and the metrics Deployment. Every other install must render byte-identical output. No Kubernetes resource is added or removed and no stateful resource is touched. Detail under Impact.
+
+## What Changes
+
+- **Derived default.** In the engine loop of `src/groundx/templates/resources/config-yaml.yaml`, beside `maxImages` (`:205-207`), render `inlineImages: true` for an engine when both hold: `groundx.engine.create` is true (service `eyelevel` and `baseUrl` equal to the in-cluster summary-api URL, `_helpers/engines.tpl:68-72`), and `groundx.file.storageType` is exactly the lowercase string `s3` (`_helpers/services/file.tpl:166-175`, the value already emitted as `upload.service` at `config-yaml.yaml:725`). The default is computed in `config-yaml.yaml`, not in the shared engine helpers, so the other readers of `groundx.engines` (`config-models.yaml:3`, `extract.tpl:84`, `summary.tpl:15,35,41`) never see a derived key. The render does not read `fileAccess.enabled`.
+- **Operator override.** An optional boolean `engines.<name>.inlineImages` wins when set to `true` or `false`, on any engine. A value that is absent or null leaves the derived default in force. An explicit `false` turns the derived default off.
+- **Schema.** Add a boolean `inlineImages` entry under `engines.default` in `values.schema.json` (`:124-143`; that block has `additionalProperties: false`, so it rejects the key today). Other engine names are not constrained by the schema today, and this change does not alter that.
+- **Values documentation.** Add a commented `engines` example to `values.yaml`, which has no `engines` section today. It changes no rendered output.
+- **Mirror.** `src/groundx` is edited first and `helm/` receives the same three file edits (`config-yaml.yaml`, `values.yaml`, `values.schema.json`), byte-identical. The gate byte-compares the `templates/` tree (`.build/bin/verify-storage-contract.py:213-238`) but not top-level `values.yaml` or `values.schema.json`, so those two pairs need their own `cmp`.
+- **Tests (consistent with the approved test plan, layer L2).** Fold helm-unittest cases into `src/groundx/tests/resources_test.yaml` beside the `engine maxImages` cases (`:310`), with fixtures under `src/groundx/tests/files/`:
+  - the local `eyelevel` engine on `s3` renders `inlineImages: true`;
+  - `minio`, `s4` and in-cluster AIStor storage (the last renders `minio`) render no key;
+  - a remote `eyelevel` engine and an `openai` engine on `s3` render no key;
+  - the schema accepts a boolean and rejects a string;
+  - an operator `false` on the local `s3` engine does not render `true`, and an operator `true` on another engine renders `true`;
+  - a before/after render comparison of the engine-reading outputs shows the only differences are added `inlineImages` lines on flagged installs. Renders go to files and only the named field is read, because the config Secret holds credentials.
+- **Snapshots.** Hand-patch them by the repository's method, never `helm unittest -u` (it drops required empty-render labels; `AGENTS.md`, "Agent boundaries"), then check with `helm unittest` without `-u` and `verify-helm-snapshots.py`, through `.build/bin/validate-helm.sh` with helm v3.19.0. Derived from the committed snapshots (each label's local engine block and `upload.service`), the labels that render the local engine on `s3` are `aws`, `cloud`, `extract` and `extract.ingest`:
+  - `resources_test.yaml.snap`: each of those four gains one `inlineImages: true` line in its engine block (`:87-95`, `:1134-1142`, `:5722-5729`, `:6670-6678`).
+  - `golang_test.yaml.snap` and `metrics_test.yaml.snap`: the `config-hash` annotation changes for the same four labels, because it hashes the rendered `config-yaml.yaml` (`app/golang.yaml:65`, `app/metrics.yaml:121`).
+  - `extract.oai` renders `s3` but with an `openai-base64` engine, so it must not change. Every label that renders `minio` must not change either.
+  - The new hash values are derived and must come from running the gate, not from typing them and not from printing the render. `design.md` pins how.
+
+## Capabilities
+
+### New Capabilities
+- `engine-inline-images-config`: how the chart derives, overrides, validates and renders the per-engine `inlineImages` flag in the application `config.yaml`, and the rule that engines and storage types outside the derived case render as before.
+
+### Modified Capabilities
+- None. The existing `doc-summary-image-limit-config` requirements about `maxImages` do not change, and `helm-chart-render-determinism` is followed as process, not amended.
+
+## Impact
+
+- **Files (groundx-on-prem):** `src/groundx/templates/resources/config-yaml.yaml`, `src/groundx/values.yaml`, `src/groundx/values.schema.json` and their `helm/` copies; `src/groundx/tests/resources_test.yaml` and new fixtures; the `resources`, `golang` and `metrics` snapshot files. No `helm/` test or snapshot changes, because `helm/` carries none.
+- **Who rolls on upgrade.** On an install with `s3` storage and the bundled engine, the `config-yaml-map` Secret content changes. Every Go-service Deployment mounts it (`app/golang.yaml:183`) and the metrics Deployment mounts it too (`app/metrics.yaml:217`), and both annotate `config-hash` from the rendered template, so each rolls once. The pre-upgrade schema-migration hook copies the same `config.yaml` into its own Secret (`app/schema-migration.yaml:6,21`) and will carry the key; it does not read engines. Installs on MinIO, AIStor, S4, or with a remote or non-`eyelevel` engine render the same bytes as before.
+- **Environments and data.** Any self-hosted install on `s3` storage, with no environment-specific logic. No PVC, database or other stateful resource changes.
+- **Compatibility and activation.** Additive in both directions: cashbot-go decodes its config without strict mode (`cashbot-go pkg/config/config.go:94-95`), so an older image ignores the key and a newer image without it behaves as today. The chart alone changes nothing: the flag has effect only once a summary-client image that reads it is deployed. The image tag follows `Chart.AppVersion` (`_helpers/app/summary-client.tpl:31-36`; in-tree `Chart.yaml:4-5` is 0.2.8) unless an operator sets `summaryClient.image`. Which chart release first carries the key is not decided by this change, and publishing the chart is a separate privileged maintainer step outside it.
+- **Rollback and roll-forward.** `helm rollback` to the previous chart removes the key and rolls the same Deployments again. Pinning `summaryClient.image` to an image that predates the cashbot-go change makes the worker ignore the key. Operator opt-out through values has one catch: setting `engines` replaces the implicit default engine entirely (`engines.tpl:46-59`) and the schema requires `engineId`, so on an install with no `engines` section, opting out means declaring the full `engines.default` block, not only `inlineImages: false`.
+- **Security.** The derived default marks only the in-cluster summary-api. An operator who sets `inlineImages: true` on a remote engine makes the worker send that install's own page-image bytes to the engine's `baseUrl`, which leaves the cluster; today that engine receives links it cannot read. This is an explicit operator choice, so it does not block the change, and the commented `values.yaml` example says so.
+- **Cross-service.** Producer of the rendered key `inlineImages` in each engine block of `config.yaml`; cashbot-go consumes it and `groundx-studio-harness` documents it (see the workspace change's `contract.md`). Neither is edited here. See the workspace `openspec/changes/gx-93-self-hosted-summary-cannot-read-page-images-from-a-private/` for cross-service coordination.
+- **Open design questions:** none. Two mechanics are pinned in `design.md` rather than here: whether an operator `false` renders as `inlineImages: false` or is omitted (follow the `maxImages` null-omit precedent and the test plan's "renders false or omits"), and how the `config-hash` values are produced.
