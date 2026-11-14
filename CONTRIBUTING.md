@@ -2,6 +2,11 @@
 
 ## Pull Requests
 
+- Open PRs as drafts. A human marks them ready for review.
+- A ready PR and each update run Helm and both live Strimzi checks. Wait for
+  `On-Prem PR checks` on the latest revision before merging. Branch pushes
+  still run the independent Helm check.
+
 - Keep Helm chart changes in `src/groundx/` first; mirror to `helm/` when the
   change needs to ship through the published chart.
 - Explain chart behavior in committed comments only when it captures a
