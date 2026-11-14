@@ -53,7 +53,7 @@ Follow [CONTRIBUTING.md](../../CONTRIBUTING.md) for focused regression coverage 
   ranker `inference_queue`; the chart only controls the Kubernetes workers. Isolate the queue before
   a Kubernetes-only payload-contract canary.
 - **Quality gates that MUST pass before any PR merges:**
-  - `.build/bin/validate-helm.sh` — lint + `helm unittest` snapshot tests + dual-surface render checks; **this is the CI gate** (`.github/workflows/helm-tests.yml` runs it on every push/PR/release) and the **only** check that guards template changes. It generates the OCR credentials fixture first (see Test above).
+  - `.build/bin/validate-helm.sh` — lint + `helm unittest` snapshot tests + dual-surface render checks; **this is the CI gate** (`.github/workflows/helm-tests.yml` runs it on branch pushes, ready PRs, and releases) and the **only** check that guards template changes. It generates the OCR credentials fixture first (see Test above).
   - `helm template src/groundx -f src/groundx/values/minikube/values.yaml -f src/groundx/tests/files/values.search-credentials.yaml` — render check (must render cleanly).
 
 ## Privileged operations
