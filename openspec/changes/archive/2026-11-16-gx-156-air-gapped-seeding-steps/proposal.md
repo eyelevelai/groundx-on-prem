@@ -4,9 +4,9 @@
 
 ## What Changes
 
-- The false-marker recovery tells an air-gapped cluster to re-seed the volume instead of waiting for a download.
+- The false-marker recovery tells an air-gapped cluster to re-seed the volume (all four steps, starting with the download on a connected machine) instead of waiting for a download.
 - The air-gapped paragraph becomes a numbered procedure: download the parts on a connected machine, scale the service to 0 and wait, seed from a short-lived pod that mounts the claim and runs as user 1001 (extract each part in order into the volume root, delete the parts, create `complete.<model>` last), scale back up. One example command block.
-- It states that only the ranker and summary pods download a model (the layout pod's `download-model` has no parts and fetches nothing), and that an upgrade that changes a model needs the new model seeded first.
+- It covers all three services: ranker and summary download archive parts in `download-model`, and layout downloads four `.pth`/`.yaml` files in its `init-layout` init container (ai-server `document/model.py` and `models/layout.py`), skipping files already present; layout's `download-model` has no parts and fetches nothing. The steps seed the layout files under their URL names. An upgrade that changes a model needs the new model seeded first.
 - Docs only: no template, value, image or snapshot change.
 
 ## Capabilities
