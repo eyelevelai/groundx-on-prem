@@ -239,6 +239,7 @@ Old and new pods use different locks, so they must not download into the same vo
 
    ```bash
    kubectl run -n eyelevel model-seed --restart=Never --image=<your busybox image> --overrides='{"spec":{"securityContext":{"runAsUser":1001,"runAsGroup":1001,"fsGroup":1001},"containers":[{"name":"model-seed","image":"<your busybox image>","command":["sleep","86400"],"volumeMounts":[{"name":"model","mountPath":"/model"}]}],"volumes":[{"name":"model","persistentVolumeClaim":{"claimName":"summary-model"}}]}}'
+   kubectl wait -n eyelevel --for=condition=Ready pod/model-seed --timeout=5m
    kubectl cp g34b-092526.tar.gz.part.00 eyelevel/model-seed:/model/
    kubectl exec -n eyelevel model-seed -- sh -c 'cd /model && tar -xzf g34b-092526.tar.gz.part.00 && rm g34b-092526.tar.gz.part.00'
    # repeat cp and exec for each part in order, then:
