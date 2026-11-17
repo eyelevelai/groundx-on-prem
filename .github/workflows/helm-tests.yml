@@ -4,6 +4,7 @@ on:
     push:
         branches: ["**"]
     pull_request:
+        types: [opened, reopened, synchronize, ready_for_review]
     release:
         types: [published, created]
     workflow_dispatch:
@@ -13,6 +14,11 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
+            - name: Require a pull request ready for review
+              if: github.event_name == 'pull_request' && github.event.pull_request.draft
+              run: |
+                echo "::error::Mark the pull request ready for review to run required checks."
+                exit 1
             - name: Checkout
               uses: actions/checkout@v4
 
@@ -64,7 +70,7 @@ jobs:
                   path: reports/helm-unittest.xml
 
     live-strimzi-kind:
-      if: github.event_name == 'pull_request' || github.event_name == 'release'
+      if: (github.event_name == 'pull_request' && !github.event.pull_request.draft) || github.event_name == 'release'
       runs-on: ubuntu-latest
       timeout-minutes: 20
 
@@ -170,7 +176,7 @@ jobs:
             kubectl describe kafkatopic.kafka.strimzi.io -n "${KIND_NAMESPACE}"
 
     strimzi-migration-kind:
-      if: github.event_name == 'pull_request' || github.event_name == 'release'
+      if: (github.event_name == 'pull_request' && !github.event.pull_request.draft) || github.event_name == 'release'
       runs-on: ubuntu-latest
       timeout-minutes: 30
 
@@ -502,3 +508,16 @@ jobs:
             kubectl get jobs -n "${KIND_NAMESPACE}"
             kubectl logs job/strimzi-v1-api-conversion-convert -n "${KIND_NAMESPACE}" --tail=200 || true
             kubectl logs job/strimzi-v1-api-conversion-crdupgrade -n "${KIND_NAMESPACE}" --tail=200 || true
+
+    on-prem-pr-checks:
+      name: ${{ github.event_name == 'pull_request' && 'On-Prem PR checks' || 'On-Prem PR checks (not applicable)' }}
+      if: always() && github.event_name == 'pull_request'
+      needs: [helm-unittest, live-strimzi-kind, strimzi-migration-kind]
+      runs-on: ubuntu-latest
+      steps:
+        - name: Require all PR checks to pass
+          env:
+            HELM: ${{ needs.helm-unittest.result }}
+            STRIMZI: ${{ needs.live-strimzi-kind.result }}
+            MIGRATION: ${{ needs.strimzi-migration-kind.result }}
+          run: test "$HELM" = success && test "$STRIMZI" = success && test "$MIGRATION" = success
