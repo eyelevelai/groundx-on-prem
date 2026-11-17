@@ -13,10 +13,10 @@
 
 - [x] 2.1 The change touches documentation and `openspec/` only: nothing under `src/`, `helm/`, `.build/` or `helm-releases/` differs from the merge base with `origin/0.3.0`.
   check: bash -c 'b=$(git merge-base HEAD origin/0.3.0) && [ -z "$(git diff --name-only "$b" -- src helm .build helm-releases)" ]'
-- [ ] 2.2 The repo's pre-push gate (`.build/bin/validate-helm.sh`) passes on the branch, run by the pre-push hook.
+- [x] 2.2 The repo's pre-push gate (`.build/bin/validate-helm.sh`) passes on the branch, run by the pre-push hook.
   check: n/a — the gate executes a repo script in a privileged repo; the pre-push hook owns it and the pipeline does not run it as an acceptance check
 
 ## 3. Merge order
 
-- [ ] 3.1 Before review, merge the latest `origin/0.3.0` into the branch; open PRs that edit `docs/upgrades.md` on the same base touch nearby paragraphs.
+- [x] 3.1 Before review, merge the latest `origin/0.3.0` into the branch; open PRs that edit `docs/upgrades.md` on the same base touch nearby paragraphs.
   check: n/a — a review-time merge step, not a behavior of the change
