@@ -385,3 +385,12 @@ GROUNDX_AGENT_API_KEY
 {{- end -}}
 {{- $cfg | toYaml -}}
 {{- end }}
+
+{{- define "groundx.extract.agent.lastSecret" -}}
+{{- $entry := .entry | default "" -}}
+{{- $scr := .secrets | default dict -}}
+{{- if hasPrefix "extract." $entry -}}
+{{- $name := include "groundx.extract.agent.secretName" .root -}}
+{{- if hasKey $scr $name -}}{{ $name }}{{- end -}}
+{{- end -}}
+{{- end }}

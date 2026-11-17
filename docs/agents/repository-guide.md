@@ -53,7 +53,7 @@ Follow [CONTRIBUTING.md](../../CONTRIBUTING.md) for focused regression coverage 
   ranker `inference_queue`; the chart only controls the Kubernetes workers. Isolate the queue before
   a Kubernetes-only payload-contract canary.
 - **Quality gates that MUST pass before any PR merges:**
-  - `.build/bin/validate-helm.sh` — lint + `helm unittest` snapshot tests + dual-surface render checks; **this is the CI gate** (`.github/workflows/helm-tests.yml` runs it on every push/PR/release) and the **only** check that guards template changes. It generates the OCR credentials fixture first (see Test above).
+  - `.build/bin/validate-helm.sh` — lint + `helm unittest` snapshot tests + dual-surface render checks; **this is the CI gate** (`.github/workflows/helm-tests.yml` runs it on branch pushes, ready PRs, and releases) and the **only** check that guards template changes. It generates the OCR credentials fixture first (see Test above).
   - `helm template src/groundx -f src/groundx/values/minikube/values.yaml -f src/groundx/tests/files/values.search-credentials.yaml` — render check (must render cleanly).
 
 ## Privileged operations
@@ -192,7 +192,10 @@ supported features.
   `src/groundx/tests/files/verify-probe-mirror-drift.sh` (FRA-145), a narrower rendered-output
   check that predates and still complements the full-tree one.
 - **`upload.groundx.ai` model-weight download is HARDCODED** in inference init-containers — an
-  **air-gap blocker**; weights must be mirrored for offline installs (mechanism not documented in-repo).
+  **air-gap blocker**; offline installs seed the model files and `complete.<model>` into the model
+  volume ([inference model downloads](../upgrades.md#inference-model-downloads)).
+- **The `download-model` init container locks a write-opened fd** (`exec 9>>"$lock"; flock -n 9`).
+  Busybox `flock FILE cmd` opens the file read-only and never gets the lock on EFS.
 - **Hosted ranker-only EKS is migration-state, not generic chart truth.** As of 2026-07-23,
   hosted search inference is two EC2 `search-inference-*.groundx.ai` servers plus one EKS
   `ranker-inference` pod. One EKS replica can mean one GPU node; judge HPA behavior with

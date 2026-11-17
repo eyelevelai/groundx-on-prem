@@ -609,6 +609,8 @@ Set both OpenSearch passwords to match your installed service. [Password deliver
 
 Keep your existing values file. Before upgrading, follow the [OpenSearch upgrade steps](docs/upgrades.md#upgrading-existing-opensearch) and [database migration requirements](docs/agents/database-upgrades.md). Installs from chart 0.2.9 or earlier run OpenSearch on its published demo certificates and may still use published passwords; the `groundx` and `process` images of chart 0.2.8 and later already reject the demo certificate. For OpenSearch 2.19 or later the upgrade to 3.2.0 is forward-only (OpenSearch cannot be downgraded); an older OpenSearch is re-certified without changing its version.
 
+If an inference model is still downloading for the first time, scale the inference deployments to 0 and wait until their pods are gone before you upgrade or roll back. See [inference model downloads](docs/upgrades.md#inference-model-downloads).
+
 ### Persistent Storage
 
 Set `cluster.pvClass` to an existing StorageClass and `cluster.pvAccessMode` to a mode it supports. Prefer `ReadWriteMany` for shared filesystems; use `ReadWriteOnce` for block or local storage. Summary pods on multiple nodes need shared `ReadWriteMany` storage.

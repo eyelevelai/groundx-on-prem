@@ -18,4 +18,5 @@ Keep this file as a table of contents. Detailed rules belong in the linked docum
 | Configuring optional post-processing | [Post-processing](docs/agents/post-processing.md) |
 | Upgrading the database | [Database migration gate](docs/agents/database-upgrades.md) |
 | Managing EKS costs | [EKS cost controls](docs/agents/eks-cost-controls.md) |
+| Configuring the extract agent API key | [Extract agent API key](docs/agents/extract-agent-key.md) |
 | Troubleshooting DNS | [DNS observability](docs/agents/dns-observability.md) |

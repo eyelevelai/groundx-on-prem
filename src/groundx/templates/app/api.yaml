@@ -31,6 +31,7 @@
 {{- $pull := get $svcData "pull" -}}
 {{- $san := get $svcData "serviceAccountName" -}}
 {{- $scr := get $svcData "secrets" | default dict -}}
+{{- $lastSecret := include "groundx.extract.agent.lastSecret" (dict "root" $ "entry" $entry "secrets" $scr) -}}
 {{- $globalSecrets := include "groundx.fileAccess.workloadSecrets" (dict "root" $ "service" $entry) | fromYaml | default dict -}}
 {{- if gt (len $globalSecrets) 0 }}
   {{- range $k, $v := $globalSecrets }}
@@ -137,8 +138,14 @@ spec:
 {{- if gt (len $scr) 0 }}
           envFrom:
 {{- range $kk, $vv := $scr }}
+{{- if ne $kk $lastSecret }}
             - secretRef:
                 name: {{ $kk }}
+{{- end }}
+{{- end }}
+{{- if $lastSecret }}
+            - secretRef:
+                name: {{ $lastSecret }}
 {{- end }}
 {{- end }}
           workingDir: /app

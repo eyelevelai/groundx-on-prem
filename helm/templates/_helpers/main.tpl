@@ -184,6 +184,15 @@ extraPreDefaults:
 {{- end }}
 {{- end }}
 
+{{- define "groundx.processors" -}}
+{{- $in := .Values.cluster | default dict -}}
+{{- $procs := dict "convert" (list 11) "extract" (list 13) "layout" (list 3) "map" (list 4) "saveFile" (list 2) "skipConvert" (list 12) "skipGenerate" (list 1) "skipLayout" (list 5) "skipMap" (list 6) "skipSummarize" (list 7) "summarize" (list 8) "summarizeChunks" (list 10) "summarizeSections" (list 9) -}}
+{{- range $k, $v := (dig "processors" dict $in | default dict) -}}
+{{- $_ := set $procs $k $v -}}
+{{- end -}}
+{{- toYaml $procs -}}
+{{- end }}
+
 {{- define "groundx.pvClass" -}}
 {{- $b := .Values.cluster | default dict -}}
 {{- dig "pvClass" "eyelevel-pv" $b -}}

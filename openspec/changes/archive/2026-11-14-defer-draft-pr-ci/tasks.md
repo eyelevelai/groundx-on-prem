@@ -1,0 +1,3 @@
+- [x] Preserve existing regression commands and non-PR triggers.
+- [x] Defer expensive draft PR jobs and update contributor guidance.
+- [x] Validate workflow syntax and event paths.
