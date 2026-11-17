@@ -49,7 +49,7 @@ The note SHALL tell an operator whose Redis certificate comes from a private CA,
 
 ### Requirement: The note states which clients verify and which do not yet
 
-The linked note SHALL preserve the chart 0.2.8 rollout findings for layout, ranker and summary verification, and identify the original extract client (AGE-395) and Workspace non-verification finding as historical. It SHALL state that a Workspace runner image that includes the AGE-403 fix verifies a `rediss://` broker and result backend, trusts a private CA through the same `SSL_CERT_FILE`, and stops at startup when a `workspace.celeryBrokerUrl` or `workspace.celeryResultBackend` URL sets an `ssl_*` option in its query. It SHALL state no release number for that image. It SHALL require checking the selected images rather than claiming either platform-wide verification or current non-verification without evidence.
+The linked note SHALL preserve the chart 0.2.8 rollout findings for layout, ranker and summary verification, and identify the original extract client (AGE-395) and Workspace non-verification finding as historical. It SHALL state that a Workspace runner image that includes the Redis certificate-verification change verifies a `rediss://` broker and result backend, trusts a private CA through the same `SSL_CERT_FILE`, and stops at startup when a `workspace.celeryBrokerUrl` or `workspace.celeryResultBackend` URL sets an `ssl_*` option in its query. It SHALL state no release number for that image. It SHALL require checking the selected images rather than claiming either platform-wide verification or current non-verification without evidence.
 
 #### Scenario: The unverified clients are named (polarity: skip unrelated repair path)
 
@@ -61,7 +61,7 @@ The linked note SHALL preserve the chart 0.2.8 rollout findings for layout, rank
 
 - **GIVEN** the same note
 - **WHEN** a reader checks whether the Workspace runner verifies a `rediss://` Redis
-- **THEN** the note says a runner image that includes the AGE-403 fix verifies the broker and result backend, names the `ssl_*` URL option as rejected at startup, states no release or chart number for that image, and requires checking the selected image
+- **THEN** the note says a runner image that includes the Redis certificate-verification change verifies the broker and result backend, names the `ssl_*` URL option as rejected at startup, states no release or chart number for that image, and requires checking the selected image
 
 ### Requirement: Documentation changes preserve deployment behavior
 

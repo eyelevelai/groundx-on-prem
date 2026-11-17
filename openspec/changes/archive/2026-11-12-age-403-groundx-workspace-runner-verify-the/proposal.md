@@ -4,7 +4,7 @@ AGE-403 makes the Workspace runner verify the certificate chain and host name of
 
 ## What Changes
 
-- Add one paragraph to `docs/upgrades.md` under "Redis TLS upgrades". It states that a Workspace runner image that includes the AGE-403 fix verifies a `rediss://` Redis the same way for broker and result backend, trusts a private CA through the same `SSL_CERT_FILE`, and that the `workspace-*` logs are checked for `certificate verify failed` when the selected image verifies. It also states that a `workspace.celeryBrokerUrl` or `workspace.celeryResultBackend` URL that sets an `ssl_*` option in its query stops the pods at startup.
+- Add one paragraph to `docs/upgrades.md` under "Redis TLS upgrades". It states that a Workspace runner image that includes the Redis certificate-verification change verifies a `rediss://` Redis the same way for broker and result backend, trusts a private CA through the same `SSL_CERT_FILE`, and that the `workspace-*` logs are checked for `certificate verify failed` when the selected image verifies. It also states that a `workspace.celeryBrokerUrl` or `workspace.celeryResultBackend` URL that sets an `ssl_*` option in its query stops the pods at startup.
 - The wording is version-neutral: no release number is stated, because the first release that carries a fixed runner image is not known. The reader is told to check the Workspace image selected for their release.
 - Amend the `existing-redis-tls-upgrade-guidance` spec so its requirements describe the new paragraph.
 - No template, values, schema, snapshot or `helm/` mirror change. No toggle that turns verification off.

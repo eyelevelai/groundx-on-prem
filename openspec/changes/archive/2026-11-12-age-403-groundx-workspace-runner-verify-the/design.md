@@ -2,7 +2,7 @@
 
 **Goals**
 
-- Tell an operator with a `rediss://` Redis that Workspace runner images carrying the AGE-403 fix verify the certificate, where to look when it does not verify, and that an `ssl_*` option in a Workspace Celery URL is rejected at startup. Scope and blast radius: `proposal.md`.
+- Tell an operator with a `rediss://` Redis that Workspace runner images carrying the Redis certificate-verification change verify the certificate, where to look when it does not verify, and that an `ssl_*` option in a Workspace Celery URL is rejected at startup. Scope and blast radius: `proposal.md`.
 
 **Non-Goals**
 
@@ -17,7 +17,7 @@ The paragraph goes after the sentence that tells operators to check the layout, 
 
 ### D2. Version-neutral wording
 
-The paragraph says "a Workspace runner image that includes the AGE-403 fix" and "when your release selects such an image". The existing historical paragraph (the original 0.2.8 rollout findings) stays: it is accurate as history and already tells the reader to check the selected images.
+The paragraph says "a Workspace runner image that includes the Redis certificate-verification change" and "when your release selects such an image". The existing historical paragraph (the original 0.2.8 rollout findings) stays: it is accurate as history and already tells the reader to check the selected images.
 
 ### D3. The `ssl_*` URL option
 
