@@ -168,7 +168,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -496,7 +500,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -782,7 +790,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -1078,7 +1090,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -1405,7 +1421,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -1690,7 +1710,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -1985,7 +2009,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -2312,7 +2340,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -2597,7 +2629,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -2893,7 +2929,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -3220,7 +3260,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -3505,7 +3549,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -3800,7 +3848,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -4127,7 +4179,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -4425,7 +4481,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -4758,7 +4818,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -5054,7 +5118,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -5380,7 +5448,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -5678,7 +5750,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -6005,7 +6081,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -6311,7 +6391,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -6584,7 +6668,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -6832,7 +6920,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -7111,7 +7203,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -7348,7 +7444,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -7593,7 +7693,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -7862,7 +7966,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -8091,7 +8199,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -8332,7 +8444,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -8603,7 +8719,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1
@@ -8837,7 +8957,11 @@
 
                   start=$(date +%s)
                   announced=0
-                  until flock -n 9; do
+                  until err=$(flock -n 9 2>&1); do
+                    if [ -n "$err" ]; then
+                      echo "Cannot lock $lock: $err. The model volume must support file locks." >&2
+                      exit 1
+                    fi
                     if [ $(( $(date +%s) - start )) -ge "$wait_limit" ]; then
                       echo "Timed out after ${wait_limit}s waiting for another pod to finish downloading the model." >&2
                       exit 1

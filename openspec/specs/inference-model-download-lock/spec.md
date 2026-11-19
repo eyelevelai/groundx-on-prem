@@ -40,7 +40,7 @@ The script SHALL stop waiting after 60 minutes (a script constant, `wait_limit=3
 - **THEN** the container exits non-zero with a timeout message and writes no marker
 
 ### Requirement: A missing flock fails at once
-The script SHALL first exit 0 without downloading when `complete.<model>` already exists, so a missing `flock` never fails a pod whose model volume is complete. When the marker is absent it SHALL check that `flock` exists before any wait and exit non-zero naming `flock` when it is missing. Any `flock -n` failure SHALL be retried every 3 seconds until the 60-minute limit, with `flock`'s own error output left in the container log. Polarity: `reject before state`.
+The script SHALL first exit 0 without downloading when `complete.<model>` already exists, so a missing `flock` never fails a pod whose model volume is complete. When the marker is absent it SHALL check that `flock` exists before any wait and exit non-zero naming `flock` when it is missing. A `flock -n` failure that prints nothing is contention and SHALL be retried every 3 seconds until the 60-minute limit. A `flock -n` failure that prints an error SHALL end the container at once with a non-zero exit and a message carrying that error, without the waiting message, a download request or a marker. Polarity: `reject before state`.
 
 #### Scenario: flock applet missing
 - **GIVEN** an image where `flock` is not on the `PATH`
@@ -55,7 +55,12 @@ The script SHALL first exit 0 without downloading when `complete.<model>` alread
 #### Scenario: flock reports an error
 - **GIVEN** a `flock` that prints an error and exits 1
 - **WHEN** the container starts on an empty volume
-- **THEN** it keeps waiting with the error visible in its log, makes no download request, and exits non-zero at the 60-minute limit with no marker
+- **THEN** it exits non-zero at once with a message carrying that error, never prints "Download in progress by another pod", makes no download request and writes no marker
+
+#### Scenario: Silent flock failure is contention
+- **GIVEN** a `flock` that exits 1 and prints nothing
+- **WHEN** the container starts on an empty volume
+- **THEN** it keeps running, reports that it is waiting, and makes no download request
 
 ### Requirement: A failed download is never marked complete
 The script SHALL exit non-zero, and SHALL NOT write `complete.<model>`, when any `wget`, `tar` or `xargs` step fails. `complete.<model>` SHALL be written only after every part downloaded and extracted and the archives were removed, while the lock is still held. Polarity: `finalize failure`.
@@ -92,7 +97,7 @@ The script SHALL lock with `exec 9>>"$lock"` followed by `flock -n 9` and SHALL 
 - **THEN** the mirror check passes
 
 ### Requirement: The upgrade guide documents the upgrade, rollback and failure behaviour
-`docs/upgrades.md` SHALL carry a `## Inference model downloads` section, listed in its index, in plain language covering: scale the inference deployments to 0 and wait until their pods are gone before upgrading or rolling back while a first download is in progress; how to recover a pod that cannot load its model because an older chart marked a failed download complete; that air-gapped installs seed the model volume and the `complete.<model>` marker before scaling up; and that a custom busybox image must include `flock`. The README's `#### Upgrading an Existing Install` SHALL keep the scale-to-0 warning and link that section. Neither SHALL name a chart version. Polarity: `accept and enqueue`.
+`docs/upgrades.md` SHALL carry a `## Inference model downloads` section, listed in its index, in plain language covering: scale the inference deployments to 0 and wait until their pods are gone before upgrading or rolling back while a first download is in progress; how to recover a pod that cannot load its model because an older chart marked a failed download complete; how an air-gapped install seeds the model volume (the ranker and summary parts and layout's `init-layout` files downloaded on a connected machine, the service scaled to 0 and its pods gone, a short-lived pod that mounts the claim extracting each part into the volume root and creating `complete.<model>` last for ranker and summary, and the layout files copied in under their own names), that an air-gapped cluster re-seeds instead of re-downloading after deleting a false marker, and that an upgrade that changes a model needs the new model seeded first; and that a custom busybox image must include `flock`. The README's `#### Upgrading an Existing Install` SHALL keep the scale-to-0 warning and link that section. Neither SHALL name a chart version. Polarity: `accept and enqueue`.
 
 #### Scenario: Guide section present and complete
 - **GIVEN** `docs/upgrades.md` after the change
@@ -108,4 +113,9 @@ The script SHALL lock with `exec 9>>"$lock"` followed by `flock -n 9` and SHALL 
 - **GIVEN** an old-chart pod and a new-chart pod running against the same volume during a first download
 - **WHEN** an operator follows the upgrade guide
 - **THEN** the service is scaled to 0 and every inference pod, Terminating ones included, is gone first so the two lock mechanisms never overlap, and a volume already holding `complete.<model>` is skipped by both versions
+
+#### Scenario: Air-gapped false marker is re-seeded
+- **GIVEN** an air-gapped cluster whose model volume holds a false `complete.<model>` left by an older chart
+- **WHEN** an operator follows the guide's recovery
+- **THEN** it tells them to delete the marker and re-seed the volume from a short-lived pod with the service scaled to 0, and does not rely on the next pod downloading the model
 
