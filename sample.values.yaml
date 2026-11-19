@@ -44,10 +44,7 @@ fileAccess:
     enabled: true
     ingressClassName: nginx # Set to your controller's ingress class.
   tlsSecretName: groundx-files-tls # Existing certificate Secret for publicUrl.
-  # Required while the chart deploys OpenSearch: a Secret whose ca.crt holds the public root CAs,
-  # the CA that signed the OpenSearch node certificate and any private storage CA.
-  # See docs/upgrades.md#installing-opensearch.
-  caSecretName: groundx-ca-bundle
+  caSecretName: groundx-ca-bundle # CA bundle: public root CAs plus your OpenSearch CA. See docs/upgrades.md#installing-opensearch.
 
 # Match the separately provisioned OpenSearch application and admin passwords.
 search:

@@ -62,7 +62,7 @@ Invariant: a service setting takes precedence over the application setting when 
 
 #### Scenario: The OpenSearch CA is mounted and named when set (polarity: accept and enqueue)
 - **WHEN** the chart renders with `search.caSecretName` set, with or without `fileAccess.caSecretName`
-- **THEN** `config.yaml` carries `caFile: /var/run/groundx/search-ca/ca.crt` under `ai.aws.search`, and `groundx`, `process` and `queue` mount the `search-ca` volume read-only (`src/groundx/tests/search_ca_test.yaml`)
+- **THEN** `config.yaml` carries `caFile: /var/run/groundx/search-ca/ca.crt` under `ai.aws.search`, and `groundx`, `process` and `queue` mount the `search-ca` volume read-only through the shared `groundx.caBundle.mount` helper (`src/groundx/tests/search_ca_test.yaml` checks `groundx`)
 
 #### Scenario: Without the OpenSearch CA the bundle is used (polarity: reject before state; catches)
 - **WHEN** the chart renders with only `fileAccess.caSecretName` set
