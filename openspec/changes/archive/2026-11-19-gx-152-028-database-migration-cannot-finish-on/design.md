@@ -12,7 +12,7 @@ The motivation and blast radius are in `proposal.md`. This document records how 
 **Non-Goals:**
 - Changes to the GroundX image, its start-up migration, probes or the migration lock. Resuming a retried history build ships in cashbot-go under the same ticket.
 - New hook annotations, Argo CD-specific annotations or a different delete policy.
-- Changes to customer Argo CD or deployment repositories, FX values, or `Chart.yaml`.
+- Changes to customer Argo CD or deployment repositories or their values, or `Chart.yaml`.
 - groundx-studio-harness documentation, which is a separate change that waits for a published chart.
 
 ## Decisions
