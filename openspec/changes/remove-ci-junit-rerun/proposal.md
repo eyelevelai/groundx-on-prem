@@ -1,16 +1,20 @@
 ## Why
 
-The Helm workflow reruns the complete test suite to produce a JUnit artifact.
-No configured repository check consumes that artifact. In run 44433765720,
-the reporting run took 3 minutes 55 seconds of the 10-minute PR workflow.
+The Helm workflow reruns its full suite for an unused JUnit artifact and
+runs live Kafka installation and migration tests on every ready PR. In run
+44433765720, the reporting pass took 3 minutes 55 seconds. The live jobs
+create Kubernetes clusters and validate upstream operator compatibility.
 
 ## What Changes
 
-Run the production gate without `--junit` and remove the report upload step.
-Keep the optional local reporting flag and all existing regression checks.
+- Run the production gate without `--junit` and remove its artifact upload.
+- Run both live Strimzi jobs only on release or manual workflow events.
+- Make `On-Prem PR checks` require only the Helm regression job.
+- Preserve Helm snapshots, render checks, local reporting and push validation.
 
 ## Impact
 
-Only GitHub Actions reporting changes. No chart, cluster, credentials or
-stateful resources change in dev, staging or production. Reverting the
-workflow edit restores the downloadable XML artifact and duplicate run.
+Only CI scheduling, reporting and contributor guidance change. No deployed
+chart, credentials or stateful resources change in dev, staging or production.
+PRs lose live Kafka compatibility verification; release and manual runs retain
+it. Reverting the workflow restores PR live tests and the XML artifact.

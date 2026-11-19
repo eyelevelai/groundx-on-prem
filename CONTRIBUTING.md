@@ -3,9 +3,10 @@
 ## Pull Requests
 
 - Open PRs as drafts. A human marks them ready for review.
-- A ready PR and each update run Helm and both live Strimzi checks. Wait for
+- A ready PR and each update run Helm regression checks. Wait for
   `On-Prem PR checks` on the latest revision before merging. Branch pushes
-  still run the independent Helm check.
+  also run Helm. Both live Strimzi installation and migration checks run on
+  release events and manual workflow dispatch, outside the PR gate.
 
 - Follow the [customer documentation rules](docs/agents/repository-guide.md#customer-facing-documentation)
   for the README and customer guides. Keep optional features and detailed
