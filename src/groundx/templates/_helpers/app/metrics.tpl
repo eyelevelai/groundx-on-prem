@@ -49,6 +49,8 @@ true
 {{- $in := dig "replicas" dict $c -}}
 {{- if not $in }}
   {{- $in = dict "desired" 1 "max" 1 "min" 1 -}}
+{{- else if not (hasKey $in "desired") -}}
+  {{- $in = mergeOverwrite (dict "desired" 1) $in -}}
 {{- end }}
 {{- toYaml $in | nindent 0 }}
 {{- end }}

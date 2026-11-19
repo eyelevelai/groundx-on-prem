@@ -53,3 +53,30 @@ golang
 {{- $svcs | toYaml -}}
 
 {{- end }}
+
+{{- define "groundx.golang.defaultGrace" -}}
+{{- $table := dict
+  "groundx" 150
+  "layoutWebhook" 150
+  "fileAccess" 150
+  "metrics" 150
+  "preProcess" 900
+  "process" 900
+  "queue" 900
+  "summaryClient" 900
+  "upload" 900
+  "largeFileDeliver" 900
+  "postProcess" 900
+-}}
+{{- required (printf "unknown Go service key %q" .) (get $table .) -}}
+{{- end }}
+
+{{- define "groundx.golang.gracePeriod" -}}
+{{- $default := int (include "groundx.golang.defaultGrace" .key) -}}
+{{- int (dig "gracePeriod" $default (.replicas | default dict)) -}}
+{{- end }}
+
+{{- define "groundx.golang.drainSeconds" -}}
+{{- $grace := int (include "groundx.golang.gracePeriod" .) -}}
+{{- int (max 1 (sub $grace 30)) -}}
+{{- end }}

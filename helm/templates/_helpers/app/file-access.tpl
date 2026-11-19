@@ -113,6 +113,15 @@
 {{ dig "containerPort" 8080 (.Values.fileAccess | default dict) }}
 {{- end }}
 
+{{- define "groundx.fileAccess.replicas" -}}
+{{- $in := .Values.fileAccess -}}
+{{- $rep := dict "desired" $in.replicas -}}
+{{- if hasKey $in "gracePeriod" -}}
+  {{- $_ := set $rep "gracePeriod" $in.gracePeriod -}}
+{{- end -}}
+{{- $rep | toYaml -}}
+{{- end }}
+
 {{- define "groundx.fileAccess.settings" -}}
 {{- include "groundx.fileAccess.validate" . -}}
 {{- $in := .Values.fileAccess -}}
@@ -124,7 +133,7 @@
   "node" (dig "node" (include "groundx.node.cpuOnly" .) $in)
   "port" (include "groundx.fileAccess.port" .)
   "pull" (dig "imagePullPolicy" (include "groundx.imagePullPolicy" .) $in)
-  "replicas" (dict "desired" $in.replicas)
+  "replicas" (include "groundx.fileAccess.replicas" . | fromYaml)
   "probe" (dict "readiness" (dict "path" "/readyz"))
   "interface" (dict "type" "ClusterIP" "port" (include "groundx.fileAccess.port" .) "targetPort" (include "groundx.fileAccess.port" .) | toYaml)
 -}}
@@ -167,6 +176,7 @@ fileAccess:
   maxPresentationBytes: {{ $in.maxPresentationBytes }}
   maxConcurrentPresentations: {{ $in.maxConcurrentPresentations }}
 fileAccessServer:
+  drainSeconds: {{ include "groundx.golang.drainSeconds" (dict "key" "fileAccess" "replicas" (include "groundx.fileAccess.replicas" . | fromYaml)) }}
   port: {{ include "groundx.fileAccess.port" . }}
   serviceName: {{ include "groundx.fileAccess.serviceName" . }}
   {{- end }}
