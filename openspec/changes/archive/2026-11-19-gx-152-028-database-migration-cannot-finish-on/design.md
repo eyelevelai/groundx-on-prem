@@ -154,12 +154,18 @@ Job's state on any cluster:
 
 ```sh
 kubectl get job <release>-schema-migration -n <namespace> \
-  -o jsonpath='{.status.active} {.status.conditions[?(@.type=="Failed")].reason}{"\n"}'
+  -o jsonpath='{.status.active} {.status.conditions[?(@.status=="True")].type} {.status.conditions[?(@.type=="Failed")].reason}{"\n"}'
 ```
 
-`1` means the Job is still running. A `Failed` reason means it failed:
-`BackoffLimitExceeded` leaves pod logs to read, while `DeadlineExceeded` may
-not. `NotFound` means it completed and Helm removed it.
+`Complete` means it finished after Helm stopped waiting. `Failed` and a reason
+mean it failed: `BackoffLimitExceeded` leaves pod logs to read, while
+`DeadlineExceeded` may not. Only a number, such as `1`, means it is still
+running. `NotFound` means Helm saw it finish and removed it.
+
+When Helm stops waiting, it also deletes the migration Secret, so the Job
+cannot start a retry pod. A retry pod that stays in `ContainerCreating` with a
+`secret ... not found` event will never start. Run the upgrade again with a
+longer `--timeout`.
 
 Running the upgrade again deletes the previous migration Job, even one that is
 still running, and starts a new one. Wait until the Job has finished first.
