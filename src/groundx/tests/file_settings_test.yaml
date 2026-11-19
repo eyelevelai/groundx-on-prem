@@ -1375,6 +1375,7 @@ tests:
     templates:
       - ../templates/resources/ingress.yaml
     set:
+      fileAccess.caSecretName: fixture-ca-bundle
       fileAccess.trustedOrigins: [https://old-files.example.com/bucket]
     asserts:
       - failedTemplate:
@@ -1383,6 +1384,7 @@ tests:
     templates:
       - ../templates/resources/layout-config-py.yaml
     set:
+      fileAccess.caSecretName: fixture-ca-bundle
       file.bucketName: archive
       file.existing.url: https://store.example.com/archive/
       file.existing.serviceType: minio
@@ -1425,6 +1427,7 @@ tests:
     templates:
       - ../templates/resources/ingress.yaml
     set:
+      fileAccess.caSecretName: fixture-ca-bundle
       fileAccess.trustedOrigins: ["http://old.example.com"]
     asserts:
       - failedTemplate:
@@ -1434,6 +1437,7 @@ tests:
     templates:
       - ../templates/resources/ingress.yaml
     set:
+      fileAccess.caSecretName: fixture-ca-bundle
       fileAccess.trustedOrigins: ["https://user:secret@old.example.com"]
     asserts:
       - failedTemplate:
@@ -1443,6 +1447,7 @@ tests:
     templates:
       - ../templates/resources/ingress.yaml
     set:
+      fileAccess.caSecretName: fixture-ca-bundle
       fileAccess.trustedOrigins: ["https://old.example.com?query=x"]
     asserts:
       - failedTemplate:
@@ -1452,6 +1457,7 @@ tests:
     templates:
       - ../templates/resources/ingress.yaml
     set:
+      fileAccess.caSecretName: fixture-ca-bundle
       fileAccess.trustedOrigins: ["https://old.example.com#fragment"]
     asserts:
       - failedTemplate:

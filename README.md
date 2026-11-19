@@ -515,16 +515,16 @@ If you wish to use an existing OpenSearch cluster, you must configure the `searc
 
 #### Deploying a Dedicated OpenSearch Cluster
 
-First follow [OpenSearch credential setup](docs/upgrades.md#installing-opensearch) to create the administrator Secret and `opensearch-admin.values.yaml`. Use the same administrator password for GroundX's `search.privilegedPassword`.
+OpenSearch runs on certificates and an admin password that you create. Follow [OpenSearch setup](docs/upgrades.md#installing-opensearch) to create the `opensearch-tls` and `opensearch-internal-users` Secrets (the admin certificate is `CN=gx-opensearch-admin`) and to add your OpenSearch CA to the `fileAccess.caSecretName` CA bundle. Give GroundX the same admin password as `search.privilegedPassword` or `SEARCH_INIT_PASSWORD`. Then install OpenSearch:
 
 ```bash
 helm repo add opensearch https://opensearch-project.github.io/helm-charts/
 helm repo update
 
-helm install opensearch opensearch/opensearch -n eyelevel -f helm/values/opensearch/values.yaml -f opensearch-admin.values.yaml
+helm install opensearch opensearch/opensearch --version 2.23.1 -n eyelevel -f helm/values/opensearch/values.yaml
 ```
 
-Keep `-f opensearch-admin.values.yaml` on later OpenSearch upgrades. Changing its seed value does not rotate an existing administrator password. For production, replace demo TLS certificates and restrict network access; password rotation alone is insufficient.
+Use the same values file on every later `helm upgrade opensearch`. If you changed any OpenSearch setting, follow [Upgrading existing OpenSearch](docs/upgrades.md#upgrading-existing-opensearch) first, or OpenSearch may start on an empty volume. Limit network access to OpenSearch to the GroundX services.
 
 ### Kafka
 
@@ -586,6 +586,7 @@ Edit `values.yaml` with your settings before installing. Replace all placeholder
 | `file.bucketName`, `file.customDomain` | Object-store bucket and stable file-delivery hostname. The hostname must match `fileAccess.publicUrl`. |
 | `fileAccess` | File-delivery and storage URLs, storage credentials, HTTPS certificates and ingress settings. Follow the file-access steps below. |
 | `search.password`, `search.privilegedPassword` | Application and administrator passwords matching OpenSearch. Neither is required for `mode: ingest`. |
+| `fileAccess.caSecretName` | Required when the chart deploys OpenSearch: a CA bundle Secret holding the public root CAs, your OpenSearch CA and any private storage CA. See [OpenSearch setup](docs/upgrades.md#installing-opensearch). |
 
 Authentication uses API keys by default, without password login. See [identity modes](docs/on-prem-identity.md) to configure local password login or Amazon Cognito.
 
@@ -606,7 +607,7 @@ Set both OpenSearch passwords to match your installed service. [Password deliver
 
 #### Upgrading an Existing Install
 
-Keep your existing values file. Before upgrading, follow the [OpenSearch credential steps](docs/upgrades.md#upgrading-existing-opensearch) and [database migration requirements](docs/agents/database-upgrades.md). Earlier installs may still use published passwords; rotate them before upgrading. Changing a seed password does not rotate credentials already stored in OpenSearch.
+Keep your existing values file. Before upgrading, follow the [OpenSearch upgrade steps](docs/upgrades.md#upgrading-existing-opensearch) and [database migration requirements](docs/agents/database-upgrades.md). Earlier installs may still use published passwords; rotate them before upgrading. Changing a seed password does not rotate credentials already stored in OpenSearch. The OpenSearch steps also replace its demo certificates, and on OpenSearch 2.19 or later they upgrade it to 3.2.0, which cannot be undone.
 
 If an inference model is still downloading for the first time, scale the inference deployments to 0 and wait until their pods are gone before you upgrade or roll back. See [inference model downloads](docs/upgrades.md#inference-model-downloads).
 

@@ -27,6 +27,7 @@ Runs the GroundX Helm production chart gate from one stable entrypoint:
   - workspace chart contract verifier
   - storage chart, generated AWS values, and template-mirror contract verifier
   - probe-mirror-drift guard (renders src/groundx and helm/ and compares the API-pod probe timing)
+  - OpenSearch TLS seed values check (operator certificates only; seed mirrors byte-identical)
   - targeted render checks for both chart surfaces
   - git whitespace check
 
@@ -88,6 +89,7 @@ fi
 OCR_TEST_CREDENTIALS="files/ocr/gcv-test.json"
 layout_pvc_values=""
 layout_pvc_render=""
+opensearch_wrapper_values=""
 ocr_generated_files=()
 SNAPSHOT_STABILITY_HASHFILE="$(mktemp)"
 cleanup() {
@@ -95,7 +97,7 @@ cleanup() {
     rm -f "${ocr_generated_files[@]}"
   fi
   rmdir src/groundx/files/ocr src/groundx/files helm/files/ocr helm/files 2>/dev/null || true
-  rm -f "${layout_pvc_values}" "${layout_pvc_render}" "${SNAPSHOT_STABILITY_HASHFILE}"
+  rm -f "${layout_pvc_values}" "${layout_pvc_render}" "${opensearch_wrapper_values}" "${SNAPSHOT_STABILITY_HASHFILE}"
 }
 trap cleanup EXIT
 for chart in src/groundx helm; do
@@ -524,6 +526,12 @@ python .build/bin/verify-storage-contract.py
 
 echo "==> Verifying src/groundx and helm/ probe-timing mirror stay in sync"
 bash src/groundx/tests/files/verify-probe-mirror-drift.sh
+
+echo "==> Verifying the OpenSearch TLS seed values and the wrapper values"
+bash src/groundx/tests/files/verify-opensearch-tls-values.sh
+opensearch_wrapper_values="$(mktemp)"
+yq '.operator' src/opensearch/values.yaml > "${opensearch_wrapper_values}"
+bash src/groundx/tests/files/verify-opensearch-tls-values.sh "${opensearch_wrapper_values}"
 
 echo "==> Rendering workspace chart fixtures"
 helm template workspace-contract src/groundx \
