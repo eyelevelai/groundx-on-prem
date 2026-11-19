@@ -242,8 +242,35 @@ The layout, ranker and summary inference pods download their model the first tim
 
 Old and new pods use different locks, so they must not download into the same volume at the same time. If every model has already downloaded, you can skip these steps.
 
-**If an inference pod cannot load its model after upgrading:** older charts could mark a failed download as complete. Scale that service to 0, wait until its pods are gone (`kubectl wait -n eyelevel --for=delete pod -l app=summary-inference --timeout=20m` for summary), delete the `complete.<model>` file from its model volume, and scale it back up. The next pod downloads the model again.
+**If an inference pod cannot load its model after upgrading:** older charts could mark a failed download as complete. Scale that service to 0, wait until its pods are gone (`kubectl wait -n eyelevel --for=delete pod -l app=summary-inference --timeout=20m` for summary), delete the `complete.<model>` file from its model volume, and scale it back up. The next pod downloads the model again. On an air-gapped cluster the pod cannot download it: delete the file while you re-seed the volume (steps 1 to 4 below), then scale back up.
 
-**Air-gapped clusters:** the pods cannot download the model. Copy the model files and the `complete.<model>` file into the model volume before scaling up.
+**Air-gapped clusters:** the pods cannot download their model, so seed each model volume yourself. Ranker and summary download archive parts in their `download-model` init container. Layout downloads four files in its `init-layout` init container; its `download-model` step fetches nothing. For each service:
+
+1. On a machine with internet access, download the model files:
+   - `ranker`: `https://upload.groundx.ai/ranker/model/current/model.tar.gz.part.<NN>`, parts `00` to `02`.
+   - `summary`: `https://upload.groundx.ai/summary/model/current/g34b-092526.tar.gz.part.<NN>`, parts `00` to `04`.
+   - `layout`: `fg_faster_rcnn_R_50_FPN_3x.101424.pth`, `fg_faster_rcnn_R_50_FPN_3x_config.101424.yaml`, `tb_faster_rcnn_R_101_FPN_3x.101624.pth` and `tb_faster_rcnn_R_101_FPN_3x_config.101624.yaml`, each from `https://upload.groundx.ai/layout/model/current/`.
+
+   The ranker and summary `download-model` init containers list the same URLs and parts.
+2. Scale the service's inference deployment to 0 and wait until its pods are gone, as above.
+3. Start a short-lived pod that mounts the service's model volume (claim `layout-model`, `ranker-model` or `summary-model`, unless you set `<service>.inference.pvc.name`) and runs as user and group `1001`, like the inference pods.
+   - **Ranker and summary:** copy the parts in, extract each one in part order into the root of the volume, delete the parts, then create `complete.<model>` last, so an interrupted copy never looks complete.
+   - **Layout:** copy the four files into the root of the volume under the same names. `init-layout` skips a file that already exists, so make sure each copy finished before you scale up.
+
+   Delete the pod.
+
+   ```bash
+   kubectl run -n eyelevel model-seed --restart=Never --image=<your busybox image> --overrides='{"spec":{"securityContext":{"runAsUser":1001,"runAsGroup":1001,"fsGroup":1001},"containers":[{"name":"model-seed","image":"<your busybox image>","command":["sleep","86400"],"volumeMounts":[{"name":"model","mountPath":"/model"}]}],"volumes":[{"name":"model","persistentVolumeClaim":{"claimName":"summary-model"}}]}}'
+   kubectl wait -n eyelevel --for=condition=Ready pod/model-seed --timeout=5m
+   kubectl cp g34b-092526.tar.gz.part.00 eyelevel/model-seed:/model/
+   kubectl exec -n eyelevel model-seed -- sh -c 'cd /model && tar -xzf g34b-092526.tar.gz.part.00 && rm g34b-092526.tar.gz.part.00'
+   # repeat cp and exec for each part in order, then:
+   kubectl exec -n eyelevel model-seed -- touch /model/complete.g34b-092526
+   kubectl delete pod -n eyelevel model-seed
+   ```
+
+4. Scale the deployment back up. The pod finds the model and skips the download.
+
+Seed the new model the same way before an upgrade that changes a service's model: the pods look for the new files.
 
 **Custom busybox image (`busybox.image`):** it must include `flock`. Without it, a pod that needs to download its model fails at once with a message naming `flock`.
