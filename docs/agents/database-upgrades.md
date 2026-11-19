@@ -96,6 +96,18 @@ running before you run the upgrade again:
 kubectl get job <release>-schema-migration -n <namespace>
 ```
 
+The status column in that output exists only on newer clusters. To read the
+Job's state on any cluster:
+
+```sh
+kubectl get job <release>-schema-migration -n <namespace> \
+  -o jsonpath='{.status.active} {.status.conditions[?(@.type=="Failed")].reason}{"\n"}'
+```
+
+`1` means the Job is still running. A `Failed` reason means it failed:
+`BackoffLimitExceeded` leaves pod logs to read, while `DeadlineExceeded` may
+not. `NotFound` means it completed and Helm removed it.
+
 Running the upgrade again deletes the previous migration Job, even one that is
 still running, and starts a new one. Wait until the Job has finished first.
 
