@@ -108,9 +108,10 @@ pending-document recovery dependencies when choosing the previous image.
 
 Argo CD renders the chart with `helm template`, so by default it never creates
 the migration Job. Set `groundx.migration.gitOps: true` to render the migration
-Secret and Job in every render. Argo CD runs Helm `pre-upgrade` hooks as PreSync
-hooks, so the Job runs before Argo CD updates any Deployment, on every sync,
-including the first.
+Secret and Job in every render. As with `helm upgrade`, it renders them only
+when at least one Go workload is enabled. Argo CD runs Helm `pre-upgrade` hooks
+as PreSync hooks, so the Job runs before Argo CD updates any Deployment, on
+every sync, including the first.
 
 The database, its credentials, the service account and the image pull Secrets
 must exist before PreSync. Do not use `groundx.migration.gitOps` for a first
