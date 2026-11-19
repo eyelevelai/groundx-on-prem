@@ -61,13 +61,7 @@ jobs:
                   yq --version
 
             - name: Run Helm production gate
-              run: .build/bin/validate-helm.sh --junit
-
-            - name: Upload test report
-              uses: actions/upload-artifact@v4
-              with:
-                  name: helm-unittest-report
-                  path: reports/helm-unittest.xml
+              run: .build/bin/validate-helm.sh
 
     live-strimzi-kind:
       if: (github.event_name == 'pull_request' && !github.event.pull_request.draft) || github.event_name == 'release'
