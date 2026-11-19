@@ -1008,6 +1008,15 @@
           }
         },
         "isInternal": { "type": "boolean" },
+        "migration": {
+          "type": "object",
+          "properties": {
+            "activeDeadlineSeconds": { "type": "integer", "minimum": 1 },
+            "backoffLimit": { "type": "integer", "minimum": 0 },
+            "gitOps": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
         "node": { "type": "string" },
         "nodeSelector": { "type": "object" },
         "replicas": {

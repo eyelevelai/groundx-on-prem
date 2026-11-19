@@ -49,12 +49,30 @@ latency on the actual target engine. Keep the index when rolling application
 images back. An incompatible existing index or unsupported online operation
 stops migration without a blocking fallback.
 
-The Job has a 15-minute deadline and no automatic retry. Allow enough Helm
-timeout for both the migration and the remaining rollout, for example:
+The Job's time limit and retry count are chart values:
+
+- `groundx.migration.activeDeadlineSeconds` (default `3600`) is the time limit
+  for the whole Job, in seconds.
+- `groundx.migration.backoffLimit` (default `2`) is how many times Kubernetes
+  starts a new pod after a failed one.
+
+Retries share the deadline. Each attempt waits up to 30 seconds for the GroundX
+migration lock and fails if another process still holds it. When the deadline
+passes, Kubernetes stops the Job even if retries remain.
+
+Time `-migrate-only` on a restored snapshot of the database before the upgrade.
+Set `activeDeadlineSeconds` above the measured time. Row count is context only:
+use the measured time, not an estimate from the number of rows.
+
+Set `--timeout` above the Job deadline plus the time the rollout needs. With the
+default deadline, for example:
 
 ```sh
-helm upgrade groundx ./src/groundx -n eyelevel -f values.yaml --timeout 20m
+helm upgrade groundx ./src/groundx -n eyelevel -f values.yaml --timeout 70m
 ```
+
+Helm applies `--timeout` to each operation it waits for, including the
+migration Job, not to the upgrade as a whole.
 
 Use the actual release, namespace and approved values. Do not use `--no-hooks`:
 it bypasses the pre-rollout ordering protection. Runtime startup checks still
@@ -71,7 +89,32 @@ Inspect the Job's pod logs and database error; do not print its Secret. Fix the
 underlying cause and retry the upgrade. A retry replaces previous hook resources;
 save relevant logs first. Successful hooks are removed automatically.
 
+After a Helm timeout, check whether `<release>-schema-migration` is still
+running before you run the upgrade again:
+
+```sh
+kubectl get job <release>-schema-migration -n <namespace>
+```
+
+Running the upgrade again deletes the previous migration Job, even one that is
+still running, and starts a new one. Wait until the Job has finished first.
+
 Already applied SQL is not rolled back when the Job fails. The runner resumes
 partial additive upgrades. Application rollback retains added columns, indexes
 and document receipts. Helm does not restore external database state. Retain
 pending-document recovery dependencies when choosing the previous image.
+
+## Argo CD and other GitOps tools
+
+Argo CD renders the chart with `helm template`, so by default it never creates
+the migration Job. Set `groundx.migration.gitOps: true` to render the migration
+Secret and Job in every render. Argo CD runs Helm `pre-upgrade` hooks as PreSync
+hooks, so the Job runs before Argo CD updates any Deployment, on every sync,
+including the first.
+
+The database, its credentials, the service account and the image pull Secrets
+must exist before PreSync. Do not use `groundx.migration.gitOps` for a first
+sync with the bundled MySQL: PreSync runs before Argo CD creates it.
+
+The setting does not change `helm install` or `helm upgrade`. Helm runs the Job
+only during an upgrade, with or without it.
