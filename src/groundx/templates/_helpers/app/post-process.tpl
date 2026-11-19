@@ -16,6 +16,9 @@
 {{- define "groundx.postProcess.replicas" -}}
 {{- $in := .Values.postProcess | default dict -}}
 desired: {{ dig "replicas" "desired" 1 $in }}
+{{- with dig "replicas" "gracePeriod" nil $in }}
+gracePeriod: {{ . }}
+{{- end }}
 {{- end }}
 
 {{- define "groundx.postProcess.settings" -}}
@@ -40,6 +43,7 @@ desired: {{ dig "replicas" "desired" 1 $in }}
 {{- define "groundx.postProcess.config" -}}
 manualDeliveryRetry: {{ .Values.postProcess.retryEnabled | default false }}
 postProcessFileServer:
+  drainSeconds: {{ include "groundx.golang.drainSeconds" (dict "key" "postProcess" "replicas" (include "groundx.postProcess.replicas" . | fromYaml)) }}
   maxConcurrent: {{ .Values.postProcess.concurrency }}
   port: {{ include "groundx.postProcess.containerPort" . }}
   serviceName: {{ include "groundx.postProcess.serviceName" . }}

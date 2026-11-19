@@ -54,3 +54,65 @@ tests:
     asserts:
       - hasDocuments:
           count: 5
+  - it: "postProcess.replicas.gracePeriod changes post-process only"
+    templates:
+      - ../templates/app/golang.yaml
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.large-file.yaml
+      - ./files/values.post-process.yaml
+    set:
+      postProcess.replicas.gracePeriod: 200
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 200
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: post-process
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 900
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: large-file-delivery
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "postProcessFileServer:\n  drainSeconds: 170\n"
+        template: ../templates/resources/config-yaml.yaml
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "largeFileDeliveryServer:\n  drainSeconds: 870\n"
+        template: ../templates/resources/config-yaml.yaml
+  - it: "postProcess gracePeriod that is not an integer is rejected before anything renders"
+    templates:
+      - ../templates/app/golang.yaml
+    values:
+      - ./files/values.post-process.yaml
+    set:
+      postProcess.replicas.gracePeriod: "soon"
+    asserts:
+      - failedTemplate:
+          errorPattern: "postProcess/replicas/gracePeriod"
+  - it: "a bare postProcess.replicas.gracePeriod renders without setting desired"
+    templates:
+      - ../templates/app/golang.yaml
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.post-process.yaml
+    set:
+      postProcess.replicas.gracePeriod: 200
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 200
+        template: ../templates/app/golang.yaml
+        documentSelector:
+          path: spec.selector.matchLabels.app
+          value: post-process
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "postProcessFileServer:\n  drainSeconds: 170\n"
+        template: ../templates/resources/config-yaml.yaml

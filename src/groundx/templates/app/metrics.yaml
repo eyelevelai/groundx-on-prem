@@ -123,6 +123,7 @@ spec:
 {{ toYaml $anns | nindent 8 }}
 {{- end }}
     spec:
+      terminationGracePeriodSeconds: {{ include "groundx.golang.gracePeriod" (dict "key" "metrics" "replicas" $rp) }}
 {{- if $sanFinal }}
       serviceAccountName: {{ $sanFinal }}
 {{- end }}
