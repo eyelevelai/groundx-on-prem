@@ -119,6 +119,10 @@ tests:
       value: layout-inference
     asserts:
       - notExists:
+          path: spec.strategy
+      - notExists:
+          path: spec.progressDeadlineSeconds
+      - notExists:
           path: spec.template.spec.containers[0].resources.requests["nvidia.com/gpu"]
       - notExists:
           path: spec.template.spec.containers[0].resources.limits["nvidia.com/gpu"]
@@ -219,6 +223,15 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].resources.limits["nvidia.com/gpu"]
           value: 1
+      - equal:
+          path: spec.strategy.type
+          value: RollingUpdate
+      - equal:
+          path: spec.strategy.rollingUpdate.maxSurge
+          value: 0
+      - equal:
+          path: spec.progressDeadlineSeconds
+          value: 1500
   - it: "layout inference defaults to a 900 second grace period and replaces the shell with supervisord without running init-layout"
     templates:
       - ../templates/app/inference.yaml
@@ -275,6 +288,34 @@ tests:
         documentSelector:
           path: metadata.name
           value: layout-inference
+      - equal:
+          path: spec.progressDeadlineSeconds
+          value: 720
+        documentSelector:
+          path: metadata.name
+          value: ranker-inference
+      - equal:
+          path: spec.strategy.rollingUpdate.maxSurge
+          value: 0
+        documentSelector:
+          path: metadata.name
+          value: ranker-inference
+      - equal:
+          path: spec.progressDeadlineSeconds
+          value: 1500
+        documentSelector:
+          path: metadata.name
+          value: layout-inference
+      - notExists:
+          path: spec.strategy
+        documentSelector:
+          path: metadata.name
+          value: summary-inference
+      - notExists:
+          path: spec.progressDeadlineSeconds
+        documentSelector:
+          path: metadata.name
+          value: summary-inference
       - matchRegex:
           path: data["supervisord.conf"]
           pattern: "(?s)\\[program:celery_worker_1\\].*stopwaitsecs=90\\n"
@@ -287,6 +328,57 @@ tests:
         documentSelector:
           path: metadata.name
           value: summary-inference-supervisord-conf-map
+  - it: "gpu inference rollout strategy follows the rendered gpu request and yields to an explicit updateStrategy (polarity: finalize success; must not block)"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.inference-gpu-rollout.yaml
+    asserts:
+      - equal:
+          path: spec.strategy.type
+          value: RollingUpdate
+        documentSelector:
+          path: metadata.name
+          value: layout-inference
+      - equal:
+          path: spec.strategy.rollingUpdate.maxSurge
+          value: 0
+        documentSelector:
+          path: metadata.name
+          value: layout-inference
+      - equal:
+          path: spec.progressDeadlineSeconds
+          value: 700
+        documentSelector:
+          path: metadata.name
+          value: layout-inference
+      - notExists:
+          path: spec.strategy
+        documentSelector:
+          path: metadata.name
+          value: ranker-inference
+      - notExists:
+          path: spec.progressDeadlineSeconds
+        documentSelector:
+          path: metadata.name
+          value: ranker-inference
+      - equal:
+          path: spec.strategy.type
+          value: Recreate
+        documentSelector:
+          path: metadata.name
+          value: summary-inference
+      - notExists:
+          path: spec.strategy.rollingUpdate
+        documentSelector:
+          path: metadata.name
+          value: summary-inference
+      - notExists:
+          path: spec.progressDeadlineSeconds
+        documentSelector:
+          path: metadata.name
+          value: summary-inference
   - it: "ranker and summary gracePeriod under 31 floors the stop wait at 1 second (polarity: finalize success)"
     templates:
       - ../templates/resources/ranker-supervisord-conf.yaml
