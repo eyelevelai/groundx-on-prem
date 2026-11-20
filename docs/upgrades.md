@@ -183,7 +183,7 @@ Changing an existing class's actual encryption requires creating a new StorageCl
 
 ## GPU inference upgrades
 
-When a layout, ranker or summary inference pod requests a GPU and `updateStrategy` is empty, the chart renders a rolling update with `maxSurge: 0`. Kubernetes stops an old pod before it starts the new one, so a node with one GPU can finish the upgrade without a spare GPU.
+When a layout, ranker or summary inference pod requests a GPU and `updateStrategy` is empty, the chart renders a rolling update with `maxSurge: 0`. Kubernetes creates the new pod at once, and it stays `Pending` (event `Insufficient nvidia.com/gpu`) until the old pod has drained and released its GPU. This is expected and resolves on its own. A node with one GPU can finish the upgrade without a spare GPU.
 
 Each upgrade has an outage for that service. It lasts from the old pod draining, up to its `replicas.gracePeriod`, until the new pod has loaded its model and is ready.
 
@@ -191,7 +191,7 @@ The chart also sets `progressDeadlineSeconds` to the grace period plus 600 secon
 
 Check that an upgrade finished with `kubectl rollout status deployment/<name> -n <namespace>`, for example `layout-inference`.
 
-To use the Kubernetes defaults instead, set `updateStrategy: RollingUpdate` under the service, for example `layout.inference.updateStrategy`. This sets the type only. Kubernetes then starts the new pod before it stops the old one, so the upgrade needs a spare GPU. Set `updateStrategy: Recreate` to stop all old pods first.
+To use the Kubernetes defaults instead, set `updateStrategy: RollingUpdate` under the service, for example `layout.inference.updateStrategy`. The chart then renders the type only, with no `maxSurge` and no `progressDeadlineSeconds`, so a fresh render uses the Kubernetes defaults and the upgrade needs a spare GPU. Set `updateStrategy: Recreate` to stop all old pods first.
 
 ## Summary GPU sizing
 
