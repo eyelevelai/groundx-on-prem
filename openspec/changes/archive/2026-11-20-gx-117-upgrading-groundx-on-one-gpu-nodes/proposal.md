@@ -25,7 +25,7 @@ None. `summary-inference-gpu-sizing` keeps its explicit-`Recreate` guidance for 
 
 ## Impact
 
-- **Blast radius:** every environment that upgrades the chart. Only Deployments rendered by `inference.yaml` with a positive GPU request change (layout and ranker by default); each rolls once on the first upgrade because its template and strategy change together. Default summary and CPU-mode layout render as before.
+- **Blast radius:** every environment that upgrades the chart. Only Deployments rendered by `inference.yaml` with a positive GPU request change (layout and ranker by default). The change adds only `spec.strategy` and `spec.progressDeadlineSeconds` and leaves `spec.template` unchanged, so upgrading does not restart these pods by itself; the new strategy applies at the next rollout that another pod-template change triggers (an image change or a `config-hash`, `config-models-hash` or `supervisord-hash` change). Default summary and CPU-mode layout render as before.
 - **Cluster capacity:** at 1 replica, no pod serves for the drain plus model load on every later template change. With more replicas, at most 25% (rounded down, minimum 1) are unavailable at a time.
 - **Opt-out and rollback:** explicit `updateStrategy: RollingUpdate` renders the type only, so the API server defaults `maxSurge` to 25% and the deadline to 600 seconds. Whether Helm's patch clears the previously rendered `maxSurge` and `progressDeadlineSeconds` is unverified; design will state the check.
 - **Not covered:** a model download on upgrade (the `download-model` init container can run longer than the 600 seconds past the grace period).

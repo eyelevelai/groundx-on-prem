@@ -185,7 +185,7 @@ Changing an existing class's actual encryption requires creating a new StorageCl
 
 When a layout, ranker or summary inference pod requests a GPU and `updateStrategy` is empty, the chart renders a rolling update with `maxSurge: 0`. Kubernetes creates the new pod at once, and it stays `Pending` (event `Insufficient nvidia.com/gpu`) until the old pod has drained and released its GPU. This is expected and resolves on its own. A node with one GPU can finish the upgrade without a spare GPU.
 
-Each upgrade has an outage for that service when it runs one replica, the default for layout and ranker. It lasts from the old pod draining, up to its `replicas.gracePeriod`, until the new pod has loaded its model and is ready. With more replicas, Kubernetes replaces a share of the pods at a time, at least one, and the others keep serving.
+An upgrade that changes the inference pod (a new image, or a values change that alters its config) has an outage for that service when it runs one replica, the default for layout and ranker. It lasts from the old pod draining, up to its `replicas.gracePeriod`, until the new pod has loaded its model and is ready. With more replicas, Kubernetes replaces a share of the pods at a time, at least one, and the others keep serving.
 
 The chart also sets `progressDeadlineSeconds` to the grace period plus 600 seconds. The deadline counts from the last progress the rollout made. With one replica that is the start of the rollout, so it covers the drain and the start-up together. If both together take longer, `kubectl rollout status` reports a failure even though the rollout can still finish.
 
