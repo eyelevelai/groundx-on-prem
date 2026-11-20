@@ -62,7 +62,10 @@ passes, Kubernetes stops the Job even if retries remain.
 
 Time `-migrate-only` on a restored snapshot of the database before the upgrade.
 Set `activeDeadlineSeconds` above the measured time. Row count is context only:
-use the measured time, not an estimate from the number of rows.
+use the measured time, not an estimate from the number of rows. The
+groundx-studio-harness on-prem upgrade guide
+(`skills/groundx-on-prem/references/upgrades.md` § 2.2) has the commands for a
+timing run.
 
 Set `--timeout` above the Job deadline plus the time the rollout needs. With the
 default deadline, for example:
@@ -72,7 +75,8 @@ helm upgrade groundx ./src/groundx -n eyelevel -f values.yaml --timeout 70m
 ```
 
 Helm applies `--timeout` to each operation it waits for, including the
-migration Job, not to the upgrade as a whole.
+migration Job, not to the upgrade as a whole. A value above the Job deadline is
+therefore enough for the migration step; the `70m` example adds margin.
 
 Use the actual release, namespace and approved values. Do not use `--no-hooks`:
 it bypasses the pre-rollout ordering protection. Runtime startup checks still
