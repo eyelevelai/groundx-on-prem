@@ -559,9 +559,43 @@ fi
 echo "==> Checking diff whitespace"
 echo "==> Verifying database upgrade hook ships identically"
 cmp src/groundx/templates/app/schema-migration.yaml helm/templates/app/schema-migration.yaml
+expect_migration_job_limits() {
+  local chart="$1"
+  local expected="$2"
+  shift 2
+
+  local rendered
+  local actual
+  rendered="$(helm template schema-upgrade "${chart}" -f "${SEARCH_CREDENTIALS}" --is-upgrade -f src/groundx/values/minikube/values.yaml "$@")"
+  actual="$(yq -N 'select(.kind == "Job" and .metadata.name == "schema-upgrade-schema-migration") | (.spec.activeDeadlineSeconds | tostring) + " " + (.spec.backoffLimit | tostring)' <<<"${rendered}")"
+  if [[ "${actual}" != "${expected}" ]]; then
+    echo "${chart}: migration Job deadline and retry count were '${actual}', expected '${expected}' ($*)" >&2
+    exit 1
+  fi
+}
+
+expect_migration_hooks() {
+  local chart="$1"
+  local expected="$2"
+  shift 2
+
+  local rendered
+  local actual
+  rendered="$(helm template schema-upgrade "${chart}" -f "${SEARCH_CREDENTIALS}" -f src/groundx/values/minikube/values.yaml "$@")"
+  actual="$(yq -N 'select(.metadata.name == "schema-upgrade-schema-migration") | .kind + ":" + .metadata.annotations["helm.sh/hook"]' <<<"${rendered}" | sort | paste -sd ' ' -)"
+  if [[ "${actual}" != "${expected}" ]]; then
+    echo "${chart}: migration hooks without --is-upgrade were '${actual}', expected '${expected}' ($*)" >&2
+    exit 1
+  fi
+}
+
 for chart in src/groundx helm; do
-  helm template schema-upgrade "${chart}" -f "${SEARCH_CREDENTIALS}" --is-upgrade \
-    -f src/groundx/values/minikube/values.yaml >/dev/null
+  expect_migration_job_limits "${chart}" "3600 2"
+  expect_migration_job_limits "${chart}" "7200 0" --set groundx.migration.activeDeadlineSeconds=7200 --set groundx.migration.backoffLimit=0
+  expect_migration_hooks "${chart}" "Job:pre-upgrade Secret:pre-upgrade" --set groundx.migration.gitOps=true
+  expect_migration_hooks "${chart}" ""
+  expect_helm_template_failure "${chart}" "at '/groundx/migration/activeDeadlineSeconds': minimum: got 0, want 1" --set groundx.migration.activeDeadlineSeconds=0
+  expect_helm_template_failure "${chart}" "at '/groundx/migration/backoffLimit': minimum: got -1, want 0" --set groundx.migration.backoffLimit=-1
 done
 
 git diff --check
