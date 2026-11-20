@@ -44,6 +44,10 @@
 {{- $wd := get $svcData "workingDir" -}}
 
 {{- $desired := get $rp "desired" -}}
+{{- $rsd := $rs | default dict -}}
+{{- $gpuReq := float64 (dig "requests" "nvidia.com/gpu" 0 $rsd) -}}
+{{- $gpuLim := float64 (dig "limits" "nvidia.com/gpu" 0 $rsd) -}}
+{{- $gpuRollout := or (gt $gpuReq 0.0) (gt $gpuLim 0.0) -}}
 
 ---
 apiVersion: apps/v1
@@ -58,6 +62,12 @@ spec:
 {{- if and $ud (ne $ud "") }}
   strategy:
     type: {{ $ud }}
+{{- else if $gpuRollout }}
+  progressDeadlineSeconds: {{ add (int (include "groundx.celeryWorker.gracePeriod" (dict "key" $entry "replicas" $rp))) 600 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
 {{- end }}
   selector:
     matchLabels:
