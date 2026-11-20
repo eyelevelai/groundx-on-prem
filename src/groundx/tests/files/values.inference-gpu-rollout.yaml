@@ -1,0 +1,23 @@
+layout:
+  inference:
+    replicas:
+      gracePeriod: 100
+    resources:
+      requests:
+        nvidia.com/gpu: "1"
+      limits:
+        nvidia.com/gpu: "1"
+ranker:
+  inference:
+    resources:
+      requests:
+        nvidia.com/gpu: "0"
+      limits: null
+summary:
+  inference:
+    updateStrategy: Recreate
+    resources:
+      requests:
+        nvidia.com/gpu: 1
+      limits:
+        nvidia.com/gpu: 1

@@ -184,10 +184,15 @@
       name: ranker-inference
       namespace: eyelevel
     spec:
+      progressDeadlineSeconds: 1500
       replicas: 1
       selector:
         matchLabels:
           app: ranker-inference
+      strategy:
+        rollingUpdate:
+          maxSurge: 0
+        type: RollingUpdate
       template:
         metadata:
           annotations:
