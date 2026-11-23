@@ -21,6 +21,11 @@ When `updateStrategy` is empty and a container of an inference Deployment asks f
 - **WHEN** `layout-inference` renders
 - **THEN** the strategy is `RollingUpdate` with `maxSurge` 0 and `progressDeadlineSeconds` is 700
 
+#### Scenario: GPU on one side only
+- **GIVEN** layout sets `nvidia.com/gpu` in `requests` only and ranker sets it in `limits` only
+- **WHEN** `layout-inference` and `ranker-inference` render
+- **THEN** both render `RollingUpdate` with `maxSurge` 0 and `progressDeadlineSeconds`
+
 ### Requirement: An explicit updateStrategy takes precedence
 When `updateStrategy` is set, the chart SHALL render only `strategy.type` with that value and neither `rollingUpdate` nor `progressDeadlineSeconds`, whatever the GPU request. Polarity: `skip unrelated repair path`.
 
