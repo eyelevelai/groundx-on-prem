@@ -134,7 +134,9 @@ the migration Job. Set `groundx.migration.gitOps: true` to render the migration
 Secret and Job in every render. As with `helm upgrade`, it renders them only
 when at least one Go workload is enabled. Argo CD runs Helm `pre-upgrade` hooks
 as PreSync hooks, so the Job runs before Argo CD updates any Deployment, on
-every sync, including the first.
+every full sync, including the first. Argo CD does not run hooks when you sync
+only selected resources, so the Job does not run and the new pods start before
+the database is migrated. Upgrade with a full sync.
 
 The database, its credentials, the service account and the image pull Secrets
 must exist before PreSync. Do not use `groundx.migration.gitOps` for a first
