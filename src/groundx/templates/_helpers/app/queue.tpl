@@ -112,9 +112,6 @@ true
 {{- if not (hasKey $in "cooldown") -}}
   {{- $_ := set $in "cooldown" (include "groundx.hpa.cooldown" .) -}}
 {{- end -}}
-{{- if not (hasKey $in "gracePeriod") -}}
-  {{- $_ := set $in "gracePeriod" 900 -}}
-{{- end -}}
 {{- if not (hasKey $in "hpa") -}}
   {{- $_ := set $in "hpa" $chp -}}
 {{- end -}}

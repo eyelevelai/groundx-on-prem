@@ -16,6 +16,9 @@
 {{- define "groundx.largeFileDeliver.replicas" -}}
 {{- $in := .Values.largeFileDeliver | default dict -}}
 desired: {{ dig "replicas" "desired" 1 $in }}
+{{- with dig "replicas" "gracePeriod" nil $in }}
+gracePeriod: {{ . }}
+{{- end }}
 {{- end }}
 
 {{- define "groundx.largeFileDeliver.settings" -}}
@@ -71,6 +74,7 @@ largeFileDelivery:
       credentialsFile: {{ printf "/var/run/groundx/large-file/%s/credentials.json" $ref }}
     {{- end }}
 largeFileDeliveryServer:
+  drainSeconds: {{ include "groundx.golang.drainSeconds" (dict "key" "largeFileDeliver" "replicas" (include "groundx.largeFileDeliver.replicas" . | fromYaml)) }}
   maxConcurrent: {{ $in.concurrency }}
   port: {{ include "groundx.largeFileDeliver.containerPort" . }}
   serviceName: {{ include "groundx.largeFileDeliver.serviceName" . }}
