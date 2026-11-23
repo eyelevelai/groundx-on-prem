@@ -154,24 +154,28 @@ stream:
 
 # Summary engines (optional). Leave unset to use the built-in summary model.
 #
-# inlineImages sends page images inside the summary request instead of as links.
-# The built-in model cannot open links to a private S3 bucket, so the chart turns this
-# on for the built-in engine when files are stored in S3.
-# - It works only while fileAccess is off and the database has no file-access policies.
-#   If fileAccess was ever on, use fileAccess instead: it already sends images this way.
-# - On an engine outside this cluster, true sends your page images to that engine.
-# - It needs a summary-client image that supports it.
+# inlineImages is off unless you set it to true on an engine.
+# When true, the summary client sends each page image inside the request instead of a link.
+# It reads the image with its own storage credentials, so the model needs no access to your bucket.
+# If the client cannot read a page image, the request fails and the document fails.
+# On an engine outside this cluster, true sends your page images to that engine.
+# It needs a summary client image that supports it.
 #
-# Setting engines replaces the built-in engine, so "default" must repeat its settings,
-# as below. To turn inlineImages off, set it to false there.
+# Setting engines replaces the built-in engine, so "default" must repeat its settings.
+# This example is the built-in engine with the chart defaults and inlineImages turned on.
+# maxRequests and requestLimit are twice the number of summary inference replicas you run
+# (the default is 2 replicas, so 4).
 #
 # engines:
 #   default:
 #     engineId: google/gemma-3-4b-it
-#     maxInputTokens: <as the chart derives it>
-#     maxRequests: <twice the desired inference replicas>
-#     requestLimit: <twice the desired inference replicas>
-#     inlineImages: false
+#     dataType: bfloat16
+#     maxInputTokens: 100000
+#     maxOutputTokens: 4096
+#     maxRequests: 4
+#     requestLimit: 4
+#     vision: true
+#     inlineImages: true
 
 summary:
   api:
