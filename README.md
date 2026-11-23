@@ -515,7 +515,7 @@ If you wish to use an existing OpenSearch cluster, you must configure the `searc
 
 #### Deploying a Dedicated OpenSearch Cluster
 
-OpenSearch runs on certificates and an admin password that you create. Follow [OpenSearch setup](docs/upgrades.md#installing-opensearch) to create the `opensearch-tls` and `opensearch-internal-users` Secrets (the admin certificate is `CN=gx-opensearch-admin`) and to add your OpenSearch CA to the `fileAccess.caSecretName` CA bundle. Give GroundX the same admin password as `search.privilegedPassword` or `SEARCH_INIT_PASSWORD`. Then install OpenSearch:
+OpenSearch runs on certificates and an admin password that you create. Follow [OpenSearch setup](docs/upgrades.md#installing-opensearch) to create the `opensearch-tls` and `opensearch-internal-users` Secrets (the admin certificate is `CN=gx-opensearch-admin`). Give GroundX the same admin password as `search.privilegedPassword` or `SEARCH_INIT_PASSWORD`. Then install OpenSearch:
 
 ```bash
 helm repo add opensearch https://opensearch-project.github.io/helm-charts/
@@ -586,7 +586,6 @@ Edit `values.yaml` with your settings before installing. Replace all placeholder
 | `file.bucketName`, `file.customDomain` | Object-store bucket and stable file-delivery hostname. The hostname must match `fileAccess.publicUrl`. |
 | `fileAccess` | File-delivery and storage URLs, storage credentials, HTTPS certificates and ingress settings. Follow the file-access steps below. |
 | `search.password`, `search.privilegedPassword` | Application and administrator passwords matching OpenSearch. Neither is required for `mode: ingest`. |
-| `fileAccess.caSecretName` | Required when the chart deploys OpenSearch: a CA bundle Secret holding the public root CAs, your OpenSearch CA and any private storage CA. See [OpenSearch setup](docs/upgrades.md#installing-opensearch). |
 
 Authentication uses API keys by default, without password login. See [identity modes](docs/on-prem-identity.md) to configure local password login or Amazon Cognito.
 

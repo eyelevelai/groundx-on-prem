@@ -4,8 +4,6 @@ chart:
   version: 0.1.0
 
 set:
-  fileAccess:
-    caSecretName: fixture-ca-bundle
   search:
     password: fixture-app-credential
     privilegedPassword: fixture-admin-credential
@@ -62,9 +60,6 @@ tests:
   - it: "database migration blocks upgrades before new Go workloads"
     templates:
       - ../templates/app/schema-migration.yaml
-    set:
-      fileAccess.caSecretName: ""
-      search.existing.url: https://search.test.invalid:9200
     release:
       name: upgrade-test
       upgrade: true
@@ -153,8 +148,6 @@ tests:
       cluster.secrets: [database-credentials]
       cluster.imagePullSecrets: [private-images]
       imageType: chainguard
-      fileAccess.caSecretName: ""
-      search.existing.url: https://search.test.invalid:9200
     release:
       upgrade: true
     documentSelector:
@@ -551,7 +544,6 @@ tests:
     values:
       - ./files/values.large-file.yaml
     set:
-      fileAccess.caSecretName: ""
       search.existing.url: https://search.test.invalid:9200
     documentSelector:
       path: metadata.name

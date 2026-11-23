@@ -53,8 +53,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -87,9 +85,6 @@
               securityContext:
                 allowPrivilegeEscalation: false
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -132,12 +127,6 @@
               operator: Equal
               value: workspace
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -228,8 +217,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -263,9 +250,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -307,12 +291,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -373,8 +351,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -412,9 +388,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -459,12 +432,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -524,8 +491,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -559,9 +524,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -603,12 +565,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -668,8 +624,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -703,9 +657,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -747,12 +698,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -812,8 +757,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -847,9 +790,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -891,12 +831,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -1258,8 +1192,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-github-secret
@@ -1302,9 +1234,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -1346,12 +1275,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -1442,8 +1365,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-github-secret
@@ -1479,9 +1400,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -1523,12 +1441,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -1588,8 +1500,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-github-secret
@@ -1625,9 +1535,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -1669,12 +1576,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -1734,8 +1635,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-github-secret
@@ -1771,9 +1670,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -1815,12 +1711,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -1880,8 +1770,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-github-secret
@@ -1917,9 +1805,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -1961,12 +1846,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -2026,8 +1905,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-github-secret
@@ -2063,9 +1940,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -2107,12 +1981,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -2201,8 +2069,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -2243,9 +2109,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -2290,12 +2153,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -2392,8 +2249,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -2427,9 +2282,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -2474,12 +2326,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -2545,8 +2391,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -2580,9 +2424,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -2627,12 +2468,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -2698,8 +2533,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -2733,9 +2566,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -2780,12 +2610,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -2851,8 +2675,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -2886,9 +2708,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -2933,12 +2752,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -3004,8 +2817,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -3039,9 +2850,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -3086,12 +2894,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -3226,8 +3028,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -3268,9 +3068,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -3315,12 +3112,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -3417,8 +3208,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -3452,9 +3241,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -3499,12 +3285,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -3570,8 +3350,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -3605,9 +3383,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -3652,12 +3427,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -3723,8 +3492,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -3758,9 +3525,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -3805,12 +3569,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -3876,8 +3634,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -3911,9 +3667,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -3958,12 +3711,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -4029,8 +3776,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -4064,9 +3809,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -4111,12 +3853,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -4570,8 +4306,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -4612,9 +4346,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -4656,12 +4387,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -4752,8 +4477,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -4787,9 +4510,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -4831,12 +4551,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -4896,8 +4610,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -4931,9 +4643,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -4975,12 +4684,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -5040,8 +4743,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -5075,9 +4776,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -5119,12 +4817,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -5184,8 +4876,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -5219,9 +4909,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -5263,12 +4950,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map
@@ -5328,8 +5009,6 @@
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                - name: SSL_CERT_FILE
-                  value: /var/run/groundx/file-access/ca.crt
               envFrom:
                 - secretRef:
                     name: workspace-secret
@@ -5363,9 +5042,6 @@
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /var/run/groundx/file-access
-                  name: file-access-ca
-                  readOnly: true
                 - mountPath: /app/config.py
                   name: config-volume
                   subPath: config.py
@@ -5407,12 +5083,6 @@
               key: eyelevel_node
               value: eyelevel-cpu-only
           volumes:
-            - name: file-access-ca
-              secret:
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-                secretName: fixture-ca-bundle
             - name: config-volume
               secret:
                 secretName: workspace-config-py-map

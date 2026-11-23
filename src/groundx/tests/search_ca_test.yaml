@@ -1,30 +1,47 @@
-suite: "an optional search CA overrides the fileAccess CA bundle for OpenSearch"
+suite: "GroundX trusts the in-cluster OpenSearch through opensearch-tls"
 chart:
   appVersion: 0.1.0
   version: 0.1.0
 
 set:
-  fileAccess:
-    caSecretName: fixture-ca-bundle
+  search:
+    password: fixture-app-credential
+    privilegedPassword: fixture-admin-credential
 
 tests:
-  - it: renders caFile in the search block when a search CA secret is set
+  - it: renders caFile in the search block for the in-cluster OpenSearch
     templates:
       - ../templates/resources/config-yaml.yaml
-    set:
-      search.password: fixture-app-credential
-      search.privilegedPassword: fixture-admin-credential
-      search.caSecretName: fixture-search-ca
     asserts:
       - matchRegex:
           path: stringData["config.yaml"]
           pattern: 'search:\n\s+baseURL: [^\n]+\n\s+caFile: /var/run/groundx/search-ca/ca\.crt\n'
-  - it: mounts the search CA read-only into groundx
+  - it: mounts only ca.crt from opensearch-tls read-only into groundx
+    templates:
+      - ../templates/app/golang.yaml
+    documentSelector:
+      path: spec.template.metadata.labels.app
+      value: groundx
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: search-ca
+            secret:
+              secretName: opensearch-tls
+              items:
+                - key: ca.crt
+                  path: ca.crt
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: search-ca
+            mountPath: /var/run/groundx/search-ca
+            readOnly: true
+  - it: uses search.caSecretName instead of opensearch-tls when it is set
     templates:
       - ../templates/app/golang.yaml
     set:
-      search.password: fixture-app-credential
-      search.privilegedPassword: fixture-admin-credential
       search.caSecretName: fixture-search-ca
     documentSelector:
       path: spec.template.metadata.labels.app
@@ -39,47 +56,20 @@ tests:
               items:
                 - key: ca.crt
                   path: ca.crt
-      - contains:
-          path: spec.template.spec.containers[0].volumeMounts
-          content:
-            name: search-ca
-            mountPath: /var/run/groundx/search-ca
-            readOnly: true
-  - it: mounts no search CA volume or volume mount when none is set
+  - it: mounts no search CA and renders no caFile for an existing OpenSearch
     templates:
       - ../templates/app/golang.yaml
+      - ../templates/resources/config-yaml.yaml
     set:
-      search.password: fixture-app-credential
-      search.privilegedPassword: fixture-admin-credential
       search.existing.url: https://search.test.invalid:9200
     asserts:
       - notExists:
           path: 'spec.template.spec.volumes[?(@.name == "search-ca")]'
+        template: ../templates/app/golang.yaml
         documentSelector:
           path: spec.template.metadata.labels.app
           value: groundx
-      - notExists:
-          path: 'spec.template.spec.containers[0].volumeMounts[?(@.name == "search-ca")]'
-        documentSelector:
-          path: spec.template.metadata.labels.app
-          value: groundx
-      - notExists:
-          path: 'spec.template.spec.volumes[?(@.name == "search-ca")]'
-        documentSelector:
-          path: spec.template.metadata.labels.app
-          value: process
-      - notExists:
-          path: 'spec.template.spec.containers[0].volumeMounts[?(@.name == "search-ca")]'
-        documentSelector:
-          path: spec.template.metadata.labels.app
-          value: process
-      - notExists:
-          path: 'spec.template.spec.volumes[?(@.name == "search-ca")]'
-        documentSelector:
-          path: spec.template.metadata.labels.app
-          value: queue
-      - notExists:
-          path: 'spec.template.spec.containers[0].volumeMounts[?(@.name == "search-ca")]'
-        documentSelector:
-          path: spec.template.metadata.labels.app
-          value: queue
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'caFile:'
+        template: ../templates/resources/config-yaml.yaml
