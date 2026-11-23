@@ -453,6 +453,49 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "engines/default/inlineImages.*got string, want boolean"
+  - it: "inlineImages string on a named engine renders no key and leaves the default engine unchanged"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.inline-images-openai.yaml
+    set:
+      engines.default.inlineImages: true
+      engines.other.engineId: other-model
+      engines.other.service: openai
+      engines.other.apiKey: other-api-key
+      engines.other.inlineImages: "yes"
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "engineID: \"other-model\"\n\\s+service: openai\n\\s+apiKey: other-api-key\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "engineID: \"gpt-5.4-mini\"\n\\s+service: openai\n\\s+apiKey: test-api-key\n\\s+inlineImages: true\n"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "engineID: \"other-model\"(\n {4}[^\n]*)*\n {4}inlineImages"
+  - it: "inlineImages true on a named engine renders its own key and not the default engine's"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.inline-images-openai.yaml
+    set:
+      engines.other.engineId: other-model
+      engines.other.service: openai
+      engines.other.apiKey: other-api-key
+      engines.other.inlineImages: true
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "engineID: \"gpt-5.4-mini\"\n\\s+service: openai\n\\s+apiKey: test-api-key\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "engineID: \"other-model\"\n\\s+service: openai\n\\s+apiKey: other-api-key\n\\s+inlineImages: true\n"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "engineID: \"gpt-5.4-mini\"(\n {4}[^\n]*)*\n {4}inlineImages"
   - it: "layout OCR timeout override renders unquoted in layout config.py"
     templates:
       - ../templates/resources/layout-config-py.yaml
