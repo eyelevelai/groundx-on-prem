@@ -187,6 +187,8 @@ When a layout, ranker or summary inference pod requests a GPU and `updateStrateg
 
 An upgrade that changes the inference pod (a new image, or a values change that alters its config) has an outage for that service when it runs one replica, the default for layout and ranker. It lasts from the old pod draining, up to its `replicas.gracePeriod`, until the new pod has loaded its model and is ready. With more replicas, Kubernetes replaces a share of the pods at a time, at least one, and the others keep serving.
 
+If the new pod never becomes ready, a one-replica service has no running pod until you fix the cause or run `helm rollback`. Helm 3 does not catch this for you: with one replica and `maxSurge: 0`, `helm upgrade --atomic`, and the `--wait` it turns on, report success while no pod is ready (seen on Helm 3.19.0), so check with `kubectl rollout status`. `--atomic` does roll back when the service sets `updateStrategy: Recreate`. Helm 4's `--rollback-on-failure` waits for the pod and rolls back when `--timeout` passes (seen on Helm 4.2.3), so set `--timeout` longer than the drain plus the start-up.
+
 The chart also sets `progressDeadlineSeconds` to the grace period plus 600 seconds. The deadline counts from the last progress the rollout made. With one replica that is the start of the rollout, so it covers the drain and the start-up together. If both together take longer, `kubectl rollout status` reports a failure even though the rollout can still finish.
 
 Check that an upgrade finished with `kubectl rollout status deployment/<name> -n <namespace>`, for example `layout-inference`.
