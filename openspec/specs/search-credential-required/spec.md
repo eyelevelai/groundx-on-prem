@@ -125,7 +125,7 @@ Every CI, gate, and declared render command that renders a non-ingest configurat
 
 #### Scenario: Gate and declared commands use the fixture (polarity: reject before state)
 - **WHEN** `.build/bin/validate-helm.sh` runs on the changed chart
-- **THEN** it passes, and the workflow, `service.yaml`, `openspec/config.yaml` and `AGENTS.md` render commands reference the fixture
+- **THEN** it passes, and the workflow, `service.yaml`, `openspec/config.yaml` and `docs/agents/repository-guide.md` render commands reference the fixture
 
 #### Scenario: A render without the fixture succeeds and carries no search password (polarity: accept and enqueue)
 - **WHEN** a non-ingest render is attempted without search passwords

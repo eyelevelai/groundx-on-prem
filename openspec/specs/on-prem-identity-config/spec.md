@@ -68,13 +68,14 @@ Every change to `templates/_helpers/main.tpl`, `templates/resources/config-yaml.
 
 ### Requirement: The `cognito` object is documented in `values.schema.json` and `sample.values.yaml`
 
-`values.schema.json` SHALL declare a `cognito` object (`mode`, `clientId`, `clientSecret`, `poolId`, `region`, all `type: string`, `additionalProperties: false`) matching the existing `admin` block's shape, and `sample.values.yaml` SHALL document all five keys with a comment noting the `apiKeyOnly` default (no chart change required to stay on it) — without removing or otherwise touching the existing `admin.password` key, which GX-20 leaves as-is by assignee decision.
+`values.schema.json` SHALL declare a `cognito` object (`mode`, `clientId`, `clientSecret`, `poolId`, `region`, all `type: string`, `additionalProperties: false`). The minimal `sample.values.yaml` SHALL explain the `apiKeyOnly` default and link `docs/on-prem-identity.md` for local password login and Cognito configuration instead of embedding provider-specific settings or an unused administrator password.
 
-#### Scenario: `sample.values.yaml` documents every `cognito` key and the `apiKeyOnly` default (polarity: finalize success)
+#### Scenario: Minimal starter identifies authentication behavior (polarity: finalize success)
 
 - **GIVEN** this change is applied
 - **WHEN** `sample.values.yaml` is inspected
-- **THEN** it contains a `cognito:` section documenting `mode`, `clientId`, `clientSecret`, `poolId`, and `region`, a comment stating that omitting this section keeps the install on `apiKeyOnly`, and the pre-existing `admin:` block (including `admin.password`) is present and unchanged
+- **THEN** it explains that the default uses API keys without password login and links `docs/on-prem-identity.md`
+- **AND** it retains `admin.apiKey`, `admin.username` and `admin.email` without a `cognito` block or `admin.password`.
 
 ### Requirement: The on-prem identity story is documented in `docs/`
 

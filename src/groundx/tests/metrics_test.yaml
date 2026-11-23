@@ -202,3 +202,97 @@ tests:
         documentSelector:
           path: kind
           value: StatefulSet
+  - it: "metrics.replicas.gracePeriod changes metrics only"
+    templates:
+      - ../templates/app/metrics.yaml
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      metrics.replicas.desired: 1
+      metrics.replicas.gracePeriod: 90
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 90
+        template: ../templates/app/metrics.yaml
+        documentSelector:
+          path: kind
+          value: Deployment
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "metricsServer:\n  baseURL: .*\n  drainSeconds: 60\n"
+        template: ../templates/resources/config-yaml.yaml
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "groundxServer:\n  baseURL: .*\n  drainSeconds: 120\n"
+        template: ../templates/resources/config-yaml.yaml
+  - it: "metrics gracePeriod of zero is rejected before anything renders"
+    templates:
+      - ../templates/app/metrics.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      metrics.replicas.desired: 1
+      metrics.replicas.gracePeriod: 0
+    asserts:
+      - failedTemplate:
+          errorPattern: "metrics/replicas/gracePeriod.*minimum: got 0, want 1"
+  - it: "metrics grace override defaults an omitted replica count to one"
+    templates:
+      - ../templates/app/metrics.yaml
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      metrics.replicas.desired: null
+      metrics.replicas.gracePeriod: 90
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 1
+        template: ../templates/app/metrics.yaml
+        documentSelector:
+          path: kind
+          value: Deployment
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 90
+        template: ../templates/app/metrics.yaml
+        documentSelector:
+          path: kind
+          value: Deployment
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "metricsServer:\n  baseURL: .*\n  drainSeconds: 60\n"
+        template: ../templates/resources/config-yaml.yaml
+  - it: "metrics grace override preserves zero replicas"
+    templates:
+      - ../templates/app/metrics.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      metrics.replicas.desired: 0
+      metrics.replicas.gracePeriod: 90
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 0
+  - it: "metrics grace override preserves three replicas"
+    templates:
+      - ../templates/app/metrics.yaml
+    values:
+      - ../values/minikube/values.yaml
+    set:
+      metrics.replicas.desired: 3
+      metrics.replicas.gracePeriod: 90
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 3

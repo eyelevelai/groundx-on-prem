@@ -96,6 +96,7 @@ fileAccess:
   storageEndpoint: ""
   signingEndpoint: ""
   storageCredentialsSecretName: ""
+  linkSigningKeySecretName: ""
   caSecretName: ""
   tlsSecretName: ""
   policyCacheTtlSeconds: 600
@@ -115,6 +116,9 @@ metrics:
   enabled: false
   disruptionBudget:
     enabled: false
+
+  replicas:
+    desired: 1
 
   resources:
     requests:
@@ -400,10 +404,16 @@ postProcess:
   disruptionBudget:
     enabled: false
 
+  replicas:
+    desired: 1
+
 largeFileDeliver:
   enabled: false
   disruptionBudget:
     enabled: false
+
+  replicas:
+    desired: 1
 
 queue:
   enabled: true

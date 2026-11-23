@@ -2,17 +2,27 @@ name: helm
 
 on:
     push:
-        branches: ["**"]
+        branches: ["main", "[0-9]+.[0-9]+.[0-9]+"]
     pull_request:
+        types: [opened, reopened, synchronize, ready_for_review]
     release:
         types: [published, created]
     workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.event_name == 'push' && github.ref || github.run_id }}
+    cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
 
 jobs:
     helm-unittest:
         runs-on: ubuntu-latest
 
         steps:
+            - name: Require a pull request ready for review
+              if: github.event_name == 'pull_request' && github.event.pull_request.draft
+              run: |
+                echo "::error::Mark the pull request ready for review to run required checks."
+                exit 1
             - name: Checkout
               uses: actions/checkout@v4
 
@@ -55,16 +65,10 @@ jobs:
                   yq --version
 
             - name: Run Helm production gate
-              run: .build/bin/validate-helm.sh --junit
-
-            - name: Upload test report
-              uses: actions/upload-artifact@v4
-              with:
-                  name: helm-unittest-report
-                  path: reports/helm-unittest.xml
+              run: .build/bin/validate-helm.sh
 
     live-strimzi-kind:
-      if: github.event_name == 'pull_request' || github.event_name == 'release'
+      if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
       runs-on: ubuntu-latest
       timeout-minutes: 20
 
@@ -170,7 +174,7 @@ jobs:
             kubectl describe kafkatopic.kafka.strimzi.io -n "${KIND_NAMESPACE}"
 
     strimzi-migration-kind:
-      if: github.event_name == 'pull_request' || github.event_name == 'release'
+      if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
       runs-on: ubuntu-latest
       timeout-minutes: 30
 
@@ -502,3 +506,14 @@ jobs:
             kubectl get jobs -n "${KIND_NAMESPACE}"
             kubectl logs job/strimzi-v1-api-conversion-convert -n "${KIND_NAMESPACE}" --tail=200 || true
             kubectl logs job/strimzi-v1-api-conversion-crdupgrade -n "${KIND_NAMESPACE}" --tail=200 || true
+
+    on-prem-pr-checks:
+      name: ${{ github.event_name == 'pull_request' && 'On-Prem PR checks' || 'On-Prem PR checks (not applicable)' }}
+      if: always() && github.event_name == 'pull_request'
+      needs: [helm-unittest]
+      runs-on: ubuntu-latest
+      steps:
+        - name: Require all PR checks to pass
+          env:
+            HELM: ${{ needs.helm-unittest.result }}
+          run: test "$HELM" = success

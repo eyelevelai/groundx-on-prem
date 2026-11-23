@@ -4,7 +4,7 @@
 TBD - created by archiving change gx-66-terminating-layout-workers-can-delay-page-work-for-an-hour. Update Purpose after archive.
 ## Requirements
 ### Requirement: Layout workers receive SIGTERM through exec supervisord
-The chart SHALL render the container command of the five layout Celery workers (`layout-correct`, `layout-map`, `layout-ocr`, `layout-process`, `layout-save`) as `export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf`. The chart SHALL render `layout-inference` with a final init container named `init-layout` that runs `python /app/init-layout.py` from the `layout-inference` image, and SHALL render the `layout-inference` main container command as `/bin/sh -c "export PYTHONPATH=/app:$PYTHONPATH && exec supervisord -c /app/supervisord.conf"` with no init step in front of it, so `supervisord` is PID 1 from container start. The `init-layout` command SHALL be `/bin/sh -c "export PYTHONPATH=/app:$PYTHONPATH && exec python /app/init-layout.py"`. The chart SHALL NOT set an env `PYTHONPATH`, so an image-provided `PYTHONPATH` is preserved. The `init-layout` container SHALL carry the main container's `workingDir`, `resources` (including `nvidia.com/gpu`, or none in cpu mode), `envFrom` secrets, security context, CA environment and CA mount, and the `config-models`, `config-volume` and `model-volume` mounts. Extract workers SHALL keep the command they render today. The startup commands of `ranker-inference`, `summary-inference` and the workspace workers are specified by the `worker-graceful-shutdown` capability.
+The chart SHALL render the container command of the five layout Celery workers (`layout-correct`, `layout-map`, `layout-ocr`, `layout-process`, `layout-save`) as `export PYTHONPATH=/app && exec supervisord -c /app/supervisord.conf`. The chart SHALL render `layout-inference` with a final init container named `init-layout` that runs `python /app/init-layout.py` from the `layout-inference` image, and SHALL render the `layout-inference` main container command as `/bin/sh -c "export PYTHONPATH=/app:$PYTHONPATH && exec supervisord -c /app/supervisord.conf"` with no init step in front of it, so `supervisord` is PID 1 from container start. The `init-layout` command SHALL be `/bin/sh -c "export PYTHONPATH=/app:$PYTHONPATH && exec python /app/init-layout.py"`. The chart SHALL NOT set an env `PYTHONPATH`, so an image-provided `PYTHONPATH` is preserved. The `init-layout` container SHALL carry the main container's `workingDir`, `resources` (including `nvidia.com/gpu`, or none in cpu mode), `envFrom` secrets, security context, CA environment and CA mount, and the `config-models`, `config-volume` and `model-volume` mounts. The layout worker and `layout-inference` commands, Supervisor stop wait and the `init-layout` init container SHALL be rendered through the shared Celery worker helper specified by the `worker-graceful-shutdown` capability, with a render byte-identical to the previous chart. Extract workers SHALL keep the command they render today. The startup commands of `ranker-inference`, `summary-inference` and the workspace workers are specified by the `worker-graceful-shutdown` capability.
 
 #### Scenario: Layout Celery workers replace the shell (polarity: finalize success)
 - **WHEN** the chart is rendered with default values
@@ -50,8 +50,13 @@ The chart SHALL render the container command of the five layout Celery workers (
 - **WHEN** a `layout-inference` pod from the chart's rendered output is deleted after `supervisord` has started
 - **THEN** `supervisord` receives SIGTERM as PID 1 and the real Celery worker stops through warm shutdown within the rendered grace period
 
+#### Scenario: Layout renders are unchanged by the shared helper (polarity: finalize success; must not block)
+- **WHEN** the chart is rendered with default values, `imageType: chainguard`, and two workers per layout family
+- **THEN** each layout worker Deployment and `layout-inference`, including its `init-layout` init container, and each layout Supervisor config is byte-identical to the previous chart
+- **AND** the existing `inference_test.yaml` cases pass unchanged
+
 ### Requirement: Layout worker pods default to a 900-second grace period
-The chart SHALL render `terminationGracePeriodSeconds: 900` on the five layout Celery worker Deployments and on `layout-inference` when no grace period is set, and SHALL render the value of `layout.<service>.replicas.gracePeriod` on the Deployment of that service when it is set. The grace period of `ranker-inference`, `summary-inference` and the workspace workers is specified by the `worker-graceful-shutdown` capability.
+The chart SHALL render `terminationGracePeriodSeconds: 900` on the five layout Celery worker Deployments and on `layout-inference` when no grace period is set, and SHALL render the value of `layout.<service>.replicas.gracePeriod` on the Deployment of that service when it is set. The 900-second default SHALL be defined once in the shared Celery worker helper, not per workload template. The grace period of `ranker-inference`, `summary-inference` and the workspace workers is specified by the `worker-graceful-shutdown` capability.
 
 #### Scenario: Default grace period (polarity: finalize success)
 - **WHEN** the chart is rendered with default values
@@ -126,3 +131,4 @@ Values files that do not set `gracePeriod` SHALL keep validating. The only rende
 #### Scenario: Helm mirror stays identical (polarity: finalize success)
 - **WHEN** the changed templates under `src/groundx/templates` are compared with `helm/templates`
 - **THEN** they are byte-identical
+

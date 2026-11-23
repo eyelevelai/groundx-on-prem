@@ -5,8 +5,7 @@
 {{- $svc := include "groundx.summary.serviceName" . -}}
 {{- $workers := int (include "groundx.summary.inference.workers" .) -}}
 {{- $replicas := include "groundx.summary.inference.replicas" . | fromYaml | default dict -}}
-{{- $gracePeriod := int (dig "gracePeriod" 300 $replicas) -}}
-{{- $stopWaitSecs := int (max 1 (sub $gracePeriod 30)) -}}
+{{- $stopWaitSecs := include "groundx.celeryWorker.stopWaitSecs" (dict "key" "summary.inference" "replicas" $replicas) -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -36,8 +35,7 @@ data:
     stderr_logfile_maxbytes=0
     {{- end }}
 
-    [group:celery_workers]
-    programs={{ range $i, $_ := until $workers }}{{ if $i }},{{ end }}celery_worker_{{ add $i 1 }}{{ end }}
+    {{ include "groundx.celeryWorker.group" $workers }}
 
     [program:celery_monitor]
     command=python /workspace/summary_monitor.py

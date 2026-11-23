@@ -554,6 +554,40 @@ tests:
             secretRef:
               name: extract-agent-secret
 
+  - it: "extract Anthropic values key renders the agent Secret last with shared Secrets before and after it"
+    templates:
+      - ../templates/app/celery.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      cluster.secrets:
+        - eyelevel-secret-credentials
+        - aaa-conflict
+        - zzz-conflict
+      engines.default.apiKey: summary-provider-key
+      engines.default.baseUrl: https://api.anthropic.test/v1
+      engines.default.engineId: claude-sonnet-4-20250514
+      engines.default.service: anthropic
+      extract.enabled: true
+      extract.agent.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: extract-agent
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].envFrom
+          value:
+            - secretRef:
+                name: aaa-conflict
+            - secretRef:
+                name: extract-save-secret
+            - secretRef:
+                name: eyelevel-secret-credentials
+            - secretRef:
+                name: zzz-conflict
+            - secretRef:
+                name: extract-agent-secret
+
   - it: "extraction inherits summary existing defaults"
     templates:
       - ../templates/resources/extract-config-py.yaml

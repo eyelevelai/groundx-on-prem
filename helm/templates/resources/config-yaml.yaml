@@ -1,6 +1,7 @@
 {{- $svcs := (include "groundx.golang.services" . | fromYaml) -}}
 {{- $engs := (include "groundx.engines" . | fromYaml) -}}
 {{- $pres := include "groundx.preProcessors" . | fromYaml -}}
+{{- $procs := include "groundx.processors" . | fromYaml -}}
 {{- $fs := (include "groundx.file.settings" . | fromYaml) -}}
 {{- $ppq := (include "groundx.stream.topic.preProcess" . | fromYaml) -}}
 {{- $pq := (include "groundx.stream.topic.process" . | fromYaml) -}}
@@ -236,6 +237,7 @@ stringData:
 
     groundxServer:
       baseURL: {{ include "groundx.groundx.serviceUrl" . }}
+      drainSeconds: {{ include "groundx.golang.drainSeconds" (dict "key" "groundx" "replicas" (include "groundx.groundx.replicas" . | fromYaml)) }}
       port: {{ include "groundx.groundx.containerPort" . }}
       serviceName: {{ include "groundx.groundx.serviceName" . }}
 
@@ -281,6 +283,7 @@ stringData:
 
     layoutWebhookServer:
       baseURL: {{ include "groundx.layoutWebhook.serviceUrl" . }}
+      drainSeconds: {{ include "groundx.golang.drainSeconds" (dict "key" "layoutWebhook" "replicas" (include "groundx.layoutWebhook.replicas" . | fromYaml)) }}
       port: {{ include "groundx.layoutWebhook.containerPort" . }}
       serviceName: {{ include "groundx.layoutWebhook.serviceName" . }}
 
@@ -571,6 +574,7 @@ stringData:
 
     metricsServer:
       baseURL: {{ include "groundx.metrics.serviceUrl" . }}
+      drainSeconds: {{ include "groundx.golang.drainSeconds" (dict "key" "metrics" "replicas" (include "groundx.metrics.replicas" . | fromYaml)) }}
       port: {{ include "groundx.metrics.containerPort" . }}
       serviceName: {{ include "groundx.metrics.serviceName" . }}
       sslCACert: /etc/ssl/tls/ca.crt
@@ -589,53 +593,36 @@ stringData:
 
     preProcessFileServer:
       baseURL: {{ include "groundx.preProcess.serviceUrl" . }}
-      {{- $ppRep := (include "groundx.preProcess.replicas" . | fromYaml) }}
-      {{- if hasKey $ppRep "gracePeriod" }}
-      drainSeconds: {{ int (max 1 (sub (int (get $ppRep "gracePeriod")) 30)) }}
-      {{- end }}
+      drainSeconds: {{ include "groundx.golang.drainSeconds" (dict "key" "preProcess" "replicas" (include "groundx.preProcess.replicas" . | fromYaml)) }}
       maxConcurrent: {{ include "groundx.preProcess.queueSize" . }}
       port: {{ include "groundx.preProcess.containerPort" . }}
       serviceName: {{ include "groundx.preProcess.serviceName" . }}
 
     processFileServer:
       baseURL: {{ include "groundx.process.serviceUrl" . }}
-      {{- $pRep := (include "groundx.process.replicas" . | fromYaml) }}
-      {{- if hasKey $pRep "gracePeriod" }}
-      drainSeconds: {{ int (max 1 (sub (int (get $pRep "gracePeriod")) 30)) }}
-      {{- end }}
+      drainSeconds: {{ include "groundx.golang.drainSeconds" (dict "key" "process" "replicas" (include "groundx.process.replicas" . | fromYaml)) }}
       maxConcurrent: {{ include "groundx.process.queueSize" . }}
       port: {{ include "groundx.process.containerPort" . }}
       serviceName: {{ include "groundx.process.serviceName" . }}
 
     processors:
-      convert: [11]
-      extract: [13]
-      layout: [3]
-      map: [4]
-      saveFile: [2]
-      skipConvert: [12]
-      skipGenerate: [1]
-      skipLayout: [5]
-      skipMap: [6]
-      skipSummarize: [7]
-      summarize: [8]
-      summarizeChunks: [10]
-      summarizeSections: [9]
+      {{- range $k, $v := $procs }}
+      {{ $k }}: [{{ range $i, $id := $v }}{{ if $i }}, {{ end }}{{ int $id }}{{ end }}]
+      {{- end }}
       {{- if $pres -}}
       {{ toYaml $pres | nindent 6 }}
       {{- end -}}
       {{- if eq (include "groundx.ingestOnly" .) "true" }}
       extraPostDefaults:
-        - processorID: 1
+        {{- range (get $procs "skipGenerate") }}
+        - processorID: {{ int . }}
           type: skip-generate
+        {{- end }}
       {{- end }}
 
     queueFileServer:
       baseURL: {{ include "groundx.queue.serviceUrl" . }}
-      {{- $qRep := (include "groundx.queue.replicas" . | fromYaml) }}
-      {{- if hasKey $qRep "gracePeriod" }}
-      drainSeconds: {{ int (max 1 (sub (int (get $qRep "gracePeriod")) 30)) }}
-      {{- end }}
+      drainSeconds: {{ include "groundx.golang.drainSeconds" (dict "key" "queue" "replicas" (include "groundx.queue.replicas" . | fromYaml)) }}
       maxConcurrent: {{ include "groundx.queue.queueSize" . }}
       pollTime: 1
       port: {{ include "groundx.queue.containerPort" . }}
@@ -692,15 +679,12 @@ stringData:
 
     summaryServer:
       baseURL: {{ include "groundx.summaryClient.serviceUrl" . }}
-      {{- $scRep := (include "groundx.summaryClient.replicas" . | fromYaml) }}
-      {{- if hasKey $scRep "gracePeriod" }}
-      drainSeconds: {{ int (max 1 (sub (int (get $scRep "gracePeriod")) 30)) }}
-      {{- end }}
+      drainSeconds: {{ include "groundx.golang.drainSeconds" (dict "key" "summaryClient" "replicas" (include "groundx.summaryClient.replicas" . | fromYaml)) }}
       maxConcurrent: {{ include "groundx.summaryClient.queueSize" . }}
       port: {{ include "groundx.summaryClient.containerPort" . }}
       serviceName: {{ include "groundx.summaryClient.serviceName" . }}
 
-    {{- if eq (include "groundx.fileAccess.create" .) "true" }}
+    {{- if or (eq (include "groundx.fileAccess.create" .) "true") .Values.fileAccess.trustedOrigins }}
 {{ include "groundx.fileAccess.config" . | indent 4 }}
     {{- end }}
 
@@ -737,10 +721,7 @@ stringData:
 
     uploadFileServer:
       baseURL: {{ include "groundx.upload.serviceUrl" . }}
-      {{- $upRep := (include "groundx.upload.replicas" . | fromYaml) }}
-      {{- if hasKey $upRep "gracePeriod" }}
-      drainSeconds: {{ int (max 1 (sub (int (get $upRep "gracePeriod")) 30)) }}
-      {{- end }}
+      drainSeconds: {{ include "groundx.golang.drainSeconds" (dict "key" "upload" "replicas" (include "groundx.upload.replicas" . | fromYaml)) }}
       maxConcurrent: {{ include "groundx.upload.queueSize" . }}
       port: {{ include "groundx.upload.containerPort" . }}
       serviceName: {{ include "groundx.upload.serviceName" . }}

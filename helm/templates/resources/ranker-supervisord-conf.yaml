@@ -5,8 +5,7 @@
 {{- $svc := include "groundx.ranker.serviceName" . -}}
 {{- $workers := int (include "groundx.ranker.inference.workers" .) -}}
 {{- $replicas := include "groundx.ranker.inference.replicas" . | fromYaml | default dict -}}
-{{- $gracePeriod := int (dig "gracePeriod" 900 $replicas) -}}
-{{- $stopWaitSecs := int (max 1 (sub $gracePeriod 30)) -}}
+{{- $stopWaitSecs := include "groundx.celeryWorker.stopWaitSecs" (dict "key" "ranker.inference" "replicas" $replicas) -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -37,8 +36,7 @@ data:
     stderr_logfile_maxbytes=0
     {{ end }}
 
-    [group:celery_workers]
-    programs={{ range $i, $_ := until $workers }}{{ if $i }},{{ end }}celery_worker_{{ add $i 1 }}{{ end }}
+    {{ include "groundx.celeryWorker.group" $workers }}
 
     [program:celery_monitor]
     command=python /workspace/ranker_monitor.py

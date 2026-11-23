@@ -9,6 +9,54 @@ set:
     privilegedPassword: fixture-admin-credential
 
 tests:
+  - it: "completed new-install sample renders licensed private file access"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../../../sample.values.yaml
+    set:
+      licenseKey: fixture-license
+      admin.apiKey: 3bf42079-1974-4f62-b71f-f8130ea35a42
+      admin.username: 683c364a-f128-4ac2-a13f-c117d77f9cdc
+      fileAccess.originsPrivate: true
+      fileAccess.frontProxyTLSVerified: true
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "licenseKey: fixture-license"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "fileAccess:\n  enabled: true\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'publicUrl: "https://files.example.com"'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'storageEndpoint: "https://store.internal.example.com:9443"'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'signingEndpoint: "https://s3.example.com"'
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "password: password|groundxKey:|cognito:"
+  - it: "new-install sample requires private-origin verification"
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ../../../sample.values.yaml
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.originsPrivate must be true after operator verification of all storage aliases"
+  - it: "new-install sample requires encrypted transport verification"
+    templates:
+      - ../templates/resources/ingress.yaml
+    values:
+      - ../../../sample.values.yaml
+    set:
+      fileAccess.originsPrivate: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "fileAccess.frontProxyTLSVerified must be true after operator verification of HTTPS termination and encrypted trusted gateway backplane"
   - it: "database migration uses target database config in a separate hook Secret"
     templates:
       - ../templates/app/schema-migration.yaml
@@ -1180,3 +1228,104 @@ tests:
       - matchRegex:
           path: stringData["config.yaml"]
           pattern: 'largeFile:\n\s+region: us-west-2\n\s+type: sqs\n\s+url: https://sqs.us-west-2.amazonaws.com/123456789012/large-file'
+  - it: processor overrides render every configured list
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      cluster.processors.convert: [132]
+      cluster.processors.extract: [134]
+      cluster.processors.layout: [118]
+      cluster.processors.map: [120]
+      cluster.processors.saveFile: [5]
+      cluster.processors.skipConvert: [133]
+      cluster.processors.skipGenerate: [4]
+      cluster.processors.skipLayout: [119]
+      cluster.processors.skipMap: [121]
+      cluster.processors.skipSummarize: [123]
+      cluster.processors.summarize: [125]
+      cluster.processors.summarizeChunks: [124]
+      cluster.processors.summarizeSections: [122]
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: '\nprocessors:\n  convert: \[132\]\n  extract: \[134\]\n  layout: \[118\]\n  map: \[120\]\n  saveFile: \[5\]\n  skipConvert: \[133\]\n  skipGenerate: \[4\]\n  skipLayout: \[119\]\n  skipMap: \[121\]\n  skipSummarize: \[123\]\n  summarize: \[125\]\n  summarizeChunks: \[124\]\n  summarizeSections: \[122\]\n\nqueueFileServer:'
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: 'extraPostDefaults'
+  - it: a partial processor override keeps the other default lists
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      cluster.processors.extract: [134]
+      cluster.processors.layout: [118]
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: '\nprocessors:\n  convert: \[11\]\n  extract: \[134\]\n  layout: \[118\]\n  map: \[4\]\n  saveFile: \[2\]\n  skipConvert: \[12\]\n  skipGenerate: \[1\]\n  skipLayout: \[5\]\n  skipMap: \[6\]\n  skipSummarize: \[7\]\n  summarize: \[8\]\n  summarizeChunks: \[10\]\n  summarizeSections: \[9\]\n\nqueueFileServer:'
+  - it: ingest mode builds extraPostDefaults from the configured skipGenerate IDs
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ./files/values.extract.ingest.yaml
+    set:
+      cluster.processors.skipGenerate: [4, 5]
+    documentSelector:
+      path: metadata.name
+      value: config-yaml-map
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: '\n  skipGenerate: \[4, 5\]\n'
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: '\n  extraPreDefaults:\n  - processorID: 13\n    type: extract\n  extraPostDefaults:\n    - processorID: 4\n      type: skip-generate\n    - processorID: 5\n      type: skip-generate\n\nqueueFileServer:'
+  - it: a misspelled processor list name fails schema validation
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      cluster.processors.skipGeneration: [4]
+    asserts:
+      - failedTemplate:
+          errorPattern: "cluster/processors.*skipGeneration.*not allowed"
+  - it: two layout processor IDs fail schema validation
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      cluster.processors.layout: [3, 118]
+    asserts:
+      - failedTemplate:
+          errorPattern: "cluster/processors/layout.*maxItems"
+  - it: two map processor IDs fail schema validation
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      cluster.processors.map: [4, 120]
+    asserts:
+      - failedTemplate:
+          errorPattern: "cluster/processors/map.*maxItems"
+  - it: two summarize processor IDs fail schema validation
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+    set:
+      cluster.processors.summarize: [8, 125]
+    asserts:
+      - failedTemplate:
+          errorPattern: "cluster/processors/summarize.*maxItems"

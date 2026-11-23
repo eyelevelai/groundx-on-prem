@@ -89,7 +89,6 @@
             service: eyelevel
             apiKey: 00000000-0000-0000-0000-000000000000
             baseURL: http://summary-api.eyelevel.svc.cluster.local
-            inlineImages: true
             maxInputTokens: 100000
             maxRequests: 4
             requestLimit: 4
@@ -99,6 +98,7 @@
 
         groundxServer:
           baseURL: http://groundx.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: groundx
 
@@ -120,6 +120,7 @@
 
         layoutWebhookServer:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: layout-webhook
 
@@ -376,6 +377,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -684,6 +686,7 @@
         workers = 1
         threads = 3
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -980,6 +983,7 @@
         workers = 1
         threads = 4
         timeout = 240
+        graceful_timeout = 240
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -1142,7 +1146,6 @@
             service: eyelevel
             apiKey: 00000000-0000-0000-0000-000000000000
             baseURL: http://summary-api.eyelevel.svc.cluster.local
-            inlineImages: true
             maxInputTokens: 100000
             maxRequests: 4
             requestLimit: 4
@@ -1152,6 +1155,7 @@
 
         groundxServer:
           baseURL: http://groundx.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: groundx
 
@@ -1170,6 +1174,7 @@
 
         layoutWebhookServer:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: layout-webhook
 
@@ -1469,6 +1474,7 @@
         workers = 2
         threads = 2
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -1506,6 +1512,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -1536,6 +1546,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -1566,6 +1580,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -1637,6 +1655,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -1945,6 +1964,7 @@
         workers = 1
         threads = 3
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -2269,6 +2289,7 @@
         workers = 1
         threads = 4
         timeout = 240
+        graceful_timeout = 240
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -2420,6 +2441,7 @@
 
         groundxServer:
           baseURL: http://groundx.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: groundx
 
@@ -2441,6 +2463,7 @@
 
         layoutWebhookServer:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: layout-webhook
 
@@ -2732,6 +2755,7 @@
 
         groundxServer:
           baseURL: http://groundx.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: groundx
 
@@ -2750,6 +2774,7 @@
 
         layoutWebhookServer:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: layout-webhook
 
@@ -3015,6 +3040,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -3321,6 +3347,7 @@
         workers = 1
         threads = 3
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -3615,6 +3642,7 @@
         workers = 1
         threads = 4
         timeout = 240
+        graceful_timeout = 240
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -3775,6 +3803,7 @@
 
         groundxServer:
           baseURL: http://groundx.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: groundx
 
@@ -3793,6 +3822,7 @@
 
         layoutWebhookServer:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: layout-webhook
 
@@ -4058,6 +4088,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -4364,6 +4395,7 @@
         workers = 1
         threads = 3
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -4658,6 +4690,7 @@
         workers = 1
         threads = 4
         timeout = 240
+        graceful_timeout = 240
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -4827,6 +4860,7 @@
 
         groundxServer:
           baseURL: http://groundx.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: groundx
 
@@ -4848,6 +4882,7 @@
 
         layoutWebhookServer:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: layout-webhook
 
@@ -5115,6 +5150,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -5423,6 +5459,7 @@
         workers = 1
         threads = 3
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -5755,7 +5792,6 @@
             engineID: "google/gemma-3-4b-it"
             service: eyelevel
             baseURL: http://summary-api.eyelevel.svc.cluster.local
-            inlineImages: true
             maxInputTokens: 100000
             maxRequests: 4
             requestLimit: 4
@@ -5765,6 +5801,7 @@
 
         groundxServer:
           baseURL: http://groundx.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: groundx
 
@@ -5782,6 +5819,7 @@
 
         layoutWebhookServer:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: layout-webhook
 
@@ -6062,6 +6100,7 @@
         workers = 2
         threads = 2
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -6099,6 +6138,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -6129,6 +6172,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -6159,6 +6206,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -6228,6 +6279,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -6547,6 +6599,7 @@
         workers = 1
         threads = 4
         timeout = 240
+        graceful_timeout = 240
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -6710,7 +6763,6 @@
             service: eyelevel
             apiKey: 00000000-0000-0000-0000-000000000000
             baseURL: http://summary-api.eyelevel.svc.cluster.local
-            inlineImages: true
             maxInputTokens: 100000
             maxRequests: 4
             requestLimit: 4
@@ -6720,6 +6772,7 @@
 
         groundxServer:
           baseURL: http://groundx.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: groundx
 
@@ -6740,6 +6793,7 @@
 
         layoutWebhookServer:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: layout-webhook
 
@@ -7049,6 +7103,7 @@
         workers = 2
         threads = 2
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -7086,6 +7141,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -7116,6 +7175,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -7146,6 +7209,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -7217,6 +7284,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -7524,6 +7592,7 @@
         workers = 1
         threads = 4
         timeout = 240
+        graceful_timeout = 240
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -7678,6 +7747,7 @@
 
         groundxServer:
           baseURL: http://groundx.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: groundx
 
@@ -7695,6 +7765,7 @@
 
         layoutWebhookServer:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: layout-webhook
 
@@ -7967,6 +8038,7 @@
         workers = 2
         threads = 2
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -8004,6 +8076,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -8034,6 +8110,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -8064,6 +8144,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -8133,6 +8217,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -8477,6 +8562,7 @@
 
         groundxServer:
           baseURL: http://groundx.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: groundx
 
@@ -8495,6 +8581,7 @@
 
         layoutWebhookServer:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: layout-webhook
 
@@ -8649,6 +8736,7 @@
             operations-drive:
               credentialsFile: /var/run/groundx/large-file/operations-drive/credentials.json
         largeFileDeliveryServer:
+          drainSeconds: 870
           maxConcurrent: 2
           port: 8080
           serviceName: large-file-delivery
@@ -8781,6 +8869,7 @@
 
         groundxServer:
           baseURL: http://groundx.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: groundx
 
@@ -8799,6 +8888,7 @@
 
         layoutWebhookServer:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: layout-webhook
 
@@ -8953,6 +9043,7 @@
             operations-drive:
               credentialsFile: /var/run/groundx/large-file/operations-drive/credentials.json
         largeFileDeliveryServer:
+          drainSeconds: 870
           maxConcurrent: 2
           port: 8080
           serviceName: large-file-delivery
@@ -9107,6 +9198,7 @@
 
         groundxServer:
           baseURL: http://myapp.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8081
           serviceName: myapp
 
@@ -9125,6 +9217,7 @@
 
         layoutWebhookServer:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: layout-webhook
 
@@ -9392,6 +9485,7 @@
         workers = 3
         threads = 3
         timeout = 10
+        graceful_timeout = 10
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -9803,6 +9897,7 @@
         workers = 4
         threads = 2
         timeout = 30
+        graceful_timeout = 30
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -9957,6 +10052,7 @@
         workers = 2
         threads = 2
         timeout = 5
+        graceful_timeout = 5
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -10142,6 +10238,7 @@
 
         groundxServer:
           baseURL: http://groundx.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: groundx
 
@@ -10160,6 +10257,7 @@
 
         layoutWebhookServer:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: layout-webhook
 
@@ -10428,6 +10526,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -10707,6 +10806,7 @@
         workers = 1
         threads = 3
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -11003,6 +11103,7 @@
         workers = 1
         threads = 4
         timeout = 240
+        graceful_timeout = 240
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -11174,6 +11275,7 @@
 
         groundxServer:
           baseURL: http://groundx.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: groundx
 
@@ -11192,6 +11294,7 @@
 
         layoutWebhookServer:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: layout-webhook
 
@@ -11460,6 +11563,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -11739,6 +11843,7 @@
         workers = 1
         threads = 3
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -12035,6 +12140,7 @@
         workers = 1
         threads = 4
         timeout = 240
+        graceful_timeout = 240
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -12208,6 +12314,7 @@
 
         groundxServer:
           baseURL: http://groundx-service.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: groundx-service
 
@@ -12229,6 +12336,7 @@
 
         layoutWebhookServer:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: layout-webhook
 
@@ -12528,6 +12636,7 @@
         workers = 2
         threads = 2
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -12565,6 +12674,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -12595,6 +12708,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -12625,6 +12742,10 @@
         stdout_logfile_maxbytes=0
         stderr_logfile=/dev/stderr
         stderr_logfile_maxbytes=0
+
+
+        [group:celery_workers]
+        programs=celery_worker_1
     kind: ConfigMap
     metadata:
       labels:
@@ -12697,6 +12818,7 @@
         workers = 2
         threads = 1
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -12977,6 +13099,7 @@
         workers = 1
         threads = 3
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -13302,6 +13425,7 @@
         workers = 1
         threads = 4
         timeout = 240
+        graceful_timeout = 240
         timeout_keep_alive = 15
 
         worker_class = "uvicorn.workers.UvicornWorker"
@@ -13438,6 +13562,7 @@
 
         groundxServer:
           baseURL: http://groundx.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: groundx
 
@@ -13456,6 +13581,7 @@
 
         layoutWebhookServer:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: layout-webhook
 
@@ -13610,6 +13736,7 @@
             operations-drive:
               credentialsFile: /var/run/groundx/large-file/operations-drive/credentials.json
         largeFileDeliveryServer:
+          drainSeconds: 870
           maxConcurrent: 2
           port: 8080
           serviceName: large-file-delivery
@@ -13774,6 +13901,7 @@
 
         groundxServer:
           baseURL: http://groundx.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: groundx
 
@@ -13792,6 +13920,7 @@
 
         layoutWebhookServer:
           baseURL: http://layout-webhook.eyelevel.svc.cluster.local
+          drainSeconds: 120
           port: 8080
           serviceName: layout-webhook
 
@@ -14075,6 +14204,7 @@
         errorlog = "-"
         loglevel = "info"
         timeout = 120
+        graceful_timeout = 120
         timeout_keep_alive = 15
         worker_class = "uvicorn.workers.UvicornWorker"
         workers = 2
