@@ -34,3 +34,14 @@ None. `summary-inference-gpu-sizing` keeps its explicit-`Recreate` guidance for 
 - **Live proof:** ticket AC2 (upgrade on a one-GPU validation EKS cluster, before and after) runs outside the pipeline once both PRs exist.
 - **Scope note:** the ticket puts summary's upgrade rollout out of scope, but the root cause is the same for any GPU-requesting Deployment, so summary with an explicit GPU request gets the new default. This is in the approved plan; default summary is untouched.
 - **Open design questions:** none.
+
+## Amendment 2026-11-24: summary on a GPU without a GPU request
+
+Default summary also gets a strategy. This supersedes the statements above that default summary is unchanged (What Changes, Scope note).
+
+- **Why:** the same stall hits summary, and `docs/upgrades.md` already described it for the 48 GB defaults. Review asked for one rule across the three inference services, which share one template.
+- **Rule:** with `updateStrategy` empty, an inference pod that runs on a GPU (`deviceType` is not `cpu`) but asks for no `nvidia.com/gpu` renders `Recreate` and the same grace period + 600 deadline. `maxSurge: 0` cannot hold such a pod back: the scheduler does not see the GPU memory it shares. On a throwaway k3s cluster a pod with no GPU request was Ready at 2 s beside its old pod, which drained until 42 s; with a GPU request it stayed Pending until the old pod exited.
+- **Opt-out:** `updateStrategy: RollingUpdate`. Multi-GPU summary installs that ask for the GPU, as `docs/upgrades.md` describes, keep `maxSurge: 0`.
+- **Rejected:** a per-node-group input saying whether a surge pod fits, and a live `lookup` of nodes. The chart has no node capacity value, and `lookup` returns nothing under `helm template` and fails the upgrade for a user without cluster-wide node access (tested on Helm 3.19.0).
+- **Edge:** a layout or ranker pod in GPU mode that asks for no `nvidia.com/gpu` (for example a different GPU resource) also renders `Recreate`.
+- **Tests:** no new case. 8 snapshot blocks, the summary asserts in the grace period case and one fixture line changed; ten mutations of the rule each fail the suite.
