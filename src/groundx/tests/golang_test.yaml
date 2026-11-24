@@ -78,10 +78,10 @@ tests:
           value: before-hook-creation,hook-succeeded
       - equal:
           path: spec.backoffLimit
-          value: 0
+          value: 2
       - equal:
           path: spec.activeDeadlineSeconds
-          value: 900
+          value: 3600
       - equal:
           path: spec.template.spec.restartPolicy
           value: Never
@@ -101,9 +101,54 @@ tests:
           path: spec.template.spec.volumes[0].secret.secretName
           value: upgrade-test-schema-migration
       - matchSnapshot: {}
+  - it: "database migration limits follow values and keep an explicit zero retry count"
+    templates:
+      - ../templates/app/schema-migration.yaml
+    set:
+      groundx.migration.activeDeadlineSeconds: 7200
+      groundx.migration.backoffLimit: 0
+    release:
+      upgrade: true
+    documentSelector:
+      path: kind
+      value: Job
+    asserts:
+      - equal:
+          path: spec.activeDeadlineSeconds
+          value: 7200
+      - equal:
+          path: spec.backoffLimit
+          value: 0
   - it: "fresh install creates no database upgrade hook"
     templates:
       - ../templates/app/schema-migration.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: "GitOps opt-in renders the migration Secret and Job as pre-upgrade hooks without an upgrade"
+    templates:
+      - ../templates/app/schema-migration.yaml
+    set:
+      groundx.migration.gitOps: true
+    asserts:
+      - hasDocuments:
+          count: 2
+      - isKind:
+          of: Secret
+        documentIndex: 0
+      - isKind:
+          of: Job
+        documentIndex: 1
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: pre-upgrade
+  - it: "GitOps opt-in without Go workloads creates no migration hook"
+    templates:
+      - ../templates/app/schema-migration.yaml
+    values:
+      - ./files/values.disabled.yaml
+    set:
+      groundx.migration.gitOps: true
     asserts:
       - hasDocuments:
           count: 0
