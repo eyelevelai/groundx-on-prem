@@ -33,9 +33,9 @@ The chart SHALL render `inlineImages: true` in an engine block of the generated 
 #### Scenario: Operator false renders no key
 
 - **POLARITY** skip unrelated repair path
-- **GIVEN** storage type `s3` and `engines.default` declared with an `engineId` and `inlineImages: false`
+- **GIVEN** `engines.default` has `inlineImages: false` and a named engine `other` has `inlineImages: true`
 - **WHEN** `templates/resources/config-yaml.yaml` renders
-- **THEN** no `inlineImages` key appears anywhere in the config, so a render with `false` matches a render that never set the value.
+- **THEN** only the `other` engine block shows `inlineImages: true`; the default engine block has no `inlineImages` key, so `false` renders the same as never setting the value.
 
 ### Requirement: Values schema accepts a boolean inlineImages and rejects other types
 
