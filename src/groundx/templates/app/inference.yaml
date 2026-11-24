@@ -48,6 +48,8 @@
 {{- $gpuReq := float64 (dig "requests" "nvidia.com/gpu" 0 $rsd) -}}
 {{- $gpuLim := float64 (dig "limits" "nvidia.com/gpu" 0 $rsd) -}}
 {{- $gpuRollout := or (gt $gpuReq 0.0) (gt $gpuLim 0.0) -}}
+{{- $devType := include (printf "groundx.%s.deviceType" $entry) $ | trim -}}
+{{- $gpuShared := and (not $gpuRollout) (ne $devType "cpu") -}}
 
 ---
 apiVersion: apps/v1
@@ -62,12 +64,16 @@ spec:
 {{- if and $ud (ne $ud "") }}
   strategy:
     type: {{ $ud }}
-{{- else if $gpuRollout }}
+{{- else if or $gpuRollout $gpuShared }}
   progressDeadlineSeconds: {{ add (int (include "groundx.celeryWorker.gracePeriod" (dict "key" $entry "replicas" $rp))) 600 }}
   strategy:
+{{- if $gpuRollout }}
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 0
+{{- else }}
+    type: Recreate
+{{- end }}
 {{- end }}
   selector:
     matchLabels:

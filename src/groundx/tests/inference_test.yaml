@@ -307,13 +307,15 @@ tests:
         documentSelector:
           path: metadata.name
           value: layout-inference
-      - notExists:
-          path: spec.strategy
+      - equal:
+          path: spec.strategy.type
+          value: Recreate
         documentSelector:
           path: metadata.name
           value: summary-inference
-      - notExists:
+      - equal:
           path: spec.progressDeadlineSeconds
+          value: 750
         documentSelector:
           path: metadata.name
           value: summary-inference
