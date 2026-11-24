@@ -27,12 +27,17 @@ When `updateStrategy` is empty and a container of an inference Deployment asks f
 - **THEN** both render `RollingUpdate` with `maxSurge` 0 and `progressDeadlineSeconds`
 
 ### Requirement: A GPU pod that does not ask for a GPU is recreated
-When `updateStrategy` is empty and an inference Deployment runs on a GPU (its `deviceType` is not `cpu`) but no container asks for `nvidia.com/gpu` greater than 0, the chart SHALL render `strategy.type: Recreate` and `progressDeadlineSeconds` equal to the service's termination grace period plus 600. The scheduler cannot see GPU memory that pods share, so a rolling update would start the new pod beside the old one, and `maxSurge: 0` would not hold it back. Polarity: `finalize success`.
+When `updateStrategy` is empty and an inference Deployment runs on a GPU (its `deviceType` is not `cpu`) but no container asks for `nvidia.com/gpu` greater than 0 and `topologySpreadConstraints` is empty, the chart SHALL render `strategy.type: Recreate` and `progressDeadlineSeconds` equal to the service's termination grace period plus 600. The scheduler cannot see GPU memory that pods share, so a rolling update would start the new pod beside the old one, and `maxSurge: 0` would not hold it back. Polarity: `finalize success`.
 
 #### Scenario: Default summary
 - **GIVEN** the default values
 - **WHEN** `summary-inference` renders
 - **THEN** `spec.strategy.type` is `Recreate`, `rollingUpdate` is absent and `progressDeadlineSeconds` is 900
+
+#### Scenario: Summary spread across nodes keeps the default
+- **GIVEN** `summary.inference.topologySpreadConstraints` is set
+- **WHEN** `summary-inference` renders
+- **THEN** `spec.strategy` and `spec.progressDeadlineSeconds` are absent
 
 #### Scenario: Summary deadline follows a grace period override
 - **GIVEN** `summary.inference.replicas.gracePeriod: 150`

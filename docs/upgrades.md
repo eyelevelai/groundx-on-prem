@@ -185,7 +185,7 @@ Changing an existing class's actual encryption requires creating a new StorageCl
 
 When a layout, ranker or summary inference pod requests a GPU and `updateStrategy` is empty, the chart renders a rolling update with `maxSurge: 0`. Kubernetes creates the new pod at once, and it stays `Pending` (event `Insufficient nvidia.com/gpu`) until the old pod has drained and released its GPU. This is expected and resolves on its own. A node with one GPU can finish the upgrade without a spare GPU.
 
-A summary pod that runs on a GPU without requesting one (the default: the pods share the GPU by memory, so the scheduler cannot see that it is full) renders `Recreate`. A rolling update would start the new pod beside the old one, and the new pod could not load its model. With `Recreate`, Kubernetes stops all old summary pods first, then starts the new ones.
+A summary pod that runs on a GPU without requesting one (the default: the pods share the GPU by memory, so the scheduler cannot see that it is full) renders `Recreate`, unless `summary.inference.topologySpreadConstraints` is set to spread the pods over several GPU nodes, which keeps the Kubernetes default. On one GPU a rolling update would start the new pod beside the old one, and the new pod could not load its model. With `Recreate`, Kubernetes stops all old summary pods first, then starts the new ones.
 
 An upgrade that changes the inference pod (a new image, or a values change that alters its config) has an outage for that service when it runs one replica, the default for layout and ranker. It lasts from the old pod draining, up to its `replicas.gracePeriod`, until the new pod has loaded its model and is ready. With more replicas, Kubernetes replaces a share of the pods at a time, at least one, and the others keep serving. Summary uses `Recreate`, so all its pods stop together and summary is unavailable from their drain until the new pods have loaded the model, whatever the replica count.
 
@@ -195,7 +195,7 @@ For both defaults the chart also sets `progressDeadlineSeconds` to the grace per
 
 Check that an upgrade finished with `kubectl rollout status deployment/<name> -n <namespace>`, for example `layout-inference`.
 
-To use the Kubernetes defaults instead, set `updateStrategy: RollingUpdate` under the service, for example `layout.inference.updateStrategy`. The chart then renders the type only, with no `maxSurge` and no `progressDeadlineSeconds`, so a fresh render uses the Kubernetes defaults and the upgrade needs a spare GPU. Set `updateStrategy: Recreate` to stop all old pods first. An install whose summary pods spread over several GPU nodes with room for a surge pod can set `summary.inference.updateStrategy: RollingUpdate`.
+To use the Kubernetes defaults instead, set `updateStrategy: RollingUpdate` under the service, for example `layout.inference.updateStrategy`. The chart then renders the type only, with no `maxSurge` and no `progressDeadlineSeconds`, so a fresh render uses the Kubernetes defaults and the upgrade needs a spare GPU. Set `updateStrategy: Recreate` to stop all old pods first. An install whose summary pods share one GPU but have room for a surge copy, for example with a lower `summary.inference.deviceUtilize`, can set `summary.inference.updateStrategy: RollingUpdate`.
 
 ## Summary GPU sizing
 

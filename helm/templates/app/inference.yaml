@@ -49,7 +49,7 @@
 {{- $gpuLim := float64 (dig "limits" "nvidia.com/gpu" 0 $rsd) -}}
 {{- $gpuRollout := or (gt $gpuReq 0.0) (gt $gpuLim 0.0) -}}
 {{- $devType := include (printf "groundx.%s.deviceType" $entry) $ | trim -}}
-{{- $gpuShared := and (not $gpuRollout) (ne $devType "cpu") -}}
+{{- $gpuShared := and (not $gpuRollout) (ne $devType "cpu") (empty $tsc) -}}
 
 ---
 apiVersion: apps/v1

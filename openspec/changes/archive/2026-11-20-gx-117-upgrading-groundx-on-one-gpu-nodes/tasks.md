@@ -21,6 +21,9 @@
 - [x] 3.3 Update `docs/upgrades.md` and the `inference-gpu-rollout-strategy` spec for the summary default
   check: grep -q 'renders `Recreate`' docs/upgrades.md && grep -q 'A GPU pod that does not ask for a GPU is recreated' openspec/specs/inference-gpu-rollout-strategy/spec.md
 
+- [x] 3.4 Skip the `Recreate` default when `topologySpreadConstraints` is set (`(empty $tsc)` in `$gpuShared`, copied to `helm/`) and add one test case for a summary spread across nodes
+  check: grep -q 'empty \$tsc' src/groundx/templates/app/inference.yaml && diff -q src/groundx/templates/app/inference.yaml helm/templates/app/inference.yaml && t=$(mktemp -d) && cp -r src/groundx "$t/groundx" && (cd "$t/groundx" && helm unittest -f tests/inference_test.yaml .)
+
 ## 4. Gate
 
 - [ ] 4.1 Run the push gate `.build/bin/validate-helm.sh`

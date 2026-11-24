@@ -331,6 +331,27 @@ tests:
         documentSelector:
           path: metadata.name
           value: summary-inference-supervisord-conf-map
+  - it: "a summary pod spread across nodes keeps the Kubernetes rolling default (polarity: skip unrelated repair path; must not block)"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+    set:
+      summary.inference.topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+    asserts:
+      - notExists:
+          path: spec.strategy
+        documentSelector:
+          path: metadata.name
+          value: summary-inference
+      - notExists:
+          path: spec.progressDeadlineSeconds
+        documentSelector:
+          path: metadata.name
+          value: summary-inference
   - it: "gpu inference rollout strategy follows the rendered gpu request and yields to an explicit updateStrategy (polarity: finalize success; must not block)"
     templates:
       - ../templates/app/inference.yaml
