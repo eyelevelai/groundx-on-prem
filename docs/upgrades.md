@@ -181,6 +181,22 @@ This does not work for a class that `0.1.1` created with an explicit `encrypted:
 Changing an existing class's actual encryption requires creating a new StorageClass, because `parameters` cannot be updated in place. Pin `--version 0.1.2` when using these StorageClass behaviors, and run `helm repo update` before installing from the published repository.
 
 
+## GPU inference upgrades
+
+When a layout, ranker or summary inference pod requests a GPU and `updateStrategy` is empty, the chart renders a rolling update with `maxSurge: 0`. Kubernetes creates the new pod at once, and it stays `Pending` (event `Insufficient nvidia.com/gpu`) until the old pod has drained and released its GPU. This is expected and resolves on its own. A node with one GPU can finish the upgrade without a spare GPU.
+
+A summary pod that runs on a GPU without requesting one (the default: the pods share the GPU by memory, so the scheduler cannot see that it is full) renders `Recreate`, unless `summary.inference.topologySpreadConstraints` is set to spread the pods over several GPU nodes, which keeps the Kubernetes default. On one GPU a rolling update would start the new pod beside the old one, and the new pod could not load its model. With `Recreate`, Kubernetes stops all old summary pods first, then starts the new ones.
+
+An upgrade that changes the inference pod (a new image, or a values change that alters its config) has an outage for that service when it runs one replica, the default for layout and ranker. It lasts from the old pod draining, up to its `replicas.gracePeriod`, until the new pod has loaded its model and is ready. With more replicas, Kubernetes replaces a share of the pods at a time, at least one, and the others keep serving. Summary uses `Recreate`, so all its pods stop together and summary is unavailable from their drain until the new pods have loaded the model, whatever the replica count.
+
+If the new pod never becomes ready, a one-replica service has no running pod until you fix the cause or run `helm rollback`. Helm 3 does not catch this for you: with one replica and `maxSurge: 0`, `helm upgrade --atomic`, and the `--wait` it turns on, report success while no pod is ready (seen on Helm 3.19.0), so check with `kubectl rollout status`. `--atomic` does roll back under `Recreate`, the summary default. Helm 4's `--rollback-on-failure` waits for the pod and rolls back when `--timeout` passes (seen on Helm 4.2.3), so set `--timeout` longer than the drain plus the start-up.
+
+For both defaults the chart also sets `progressDeadlineSeconds` to the grace period plus 600 seconds. The deadline counts from the last progress the rollout made. With one replica that is the start of the rollout, so it covers the drain and the start-up together. If both together take longer, `kubectl rollout status` reports a failure even though the rollout can still finish.
+
+Check that an upgrade finished with `kubectl rollout status deployment/<name> -n <namespace>`, for example `layout-inference`.
+
+To use the Kubernetes defaults instead, set `updateStrategy: RollingUpdate` under the service, for example `layout.inference.updateStrategy`. The chart then renders the type only, with no `maxSurge` and no `progressDeadlineSeconds`, so a fresh render uses the Kubernetes defaults and the upgrade needs a spare GPU. Set `updateStrategy: Recreate` to stop all old pods first. An install whose summary pods share one GPU but have room for a surge copy, for example with a lower `summary.inference.deviceUtilize`, can set `summary.inference.updateStrategy: RollingUpdate`.
+
 ## Summary GPU sizing
 
 Pods in this node group have specific requirements on GPU, CPU, RAM, and disk drive space.
@@ -205,7 +221,7 @@ summary:
     updateStrategy: Recreate
 ```
 
-Apply these values to a running install with `helm upgrade`, passing the file with `-f` after your other values files. With `updateStrategy: Recreate`, Kubernetes stops the old summary pods before it starts the new one, so summary is unavailable on each upgrade until the new pod has loaded its model (the load took about 5 minutes in the test run). Without it, the default rolling update starts the new pod while the old pods still hold the GPU, and the new pod cannot load its model.
+Apply these values to a running install with `helm upgrade`, passing the file with `-f` after your other values files. With `updateStrategy: Recreate`, which the chart renders for these pods when `updateStrategy` is empty, Kubernetes stops the old summary pods before it starts the new one, so summary is unavailable on each upgrade until the new pod has loaded its model (the load took about 5 minutes in the test run). A rolling update would start the new pod while the old pods still hold the GPU, and the new pod could not load its model.
 
 These values assume the summary pod has the node's GPU to itself. They were tested on an AWS `g5.2xlarge` (one NVIDIA A10G, which reported 23028 MiB of GPU memory) with the `summary-inference:0.2.7` image and helm `v3.19.0+g3d8990f`, applied as an in-place `helm upgrade` to an install running the default values. Other 24 GB GPUs, such as the NVIDIA L4, were not tested.
 
@@ -213,13 +229,13 @@ With several summary GPU nodes, or with `cluster.hpa: true` and `summary.inferen
 
 Each pod then has a GPU to itself, so on 24 GB GPUs use the `summary.inference.workers` and `summary.inference.deviceUtilize` values from the block above. In either case, keep `summary.inference.replicas.max` at or below the number of summary pods your summary GPU nodes can hold.
 
-With a GPU request, keep `updateStrategy: Recreate` unless a spare GPU is free, because a rolling update's new pod waits Pending for the GPU the old pod holds. Every summary pod mounts the same model volume claim, so pods on more than one node need ReadWriteMany storage for that claim.
+With a GPU request and no `updateStrategy` set, the pods roll with `maxSurge: 0` instead of `Recreate` (see [GPU inference upgrades](#gpu-inference-upgrades)). Every summary pod mounts the same model volume claim, so pods on more than one node need ReadWriteMany storage for that claim.
 
 The claim inherits `cluster.pvAccessMode` and `cluster.pvClass`; if that is not already ReadWriteMany on a storage class that supports it, set `summary.inference.pvc.access: ReadWriteMany` and such a class in `summary.inference.pvc.class` (see [Persistent storage](#persistent-storage)). Kubernetes does not let a claim that already exists change its access mode, so on an existing install also set a new `summary.inference.pvc.name` (the default is `summary-model`): the upgrade creates a new claim, the summary pods download the model into it again, and Helm removes the old claim because the chart no longer renders it.
 
 With ReadWriteOnce storage the volume can be mounted by one node only, so a pod scheduled to a second node cannot start; keep summary on one node instead.
 
-For the 48 GB defaults, `updateStrategy: Recreate` is also recommended, with the same brief outage on each upgrade. Without it, Kubernetes' default rolling update starts a third summary pod on the node before it stops an old one, three pods at 0.48 need 1.44 of the GPU, and the new pod cannot load its model. This advice follows from that arithmetic and from the 24 GB test without `Recreate`, where the rollout stalled the same way; it was not tested on a 48 GB GPU.
+For the 48 GB defaults the chart also renders `Recreate`, with the same brief outage on each upgrade. A rolling update would start a third summary pod on the node before it stops an old one, three pods at 0.48 need 1.44 of the GPU, and the new pod could not load its model. This follows from that arithmetic and from the 24 GB test with a rolling update, where the rollout stalled the same way; it was not tested on a 48 GB GPU.
 
 If your machine has different resources than this, you will need to modify `summary.inference` in your `values.yaml` using the per pod requirements described above to optimize for your node resources.
 
