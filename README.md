@@ -648,10 +648,10 @@ Replace `values.yaml` with the path to the `values.yaml` file you created in the
 
 For upgrades, keep your customized `values.yaml`. Do not replace it with `sample.values.yaml`.
 
-Before upgrading, follow the [database upgrade requirements](docs/agents/database-upgrades.md) and the [OpenSearch credential steps](#upgrading-an-existing-install). Then pass your existing file to Helm:
+Before upgrading, follow the [database upgrade requirements](docs/agents/database-upgrades.md) and the [OpenSearch credential steps](#upgrading-an-existing-install). Then pass your existing file to Helm, with a `--timeout` above the migration Job deadline:
 
 ```bash
-helm upgrade groundx groundx/groundx -n eyelevel -f values.yaml
+helm upgrade groundx groundx/groundx -n eyelevel -f values.yaml --timeout 70m
 ```
 
 To enable the file gateway on an existing installation, follow the [existing-file activation procedure](docs/agents/private-file-access.md#upgrade-existing-files-before-activation). It includes preparing older files, selecting compatible images and testing your storage provider.

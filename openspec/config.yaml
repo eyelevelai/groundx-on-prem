@@ -153,6 +153,11 @@ context: |
     - A scope check for a README-only change diffs against `git merge-base HEAD origin/<base>` (not the moving `origin/<base>` tip) and requires README.md changed and `src helm .build helm-releases` unchanged.
     - The pre-push gate runs `.build/bin/validate-helm.sh` itself; a task check must not execute it (privileged repo), so the gate task declares `check: n/a` with that reason.
 
+  - CONVENTIONS DISCOVERED DURING GX-152 (snapshot regeneration and schema minimums):
+    - helm-unittest 1.1.2 `-u` does not reproduce the committed snapshot files byte-for-byte: on the unchanged 0.3.0 base (8f99d2ba) it re-sorted entries, changed key quoting and dropped null entries in golang_test.yaml.snap (136 changed diff lines), and a full-suite `-u` changed 8 other suites' files. The content is equal as parsed YAML once null entries are ignored. The "never hand-edit" rule above still applies.
+    - One narrow exception, decided by a human for GX-152 (2026-11-18): when a regeneration would reorder a snapshot file that open PRs against the same base also change, a human may approve editing only the changed values by hand to avoid merge conflicts. The task check must then prove that the diff against the merge base is exactly those values, that a fresh `-u` run on a `mktemp -d` copy equals the committed file as parsed YAML (`yq -o=json` then `jq -S`, null entries ignored), and that a run without `-u` leaves every snapshot byte-identical. Without that approval, regenerate.
+    - Helm v3.19.0 reports an integer schema minimum as `at '/<path>': minimum: got N, want M`. A new key under an object with `additionalProperties: false` fails on the base chart as `additional properties '<key>' not allowed`, so a reject check matches the full `minimum` text and is paired with a valid render of the same key.
+
   - KNOWN GAPS / OPEN QUESTIONS:
     - helm/ <-> src/groundx duplication: no regen script (manual sync required); a drift check DOES exist (verify_mirrors() in .build/bin/verify-storage-contract.py fails the gate on mismatch) — the remaining gap is only the absence of a regen script, not the absence of a check.
     - upload.groundx.ai model-weight download hardcoded in init-containers — air-gap blocker; pre-seeding is documented only briefly (docs/upgrades.md#inference-model-downloads).
