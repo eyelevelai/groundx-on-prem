@@ -375,6 +375,97 @@ tests:
       - notMatchRegex:
           path: stringData["config.yaml"]
           pattern: "maxImages:"
+  - it: "no inlineImages value on the local s3 engine renders no key"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.inline-images-s3.yaml
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "\n\\s+service: s3\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "service: eyelevel\n(\\s+apiKey: [^\n]*\n)?\\s+baseURL: http://summary-api"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "inlineImages"
+  - it: "inlineImages true on the local s3 engine renders the key"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.inline-images-s3.yaml
+    set:
+      engines.default.engineId: local-model
+      engines.default.inlineImages: true
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "\n\\s+service: s3\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "engineID: \"local-model\"\n\\s+service: eyelevel\n(\\s+apiKey: [^\n]*\n)?\\s+baseURL: http://summary-api[^\n]*\n\\s+inlineImages: true\n"
+  - it: "inlineImages true on an openai engine with minio storage renders the key"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.inline-images-openai.yaml
+    set:
+      engines.default.inlineImages: true
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "\n\\s+service: minio\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "engineID: \"gpt-5.4-mini\"\n\\s+service: openai\n\\s+apiKey: test-api-key\n\\s+inlineImages: true\n"
+  - it: "inlineImages string on a named engine renders no key and leaves the default engine unchanged"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.inline-images-openai.yaml
+    set:
+      engines.default.inlineImages: true
+      engines.other.engineId: other-model
+      engines.other.service: openai
+      engines.other.apiKey: other-api-key
+      engines.other.inlineImages: "yes"
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "engineID: \"other-model\"\n\\s+service: openai\n\\s+apiKey: other-api-key\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "engineID: \"gpt-5.4-mini\"\n\\s+service: openai\n\\s+apiKey: test-api-key\n\\s+inlineImages: true\n"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "engineID: \"other-model\"(\n {4}[^\n]*)*\n {4}inlineImages"
+  - it: "inlineImages true on a named engine renders its own key and not the default engine's"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+    values:
+      - ../values.yaml
+      - ./files/values.inline-images-openai.yaml
+    set:
+      engines.other.engineId: other-model
+      engines.other.service: openai
+      engines.other.apiKey: other-api-key
+      engines.other.inlineImages: true
+      engines.default.inlineImages: false
+    asserts:
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "engineID: \"gpt-5.4-mini\"\n\\s+service: openai\n\\s+apiKey: test-api-key\n"
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "engineID: \"other-model\"\n\\s+service: openai\n\\s+apiKey: other-api-key\n\\s+inlineImages: true\n"
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "engineID: \"gpt-5.4-mini\"(\n {4}[^\n]*)*\n {4}inlineImages"
   - it: "layout OCR timeout override renders unquoted in layout config.py"
     templates:
       - ../templates/resources/layout-config-py.yaml

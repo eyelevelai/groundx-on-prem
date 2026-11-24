@@ -203,6 +203,9 @@ stringData:
         {{- if hasKey $e "baseUrl" }}
         baseURL: {{ get $e "baseUrl" }}
         {{- end }}
+        {{- if and (kindIs "bool" (get $e "inlineImages")) (get $e "inlineImages") }}
+        inlineImages: true
+        {{- end }}
         {{- if and (hasKey $e "maxImages") (ne (get $e "maxImages") nil) }}
         maxImages: {{ get $e "maxImages" }}
         {{- end }}

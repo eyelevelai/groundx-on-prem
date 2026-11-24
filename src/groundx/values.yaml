@@ -152,6 +152,32 @@ stream:
   # bundled (Mode-2) Kafka: prereqs/kafka-cluster/README.md namespace-pairing constraint:
   # that subchart's -n <ns> must equal this chart's .Values.namespace
 
+# Summary engines (optional). Leave unset to use the built-in summary model.
+#
+# inlineImages is off unless you set it to true on an engine.
+# When true, the summary client sends each page image inside the request instead of a link.
+# It reads the image with its own storage credentials, so the model needs no access to your bucket.
+# If the client cannot read a page image, the request fails and the document fails.
+# If file access is off on an install that once had it on, the database still holds file-access policies, the client is not allowed to read pages, and every document fails; turn file access back on and keep inlineImages set.
+# On an engine outside this cluster, true sends your page images to that engine.
+# It needs a summary client image that supports it.
+#
+# Setting engines replaces the built-in engine, so "default" must repeat its settings.
+# This example is the built-in engine with the chart defaults and inlineImages turned on.
+# maxRequests and requestLimit are twice the number of summary inference replicas you run
+# (the default is 2 replicas, so 4).
+#
+# engines:
+#   default:
+#     engineId: google/gemma-3-4b-it
+#     dataType: bfloat16
+#     maxInputTokens: 100000
+#     maxOutputTokens: 4096
+#     maxRequests: 4
+#     requestLimit: 4
+#     vision: true
+#     inlineImages: true
+
 summary:
   api:
     enabled: true
