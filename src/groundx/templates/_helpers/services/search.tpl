@@ -26,6 +26,24 @@ true
 {{- end -}}
 {{- end }}
 
+{{- define "groundx.search.caSecretName" -}}
+{{- $in := .Values.search | default dict -}}
+{{- $ca := dig "caSecretName" "" $in | trim -}}
+{{- if and (empty $ca) (eq (include "groundx.search.create" . | trim) "true") -}}
+opensearch-tls
+{{- else -}}
+{{ $ca }}
+{{- end -}}
+{{- end }}
+
+{{- define "groundx.search.caMount" -}}
+{{- include "groundx.caBundle.mount" (dict "name" "search-ca" "path" "/var/run/groundx/search-ca" "secret" (include "groundx.search.caSecretName" . | trim)) }}
+{{- end }}
+
+{{- define "groundx.search.caVolume" -}}
+{{- include "groundx.caBundle.volume" (dict "name" "search-ca" "secret" (include "groundx.search.caSecretName" . | trim)) }}
+{{- end }}
+
 {{- define "groundx.search.serviceHost" -}}
 {{- $ns := include "groundx.ns" . -}}
 {{- $name := include "groundx.search.serviceName" . -}}

@@ -27,11 +27,11 @@ Validated by the helm-unittest case "CA bundle reaches the metrics and Go Deploy
 - **WHEN** the existing `file_settings_test.yaml` cases "gateway uses the shared Go workload with private secret and CA references" and "migration job receives the same credential and trust references on upgrades" run
 - **THEN** both pass unchanged: the gateway Deployment and the migration Job still carry `SSL_CERT_FILE` and the `file-store-ca` volume
 
-#### Scenario: Empty caSecretName renders the same manifests as before (polarity: skip unrelated repair path; must not block; backward compatibility during rollout)
+#### Scenario: Empty caSecretName renders no bundle (polarity: skip unrelated repair path; must not block; backward compatibility during rollout)
 - **GIVEN** the chart with `fileAccess.caSecretName` empty, its default
 - **WHEN** the `metrics_test.yaml` and `golang_test.yaml` snapshot suites run without `-u`
-- **THEN** they pass against the committed snapshots, no workload carries `SSL_CERT_FILE` or a `file-access-ca` volume, and no file under `src/groundx/tests/__snapshot__/` changes
-- **AND** an install that leaves `caSecretName` empty, including one upgrading from the released 0.2.7 chart, keeps system trust in every workload, so cashbot-go and ai-server behave as before during rollout
+- **THEN** they pass against the committed snapshots, and no workload carries `SSL_CERT_FILE` or a `file-access-ca` volume
+- **AND** an install that leaves `caSecretName` empty, including one upgrading from the released 0.2.7 chart, keeps system trust in every workload, so cashbot-go and ai-server behave as before during rollout; the in-cluster OpenSearch is trusted separately through `opensearch-tls` (GX-90, `search-tls-operator-certificates`)
 
 #### Scenario: The published mirror carries the same templates (polarity: accept and enqueue)
 - **WHEN** `diff -r src/groundx/templates helm/templates` runs after the change
