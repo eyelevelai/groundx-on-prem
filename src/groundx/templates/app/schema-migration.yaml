@@ -1,5 +1,6 @@
 {{- $svcs := include "groundx.golang.services" . | fromYaml -}}
-{{- if and .Release.IsUpgrade (gt (len $svcs) 0) -}}
+{{- $migration := dig "migration" dict (.Values.groundx | default dict) -}}
+{{- if and (or .Release.IsUpgrade (dig "gitOps" false $migration)) (gt (len $svcs) 0) -}}
 {{- $name := printf "%s-schema-migration" (.Release.Name | trunc 46 | trimSuffix "-") -}}
 {{- $cfg := include "groundx.groundx.settings" . | fromYaml -}}
 {{- $username := include "groundx.container.username" . -}}
@@ -32,8 +33,8 @@ metadata:
     helm.sh/hook-weight: "-5"
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
 spec:
-  backoffLimit: 0
-  activeDeadlineSeconds: 900
+  backoffLimit: {{ dig "backoffLimit" 2 $migration }}
+  activeDeadlineSeconds: {{ dig "activeDeadlineSeconds" 3600 $migration }}
   template:
     metadata:
       labels:
