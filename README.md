@@ -521,6 +521,8 @@ If you wish to use an existing MinIO or AIStor cluster, you must configure the `
 
 If you wish to use an existing AWS S3 bucket, you must configure the `file.existing` parameters in your `values.yaml` **and** set `file.serviceType` to `s3`.
 
+If the cluster was set up with `setup-eks`, list the bucket in `app_irsa_s3_buckets` in `terraform/aws/env.tfvars` (see [EKS Access Scoping](docs/eks-access-scoping.md)).
+
 #### Using S4
 
 [S4](https://github.com/rh-aiservices-bu/s4) is an experimental, single-replica S3-compatible store for small installs, with no high availability. Use [AIStor](#deploying-a-dedicated-aistor-object-store) for production. S4 requires GroundX chart 0.2.8 or later with its default images; older images can send files to AWS S3 or fail extraction.
@@ -697,6 +699,8 @@ If you wish to use an existing Kafka cluster, you must configure the `stream.exi
 #### Using AWS SQS
 
 If you wish to use existing AWS SQS queues, you must configure the `stream.existing` parameters in your `values.yaml` **and** set `stream.serviceType` to `sqs`.
+
+If the cluster was set up with `setup-eks`, list every queue in `app_irsa_sqs_queues` in `terraform/aws/env.tfvars` (see [EKS Access Scoping](docs/eks-access-scoping.md)).
 
 #### Deploying a Dedicated Kafka Cluster
 
@@ -1051,6 +1055,14 @@ CPU-only nodes default to gp3 disks and one unavailable node per update. CloudWa
 
 AWS EKS deployments managed by the bundled Terraform (new or existing) can enable default-off
 diagnostics with one setting. See [EKS Node Diagnostics](docs/eks-node-diagnostics.md).
+
+## Limiting AWS access for EKS installs
+
+Three optional settings in `terraform/aws/env.tfvars` limit the GroundX application role to named
+S3 buckets (`app_irsa_s3_buckets`) and SQS queues (`app_irsa_sqs_queues`), and the cluster's
+control API to named address ranges (`cluster_endpoint_public_access_cidrs`). `setup-eks` asks for
+them on a new install. Direct Terraform runs, including `bin/environment eks`, keep today's access
+until you add them. See [EKS Access Scoping](docs/eks-access-scoping.md).
 
 ## EKS Cluster Version Configuration
 

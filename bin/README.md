@@ -40,6 +40,7 @@ Component is the cloud environment or Kubernetes cluster configuration you wish 
 - `eks`
   - This will set up a new EKS cluster
   - You must configure the `environment` parameters in env.tfvars, including VPC and subnet IDs
+  - Optional settings `app_irsa_s3_buckets`, `app_irsa_sqs_queues` and `cluster_endpoint_public_access_cidrs` limit the application role's S3 and SQS access and the cluster API's allowed addresses; leaving them out keeps today's access (see [EKS Access Scoping](../docs/eks-access-scoping.md))
 
 ### Options
 

@@ -12,6 +12,11 @@ must_have aws
 must_have terraform
 must_have jq
 
+had_env_tfvars=false
+if [ -f "$ENV_DIR/env.tfvars" ]; then
+    had_env_tfvars=true
+fi
+
 if [ ! -f "$ENV_DIR/env.tfvars" ]; then
     echo "env.tfvars not found. Copying env.tfvars.example..."
     cp "$ENV_DIR/env.tfvars.example" "$ENV_DIR/env.tfvars"
@@ -42,9 +47,106 @@ choose_kc=$(prompt_text "Do you want to set up a dedicated Kubernetes cluster fo
 choose_vpc=$(prompt_text "Do you want to set up a dedicated VPC for this deployment?")
 confirm_choices=$(prompt_text "")
 enter_region=$(prompt_text "What AWS region do you want to deploy to?")
+enter_access_cidrs=$(prompt_text "Which internet addresses may manage this cluster?
+
+Your cluster has a control address that tools like kubectl and helm use to manage it.
+Only the addresses you list here can reach it. Everyone else is refused.
+
+Include the public address of THIS computer, because this script and the GroundX
+install that follows manage the cluster from here. If you leave it out, this computer
+is locked out. To find it, ask your network administrator, or search the web for
+\"what is my IP address\" on this computer.
+
+Write each address with /32 at the end, for example 203.0.113.5/32. To allow a whole
+office network, use its range, for example 203.0.113.0/24. Separate several with commas.
+This answer is saved as cluster_endpoint_public_access_cidrs in terraform/aws/env.tfvars.")
+enter_s3_buckets=$(prompt_text "Which S3 buckets will GroundX store files in?
+
+GroundX can read and write only the buckets you list here. List every bucket this
+install uses: the main file bucket and, if document extraction uses its own bucket,
+that bucket too. Type bucket names only, for example groundx-files, separated by commas.
+
+Press Enter without typing anything if this install keeps its files inside the cluster
+(the GroundX default) and uses no S3 bucket. GroundX then gets no S3 access.
+
+In your GroundX Helm values these are file.bucketName and, if set, extract.file.bucketName.
+This answer is saved as app_irsa_s3_buckets in terraform/aws/env.tfvars.")
+enter_sqs_queues=$(prompt_text "Which SQS queues will GroundX use?
+
+GroundX can use only the queues you list here. List every queue this install has
+turned on, including the post-process queue and the large-file queue if you use them.
+Type queue names only, for example file-process, separated by commas. The queues must
+be in this AWS account and in the region you choose next.
+
+Press Enter without typing anything if this install uses the built-in Kafka queues
+(the GroundX default) and no SQS queue. GroundX then gets no SQS access.
+
+In your GroundX Helm values each queue is the last part of a stream.topics.<name>.url
+whose type is sqs. This answer is saved as app_irsa_sqs_queues in terraform/aws/env.tfvars.")
 
 if $check_env; then
     ENV=$(prompt_input "menu" "$choose_environment" "environments[@]" "") && ok
+fi
+
+msg=$(status "Allowed addresses")
+refused=$(status "Enter at least one address with /32 at the end, like 203.0.113.5/32 (separate several with commas)")
+access_cidrs_hcl=$(prompt_input "cidr-list" "$enter_access_cidrs" "empty[@]" "$msg" "$refused") && ok
+
+msg=$(status "S3 bucket names (Enter for none)")
+refused=$(status "Use bucket names only, like groundx-files (no s3:// and no slashes), separated by commas. Enter for none")
+s3_buckets_hcl=$(prompt_input "name-list" "$enter_s3_buckets" "empty[@]" "$msg" "$refused") && ok
+
+msg=$(status "SQS queue names (Enter for none)")
+refused=$(status "Use queue names only, like file-process (no https:// address), separated by commas. Enter for none")
+sqs_queues_hcl=$(prompt_input "name-list" "$enter_sqs_queues" "empty[@]" "$msg" "$refused") && ok
+
+list_display() {
+    local items="${1//\"/}"
+    items="${items#\[}"
+    items="${items%\]}"
+    if [[ -z "$items" ]]; then
+        echo "$2"
+    else
+        echo "$items"
+    fi
+}
+
+current_setting() {
+    if grep -Eq "^[[:space:]]*$1[[:space:]]*=" "$ENV_DIR/env.tfvars"; then
+        echo "as set in your current env.tfvars"
+    else
+        echo "$2 (no $1 setting)"
+    fi
+}
+
+if $had_env_tfvars; then
+    cat <<EOF
+
+This folder already has an env.tfvars file, so GroundX may already be installed from it.
+Continuing rewrites env.tfvars and changes this install's AWS access:
+
+  S3 buckets GroundX can use
+    now:   $(current_setting app_irsa_s3_buckets "every bucket in this AWS account")
+    after: $(list_display "$s3_buckets_hcl" "none (no S3 access)")
+  SQS queues GroundX can use
+    now:   $(current_setting app_irsa_sqs_queues "every queue in this AWS account")
+    after: $(list_display "$sqs_queues_hcl" "none (no SQS access)")
+  Addresses that can manage the cluster
+    now:   $(current_setting cluster_endpoint_public_access_cidrs "any address on the internet")
+    after: $(list_display "$access_cidrs_hcl" "none")
+
+If a bucket or queue this install uses is missing, GroundX will fail with "access denied" errors.
+If this computer's public address is missing, this computer loses access to the cluster.
+
+Type yes to continue. Anything else stops without changing anything.
+EOF
+    confirm_existing=""
+    read -r -p "Continue? " confirm_existing
+    confirm_existing=$(printf '%s' "$confirm_existing" | tr '[:upper:]' '[:lower:]' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+    if [[ "$confirm_existing" != "yes" ]]; then
+        echo "Stopped. Nothing was changed."
+        exit 1
+    fi
 fi
 
 if [[ "$ENV" == "aws" ]]; then
@@ -102,6 +204,9 @@ else
 fi
 echo -e   "cluster type:        $KCT"
 echo -e   "storage driver:      $STORAGE_DRIVER"
+echo -e   "S3 buckets:          $(list_display "$s3_buckets_hcl" "none")"
+echo -e   "SQS queues:          $(list_display "$sqs_queues_hcl" "none")"
+echo -e   "API addresses:       $(list_display "$access_cidrs_hcl" "none")"
 
 
 result=$(prompt_input "yn" "$confirm_choices" "empty[@]" "") && ok
@@ -146,6 +251,10 @@ environment_internal = {
 storage = {
   driver = "$STORAGE_DRIVER"
 }
+
+app_irsa_s3_buckets                  = $s3_buckets_hcl
+app_irsa_sqs_queues                  = $sqs_queues_hcl
+cluster_endpoint_public_access_cidrs = $access_cidrs_hcl
 EOF
 fi
 
@@ -256,6 +365,10 @@ environment_internal = {
 storage = {
   driver = "$STORAGE_DRIVER"
 }
+
+app_irsa_s3_buckets                  = $s3_buckets_hcl
+app_irsa_sqs_queues                  = $sqs_queues_hcl
+cluster_endpoint_public_access_cidrs = $access_cidrs_hcl
 EOF
 
 if ! $SEARCH; then

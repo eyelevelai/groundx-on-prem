@@ -337,3 +337,29 @@ variable "vpc" {
     public_subnets  = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
   }
 }
+
+variable "app_irsa_s3_buckets" {
+  description = "Optional S3 bucket names the GroundX application role may use. Not set keeps access to every bucket; an empty list grants no S3 access."
+  type        = list(string)
+  default     = null
+}
+
+variable "app_irsa_sqs_queues" {
+  description = "Optional SQS queue names, in this install's account and region, the GroundX application role may use. Not set keeps access to every queue; an empty list grants no SQS access."
+  type        = list(string)
+  default     = null
+}
+
+variable "cluster_endpoint_public_access_cidrs" {
+  description = "Optional address ranges allowed to reach the EKS cluster's public API endpoint. Not set keeps the endpoint open to all addresses."
+  type        = list(string)
+  default     = null
+
+  validation {
+    condition = var.cluster_endpoint_public_access_cidrs == null ? true : (
+      length(var.cluster_endpoint_public_access_cidrs) > 0 &&
+      alltrue([for c in var.cluster_endpoint_public_access_cidrs : can(cidrhost(c, 0))])
+    )
+    error_message = "cluster_endpoint_public_access_cidrs must list at least one address range such as 203.0.113.5/32. Remove the setting to keep the endpoint open to all addresses."
+  }
+}
