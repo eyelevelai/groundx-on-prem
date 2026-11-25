@@ -174,11 +174,11 @@ aws eks update-cluster-config --region REGION --name CLUSTER_NAME \
 aws eks describe-update --region REGION --name CLUSTER_NAME --update-id UPDATE_ID
 ```
 
-Use your current public address in place of `203.0.113.5/32`. The first
-command takes one range only: if you put several ranges inside those quotes,
-separated by commas, the AWS CLI sends them as one value, which is not a valid
-range. To keep access for several ranges, use the JSON form of the same option
-([AWS CLI shorthand syntax](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-shorthand.html))
+Use the first command for a single range, with your current public address in
+place of `203.0.113.5/32`. To keep access for other ranges as well, use the
+JSON form of the same option exactly as shown, single quotes included, which
+sends each range separately
+([AWS CLI shorthand syntax](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-shorthand.html)),
 and list every range that should keep access:
 
 ```bash
