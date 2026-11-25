@@ -118,10 +118,15 @@ pod's requests only when all of these are true:
      name: s3-sqs-worker
    ```
 
-3. For S3, `username` and `password` under `file` in your GroundX Helm values
-   are left unset. If they are set, GroundX is given those keys, and requests
-   made with them are limited by the keys' own AWS permissions, not by these
-   settings.
+3. GroundX is given no static AWS keys. In your GroundX Helm values, leave
+   `username` and `password` unset in the `file` section and in the `file`
+   section inside `extract`. Put no AWS key variables, such as
+   `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, in the Kubernetes Secrets
+   the GroundX pods load: the Secrets listed under `secrets` in the `cluster`
+   section and, when file access is on, the Secret named by
+   `storageCredentialsSecretName` in the `fileAccess` section. If GroundX is
+   given keys, requests made with them are limited by the keys' own AWS
+   permissions, not by these settings.
 
 These read-only commands show the annotation and which service account each
 GroundX pod runs as:

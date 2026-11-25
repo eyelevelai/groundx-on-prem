@@ -342,12 +342,26 @@ variable "app_irsa_s3_buckets" {
   description = "Optional S3 bucket names the GroundX application role may use. Not set keeps access to every bucket; an empty list grants no S3 access."
   type        = list(string)
   default     = null
+
+  validation {
+    condition = var.app_irsa_s3_buckets == null ? true : alltrue([
+      for name in var.app_irsa_s3_buckets : can(regex("^[A-Za-z0-9._-]+$", name))
+    ])
+    error_message = "app_irsa_s3_buckets must list bucket names only, using letters, digits, dots, underscores and hyphens, for example groundx-files. Remove the setting to keep access to every bucket, or use an empty list for no S3 access."
+  }
 }
 
 variable "app_irsa_sqs_queues" {
   description = "Optional SQS queue names, in this install's account and region, the GroundX application role may use. Not set keeps access to every queue; an empty list grants no SQS access."
   type        = list(string)
   default     = null
+
+  validation {
+    condition = var.app_irsa_sqs_queues == null ? true : alltrue([
+      for name in var.app_irsa_sqs_queues : can(regex("^[A-Za-z0-9._-]+$", name))
+    ])
+    error_message = "app_irsa_sqs_queues must list queue names only, using letters, digits, dots, underscores and hyphens, for example file-process. Remove the setting to keep access to every queue, or use an empty list for no SQS access."
+  }
 }
 
 variable "cluster_endpoint_public_access_cidrs" {

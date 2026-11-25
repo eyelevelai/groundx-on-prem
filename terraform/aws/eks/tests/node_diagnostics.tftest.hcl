@@ -443,3 +443,27 @@ run "bare_address_without_a_range_is_rejected" {
 
   expect_failures = [var.cluster_endpoint_public_access_cidrs]
 }
+
+run "wildcard_bucket_name_is_rejected" {
+  command = plan
+
+  variables {
+    app_irsa_s3_buckets                  = ["groundx-files", "*"]
+    app_irsa_sqs_queues                  = null
+    cluster_endpoint_public_access_cidrs = null
+  }
+
+  expect_failures = [var.app_irsa_s3_buckets]
+}
+
+run "wildcard_queue_name_is_rejected" {
+  command = plan
+
+  variables {
+    app_irsa_s3_buckets                  = null
+    app_irsa_sqs_queues                  = ["file-process", "*"]
+    cluster_endpoint_public_access_cidrs = null
+  }
+
+  expect_failures = [var.app_irsa_sqs_queues]
+}
