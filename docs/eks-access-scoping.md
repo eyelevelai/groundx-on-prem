@@ -174,9 +174,19 @@ aws eks update-cluster-config --region REGION --name CLUSTER_NAME \
 aws eks describe-update --region REGION --name CLUSTER_NAME --update-id UPDATE_ID
 ```
 
-Use your current public address in place of `203.0.113.5/32`, and add every
-other range that should keep access. The update is done when `describe-update`
-shows the status `Successful`.
+Use your current public address in place of `203.0.113.5/32`. The first
+command takes one range only: if you put several ranges inside those quotes,
+separated by commas, the AWS CLI sends them as one value, which is not a valid
+range. To keep access for several ranges, use the JSON form of the same option
+([AWS CLI shorthand syntax](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-shorthand.html))
+and list every range that should keep access:
+
+```bash
+aws eks update-cluster-config --region REGION --name CLUSTER_NAME \
+  --resources-vpc-config '{"endpointPublicAccess":true,"publicAccessCidrs":["203.0.113.5/32","198.51.100.0/24"],"endpointPrivateAccess":true}'
+```
+
+The update is done when `describe-update` shows the status `Successful`.
 
 Then put the same list in `cluster_endpoint_public_access_cidrs` in
 `terraform/aws/env.tfvars` and run `terraform -chdir=terraform/aws/eks plan`.

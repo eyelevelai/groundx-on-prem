@@ -326,7 +326,7 @@ run "empty_s3_with_named_queues_has_no_s3_statement" {
 
   variables {
     app_irsa_s3_buckets                  = []
-    app_irsa_sqs_queues                  = ["file-process"]
+    app_irsa_sqs_queues                  = ["file-process", "jobs.fifo"]
     cluster_endpoint_public_access_cidrs = null
   }
 
@@ -335,10 +335,10 @@ run "empty_s3_with_named_queues_has_no_s3_statement" {
       {
         sid       = "SqsQueues"
         actions   = ["sqs:SendMessage", "sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:ChangeMessageVisibility", "sqs:GetQueueAttributes", "sqs:GetQueueUrl"]
-        resources = ["arn:aws:sqs:us-west-2:123456789012:file-process"]
+        resources = ["arn:aws:sqs:us-west-2:123456789012:file-process", "arn:aws:sqs:us-west-2:123456789012:jobs.fifo"]
       },
     ])
-    error_message = "An empty S3 list must remove every S3 statement and leave only the named queue."
+    error_message = "An empty S3 list must remove every S3 statement and leave only the named queues."
   }
 }
 
