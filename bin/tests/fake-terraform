@@ -4,6 +4,35 @@ set -euo pipefail
 
 printf '%s\n' "$*" >> "$FAKE_TERRAFORM_LOG"
 
+if [[ "${FAKE_SCENARIO:-}" == "setup_eks" && "$1" == "-chdir="* ]]; then
+  dir="${1#-chdir=}"
+  case "${2:-}" in
+    init|apply)
+      exit 0
+      ;;
+    plan)
+      count=$(find "$FAKE_TFVARS_SNAPSHOTS" -type f | wc -l | tr -d ' ')
+      cp "$dir/../env.tfvars" "$FAKE_TFVARS_SNAPSHOTS/$(printf '%02d' $((count + 1)))-$(basename "$dir").tfvars"
+      exit 0
+      ;;
+    show)
+      printf '%s' '{"format_version":"1.0"}'
+      exit 0
+      ;;
+    output)
+      case "${3:-} ${4:-}" in
+        "-raw vpc_id") printf 'vpc-0test'; exit 0 ;;
+        "-json subnets") printf '["subnet-0test"]'; exit 0 ;;
+        "-raw ssh_security_group") printf 'sg-0test'; exit 0 ;;
+        "-raw storage_driver") printf 'ebs'; exit 0 ;;
+        "-raw storage_class_name") printf 'eyelevel-pv'; exit 0 ;;
+        "-raw storage_access_mode") printf 'ReadWriteOnce'; exit 0 ;;
+        "-raw efs_file_system_id") exit 0 ;;
+      esac
+      ;;
+  esac
+fi
+
 if [[ "$1" == "-chdir="* && "$2" == "show" && "$3" == "-json" ]]; then
   case "$FAKE_SCENARIO" in
     existing_cluster|existing_cluster_lookup_fails)

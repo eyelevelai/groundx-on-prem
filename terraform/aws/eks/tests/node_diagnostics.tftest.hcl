@@ -30,6 +30,20 @@ override_data {
   }
 }
 
+override_data {
+  target = data.aws_partition.current
+  values = {
+    partition = "aws"
+  }
+}
+
+override_data {
+  target = data.aws_caller_identity.current
+  values = {
+    account_id = "123456789012"
+  }
+}
+
 override_module {
   target = module.eyelevel_eks
   outputs = {
@@ -241,4 +255,191 @@ run "cloudwatch_cost_settings_apply_without_dns_collection" {
     condition     = keys(local.cloudwatch_configuration.agents[0].config.logs.metrics_collected) == ["kubernetes"] && !contains(keys(local.cloudwatch_configuration.agents[0].config), "traces") && !contains(keys(local.cloudwatch_configuration.agents[0].config), "metrics")
     error_message = "CloudWatch agent config must not contain Application Signals collection."
   }
+}
+
+run "access_settings_absent_keep_full_access" {
+  command = plan
+
+  variables {
+    app_irsa_s3_buckets                  = null
+    app_irsa_sqs_queues                  = null
+    cluster_endpoint_public_access_cidrs = null
+  }
+
+  assert {
+    condition = jsonencode(local.app_irsa_statements) == jsonencode([
+      { sid = "FullS3", actions = ["s3:*"], resources = ["*"] },
+      { sid = "FullSqs", actions = ["sqs:*"], resources = ["*"] },
+    ])
+    error_message = "Absent S3 and SQS settings must keep the FullS3 then FullSqs statements on every resource."
+  }
+
+  assert {
+    condition     = length(aws_iam_policy.s3_sqs_admin) == 1 && length(aws_iam_role_policy_attachment.attach_admin) == 1
+    error_message = "Absent settings must keep exactly one S3/SQS policy and one attachment."
+  }
+
+  assert {
+    condition     = jsonencode(local.cluster_endpoint_public_access_cidrs) == jsonencode(["0.0.0.0/0"])
+    error_message = "An absent range setting must pass the EKS module its own default of 0.0.0.0/0."
+  }
+}
+
+run "named_buckets_and_queues_are_scoped" {
+  command = plan
+
+  variables {
+    app_irsa_s3_buckets                  = ["groundx-files", "extract-bucket"]
+    app_irsa_sqs_queues                  = ["file-process"]
+    cluster_endpoint_public_access_cidrs = null
+  }
+
+  assert {
+    condition = jsonencode(local.app_irsa_statements) == jsonencode([
+      {
+        sid       = "S3Buckets"
+        actions   = ["s3:ListBucket", "s3:GetBucketLocation"]
+        resources = ["arn:aws:s3:::groundx-files", "arn:aws:s3:::extract-bucket"]
+      },
+      {
+        sid       = "S3Objects"
+        actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:PutObjectTagging", "s3:AbortMultipartUpload"]
+        resources = ["arn:aws:s3:::groundx-files/*", "arn:aws:s3:::extract-bucket/*"]
+      },
+      {
+        sid       = "SqsQueues"
+        actions   = ["sqs:SendMessage", "sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:ChangeMessageVisibility", "sqs:GetQueueAttributes", "sqs:GetQueueUrl"]
+        resources = ["arn:aws:sqs:us-west-2:123456789012:file-process"]
+      },
+    ])
+    error_message = "Named buckets and queues must get only their own bucket, object and queue ARNs, never *."
+  }
+
+  assert {
+    condition     = length(aws_iam_policy.s3_sqs_admin) == 1 && length(aws_iam_role_policy_attachment.attach_admin) == 1
+    error_message = "Named settings must keep exactly one S3/SQS policy and one attachment."
+  }
+}
+
+run "empty_s3_with_named_queues_has_no_s3_statement" {
+  command = plan
+
+  variables {
+    app_irsa_s3_buckets                  = []
+    app_irsa_sqs_queues                  = ["file-process"]
+    cluster_endpoint_public_access_cidrs = null
+  }
+
+  assert {
+    condition = jsonencode(local.app_irsa_statements) == jsonencode([
+      {
+        sid       = "SqsQueues"
+        actions   = ["sqs:SendMessage", "sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:ChangeMessageVisibility", "sqs:GetQueueAttributes", "sqs:GetQueueUrl"]
+        resources = ["arn:aws:sqs:us-west-2:123456789012:file-process"]
+      },
+    ])
+    error_message = "An empty S3 list must remove every S3 statement and leave only the named queue."
+  }
+}
+
+run "empty_sqs_with_named_buckets_has_no_sqs_statement" {
+  command = plan
+
+  variables {
+    app_irsa_s3_buckets                  = ["groundx-files"]
+    app_irsa_sqs_queues                  = []
+    cluster_endpoint_public_access_cidrs = null
+  }
+
+  assert {
+    condition = jsonencode(local.app_irsa_statements) == jsonencode([
+      {
+        sid       = "S3Buckets"
+        actions   = ["s3:ListBucket", "s3:GetBucketLocation"]
+        resources = ["arn:aws:s3:::groundx-files"]
+      },
+      {
+        sid       = "S3Objects"
+        actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:PutObjectTagging", "s3:AbortMultipartUpload"]
+        resources = ["arn:aws:s3:::groundx-files/*"]
+      },
+    ])
+    error_message = "An empty SQS list must remove every SQS statement and leave only the named bucket."
+  }
+}
+
+run "empty_s3_keeps_absent_sqs_at_full_access" {
+  command = plan
+
+  variables {
+    app_irsa_s3_buckets                  = []
+    app_irsa_sqs_queues                  = null
+    cluster_endpoint_public_access_cidrs = null
+  }
+
+  assert {
+    condition = jsonencode(local.app_irsa_statements) == jsonencode([
+      { sid = "FullSqs", actions = ["sqs:*"], resources = ["*"] },
+    ])
+    error_message = "S3 and SQS must be decided independently: an empty S3 list must not change absent SQS access."
+  }
+}
+
+run "both_lists_empty_attach_no_policy_and_keep_the_role" {
+  command = plan
+
+  variables {
+    app_irsa_s3_buckets                  = []
+    app_irsa_sqs_queues                  = []
+    cluster_endpoint_public_access_cidrs = null
+  }
+
+  assert {
+    condition     = length(aws_iam_policy.s3_sqs_admin) == 0 && length(aws_iam_role_policy_attachment.attach_admin) == 0 && length(data.aws_iam_policy_document.s3_sqs_admin) == 0
+    error_message = "Both lists empty must plan no S3/SQS policy document, policy or attachment."
+  }
+
+  assert {
+    condition     = aws_iam_role.app_irsa.name == "eyelevel-s3-sqs-worker-irsa"
+    error_message = "Both lists empty must keep the application role."
+  }
+}
+
+run "named_ranges_reach_the_endpoint_input" {
+  command = plan
+
+  variables {
+    app_irsa_s3_buckets                  = null
+    app_irsa_sqs_queues                  = null
+    cluster_endpoint_public_access_cidrs = ["203.0.113.5/32", "198.51.100.0/24"]
+  }
+
+  assert {
+    condition     = jsonencode(local.cluster_endpoint_public_access_cidrs) == jsonencode(["203.0.113.5/32", "198.51.100.0/24"])
+    error_message = "Named ranges must be passed to the EKS module unchanged."
+  }
+}
+
+run "empty_range_list_is_rejected" {
+  command = plan
+
+  variables {
+    app_irsa_s3_buckets                  = null
+    app_irsa_sqs_queues                  = null
+    cluster_endpoint_public_access_cidrs = []
+  }
+
+  expect_failures = [var.cluster_endpoint_public_access_cidrs]
+}
+
+run "bare_address_without_a_range_is_rejected" {
+  command = plan
+
+  variables {
+    app_irsa_s3_buckets                  = null
+    app_irsa_sqs_queues                  = null
+    cluster_endpoint_public_access_cidrs = ["203.0.113.5"]
+  }
+
+  expect_failures = [var.cluster_endpoint_public_access_cidrs]
 }
