@@ -54,5 +54,6 @@ Each run uses the AWS profile the requester approved for read-only plans, a scra
 
 - [ ] 5.1 Pass the repository gate on push
   check: n/a — the pre-push gate runs `.build/bin/validate-helm.sh` itself (including `verify_setup_eks` on the changed `setup-eks`); a task check must not execute it in this privileged repo
+  deferred: open at archive (2026-11-25, requester approved). Owner: the hand-off push of this branch. Due: before the pull request is opened; the pre-push gate result is recorded in the workspace review record.
 
 Rollout and manual operations: no secrets or chart values change. After review, the on-cluster check in design decision 8 runs on a throwaway cluster built from this branch, with the requester's explicit authorization for each AWS-changing step; the validation EKS cluster is not used. See workspace `openspec/changes/gx-184-new-groundx-installs-on-aws-can-use/tasks.md` for cross-service coordination and deferred items.
