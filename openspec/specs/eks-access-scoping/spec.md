@@ -56,6 +56,22 @@ No S3 statement SHALL name the resource `*`.
 - **THEN** the S3 statements are `S3Buckets` on `arn:aws:s3:::groundx-files` and `arn:aws:s3:::extract-bucket`, and `S3Objects` on `arn:aws:s3:::groundx-files/*` and `arn:aws:s3:::extract-bucket/*`
 - **AND** no statement has the resource `*` and no statement has Sid `FullS3`
 
+The variable's validation SHALL reject any entry that uses a character other than letters, digits, `.`, `_` and `-` (each entry must match `^[A-Za-z0-9._-]+$`), and SHALL be written as a conditional expression (`null ? true : ...`) so `null` passes on Terraform 1.9.8. An empty list passes.
+
+Invariant: a bucket entry reaches the policy only when it uses those characters alone; an absent setting or an empty list is never rejected.
+
+#### Scenario: Wildcard bucket entry is rejected (catches)
+
+- **GIVEN** `app_irsa_s3_buckets = ["groundx-files", "*"]`
+- **WHEN** Terraform plans the cluster folder
+- **THEN** the plan fails on this variable's validation and no resource is planned
+
+#### Scenario: Absent, empty and plain bucket names are not rejected (must not block)
+
+- **GIVEN** `app_irsa_s3_buckets` is `null`, or `[]`, or `["groundx-files"]`
+- **WHEN** Terraform plans the cluster folder
+- **THEN** this variable's validation passes
+
 ### Requirement: Named queues get only the queue operations GroundX uses
 
 When `app_irsa_sqs_queues` lists names, the policy SHALL contain, in place of `FullSqs`, a statement with Sid `SqsQueues` allowing `sqs:SendMessage`, `sqs:ReceiveMessage`, `sqs:DeleteMessage`, `sqs:ChangeMessageVisibility`, `sqs:GetQueueAttributes` and `sqs:GetQueueUrl` on `arn:<partition>:sqs:<environment.region>:<account id>:<queue>` for each named queue, where the partition and account id come from the AWS credentials Terraform runs with.
@@ -66,6 +82,22 @@ When `app_irsa_sqs_queues` lists names, the policy SHALL contain, in place of `F
 - **WHEN** Terraform plans the cluster folder
 - **THEN** the SQS statement is `SqsQueues` on `arn:aws:sqs:us-west-2:123456789012:file-process` only
 - **AND** no statement has Sid `FullSqs` and no SQS statement has the resource `*`
+
+The variable's validation SHALL reject any entry that uses a character other than letters, digits, `.`, `_` and `-` (each entry must match `^[A-Za-z0-9._-]+$`), and SHALL be written as a conditional expression (`null ? true : ...`) so `null` passes on Terraform 1.9.8. An empty list passes.
+
+Invariant: a queue entry reaches the policy only when it uses those characters alone; an absent setting or an empty list is never rejected.
+
+#### Scenario: Wildcard queue entry is rejected (catches)
+
+- **GIVEN** `app_irsa_sqs_queues = ["file-process", "*"]`
+- **WHEN** Terraform plans the cluster folder
+- **THEN** the plan fails on this variable's validation and no resource is planned
+
+#### Scenario: Absent, empty and plain queue names are not rejected (must not block)
+
+- **GIVEN** `app_irsa_sqs_queues` is `null`, or `[]`, or `["file-process", "jobs.fifo"]`
+- **WHEN** Terraform plans the cluster folder
+- **THEN** this variable's validation passes
 
 ### Requirement: An empty list grants no access for that service, independently
 
