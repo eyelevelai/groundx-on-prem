@@ -91,18 +91,47 @@ rewrites the whole `env.tfvars` file.
 
 ## Service account
 
-GroundX pods use the AWS role through the `eyelevel:s3-sqs-worker` service
-account, whose `eks.amazonaws.com/role-arn` annotation must name this install's
-role
-([IAM roles for service accounts](https://docs.aws.amazon.com/eks/latest/userguide/associate-service-account-role.html)).
-The `rolearn` value in `src/groundx/prereqs/serviceaccount/values.yaml` is an
-example, not your install's role; replace it with your role's ARN:
+The S3 and SQS settings limit only GroundX pods that use this install's AWS
+role. The role trusts only the `eyelevel:s3-sqs-worker` service account
+(`s3-sqs-worker` in the `eyelevel` namespace). The settings limit a GroundX
+pod's requests only when all of these are true:
+
+1. That service account exists and its `eks.amazonaws.com/role-arn` annotation
+   names this install's role
+   ([IAM roles for service accounts](https://docs.aws.amazon.com/eks/latest/userguide/associate-service-account-role.html)).
+   Install the chart in `src/groundx/prereqs/serviceaccount` with `rolearn` set
+   to your role's ARN. The value in its `values.yaml` is an example, not your
+   install's role. This prints your role's ARN
+   ([get-role](https://docs.aws.amazon.com/cli/latest/reference/iam/get-role.html)):
+
+   ```bash
+   aws iam get-role --role-name eyelevel-s3-sqs-worker-irsa --query Role.Arn --output text
+   ```
+
+2. Your GroundX Helm values name that service account. The GroundX chart sets
+   no service account name unless you give one, and the example
+   `src/groundx/values/values.aws.services.yaml` names `existing-service-account`.
+   Set:
+
+   ```yaml
+   serviceAccount:
+     name: s3-sqs-worker
+   ```
+
+3. For S3, `username` and `password` under `file` in your GroundX Helm values
+   are left unset. If they are set, GroundX is given those keys, and requests
+   made with them are limited by the keys' own AWS permissions, not by these
+   settings.
+
+These read-only commands show the annotation and which service account each
+GroundX pod runs as:
 
 ```bash
-aws iam get-role --role-name eyelevel-s3-sqs-worker-irsa --query Role.Arn --output text
+kubectl -n eyelevel get serviceaccount s3-sqs-worker \
+  -o jsonpath='{.metadata.annotations.eks\.amazonaws\.com/role-arn}'
+kubectl -n eyelevel get pods \
+  -o custom-columns=POD:.metadata.name,SERVICE_ACCOUNT:.spec.serviceAccountName
 ```
-
-([get-role](https://docs.aws.amazon.com/cli/latest/reference/iam/get-role.html))
 
 ## After apply
 

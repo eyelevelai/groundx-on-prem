@@ -292,3 +292,9 @@ No ADR: each decision is reversible per install and is recorded here and in the 
 - `prompt_input` loops forever at end of input (`cli-input:49-71`), and its second `$?` test (`:64`) reads the previous test's status, so the `err_msg_n` message is never shown.
 - `terraform/groundx-operator/README.md:297` points to `environment/aws/setup-eks`, which does not exist.
 - `openspec/config.yaml` `context` describes the Terraform path as not used for new installs and says no Terraform CI workflow exists; both disagree with `AGENTS.md`, the README Terraform section and `helm-tests.yml:35-40`.
+
+## Amendments
+
+### 2026-11-25: service-account conditions in the operator doc (review fix round 1)
+
+Decision 9 listed the service account carrying this install's role ARN as the doc's only service-account content. Review found that this read as if every GroundX pod uses the role. `docs/eks-access-scoping.md` now states the conditions under which the S3 and SQS settings limit a pod: the role trusts only `eyelevel:s3-sqs-worker` (`terraform/aws/eks/irsa.tf:14-18`); the `src/groundx/prereqs/serviceaccount` chart is installed with this install's role ARN; the GroundX values name that service account, because the chart's service account name defaults to empty (`src/groundx/templates/_helpers/main.tpl:207-210`) and `src/groundx/values/values.aws.services.yaml:13-14` names `existing-service-account`; and the S3 `username` and `password` file values are left unset, because the chart passes them to GroundX as static keys (`src/groundx/templates/resources/config-yaml.yaml:716-723`). Two read-only `kubectl` commands show the annotation and each pod's service account. The same round removed the pre-existing `irsa.tf` comment that called the policy a broad admin policy; no decision here referred to it.

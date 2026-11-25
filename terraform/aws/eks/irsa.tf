@@ -67,7 +67,6 @@ locals {
   app_irsa_policy_count = length(local.app_irsa_statements) > 0 ? 1 : 0
 }
 
-# Broad admin policy for S3 and SQS (Option 2)
 data "aws_iam_policy_document" "s3_sqs_admin" {
   count = local.app_irsa_policy_count
 
