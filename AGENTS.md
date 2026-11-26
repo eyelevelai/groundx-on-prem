@@ -155,7 +155,8 @@ without explicit human authorization.**
   `config.py`/`gunicorn_conf.py`/`supervisord.conf` forces a rollout.
 - **`existing: {}` swap-out:** every backing service (`cache`, `db`, `file`, `search`, `stream`) is
   either deployed by the chart or attached to external infra via its `existing:` block; of these, only
-  `file` also takes a `serviceType`. AWS SQS replaces Kafka per queue with `stream.topics.<name>.type: sqs`.
+  `file` also takes a `serviceType`. The exception is AWS SQS, which uses neither: it replaces Kafka
+  per queue with `stream.topics.<name>.type: sqs`.
 - **Neo4j (`graph`)** is wired in legacy `bin/`/Terraform but absent from the current `src/groundx`
   chart — treat as legacy-Terraform-only / likely dead in the Helm path (unconfirmed).
 - The strict deployment contract is **`src/groundx/values.schema.json`** (1693 lines,
