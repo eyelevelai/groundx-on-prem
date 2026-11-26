@@ -4,9 +4,9 @@ Summary-inference gains a file lock on its model volume (`initializing.flock`) t
 
 ## What Changes
 
-- Add a few sentences to `docs/upgrades.md`, next to the existing summary `updateStrategy: Recreate` and scale-to-zero guidance:
+- Add a few sentences to `docs/upgrades.md` (the overlap note next to the summary `updateStrategy: Recreate` guidance; the file-lock note under "Persistent storage", as amended in design.md "## Amendments"):
   - During the upgrade that introduces the lock, an old pod that restarts while old and new pods overlap can load its model alongside a new pod. Setting `summary.inference.updateStrategy: Recreate`, or scaling summary-inference to zero before upgrading, removes the overlap.
-  - Summary-inference now needs file-lock support on its model volume. It was tested on EFS only. On storage that rejects locks the worker logs the lock error (`model load failed; exiting worker`) and restarts, so summary does not come up. Remedy: use a storage class with lock support, or roll the chart back.
+  - Summary-inference now needs file-lock support on its model volume. It was tested on EFS only. On storage that rejects locks the worker logs `model load failed; exiting worker` with an `fcntl.flock` traceback on `initializing.flock` and restarts, so summary does not come up (the log line alone does not identify the lock failure; the traceback does). Remedy: use a storage class with lock support, or roll the chart back.
 - No new procedure section. No chart, template, values, or snapshot change.
 
 ## Capabilities
