@@ -698,11 +698,12 @@ If you wish to use an existing Kafka cluster, you must configure the `stream.exi
 
 #### Using AWS SQS
 
-To use existing AWS SQS queues, give each queue under `stream.topics` in your `values.yaml` `type: sqs` and the queue's URL in `url`, and set `stream.enabled` to `false` so the chart creates no Kafka topics. `src/groundx/values/values.aws.services.yaml` shows the five queues GroundX uses:
+To use existing AWS SQS queues, give each queue under `stream.topics` in your `values.yaml` `type: sqs` and the queue's URL in `url`, set `stream.region` to the queues' AWS region (a topic can set its own `region`), and set `stream.enabled` to `false` so GroundX does not wait at startup for an in-cluster Kafka that an SQS install does not run. `src/groundx/values/values.aws.services.yaml` shows the five queues GroundX uses:
 
 ```yaml
 stream:
   enabled: false
+  region: us-east-2
   topics:
     preProcess:
       type: sqs
@@ -720,6 +721,8 @@ stream:
       type: sqs
       url: https://sqs.us-east-2.amazonaws.com/111122223333/file-upload
 ```
+
+The optional post-processing and large-file delivery workers each use one more queue, and their topics default to Kafka. When you turn on `postProcess.enabled` or `largeFileDeliver.enabled`, also give `stream.topics.postProcess` or `stream.topics.largeFile` `type: sqs` and its `url` (they use `stream.region` unless they set their own `region`), as [optional post-processing](docs/agents/post-processing.md) and [large file delivery](docs/agents/large-file-delivery.md) describe.
 
 If the cluster was set up with `setup-eks`, list every queue in `app_irsa_sqs_queues` in `terraform/aws/env.tfvars`; a queue's name is the last part of its `url`, for example `file-process` (see [EKS Access Scoping](docs/eks-access-scoping.md)).
 

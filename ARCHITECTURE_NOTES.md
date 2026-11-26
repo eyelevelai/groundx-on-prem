@@ -119,7 +119,8 @@ groundx (main API/LB)  → OpenSearch hybrid query → ranker-api → ranker-inf
    not in the workload YAML.** To understand any pod you must read its `.settings` helper.
 2. **Service abstraction with `existing: {}` swap-out.** Every backing service (`cache`, `db`,
    `file`, `search`, `stream`) is either deployed by the chart or attached to external infra by
-   setting `existing:` + `serviceType` (e.g. `file.serviceType: s3`, `stream.serviceType: sqs`).
+   setting `existing:` + `serviceType` (e.g. `file.serviceType: s3`). `stream` has no `serviceType`: AWS SQS
+   is set per queue with `stream.topics.<name>.type: sqs` and `url`, plus `stream.enabled: false`.
 3. **Config-hash restart pattern.** Deployments annotate `config-hash: {{ ...sha256sum }}` of their
    ConfigMaps, so editing `config.py`/`gunicorn_conf.py`/`supervisord.conf` forces a rollout.
 4. **Throughput-driven HPA.** Autoscaling = pipeline-throughput estimate (`throughput.tpm`) +
@@ -160,7 +161,7 @@ groundx (main API/LB)  → OpenSearch hybrid query → ranker-api → ranker-inf
 | **Azure OpenAI** (`*.openai.azure.com`) | same as above, `serviceType: azure` | Configurable | `apiKey` | Same as OpenAI, Azure-hosted. |
 | **Google Sheets / Drive** | `extract.save.driveId`, `extract.save.templateId`, `extract.save.gcpCredentials` | Configurable; off unless `extract.save` enabled + creds set | GCP service-account JSON (`gcpCredentials`) → secret | **`extract.save` pod can write extraction results to a Google Sheet.** Verified in Phase 3 (see §13). |
 | **AWS S3** (`*.s3.*.amazonaws.com`) | `file.existing` + `file.serviceType: s3` | Configurable | AWS creds / IRSA | Object storage backend (instead of MinIO AIStor or S4). |
-| **AWS SQS** (`sqs.*.amazonaws.com`) | `stream.existing`/`stream.topics` + `serviceType: sqs` | Configurable | AWS creds / IRSA | Pipeline queues (replaces Kafka). |
+| **AWS SQS** (`sqs.*.amazonaws.com`) | `stream.topics.<name>` with `type: sqs` and `url`, `stream.region`, `stream.enabled: false` | Configurable | AWS creds / IRSA | Pipeline queues (replaces Kafka). |
 | **AWS RDS / ElastiCache** (`*.rds`, `*.cache.amazonaws.com`) | `db.existing`, `cache.existing` | Configurable | user/pass | External MySQL / Redis. |
 | Helm repos: nvidia (ngc), percona, MinIO AIStor (`helm.min.io`), strimzi (quay), opensearch, prometheus-community, neo4j; S4 chart from its git tag; RedisLabs GitHub releases | README + values overlays | Hardcoded in docs/commands | none | **Install-time** dependency charts/operators. |
 | `eyelevel.ai`, `dashboard.eyelevel.ai/xray`, `documentation.groundx.ai`, YouTube | README only | n/a | n/a | **Docs/marketing only** — no runtime call. |
