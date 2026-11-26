@@ -521,6 +521,8 @@ If you wish to use an existing MinIO or AIStor cluster, you must configure the `
 
 If you wish to use an existing AWS S3 bucket, you must configure the `file.existing` parameters in your `values.yaml` **and** set `file.serviceType` to `s3`.
 
+If the cluster was set up with `setup-eks`, list the bucket in `app_irsa_s3_buckets` in `terraform/aws/env.tfvars` (see [EKS Access Scoping](docs/eks-access-scoping.md)).
+
 #### Using S4
 
 [S4](https://github.com/rh-aiservices-bu/s4) is an experimental, single-replica S3-compatible store for small installs, with no high availability. Use [AIStor](#deploying-a-dedicated-aistor-object-store) for production. S4 requires GroundX chart 0.2.8 or later with its default images; older images can send files to AWS S3 or fail extraction.
@@ -696,7 +698,33 @@ If you wish to use an existing Kafka cluster, you must configure the `stream.exi
 
 #### Using AWS SQS
 
-If you wish to use existing AWS SQS queues, you must configure the `stream.existing` parameters in your `values.yaml` **and** set `stream.serviceType` to `sqs`.
+To use existing AWS SQS queues, give each queue under `stream.topics` in your `values.yaml` `type: sqs` and the queue's URL in `url`, set `stream.region` to the queues' AWS region (a topic can set its own `region`), and set `stream.enabled` to `false` so GroundX does not wait at startup for an in-cluster Kafka that an SQS install does not run. `src/groundx/values/values.aws.services.yaml` shows the five queues GroundX uses:
+
+```yaml
+stream:
+  enabled: false
+  region: us-east-2
+  topics:
+    preProcess:
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/111122223333/file-pre-process
+    process:
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/111122223333/file-process
+    summary:
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/111122223333/file-summary
+    update:
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/111122223333/file-update
+    upload:
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/111122223333/file-upload
+```
+
+The optional post-processing and large-file delivery workers each use one more queue, and their topics default to Kafka. When you turn on `postProcess.enabled` or `largeFileDeliver.enabled`, also give `stream.topics.postProcess` or `stream.topics.largeFile` `type: sqs` and its `url` (they use `stream.region` unless they set their own `region`), as [optional post-processing](docs/agents/post-processing.md) and [large file delivery](docs/agents/large-file-delivery.md) describe.
+
+If the cluster was set up with `setup-eks`, list every queue in `app_irsa_sqs_queues` in `terraform/aws/env.tfvars`; a queue's name is the last part of its `url`, for example `file-process` (see [EKS Access Scoping](docs/eks-access-scoping.md)).
 
 #### Deploying a Dedicated Kafka Cluster
 
@@ -1051,6 +1079,15 @@ CPU-only nodes default to gp3 disks and one unavailable node per update. CloudWa
 
 AWS EKS deployments managed by the bundled Terraform (new or existing) can enable default-off
 diagnostics with one setting. See [EKS Node Diagnostics](docs/eks-node-diagnostics.md).
+
+## Limiting AWS access for EKS installs
+
+Three optional settings in `terraform/aws/env.tfvars` limit AWS access. `app_irsa_s3_buckets` and
+`app_irsa_sqs_queues` limit the AWS role GroundX pods use to the named S3 buckets and SQS queues.
+`cluster_endpoint_public_access_cidrs` limits which addresses can reach the cluster's control API
+over its public endpoint; nodes, pods and anything inside the cluster's VPC keep using the private
+endpoint, which these settings do not change. `setup-eks` asks for them on a new install. Direct Terraform runs, including `bin/environment eks`, keep today's access
+until you add them. See [EKS Access Scoping](docs/eks-access-scoping.md).
 
 ## EKS Cluster Version Configuration
 

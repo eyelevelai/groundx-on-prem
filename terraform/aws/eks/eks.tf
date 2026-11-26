@@ -1,6 +1,7 @@
 locals {
   should_create                   = var.environment.vpc_id != "" && length(var.environment.subnets) > 0
   eks_kms_source_policy_documents = var.eks_kms_source_policy_documents
+  cluster_endpoint_public_access_cidrs = var.cluster_endpoint_public_access_cidrs == null ? ["0.0.0.0/0"] : var.cluster_endpoint_public_access_cidrs
 
   cloudwatch_configuration = {
     manager = {
@@ -474,6 +475,7 @@ module "eyelevel_eks" {
 
   cluster_endpoint_private_access          = true
   cluster_endpoint_public_access           = true
+  cluster_endpoint_public_access_cidrs     = local.cluster_endpoint_public_access_cidrs
   enable_cluster_creator_admin_permissions = true
   subnet_ids                               = var.environment.subnets
   vpc_id                                   = var.environment.vpc_id

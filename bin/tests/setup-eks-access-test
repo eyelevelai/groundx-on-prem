@@ -1,0 +1,172 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)
+WATCHDOG_SECONDS="${SETUP_EKS_TEST_TIMEOUT:-30}"
+CHANGE_LIST_HEADER="This folder already has an env.tfvars file"
+COMPLETE_LINE="VPC and Cluster setup complete"
+
+fail() {
+  echo "FAIL: $*" >&2
+  exit 1
+}
+
+command -v jq >/dev/null 2>&1 || fail "jq is required on PATH"
+
+TEST_ROOT=$(cd "$(mktemp -d)" && pwd -P)
+trap 'rm -rf "$TEST_ROOT"' EXIT
+
+build_tree() {
+  local tree="$1"
+  mkdir -p "$tree/terraform/aws/eks" "$tree/terraform/aws/vpc" "$tree/src/groundx/prereqs/storageclass" "$tree/fakebin" "$tree/snapshots"
+  cp -R "$ROOT_DIR/bin" "$tree/bin"
+  cp "$ROOT_DIR/terraform/aws/setup-eks" "$ROOT_DIR/terraform/aws/env.tfvars.example" "$tree/terraform/aws/"
+  cp "$ROOT_DIR/bin/tests/fake-terraform" "$tree/fakebin/terraform"
+  cp "$ROOT_DIR/bin/tests/fake-aws" "$tree/fakebin/aws"
+  chmod +x "$tree/fakebin/terraform" "$tree/fakebin/aws"
+}
+
+write_existing_tfvars() {
+  cat >"$1/terraform/aws/env.tfvars" <<'EOF'
+environment = {
+  cluster_role_arns = []
+  region = "us-west-2"
+  security_groups = ["sg-0existing"]
+  ssh_key_name = ""
+  stage = "prod"
+  subnets = ["subnet-0existing"]
+  vpc_id = "vpc-0existing"
+}
+
+environment_internal = {
+  eks_version = "1.31"
+}
+
+storage = {
+  driver = "efs"
+}
+EOF
+}
+
+run_setup_eks() {
+  local tree="$1" answers="$2"
+  local name script_dir resolved pid watchdog status
+  name=$(basename "$tree")
+  script_dir=$(cd "$tree/terraform/aws" && pwd -P)
+  [[ "$script_dir" == "$TEST_ROOT"/* ]] || fail "$name: the setup-eks under test is not inside the test's temp root"
+  resolved=$(PATH="$tree/fakebin:$PATH" command -v terraform)
+  [[ "$resolved" == "$tree/fakebin/terraform" ]] || fail "$name: terraform resolves to [$resolved], not the fake"
+  resolved=$(PATH="$tree/fakebin:$PATH" command -v aws)
+  [[ "$resolved" == "$tree/fakebin/aws" ]] || fail "$name: aws resolves to [$resolved], not the fake"
+
+  set +e
+  set -m
+  (
+    cd "$tree"
+    FAKE_SCENARIO=setup_eks \
+      FAKE_TERRAFORM_LOG="$tree/terraform.log" \
+      FAKE_AWS_LOG="$tree/aws.log" \
+      FAKE_TFVARS_SNAPSHOTS="$tree/snapshots" \
+      STORAGE_DRIVER=ebs \
+      PATH="$tree/fakebin:$PATH" \
+      exec bash "$script_dir/setup-eks" <"$answers" >"$tree/output" 2>&1
+  ) &
+  pid=$!
+  (
+    sleep "$WATCHDOG_SECONDS"
+    if kill -0 "$pid" 2>/dev/null; then
+      : >"$tree/watchdog_fired"
+      kill -TERM -- "-$pid" 2>/dev/null
+    fi
+  ) &
+  watchdog=$!
+  set +m
+  wait "$pid"
+  status=$?
+  kill -TERM -- "-$watchdog" 2>/dev/null
+  wait "$watchdog" 2>/dev/null
+  set -e
+
+  echo "$status" >"$tree/exit_code"
+  [[ ! -e "$tree/watchdog_fired" ]] || fail "$name: setup-eks did not finish within ${WATCHDOG_SECONDS}s, so it was waiting for an answer it never got"
+  if grep -Eq 'unexpected (terraform|aws) invocation' "$tree/output"; then
+    fail "$name: setup-eks called terraform or aws in a way the fakes do not expect"
+  fi
+}
+
+setting_value() {
+  sed -n -E "s/^$2[[:space:]]*=[[:space:]]*(.*[^[:space:]])[[:space:]]*\$/\1/p" "$1"
+}
+
+assert_snapshots() {
+  local tree="$1" s3="$2" sqs="$3" cidrs="$4"
+  local name snapshot found_vpc=false found_eks=false
+  name=$(basename "$tree")
+  for snapshot in "$tree"/snapshots/*.tfvars; do
+    [[ -f "$snapshot" ]] || fail "$name: no env.tfvars snapshot was taken at any terraform plan"
+    [[ "$snapshot" == *-vpc.tfvars ]] && found_vpc=true
+    [[ "$snapshot" == *-eks.tfvars ]] && found_eks=true
+    [[ "$(grep -Ec '^app_irsa_s3_buckets[[:space:]]*=' "$snapshot")" == 1 ]] || fail "$name: $(basename "$snapshot") must set app_irsa_s3_buckets exactly once"
+    [[ "$(grep -Ec '^app_irsa_sqs_queues[[:space:]]*=' "$snapshot")" == 1 ]] || fail "$name: $(basename "$snapshot") must set app_irsa_sqs_queues exactly once"
+    [[ "$(grep -Ec '^cluster_endpoint_public_access_cidrs[[:space:]]*=' "$snapshot")" == 1 ]] || fail "$name: $(basename "$snapshot") must set cluster_endpoint_public_access_cidrs exactly once"
+    [[ "$(setting_value "$snapshot" app_irsa_s3_buckets)" == "$s3" ]] || fail "$name: $(basename "$snapshot") app_irsa_s3_buckets is [$(setting_value "$snapshot" app_irsa_s3_buckets)], expected [$s3]"
+    [[ "$(setting_value "$snapshot" app_irsa_sqs_queues)" == "$sqs" ]] || fail "$name: $(basename "$snapshot") app_irsa_sqs_queues is [$(setting_value "$snapshot" app_irsa_sqs_queues)], expected [$sqs]"
+    [[ "$(setting_value "$snapshot" cluster_endpoint_public_access_cidrs)" == "$cidrs" ]] || fail "$name: $(basename "$snapshot") cluster_endpoint_public_access_cidrs is [$(setting_value "$snapshot" cluster_endpoint_public_access_cidrs)], expected [$cidrs]"
+    if grep -Fq -e 'not-a-range' -e 's3://' "$snapshot"; then
+      fail "$name: $(basename "$snapshot") contains an answer setup-eks should have refused"
+    fi
+  done
+  $found_vpc || fail "$name: the network folder was never planned with the first rewrite"
+  $found_eks || fail "$name: the cluster folder was never planned with the second rewrite"
+}
+
+new_install="$TEST_ROOT/new_install"
+build_tree "$new_install"
+printf '%s\n' "" "not-a-range" "203.0.113.5/32, 198.51.100.0/24" "s3://groundx-files" "groundx-files, extract-bucket" "File-Process,large-file" "us-west-2" "y" >"$TEST_ROOT/new_install.answers"
+run_setup_eks "$new_install" "$TEST_ROOT/new_install.answers"
+[[ "$(cat "$new_install/exit_code")" == 0 ]] || fail "new_install: setup-eks exited $(cat "$new_install/exit_code")"
+grep -Fq "$COMPLETE_LINE" "$new_install/output" || fail "new_install: setup-eks did not reach [$COMPLETE_LINE]"
+if grep -Fq "$CHANGE_LIST_HEADER" "$new_install/output"; then
+  fail "new_install: a run with no env.tfvars must not show the existing-install change list"
+fi
+assert_snapshots "$new_install" '["groundx-files", "extract-bucket"]' '["File-Process", "large-file"]' '["203.0.113.5/32", "198.51.100.0/24"]'
+
+existing_decline="$TEST_ROOT/existing_decline"
+build_tree "$existing_decline"
+write_existing_tfvars "$existing_decline"
+cp "$existing_decline/terraform/aws/env.tfvars" "$TEST_ROOT/existing_decline.before"
+printf '%s\n' "203.0.113.5/32" "groundx-files" "file-process" "no" "us-west-2" "y" >"$TEST_ROOT/existing_decline.answers"
+run_setup_eks "$existing_decline" "$TEST_ROOT/existing_decline.answers"
+[[ "$(cat "$existing_decline/exit_code")" != 0 ]] || fail "existing_decline: declining must exit non-zero"
+grep -Fq "$CHANGE_LIST_HEADER" "$existing_decline/output" || fail "existing_decline: the change list was not shown"
+grep -Fq "every bucket in this AWS account" "$existing_decline/output" || fail "existing_decline: the change list must say what S3 access the install has now"
+grep -Fq "replaces env.tfvars with a new file built from this script's template" "$existing_decline/output" || fail "existing_decline: the confirmation must say env.tfvars is replaced from the template"
+grep -Fq "node_diagnostics" "$existing_decline/output" || fail "existing_decline: the confirmation must name settings a rewrite loses"
+grep -Fq "without stopping for you to review a plan" "$existing_decline/output" || fail "existing_decline: the confirmation must say it applies without a plan review"
+grep -Fq "docs/eks-access-scoping.md" "$existing_decline/output" || fail "existing_decline: the confirmation must point an edited install to the plan-first steps"
+grep -Fq "Stopped. Nothing was changed." "$existing_decline/output" || fail "existing_decline: declining must say nothing was changed"
+cmp -s "$TEST_ROOT/existing_decline.before" "$existing_decline/terraform/aws/env.tfvars" || fail "existing_decline: env.tfvars changed although the operator declined"
+[[ ! -s "$existing_decline/terraform.log" ]] || fail "existing_decline: terraform ran although the operator declined: $(cat "$existing_decline/terraform.log")"
+[[ ! -s "$existing_decline/aws.log" ]] || fail "existing_decline: aws ran although the operator declined: $(cat "$existing_decline/aws.log")"
+[[ ! -e "$existing_decline/src/groundx/values.aws.local.yaml" ]] || fail "existing_decline: chart values were written although the operator declined"
+[[ ! -e "$existing_decline/src/groundx/prereqs/storageclass/values.aws.local.yaml" ]] || fail "existing_decline: storage class values were written although the operator declined"
+
+existing_accept="$TEST_ROOT/existing_accept"
+build_tree "$existing_accept"
+write_existing_tfvars "$existing_accept"
+printf '%s\n' "203.0.113.5/32" "" "file-process" " Yes " "us-west-2" "y" >"$TEST_ROOT/existing_accept.answers"
+run_setup_eks "$existing_accept" "$TEST_ROOT/existing_accept.answers"
+[[ "$(cat "$existing_accept/exit_code")" == 0 ]] || fail "existing_accept: setup-eks exited $(cat "$existing_accept/exit_code")"
+grep -Fq "$CHANGE_LIST_HEADER" "$existing_accept/output" || fail "existing_accept: the change list was not shown"
+grep -Fq "every bucket in this AWS account" "$existing_accept/output" || fail "existing_accept: the change list must say what S3 access the install has now"
+grep -Fq "none (no S3 access)" "$existing_accept/output" || fail "existing_accept: the change list must say S3 access becomes none"
+grep -Fq "$COMPLETE_LINE" "$existing_accept/output" || fail "existing_accept: setup-eks did not reach [$COMPLETE_LINE]"
+assert_snapshots "$existing_accept" '[]' '["file-process"]' '["203.0.113.5/32"]'
+
+if [[ -n "${SETUP_EKS_TEST_KEEP:-}" ]]; then
+  mkdir -p "$SETUP_EKS_TEST_KEEP"
+  cp "$new_install"/snapshots/*.tfvars "$SETUP_EKS_TEST_KEEP/"
+fi
+
+echo "setup-eks access tests passed"

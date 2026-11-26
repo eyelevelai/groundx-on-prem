@@ -140,6 +140,24 @@ context: |
     - A scope check for a README-only change diffs against `git merge-base HEAD origin/<base>` (not the moving `origin/<base>` tip) and requires README.md changed and `src helm .build helm-releases` unchanged.
     - The pre-push gate runs `.build/bin/validate-helm.sh` itself; a task check must not execute it (privileged repo), so the gate task declares `check: n/a` with that reason.
 
+  - CONVENTIONS DISCOVERED DURING GX-184 (EKS access settings):
+    - terraform/aws/env.tfvars auto-loads into `terraform test` through env.auto.tfvars, so a
+      run that asserts an optional variable's "not set" behavior sets that variable to null in
+      its own variables block; otherwise a developer's env.tfvars leaks into the run.
+    - CI runs the Terraform test file on 1.9.8 (helm-tests.yml). A claim that an expression
+      evaluates correctly there (for example a validation that must not depend on `||`
+      short-circuiting) is checked by running the test file with a 1.9.8 binary passed as
+      GX_ON_PREM_TERRAFORM, not with the local default.
+    - setup-eks behavior is tested by bin/tests/setup-eks-access-test: a mktemp copy of bin/,
+      terraform/aws/setup-eks and env.tfvars.example with fake terraform/aws on PATH and piped
+      answers. It must fail closed unless the fakes and the copied script are the ones running,
+      kill the run's process group on a watchdog (prompt_input loops at end of input), and
+      check for "unexpected ... invocation" lines because setup-eks reads tee's exit status.
+    - node_diagnostics.tftest.hcl overrides the S3/SQS policy document's JSON, so its runs assert
+      the document's rendered statements (data.aws_iam_policy_document.s3_sqs_admin[0].statement)
+      and that aws_iam_policy.s3_sqs_admin carries the overridden JSON; the attachment's
+      policy_arn is unknown at plan on Terraform 1.9.8 and is shown only by a real terraform plan.
+
   - KNOWN GAPS / OPEN QUESTIONS:
     - helm/ <-> src/groundx duplication: no regen script (manual sync required); a drift check DOES exist (verify_mirrors() in .build/bin/verify-storage-contract.py fails the gate on mismatch) — the remaining gap is only the absence of a regen script, not the absence of a check.
     - upload.groundx.ai model-weight download hardcoded in init-containers — air-gap blocker; no documented pre-seeding mechanism.

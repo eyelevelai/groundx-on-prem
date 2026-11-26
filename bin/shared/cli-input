@@ -11,6 +11,7 @@ prompt_input() {
     local prompt="$2"
     local data=("${!3}")
     local input_prompt="$4"
+    local refused_prompt="${5:-$4}"
 
     local choice
     local data
@@ -41,6 +42,16 @@ prompt_input() {
         err_msg_1=$msg
         err_msg_n=$msg
         validate_function=validate_yn
+    elif [[ "$type" == "cidr-list" ]]; then
+        msg=$input_prompt
+        err_msg_1=$refused_prompt
+        err_msg_n=$refused_prompt
+        validate_function=validate_cidr_list
+    elif [[ "$type" == "name-list" ]]; then
+        msg=$input_prompt
+        err_msg_1=$refused_prompt
+        err_msg_n=$refused_prompt
+        validate_function=validate_name_list
     else
         error "invalid prompt type [$type]" >&2
         exit 1
@@ -55,7 +66,9 @@ prompt_input() {
             read -p "$msg" choice
         fi
 
-        choice=$(echo "$choice" | tr '[:upper:]' '[:lower:]')
+        if [[ "$type" != "cidr-list" && "$type" != "name-list" ]]; then
+            choice=$(echo "$choice" | tr '[:upper:]' '[:lower:]')
+        fi
 
         result=$($validate_function "$choice" "data[@]")
         if [[ $? -eq 0 ]]; then
@@ -126,6 +139,66 @@ validate_text() {
 
     echo $choice
 
+    return 0
+}
+
+split_list_answer() {
+    local answer="$1"
+    local entries=()
+
+    read -r -a entries <<< "${answer//,/ }"
+    if [[ ${#entries[@]} -gt 0 ]]; then
+        printf '%s\n' "${entries[@]}"
+    fi
+}
+
+hcl_list() {
+    local out=""
+    local entry
+
+    while IFS= read -r entry; do
+        [[ -n "$out" ]] && out+=", "
+        out+="\"$entry\""
+    done
+
+    echo "[$out]"
+}
+
+validate_cidr_list() {
+    local entries
+    local entry
+
+    entries=$(split_list_answer "$1")
+    [[ -n "$entries" ]] || return 1
+
+    while IFS= read -r entry; do
+        if [[ ! "$entry" =~ ^(0|[1-9][0-9]{0,2})\.(0|[1-9][0-9]{0,2})\.(0|[1-9][0-9]{0,2})\.(0|[1-9][0-9]{0,2})/(0|[1-9][0-9]?)$ ]]; then
+            return 1
+        fi
+        if (( BASH_REMATCH[1] > 255 || BASH_REMATCH[2] > 255 || BASH_REMATCH[3] > 255 || BASH_REMATCH[4] > 255 || BASH_REMATCH[5] > 32 )); then
+            return 1
+        fi
+    done <<< "$entries"
+
+    hcl_list <<< "$entries"
+    return 0
+}
+
+validate_name_list() {
+    local entries
+    local entry
+
+    entries=$(split_list_answer "$1")
+    if [[ -z "$entries" ]]; then
+        echo "[]"
+        return 0
+    fi
+
+    while IFS= read -r entry; do
+        [[ "$entry" =~ ^[A-Za-z0-9._-]+$ ]] || return 1
+    done <<< "$entries"
+
+    hcl_list <<< "$entries"
     return 0
 }
 

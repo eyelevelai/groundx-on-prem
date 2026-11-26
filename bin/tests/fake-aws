@@ -4,6 +4,11 @@ set -euo pipefail
 
 printf '%s\n' "$*" >> "$FAKE_AWS_LOG"
 
+if [[ "${FAKE_SCENARIO:-}" == "setup_eks" && "$1" == "eks" && "${2:-}" == "list-clusters" ]]; then
+  printf '%s' '{"clusters":[]}'
+  exit 0
+fi
+
 if [[ "$1" == "eks" && "$2" == "describe-cluster" ]]; then
   case "$FAKE_SCENARIO" in
     existing_cluster)
