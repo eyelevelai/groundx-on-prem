@@ -26,7 +26,7 @@ override_data {
 override_data {
   target = data.aws_iam_policy_document.s3_sqs_admin
   values = {
-    json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    json = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"rendered-s3-sqs-document\"}]}"
   }
 }
 
@@ -347,6 +347,16 @@ run "named_buckets_and_queues_are_scoped" {
   assert {
     condition     = length(aws_iam_policy.s3_sqs_admin) == 1 && length(aws_iam_role_policy_attachment.attach_admin) == 1
     error_message = "Named settings must keep exactly one S3/SQS policy and one attachment."
+  }
+
+  assert {
+    condition     = aws_iam_policy.s3_sqs_admin[0].policy == "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"rendered-s3-sqs-document\"}]}"
+    error_message = "The IAM policy must carry the rendered S3/SQS policy document."
+  }
+
+  assert {
+    condition     = aws_iam_role_policy_attachment.attach_admin[0].role == "eyelevel-s3-sqs-worker-irsa"
+    error_message = "The S3/SQS policy must be attached to the GroundX role."
   }
 }
 
