@@ -123,7 +123,16 @@ if $had_env_tfvars; then
     cat <<EOF
 
 This folder already has an env.tfvars file, so GroundX may already be installed from it.
-Continuing rewrites env.tfvars and changes this install's AWS access:
+Continuing replaces env.tfvars with a new file built from this script's template, then
+applies the network and cluster changes without stopping for you to review a plan.
+
+Anything you added or changed in env.tfvars yourself is replaced or removed, for example
+nodes, node_replicas, node_diagnostics, dns_observability, eks_kms_source_policy_documents,
+cluster_role_arns and ssh_key_name. If you edited env.tfvars, stop here and follow
+"Existing installs" in docs/eks-access-scoping.md: add the settings yourself and
+review the plan before applying.
+
+Continuing also changes this install's AWS access:
 
   S3 buckets GroundX can use
     now:   $(current_setting app_irsa_s3_buckets "every bucket in this AWS account")

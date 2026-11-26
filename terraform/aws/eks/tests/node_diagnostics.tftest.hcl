@@ -303,7 +303,7 @@ run "named_buckets_and_queues_are_scoped" {
       },
       {
         sid       = "S3Objects"
-        actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:PutObjectTagging", "s3:AbortMultipartUpload"]
+        actions   = ["s3:GetObject", "s3:GetObjectTagging", "s3:PutObject", "s3:DeleteObject", "s3:PutObjectTagging", "s3:AbortMultipartUpload"]
         resources = ["arn:aws:s3:::groundx-files/*", "arn:aws:s3:::extract-bucket/*"]
       },
       {
@@ -313,6 +313,35 @@ run "named_buckets_and_queues_are_scoped" {
       },
     ])
     error_message = "Named buckets and queues must get only their own bucket, object and queue ARNs, never *."
+  }
+
+  assert {
+    condition = jsonencode([for s in data.aws_iam_policy_document.s3_sqs_admin[0].statement : { sid = s.sid, effect = s.effect, actions = sort(s.actions), resources = sort(s.resources) }]) == jsonencode([
+      {
+        sid       = "S3Buckets"
+        effect    = "Allow"
+        actions   = sort(["s3:ListBucket", "s3:GetBucketLocation"])
+        resources = sort(["arn:aws:s3:::groundx-files", "arn:aws:s3:::extract-bucket"])
+      },
+      {
+        sid       = "S3Objects"
+        effect    = "Allow"
+        actions   = sort(["s3:GetObject", "s3:GetObjectTagging", "s3:PutObject", "s3:DeleteObject", "s3:PutObjectTagging", "s3:AbortMultipartUpload"])
+        resources = sort(["arn:aws:s3:::groundx-files/*", "arn:aws:s3:::extract-bucket/*"])
+      },
+      {
+        sid       = "SqsQueues"
+        effect    = "Allow"
+        actions   = sort(["sqs:SendMessage", "sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:ChangeMessageVisibility", "sqs:GetQueueAttributes", "sqs:GetQueueUrl"])
+        resources = ["arn:aws:sqs:us-west-2:123456789012:file-process"]
+      },
+    ])
+    error_message = "The rendered S3/SQS policy document must carry exactly the named bucket, object and queue statements."
+  }
+
+  assert {
+    condition     = alltrue([for s in data.aws_iam_policy_document.s3_sqs_admin[0].statement : !contains(s.resources, "*") && !contains(s.actions, "s3:*") && !contains(s.actions, "sqs:*")])
+    error_message = "The rendered S3/SQS policy document must not allow s3:* or sqs:* or any action on resource *."
   }
 
   assert {
@@ -340,6 +369,18 @@ run "empty_s3_with_named_queues_has_no_s3_statement" {
     ])
     error_message = "An empty S3 list must remove every S3 statement and leave only the named queues."
   }
+
+  assert {
+    condition = jsonencode([for s in data.aws_iam_policy_document.s3_sqs_admin[0].statement : { sid = s.sid, effect = s.effect, actions = sort(s.actions), resources = sort(s.resources) }]) == jsonencode([
+      {
+        sid       = "SqsQueues"
+        effect    = "Allow"
+        actions   = sort(["sqs:SendMessage", "sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:ChangeMessageVisibility", "sqs:GetQueueAttributes", "sqs:GetQueueUrl"])
+        resources = sort(["arn:aws:sqs:us-west-2:123456789012:file-process", "arn:aws:sqs:us-west-2:123456789012:jobs.fifo"])
+      },
+    ])
+    error_message = "The rendered policy document for an empty S3 list must carry only the named queue statement."
+  }
 }
 
 run "empty_sqs_with_named_buckets_has_no_sqs_statement" {
@@ -360,11 +401,29 @@ run "empty_sqs_with_named_buckets_has_no_sqs_statement" {
       },
       {
         sid       = "S3Objects"
-        actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:PutObjectTagging", "s3:AbortMultipartUpload"]
+        actions   = ["s3:GetObject", "s3:GetObjectTagging", "s3:PutObject", "s3:DeleteObject", "s3:PutObjectTagging", "s3:AbortMultipartUpload"]
         resources = ["arn:aws:s3:::groundx-files/*"]
       },
     ])
     error_message = "An empty SQS list must remove every SQS statement and leave only the named bucket."
+  }
+
+  assert {
+    condition = jsonencode([for s in data.aws_iam_policy_document.s3_sqs_admin[0].statement : { sid = s.sid, effect = s.effect, actions = sort(s.actions), resources = sort(s.resources) }]) == jsonencode([
+      {
+        sid       = "S3Buckets"
+        effect    = "Allow"
+        actions   = sort(["s3:ListBucket", "s3:GetBucketLocation"])
+        resources = ["arn:aws:s3:::groundx-files"]
+      },
+      {
+        sid       = "S3Objects"
+        effect    = "Allow"
+        actions   = sort(["s3:GetObject", "s3:GetObjectTagging", "s3:PutObject", "s3:DeleteObject", "s3:PutObjectTagging", "s3:AbortMultipartUpload"])
+        resources = ["arn:aws:s3:::groundx-files/*"]
+      },
+    ])
+    error_message = "The rendered policy document for an empty SQS list must carry only the named bucket statements."
   }
 }
 

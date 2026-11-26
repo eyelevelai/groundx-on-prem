@@ -45,7 +45,7 @@ A setting that is not present in `env.tfvars` (or is set to `null`) SHALL leave 
 When `app_irsa_s3_buckets` lists names, the application role's policy SHALL contain, in place of `FullS3`:
 
 - a statement with Sid `S3Buckets` allowing `s3:ListBucket` and `s3:GetBucketLocation` on `arn:<partition>:s3:::<bucket>` for each named bucket;
-- a statement with Sid `S3Objects` allowing `s3:GetObject`, `s3:PutObject`, `s3:DeleteObject`, `s3:PutObjectTagging` and `s3:AbortMultipartUpload` on `arn:<partition>:s3:::<bucket>/*` for each named bucket.
+- a statement with Sid `S3Objects` allowing `s3:GetObject`, `s3:GetObjectTagging`, `s3:PutObject`, `s3:DeleteObject`, `s3:PutObjectTagging` and `s3:AbortMultipartUpload` on `arn:<partition>:s3:::<bucket>/*` for each named bucket.
 
 No S3 statement SHALL name the resource `*`.
 
@@ -217,13 +217,14 @@ Both `env.tfvars` rewrites in `setup-eks` (before the network run and before the
 
 ### Requirement: setup-eks confirms before changing an existing install
 
-When `terraform/aws/env.tfvars` already exists when `setup-eks` starts, the script SHALL, after the three questions and before any `aws` or `terraform` call, show for each setting what the existing file has (the setting's presence, or the plain-language meaning of its absence) and what it will become, and SHALL continue only when the operator types `yes` (letter case and surrounding spaces ignored). Any other answer, including end of input, SHALL stop with a non-zero exit, leave `env.tfvars` byte-for-byte unchanged, and write no chart values file. A run that started with no `env.tfvars` SHALL NOT show this confirmation.
+When `terraform/aws/env.tfvars` already exists when `setup-eks` starts, the script SHALL, after the three questions and before any `aws` or `terraform` call, show for each setting what the existing file has (the setting's presence, or the plain-language meaning of its absence) and what it will become, and SHALL continue only when the operator types `yes` (letter case and surrounding spaces ignored). The confirmation SHALL also say that continuing replaces `env.tfvars` with a new file built from the script's template, so the operator's own edits to it are replaced or removed, that the network and cluster changes are then applied without stopping for a plan review, and that an install with an edited `env.tfvars` should instead follow the plan-first steps in `docs/eks-access-scoping.md`. Any other answer, including end of input, SHALL stop with a non-zero exit, leave `env.tfvars` byte-for-byte unchanged, and write no chart values file. A run that started with no `env.tfvars` SHALL NOT show this confirmation.
 
 #### Scenario: Declining leaves the install untouched (reject before state)
 
 - **GIVEN** an existing `env.tfvars`
 - **WHEN** the operator answers the three questions and then types `no`
-- **THEN** `setup-eks` exits non-zero
+- **THEN** the confirmation shown before the answer says `env.tfvars` is replaced from the template, names `node_diagnostics` among the settings a rewrite loses, says it applies without stopping for a plan review, and points to `docs/eks-access-scoping.md`
+- **AND** `setup-eks` exits non-zero
 - **AND** `env.tfvars` is byte-for-byte unchanged, no `terraform` or `aws` command ran, and neither `src/groundx/values.aws.local.yaml` nor `src/groundx/prereqs/storageclass/values.aws.local.yaml` was written
 
 #### Scenario: Typing yes continues with the new values

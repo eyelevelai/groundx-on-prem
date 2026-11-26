@@ -30,9 +30,9 @@ separately:
 | Names | Only the named buckets or queues |
 
 Named buckets get `s3:ListBucket` and `s3:GetBucketLocation` on each bucket, and
-`s3:GetObject`, `s3:PutObject`, `s3:DeleteObject`, `s3:PutObjectTagging` and
-`s3:AbortMultipartUpload` on the objects in it. Named queues get
-`sqs:SendMessage`, `sqs:ReceiveMessage`, `sqs:DeleteMessage`,
+`s3:GetObject`, `s3:GetObjectTagging`, `s3:PutObject`, `s3:DeleteObject`,
+`s3:PutObjectTagging` and `s3:AbortMultipartUpload` on the objects in it.
+Named queues get `sqs:SendMessage`, `sqs:ReceiveMessage`, `sqs:DeleteMessage`,
 `sqs:ChangeMessageVisibility`, `sqs:GetQueueAttributes` and `sqs:GetQueueUrl`,
 and must be in the same AWS account and region as the cluster. If both lists are
 `[]`, Terraform attaches no S3 or SQS policy to the role; the role itself stays.
@@ -85,9 +85,16 @@ To opt in:
 Do not use `bin/environment eks` to opt in: it applies without waiting for you
 to review the plan.
 
-Re-running `setup-eks` on a folder that already has `env.tfvars` asks the three
-questions, shows what will change, and continues only if you type `yes`. It
-rewrites the whole `env.tfvars` file.
+Do not re-run `setup-eks` to opt in an install whose `env.tfvars` you have
+edited. On a folder that already has `env.tfvars`, it asks the three questions,
+shows how S3, SQS and cluster API access will change, and continues only if you
+type `yes`. It then replaces `env.tfvars` with a new file built from its
+template, so your own edits are replaced or removed, for example `nodes`,
+`node_replicas`, `node_diagnostics`, `dns_observability`,
+`eks_kms_source_policy_documents`, `cluster_role_arns` and `ssh_key_name`. It
+then applies the network (`terraform/aws/vpc`) and cluster
+(`terraform/aws/eks`) folders with `--auto-approve`, without stopping for you
+to review a plan. Use the steps above instead.
 
 ## Service account
 
@@ -120,7 +127,9 @@ pod's requests only when all of these are true:
 
 3. GroundX is given no static AWS keys. In your GroundX Helm values, leave
    `username` and `password` unset in the `file` section and in the `file`
-   section inside `extract`. Put no AWS key variables, such as
+   section inside `extract`, and leave `key` and `secret` unset in the `stream`
+   section and in each queue under `stream.topics` (for example
+   `stream.topics.process.key`). Put no AWS key variables, such as
    `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, in the Kubernetes Secrets
    the GroundX pods load: the Secrets listed under `secrets` in the `cluster`
    section and, when file access is on, the Secret named by

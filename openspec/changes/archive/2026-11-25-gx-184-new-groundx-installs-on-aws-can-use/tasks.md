@@ -49,6 +49,8 @@ Each run uses the AWS profile the requester approved for read-only plans, a scra
   check: sed -n '/^### Components/,/^### Options/p' bin/README.md | grep -Fq cluster_endpoint_public_access_cidrs && sed -n '/^### Components/,/^### Options/p' bin/README.md | grep -Fq app_irsa_s3_buckets
 - [x] 4.5 Re-run the whole-repo sweep from design decision 9 after 4.1-4.4 and confirm no other committed doc describes the role policy, the endpoint, the `setup-eks` questions or `bin/environment eks` differently
   check: n/a — a reading task; any place it finds is fixed under 4.1-4.4, whose checks cover the result
+- [x] 4.6 (review fix round 6, 2026-11-26) List `s3:GetObjectTagging` with the object actions in `docs/eks-access-scoping.md` and both copies of the `eks-access-scoping` spec; in the doc, name the queue credentials (`key` and `secret` in `stream` and in each `stream.topics` queue) among the static keys to leave unset, and say that re-running `setup-eks` replaces `env.tfvars` from its template and applies with `--auto-approve`, so an edited install uses the plan-first steps instead
+  check: f=docs/eks-access-scoping.md; for s in 's3:GetObjectTagging' 'leave `key` and `secret` unset in the `stream`' 'stream.topics.process.key' 'Do not re-run `setup-eks`' 'new file built from its' '--auto-approve' 'node_diagnostics'; do grep -Fq -- "$s" "$f" || { echo "missing in $f: $s" >&2; exit 1; }; done; for p in openspec/specs/eks-access-scoping/spec.md openspec/changes/archive/2026-11-25-gx-184-new-groundx-installs-on-aws-can-use/specs/eks-access-scoping/spec.md; do grep -Fq 's3:GetObjectTagging' "$p" || { echo "missing in $p: s3:GetObjectTagging" >&2; exit 1; }; done
 
 ## 5. Gate
 
