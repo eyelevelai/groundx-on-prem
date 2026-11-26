@@ -21,13 +21,13 @@ TBD - created by archiving change gx-114-summary-inference-model-load-lock-two. 
 
 ### Requirement: The upgrade guide states the file-lock storage requirement, its symptom and its remedy
 
-`docs/upgrades.md` SHALL state that summary-inference now needs file-lock support on its model volume and that this was tested on EFS only. It SHALL state that on storage that rejects locks the worker logs the lock error (`model load failed; exiting worker`) and restarts, so summary does not come up. It SHALL name the remedy: a storage class with lock support, or rolling the chart back. It SHALL NOT claim that other storage classes were tested or that the failure is detected before the pod starts.
+`docs/upgrades.md` SHALL state that summary-inference now needs file-lock support on its model volume and that this was tested on EFS only. It SHALL state this in the "Persistent storage" section, since every summary worker takes the lock on every model load at any node count. It SHALL state that on a fresh install the first symptom is the `download-model` init container's file-lock error, and that on an upgrade the worker logs `model load failed; exiting worker` with a traceback from `fcntl.flock` on `initializing.flock` and restarts, so summary does not come up; the traceback, not the log line alone, identifies the lock failure. It SHALL name the remedy: a storage class with lock support (with a new `summary.inference.pvc.name`, since an existing claim cannot change its storage class), or rolling the chart back. It SHALL NOT claim that other storage classes were tested or that the failure is detected before the pod starts.
 
 #### Scenario: The requirement, symptom and remedy are stated (polarity: finalize failure)
 
 - **GIVEN** an operator whose model volume is on storage that rejects file locks
 - **WHEN** they read the note
-- **THEN** it says the worker logs `model load failed; exiting worker` and restarts, summary does not come up, and the remedy is a storage class with lock support or a chart rollback; a reader is not told summary will start without locks
+- **THEN** it says the worker logs `model load failed; exiting worker` with an `fcntl.flock` traceback and restarts, summary does not come up, and the remedy is a storage class with lock support or a chart rollback; a reader is not told summary will start without locks
 
 #### Scenario: The test coverage claim is bounded (polarity: reject before state)
 

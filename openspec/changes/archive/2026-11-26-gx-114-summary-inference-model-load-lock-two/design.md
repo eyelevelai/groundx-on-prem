@@ -14,3 +14,7 @@ Producer contract shapes: none; this change has no cross-service touchpoint.
 ## Existing mechanisms
 
 Adds no config key, flag, class, helper, constant, table, workflow or delivery path. It extends existing prose in `docs/upgrades.md` (the `updateStrategy: Recreate` paragraph and the scale-to-zero steps under "Inference model downloads") and reuses them rather than adding a parallel procedure.
+
+## Amendments
+
+2026-11-26 (review round): decision 1's lock-storage placement is superseded. The file-lock storage note lives in "Persistent storage", not next to the multi-node ReadWriteMany sentence, because every summary worker takes the lock on every model load at any node count. Decision 3's symptom is refined: the log line `model load failed; exiting worker` is logged for every model-load failure, so the note says the `fcntl.flock` traceback on `initializing.flock` identifies the lock failure; on a fresh install the first symptom is the `download-model` init container's file-lock error. The overlap note offers `updateStrategy: Recreate` or scaling summary-inference to 0, and says the scale-to-zero applies even when every model has already downloaded.
