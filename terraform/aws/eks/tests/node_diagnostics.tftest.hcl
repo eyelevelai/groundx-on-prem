@@ -267,9 +267,9 @@ run "access_settings_absent_keep_full_access" {
   }
 
   assert {
-    condition = jsonencode(local.app_irsa_statements) == jsonencode([
-      { sid = "FullS3", actions = ["s3:*"], resources = ["*"] },
-      { sid = "FullSqs", actions = ["sqs:*"], resources = ["*"] },
+    condition = jsonencode([for s in data.aws_iam_policy_document.s3_sqs_admin[0].statement : { sid = s.sid, effect = s.effect, actions = sort(s.actions), resources = sort(s.resources) }]) == jsonencode([
+      { sid = "FullS3", effect = "Allow", actions = ["s3:*"], resources = ["*"] },
+      { sid = "FullSqs", effect = "Allow", actions = ["sqs:*"], resources = ["*"] },
     ])
     error_message = "Absent S3 and SQS settings must keep the FullS3 then FullSqs statements on every resource."
   }
@@ -292,27 +292,6 @@ run "named_buckets_and_queues_are_scoped" {
     app_irsa_s3_buckets                  = ["groundx-files", "extract-bucket"]
     app_irsa_sqs_queues                  = ["file-process"]
     cluster_endpoint_public_access_cidrs = null
-  }
-
-  assert {
-    condition = jsonencode(local.app_irsa_statements) == jsonencode([
-      {
-        sid       = "S3Buckets"
-        actions   = ["s3:ListBucket", "s3:GetBucketLocation"]
-        resources = ["arn:aws:s3:::groundx-files", "arn:aws:s3:::extract-bucket"]
-      },
-      {
-        sid       = "S3Objects"
-        actions   = ["s3:GetObject", "s3:GetObjectTagging", "s3:PutObject", "s3:DeleteObject", "s3:PutObjectTagging", "s3:AbortMultipartUpload"]
-        resources = ["arn:aws:s3:::groundx-files/*", "arn:aws:s3:::extract-bucket/*"]
-      },
-      {
-        sid       = "SqsQueues"
-        actions   = ["sqs:SendMessage", "sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:ChangeMessageVisibility", "sqs:GetQueueAttributes", "sqs:GetQueueUrl"]
-        resources = ["arn:aws:sqs:us-west-2:123456789012:file-process"]
-      },
-    ])
-    error_message = "Named buckets and queues must get only their own bucket, object and queue ARNs, never *."
   }
 
   assert {
@@ -370,17 +349,6 @@ run "empty_s3_with_named_queues_has_no_s3_statement" {
   }
 
   assert {
-    condition = jsonencode(local.app_irsa_statements) == jsonencode([
-      {
-        sid       = "SqsQueues"
-        actions   = ["sqs:SendMessage", "sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:ChangeMessageVisibility", "sqs:GetQueueAttributes", "sqs:GetQueueUrl"]
-        resources = ["arn:aws:sqs:us-west-2:123456789012:file-process", "arn:aws:sqs:us-west-2:123456789012:jobs.fifo"]
-      },
-    ])
-    error_message = "An empty S3 list must remove every S3 statement and leave only the named queues."
-  }
-
-  assert {
     condition = jsonencode([for s in data.aws_iam_policy_document.s3_sqs_admin[0].statement : { sid = s.sid, effect = s.effect, actions = sort(s.actions), resources = sort(s.resources) }]) == jsonencode([
       {
         sid       = "SqsQueues"
@@ -400,22 +368,6 @@ run "empty_sqs_with_named_buckets_has_no_sqs_statement" {
     app_irsa_s3_buckets                  = ["groundx-files"]
     app_irsa_sqs_queues                  = []
     cluster_endpoint_public_access_cidrs = null
-  }
-
-  assert {
-    condition = jsonencode(local.app_irsa_statements) == jsonencode([
-      {
-        sid       = "S3Buckets"
-        actions   = ["s3:ListBucket", "s3:GetBucketLocation"]
-        resources = ["arn:aws:s3:::groundx-files"]
-      },
-      {
-        sid       = "S3Objects"
-        actions   = ["s3:GetObject", "s3:GetObjectTagging", "s3:PutObject", "s3:DeleteObject", "s3:PutObjectTagging", "s3:AbortMultipartUpload"]
-        resources = ["arn:aws:s3:::groundx-files/*"]
-      },
-    ])
-    error_message = "An empty SQS list must remove every SQS statement and leave only the named bucket."
   }
 
   assert {
@@ -447,8 +399,8 @@ run "empty_s3_keeps_absent_sqs_at_full_access" {
   }
 
   assert {
-    condition = jsonencode(local.app_irsa_statements) == jsonencode([
-      { sid = "FullSqs", actions = ["sqs:*"], resources = ["*"] },
+    condition = jsonencode([for s in data.aws_iam_policy_document.s3_sqs_admin[0].statement : { sid = s.sid, effect = s.effect, actions = sort(s.actions), resources = sort(s.resources) }]) == jsonencode([
+      { sid = "FullSqs", effect = "Allow", actions = ["sqs:*"], resources = ["*"] },
     ])
     error_message = "S3 and SQS must be decided independently: an empty S3 list must not change absent SQS access."
   }

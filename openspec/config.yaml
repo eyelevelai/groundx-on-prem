@@ -153,9 +153,10 @@ context: |
       answers. It must fail closed unless the fakes and the copied script are the ones running,
       kill the run's process group on a watchdog (prompt_input loops at end of input), and
       check for "unexpected ... invocation" lines because setup-eks reads tee's exit status.
-    - The AWS IRSA policy's statements are built in locals (local.app_irsa_statements) because
-      node_diagnostics.tftest.hcl overrides the policy document's JSON; rendered JSON is proven
-      only by a real terraform plan.
+    - node_diagnostics.tftest.hcl overrides the S3/SQS policy document's JSON, so its runs assert
+      the document's rendered statements (data.aws_iam_policy_document.s3_sqs_admin[0].statement)
+      and that aws_iam_policy.s3_sqs_admin carries the overridden JSON; the attachment's
+      policy_arn is unknown at plan on Terraform 1.9.8 and is shown only by a real terraform plan.
 
   - KNOWN GAPS / OPEN QUESTIONS:
     - helm/ <-> src/groundx duplication: no regen script (manual sync required); a drift check DOES exist (verify_mirrors() in .build/bin/verify-storage-contract.py fails the gate on mismatch) — the remaining gap is only the absence of a regen script, not the absence of a check.

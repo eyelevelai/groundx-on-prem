@@ -698,9 +698,30 @@ If you wish to use an existing Kafka cluster, you must configure the `stream.exi
 
 #### Using AWS SQS
 
-If you wish to use existing AWS SQS queues, you must configure the `stream.existing` parameters in your `values.yaml` **and** set `stream.serviceType` to `sqs`.
+To use existing AWS SQS queues, give each queue under `stream.topics` in your `values.yaml` `type: sqs` and the queue's URL in `url`, and set `stream.enabled` to `false` so the chart creates no Kafka topics. `src/groundx/values/values.aws.services.yaml` shows the five queues GroundX uses:
 
-If the cluster was set up with `setup-eks`, list every queue in `app_irsa_sqs_queues` in `terraform/aws/env.tfvars` (see [EKS Access Scoping](docs/eks-access-scoping.md)).
+```yaml
+stream:
+  enabled: false
+  topics:
+    preProcess:
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/111122223333/file-pre-process
+    process:
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/111122223333/file-process
+    summary:
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/111122223333/file-summary
+    update:
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/111122223333/file-update
+    upload:
+      type: sqs
+      url: https://sqs.us-east-2.amazonaws.com/111122223333/file-upload
+```
+
+If the cluster was set up with `setup-eks`, list every queue in `app_irsa_sqs_queues` in `terraform/aws/env.tfvars`; a queue's name is the last part of its `url`, for example `file-process` (see [EKS Access Scoping](docs/eks-access-scoping.md)).
 
 #### Deploying a Dedicated Kafka Cluster
 
@@ -1058,10 +1079,11 @@ diagnostics with one setting. See [EKS Node Diagnostics](docs/eks-node-diagnosti
 
 ## Limiting AWS access for EKS installs
 
-Three optional settings in `terraform/aws/env.tfvars` limit the GroundX application role to named
-S3 buckets (`app_irsa_s3_buckets`) and SQS queues (`app_irsa_sqs_queues`), and the cluster's
-control API to named address ranges (`cluster_endpoint_public_access_cidrs`). `setup-eks` asks for
-them on a new install. Direct Terraform runs, including `bin/environment eks`, keep today's access
+Three optional settings in `terraform/aws/env.tfvars` limit AWS access. `app_irsa_s3_buckets` and
+`app_irsa_sqs_queues` limit the AWS role GroundX pods use to the named S3 buckets and SQS queues.
+`cluster_endpoint_public_access_cidrs` limits which addresses can reach the cluster's control API
+over its public endpoint; nodes, pods and anything inside the cluster's VPC keep using the private
+endpoint, which these settings do not change. `setup-eks` asks for them on a new install. Direct Terraform runs, including `bin/environment eks`, keep today's access
 until you add them. See [EKS Access Scoping](docs/eks-access-scoping.md).
 
 ## EKS Cluster Version Configuration
