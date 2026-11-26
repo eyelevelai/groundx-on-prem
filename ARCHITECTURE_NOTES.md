@@ -119,8 +119,9 @@ groundx (main API/LB)  → OpenSearch hybrid query → ranker-api → ranker-inf
    not in the workload YAML.** To understand any pod you must read its `.settings` helper.
 2. **Service abstraction with `existing: {}` swap-out.** Every backing service (`cache`, `db`,
    `file`, `search`, `stream`) is either deployed by the chart or attached to external infra by
-   setting `existing:` + `serviceType` (e.g. `file.serviceType: s3`). `stream` has no `serviceType`: AWS SQS
-   is set per queue with `stream.topics.<name>.type: sqs` and `url`, plus `stream.enabled: false`.
+   setting its `existing:` block. Of these, only `file` also takes a `serviceType` (e.g. `file.serviceType: s3`).
+   AWS SQS replaces Kafka per queue: `stream.topics.<name>.type: sqs` and `url`, plus `stream.region`
+   and `stream.enabled: false`.
 3. **Config-hash restart pattern.** Deployments annotate `config-hash: {{ ...sha256sum }}` of their
    ConfigMaps, so editing `config.py`/`gunicorn_conf.py`/`supervisord.conf` forces a rollout.
 4. **Throughput-driven HPA.** Autoscaling = pipeline-throughput estimate (`throughput.tpm`) +
