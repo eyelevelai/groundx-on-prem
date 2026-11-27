@@ -39,10 +39,12 @@
 {{- $sct := get $svcData "securityContext" -}}
 {{- $supe := get $svcData "supervisord" -}}
 {{- $tl := get $svcData "tolerations" -}}
+{{- $threads := get $svcData "threads" -}}
 {{- $tsc := get $svcData "topologySpreadConstraints" -}}
 {{- $pdb := get $svcData "disruptionBudget" | default dict -}}
 {{- $ud := get $svcData "updateStrategy" -}}
 {{- $wd := get $svcData "workingDir" -}}
+{{- $workers := get $svcData "workers" -}}
 
 {{- $desired := get $rp "desired" -}}
 
@@ -74,6 +76,10 @@ spec:
         config-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-config-py.yaml") $ | sha256sum }}
         config-models-hash: {{ include (print $.Template.BasePath "/resources/config-models.yaml") $ | sha256sum }}
         supervisord-hash: {{ include (print $.Template.BasePath "/resources/" $mapPrefix "-supervisord-conf.yaml") $ | sha256sum }}
+{{- if and $workers $threads }}
+        groundx.ai/celery-threads: {{ $threads | toString | trim | quote }}
+        groundx.ai/celery-workers: {{ $workers | toString | trim | quote }}
+{{- end }}
 {{- if eq $csym "true" }}
         ldconfig-symlink-hash: {{ include (print $.Template.BasePath "/resources/ldconfig-symlink.yaml") $ | sha256sum }}
 {{- end }}

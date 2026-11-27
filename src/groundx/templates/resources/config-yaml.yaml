@@ -314,6 +314,7 @@ stringData:
       inference:
         {{- if ne $lic "0" }}
         - name: {{ include "groundx.layout.serviceName" . }}-inference
+          exactKeys: true
           tokensPerMinute: {{ $lic }}
         {{- end }}
         {{- if ne $ribw "0" }}

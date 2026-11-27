@@ -337,6 +337,70 @@ tests:
       - matchRegex:
           path: data["supervisord.conf"]
           pattern: "\\[group:celery_workers\\]\\nprograms=celery_worker_1,celery_worker_2\\n"
+  - it: "inference pods carry their worker and process counts with autoscaling off (polarity: finalize success; catches)"
+    templates:
+      - ../templates/app/inference.yaml
+    values:
+      - ../values.yaml
+    set:
+      cluster.hpa: false
+      layout.inference.workers: 2
+      layout.inference.threads: 4
+      summary.inference.enabled: true
+      summary.inference.workers: 3
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["groundx.ai/celery-workers"]
+          value: "2"
+        documentSelector:
+          path: metadata.name
+          value: layout-inference
+      - equal:
+          path: spec.template.metadata.annotations["groundx.ai/celery-threads"]
+          value: "4"
+        documentSelector:
+          path: metadata.name
+          value: layout-inference
+      - equal:
+          path: spec.template.metadata.annotations["groundx.ai/celery-workers"]
+          value: "14"
+        documentSelector:
+          path: metadata.name
+          value: ranker-inference
+      - equal:
+          path: spec.template.metadata.annotations["groundx.ai/celery-threads"]
+          value: "1"
+        documentSelector:
+          path: metadata.name
+          value: ranker-inference
+      - equal:
+          path: spec.template.metadata.annotations["groundx.ai/celery-workers"]
+          value: "3"
+        documentSelector:
+          path: metadata.name
+          value: summary-inference
+  - it: "layout config and metric entry carry the counts the health check and cashbot-go read (polarity: finalize success; catches)"
+    templates:
+      - ../templates/resources/config-yaml.yaml
+      - ../templates/resources/layout-config-py.yaml
+    values:
+      - ../values.yaml
+    set:
+      layout.inference.workers: 2
+      layout.inference.threads: 4
+    asserts:
+      - matchRegex:
+          path: stringData["config.py"]
+          pattern: '(?m)^\s*workers=2,\n\s*threads=4,$'
+        template: ../templates/resources/layout-config-py.yaml
+      - matchRegex:
+          path: stringData["config.yaml"]
+          pattern: "(?s)inference:\\n(?:\\s+.*\\n)*?\\s+- name: layout-inference\\n\\s+exactKeys: true\\n\\s+tokensPerMinute: "
+        template: ../templates/resources/config-yaml.yaml
+      - notMatchRegex:
+          path: stringData["config.yaml"]
+          pattern: "(?s)- name: ranker-inference\\n\\s+exactKeys:"
+        template: ../templates/resources/config-yaml.yaml
   - it: "layout inference init-layout carries the file-access CA env, CA mount and workload secrets"
     templates:
       - ../templates/app/inference.yaml

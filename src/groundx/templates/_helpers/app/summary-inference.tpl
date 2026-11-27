@@ -291,7 +291,9 @@ true
   "pvc"            (include "groundx.summary.inference.pvc" . | fromYaml)
   "replicas"       ($rep)
   "supervisord"    (printf "%s-inference-supervisord-conf-map" $svc)
+  "threads"        (include "groundx.summary.inference.threads" .)
   "updateStrategy" (include "groundx.summary.inference.updateStrategy" .)
+  "workers"        (include "groundx.summary.inference.workers" .)
   "workingDir"     ("/workspace")
 -}}
 {{- if ne $rt "" -}}
