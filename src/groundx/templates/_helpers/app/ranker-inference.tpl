@@ -235,7 +235,9 @@ true
   "pvc"            (include "groundx.ranker.inference.pvc" . | fromYaml)
   "replicas"       ($rep)
   "supervisord"    (printf "%s-inference-supervisord-conf-map" $svc)
+  "threads"        (include "groundx.ranker.inference.threads" .)
   "updateStrategy" (include "groundx.ranker.inference.updateStrategy" .)
+  "workers"        (include "groundx.ranker.inference.workers" .)
   "workingDir"     ("/workspace")
 -}}
 {{- if and $san (ne $san "") -}}
